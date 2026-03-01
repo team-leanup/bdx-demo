@@ -1,0 +1,1726 @@
+
+================================================================================
+FROM: domain-analyst | SUMMARY: 도메인/비즈니스 로직 분석 완료
+================================================================================
+
+# BDX 데모 - 도메인/비즈니스 로직 분석 결과
+
+## 1. 용어 정확성
+
+### 잘못된 용어 → 올바른 업계 용어 매핑
+
+| 현재 용어 | 올바른 용어 | 위치 | 비고 |
+|-----------|-----------|------|------|
+| `단색톤` (solid_tone) | **원컬러** | service-options.ts, consultation.ts, 곳곳 | 클라이언트 명시적 피드백 |
+| `풋` (foot) | **페디큐어** | BODY_PART_OPTIONS | '풋'은 업계 미사용, '페디큐어'로 |
+| `핸드` (hand) | **젤네일** 또는 **핸드** | BODY_PART_OPTIONS | '핸드'는 그나마 사용하나 '젤네일(핸드)'가 더 명확 |
+| `패디큐어` | **페디큐어** | service-options.ts | 오타성 오류 (이미 '페디큐어'로 표기된 곳도 있음) |
+| `솔리드` (expression: solid) | **기본** 또는 **단색** | EXPRESSION_OPTIONS | '솔리드'는 업계 용어이나 일반 사장님에겐 낯선 표현 |
+| `스퀘어 오프` (squoval) | **스퀘어오발** 또는 **스퀘어오프** | NAIL_SHAPE_OPTIONS | squoval은 합성어, 현재 '스퀘어 오프'가 실제 업계 사용 용어와 일치 |
+| `S/A/B 등급 파츠` | **사장님 직접 등록 방식** | PARTS_GRADE_OPTIONS | 등급 시스템 자체가 직관적이지 않음 |
+| `표현 기법` | **기법** 또는 **표현 방식** | ExpressionSelector | 용어는 무난하나 '기법'만으로 충분 |
+| `디자인 범위` | **아트 범위** 또는 **시술 범위** | DesignScopeSelector | '디자인 범위'는 모호, '아트 범위'가 더 자연스러움 |
+| `자샵 오프` / `타샵 오프` | **자샵오프** / **타샵오프** (붙여쓰기) | OFF_TYPE_OPTIONS | 업계에서 붙여 씀 |
+
+---
+
+## 2. 서비스/가격 체계
+
+### 현재 구조의 문제점
+
+**온보딩 순서 오류** (현재: pricing → services → surcharges)
+- 실제 라우팅: `/onboarding/pricing` → next 버튼 → `/onboarding/services`
+- 논리적 순서가 반대: 어떤 서비스를 제공할지 결정해야 가격을 설정할 수 있음
+- 클라이언트 피드백: "서비스 설정이 가격보다 먼저 나와야 논리적"
+
+**서비스 카테고리 순서 오류** (현재 services/page.tsx 정의 순서)
+```
+현재: 젤네일, 패디큐어, 속눈썹연장, 왁싱, 아크릴, 네일아트, 케어, 제거
+요청: 젤네일 → 페디큐어 → 네일아트 → 케어 → 제거 → 속눈썹연장 → 왁싱 → 아크릴
+```
+- 핵심 서비스(젤네일/페디큐어)를 앞에, 부가 서비스를 뒤에 배치해야 함
+- 네일아트, 케어, 제거는 네일의 일부이므로 속눈썹/왁싱보다 앞에 위치
+
+**가격 설정 범위 부족** (pricing/page.tsx)
+- 현재: 핸드 기본가 + 풋 기본가 + 오프 2종만 설정 가능
+- 누락: 디자인 범위별 추가금, 표현 기법 추가금, 설정값이 surcharges에 나뉘어 있음
+- 저장 로직 불완전: `setShopSettings`에 `sameShopOff`, `otherShopOff` 값이 저장되지 않음
+
+**가격 설정과 추가금 설정이 별도 페이지로 분리** (surcharges/page.tsx)
+- 연장/리페어, 파츠 등급별, 컬러 추가금이 separate 페이지
+- 온보딩 흐름상 pricing → surcharges 순서이나, services 선택 전에 가격을 설정하는 것이 더 이상함
+
+### 개선된 서비스 카테고리 체계
+
+```typescript
+// 기본 서비스 (항상 활성화, 비활성화 불가)
+const CORE_SERVICES = ['젤네일(핸드)', '페디큐어'];
+
+// 선택 추가 서비스 (사장님이 토글)
+const OPTIONAL_SERVICES = [
+  '네일아트',   // 네일 계열
+  '케어',       // 네일 계열
+  '제거',       // 네일 계열
+  '속눈썹연장', // 별도 계열
+  '왁싱',       // 별도 계열
+  '아크릴',     // 별도 계열
+];
+```
+
+---
+
+## 3. 파츠/컬러 시스템
+
+### S/A/B 등급 문제점
+
+1. **직관성 부족**: 사장님이 "S등급"이 뭔지 즉시 이해 어려움
+2. **예시 기반 분류의 모호함**: "큐빅"이 S인지 A인지 사장님마다 다를 수 있음
+3. **고정 등급으로 확장성 없음**: 가게마다 파츠 종류와 가격이 천차만별
+4. **클라이언트 명시적 피드백**: "사장님이 직접 등록하는 방식"으로 변경 요청
+
+### 사장님 직접 등록 방식 설계안
+
+```typescript
+// 파츠를 등급 기반이 아닌 사장님 직접 등록으로 변경
+interface CustomPart {
+  id: string;
+  name: string;         // "스와로브스키 큐빅", "진주 파츠" 등 직접 입력
+  pricePerUnit: number; // 개당 가격 직접 입력
+  icon?: string;        // 선택적 아이콘
+  isActive: boolean;    // 현재 사용 여부
+}
+
+// 온보딩 시 기본 파츠 예시 제공 (편집 가능)
+const DEFAULT_CUSTOM_PARTS: CustomPart[] = [
+  { name: '스톤', pricePerUnit: 2000 },
+  { name: '참', pricePerUnit: 2000 },
+  { name: '글리터', pricePerUnit: 1000 },
+];
+```
+
+**UI 변경**:
+- 상담 화면: S/A/B 배지 → 사장님이 등록한 파츠 이름 카드
+- 추가금 설정: 등급 3개 고정 → 파츠 목록 추가/삭제/편집
+
+### 프로 요금제 구분 방안
+
+현재 코드에서 `ConsultationStep.PRO_MODE`가 있으나 실제로 어떤 기능이 Pro인지 UI에서 구분이 없음.
+
+**제안**:
+- 기본 플랜: 원컬러, 단색+포인트, 풀아트 수준의 상담
+- 프로 플랜: 캔버스 기능, 사장님 커스텀 파츠 등록, 이달의 아트 관리, 고객 분석 대시보드 (전체)
+
+---
+
+## 4. 대시보드 인사이트
+
+### 현재 KPI 문제점
+
+| 현재 KPI | 문제점 |
+|----------|--------|
+| `총 상담 127건` | 상담 기록이 많아도 매출과 연결이 없으면 의미 희박 |
+| `총 매출 ₩9,834,000` | 목표 대비인지 지난달 대비인지 컨텍스트 부족 |
+| `평균 금액 ₩77,433` | 하락(▼3%)인데 왜인지, 어떻게 해야 하는지 인사이트 없음 |
+| `고객 수 45명` | 순 방문 고객 수인지 시술 건수인지 불명확 |
+
+**근본 문제**: 현재 KPI는 "숫자 나열"이지 "실행 가능한 인사이트"가 아님. 사장님은 "오늘 예약이 몇 명이냐", "이번 달 목표까지 얼마 남았냐"가 더 중요.
+
+### 사장님에게 실제 도움되는 KPI 제안
+
+```
+오늘 대시보드 (실용적):
+├── 오늘 시술 건수 / 예약 건수
+├── 오늘 매출
+├── 이번 달 누적 매출 (목표 대비 진행률 바)
+└── 다음 예약 고객 이름 + 시간
+
+월간 인사이트 (행동 유발):
+├── 재방문율 % (전월 대비)
+├── 가장 잘 팔린 시술 TOP 3
+├── 이달 평균 단가 (전월 대비)
+└── 아직 안 온 단골 고객 목록 (30일 이상 미방문)
+
+수익성 지표:
+├── 파츠/추가 옵션 attach rate (파츠 없는 고객 비율)
+├── 할인 적용 비율 (33.9% → 너무 높으면 가격 전략 재검토 신호)
+└── 예약금 수금률 (29.9% → 낮은 경우 노쇼 리스크)
+```
+
+---
+
+## 5. 워크플로우 순서
+
+### 온보딩 순서 개선
+
+**현재**: 가격 설정(pricing) → 서비스 설정(services) → 추가금 설정(surcharges)
+
+**문제**: pricing에서 먼저 핸드/풋 기본가를 입력하는데, 어떤 서비스를 하는지도 모르는 상태에서 가격부터 입력하는 것은 비논리적
+
+**개선안**:
+```
+1. 매장 기본 정보 (이름, 전화번호, 주소)
+2. 서비스 선택 (제공할 서비스 토글 - 클라이언트 요청 순서로)
+3. 기본 가격 설정 (선택한 서비스에 맞게 표시)
+4. 추가금 설정 (파츠, 연장, 컬러 등)
+5. 파츠 등록 (사장님 직접 등록)
+6. 시술 시간 설정
+7. 직원 등록
+```
+
+### 상담 플로우 개선
+
+**현재 단계**:
+- STEP1_BASIC: 시술부위 + 오프 + 연장 + 쉐입
+- STEP2_DESIGN: 디자인 범위
+- STEP3_OPTIONS: 표현기법 + 파츠 + 컬러
+
+**문제**:
+- STEP3_OPTIONS에 컬러 참고 섹션(COLOR_SWATCHES)이 있음 → 클라이언트 제거 요청
+- 파츠 선택이 S/A/B 등급 방식 → 직접 입력 방식으로 변경 필요
+- 컬러는 "몇 색 추가"인지 카운터 방식인데, 직접 입력 방식으로 변경 요청
+
+**캔버스 관련**:
+- ColorPicker: 고정 팔레트(20색) → 직접 입력(hex 또는 컬러 이름 텍스트 입력)으로 변경 요청
+- PartsPalette: S/A/B 등급 선택 → 사장님이 등록한 파츠 목록에서 선택으로 변경
+
+### 정보 우선순위 개선
+
+**상담 정보 입력 시 누락된 중요 정보**:
+- 쉐입(shape)은 있는데 **길이(length)** 정보 없음 (짧게/보통/길게)
+- **베이스 타입** (`baseType?: string`)이 Pro 전용 필드이나 왜 Pro 전용인지 불명확
+- 이미지 첨부가 `ConsultationRecord.imageUrls`에만 있고 상담 화면에는 없음
+
+---
+
+## 핵심 우선순위 요약
+
+| 우선순위 | 변경 사항 | 영향 범위 |
+|----------|-----------|-----------|
+| 🔴 즉시 | `단색톤` → `원컬러` 용어 변경 | service-options.ts, consultation.ts, mock-dashboard.ts, 모든 UI |
+| 🔴 즉시 | 온보딩 순서 변경 (services 먼저) | pricing/page.tsx의 라우팅 로직 |
+| 🔴 즉시 | 서비스 카테고리 순서 수정 | services/page.tsx |
+| 🔴 즉시 | 컬러 참고 섹션 제거 | ColorSelector.tsx |
+| 🟡 중요 | S/A/B 등급 → 사장님 직접 등록 | types/price.ts, service-options.ts, PartsSelector, PartsPalette, surcharges/page.tsx |
+| 🟡 중요 | 캔버스 선택식 → 직접 입력 방식 | ColorPicker.tsx, PartsPalette.tsx |
+| 🟡 중요 | 대시보드 KPI 개선 | mock-dashboard.ts, KPICards.tsx |
+| 🟢 개선 | 기본 서비스(젤네일/페디큐어) 비활성화 불가 처리 | services/page.tsx |
+| 🟢 개선 | 가격 저장 로직 완성 (sameShopOff 등 누락) | pricing/page.tsx |
+
+
+
+================================================================================
+FROM: domain-analyst | SUMMARY: PRD 기반 분석 보완 - 용어/플로우 불일치 추가 발견
+================================================================================
+
+# PRD 검토 후 분석 보완 사항
+
+## PRD vs 현재 코드 핵심 불일치
+
+### 1. 온보딩 순서 (PRD 기준 명확한 정답)
+
+PRD 섹션 8에서 온보딩 화면 순서가 명확히 정의되어 있음:
+
+```
+B-4 매장 기본정보 (매장명, 전화)
+B-5 기본 가격 설정 (핸드/풋 기본 가격)  ← PRD도 가격이 B-5로 서비스보다 앞
+B-6 서비스 구조 (체크박스 선택)
+B-7 추가금 설정
+B-8 시간 설정
+B-8.5 테마 선택 ← PRD에 있으나 현재 온보딩에 없음
+B-9 온보딩 완료
+```
+
+**중요**: PRD에서는 B-5(가격) → B-6(서비스) 순서임. 클라이언트 피드백은 "서비스가 먼저"인데, PRD는 가격이 먼저. **클라이언트 최신 피드백이 우선**이므로 서비스 → 가격으로 수정 필요.
+
+현재 코드의 실제 라우팅 버그: `pricing/page.tsx`의 handleNext가 `/onboarding/services`로 push하는 건 실제로 "가격 → 서비스" 순서. PRD 기준으로도 반대이고, 클라이언트 피드백 기준으로도 반대.
+
+### 2. PRD 섹션 9.2에서 확인된 공식 용어표
+
+PRD 용어 가이드에서 "단색 도포" 항목:
+- **UI 표기**: 솔리드 
+- **업계 용어**: 솔리드/원컬러  
+
+`디자인 범위` 항목에는:
+- **단색톤 / 단색+포인트 / 풀아트 / 이달의 아트** — "동일" 표기 (즉 PRD 자체도 "단색톤"을 쓰고 있음)
+
+→ 그러나 클라이언트 피드백이 "단색톤 → 원컬러로 변경" 요청이므로, PRD 용어가 이미 outdated된 것. 코드와 PRD 동시에 업데이트 필요.
+
+### 3. PRD에 있으나 현재 미구현된 온보딩 화면
+
+**B-8.5 테마 선택** — PRD에 명시된 온보딩 필수 단계이나 현재 온보딩 흐름에 없음.
+현재 온보딩: shop → pricing → services → surcharges → time → complete
+PRD 온보딩: shop → pricing → services → surcharges → time → **theme** → complete
+
+### 4. PRD 캔버스 기능과 코드 불일치
+
+PRD BDX-CNV-002: "파츠 등급(1000/2000/3000원)을 선택할 수 있으며" → 현재 코드는 S/A/B 등급.
+클라이언트 피드백은 "사장님이 직접 등록"으로 바꾸라는 것이므로 PRD도 업데이트 필요.
+
+### 5. 최종 요약 화면 정보 우선순위 (클라이언트 피드백)
+
+클라이언트 요청: "가격 → 예상 시간 → 디자인 → 시술 조건 → 추가 옵션 → 고객 정보"
+
+현재 PRD A-8 최종 요약에는 금액/할인/예약금/결제/시간/담당선생님 순서로 나와 있는데, 
+코드에서 실제 어떤 순서로 표시되는지 확인 필요 (summary 페이지 구현 상태).
+
+---
+
+## 종합 우선순위 (PRD + 피드백 통합)
+
+### 즉시 수정 (코드 단순 변경)
+1. `단색톤` → `원컬러` 전체 변경 (service-options.ts, consultation.ts, mock-dashboard.ts, PRD)
+2. 컬러 참고 섹션 제거 (ColorSelector.tsx:63-76)
+3. 서비스 목록 순서 수정 (services/page.tsx의 SERVICE_CATEGORIES 배열)
+4. 온보딩 라우팅 순서 수정 (services → pricing 순서로)
+
+### 구조 변경 (설계 먼저)
+5. 파츠 시스템: S/A/B → 사장님 직접 등록 (타입/데이터/UI 전면 변경)
+6. 캔버스 직접 입력 방식 (ColorPicker, PartsPalette 변경)
+7. 온보딩에 테마 선택 단계 추가 (B-8.5)
+8. 기본 서비스(젤네일/페디큐어) 비활성화 불가 처리
+
+### 대시보드 개선
+9. KPI 개선: 오늘 실시간 현황 중심으로 재편
+10. 미방문 단골 알림, 할인율/예약금 수금률 추가
+
+
+
+================================================================================
+FROM: ux-analyst | SUMMARY: UX/UI 심층 분석 완료 - 전 페이지 분석 결과
+================================================================================
+# BDX 네일샵 UX/UI 심층 분석 보고서
+
+## 전체 구조 분석
+
+### 레이아웃 시스템
+- **AppShell**: `max-w-2xl mx-auto` 제한 없음 → 넓은 화면에서 과도한 여백 발생
+- **BottomTabBar**: `max-w-2xl mx-auto` 적용 → 탭바만 중앙 제한, 콘텐츠는 풀 와이드
+- **스크롤**: `overflow-y-auto` + `overscroll-contain` 적용되어 있으나, 페이지별 컨테이너 높이 설정 불일치
+- **consultation 페이지들**: `min-h-screen flex flex-col` 구조로 독립적 처리
+
+---
+
+## 페이지별 상세 분석
+
+---
+
+### 1. 홈 (home/page.tsx)
+
+**현재 상태**
+- 날짜/인사말 헤더 + 오늘의 요약 카드 + CTA 버튼 + 이번달 통계 + 최근 상담 4건
+- 통계 카드: 숫자만 크게, 라벨은 작게 (아이콘 없음)
+- 최근 상담 리스트: 텍스트 배지(핸드/풋, 디자인범위) + 이름 + 가격
+
+**문제점**
+1. **아이콘 완전 부재**: 오늘의 요약 3개 카드(상담수/매출/대기)에 아이콘이 전혀 없음. 외국인 고객을 위한 직관성 심각하게 부족
+2. **CTA 버튼**: "새 상담 시작" 버튼에 단순 + 아이콘뿐, 텍스트 의존도 높음
+3. **이번달 통계**: 중복 레이아웃 (오늘 요약과 같은 패턴, 아이콘 없음)
+4. **최근 상담 카드**: Badge로 텍스트 정보 나열, 시각적 스캔 어려움
+5. **정보 계층**: 오늘 매출(가장 중요) vs 상담 건수, 대기 고객이 동일한 시각 비중
+6. **가로 여백**: `mx-4` padding만으로 넓은 화면에서 중앙 빈 공간 과다
+
+**개선안**
+```
+오늘의 요약 카드:
+- 각 셀에 아이콘 추가 (위) + 숫자 (중) + 라벨 (아래)
+  - 상담수: 📋 클립보드 아이콘
+  - 매출: 💰 동전/지폐 아이콘  
+  - 대기: 👥 사람 아이콘
+- 매출 카드: 더 큰 글씨 + 강조색
+
+레이아웃 개선:
+- 전체 컨테이너에 max-w-sm mx-auto 적용 (모바일 최적화)
+- 혹은 좌우 padding을 px-6~px-8로 증가
+```
+
+**우선순위**: 상
+
+---
+
+### 2. 기록 탭 (records/page.tsx)
+
+**현재 상태**
+- 검색바 + 필터 칩(전체/오늘/이번주/이번달) + 카드 리스트
+- 각 카드: 날짜(좌) + 부위 Badge(우) / 이름+전화 + 담당자 / 디자인 배지들 / 금액(우) + 컬러 도트(우)
+- 컬러 도트(3~5개 소형 원): 좌측 이름 정보와 우측 금액 사이의 시각적 분리 역할
+
+**문제점** (클라이언트 직접 지적: "텍스트가 좌우 치우쳐져 중앙이 비어있는 잘못된 UI")
+1. **레이아웃 구조 문제**: flex items-start justify-between으로 좌/우 두 블록만 존재 → 카드 중앙 공간이 항상 비어있음
+2. **정보 밀도 불균형**: 좌측에 이름/전화/담당/배지 집중, 우측에 가격/도트만 → 카드 내 균형 X
+3. **컬러 도트**: 역할이 불명확하고 너무 작아서 실용적 정보 전달 못 함 (3px dot)
+4. **아이콘 없음**: 시술 부위(핸드/풋) 아이콘, 디자인 유형 아이콘 없이 텍스트 Badge만 사용
+5. **검색 결과 없음 상태**: 📋 이모지 사용 (SVG 아이콘 대신)
+
+**개선안**
+```
+카드 레이아웃 재구성:
+상단 행: [아이콘] [날짜] -------- [금액 강조]
+중간 행: [이름] [전화번호]
+하단 행: [부위 아이콘+배지] [디자인 배지] [컬러 스와치]
+
+또는 3열 그리드 방식:
+[아바타/아이콘 | 주요 정보 | 가격]
+
+컬러 도트 개선:
+- 8px → 14px로 확대
+- 실제 색상 팔레트 역할 강화
+```
+
+**우선순위**: 상 (클라이언트 직접 지적)
+
+---
+
+### 3. 기록 상세 (records/[id]/page.tsx)
+
+**현재 상태**
+- 뒤로가기 + 제목 헤더
+- 고객정보 카드 / 시술내용 카드 / 가격상세 카드 / 체크리스트 카드
+- 각 항목: label(좌) + value(우) justify-between 패턴
+
+**문제점**
+1. **최종 결제 금액**: 카드 하단 `bg-primary/10 p-3 rounded-xl`에 표시되나, 크기가 작음 (text-xl). 클라이언트 요구: "가격/시간이 가장 크고 눈에 띄어야"
+2. **가격 상세 섹션**: 기본가 + 추가항목들 열거 후 최종결제가 나오는 구조 → 최종이 시각적으로 묻힘
+3. **시술 내용 카드**: 아이콘 없이 모든 정보가 텍스트 label+value 패턴으로 반복
+4. **체크리스트**: 기능적이나 단조로움
+5. **페이지 내 스크롤**: 콘텐츠 길이 대비 패딩 pb-6만 있어서 하단 탭바에 가려질 수 있음
+
+**개선안**
+```
+최종 결제 강조:
+- 페이지 상단 히어로 영역에 최종 결제 금액 크게 표시
+- 현재: 작은 배너바 (text-xl) → 변경: 큰 히어로 카드 (text-4xl)
+- 예상 시간도 함께 강조 표시
+
+시술 내용: 아이콘 추가
+- 부위: 손/발 아이콘
+- 오프: 제거 아이콘
+- 쉐입: 해당 쉐입 미리보기 아이콘
+```
+
+**우선순위**: 상
+
+---
+
+### 4. 고객 목록 (customers/page.tsx)
+
+**현재 상태**
+- 검색바 + 카드 리스트
+- 각 카드: 이니셜 아바타(원형) + 이름/전화 + 담당자 + 방문횟수/평균금액 + 태그 3개
+
+**문제점**
+1. **태그 길이**: `topTags.slice(0, 3)`으로 3개만 보여주나, 태그 값이 긴 경우 (예: "그라데이션 마그네틱 풀아트") 카드가 넘침. 클라이언트 지적: "태그가 너무 길다"
+2. **아바타**: 이니셜만 텍스트로 표시, 이미지 없음 → 외국인 고객 구분 어려움
+3. **방문/평균 정보**: 중요 정보인데 아이콘 없이 텍스트만 나열
+4. **마지막 방문**: 상대적 날짜 (n일 전) → 직관적이지 않음, 특히 외국인
+5. **정렬 없음**: 최근 방문순, 방문 횟수 순 등 정렬 옵션 없음
+
+**개선안**
+```
+태그 제한:
+- 태그 최대 글자수 제한 (예: truncate 처리 + max-w-[80px])
+- 또는 태그 표시 줄을 max-h-[2rem] overflow-hidden으로 1줄 제한
+
+아이콘 추가:
+- 방문횟수: 🏃 또는 calendar 아이콘
+- 평균금액: 💳 아이콘
+- 최근방문: 🕐 시계 아이콘
+```
+
+**우선순위**: 중
+
+---
+
+### 5. 고객 상세 (customers/[id]/page.tsx)
+
+**현재 상태**
+- 기본정보 카드 (아바타+이름+통계3개)
+- 시술 성향 태그 카드 (카테고리별 배지)
+- 스몰토크 기록
+- 시술 이미지 갤러리 (색상 placeholder)
+- 시술 이력 타임라인
+- 선호도 프로필
+
+**문제점**
+1. **시술 성향 태그**: 태그 카테고리별로 배지 나열 → 태그가 없으면 "미등록" 텍스트만 반복되어 스크롤이 길어짐. 클라이언트 지적: "태그가 너무 길다"
+2. **갤러리**: 실제 이미지 없이 컬러 박스로만 placeholder → 비현실적인 미리보기
+3. **타임라인**: `hist.designScope`가 영어 키값으로 그대로 표시될 가능성 (Badge variant="primary")
+4. **통계 카드**: 방문/평균/최근방문 3개 칸 → 아이콘 없음
+5. **섹션 구분**: 각 섹션이 동일한 Card 패턴으로 반복 → 스크롤시 어느 섹션인지 파악 어려움
+
+**개선안**
+```
+태그 표시 개선:
+- 카테고리가 있는 태그만 표시 (미등록 카테고리 숨김)
+- 최대 2줄로 제한: flex-wrap + max-h-[60px] overflow-hidden
+
+통계 아이콘:
+- 방문: User 아이콘
+- 평균: Currency 아이콘  
+- 최근: Clock 아이콘
+
+섹션 구분:
+- 각 섹션 헤더에 색상 바 또는 아이콘 추가
+```
+
+**우선순위**: 중
+
+---
+
+### 6. 상담 플로우 - Step1 기본조건 (consultation/step1)
+
+**현재 상태**
+- ConsultationHeader (스텝 인디케이터) + PriceSummaryBar + 메인 컨텐츠
+- BodyPartSelector: 핸드/풋 2열 SelectCard (아이콘 있음 - SVG)
+- OffSelector: 오프 없음/자샵/타샵 목록형 SelectCard (아이콘 없음)
+- ExtensionSelector: 없음/리페어/연장 목록형 SelectCard (아이콘 없음)
+- ShapeSelector: 7개 쉐입 4열 그리드 (커스텀 SVG 아이콘)
+
+**문제점**
+1. **BodyPart 아이콘**: 손 SVG가 단순한 선 그래프 수준 → 비현실적. 클라이언트 지적
+2. **ShapeSelector 아이콘**: SVG로 쉐입 표현하나, rect/path 조합이 실제 손톱 쉐입과 상이 → 클라이언트 지적 "비현실적"
+3. **OffSelector/ExtensionSelector**: 아이콘 없이 텍스트 제목+설명만 → 외국인 고객 직관성 부족
+4. **페이지 길이**: 4개 섹션이 한 페이지에 세로로 나열 → 스크롤 필요. pb-28 설정으로 하단 여백은 확보
+5. **SelectCard 레이아웃**: 아이콘이 좌측, 텍스트가 우측인 가로 레이아웃 → 클라이언트 요청: "아이콘 위, 글씨 아래"
+
+**개선안**
+```
+ShapeSelector 아이콘 교체 방향:
+- 단순 SVG rect/path → 실제 손톱 쉐입에 가까운 정교한 SVG
+- 또는 이미지 파일(PNG/SVG) 사용
+- 특히 round, oval, almond, stiletto 차이가 시각적으로 명확해야 함
+
+SelectCard 레이아웃 변경:
+- 현재: 가로 배치 (아이콘 왼쪽 | 텍스트 오른쪽)
+- 개선: 세로 배치 (아이콘 상단 | 텍스트 하단)
+- BodyPart: 2열 SelectCard를 아이콘 중심 레이아웃으로
+
+OffSelector/ExtensionSelector 아이콘 추가:
+- 오프 없음: slash circle 아이콘
+- 자샵 오프: home/shop 아이콘
+- 타샵 오프: external 아이콘
+- 리페어: wrench/repair 아이콘
+- 연장: extend/length 아이콘
+```
+
+**우선순위**: 상
+
+---
+
+### 7. 상담 플로우 - Step2 디자인범위 (consultation/step2)
+
+**현재 상태**
+- DesignScopeSelector: 4가지 디자인 범위 목록형 SelectCard
+- 이모지 아이콘 사용: 🎨✨🖼️🌸
+
+**문제점**
+1. **이모지 아이콘**: 이모지는 OS/브라우저마다 렌더링 차이가 심함 → 일관성 없는 외관
+2. **SelectCard 레이아웃**: 가로 배치 (이모지 좌 | 텍스트 우) → 클라이언트 요구 "아이콘 위에"
+3. **설명 텍스트**: 한국어 설명 → 외국인 고객 대상 직관성 부족
+
+**개선안**
+```
+이모지 → SVG 아이콘:
+- 단색톤: 단일 컬러 팔레트 아이콘
+- 단색+포인트: 베이스+별/점 아이콘
+- 풀아트: 프레임/갤러리 아이콘
+- 이달의 아트: 달력+별 아이콘
+
+각 디자인 범위에 실제 예시 이미지 thumbnail 추가
+```
+
+**우선순위**: 상
+
+---
+
+### 8. 상담 플로우 - Step3 추가옵션 (consultation/step3)
+
+**현재 상태**
+- ExpressionSelector: 표현기법 태그 선택 (솔리드/그라데이션/프렌치/마그네틱)
+- PartsSelector: S/A/B 등급별 카운터
+- ColorSelector: 추가 컬러 카운터 + 컬러 스와치 시각 참고
+
+**문제점**
+1. **ExpressionSelector**: 아이콘 없이 텍스트 Pill 태그만 → 외국인에게 "그라데이션" "마그네틱" 텍스트가 불명확
+2. **PartsSelector**: 등급(S/A/B) 카드가 아이콘 없이 텍스트와 예시 텍스트만 → "스와로브스키" 등 텍스트 의존
+3. **ColorSelector**: 컬러 스와치가 `참고용`으로만 제시 → 실제 선택 연동 없어 사용 목적 불명확
+
+**개선안**
+```
+ExpressionSelector 개선:
+- 각 기법 시각적 표현 추가
+  - 솔리드: 단색 원
+  - 그라데이션: 그라데이션 원
+  - 프렌치: 끝만 흰색인 반달 모양
+  - 마그네틱: 사선 패턴 원
+
+PartsSelector 개선:
+- S등급: 반짝이는 보석/크리스탈 이미지 아이콘
+- A등급: 중간 크기 파츠 아이콘
+- B등급: 작은 파츠 아이콘
+```
+
+**우선순위**: 중
+
+---
+
+### 9. 상담 플로우 - Canvas (consultation/canvas)
+
+**현재 상태**
+- HandIllustration: SVG로 손 그래픽 + 손가락별 터치 영역
+- 손가락 탭 → Modal (컬러/파츠 탭 선택)
+- HandSwitcher: 좌/우손 전환
+- FingerSummary: 손가락별 선택 요약
+- 전체 동일 적용 버튼
+
+**문제점**
+1. **HandIllustration SVG**: 단순한 path/polygon 조합 → 실제 손 같지 않음. 클라이언트 직접 지적. 특히:
+   - Palm path가 직선적이고 부자연스러움
+   - 손가락 형태가 균일하게 긴 직사각형
+   - 큐티클/손가락 관절 표현이 단순한 곡선 2개
+   - 스킨 컬러 없음 (surface 색상 사용)
+2. **손가락 hit area**: hitArea rect가 손가락 모양과 일치하지 않음
+3. **nail ellipse**: 타원형이나 실제 손톱 쉐입(Step1에서 선택)과 연동 없음
+4. **Canvas → 외국인 직관성**: 손 그림이 비현실적이면 외국인 고객에게 혼란
+
+**개선안**
+```
+HandIllustration 대안:
+방법 1: 실제 손 사진 이미지 사용 (PNG/WebP)
+  - 각도: 손등 위에서 촬영
+  - 손가락 위에 clickable overlay 레이어 (SVG)
+  - 네일 컬러는 실제 사진 위에 SVG ellipse로 오버레이
+
+방법 2: 고품질 손 일러스트 (Figma 제작 또는 외부 리소스)
+  - 피부톤 자연스러운 손 SVG
+  - 손가락 두께/형태 비율 현실적으로
+
+방법 3: 현재 SVG 개선
+  - 피부 계열 컬러 fill 적용 (현재 surface 흰색/회색)
+  - 손바닥 path 개선 (더 자연스러운 곡선)
+  - 큐티클 표현 추가
+  - 손가락 두께 차별화 (엄지 가장 두꺼움)
+```
+
+**우선순위**: 상 (클라이언트 직접 지적)
+
+---
+
+### 10. 상담 최종 확인 (consultation/summary)
+
+**현재 상태**
+- 상단: primary 배경 바에 최종금액(text-xl) + 예상시간(text-sm)
+- ConsultationSummaryCard: 기본정보/고객정보/시술조건/디자인/추가옵션/가격상세 순서
+- 하단 액션바: 할인/예약금 버튼 + 수정하기 + 상담저장
+
+**문제점** (클라이언트 지적: "가격/시간이 가장 크고 눈에 띄어야")
+1. **최종 금액 크기**: primary 바에 text-xl → 화면 상단 얇은 바에 작게 표시
+2. **예상 시간**: text-sm으로 더 작음 → 가격과 시간 모두 눈에 안 띔
+3. **정보 순서**: 기본정보(담당자/예상시간) → 고객정보 → 시술조건 → ... → 가격 순서 → 가격이 맨 아래
+4. **SectionTitle**: 영문 uppercase 스타일 (BASIC INFO 스타일) → 외국인 접근성은 좋으나 한국어로 작게 표시
+5. **가격상세 최종 결제**: PriceRow isFinal에서 text-lg font-bold 사용, 적당하나 위치가 스크롤 하단
+
+**개선안**
+```
+최종 금액 영역 개선:
+- 현재: 얇은 primary 배너 (py-3)
+- 개선: 히어로 카드로 확장
+  - 최종 결제 금액: text-4xl font-black
+  - 예상 시간: text-xl font-bold
+  - 배경: 그라데이션 primary 카드
+  - 위치: 스크롤 전 첫 화면에 항상 보이게
+
+정보 순서 재배치:
+- 1. 가격/시간 히어로 (항상 상단 고정)
+- 2. 고객정보
+- 3. 시술 요약 (간략화)
+- 4. 가격 상세 (접었다 펼치기 가능)
+```
+
+**우선순위**: 상 (클라이언트 직접 지적)
+
+---
+
+### 11. 대시보드 (dashboard/page.tsx)
+
+**현재 상태**
+- KPI 카드들 + 매출 추이 차트 + 인기 서비스 + 고객 분석 + 선생님 성과
+- 모든 섹션이 Card 안에 각각의 컴포넌트
+
+**문제점**
+1. **KPI 카드**: 코드에서 컴포넌트화되어 있어 내부 확인 필요하나, 아이콘 여부 미확인
+2. **섹션 간격**: 모든 섹션이 동일한 gap-4로 구성 → 계층 구분 부족
+3. **외국인 접근성**: 대시보드가 한국어 레이블 중심
+
+**우선순위**: 하 (백오피스 성격, 외국인 고객보다 직원용)
+
+---
+
+### 12. 설정 (settings/page.tsx)
+
+**현재 상태**
+- 섹션별 구분: Section 컴포넌트 (uppercase 소제목)
+- 매장정보 / 선생님 관리 / 서비스 옵션 / 테마 / 앱정보
+
+**문제점**
+1. **아이콘 없음**: 각 섹션 항목에 아이콘 없이 텍스트만
+2. **선생님 아바타**: 이니셜 원형 아바타 (이미지 없음)
+3. **섹션 네비게이션**: 많은 내용을 한 페이지에 나열 → 긴 스크롤
+4. **수정 버튼**: 작은 border 버튼, 터치 타겟 작음 (px-3 py-1.5)
+
+**우선순위**: 하
+
+---
+
+## 공통 개선 우선순위 (전체)
+
+### 우선순위 상 (즉시 수정)
+| # | 이슈 | 영향 |
+|---|------|------|
+| 1 | 기록 탭 좌우 치우침 레이아웃 | 클라이언트 직접 지적 |
+| 2 | Canvas 손 일러스트 비현실적 | 클라이언트 직접 지적 |
+| 3 | 최종 확인 가격/시간 작음 | 클라이언트 직접 지적 |
+| 4 | 네일 쉐입 아이콘 비현실적 | 클라이언트 직접 지적 |
+| 5 | 전반적 아이콘 부재 | 외국인 직관성 핵심 |
+| 6 | SelectCard 레이아웃 (아이콘 위, 텍스트 아래) | 클라이언트 직접 요청 |
+| 7 | 가로 여백 과다 (max-w 미설정) | 클라이언트 직접 지적 |
+
+### 우선순위 중 (단기 개선)
+| # | 이슈 |
+|---|------|
+| 8 | 고객 상세 태그 길이 제한 |
+| 9 | 이모지 → SVG 아이콘 교체 |
+| 10 | 표현기법 시각적 표현 추가 |
+
+### 우선순위 하 (장기 개선)
+| # | 이슈 |
+|---|------|
+| 11 | 대시보드 아이콘 추가 |
+| 12 | 설정 아이콘 추가 |
+
+---
+
+## 스크롤 문제 분석
+
+클라이언트 피드백: "모든 페이지 세로 스크롤 안됨"
+
+코드 분석 결과:
+- AppShell의 `main`: `overflow-y-auto` 적용 ✓
+- consultation 페이지들: `overflow-y-auto` 각각 적용 ✓
+- 그러나 `body`에 `height: 100%` + `overflow-x: hidden`만 있음
+- **실제 문제**: `#__next { height: 100% }` 로 루트가 100% 높이 고정되어 있음
+- AppShell main이 `flex-1 overflow-y-auto`인데, 부모 체인이 모두 height 100% 고정이면 스크롤 작동해야 하나, paddingBottom이 탭바 높이(4rem)만큼만 설정되어 일부 하단 콘텐츠가 탭바에 가려질 수 있음
+
+**해결 방향**:
+```css
+/* AppShell main */
+main {
+  height: calc(100vh - 3.5rem - 4rem); /* statusbar + tabbar */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+```
+또는 각 페이지의 pb를 pb-20 이상으로 통일
+
+---
+
+## 가로 여백 문제 분석
+
+클라이언트 피드백: "가로가 너무 넓고 중앙 여백 과다"
+
+코드 분석 결과:
+- `BottomTabBar`: `max-w-2xl mx-auto` 적용 (768px 제한)
+- 각 페이지 콘텐츠: `px-4` + `mx-4`만 사용, max-w 없음
+- consultation 페이지: `max-w-lg mx-auto` 적용 ✓ (512px)
+- 메인 앱 페이지: max-w 없음 → 넓은 화면에서 콘텐츠가 전체 너비 사용
+
+**해결 방향**:
+```tsx
+// AppShell main에 max-w 추가
+<main className="flex-1 overflow-y-auto max-w-md mx-auto w-full">
+```
+
+이상으로 UX/UI 분석 완료했습니다. 총 12개 페이지/컴포넌트 분석, 주요 이슈 7개 (우선순위 상), 세부 개선안 포함입니다.
+
+
+================================================================================
+FROM: feature-analyst | SUMMARY: 누락 기능 분석 완료 - 9개 기능 설계안
+================================================================================
+## BDX 데모 누락 기능 분석 결과
+
+코드베이스 전체를 분석했습니다. 아래는 각 누락 기능별 상세 설계안입니다.
+
+---
+
+## 1. 회원권 관리 (Membership/Package Management)
+
+**현재 상태**: 미구현. `Customer` 타입에 회원권 관련 필드 없음. `ConsultationRecord`에도 회원권 차감 로직 없음.
+
+**필요성**: 네일샵 단골 고객들은 10회권, 20회권을 미리 구매하는 경우가 많음. 상담 시 자동 차감 없이 수동으로 관리하면 실수가 발생함.
+
+**데이터 모델**:
+```typescript
+export type MembershipStatus = 'active' | 'expired' | 'exhausted';
+
+export interface Membership {
+  id: string;
+  customerId: string;
+  shopId: string;
+  name: string;             // "10회 핸드 패키지"
+  totalSessions: number;    // 총 횟수 (예: 10)
+  usedSessions: number;     // 사용 횟수
+  remainingSessions: number; // 잔여 횟수
+  purchasePrice: number;    // 구매 금액
+  purchasedAt: string;
+  expiresAt?: string;       // 만료일 (없으면 무제한)
+  status: MembershipStatus;
+  applicableBodyPart?: 'hand' | 'foot' | 'both';
+  usageHistory: {
+    consultationRecordId: string;
+    usedAt: string;
+    sessionCount: number;    // 차감 횟수 (보통 1)
+  }[];
+}
+```
+
+**ConsultationType 확장**:
+```typescript
+// consultation.ts에 추가
+membershipId?: string;       // 사용할 회원권 ID
+membershipDeduction?: number; // 차감 횟수
+```
+
+**UI 위치**:
+- 설정 > "회원권 관리" 섹션 추가
+- 고객 상세 페이지 상단 카드에 회원권 잔여 횟수 뱃지 표시
+- 상담 summary 화면에서 회원권 사용 여부 토글 추가
+- 상담 고객 선택 시 해당 고객의 잔여 회원권 자동 표시
+
+**상호작용**:
+- 상담 완료 시 → 회원권 선택했으면 `usedSessions +1`, `remainingSessions -1`
+- 잔여 0 또는 만료 → `status: 'exhausted'/'expired'`로 자동 변경
+- 고객 불러오기(상담 step) 시 → 활성 회원권 있으면 배지 노출
+
+**Mock 데이터**:
+```typescript
+export const MOCK_MEMBERSHIPS: Membership[] = [
+  {
+    id: 'membership-001',
+    customerId: 'customer-002', // 이수진 (12회 방문 단골)
+    shopId: 'shop-001',
+    name: '10회 핸드 패키지',
+    totalSessions: 10,
+    usedSessions: 7,
+    remainingSessions: 3,
+    purchasePrice: 550000,
+    purchasedAt: '2025-10-01T10:00:00.000Z',
+    expiresAt: '2026-10-01T23:59:59.000Z',
+    status: 'active',
+    applicableBodyPart: 'hand',
+    usageHistory: [/* 7건 */]
+  },
+  {
+    id: 'membership-002',
+    customerId: 'customer-006', // 윤서연 (9회 방문)
+    shopId: 'shop-001',
+    name: '5회 풀아트 패키지',
+    totalSessions: 5,
+    usedSessions: 4,
+    remainingSessions: 1,
+    purchasePrice: 400000,
+    purchasedAt: '2025-12-15T10:00:00.000Z',
+    status: 'active',
+    applicableBodyPart: 'hand',
+    usageHistory: [/* 4건 */]
+  }
+];
+```
+
+**우선순위**: P1 (중요)
+
+---
+
+## 2. 예약 정보 입력 (Reservation/Booking Input)
+
+**현재 상태**: 미구현. 현재 상담 플로우는 즉석 상담만 지원. `ConsultationType`에 예약 일시/예약 채널 필드 없음.
+
+**필요성**: 사장님들은 카카오톡/네이버 예약으로 미리 예약을 받아두고, 방문 당일 앱에 입력하는 워크플로우가 일반적. 사전 정보 입력으로 당일 상담 시간 단축.
+
+**데이터 모델**:
+```typescript
+export type BookingChannel = 'kakao' | 'naver' | 'phone' | 'walk_in' | 'direct';
+
+export interface BookingRequest {
+  id: string;
+  shopId: string;
+  customerName: string;
+  customerPhone?: string;
+  customerId?: string;         // 기존 고객이면 연결
+  designerId?: string;         // 담당 선생님
+  scheduledAt: string;         // 예약 일시
+  channel: BookingChannel;     // 예약 경로
+  requestNote?: string;        // 고객 요청사항 텍스트
+  requestImageUrls?: string[]; // 고객이 보낸 디자인 참고 이미지
+  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+  consultationRecordId?: string; // 상담 완료 시 연결
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+**UI 위치**:
+- 홈 화면에 "예약 관리" 탭/섹션 추가 (또는 별도 `/reservations` 페이지)
+- 예약 등록: `+ 예약 추가` 버튼 → 이름/전화/날짜/담당자/채널/요청사항/이미지 입력 폼
+- 예약 목록: 오늘/이번주 예약 목록, 상태별 필터
+- 예약 카드에서 "상담 시작" 버튼 → 해당 예약 정보가 상담 스토어에 pre-fill됨
+
+**상호작용**:
+- 예약에서 상담 시작 → `customerName`, `customerPhone`, `customerId`, `requestNote`, `requestImageUrls`가 상담 플로우로 전달
+- 상담 완료 → 예약 status `'completed'`로 업데이트, `consultationRecordId` 연결
+- 고객 상세 페이지 → 해당 고객의 예약 이력 표시
+
+**Mock 데이터**:
+```typescript
+export const MOCK_BOOKINGS: BookingRequest[] = [
+  {
+    id: 'booking-001',
+    shopId: 'shop-001',
+    customerName: '김미영',
+    customerId: 'customer-001',
+    designerId: 'designer-001',
+    scheduledAt: '2026-02-27T14:00:00.000Z',
+    channel: 'kakao',
+    requestNote: '웨딩 네일이라서 흰색 계열로 해주세요. 꽃 디자인 원해요',
+    requestImageUrls: [],
+    status: 'confirmed',
+    createdAt: '2026-02-25T10:00:00.000Z',
+    updatedAt: '2026-02-25T10:00:00.000Z',
+  },
+  // ... 더 많은 예약
+];
+```
+
+**우선순위**: P0 (필수)
+
+---
+
+## 3. 단골 고객 시스템 (Regular Customer System)
+
+**현재 상태**: 부분 구현. `Customer` 타입에 `visitCount`는 있음. 하지만 "단골" 여부를 명시적으로 구분하는 필드(`isRegular`, `regularSince`)가 없음. 대시보드의 `MOCK_CUSTOMER_ANALYTICS`에 `returningCustomers: 37`이 있지만 단골 리스트로 드릴다운 불가. KPI 카드의 "고객 수 45명" 클릭해도 아무 반응 없음.
+
+**필요성**: 단골 관리는 네일샵 운영의 핵심. 단골이 몇 명인지, 누가 단골인지 한눈에 파악하고 싶음.
+
+**데이터 모델**: `Customer` 타입 확장:
+```typescript
+// customer.ts에 추가
+export interface Customer {
+  // ... 기존 필드 유지
+  isRegular: boolean;        // 단골 여부 (사장님이 수동 설정)
+  regularSince?: string;     // 단골 지정일
+  regularMemo?: string;      // 단골 관련 메모 (생일, 특이사항 등)
+  visitFrequency?: 'weekly' | 'biweekly' | 'monthly' | 'irregular'; // 방문 주기
+}
+```
+
+**UI 위치**:
+- 대시보드 KPI 카드 "고객 수" 클릭 → 바텀시트/모달로 단골 목록 표시
+- 대시보드에 "단골 고객" KPI 카드 추가 (단골 수, 전월 대비)
+- 고객 상세 페이지 헤더에 별 아이콘 토글로 단골 지정/해제
+- 고객 목록 페이지에 "단골" 필터 탭 추가
+
+**상호작용**:
+- 고객 상세에서 별 아이콘 토글 → `isRegular` 변경, `regularSince` 자동 기록
+- 대시보드 단골 카드 클릭 → 단골 리스트 모달 (이름, 마지막 방문일, 방문 횟수 표시)
+
+**Mock 데이터**: `MOCK_CUSTOMERS`에 필드 추가:
+```typescript
+// customer-002 이수진 (12회), customer-006 윤서연 (9회), customer-003 박지현 (8회)
+// → isRegular: true 설정
+```
+
+**우선순위**: P1 (중요)
+
+---
+
+## 4. 고객 정보 연동 (Customer Pre-fill in Consultation)
+
+**현재 상태**: 부분 구현. `consultation/customer/page.tsx`의 `CustomerInfoForm`에 `onExistingCustomerSelect` prop이 있음. 그러나 기존 고객 선택 시 이름/전화번호만 fill. **예약 정보**(요청사항, 이미지, 담당자)는 연동 안 됨. **단골 여부**나 **회원권 잔여**도 표시 안 됨.
+
+**필요성**: 상담 시작 시 고객의 이전 선호도, 최근 시술, 당일 예약 요청사항을 한눈에 보여주면 상담 시간이 획기적으로 단축됨.
+
+**데이터 모델**: 추가 타입 불필요. `ConsultationCustomerContext` 인터페이스만 추가:
+```typescript
+// consultation.ts에 추가
+export interface ConsultationCustomerContext {
+  customer?: Customer;           // 기존 고객 상세
+  booking?: BookingRequest;      // 연결된 예약 정보
+  membership?: Membership;       // 활성 회원권
+  lastConsultation?: ConsultationRecord; // 직전 상담 기록
+}
+```
+
+**UI 위치**:
+- `consultation/customer/page.tsx`: 기존 고객 선택 시 → 해당 고객의 컨텍스트 카드 노출
+  - 최근 방문일, 지난 시술, 선호도 요약 (3줄)
+  - 회원권 잔여 횟수 (있으면)
+  - 예약 요청사항 (있으면)
+  - 예약 참고 이미지 (있으면)
+- 상담 summary 화면에 예약 메모 표시
+
+**상호작용**:
+- 예약 목록에서 "상담 시작" 버튼 클릭 → 고객 정보 + 예약 정보 자동 pre-fill
+- 수동으로 이름 검색 시 → 기존 고객 매칭되면 컨텍스트 카드 노출
+- `ConsultationStore`에 `setBookingContext(booking: BookingRequest)` 액션 추가
+
+**우선순위**: P0 (필수)
+
+---
+
+## 5. 이미지 첨부 (Image Attachment)
+
+**현재 상태**: 타입 레벨에서만 존재. `ConsultationRecord.imageUrls?: string[]`, `TreatmentHistory.imageUrls?: string[]`이 선언되어 있음. 하지만 실제 업로드 UI 없음. 고객 상세 갤러리는 컬러 블록으로 더미 표시 중.
+
+**필요성**: 
+- 예약 시 고객이 카톡으로 보낸 디자인 이미지를 앱에 저장
+- 시술 완료 후 결과 사진을 기록으로 남김
+- 다음 방문 시 이전 결과물 참고 가능
+
+**데이터 모델**: 기존 타입 활용, 추가 타입:
+```typescript
+export type ImageAttachmentContext = 
+  | 'booking_reference'  // 예약 참고 이미지
+  | 'treatment_result'   // 시술 결과 사진
+  | 'customer_profile';  // 고객 프로필 이미지
+
+export interface ImageAttachment {
+  id: string;
+  url: string;
+  thumbnailUrl?: string;
+  context: ImageAttachmentContext;
+  referenceId: string;   // bookingId or consultationRecordId
+  uploadedAt: string;
+  note?: string;
+}
+```
+
+**UI 위치**:
+- 예약 입력 폼: 이미지 첨부 버튼 (갤러리에서 선택 / 카메라)
+- 상담 summary 화면: 결과 사진 첨부 섹션 추가
+- 고객 상세 갤러리: 현재 더미 컬러 블록 → 실제 이미지 또는 "사진 없음" 상태
+- 상담 고객 선택 시: 예약 참고 이미지 표시
+
+**상호작용**:
+- 예약에서 상담 시작 → 예약 이미지가 상담 플로우에 함께 전달
+- 상담 완료 → `ConsultationRecord.imageUrls`에 저장
+- 고객 상세 갤러리 → 해당 날짜의 시술 결과 이미지 표시
+
+**Mock 데이터**: 데모 목적으로 URL 배열을 placeholder 이미지로 설정:
+```typescript
+// MOCK_CONSULTATIONS에 imageUrls 추가
+imageUrls: ['/images/mock/nail-001.jpg', '/images/mock/nail-002.jpg']
+// 실제 이미지가 없으면 picsum.photos 또는 gradient placeholder
+```
+
+**우선순위**: P1 (중요)
+
+---
+
+## 6. 고객 상세 미니 대시보드 (Customer Mini Dashboard)
+
+**현재 상태**: 부분 구현. 고객 상세에 방문 횟수, 평균 금액, 최근 방문일 3개 KPI만 있음. 개인별 시술 통계(선호 디자인 비율, 선호 시술 부위, 총 누적 금액)와 이것이 도넛 차트나 바 차트로 시각화된 미니 대시보드는 없음.
+
+**필요성**: 고객 방문 시 "이분이 주로 어떤 시술을 하셨지?"를 빠르게 파악하기 위해.
+
+**데이터 모델**: 추가 타입 (`CustomerStats` 계산 함수로 처리):
+```typescript
+export interface CustomerStats {
+  totalSpend: number;
+  visitCount: number;
+  averageSpend: number;
+  favoriteDesignScope: string;    // 가장 많이 한 디자인 범위
+  favoriteBodyPart: 'hand' | 'foot' | 'both';
+  designScopeBreakdown: { scope: string; count: number; percentage: number }[];
+  handFootRatio: { hand: number; foot: number }; // 핸드:풋 비율
+  monthlyVisitTrend: { month: string; count: number }[]; // 최근 6개월
+  repeatInterval?: number;        // 평균 재방문 간격 (일)
+}
+```
+
+**UI 위치**: 고객 상세 페이지 기존 "기본 정보 카드" 하단에 새 섹션 추가:
+- 선호 디자인 도넛 차트 (단색/포인트/풀아트/이달의아트 비율)
+- 핸드/풋 비율 바
+- 최근 6개월 방문 히트맵 또는 작은 바 차트
+- "이 고객과 가장 잘 맞는 시술" 추천 배지 (통계 기반)
+
+**Mock 데이터**: `getMockCustomerById()` 반환값에서 `treatmentHistory`를 집계하여 계산.
+
+**우선순위**: P1 (중요)
+
+---
+
+## 7. 대시보드 상세 드릴다운 (Dashboard Drill-down)
+
+**현재 상태**: 미구현. KPI 카드 4개(총 상담, 총 매출, 평균 금액, 고객 수)가 정적 표시만 됨. 클릭 이벤트 없음. 매출 분해 (매출/수익/마진)도 없음.
+
+**필요성**: 사장님이 "총 매출 9,834,000원"만 보는 게 아니라, "순이익이 얼마고, 마진율이 얼마인지"를 알고 싶어함. "고객 수 45명" 클릭 시 누가 왔는지 리스트로 보고 싶어함.
+
+**데이터 모델**:
+```typescript
+// mock-dashboard.ts에 추가
+export interface RevenueBreakdown {
+  totalRevenue: number;         // 총 매출
+  totalCost: number;            // 총 원가 (재료비 추정)
+  grossProfit: number;          // 매출 총이익
+  marginRate: number;           // 마진율 (%)
+  discountTotal: number;        // 총 할인 금액
+  depositTotal: number;         // 총 예약금 수금액
+}
+
+export interface CustomerDrilldown {
+  totalCustomers: number;
+  regularCustomers: number;
+  newCustomers: number;
+  customerList: {
+    id: string;
+    name: string;
+    isRegular: boolean;
+    lastVisitDate: string;
+    visitCount: number;
+    totalSpend: number;
+  }[];
+}
+```
+
+**UI 위치**:
+- KPI 카드를 클릭 가능하도록 변경 (화살표 아이콘 추가)
+- 클릭 시 바텀시트 슬라이드업:
+  - "총 매출" 클릭 → 매출/원가/이익/마진율 분해 표시
+  - "고객 수" 클릭 → 단골/신규 탭 + 고객 이름 리스트
+  - "총 상담" 클릭 → 담당자별/서비스별 분해
+  - "평균 금액" 클릭 → 가격 분포 히스토그램
+
+**상호작용**:
+- 고객 리스트 아이템 클릭 → 해당 고객 상세 페이지로 이동
+
+**Mock 데이터**:
+```typescript
+export const MOCK_REVENUE_BREAKDOWN: RevenueBreakdown = {
+  totalRevenue: 9834000,
+  totalCost: 2950200,   // 약 30% 재료비
+  grossProfit: 6883800,
+  marginRate: 70.0,
+  discountTotal: 266600,
+  depositTotal: 380000,
+};
+```
+
+**우선순위**: P1 (중요)
+
+---
+
+## 8. 매장 휴무일 설정 (Holiday/Closed Day Settings)
+
+**현재 상태**: 부분 구현. `BusinessHours` 타입에 요일별 영업시간은 있음. `MOCK_SHOP`에 일요일 휴무(`isOpen: false`)도 있음. 하지만 임시 휴무(특정 날짜)와 정기 휴무(매달 N번째 X요일) 기능 없음. 설정 페이지에서 영업시간 수정 UI도 없음 (표시만 됨).
+
+**필요성**: 매달 마지막 월요일 휴무, 명절 휴무, 연차 사용 등을 미리 등록해두면 예약 관리 시 오류 방지.
+
+**데이터 모델**:
+```typescript
+// shop.ts에 추가
+export type ClosedDayType = 'regular_weekly' | 'regular_monthly' | 'temporary';
+
+export interface ClosedDay {
+  id: string;
+  shopId: string;
+  type: ClosedDayType;
+  
+  // type: 'regular_weekly' - 매주 특정 요일
+  weeklyDayOfWeek?: number;   // 0=일, 1=월 ...
+  
+  // type: 'regular_monthly' - 매월 N번째 특정 요일
+  monthlyWeekNumber?: 1 | 2 | 3 | 4 | 5; // N번째
+  monthlyDayOfWeek?: number;
+  
+  // type: 'temporary' - 특정 날짜
+  date?: string;              // YYYY-MM-DD
+  
+  reason?: string;            // 휴무 사유 (선택)
+  createdAt: string;
+}
+
+// Shop 타입에 추가
+export interface Shop {
+  // ... 기존
+  closedDays: ClosedDay[];
+}
+```
+
+**UI 위치**:
+- 설정 > 매장 정보 카드에 "영업시간 수정" 버튼 (현재 표시만) → 실제 편집 가능하게
+- 설정 > 새 섹션 "휴무일 관리" 추가:
+  - 현재 정기 휴무 목록 (요일 뱃지)
+  - 임시 휴무 목록 (캘린더 또는 날짜 리스트)
+  - `+ 휴무일 추가` 버튼 → 타입 선택 → 상세 입력
+
+**Mock 데이터**:
+```typescript
+export const MOCK_CLOSED_DAYS: ClosedDay[] = [
+  {
+    id: 'closed-001',
+    shopId: 'shop-001',
+    type: 'regular_weekly',
+    weeklyDayOfWeek: 0, // 매주 일요일
+    reason: '정기 휴무',
+    createdAt: '2025-03-01T09:00:00.000Z',
+  },
+  {
+    id: 'closed-002',
+    shopId: 'shop-001',
+    type: 'temporary',
+    date: '2026-03-01', // 삼일절
+    reason: '공휴일',
+    createdAt: '2026-02-01T09:00:00.000Z',
+  },
+];
+```
+
+**우선순위**: P2 (나중)
+
+---
+
+## 9. 프로 요금제 UI (Pro Tier UI)
+
+**현재 상태**: 미구현. `ConsultationStep.PRO_MODE`가 타입에 정의되어 있고 상담 플로우에 포함되어 있음. 하지만 현재 앱 전체에 무료/프로 구분 없이 모든 기능이 열려있음. 설정 페이지에 플랜 정보 없음.
+
+**필요성**: SaaS 비즈니스 모델 데모 목적. 투자자/클라이언트에게 수익 모델을 보여주어야 함.
+
+**데이터 모델**:
+```typescript
+export type PlanTier = 'free' | 'pro' | 'enterprise';
+
+export interface PlanConfig {
+  tier: PlanTier;
+  features: {
+    maxDesigners: number;      // 무료: 1, 프로: 무제한
+    hasAnalytics: boolean;     // 대시보드 고급 분석
+    hasMembership: boolean;    // 회원권 관리
+    hasImageAttachment: boolean; // 이미지 첨부
+    hasProMode: boolean;       // 캔버스 Pro 모드
+    hasExport: boolean;        // 데이터 내보내기
+  };
+}
+
+// AppStore에 추가
+planTier: PlanTier;
+```
+
+**프리 vs 프로 기능 경계**:
+| 기능 | 무료 | 프로 |
+|------|------|------|
+| 선생님 등록 | 1명 | 무제한 |
+| 상담 기록 | 30건/월 | 무제한 |
+| 회원권 관리 | ❌ | ✅ |
+| 이미지 첨부 | ❌ | ✅ |
+| 고급 대시보드 | ❌ | ✅ |
+| 캔버스 Pro 모드 | ❌ | ✅ |
+| 데이터 내보내기 | ❌ | ✅ |
+
+**UI 위치**:
+- 설정 페이지 상단에 현재 플랜 카드 추가 (무료/프로 뱃지)
+- 잠긴 기능에 `🔒 PRO` 배지 오버레이
+- 프로 기능 접근 시 업그레이드 유도 바텀시트
+- 설정에 "프로로 업그레이드" CTA 카드
+
+**Mock 데이터**: `AppStore`의 `planTier: 'free'`로 기본 설정, 데모 시 'pro'로 전환 가능한 토글 버튼 추가.
+
+**우선순위**: P2 (나중)
+
+---
+
+## 전체 기능 우선순위 매트릭스
+
+| 기능 | 우선순위 | 사용자 가치 | 구현 복잡도 | 의존성 |
+|------|----------|------------|------------|--------|
+| 예약 정보 입력 (2) | **P0** | ★★★★★ | 중 | 없음 |
+| 고객 정보 연동 (4) | **P0** | ★★★★★ | 낮 | 2번 일부 |
+| 단골 고객 시스템 (3) | **P1** | ★★★★☆ | 낮 | 없음 |
+| 대시보드 드릴다운 (7) | **P1** | ★★★★☆ | 중 | 3번 |
+| 회원권 관리 (1) | **P1** | ★★★★☆ | 높 | 없음 |
+| 이미지 첨부 (5) | **P1** | ★★★☆☆ | 중 | 2번 |
+| 고객 상세 미니 대시보드 (6) | **P1** | ★★★☆☆ | 중 | 없음 |
+| 매장 휴무일 설정 (8) | **P2** | ★★☆☆☆ | 낮 | 없음 |
+| 프로 요금제 UI (9) | **P2** | ★★★☆☆ | 낮 | 없음 |
+
+### 권장 구현 순서 (데모 임팩트 기준)
+
+**Wave 1 (즉시 구현, P0)**:
+1. 예약 정보 입력 + 고객 연동 → 핵심 워크플로우 시연 가능
+
+**Wave 2 (P1 - 빠른 임팩트)**:
+2. 단골 시스템 + 대시보드 드릴다운 → 사장님 가치 증명
+3. 회원권 관리 → 차별화 기능
+4. 이미지 첨부 + 고객 상세 미니 대시보드 → UX 완성도
+
+**Wave 3 (P2 - 비즈니스 모델)**:
+5. 프로 요금제 UI + 매장 휴무일 설정
+
+---
+
+**핵심 발견사항**:
+- `imageUrls` 필드는 타입에 이미 있으나 UI가 없는 상태 → 구현 공수 낮음
+- `CustomerInfoForm`의 기존 고객 연동 기반이 있어 고객 컨텍스트 확장이 용이
+- `BusinessHours` 타입이 이미 있어 휴무일 확장도 용이
+- 대시보드 KPI 카드가 클릭 가능한 UI로 바꾸는 것이 드릴다운 핵심
+
+
+================================================================================
+FROM: ia-analyst | SUMMARY: 테마 시스템 및 IA 분석 완료
+================================================================================
+
+## IA 분석 결과 (ia-analyst)
+
+---
+
+# Part 1: 테마 시스템 개편
+
+## 현재 8종 테마 분석
+
+| ID | 이름 | primary | background | accent | isDark |
+|----|------|---------|-----------|--------|--------|
+| rose-pink | 로즈 핑크 | #F472B6 | #FFF5F7 | #EC4899 | false |
+| soft-ivory | 소프트 아이보리 | #D4B896 | #FFFDF7 | #C4A882 | false |
+| warm-beige | 웜 베이지 | #D4A574 | #FDF8F3 | #C99157 | false |
+| modern-black | 모던 블랙 | #E2E8F0 | #0F0F1A | #A0AEC0 | **true** |
+| lavender-purple | 라벤더 퍼플 | #A78BFA | #F5F3FF | #8B5CF6 | false |
+| mint-green | 민트 그린 | #6EE7B7 | #F0FDF4 | #34D399 | false |
+| coral-orange | 코랄 오렌지 | #FB923C | #FFF7ED | #F97316 | false |
+| olive-green | 올리브 그린 | #84A98C | #F2F7F3 | #74A57F | false |
+
+## 삭제 대상 (3종)
+
+1. **라벤더 퍼플** — 보라/퍼플 계열은 네일샵보다 뷰티 일반 앱 연상, 타겟 고객층(손발 케어 전문점)과 브랜드 거리감 있음. textSecondary #5B21B6처럼 채도 높은 보라색이 가독성 저하
+2. **민트 그린** — 초록 계열은 뷰티/네일 맥락보다 의료/환경 앱 연상, 네일 색상 미리보기 도트와 충돌 가능성
+3. **코랄 오렌지** — 오렌지 계열은 명도 대비 확보가 어렵고, textSecondary #7C2D12처럼 어두운 갈색 계열이 고급스러운 네일샵 이미지와 불일치
+
+## 변경 대상 — 모던 블랙 → 클린 블랙 (Light Theme)
+
+클라이언트 요청: 다크 배경 → 흰색 배경 + 블랙/하늘색 포인트
+
+```
+id: 'clean-black'
+name: '클린 블랙'
+isDark: false
+
+--color-primary:       #0F172A   // 진한 블랙-네이비 (포인트)
+--color-primary-light: #E2E8F0   // 밝은 슬레이트
+--color-primary-dark:  #020617   // 딥 블랙
+--color-secondary:     #F1F5F9   // 라이트 슬레이트 (배경 서브)
+--color-accent:        #38BDF8   // 하늘색 (Sky-400)
+--color-background:    #FFFFFF   // 순백
+--color-surface:       #FFFFFF
+--color-surface-alt:   #F8FAFC
+--color-text:          #0F172A
+--color-text-secondary:#475569
+--color-text-muted:    #94A3B8
+--color-border:        #E2E8F0
+```
+
+## 신규 추가 — 파스텔 계열 2-3종 제안
+
+### 파스텔 블루 (Pastel Blue)
+네일샵에서 선호도 높은 차분한 청색 계열, 로즈 핑크와 좋은 대비
+```
+id: 'pastel-blue'
+name: '파스텔 블루'
+emoji: '🩵'
+
+--color-primary:       #93C5FD   // Blue-300
+--color-primary-light: #DBEAFE   // Blue-100
+--color-primary-dark:  #3B82F6   // Blue-500
+--color-secondary:     #EFF6FF   // Blue-50
+--color-accent:        #60A5FA   // Blue-400
+--color-background:    #F0F9FF   // Sky-50
+--color-surface:       #FFFFFF
+--color-surface-alt:   #EFF6FF
+--color-text:          #1E3A5F
+--color-text-secondary:#3B5998
+--color-text-muted:    #93C5FD
+--color-border:        #BFDBFE   // Blue-200
+```
+
+### 파스텔 라일락 (Pastel Lilac)
+라벤더 퍼플보다 훨씬 낮은 채도, 부드럽고 여성스러운 연보라
+```
+id: 'pastel-lilac'
+name: '파스텔 라일락'
+emoji: '🪻'
+
+--color-primary:       #C4B5FD   // Violet-300
+--color-primary-light: #EDE9FE   // Violet-100
+--color-primary-dark:  #8B5CF6   // Violet-500
+--color-secondary:     #F5F3FF   // Violet-50
+--color-accent:        #A78BFA   // Violet-400
+--color-background:    #FAFAF9   // Stone-50 (살짝 따뜻)
+--color-surface:       #FFFFFF
+--color-surface-alt:   #F5F3FF
+--color-text:          #2E1B69   // 차분한 딥 퍼플
+--color-text-secondary:#5B4A8A
+--color-text-muted:    #A09BB5
+--color-border:        #DDD6FE   // Violet-200
+```
+
+### 파스텔 피치 (Pastel Peach)
+코랄 오렌지보다 훨씬 낮은 채도, 복숭아빛 — 로즈 핑크와 함께 써도 이질감 없음
+```
+id: 'pastel-peach'
+name: '파스텔 피치'
+emoji: '🍑'
+
+--color-primary:       #FDBA74   // Orange-300
+--color-primary-light: #FEF3C7   // Amber-100
+--color-primary-dark:  #F97316   // Orange-500
+--color-secondary:     #FFF7ED   // Orange-50
+--color-accent:        #FB923C   // Orange-400
+--color-background:    #FFFBF7   // 극히 연한 복숭아빛 흰색
+--color-surface:       #FFFFFF
+--color-surface-alt:   #FEF9F5
+--color-text:          #3D1F0A
+--color-text-secondary:#7C4A1E
+--color-text-muted:    #C4956A
+--color-border:        #FED7AA   // Orange-200
+```
+
+## 최종 테마 라인업 (7종 확정 제안)
+
+| 순서 | ID | 이름 | 설명 | 계열 |
+|------|-----|------|------|------|
+| 1 | rose-pink | 로즈 핑크 (기본) | 사랑스러운 핑크 | 핑크 |
+| 2 | soft-ivory | 소프트 아이보리 | 따뜻한 크림 | 아이보리 |
+| 3 | warm-beige | 웜 베이지 | 고급스러운 베이지 | 베이지 |
+| 4 | olive-green | 올리브 그린 | 자연스러운 그린 | 그린 |
+| 5 | clean-black | 클린 블랙 | 하늘색 포인트 모던 | 블랙/하늘 |
+| 6 | pastel-blue | 파스텔 블루 | 차분한 하늘빛 | 블루 |
+| 7 | pastel-lilac | 파스텔 라일락 | 부드러운 연보라 | 퍼플 |
+
+→ 파스텔 피치는 선택적 추가 (8번째), 클라이언트 확인 후 결정
+
+**ThemeId 타입 변경 필요:**
+```typescript
+export type ThemeId =
+  | 'rose-pink'
+  | 'soft-ivory'
+  | 'warm-beige'
+  | 'olive-green'
+  | 'clean-black'      // 변경: modern-black → clean-black
+  | 'pastel-blue'      // 신규
+  | 'pastel-lilac'     // 신규
+  | 'pastel-peach';    // 선택적 신규
+```
+
+---
+
+# Part 2: 정보 구조(IA) 재설계
+
+## 온보딩 플로우 재설계
+
+### 현재 순서 (8단계)
+```
+시작 → 매장정보 → 기본가격 → 서비스 → 추가금 → 시술시간 → 테마 → 완료
+```
+
+### 변경 후 순서 (8단계, 매장정보 유지)
+클라이언트 요청: 서비스 설정 → 기본 가격 → 추가금 → 시간 → 테마 (매장정보는 유지)
+```
+시작 → 매장정보 → 서비스 → 기본가격 → 추가금 → 시술시간 → 테마 → 완료
+```
+
+### STEPS 배열 변경 내용 (layout.tsx)
+```typescript
+const STEPS = [
+  { path: '/onboarding',              label: '시작' },
+  { path: '/onboarding/shop-info',    label: '매장 정보' },   // 유지
+  { path: '/onboarding/services',     label: '서비스' },      // 3번으로 이동 (기존 4번)
+  { path: '/onboarding/pricing',      label: '기본 가격' },   // 4번으로 이동 (기존 3번)
+  { path: '/onboarding/surcharges',   label: '추가금' },      // 유지 (5번)
+  { path: '/onboarding/time',         label: '시술 시간' },   // 유지 (6번)
+  { path: '/onboarding/theme',        label: '테마' },        // 유지 (7번)
+  { path: '/onboarding/complete',     label: '완료' },        // 유지 (8번)
+];
+```
+
+**각 단계 정보 구조:**
+- Step 2 (매장정보): 상호명, 대표번호, 주소, 영업시간
+- Step 3 (서비스): 제공 시술 종류 (핸드/풋/젤/아크릴 등) 체크
+- Step 4 (기본가격): 파트별 기본가 입력 (핸드, 풋, 디자인 유형별)
+- Step 5 (추가금): 오프/연장/파츠/컬러 추가금 설정
+- Step 6 (시술시간): 서비스별 기본 소요 시간 설정
+- Step 7 (테마): 7종 테마 선택
+
+## 상담 플로우 정보 우선순위 재배치
+
+### ConsultationSummaryCard 섹션 순서 변경
+
+현재 순서:
+```
+기본정보 → 고객정보 → 시술조건 → 디자인 → 추가옵션 → 가격상세
+```
+
+변경 후 (클라이언트 요청 우선순위: 가격 → 시간 → 디자인 → 시술조건 → 추가옵션 → 고객정보):
+```
+[핀 고정 상단바] 최종금액 + 예상시간   ← 이미 구현됨 (유지)
+1. 가격 상세                            ← 가장 위로 (현재 마지막)
+2. 시술 시간                            ← 예상 시간 섹션 분리 신설
+3. 디자인                               ← 3번으로 상향
+4. 시술 조건                            ← 4번
+5. 추가 옵션                            ← 5번
+6. 고객 정보                            ← 마지막 (현재 2번)
+```
+
+**근거:** 원장/디자이너 입장에서 "얼마 받을 것인가" + "얼마나 걸릴 것인가"가 최우선 판단 기준. 고객 정보(이름/전화)는 저장 전 마지막 확인 사항.
+
+## 메인 탭 구조 (현재 5탭 → 유지)
+
+```
+홈(/home) → 기록(/records) → 고객(/customers) → 대시보드(/dashboard) → 설정(/settings)
+```
+
+탭 순서는 변경 없음. 각 탭 내부 정보 계층 재설계가 핵심.
+
+---
+
+# Part 3: 페이지별 구조 개선
+
+## 기록 탭 — 카드 중심 레이아웃 설계
+
+### 현재 상태
+- 세로 스크롤 목록, Card 컴포넌트 사용 (좋음)
+- 레이아웃: `gap-2 px-4` (좁은 여백)
+- 각 카드: 날짜 행 + 고객정보+금액 행 혼합
+
+### 개선 설계: 중앙 정렬 카드 레이아웃
+```
+┌─────────────────────────────────┐
+│ 상담 기록              총 24건   │ ← 헤더
+├─────────────────────────────────┤
+│ [검색창]                         │
+│ [전체] [오늘] [이번주] [이번달]   │
+├─────────────────────────────────┤
+│  ┌─────────────────────────────┐│
+│  │ 2025.12.14           [핸드] ││ ← 날짜 + 부위 뱃지
+│  │ 김지은  010-1234-****       ││ ← 고객명 (전화 뒷자리 마스킹)
+│  │ 담당: 효주                   ││
+│  │ [풀아트] [그라데이션]         ││ ← 서비스 태그
+│  │                             ││
+│  │ ◐◐◑●        ₩ 85,000      ││ ← 컬러도트 + 금액 우측정렬
+│  └─────────────────────────────┘│
+│  max-w-lg mx-auto (중앙 정렬)   │
+└─────────────────────────────────┘
+```
+
+**구체적 변경:**
+- `max-w-lg mx-auto` 컨테이너로 카드 중앙 정렬
+- 카드 패딩 `p-4 → p-5`
+- 카드 간격 `gap-2 → gap-3`
+- 고객 전화번호 뒷 4자리 마스킹 (개인정보 보호)
+- 컬러 도트 크기 `h-3 w-3 → h-4 w-4` (터치 영역 개선)
+
+## 고객 상세 — 섹션 순서/구조 재배치
+
+### 현재 섹션 순서
+```
+헤더 → 기본정보(통계) → 시술성향태그 → 스몰토크 → 이미지갤러리 → 시술이력 → 선호도프로필
+```
+
+### 개선 설계
+
+**미니 대시보드 신설:** 기본정보 카드 내 통계를 더 풍부하게
+```
+┌──────────────────────────────┐
+│ [아바타] 김지은                │
+│         010-1234-5678        │
+│         담당: 효주             │
+├─────┬─────┬──────────────────┤
+│12회  │₩72K │3개월 전          │
+│방문  │평균  │최근방문          │
+├─────┴─────┴──────────────────┤
+│ [총 매출: ₩864,000]  [회원권] │ ← 신규: 총매출 + 회원권 상태
+└──────────────────────────────┘
+```
+
+**태그 압축 설계:**
+현재: TAG_PRESETS 7개 카테고리 전부 나열 (미등록도 표시)
+개선: 등록된 태그가 있는 카테고리만 표시 + 접힘 처리
+```typescript
+// 현재: TAG_PRESETS.map() → 전체 카테고리 렌더링
+// 개선: 등록된 카테고리만 렌더
+const activeTags = TAG_PRESETS.filter(
+  p => (tagsByCategory[p.category] ?? []).length > 0
+);
+// 없으면 "태그 없음 + 추가" CTA
+```
+
+**변경 후 섹션 순서:**
+```
+1. 기본정보 (미니 대시보드 + 회원권)
+2. 이미지 갤러리 (시각적 첫인상)   ← 상향 이동
+3. 시술 이력 타임라인               ← 상향 이동
+4. 시술 성향 태그 (압축)            ← 하향 이동
+5. 선호도 프로필
+6. 스몰토크 기록                    ← 마지막 (메모 성격)
+```
+
+**회원권 섹션 (신규):**
+```
+┌──────────────────────────────┐
+│ 회원권 / 선불금               │
+│ 잔액: ₩150,000   [충전][사용] │
+└──────────────────────────────┘
+```
+
+## 대시보드 — KPI 카드 + 차트 재구성
+
+### 현재 구조
+```
+헤더 → KPICards → RevenueChart → ServiceAnalytics → CustomerAnalytics → DesignerPerformance
+```
+
+### 개선 설계: 실용적 운영 인사이트
+
+**KPI 우선순위 재정렬:**
+```
+┌────┬────┐
+│오늘│이달│  ← 기간 토글
+│매출│매출│
+├────┴────┤
+│ 오늘 예약/상담 건수    │
+│ 평균 객단가           │
+│ 신규 고객 수          │
+└──────────────────────┘
+```
+
+**차트 섹션 재구성:**
+```
+1. 매출 추이 (주간/월간 토글)
+2. 담당자별 매출 실적             ← DesignerPerformance를 2번으로 상향
+3. 인기 서비스 (파이/바 차트)     ← ServiceAnalytics 3번
+4. 고객 분석 (재방문율, 신규 비율) ← 4번
+```
+
+**운영 인사이트 추가 (신규):**
+```
+┌──────────────────────────────┐
+│ 오늘의 인사이트               │
+│ • 그라데이션 요청 +40% 증가   │
+│ • 효주 선생님 매출 1위         │
+│ • 재방문율 68% (지난달 대비+3%)│
+└──────────────────────────────┘
+```
+
+## 설정 — 예약 관리 탭 추가
+
+### 현재 구조 (단일 스크롤 페이지)
+```
+매장정보 → 선생님관리 → 서비스/옵션관리 → 테마변경 → 앱정보
+```
+
+### 개선 설계: 탭 기반 구조
+
+```
+[매장] [서비스] [예약관리] [테마] [앱]
+```
+
+**탭별 정보:**
+| 탭 | 포함 내용 |
+|----|----------|
+| 매장 | 매장정보 편집, 선생님 관리, 영업시간 |
+| 서비스 | 기본가격표, 추가금 설정, 서비스 종류 |
+| 예약관리 (신규) | 예약 가능 시간대, 예약 간격, 예약금 정책, 취소 정책 |
+| 테마 | 테마 선택기 (7종) |
+| 앱 | 버전정보, 데이터 초기화, 로그아웃 |
+
+**예약 관리 탭 상세 정보 구조:**
+```
+┌──────────────────────────────┐
+│ 예약 설정                     │
+│ • 예약 가능 요일/시간대        │
+│ • 시술 간격 (기본 30분)        │
+├──────────────────────────────┤
+│ 예약금 정책                   │
+│ • 예약금 필수 여부 (토글)      │
+│ • 예약금 금액 또는 비율         │
+├──────────────────────────────┤
+│ 취소/변경 정책                 │
+│ • 취소 가능 기한               │
+│ • 위약금 정책                  │
+└──────────────────────────────┘
+```
+
+---
+
+# 전체 앱 네비게이션 맵
+
+```
+앱 진입
+  ├── [온보딩] (최초 1회)
+  │     ├── 시작
+  │     ├── 매장정보
+  │     ├── 서비스 (변경: 기존 4번 → 3번)
+  │     ├── 기본가격 (변경: 기존 3번 → 4번)
+  │     ├── 추가금
+  │     ├── 시술시간
+  │     ├── 테마
+  │     └── 완료
+  │
+  └── [메인] BottomTabBar 5탭
+        ├── 홈 (/home)
+        │     └── 상담 시작 → [상담 플로우]
+        │           ├── step1 (기본 설정)
+        │           ├── step2 (디자인)
+        │           ├── step3 (추가 옵션)
+        │           ├── canvas (색상 선택)
+        │           ├── customer (고객 정보)
+        │           └── summary (최종 확인) ← 섹션 순서 변경
+        │
+        ├── 기록 (/records) ← 카드 중앙 정렬 레이아웃
+        │     └── 기록 상세 (/records/[id])
+        │
+        ├── 고객 (/customers)
+        │     └── 고객 상세 (/customers/[id]) ← 섹션 순서 재배치
+        │
+        ├── 대시보드 (/dashboard) ← KPI 재구성
+        │
+        └── 설정 (/settings) ← 탭 기반 구조 + 예약관리 신규
+```
+
+---
+
+# 구현 우선순위 권고
+
+**P1 (즉시 적용 가능, 파급 큼):**
+1. `src/types/theme.ts` — ThemeId 타입 변경
+2. `src/app/globals.css` — 3종 삭제, modern-black → clean-black, 파스텔 2-3종 추가
+3. `src/config/themes.ts` — THEME_PRESETS 배열 업데이트
+4. `src/app/onboarding/layout.tsx` — STEPS 배열 순서 변경 (services ↔ pricing)
+
+**P2 (UX 개선):**
+5. `src/components/consultation/ConsultationSummaryCard.tsx` — 섹션 순서 변경
+6. `src/app/(main)/records/page.tsx` — max-w-lg mx-auto 중앙 정렬
+7. `src/app/(main)/customers/[id]/page.tsx` — 섹션 재배치 + 태그 압축
+
+**P3 (기능 추가):**
+8. `src/app/(main)/settings/page.tsx` — 탭 기반 구조 전환 + 예약관리 탭
+9. `src/app/(main)/dashboard/page.tsx` — KPI 재구성 + 인사이트 추가
+
+
+
+================================================================================
+FROM: feature-analyst | SUMMARY: Task #3 이미 완료됨 확인
+================================================================================
+Task #3 누락 기능 분석 및 설계는 이미 완료되었습니다. 이전 메시지에서 9개 기능 전체에 대한 상세 분석 결과를 전송했습니다.
+
+분석 내용 요약:
+- P0 (필수): 예약 정보 입력, 고객 정보 연동
+- P1 (중요): 단골 시스템, 대시보드 드릴다운, 회원권 관리, 이미지 첨부, 고객 미니 대시보드
+- P2 (나중): 매장 휴무일 설정, 프로 요금제 UI
+
+각 기능별 TypeScript 타입 설계, UI 위치, 상호작용 방식, Mock 데이터 구조가 포함되어 있습니다. 이전 메시지를 참조해 주세요.
+

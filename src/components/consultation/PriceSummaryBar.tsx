@@ -1,0 +1,38 @@
+'use client';
+
+import { useConsultationStore } from '@/store/consultation-store';
+import { calculatePrice } from '@/lib/price-calculator';
+import { estimateTime } from '@/lib/time-calculator';
+import { formatPrice, formatMinutes } from '@/lib/format';
+import { cn } from '@/lib/cn';
+import { useT } from '@/lib/i18n';
+
+interface PriceSummaryBarProps {
+  className?: string;
+}
+
+export function PriceSummaryBar({ className }: PriceSummaryBarProps) {
+  const t = useT();
+  const consultation = useConsultationStore((s) => s.consultation);
+  const breakdown = calculatePrice(consultation);
+  const minutes = estimateTime(consultation);
+
+  return (
+    <div
+      className={cn(
+        'flex items-center justify-between px-4 md:px-8 py-2 md:py-3 bg-primary/5 border-b border-primary/20',
+        className,
+      )}
+    >
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs text-text-muted">{t('consultation.estimatedAmount')}</span>
+        <span className="text-sm font-bold text-primary">{formatPrice(breakdown.subtotal)}</span>
+      </div>
+      <div className="w-px h-4 bg-border" />
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs text-text-muted">{t('consultation.estimatedTimeLabel')}</span>
+        <span className="text-sm font-semibold text-text">~{formatMinutes(minutes)}</span>
+      </div>
+    </div>
+  );
+}

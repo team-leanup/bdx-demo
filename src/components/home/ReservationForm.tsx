@@ -1,0 +1,284 @@
+'use client';
+
+import { useState } from 'react';
+import { Button, Card } from '@/components/ui';
+import type { BookingChannel, BookingRequest } from '@/types/consultation';
+import type { Locale } from '@/store/locale-store';
+
+function generateTimeSlots(start = '10:00', end = '20:00'): string[] {
+  const slots: string[] = [];
+  const [startH, startM] = start.split(':').map(Number);
+  const [endH, endM] = end.split(':').map(Number);
+  let h = startH, m = startM;
+  while (h < endH || (h === endH && m <= endM)) {
+    slots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+    m += 30;
+    if (m >= 60) { h++; m = 0; }
+  }
+  return slots;
+}
+
+const CHANNEL_OPTIONS: { value: BookingChannel; label: string }[] = [
+  { value: 'kakao', label: '카카오톡' },
+  { value: 'naver', label: '네이버' },
+  { value: 'phone', label: '전화' },
+  { value: 'walk_in', label: '워크인' },
+];
+
+const LANGUAGE_OPTIONS: { value: Locale; flag: string; label: string }[] = [
+  { value: 'ko', flag: '🇰🇷', label: '한국어' },
+  { value: 'en', flag: '🇺🇸', label: 'English' },
+  { value: 'zh', flag: '🇨🇳', label: '中文' },
+  { value: 'ja', flag: '🇯🇵', label: '日本語' },
+];
+
+interface ReservationFormProps {
+  onSubmit: (reservation: BookingRequest) => void;
+  initialOpen?: boolean;
+}
+
+export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFormProps) {
+  const today = new Date().toISOString().split('T')[0];
+
+  const [formOpen, setFormOpen] = useState(initialOpen);
+  const [formName, setFormName] = useState('');
+  const [formPhone, setFormPhone] = useState('');
+  const [formDate, setFormDate] = useState(today);
+  const [formTime, setFormTime] = useState('');
+  const [formChannel, setFormChannel] = useState<BookingChannel>('kakao');
+  const [formNote, setFormNote] = useState('');
+  const [formLanguage, setFormLanguage] = useState<Locale>('ko');
+  const [formImages, setFormImages] = useState<string[]>([]);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const newImages = [...formImages];
+    for (let i = 0; i < files.length && newImages.length < 3; i++) {
+      newImages.push(URL.createObjectURL(files[i]));
+    }
+    setFormImages(newImages);
+    e.target.value = '';
+  };
+
+  const removeImage = (index: number) => {
+    setFormImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = () => {
+    if (!formName.trim() || !formTime) return;
+    const newBooking: BookingRequest = {
+      id: `booking-new-${Date.now()}`,
+      customerName: formName.trim(),
+      phone: formPhone.trim(),
+      reservationDate: formDate,
+      reservationTime: formTime,
+      channel: formChannel,
+      requestNote: formNote.trim() || undefined,
+      referenceImageUrls: formImages,
+      status: 'confirmed',
+      createdAt: new Date().toISOString(),
+      language: formLanguage,
+    };
+    onSubmit(newBooking);
+    // 폼 초기화
+    setFormName('');
+    setFormPhone('');
+    setFormDate(today);
+    setFormTime('');
+    setFormChannel('kakao');
+    setFormNote('');
+    setFormLanguage('ko');
+    setFormImages([]);
+    setFormOpen(false);
+  };
+
+  if (!formOpen) {
+    return (
+      <button
+        onClick={() => setFormOpen(true)}
+        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-surface-alt py-3 text-sm font-medium text-text-secondary transition-colors hover:border-primary hover:text-primary active:scale-95"
+      >
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        새 예약 등록
+      </button>
+    );
+  }
+
+  return (
+    <Card className="p-4">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-text">예약 등록</h3>
+        <button
+          onClick={() => setFormOpen(false)}
+          className="flex h-6 w-6 items-center justify-center rounded-full bg-surface-alt text-text-muted"
+        >
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        {/* 고객명 */}
+        <div>
+          <label className="mb-1 block text-xs font-medium text-text-secondary">
+            고객명 <span className="text-error">*</span>
+          </label>
+          <input
+            type="text"
+            value={formName}
+            onChange={(e) => setFormName(e.target.value)}
+            placeholder="고객 이름 입력"
+            className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text placeholder-text-muted outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
+          />
+        </div>
+
+        {/* 연락처 */}
+        <div>
+          <label className="mb-1 block text-xs font-medium text-text-secondary">
+            연락처
+          </label>
+          <input
+            type="tel"
+            value={formPhone}
+            onChange={(e) => setFormPhone(e.target.value)}
+            placeholder="010-0000-0000"
+            className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text placeholder-text-muted outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
+          />
+        </div>
+
+        {/* 예약 일자 & 시간 */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-text-secondary">
+              예약 일자 <span className="text-error">*</span>
+            </label>
+            <input
+              type="date"
+              value={formDate}
+              onChange={(e) => setFormDate(e.target.value)}
+              className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-text-secondary">
+              예약 시간 <span className="text-error">*</span>
+            </label>
+            <select
+              value={formTime}
+              onChange={(e) => setFormTime(e.target.value)}
+              className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
+            >
+              <option value="">시간 선택</option>
+              {generateTimeSlots().map((slot) => (
+                <option key={slot} value={slot}>{slot}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* 예약 채널 */}
+        <div>
+          <label className="mb-1 block text-xs font-medium text-text-secondary">
+            예약 채널
+          </label>
+          <select
+            value={formChannel}
+            onChange={(e) => setFormChannel(e.target.value as BookingChannel)}
+            className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
+          >
+            {CHANNEL_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* 상담 언어 */}
+        <div>
+          <label className="mb-1 block text-xs font-medium text-text-secondary">
+            상담 언어
+          </label>
+          <select
+            value={formLanguage}
+            onChange={(e) => setFormLanguage(e.target.value as Locale)}
+            className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
+          >
+            {LANGUAGE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.flag} {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* 요청사항 */}
+        <div>
+          <label className="mb-1 block text-xs font-medium text-text-secondary">
+            요청사항 <span className="text-text-muted">(선택)</span>
+          </label>
+          <textarea
+            value={formNote}
+            onChange={(e) => setFormNote(e.target.value)}
+            placeholder="고객 요청 사항을 입력하세요"
+            rows={3}
+            className="w-full resize-none rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text placeholder-text-muted outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
+          />
+        </div>
+
+        {/* 참고 이미지 */}
+        <div>
+          <label className="mb-1 block text-xs font-medium text-text-secondary">
+            참고 이미지 <span className="text-text-muted">(최대 3장)</span>
+          </label>
+          {formImages.length > 0 && (
+            <div className="flex gap-2 mb-2 flex-wrap">
+              {formImages.map((url, i) => (
+                <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
+                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(i)}
+                    className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center"
+                  >
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {formImages.length < 3 && (
+            <label className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface-alt py-3 text-sm text-text-muted cursor-pointer hover:border-primary hover:text-primary transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              이미지 추가
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+            </label>
+          )}
+        </div>
+
+        {/* 등록 버튼 */}
+        <Button
+          fullWidth
+          onClick={handleSubmit}
+          disabled={!formName.trim() || !formTime}
+        >
+          등록
+        </Button>
+      </div>
+    </Card>
+  );
+}

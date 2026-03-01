@@ -1,0 +1,17 @@
+{
+  "name": "BDX - Beauty Decision eXperience",
+  "short_name": "BDX",
+  "description": "네일샵 상담 & 고객 관리 플랫폼",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF5F7",
+  "theme_color": "#F472B6",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}

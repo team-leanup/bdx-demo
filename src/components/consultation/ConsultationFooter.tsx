@@ -1,0 +1,56 @@
+'use client';
+
+import { useConsultationStore } from '@/store/consultation-store';
+import { calculatePrice } from '@/lib/price-calculator';
+import { formatPrice } from '@/lib/format';
+import { Button } from '@/components/ui';
+import { cn } from '@/lib/cn';
+import { useT } from '@/lib/i18n';
+
+interface ConsultationFooterProps {
+  onNext: () => void;
+  nextLabel?: string;
+  disabled?: boolean;
+  loading?: boolean;
+  className?: string;
+}
+
+export function ConsultationFooter({
+  onNext,
+  nextLabel,
+  disabled = false,
+  loading = false,
+  className,
+}: ConsultationFooterProps) {
+  const t = useT();
+  const consultation = useConsultationStore((s) => s.consultation);
+  const breakdown = calculatePrice(consultation);
+  const label = nextLabel ?? t('common.next');
+
+  return (
+    <footer
+      className={cn(
+        'fixed bottom-0 left-0 right-0 z-30 bg-surface border-t border-border',
+        'md:static md:flex-shrink-0',
+        'flex items-center justify-between px-4 md:px-8 py-3 gap-4',
+        'safe-bottom',
+        className,
+      )}
+    >
+      <div className="flex flex-col gap-0.5">
+        <span className="text-xs text-text-muted">{t('consultation.estimatedAmount')}</span>
+        <span className="text-base font-bold text-primary">{formatPrice(breakdown.subtotal)}</span>
+      </div>
+      <Button
+        variant="primary"
+        size="lg"
+        onClick={onNext}
+        disabled={disabled}
+        loading={loading}
+        className="flex-1 max-w-48 md:max-w-xs"
+      >
+        {label}
+      </Button>
+    </footer>
+  );
+}

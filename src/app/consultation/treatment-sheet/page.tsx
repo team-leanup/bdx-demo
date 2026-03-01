@@ -1,0 +1,464 @@
+'use client';
+
+import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { useConsultationStore } from '@/store/consultation-store';
+import { useAuthStore } from '@/store/auth-store';
+import { HandIllustration } from '@/components/canvas/HandIllustration';
+import { formatPrice } from '@/lib/format';
+import { calculatePrice } from '@/lib/price-calculator';
+import { estimateTime } from '@/lib/time-calculator';
+import { MOCK_DESIGNERS } from '@/data/mock-shop';
+import { MOCK_CUSTOMERS } from '@/data/mock-customers';
+import type { FingerPosition, FingerSelection } from '@/types/canvas';
+import type { NailShape } from '@/types/consultation';
+
+const SHAPE_LABELS: Record<string, string> = {
+  round: '라운드', oval: '오벌', square: '스퀘어', squoval: '스퀘오벌',
+  almond: '아몬드', stiletto: '스틸레토', coffin: '코핀',
+};
+
+const LENGTH_LABELS = { short: '짧게', medium: '보통', long: '길게' };
+const THICKNESS_LABELS = { thin: '얇게', medium: '보통', thick: '두껍게' };
+const CUTICLE_LABELS = { low: '예민하지 않음', medium: '보통', high: '예민함' };
+
+type LengthType = 'short' | 'medium' | 'long';
+type ThicknessType = 'thin' | 'medium' | 'thick';
+type CuticleType = 'low' | 'medium' | 'high';
+
+interface DailyChecklistState {
+  shape: NailShape | null;
+  length: LengthType | null;
+  thickness: ThicknessType | null;
+  cuticleSensitivity: CuticleType | null;
+  memo: string;
+}
+
+function SegmentControl<T extends string>({
+  options,
+  value,
+  onChange,
+  labels,
+}: {
+  options: T[];
+  value: T | null;
+  onChange: (v: T) => void;
+  labels: Record<T, string>;
+}) {
+  return (
+    <div className="flex gap-2 flex-wrap">
+      {options.map((opt) => (
+        <button
+          key={opt}
+          type="button"
+          onClick={() => onChange(opt)}
+          className="px-4 py-2 rounded-xl text-sm font-semibold transition-all active:scale-[0.97]"
+          style={{
+            background: value === opt ? 'var(--color-primary)' : 'var(--color-background)',
+            color: value === opt ? 'white' : 'var(--color-text-secondary)',
+            border: `1.5px solid ${value === opt ? 'var(--color-primary)' : 'var(--color-border)'}`,
+          }}
+        >
+          {labels[opt]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export default function TreatmentSheetPage() {
+  const router = useRouter();
+  const { consultation, reset } = useConsultationStore();
+  const { activeDesignerId, activeDesignerName } = useAuthStore();
+  const [smallTalkText, setSmallTalkText] = useState('');
+  const [isSaved, setIsSaved] = useState(false);
+  const [treatmentPhotos, setTreatmentPhotos] = useState<string[]>([]);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    Array.from(files).forEach((file) => {
+      if (treatmentPhotos.length >= 6) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const url = ev.target?.result as string;
+        setTreatmentPhotos((prev) => (prev.length < 6 ? [...prev, url] : prev));
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
+  };
+
+  const removePhoto = (idx: number) => {
+    setTreatmentPhotos((prev) => prev.filter((_, i) => i !== idx));
+  };
+  const [checklist, setChecklist] = useState<DailyChecklistState>({
+    shape: (consultation.nailShape ?? null) as NailShape | null,
+    length: null,
+    thickness: null,
+    cuticleSensitivity: null,
+    memo: '',
+  });
+
+  const designer = MOCK_DESIGNERS.find(d => d.id === (consultation.designerId || activeDesignerId));
+  const priceBreakdown = calculatePrice(consultation);
+  const totalPrice = priceBreakdown.subtotal;
+  const estimatedMinutes = estimateTime(consultation);
+  const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Build canvas selections for read-only display from canvasData
+  const buildSelections = (handSide: 'left_hand' | 'right_hand'): Partial<Record<FingerPosition, FingerSelection>> => {
+    const hand = consultation.canvasData?.find(d => d.handSide === handSide);
+    if (!hand) return {};
+    const sels: Partial<Record<FingerPosition, FingerSelection>> = {};
+    for (const art of hand.fingerArts) {
+      const finger = art.fingerId.replace(`${handSide}_`, '') as FingerPosition;
+      sels[finger] = {
+        finger,
+        colorCode: art.colorCode,
+        isPoint: art.isPoint ?? false,
+        artType: art.artType as FingerSelection['artType'],
+        note: art.note,
+        parts: [],
+      };
+    }
+    for (const part of hand.fingerParts) {
+      const finger = part.fingerId.replace(`${handSide}_`, '') as FingerPosition;
+      if (sels[finger]) {
+        sels[finger]!.parts = Array.from({ length: part.quantity }, (_, i) => ({
+          id: `${part.fingerId}-${part.partGrade}-${i}`,
+          partType: 'other' as const,
+          grade: part.partGrade,
+          x: 0.3 + i * 0.1,
+          y: 0.5,
+        }));
+      }
+    }
+    return sels;
+  };
+
+  const handleSaveSmallTalk = () => {
+    if (!smallTalkText.trim()) return;
+
+    // Find customer by name in MOCK_CUSTOMERS
+    const customer = MOCK_CUSTOMERS.find(c => c.name === consultation.customerName);
+    if (customer) {
+      const newNote = {
+        id: `stn-${Date.now()}`,
+        customerId: customer.id,
+        consultationRecordId: undefined,
+        noteText: smallTalkText.trim(),
+        createdAt: new Date().toISOString(),
+        createdByDesignerId: activeDesignerId ?? designer?.id ?? 'unknown',
+        createdByDesignerName: activeDesignerName ?? designer?.name ?? '디자이너',
+      };
+      customer.smallTalkNotes.unshift(newNote);
+    }
+
+    setIsSaved(true);
+    setSmallTalkText('');
+  };
+
+  const handleComplete = () => {
+    reset();
+    router.push('/home');
+  };
+
+  const hasCanvas = consultation.canvasData && consultation.canvasData.length > 0;
+  const hasReferenceImages = consultation.referenceImages && consultation.referenceImages.length > 0;
+
+  return (
+    <div className="h-dvh bg-background flex flex-col overflow-hidden">
+      {/* Header */}
+      <div className="px-4 pt-6 pb-4 border-b border-border">
+        <h1 className="text-xl font-bold text-text">시술 확인서</h1>
+        <div className="flex items-center gap-2 mt-1 flex-wrap">
+          <span className="text-sm text-text-secondary">{consultation.customerName || '고객'}</span>
+          <span className="text-text-muted">·</span>
+          <span className="text-sm text-text-muted">{today}</span>
+          {designer && (
+            <>
+              <span className="text-text-muted">·</span>
+              <span className="text-sm text-text-muted">{designer.name}</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      <main className="flex-1 overflow-y-auto px-4 md:px-8 py-5 flex flex-col gap-5 max-w-2xl md:max-w-4xl mx-auto w-full">
+        {/* Checklist Summary */}
+        <div className="rounded-2xl border border-border bg-surface p-4">
+          <h3 className="text-sm font-bold text-text mb-3">체크리스트</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {consultation.nailShape && (
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[11px] text-text-muted">쉐입</span>
+                <span className="text-sm font-semibold text-text">{SHAPE_LABELS[consultation.nailShape] || consultation.nailShape}</span>
+              </div>
+            )}
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[11px] text-text-muted">신체 부위</span>
+              <span className="text-sm font-semibold text-text">{consultation.bodyPart === 'hand' ? '핸드' : '페디큐어'}</span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[11px] text-text-muted">디자인</span>
+              <span className="text-sm font-semibold text-text">
+                {consultation.designScope === 'solid_tone' ? '원컬러'
+                  : consultation.designScope === 'solid_point' ? '단색+포인트'
+                  : consultation.designScope === 'full_art' ? '풀아트'
+                  : '이달의 아트'}
+              </span>
+            </div>
+            {consultation.offType !== 'none' && (
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[11px] text-text-muted">오프</span>
+                <span className="text-sm font-semibold text-text">
+                  {consultation.offType === 'same_shop' ? '자샵오프' : '타샵오프'}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Daily Checklist - 당일 시술 체크 */}
+        <div className="rounded-2xl border border-border bg-surface p-4 flex flex-col gap-4">
+          <div>
+            <h3 className="text-sm font-bold text-text mb-0.5">당일 시술 체크</h3>
+            <p className="text-xs text-text-muted">시술 시작 전 고객 상태를 확인해주세요</p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-semibold text-text-secondary">길이</span>
+              <SegmentControl<LengthType>
+                options={['short', 'medium', 'long']}
+                value={checklist.length}
+                onChange={(v) => setChecklist(prev => ({ ...prev, length: v }))}
+                labels={LENGTH_LABELS}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-semibold text-text-secondary">두께감</span>
+              <SegmentControl<ThicknessType>
+                options={['thin', 'medium', 'thick']}
+                value={checklist.thickness}
+                onChange={(v) => setChecklist(prev => ({ ...prev, thickness: v }))}
+                labels={THICKNESS_LABELS}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-semibold text-text-secondary">큐티클 상태</span>
+              <SegmentControl<CuticleType>
+                options={['low', 'medium', 'high']}
+                value={checklist.cuticleSensitivity}
+                onChange={(v) => setChecklist(prev => ({ ...prev, cuticleSensitivity: v }))}
+                labels={CUTICLE_LABELS}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-semibold text-text-secondary">메모</span>
+              <textarea
+                value={checklist.memo}
+                onChange={(e) => setChecklist(prev => ({ ...prev, memo: e.target.value }))}
+                placeholder="특이사항 메모 (ex. 손톱이 얇음, 큐티클 주의)"
+                rows={2}
+                className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Reference Images */}
+        {hasReferenceImages && (
+          <div className="rounded-2xl border border-border bg-surface p-4">
+            <h3 className="text-sm font-bold text-text mb-3">참고 이미지</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {consultation.referenceImages!.map((url, i) => (
+                <div key={i} className="rounded-xl overflow-hidden border border-border">
+                  <img src={url} alt="" className="w-full h-auto object-contain" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Canvas - Read only */}
+        {hasCanvas && (
+          <div className="rounded-2xl border border-border bg-surface p-4">
+            <h3 className="text-sm font-bold text-text mb-3">네일 디자인</h3>
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <p className="text-xs text-text-muted text-center mb-2">왼손</p>
+                <HandIllustration
+                  hand="left"
+                  selections={buildSelections('left_hand')}
+                  onFingerTap={() => {}}
+                />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs text-text-muted text-center mb-2">오른손</p>
+                <HandIllustration
+                  hand="right"
+                  selections={buildSelections('right_hand')}
+                  onFingerTap={() => {}}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Treatment Photos */}
+        <div className="rounded-2xl border border-border bg-surface p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="text-sm font-bold text-text">시술 사진</h3>
+              <p className="text-xs text-text-muted mt-0.5">완성된 시술 사진을 촬영해 기록하세요 (최대 6장)</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => photoInputRef.current?.click()}
+              disabled={treatmentPhotos.length >= 6}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all active:scale-[0.97] disabled:opacity-40"
+              style={{
+                background: 'var(--color-primary)',
+                color: 'white',
+              }}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+              </svg>
+              사진 추가
+            </button>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              multiple
+              onChange={handlePhotoUpload}
+              className="hidden"
+            />
+          </div>
+
+          {treatmentPhotos.length > 0 ? (
+            <div className="grid grid-cols-3 gap-2">
+              {treatmentPhotos.map((url, i) => (
+                <div key={i} className="relative rounded-xl overflow-hidden border border-border aspect-square">
+                  <img src={url} alt={`시술 사진 ${i + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(i)}
+                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 flex items-center justify-center"
+                  >
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => photoInputRef.current?.click()}
+              className="w-full py-8 rounded-xl border-2 border-dashed border-border flex flex-col items-center gap-2 hover:border-primary/40 hover:bg-surface-alt transition-all"
+            >
+              <svg className="w-8 h-8 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+              </svg>
+              <span className="text-xs text-text-muted font-medium">탭하여 사진 촬영 또는 선택</span>
+            </button>
+          )}
+        </div>
+
+        {/* Price & Time Summary */}
+        <div className="rounded-2xl border border-border bg-surface p-4">
+          <h3 className="text-sm font-bold text-text mb-3">시술 내역</h3>
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-text-secondary">총 금액</span>
+              <span className="text-lg font-extrabold text-primary">{formatPrice(totalPrice)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-text-secondary">예상 소요 시간</span>
+              <span className="text-sm font-semibold text-text">{estimatedMinutes}분</span>
+            </div>
+            {consultation.discount && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-text-secondary">할인</span>
+                <span className="text-sm font-semibold" style={{ color: 'var(--color-error, #ef4444)' }}>
+                  -{consultation.discount.type === 'percent' ? `${consultation.discount.value}%` : formatPrice(consultation.discount.value)}
+                </span>
+              </div>
+            )}
+            {consultation.deposit && consultation.deposit > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-text-secondary">예약금</span>
+                <span className="text-sm font-semibold text-text-secondary">-{formatPrice(consultation.deposit)}</span>
+              </div>
+            )}
+            <div className="mt-2 pt-2 border-t border-border flex justify-between items-center">
+              <span className="text-sm font-bold text-text">최종 결제</span>
+              <span className="text-lg font-extrabold text-text">{formatPrice(priceBreakdown.finalPrice)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Small Talk Memo */}
+        <div className="rounded-2xl border border-border bg-surface p-4">
+          <h3 className="text-sm font-bold text-text mb-1">스몰토크 메모</h3>
+          <p className="text-[11px] text-text-muted mb-3">고객과 나눈 이야기를 기록해두면 다음 방문 때 활용할 수 있어요</p>
+
+          {isSaved && (
+            <div
+              className="mb-3 rounded-xl px-3 py-2 text-xs font-semibold flex items-center gap-1.5"
+              style={{ background: 'color-mix(in srgb, var(--color-success) 12%, var(--color-surface))', color: 'var(--color-success)' }}
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              저장됐어요
+            </div>
+          )}
+
+          <textarea
+            value={smallTalkText}
+            onChange={(e) => setSmallTalkText(e.target.value)}
+            placeholder="고객과 나눈 이야기를 메모해두세요 (취미, 관심사 등)"
+            rows={3}
+            className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
+
+          <button
+            onClick={handleSaveSmallTalk}
+            disabled={!smallTalkText.trim()}
+            className="mt-2 w-full py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-[0.98] disabled:opacity-40"
+            style={{
+              background: smallTalkText.trim() ? 'var(--color-primary)' : 'var(--color-border)',
+              color: smallTalkText.trim() ? 'white' : 'var(--color-text-muted)',
+            }}
+          >
+            메모 저장
+          </button>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <div className="sticky bottom-0 px-4 py-4 border-t border-border bg-background" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+        <button
+          onClick={handleComplete}
+          className="w-full py-3.5 rounded-xl font-bold text-sm text-white transition-all active:scale-[0.98]"
+          style={{ background: 'var(--color-primary)' }}
+        >
+          홈으로
+        </button>
+      </div>
+    </div>
+  );
+}
