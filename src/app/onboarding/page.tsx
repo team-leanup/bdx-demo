@@ -61,7 +61,7 @@ export default function OnboardingWelcomePage() {
 
           {/* Step indicator: 4 circles */}
           <div className="flex items-center justify-center gap-2 mt-2">
-            {Array.from({ length: 4 }).map((_, i) => (
+            {Array.from({ length: 7 }).map((_, i) => (
               <div
                 key={i}
                 className="w-2.5 h-2.5 rounded-full border-2"

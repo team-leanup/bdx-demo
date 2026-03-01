@@ -55,7 +55,7 @@ export function ConsultationHeader({
       <button
         type="button"
         onClick={handleBack}
-        className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-surface-alt transition-colors"
+        className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-surface-alt transition-colors"
         aria-label={t('consultation.backLabel')}
       >
         <svg
@@ -81,7 +81,7 @@ export function ConsultationHeader({
       <button
         type="button"
         onClick={handleClose}
-        className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-surface-alt transition-colors"
+        className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-surface-alt transition-colors"
         aria-label={t('consultation.closeConsultation')}
       >
         <svg

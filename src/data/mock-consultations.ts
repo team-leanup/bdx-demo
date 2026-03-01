@@ -1,6 +1,12 @@
 import type { ConsultationRecord } from '@/types/consultation';
 import { ConsultationStep } from '@/types/consultation';
 
+function getRelativeDate(daysAgo: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  return d.toISOString();
+}
+
 export const MOCK_CONSULTATIONS: ConsultationRecord[] = [
   {
     id: 'record-001',
@@ -28,8 +34,8 @@ export const MOCK_CONSULTATIONS: ConsultationRecord[] = [
     totalPrice: 100000,
     estimatedMinutes: 120,
     finalPrice: 85000,
-    createdAt: '2026-02-20T13:00:00.000Z',
-    updatedAt: '2026-02-20T14:30:00.000Z',
+    createdAt: getRelativeDate(0),
+    updatedAt: getRelativeDate(0),
     notes: '웨딩 준비 고객. 그라데이션 풀아트, 파츠 A등급 3개',
     checklist: {
       shape: 'round',
@@ -64,8 +70,8 @@ export const MOCK_CONSULTATIONS: ConsultationRecord[] = [
     totalPrice: 65000,
     estimatedMinutes: 70,
     finalPrice: 60000,
-    createdAt: '2026-02-25T10:00:00.000Z',
-    updatedAt: '2026-02-25T11:10:00.000Z',
+    createdAt: getRelativeDate(0),
+    updatedAt: getRelativeDate(0),
     checklist: {
       shape: 'round',
       length: 'medium',
@@ -128,8 +134,8 @@ export const MOCK_CONSULTATIONS: ConsultationRecord[] = [
     totalPrice: 73000,
     estimatedMinutes: 95,
     finalPrice: 65000,
-    createdAt: '2026-02-22T11:00:00.000Z',
-    updatedAt: '2026-02-22T12:35:00.000Z',
+    createdAt: getRelativeDate(1),
+    updatedAt: getRelativeDate(1),
   },
   {
     id: 'record-005',
@@ -344,8 +350,8 @@ export const MOCK_CONSULTATIONS: ConsultationRecord[] = [
     totalPrice: 83000,
     estimatedMinutes: 90,
     finalPrice: 75000,
-    createdAt: '2026-02-24T12:00:00.000Z',
-    updatedAt: '2026-02-24T13:30:00.000Z',
+    createdAt: getRelativeDate(0),
+    updatedAt: getRelativeDate(0),
   },
 ];
 

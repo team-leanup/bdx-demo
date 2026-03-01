@@ -41,16 +41,6 @@ const DEFAULT_DAY_SCHEDULES: DaySchedule[] = DAY_LABEL_KEYS.map((_, i) => ({
   closeTime: '20:00',
 }));
 
-const PRO_FEATURES = [
-  { label: '추가금 세부 설정', ready: true },
-  { label: '파츠 커스텀 등록', ready: true },
-  { label: '고객 시술 이미지 갤러리', ready: true },
-  { label: '상담 기록 이미지 첨부', ready: true },
-  { label: '매출 상세 분석 리포트', ready: true },
-  { label: '월간/주간 자동 리포트', ready: true },
-  { label: '다중 매장 관리', ready: false },
-  { label: 'AI 인사이트', ready: false },
-];
 
 // ── 커스텀 파츠 관리 컴포넌트 ──
 function CustomPartsManager() {
@@ -403,112 +393,6 @@ function OperatingHoursSection() {
   );
 }
 
-// Pro 요금제 섹션 (앱 탭 내부)
-function ProPlanSection() {
-  const t = useT();
-  const [expanded, setExpanded] = useState(false);
-
-  return (
-    <Section title={t('settings.pro_title')}>
-      <Card className="mx-4 md:mx-0 overflow-hidden p-0">
-        {/* Pro 등록 버튼 */}
-        <button
-          className="w-full px-5 py-4 flex items-center gap-3 text-left"
-          style={{
-            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%)',
-          }}
-          onClick={() => setExpanded((v) => !v)}
-        >
-          <div className="flex-shrink-0">
-            <span className="inline-flex items-center gap-1 rounded-md bg-white/20 border border-white/30 px-2 py-0.5 text-[11px] font-extrabold text-white tracking-widest">
-              PRO
-            </span>
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-bold text-white">{t('settings.pro_register')}</p>
-            <p className="text-xs text-amber-100 mt-0.5">{t('settings.pro_desc')}</p>
-          </div>
-          {/* Chevron */}
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={cn(
-              'w-4 h-4 text-white flex-shrink-0 transition-transform duration-200',
-              expanded && 'rotate-180',
-            )}
-          >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </button>
-
-        {/* Pro 기능 목록 (펼침) */}
-        {expanded && (
-          <div className="px-5 py-4 border-t border-amber-200/30 bg-amber-50/50 dark:bg-amber-900/10">
-            <p className="text-xs font-semibold text-amber-800/70 dark:text-amber-300/70 mb-3 uppercase tracking-wider">
-              {t('settings.pro_features')}
-            </p>
-            <div className="flex flex-col gap-2">
-              {PRO_FEATURES.map((feature, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  {feature.ready ? (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="w-3.5 h-3.5 text-amber-600 flex-shrink-0"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  ) : (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="w-3.5 h-3.5 text-text-muted flex-shrink-0"
-                    >
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="12" y1="8" x2="12" y2="12" />
-                      <line x1="12" y1="16" x2="12.01" y2="16" />
-                    </svg>
-                  )}
-                  <span className="text-sm text-text-secondary">
-                    {feature.label}
-                  </span>
-                  {!feature.ready && (
-                    <span className="ml-auto rounded-full bg-border/60 px-2 py-0.5 text-[10px] font-medium text-text-muted">
-                      {t('settings.pro_comingSoon')}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-            <button
-              className="mt-4 w-full rounded-xl py-2.5 text-sm font-bold text-white transition-opacity hover:opacity-90"
-              style={{
-                background: 'linear-gradient(135deg, #f59e0b 0%, #b45309 100%)',
-              }}
-            >
-              {t('settings.pro_start')}
-            </button>
-          </div>
-        )}
-      </Card>
-    </Section>
-  );
-}
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -865,9 +749,6 @@ export default function SettingsPage() {
       {/* ── 앱 탭 ── */}
       {effectiveTab === 'app' && (
         <div className="flex flex-col gap-6">
-          {/* Pro 요금제 */}
-          <ProPlanSection />
-
           {/* 언어 설정 */}
           <Section title={t('settings.language')}>
             <Card className="mx-4 md:mx-0">
@@ -940,22 +821,12 @@ export default function SettingsPage() {
           <Section title={t('settings.app_title')}>
             <Card className="mx-4 md:mx-0">
               <div className="flex flex-col gap-3">
-                {/* 사용 가이드 링크 */}
-                <button
-                  onClick={() => router.push('/onboarding/guide')}
-                  className="flex items-center gap-3 rounded-xl border border-border px-3 py-3 text-left transition-colors hover:bg-surface-alt"
-                >
-                  {/* book SVG */}
-                  <svg className="h-5 w-5 flex-shrink-0 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-                  </svg>
-                  <span className="flex-1 text-sm font-medium text-text">{t('settings.app_guide')}</span>
-                  <svg className="h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary">{t('settings.version')}</span>
+                  <span className="font-medium text-text">1.0.0 (Demo)</span>
+                </div>
 
-                {/* 사용가이드 다시보기 */}
+                {/* 사용 가이드 다시보기 */}
                 <button
                   onClick={() => router.push('/home?tour=true')}
                   className="flex items-center gap-3 rounded-xl border border-border px-3 py-3 text-left transition-colors hover:bg-surface-alt"
@@ -963,16 +834,11 @@ export default function SettingsPage() {
                   <svg className="h-5 w-5 flex-shrink-0 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
                   </svg>
-                  <span className="flex-1 text-sm font-medium text-text">사용가이드 다시보기</span>
+                  <span className="flex-1 text-sm font-medium text-text">사용 가이드 다시보기</span>
                   <svg className="h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
-
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">{t('settings.version')}</span>
-                  <span className="font-medium text-text">1.0.0 (Demo)</span>
-                </div>
 
                 {/* 계정 전환 */}
                 <button

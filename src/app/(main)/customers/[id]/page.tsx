@@ -61,6 +61,12 @@ function CustomerDetailContent({ id }: { id: string }) {
   const customer = getMockCustomerById(id);
   const [isVip, setIsVip] = useState(() => getMockCustomerById(id)?.isRegular ?? false);
   const [tagsExpanded, setTagsExpanded] = useState(false);
+  const [editingTags, setEditingTags] = useState(false);
+  const [localTags, setLocalTags] = useState(customer?.tags ?? []);
+  const [newTagValue, setNewTagValue] = useState('');
+  const [showSmallTalkInput, setShowSmallTalkInput] = useState(false);
+  const [newSmallTalk, setNewSmallTalk] = useState('');
+  const [localSmallTalkNotes, setLocalSmallTalkNotes] = useState(customer?.smallTalkNotes ?? []);
   const [galleryTab, setGalleryTab] = useState<'consult' | 'treatment'>('treatment');
   const [treatmentUploads, setTreatmentUploads] = useState<UploadedImage[]>([]);
   const [consultUploads, setConsultUploads] = useState<UploadedImage[]>([]);
@@ -119,9 +125,9 @@ function CustomerDetailContent({ id }: { id: string }) {
 
   const pref = customer.preference;
 
-  // 태그를 카테고리별로 분류
+  // 태그를 카테고리별로 분류 (localTags 기반)
   const tagsByCategory: Partial<Record<TagCategory, string[]>> = {};
-  for (const tag of customer.tags) {
+  for (const tag of localTags) {
     if (!tagsByCategory[tag.category]) tagsByCategory[tag.category] = [];
     tagsByCategory[tag.category]!.push(tag.value);
   }
@@ -539,13 +545,18 @@ function CustomerDetailContent({ id }: { id: string }) {
         <Card className="mx-4 shadow-md rounded-2xl">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-text-secondary">시술 성향 태그</h2>
-            <button className="text-xs text-primary">편집</button>
+            <button
+              className="text-xs text-primary"
+              onClick={() => setEditingTags((prev) => !prev)}
+            >
+              {editingTags ? '완료' : '편집'}
+            </button>
           </div>
           {/* 카테고리별 그룹 표시 */}
           <div className="flex flex-col gap-3">
             {registeredPresets.map((preset) => {
               const tagsForCategory = tagsByCategory[preset.category] ?? [];
-              if (tagsForCategory.length === 0) return null;
+              if (tagsForCategory.length === 0 && !editingTags) return null;
               return (
                 <div key={preset.category}>
                   <p
@@ -557,7 +568,7 @@ function CustomerDetailContent({ id }: { id: string }) {
                   <div
                     className={cn(
                       'flex flex-wrap gap-1.5 overflow-hidden transition-all duration-300',
-                      tagsExpanded ? 'max-h-none' : 'max-h-20',
+                      tagsExpanded || editingTags ? 'max-h-none' : 'max-h-20',
                     )}
                   >
                     {tagsForCategory.map((val) => (
@@ -568,6 +579,16 @@ function CustomerDetailContent({ id }: { id: string }) {
                         className="px-3 py-1 text-xs"
                       >
                         {val}
+                        {editingTags && (
+                          <button
+                            className="ml-1 text-[10px] opacity-60 hover:opacity-100"
+                            onClick={() => setLocalTags((prev) =>
+                              prev.filter((t) => !(t.category === preset.category && t.value === val))
+                            )}
+                          >
+                            ✕
+                          </button>
+                        )}
                       </Badge>
                     ))}
                   </div>
@@ -575,7 +596,49 @@ function CustomerDetailContent({ id }: { id: string }) {
               );
             })}
           </div>
-          {registeredPresets.length > 2 && (
+          {editingTags && (
+            <div className="mt-3 flex gap-2">
+              <input
+                type="text"
+                value={newTagValue}
+                onChange={(e) => setNewTagValue(e.target.value)}
+                placeholder="새 태그 입력"
+                className="flex-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-text placeholder:text-text-muted"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newTagValue.trim()) {
+                    setLocalTags((prev) => [...prev, {
+                      id: `t-${Date.now()}`,
+                      customerId: customer.id,
+                      category: 'etc' as TagCategory,
+                      value: newTagValue.trim(),
+                      isCustom: true,
+                      createdAt: new Date().toISOString(),
+                    }]);
+                    setNewTagValue('');
+                  }
+                }}
+              />
+              <button
+                onClick={() => {
+                  if (newTagValue.trim()) {
+                    setLocalTags((prev) => [...prev, {
+                      id: `t-${Date.now()}`,
+                      customerId: customer.id,
+                      category: 'etc' as TagCategory,
+                      value: newTagValue.trim(),
+                      isCustom: true,
+                      createdAt: new Date().toISOString(),
+                    }]);
+                    setNewTagValue('');
+                  }
+                }}
+                className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white"
+              >
+                추가
+              </button>
+            </div>
+          )}
+          {registeredPresets.length > 2 && !editingTags && (
             <button
               onClick={() => setTagsExpanded((prev) => !prev)}
               className="mt-3 text-xs font-medium text-primary"
@@ -595,15 +658,46 @@ function CustomerDetailContent({ id }: { id: string }) {
           <button
             className="rounded-xl border px-3 py-1 text-xs font-medium transition-colors hover:bg-primary hover:text-white"
             style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+            onClick={() => setShowSmallTalkInput((prev) => !prev)}
           >
-            + 추가
+            {showSmallTalkInput ? '취소' : '+ 추가'}
           </button>
         </div>
-        {customer.smallTalkNotes.length === 0 ? (
+        {showSmallTalkInput && (
+          <div className="mb-3 flex flex-col gap-2">
+            <textarea
+              value={newSmallTalk}
+              onChange={(e) => setNewSmallTalk(e.target.value)}
+              placeholder="고객과의 대화 내용을 기록하세요..."
+              className="w-full rounded-xl border border-border bg-surface p-3 text-sm text-text placeholder:text-text-muted resize-none"
+              rows={3}
+            />
+            <button
+              onClick={() => {
+                if (newSmallTalk.trim()) {
+                  setLocalSmallTalkNotes((prev) => [{
+                    id: `stn-${Date.now()}`,
+                    customerId: customer.id,
+                    noteText: newSmallTalk.trim(),
+                    createdAt: new Date().toISOString(),
+                    createdByDesignerId: 'designer-001',
+                    createdByDesignerName: '나',
+                  }, ...prev]);
+                  setNewSmallTalk('');
+                  setShowSmallTalkInput(false);
+                }
+              }}
+              className="self-end rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-white"
+            >
+              저장
+            </button>
+          </div>
+        )}
+        {localSmallTalkNotes.length === 0 ? (
           <p className="text-sm text-text-muted">기록이 없습니다</p>
         ) : (
           <div className="flex flex-col gap-3">
-            {[...customer.smallTalkNotes]
+            {[...localSmallTalkNotes]
               .sort(
                 (a, b) =>
                   new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -635,8 +729,17 @@ function CustomerDetailContent({ id }: { id: string }) {
       {/* 구분선 */}
       <div className="mx-4 h-px" style={{ background: 'var(--color-border)' }} />
 
-      {/* 상담 기록으로 이동 */}
-      <div className="px-4">
+      {/* CTA 버튼 */}
+      <div className="px-4 flex flex-col gap-2">
+        <Button
+          variant="primary"
+          fullWidth
+          onClick={() => router.push(
+            `/consultation/customer?name=${encodeURIComponent(customer.name)}&phone=${encodeURIComponent(customer.phone)}&customerId=${customer.id}`
+          )}
+        >
+          이 고객으로 새 상담 시작
+        </Button>
         <Button
           variant="secondary"
           fullWidth

@@ -105,7 +105,7 @@ export default function CanvasPage() {
   return (
     <div className="h-dvh flex flex-col bg-background overflow-hidden">
       <ConsultationHeader
-        stepNumber={5}
+        stepNumber={4}
         totalSteps={5}
         title={t('consultation.canvasTitle')}
         onBack={handleBack}

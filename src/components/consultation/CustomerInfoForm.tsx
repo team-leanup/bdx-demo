@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui';
 import { MOCK_CUSTOMERS } from '@/data/mock-customers';
-import { MOCK_CONSULTATIONS } from '@/data/mock-consultations';
+import { useRecordsStore } from '@/store/records-store';
 import { cn } from '@/lib/cn';
 import { useT } from '@/lib/i18n';
 import type { Customer } from '@/types/customer';
@@ -54,6 +54,7 @@ export function CustomerInfoForm({
   className,
 }: CustomerInfoFormProps) {
   const t = useT();
+  const allRecords = useRecordsStore((s) => s.getAllRecords)();
   const [mode, setMode] = useState<'new' | 'existing'>('new');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -181,7 +182,7 @@ export function CustomerInfoForm({
 
           {/* 선택된 고객의 최근 상담 내역 카드 */}
           {selectedCustomer && (() => {
-            const records = MOCK_CONSULTATIONS
+            const records = allRecords
               .filter((r: ConsultationRecord) => r.customerId === selectedCustomer.id)
               .sort((a: ConsultationRecord, b: ConsultationRecord) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
             const latest = records[0];

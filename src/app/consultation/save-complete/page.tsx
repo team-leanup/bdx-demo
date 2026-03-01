@@ -24,7 +24,7 @@ function SaveCompleteContent() {
       title: '시술 확인서 보기',
       badge: null,
       subtitle: '네일 디자인 요약과 금액을 확인해요',
-      href: '/consultation/treatment-sheet',
+      href: `/consultation/treatment-sheet?consultationId=${consultationId}&customerId=${customerId}`,
       accent: false,
     },
   ];

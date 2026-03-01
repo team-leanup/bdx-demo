@@ -225,6 +225,7 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
         <AnimatePresence mode="wait">
           <motion.div
             key={activeHand}
+            className="w-full"
             initial={{ opacity: 0, x: activeHand === 'right' ? 30 : -30 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: activeHand === 'right' ? -30 : 30 }}

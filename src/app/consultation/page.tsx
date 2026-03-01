@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useConsultationStore } from '@/store/consultation-store';
@@ -67,11 +67,23 @@ const STEP_FLOW_ICONS = ['👤', '✋', '🎨', '✨', '📋'];
 
 export default function ConsultationStartPage() {
   const router = useRouter();
+  const consultation = useConsultationStore((s) => s.consultation);
   const { reset, setDesignerId, setStep } = useConsultationStore();
   const authDesignerId = useAuthStore((s) => s.activeDesignerId);
   const [selectedDesignerId, setSelectedDesignerId] = useState<string>(authDesignerId || '');
+  const [showResumeDialog, setShowResumeDialog] = useState(false);
   const { locale, setConsultationLocale } = useLocaleStore();
   const t = useT();
+
+  useEffect(() => {
+    if (
+      consultation.currentStep !== ConsultationStep.START &&
+      consultation.currentStep !== ConsultationStep.CUSTOMER_INFO &&
+      consultation.customerName
+    ) {
+      setShowResumeDialog(true);
+    }
+  }, []);
 
   const STEP_FLOW = [
     { icon: STEP_FLOW_ICONS[0], label: t('consultation.customerInfo') },
@@ -92,6 +104,40 @@ export default function ConsultationStartPage() {
 
   return (
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
+      {/* Resume dialog */}
+      {showResumeDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="mx-4 w-full max-w-sm rounded-2xl bg-surface p-6 shadow-xl">
+            <h3 className="text-lg font-bold text-text mb-2">진행 중인 상담이 있어요</h3>
+            <p className="text-sm text-text-secondary mb-5">
+              {consultation.customerName}님 상담을 이어서 진행할까요?
+            </p>
+            <div className="flex flex-col gap-2">
+              <Button variant="primary" fullWidth onClick={() => {
+                setShowResumeDialog(false);
+                const stepRoutes: Record<string, string> = {
+                  [ConsultationStep.STEP1_BASIC]: '/consultation/step1',
+                  [ConsultationStep.STEP2_DESIGN]: '/consultation/step2',
+                  [ConsultationStep.STEP3_OPTIONS]: '/consultation/step3',
+                  [ConsultationStep.CANVAS]: '/consultation/canvas',
+                  [ConsultationStep.SUMMARY]: '/consultation/summary',
+                };
+                const route = stepRoutes[consultation.currentStep] || '/consultation/customer';
+                router.push(route);
+              }}>
+                이어서 상담하기
+              </Button>
+              <Button variant="ghost" fullWidth onClick={() => {
+                setShowResumeDialog(false);
+                reset();
+              }}>
+                새로 시작하기
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="flex items-center justify-between px-4 md:px-8 py-4 bg-surface border-b border-border">
         <button
@@ -137,17 +183,17 @@ export default function ConsultationStartPage() {
           </div>
 
           {/* Step flow visual */}
-          <div className="flex items-center justify-between bg-surface-alt rounded-2xl px-4 py-4 md:px-8 border border-border mb-6">
+          <div className="flex items-center justify-between bg-surface-alt rounded-2xl px-3 py-3 md:px-8 md:py-4 border border-border mb-6">
             {STEP_FLOW.map((step, i) => (
               <div key={step.label} className="flex items-center">
-                <div className="flex flex-col items-center gap-1">
+                <div className="flex flex-col items-center gap-1.5">
                   <div className="w-9 h-9 md:w-12 md:h-12 rounded-xl bg-surface border border-border flex items-center justify-center text-base md:text-xl shadow-sm">
                     {step.icon}
                   </div>
-                  <span className="text-[9px] md:text-xs text-text-muted font-medium leading-none text-center max-w-[48px] md:max-w-[64px]">{step.label}</span>
+                  <span className="text-[9px] md:text-xs text-text-muted font-medium leading-tight text-center whitespace-nowrap">{step.label}</span>
                 </div>
                 {i < STEP_FLOW.length - 1 && (
-                  <svg className="w-3 h-3 text-text-muted mx-0.5 mb-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg className="w-3 h-3 md:w-4 md:h-4 text-text-muted mx-0.5 md:mx-1.5 mb-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                   </svg>
                 )}

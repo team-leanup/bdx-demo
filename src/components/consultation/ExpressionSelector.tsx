@@ -12,67 +12,120 @@ interface ExpressionSelectorProps {
   className?: string;
 }
 
-// Visual SVG icons for each expression type - Refined with zoomed details
+// SVG icons: small base nail (left) + large magnifier loupe (right) showing zoomed detail
 const EXPRESSION_ICONS: Record<string, (selected: boolean) => React.ReactNode> = {
-  // 기본 (solid): Zoomed-in glossy nail tip
+  // ── 기본 (solid): 균일한 광택 강조 ──
   solid: (selected) => (
-    <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+    <svg width="96" height="80" viewBox="0 0 96 80" fill="none">
       <defs>
-        <linearGradient id="solid-zoom-grad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="currentColor" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="currentColor" stopOpacity="0.05" />
-        </linearGradient>
+        <clipPath id="s-lens"><circle cx="60" cy="40" r="22" /></clipPath>
       </defs>
-      {/* Zoomed Finger Tip */}
-      <path d="M12 50 C12 30 18 20 28 20 C38 20 44 30 44 50" stroke="currentColor" strokeWidth="4" fill="url(#solid-zoom-grad)" strokeLinecap="round" />
-      {/* Solid Glossy Nail */}
-      <path d="M16 45 Q16 25 28 25 Q40 25 40 45" fill="currentColor" fillOpacity={selected ? '0.7' : '0.2'} stroke="currentColor" strokeWidth="3" />
-      {/* Highlight */}
-      <path d="M22 32 Q24 28 30 28" stroke="white" strokeWidth="2.5" strokeLinecap="round" opacity="0.5" />
+      {/* Small base nail */}
+      <path d="M6 60 C6 40 12 28 20 28 C28 28 34 40 34 60" stroke="currentColor" strokeWidth="2.5" fill="currentColor" fillOpacity="0.04" strokeLinecap="round" />
+      <path d="M9 56 Q9 32 20 32 Q31 32 31 56" fill="currentColor" fillOpacity={selected ? '0.35' : '0.1'} stroke="currentColor" strokeWidth="2" />
+      <path d="M14 40 Q16 36 22 36" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.35" />
+      {/* ── Large magnifier ── */}
+      <g clipPath="url(#s-lens)">
+        <circle cx="60" cy="40" r="22" fill="currentColor" fillOpacity="0.05" />
+        {/* Zoomed nail surface — uniform glossy coat */}
+        <path d="M42 66 Q42 18 60 18 Q78 18 78 66" fill="currentColor" fillOpacity={selected ? '0.55' : '0.18'} />
+        {/* Glossy highlight streaks */}
+        <path d="M50 30 Q54 22 64 22" stroke="white" strokeWidth="3" strokeLinecap="round" opacity="0.7" />
+        <path d="M52 40 Q55 34 62 34" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.35" />
+        <path d="M54 50 Q56 46 61 46" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.2" />
+      </g>
+      {/* Rim + handle */}
+      <circle cx="60" cy="40" r="22" stroke="currentColor" strokeWidth="3.5" fill="none" opacity={selected ? '0.8' : '0.3'} />
+      <line x1="76" y1="56" x2="88" y2="68" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" opacity={selected ? '0.8' : '0.3'} />
     </svg>
   ),
-  // 그라데이션: Zoomed tip showing color blend
+
+  // ── 그라데이션: 아래→위 색 번짐 강조 ──
   gradient: (selected) => (
-    <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+    <svg width="96" height="80" viewBox="0 0 96 80" fill="none">
       <defs>
-        <linearGradient id="grad-zoom-fill" x1="28" y1="50" x2="28" y2="25" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="currentColor" stopOpacity={selected ? '0.8' : '0.4'} />
-          <stop offset="100%" stopColor="currentColor" stopOpacity="0.05" />
+        <clipPath id="g-lens"><circle cx="60" cy="40" r="22" /></clipPath>
+        <linearGradient id="g-zoom" x1="60" y1="66" x2="60" y2="18" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="currentColor" stopOpacity={selected ? '0.75' : '0.35'} />
+          <stop offset="60%" stopColor="currentColor" stopOpacity="0.15" />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="0.02" />
+        </linearGradient>
+        <linearGradient id="g-base" x1="20" y1="56" x2="20" y2="32" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="currentColor" stopOpacity={selected ? '0.45' : '0.2'} />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="0.02" />
         </linearGradient>
       </defs>
-      {/* Zoomed Finger Tip */}
-      <path d="M12 50 C12 30 18 20 28 20 C38 20 44 30 44 50" stroke="currentColor" strokeWidth="4" fill="currentColor" fillOpacity="0.05" strokeLinecap="round" />
-      {/* Gradient Nail Area */}
-      <path d="M16 45 Q16 25 28 25 Q40 25 40 45" fill="url(#grad-zoom-fill)" stroke="currentColor" strokeWidth="3" />
-      {/* Blend details */}
-      <circle cx="28" cy="35" r="8" fill="currentColor" fillOpacity="0.1" />
-      <circle cx="28" cy="35" r="4" fill="currentColor" fillOpacity="0.15" />
+      {/* Small base nail */}
+      <path d="M6 60 C6 40 12 28 20 28 C28 28 34 40 34 60" stroke="currentColor" strokeWidth="2.5" fill="currentColor" fillOpacity="0.04" strokeLinecap="round" />
+      <path d="M9 56 Q9 32 20 32 Q31 32 31 56" fill="url(#g-base)" stroke="currentColor" strokeWidth="2" />
+      {/* ── Large magnifier ── */}
+      <g clipPath="url(#g-lens)">
+        <circle cx="60" cy="40" r="22" fill="currentColor" fillOpacity="0.03" />
+        {/* Zoomed gradient nail — clear color fade */}
+        <path d="M42 66 Q42 18 60 18 Q78 18 78 66" fill="url(#g-zoom)" />
+        {/* Soft blend rings to emphasize gradation */}
+        <ellipse cx="60" cy="50" rx="14" ry="8" fill="currentColor" fillOpacity="0.12" />
+        <ellipse cx="60" cy="42" rx="10" ry="6" fill="currentColor" fillOpacity="0.08" />
+        <ellipse cx="60" cy="35" rx="6" ry="4" fill="currentColor" fillOpacity="0.05" />
+      </g>
+      <circle cx="60" cy="40" r="22" stroke="currentColor" strokeWidth="3.5" fill="none" opacity={selected ? '0.8' : '0.3'} />
+      <line x1="76" y1="56" x2="88" y2="68" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" opacity={selected ? '0.8' : '0.3'} />
     </svg>
   ),
-  // 프렌치: Zoomed focus on the tip line
+
+  // ── 프렌치: 팁 라인 경계 강조 ──
   french: (selected) => (
-    <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
-      {/* Zoomed Finger Tip */}
-      <path d="M12 50 C12 30 18 20 28 20 C38 20 44 30 44 50" stroke="currentColor" strokeWidth="4" fill="currentColor" fillOpacity="0.05" strokeLinecap="round" />
-      {/* Nude Nail Base */}
-      <path d="M16 45 Q16 25 28 25 Q40 25 40 45" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeWidth="3" />
-      {/* French Tip - Bold emphasis */}
-      <path d="M16 38 Q16 25 28 25 Q40 25 40 38 L40 42 Q40 30 28 30 Q16 30 16 42 Z" fill="currentColor" fillOpacity={selected ? '0.8' : '0.4'} />
-      <path d="M16 38 Q16 25 28 25 Q40 25 40 38" stroke="currentColor" strokeWidth="3" />
+    <svg width="96" height="80" viewBox="0 0 96 80" fill="none">
+      <defs>
+        <clipPath id="f-lens"><circle cx="60" cy="40" r="22" /></clipPath>
+      </defs>
+      {/* Small base nail */}
+      <path d="M6 60 C6 40 12 28 20 28 C28 28 34 40 34 60" stroke="currentColor" strokeWidth="2.5" fill="currentColor" fillOpacity="0.04" strokeLinecap="round" />
+      <path d="M9 56 Q9 32 20 32 Q31 32 31 56" fill="currentColor" fillOpacity="0.06" stroke="currentColor" strokeWidth="2" />
+      <path d="M9 44 Q9 32 20 32 Q31 32 31 44 L31 47 Q31 36 20 36 Q9 36 9 47 Z" fill="currentColor" fillOpacity={selected ? '0.4' : '0.18'} />
+      {/* ── Large magnifier ── */}
+      <g clipPath="url(#f-lens)">
+        <circle cx="60" cy="40" r="22" fill="currentColor" fillOpacity="0.03" />
+        {/* Zoomed nail base — nude */}
+        <path d="M42 66 Q42 18 60 18 Q78 18 78 66" fill="currentColor" fillOpacity="0.06" />
+        {/* Prominent white french tip */}
+        <path d="M42 36 Q42 18 60 18 Q78 18 78 36 L78 42 Q78 26 60 26 Q42 26 42 42 Z" fill="currentColor" fillOpacity={selected ? '0.8' : '0.35'} />
+        {/* Tip boundary line */}
+        <path d="M42 36 Q42 18 60 18 Q78 18 78 36" stroke="currentColor" strokeWidth="2.5" opacity="0.6" />
+        {/* Smile line curve */}
+        <path d="M46 40 Q60 30 74 40" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 2" opacity="0.3" />
+      </g>
+      <circle cx="60" cy="40" r="22" stroke="currentColor" strokeWidth="3.5" fill="none" opacity={selected ? '0.8' : '0.3'} />
+      <line x1="76" y1="56" x2="88" y2="68" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" opacity={selected ? '0.8' : '0.3'} />
     </svg>
   ),
-  // 마그네틱: Zoomed focus on the cat-eye shimmer line
+
+  // ── 마그네틱/캣아이: 대각선 쉬머 라인 강조 ──
   magnetic: (selected) => (
-    <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
-      {/* Zoomed Finger Tip */}
-      <path d="M12 50 C12 30 18 20 28 20 C38 20 44 30 44 50" stroke="currentColor" strokeWidth="4" fill="currentColor" fillOpacity="0.05" strokeLinecap="round" />
-      {/* Dark Base */}
-      <path d="M16 45 Q16 25 28 25 Q40 25 40 45" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="3" />
-      {/* Shimmer Cat-Eye Line */}
-      <path d="M18 42 Q28 30 38 22" stroke="currentColor" strokeWidth="6" strokeLinecap="round" opacity={selected ? '0.9' : '0.5'} />
-      <path d="M18 42 Q28 30 38 22" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
-      {/* Extra Sparkle */}
-      <circle cx="34" cy="28" r="2" fill="white" opacity="0.8" />
+    <svg width="96" height="80" viewBox="0 0 96 80" fill="none">
+      <defs>
+        <clipPath id="m-lens"><circle cx="60" cy="40" r="22" /></clipPath>
+      </defs>
+      {/* Small base nail */}
+      <path d="M6 60 C6 40 12 28 20 28 C28 28 34 40 34 60" stroke="currentColor" strokeWidth="2.5" fill="currentColor" fillOpacity="0.04" strokeLinecap="round" />
+      <path d="M9 56 Q9 32 20 32 Q31 32 31 56" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeWidth="2" />
+      <path d="M11 52 Q20 40 29 32" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity={selected ? '0.5' : '0.2'} />
+      {/* ── Large magnifier ── */}
+      <g clipPath="url(#m-lens)">
+        <circle cx="60" cy="40" r="22" fill="currentColor" fillOpacity="0.1" />
+        {/* Dark base coat */}
+        <path d="M42 66 Q42 18 60 18 Q78 18 78 66" fill="currentColor" fillOpacity="0.15" />
+        {/* Bold diagonal cat-eye shimmer */}
+        <path d="M42 60 Q60 36 78 24" stroke="currentColor" strokeWidth="10" strokeLinecap="round" opacity={selected ? '0.7' : '0.3'} />
+        <path d="M42 60 Q60 36 78 24" stroke="white" strokeWidth="3.5" strokeLinecap="round" opacity="0.6" />
+        {/* Sparkle highlights */}
+        <circle cx="68" cy="30" r="3" fill="white" opacity="0.85" />
+        <circle cx="72" cy="34" r="1.5" fill="white" opacity="0.5" />
+        <circle cx="52" cy="52" r="2" fill="white" opacity="0.4" />
+        <circle cx="48" cy="56" r="1" fill="white" opacity="0.3" />
+      </g>
+      <circle cx="60" cy="40" r="22" stroke="currentColor" strokeWidth="3.5" fill="none" opacity={selected ? '0.8' : '0.3'} />
+      <line x1="76" y1="56" x2="88" y2="68" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" opacity={selected ? '0.8' : '0.3'} />
     </svg>
   ),
 };

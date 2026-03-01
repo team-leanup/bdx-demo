@@ -41,7 +41,8 @@ export function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
   const previewFinal = Math.max(0, subtotal - previewDiscount - previewDeposit);
 
   const handleApply = () => {
-    const val = Number(discountValue);
+    let val = Number(discountValue);
+    if (discountType === 'percent') val = Math.min(Math.max(val, 0), 100);
     if (val > 0 && !isNaN(val)) {
       setDiscount({ type: discountType, value: val });
     } else {

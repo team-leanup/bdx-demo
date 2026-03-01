@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/cn';
 import { useT } from '@/lib/i18n';
+import { DESIGN_SCOPE_LABEL, BODY_PART_LABEL, EXPRESSION_LABEL } from '@/lib/labels';
+import { formatPrice } from '@/lib/format';
 import type { BookingStatus, BookingChannel } from '@/types/consultation';
 
 export interface TimeGridEvent {
@@ -19,6 +21,11 @@ export interface TimeGridEvent {
   language?: string;
   designerId?: string;
   originalId: string;
+  // Consultation details
+  designScope?: string;
+  bodyPart?: string;
+  finalPrice?: number;
+  expressions?: string[];
 }
 
 interface TimeGridCalendarProps {
@@ -199,7 +206,7 @@ export function TimeGridCalendar({ events, weekStartDate, onEventClick, onWeekCh
             <div className="absolute inset-0 grid grid-cols-[60px_repeat(7,1fr)]">
               <div />
               {weekDates.map((date) => (
-                <div key={date} className="relative border-l border-border">
+                <div key={date} className="relative border-l border-border overflow-hidden">
                   {(eventsByDate[date] || []).map((ev) => {
                     const startMin = timeToMinutes(ev.startTime);
                     const endMin = timeToMinutes(ev.endTime);
@@ -218,6 +225,17 @@ export function TimeGridCalendar({ events, weekStartDate, onEventClick, onWeekCh
                         style={{ top, height }}
                       >
                         <div className="text-[10px] font-semibold truncate">{ev.title}</div>
+                        {ev.type === 'consultation' && ev.designScope && (
+                          <div className="text-[9px] font-medium truncate">
+                            {BODY_PART_LABEL[ev.bodyPart ?? ''] ?? ''} {DESIGN_SCOPE_LABEL[ev.designScope] ?? ev.designScope}
+                            {ev.finalPrice != null && ` · ${formatPrice(ev.finalPrice)}`}
+                          </div>
+                        )}
+                        {ev.type === 'consultation' && ev.expressions && ev.expressions.length > 0 && height >= 56 && (
+                          <div className="text-[8px] opacity-60 truncate">
+                            {ev.expressions.map((e) => EXPRESSION_LABEL[e] ?? e).join(', ')}
+                          </div>
+                        )}
                         <div className="text-[9px] opacity-70 truncate">{ev.startTime}–{ev.endTime}</div>
                       </button>
                     );

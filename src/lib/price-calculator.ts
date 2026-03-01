@@ -1,6 +1,7 @@
 import type { ConsultationType } from '@/types/consultation';
 import type { PriceBreakdown, PriceItem, ServicePricing, PartsPricing } from '@/types/price';
 import type { CustomPart } from '@/types/canvas';
+import { estimateTime } from '@/lib/time-calculator';
 
 export const DEFAULT_SERVICE_PRICING: ServicePricing = {
   handBase: 60000,
@@ -191,7 +192,7 @@ export function calculatePrice(
   const finalPrice = Math.max(0, subtotal - discountAmount - depositAmount);
 
   // 예상 시간 (time-calculator와 별도로 기본 계산)
-  const estimatedMinutes = estimateTimeFromConsultation(consultation);
+  const estimatedMinutes = estimateTime(consultation);
 
   return {
     basePrice,
@@ -210,42 +211,3 @@ export function calculatePrice(
   };
 }
 
-function estimateTimeFromConsultation(consultation: ConsultationType): number {
-  // 기본 시간 (분)
-  let minutes = consultation.bodyPart === 'hand' ? 60 : 90;
-
-  // 오프
-  if (consultation.offType === 'same_shop') minutes += 10;
-  if (consultation.offType === 'other_shop') minutes += 20;
-
-  // 연장
-  if (consultation.extensionType === 'repair') minutes += 10;
-  if (consultation.extensionType === 'extension') minutes += 30;
-
-  // 디자인 범위
-  const designTime: Record<string, number> = {
-    solid_tone: 0,
-    solid_point: 15,
-    full_art: 30,
-    monthly_art: 30,
-  };
-  minutes += designTime[consultation.designScope] ?? 0;
-
-  // 표현 기법
-  for (const expr of consultation.expressions) {
-    if (expr === 'gradient') minutes += 10;
-    if (expr === 'french') minutes += 10;
-    if (expr === 'magnetic') minutes += 5;
-  }
-
-  // 파츠
-  if (consultation.hasParts) {
-    const totalParts = consultation.partsSelections.reduce(
-      (sum, s) => sum + s.quantity,
-      0,
-    );
-    minutes += Math.ceil(totalParts / 2) * 5;
-  }
-
-  return minutes;
-}

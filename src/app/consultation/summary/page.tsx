@@ -13,7 +13,7 @@ import { useLocaleStore } from '@/store/locale-store';
 import { calculatePrice } from '@/lib/price-calculator';
 import { estimateTime } from '@/lib/time-calculator';
 import { MOCK_CUSTOMERS } from '@/data/mock-customers';
-import { MOCK_CONSULTATIONS } from '@/data/mock-consultations';
+import { useRecordsStore } from '@/store/records-store';
 
 export default function SummaryPage() {
   const router = useRouter();
@@ -23,6 +23,7 @@ export default function SummaryPage() {
   const [discountOpen, setDiscountOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [customerMemo, setCustomerMemo] = useState('');
+  const addRecord = useRecordsStore((s) => s.addRecord);
   const t = useT();
 
   useEffect(() => {
@@ -53,8 +54,8 @@ export default function SummaryPage() {
     };
     sessionStorage.setItem(`bdx-saved-record-${newId}`, JSON.stringify(savedRecord));
 
-    // 기록 탭에 즉시 반영
-    MOCK_CONSULTATIONS.unshift(savedRecord as any);
+    // 기록 탭에 즉시 반영 (store 경유)
+    addRecord(savedRecord as any);
 
     // 스몰토크 메모 → MOCK_CUSTOMERS 해당 고객 smallTalkNotes에 자동 push
     if (customerMemo) {

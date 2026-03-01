@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useConsultationStore } from '@/store/consultation-store';
 import { useAuthStore } from '@/store/auth-store';
@@ -72,27 +72,6 @@ export default function TreatmentSheetPage() {
   const { activeDesignerId, activeDesignerName } = useAuthStore();
   const [smallTalkText, setSmallTalkText] = useState('');
   const [isSaved, setIsSaved] = useState(false);
-  const [treatmentPhotos, setTreatmentPhotos] = useState<string[]>([]);
-  const photoInputRef = useRef<HTMLInputElement>(null);
-
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-    Array.from(files).forEach((file) => {
-      if (treatmentPhotos.length >= 6) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const url = ev.target?.result as string;
-        setTreatmentPhotos((prev) => (prev.length < 6 ? [...prev, url] : prev));
-      };
-      reader.readAsDataURL(file);
-    });
-    e.target.value = '';
-  };
-
-  const removePhoto = (idx: number) => {
-    setTreatmentPhotos((prev) => prev.filter((_, i) => i !== idx));
-  };
   const [checklist, setChecklist] = useState<DailyChecklistState>({
     shape: (consultation.nailShape ?? null) as NailShape | null,
     length: null,
@@ -120,6 +99,7 @@ export default function TreatmentSheetPage() {
         isPoint: art.isPoint ?? false,
         artType: art.artType as FingerSelection['artType'],
         note: art.note,
+        memo: art.memo,
         parts: [],
       };
     }
@@ -290,8 +270,8 @@ export default function TreatmentSheetPage() {
         {hasCanvas && (
           <div className="rounded-2xl border border-border bg-surface p-4">
             <h3 className="text-sm font-bold text-text mb-3">네일 디자인</h3>
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
+            <div className="flex flex-col gap-6">
+              <div>
                 <p className="text-xs text-text-muted text-center mb-2">왼손</p>
                 <HandIllustration
                   hand="left"
@@ -299,7 +279,7 @@ export default function TreatmentSheetPage() {
                   onFingerTap={() => {}}
                 />
               </div>
-              <div className="flex-1">
+              <div>
                 <p className="text-xs text-text-muted text-center mb-2">오른손</p>
                 <HandIllustration
                   hand="right"
@@ -310,72 +290,6 @@ export default function TreatmentSheetPage() {
             </div>
           </div>
         )}
-
-        {/* Treatment Photos */}
-        <div className="rounded-2xl border border-border bg-surface p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h3 className="text-sm font-bold text-text">시술 사진</h3>
-              <p className="text-xs text-text-muted mt-0.5">완성된 시술 사진을 촬영해 기록하세요 (최대 6장)</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => photoInputRef.current?.click()}
-              disabled={treatmentPhotos.length >= 6}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all active:scale-[0.97] disabled:opacity-40"
-              style={{
-                background: 'var(--color-primary)',
-                color: 'white',
-              }}
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
-              </svg>
-              사진 추가
-            </button>
-            <input
-              ref={photoInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              multiple
-              onChange={handlePhotoUpload}
-              className="hidden"
-            />
-          </div>
-
-          {treatmentPhotos.length > 0 ? (
-            <div className="grid grid-cols-3 gap-2">
-              {treatmentPhotos.map((url, i) => (
-                <div key={i} className="relative rounded-xl overflow-hidden border border-border aspect-square">
-                  <img src={url} alt={`시술 사진 ${i + 1}`} className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => removePhoto(i)}
-                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/50 flex items-center justify-center"
-                  >
-                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => photoInputRef.current?.click()}
-              className="w-full py-8 rounded-xl border-2 border-dashed border-border flex flex-col items-center gap-2 hover:border-primary/40 hover:bg-surface-alt transition-all"
-            >
-              <svg className="w-8 h-8 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
-              </svg>
-              <span className="text-xs text-text-muted font-medium">탭하여 사진 촬영 또는 선택</span>
-            </button>
-          )}
-        </div>
 
         {/* Price & Time Summary */}
         <div className="rounded-2xl border border-border bg-surface p-4">

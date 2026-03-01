@@ -11,55 +11,8 @@ interface BodyPartSelectorProps {
   className?: string;
 }
 
-/**
- * Intuitive Hand Icon - Accurate anatomy in simple line style
- */
-const HAND_ICON = (
-  <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-    {/* Thumb - Angled out naturally */}
-    <path
-      d="M22 52 C14 48 10 42 12 38 C14 34 18 34 22 38 L28 44"
-      stroke="currentColor"
-      strokeWidth="5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    {/* Fingers and Palm silhouette */}
-    <path
-      d="M28 68 C22 68 18 64 18 58 L18 42 C18 38 21 36 24 36 C27 36 30 38 30 42 L30 52 L30 26 C30 22 33 20 36 20 C39 20 42 22 42 26 L42 50 L42 22 C42 18 45 16 48 16 C51 16 54 18 54 22 L54 50 L54 28 C54 24 57 22 60 22 C63 22 66 24 66 28 L66 58 C66 68 56 72 42 72 C28 72 28 68 28 68 Z"
-      stroke="currentColor"
-      strokeWidth="5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-/**
- * Intuitive Foot Icon - Clear sole shape and toe size difference
- */
-const FOOT_ICON = (
-  <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-    {/* Detailed Sole Silhouette with Arch */}
-    <path
-      d="M32 74 C18 74 14 58 16 42 C18 28 28 24 38 24 C52 24 62 40 62 58 C62 70 48 74 32 74 Z"
-      stroke="currentColor"
-      strokeWidth="5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    {/* Toes - Graduated sizes for instant recognition */}
-    <g fill="currentColor">
-      {/* Big Toe (Largest) */}
-      <circle cx="44" cy="14" r="7.5" />
-      {/* 2nd to 5th Toes (Decreasing) */}
-      <circle cx="58" cy="19" r="5.5" />
-      <circle cx="68" cy="28" r="4.5" />
-      <circle cx="72" cy="40" r="3.5" />
-      <circle cx="70" cy="52" r="3" />
-    </g>
-  </svg>
-);
+const HAND_ICON = <span className="text-[64px] leading-none">🤚</span>;
+const FOOT_ICON = <span className="text-[64px] leading-none">🦶</span>;
 
 const ICONS: Record<string, React.ReactNode> = {
   hand: HAND_ICON,

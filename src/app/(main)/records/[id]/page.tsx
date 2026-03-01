@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, Badge, Button } from '@/components/ui';
 import { formatPrice, formatDateDotWithTime } from '@/lib/format';
 import { BODY_PART_LABEL, DESIGN_SCOPE_LABEL, EXPRESSION_LABEL, OFF_TYPE_LABEL, getDesignerName } from '@/lib/labels';
-import { getMockConsultationById, MOCK_CONSULTATIONS } from '@/data/mock-consultations';
+import { getMockConsultationById } from '@/data/mock-consultations';
 import { calculatePrice } from '@/lib/price-calculator';
 import { useT } from '@/lib/i18n';
 import { DailyChecklist } from '@/components/consultation/DailyChecklist';
@@ -209,10 +209,13 @@ export default function RecordDetailPage({ params }: Props) {
           initialData={checklistData}
           onSave={(data) => {
             setChecklistData(data);
-            // Update in-memory mock data
-            const idx = MOCK_CONSULTATIONS.findIndex((r) => r.id === id);
-            if (idx !== -1) {
-              MOCK_CONSULTATIONS[idx] = { ...MOCK_CONSULTATIONS[idx], checklist: data };
+            // Persist checklist to sessionStorage
+            const saved = sessionStorage.getItem(`bdx-saved-record-${id}`);
+            if (saved) {
+              try {
+                const parsed = JSON.parse(saved);
+                sessionStorage.setItem(`bdx-saved-record-${id}`, JSON.stringify({ ...parsed, checklist: data }));
+              } catch { /* ignore */ }
             }
           }}
           onSaveToPreference={() => {

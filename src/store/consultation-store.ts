@@ -181,6 +181,7 @@ export const useConsultationStore = create<ConsultationStore>()(
       goNext: () => {
         const current = get().consultation.currentStep;
         const idx = STEP_ORDER.indexOf(current);
+        if (idx === -1) return;
         if (idx < STEP_ORDER.length - 1) {
           set((state) => ({
             consultation: {
@@ -194,6 +195,7 @@ export const useConsultationStore = create<ConsultationStore>()(
       goPrev: () => {
         const current = get().consultation.currentStep;
         const idx = STEP_ORDER.indexOf(current);
+        if (idx === -1) return;
         if (idx > 0) {
           set((state) => ({
             consultation: {

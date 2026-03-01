@@ -8,7 +8,14 @@ import { MOCK_DESIGNERS } from '@/data/mock-shop';
 const SALT = 'bdx-salt';
 
 function hashPassword(password: string): string {
-  return btoa(password + SALT);
+  let hash = 0;
+  const str = password + SALT;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return 'h_' + Math.abs(hash).toString(36);
 }
 
 function buildDefaultPasswords(): Record<string, string> {

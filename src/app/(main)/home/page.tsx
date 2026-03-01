@@ -7,8 +7,8 @@ import { TourOverlay } from '@/components/onboarding/TourOverlay';
 import { Badge } from '@/components/ui';
 import { formatPrice, formatRelativeDate } from '@/lib/format';
 import { BODY_PART_LABEL, DESIGN_SCOPE_LABEL } from '@/lib/labels';
-import { MOCK_CONSULTATIONS } from '@/data/mock-consultations';
 import { MOCK_SHOP } from '@/data/mock-shop';
+import { useRecordsStore } from '@/store/records-store';
 import { useAppStore } from '@/store/app-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { useConsultationStore } from '@/store/consultation-store';
@@ -16,6 +16,7 @@ import type { BookingChannel, BookingRequest } from '@/types/consultation';
 import { ReservationForm } from '@/components/home/ReservationForm';
 import { useT } from '@/lib/i18n';
 import { useAuthStore } from '@/store/auth-store';
+import { useLocaleStore } from '@/store/locale-store';
 import {
   IconScissors,
   IconWon,
@@ -53,6 +54,8 @@ export default function HomePage() {
   const [showReservationModal, setShowReservationModal] = useState(false);
   const { shopSettings } = useAppStore();
   const { activeDesignerName, role } = useAuthStore();
+  const restoreLocale = useLocaleStore((s) => s.restoreLocale);
+  const allRecords = useRecordsStore((s) => s.getAllRecords);
 
   const CHANNEL_BADGE: Record<BookingChannel, { label: string; icon: string; variant: 'primary' | 'neutral' | 'success' | 'warning' }> = {
     kakao: { label: t('home.channel_kakao'), icon: '💬', variant: 'warning' },
@@ -62,6 +65,10 @@ export default function HomePage() {
   };
 
   useEffect(() => {
+    restoreLocale();
+  }, [restoreLocale]);
+
+  useEffect(() => {
     if (searchParams.get('tour') === 'true') {
       const timer = setTimeout(() => setShowTour(true), 600);
       return () => clearTimeout(timer);
@@ -69,18 +76,19 @@ export default function HomePage() {
   }, [searchParams]);
   const shopName = shopSettings.shopName || MOCK_SHOP.name;
 
+  const records = allRecords();
   const today = getTodayStr();
-  const todayConsultations = MOCK_CONSULTATIONS.filter(
+  const todayConsultations = records.filter(
     (r) => r.createdAt.startsWith(today),
   );
   const todayRevenue = todayConsultations.reduce((sum, r) => sum + r.finalPrice, 0);
 
   const thisMonth = today.slice(0, 7);
-  const monthConsultations = MOCK_CONSULTATIONS.filter((r) =>
+  const monthConsultations = records.filter((r) =>
     r.createdAt.startsWith(thisMonth),
   );
 
-  const recentConsultations = [...MOCK_CONSULTATIONS]
+  const recentConsultations = [...records]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 4);
 
@@ -255,7 +263,7 @@ export default function HomePage() {
             )}
           </div>
           <button
-            onClick={() => router.push('/reservations')}
+            onClick={() => router.push('/records')}
             className="text-xs font-semibold text-primary active:opacity-60"
           >
             {t('home.section_viewAll')}
@@ -328,7 +336,7 @@ export default function HomePage() {
             <span className="text-sm font-bold text-text">{t('home.section_recentConsultation')}</span>
           </div>
           <button
-            onClick={() => router.push('/records')}
+            onClick={() => router.push('/records?view=list')}
             className="text-xs font-semibold text-primary active:opacity-60"
           >
             {t('home.section_viewAllShort')}

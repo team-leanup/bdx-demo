@@ -27,7 +27,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ko">
+    <html lang="ko" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `
+          try {
+            var t = JSON.parse(localStorage.getItem('bdx-theme') || '{}');
+            if (t.state && t.state.themeId) document.documentElement.setAttribute('data-theme', t.state.themeId);
+          } catch(e) {}
+        `}} />
+      </head>
       <body className="min-h-screen bg-background text-text font-pretendard">
         <ThemeProvider>{children}</ThemeProvider>
       </body>

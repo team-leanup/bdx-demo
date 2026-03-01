@@ -84,7 +84,7 @@ export const MOCK_CUSTOMERS: Customer[] = [
     assignedDesignerName: '효주',
     firstVisitDate: '2025-05-10',
     lastVisitDate: '2026-02-25',
-    visitCount: 12,
+    visitCount: 2,
     averageSpend: 58000,
     totalSpend: 696000,
     tags: [
@@ -150,7 +150,7 @@ export const MOCK_CUSTOMERS: Customer[] = [
     assignedDesignerName: '명훈',
     firstVisitDate: '2025-08-05',
     lastVisitDate: '2026-02-18',
-    visitCount: 8,
+    visitCount: 2,
     averageSpend: 95000,
     totalSpend: 760000,
     tags: [
@@ -209,7 +209,7 @@ export const MOCK_CUSTOMERS: Customer[] = [
     assignedDesignerName: '자훈',
     firstVisitDate: '2025-11-01',
     lastVisitDate: '2026-02-22',
-    visitCount: 4,
+    visitCount: 2,
     averageSpend: 68000,
     totalSpend: 272000,
     tags: [
@@ -304,7 +304,7 @@ export const MOCK_CUSTOMERS: Customer[] = [
     assignedDesignerName: '명훈',
     firstVisitDate: '2025-06-20',
     lastVisitDate: '2026-02-15',
-    visitCount: 9,
+    visitCount: 1,
     averageSpend: 82000,
     totalSpend: 738000,
     tags: [

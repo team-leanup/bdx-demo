@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useMemo, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Card, Badge, Input, BentoGrid, BentoCard } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { formatPrice } from '@/lib/format';
-import { DESIGN_SCOPE_LABEL, getDesignerName } from '@/lib/labels';
-import { MOCK_CONSULTATIONS } from '@/data/mock-consultations';
+import { DESIGN_SCOPE_LABEL, BODY_PART_LABEL, EXPRESSION_LABEL, getDesignerName } from '@/lib/labels';
+import { useRecordsStore } from '@/store/records-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { useAppStore } from '@/store/app-store';
@@ -95,6 +95,10 @@ function toTimeGridEvents(
       status: 'done',
       designerId: c.designerId,
       originalId: c.id,
+      designScope: c.consultation.designScope,
+      bodyPart: c.consultation.bodyPart,
+      finalPrice: c.finalPrice,
+      expressions: c.consultation.expressions,
     });
   }
 
@@ -110,8 +114,10 @@ const FILTER_KEYS: { key: FilterPeriod; i18nKey: string }[] = [
 
 export default function RecordsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const t = useT();
-  const [viewMode, setViewMode] = useState<ViewMode>('timegrid');
+  const initialView = (searchParams.get('view') as ViewMode) || 'timegrid';
+  const [viewMode, setViewMode] = useState<ViewMode>(initialView);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterPeriod>('all');
   const [reservationFilter, setReservationFilter] = useState<ReservationFilter>('all');
@@ -120,13 +126,15 @@ export default function RecordsPage() {
   const [selectedEvent, setSelectedEvent] = useState<TimeGridEvent | null>(null);
 
   const [editMode, setEditMode] = useState(false);
-  const [editForm, setEditForm] = useState({ title: '', phone: '', startTime: '', requestNote: '' });
+  const [editForm, setEditForm] = useState({ title: '', phone: '', startTime: '', requestNote: '', referenceImages: [] as string[] });
+  const editPhotoRef = useRef<HTMLInputElement>(null);
 
   const role = useAuthStore((s) => s.role);
   const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
   const allReservations = useReservationStore((s) => s.reservations);
   const updateReservation = useReservationStore((s) => s.updateReservation);
   const { shopSettings } = useAppStore();
+  const allConsultations = useRecordsStore((s) => s.getAllRecords)();
 
   // Derive calendar hours from business hours
   const { calendarStartHour, calendarEndHour } = useMemo(() => {
@@ -187,17 +195,17 @@ export default function RecordsPage() {
 
   const todayConsultations = useMemo(() => {
     const today = getTodayStr();
-    return MOCK_CONSULTATIONS.filter((c) => c.createdAt.split('T')[0] === today).length;
+    return allConsultations.filter((c) => c.createdAt.split('T')[0] === today).length;
   }, []);
 
   const timeGridEvents = useMemo(
-    () => toTimeGridEvents(filteredReservations, MOCK_CONSULTATIONS),
+    () => toTimeGridEvents(filteredReservations, allConsultations),
     [filteredReservations],
   );
 
   const sorted = useMemo(
     () =>
-      [...MOCK_CONSULTATIONS].sort(
+      [...allConsultations].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       ),
     [],
@@ -228,12 +236,8 @@ export default function RecordsPage() {
       <FeatureDiscovery
         featureId="records-views"
         icon="🗂️"
-        title="3가지 뷰로 확인하세요"
-        steps={[
-          { icon: '📋', title: '주간 타임그리드', description: '시간대별로 예약과 상담을 한눈에 확인하세요' },
-          { icon: '📆', title: '월간 캘린더', description: '한 달 일정을 달력으로 보고 날짜를 선택해 예약 목록을 확인하세요' },
-          { icon: '📝', title: '리스트 뷰', description: '상담 기록을 검색하고 기간별로 필터링할 수 있어요' },
-        ]}
+        title="기록 관리"
+        description={"주간 타임그리드, 월간 캘린더, 리스트 뷰로\n예약과 상담 기록을 한눈에 관리하세요."}
       />
       {/* Header */}
       <div className="px-4 md:px-0 pt-4">
@@ -261,7 +265,7 @@ export default function RecordsPage() {
         <BentoCard span="1x1">
           <div className="p-4 flex flex-col items-center justify-center h-full">
             <span className="text-2xl font-extrabold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
-              {MOCK_CONSULTATIONS.length}
+              {allConsultations.length}
             </span>
             <span className="text-xs text-text-secondary mt-1">총 상담 기록</span>
           </div>
@@ -337,11 +341,13 @@ export default function RecordsPage() {
               } else if (ev.type === 'reservation') {
                 setSelectedEvent(ev);
                 setEditMode(false);
+                const booking = allReservations.find((r) => r.id === ev.originalId);
                 setEditForm({
                   title: ev.title,
                   phone: ev.customerPhone ?? '',
                   startTime: ev.startTime,
                   requestNote: ev.requestNote ?? '',
+                  referenceImages: booking?.referenceImageUrls ?? [],
                 });
               }
             }}
@@ -400,13 +406,6 @@ export default function RecordsPage() {
               </div>
             ) : (
               <div className="flex flex-col divide-y divide-border bg-surface">
-                {/* Header */}
-                <div className="grid grid-cols-[60px_1fr_80px_70px] gap-2 px-4 py-2 bg-surface-alt">
-                  <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wide">시간</span>
-                  <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wide">고객</span>
-                  <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wide">시술</span>
-                  <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wide text-right">금액</span>
-                </div>
                 {listFiltered.map((record) => {
                   const c = record.consultation;
                   const timeStr = record.createdAt.split('T')[1]?.substring(0, 5) ?? '';
@@ -414,19 +413,36 @@ export default function RecordsPage() {
                     <button
                       key={record.id}
                       onClick={() => router.push(`/records/${record.id}`)}
-                      className="grid grid-cols-[60px_1fr_80px_70px] gap-2 px-4 py-3 text-left hover:bg-surface-alt active:bg-surface-alt transition-colors"
+                      className="flex flex-col gap-1.5 px-4 py-3 text-left hover:bg-surface-alt active:bg-surface-alt transition-colors"
                     >
-                      <span className="text-xs font-semibold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>{timeStr}</span>
-                      <div className="min-w-0">
-                        <span className="text-sm font-semibold text-text truncate block">{c.customerName}</span>
-                        <span className="text-xs text-text-muted truncate block">{getDesignerName(record.designerId)}</span>
+                      {/* 1행: 시간 + 고객명 + 디자이너 + 금액 */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-primary shrink-0" style={{ fontVariantNumeric: 'tabular-nums' }}>{timeStr}</span>
+                        <span className="text-sm font-semibold text-text truncate">{c.customerName}</span>
+                        <span className="text-xs text-text-muted shrink-0">· {getDesignerName(record.designerId)}</span>
+                        <span className="ml-auto text-sm font-bold text-primary shrink-0" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                          {formatPrice(record.finalPrice)}
+                        </span>
                       </div>
-                      <span className="text-xs text-text-secondary truncate self-center">
-                        {DESIGN_SCOPE_LABEL[c.designScope] ?? c.designScope}
-                      </span>
-                      <span className="text-xs font-bold text-primary text-right self-center" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                        {formatPrice(record.finalPrice)}
-                      </span>
+                      {/* 2행: 시술 부위 + 디자인 + 기법 태그 */}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="inline-flex items-center rounded-md bg-surface-alt px-1.5 py-0.5 text-[10px] font-semibold text-text-secondary">
+                          {BODY_PART_LABEL[c.bodyPart] ?? c.bodyPart}
+                        </span>
+                        <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                          {DESIGN_SCOPE_LABEL[c.designScope] ?? c.designScope}
+                        </span>
+                        {c.expressions.map((exp) => (
+                          <span key={exp} className="inline-flex items-center rounded-md bg-surface-alt px-1.5 py-0.5 text-[10px] text-text-muted">
+                            {EXPRESSION_LABEL[exp] ?? exp}
+                          </span>
+                        ))}
+                        {c.hasParts && c.partsSelections.length > 0 && (
+                          <span className="inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] text-amber-700">
+                            파츠 {c.partsSelections.reduce((sum, p) => sum + p.quantity, 0)}개
+                          </span>
+                        )}
+                      </div>
                     </button>
                   );
                 })}
@@ -505,6 +521,54 @@ export default function RecordsPage() {
                         placeholder="요청사항이나 메모를 입력하세요"
                       />
                     </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-text-secondary">참고 이미지</label>
+                      <div className="flex gap-2 flex-wrap">
+                        {editForm.referenceImages.map((url, i) => (
+                          <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-border flex-shrink-0">
+                            <img src={url} alt="" className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => setEditForm((f) => ({ ...f, referenceImages: f.referenceImages.filter((_, idx) => idx !== i) }))}
+                              className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 flex items-center justify-center"
+                            >
+                              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                        {editForm.referenceImages.length < 5 && (
+                          <button
+                            type="button"
+                            onClick={() => editPhotoRef.current?.click()}
+                            className="w-16 h-16 rounded-lg border border-dashed border-border bg-surface-alt flex flex-col items-center justify-center gap-0.5 text-text-muted hover:border-primary hover:text-primary transition-colors flex-shrink-0"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            <span className="text-[9px]">추가</span>
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        ref={editPhotoRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => {
+                          const files = e.target.files;
+                          if (!files) return;
+                          const current = editForm.referenceImages;
+                          for (let i = 0; i < files.length && current.length + i < 5; i++) {
+                            const url = URL.createObjectURL(files[i]);
+                            setEditForm((f) => ({ ...f, referenceImages: [...f.referenceImages, url] }));
+                          }
+                          e.target.value = '';
+                        }}
+                        className="hidden"
+                      />
+                    </div>
                     <div className="mt-3 flex gap-2">
                       <button
                         onClick={() => {
@@ -513,6 +577,7 @@ export default function RecordsPage() {
                             phone: editForm.phone,
                             reservationTime: editForm.startTime,
                             requestNote: editForm.requestNote,
+                            referenceImageUrls: editForm.referenceImages.length > 0 ? editForm.referenceImages : undefined,
                           });
                           setSelectedEvent(null);
                           setEditMode(false);
@@ -578,11 +643,13 @@ export default function RecordsPage() {
                       <button
                         onClick={() => {
                           setEditMode(true);
+                          const booking = allReservations.find((r) => r.id === selectedEvent.originalId);
                           setEditForm({
                             title: selectedEvent.title,
                             phone: selectedEvent.customerPhone ?? '',
                             startTime: selectedEvent.startTime,
                             requestNote: selectedEvent.requestNote ?? '',
+                            referenceImages: booking?.referenceImageUrls ?? [],
                           });
                         }}
                         className="rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"

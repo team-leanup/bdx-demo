@@ -60,7 +60,7 @@ export const THEME_PRESETS: ThemePreset[] = [
     isDark: false,
     colors: {
       primary: '#0F172A',
-      primaryLight: '#1E293B',
+      primaryLight: '#E2E8F0',
       primaryDark: '#020617',
       secondary: '#9CA3AF',
       accent: '#6B7280',
@@ -94,7 +94,7 @@ export const THEME_PRESETS: ThemePreset[] = [
       surfaceAlt: '#E8F0EA',
       text: '#2D3B2D',
       textSecondary: '#4A5C4A',
-      textMuted: '#84A98C',
+      textMuted: '#A3BDA9',
       border: '#CAD2C5',
       success: '#10B981',
       warning: '#F59E0B',

@@ -137,7 +137,7 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
       </div>
 
       {/* 히어로 카드: 최종금액 + 예상시간 */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-5 shadow-md">
+      <div className="relative overflow-hidden bg-gradient-to-br from-primary-dark to-primary rounded-2xl p-5 shadow-md">
         {/* Decorative circles */}
         <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10" />
         <div className="absolute -bottom-4 -left-4 w-16 h-16 rounded-full bg-white/10" />
