@@ -75,7 +75,7 @@ export default function SummaryPage() {
           createdByDesignerName:
             customer.assignedDesignerName ?? '디자이너',
         };
-        customer.smallTalkNotes.push(newNote);
+        customer.smallTalkNotes = [...customer.smallTalkNotes, newNote];
       }
     }
 

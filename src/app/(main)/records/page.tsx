@@ -9,6 +9,7 @@ import { cn } from '@/lib/cn';
 import { formatPrice } from '@/lib/format';
 import { DESIGN_SCOPE_LABEL, BODY_PART_LABEL, EXPRESSION_LABEL, getDesignerName } from '@/lib/labels';
 import { useRecordsStore } from '@/store/records-store';
+import { MOCK_CONSULTATIONS } from '@/data/mock-consultations';
 import { useAuthStore } from '@/store/auth-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { useAppStore } from '@/store/app-store';
@@ -60,7 +61,7 @@ function toTimeGridEvents(
 
   for (const r of reservations) {
     const [h, m] = r.reservationTime.split(':').map(Number);
-    const endH = h + 1;
+    const endH = Math.min(h + 1, 23);
     events.push({
       id: `res-${r.id}`,
       title: r.customerName,
@@ -136,7 +137,11 @@ export default function RecordsPage() {
   const removeReservation = useReservationStore((s) => s.removeReservation);
   const removeRecord = useRecordsStore((s) => s.removeRecord);
   const { shopSettings } = useAppStore();
-  const allConsultations = useRecordsStore((s) => s.getAllRecords)();
+  const additionalRecords = useRecordsStore((s) => s.additionalRecords);
+  const allConsultations = useMemo(
+    () => [...additionalRecords, ...MOCK_CONSULTATIONS],
+    [additionalRecords],
+  );
 
   // Derive calendar hours from business hours
   const { calendarStartHour, calendarEndHour } = useMemo(() => {
@@ -198,7 +203,7 @@ export default function RecordsPage() {
   const todayConsultations = useMemo(() => {
     const today = getTodayStr();
     return allConsultations.filter((c) => c.createdAt.split('T')[0] === today).length;
-  }, []);
+  }, [allConsultations]);
 
   const timeGridEvents = useMemo(
     () => toTimeGridEvents(filteredReservations, []),
@@ -210,7 +215,7 @@ export default function RecordsPage() {
       [...allConsultations].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       ),
-    [],
+    [allConsultations],
   );
 
   const listFiltered = useMemo(() => {

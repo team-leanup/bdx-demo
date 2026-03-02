@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TourOverlay } from '@/components/onboarding/TourOverlay';
@@ -9,6 +9,7 @@ import { formatPrice, formatRelativeDate } from '@/lib/format';
 import { BODY_PART_LABEL, DESIGN_SCOPE_LABEL } from '@/lib/labels';
 import { MOCK_SHOP } from '@/data/mock-shop';
 import { useRecordsStore } from '@/store/records-store';
+import { MOCK_CONSULTATIONS } from '@/data/mock-consultations';
 import { useAppStore } from '@/store/app-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { useConsultationStore } from '@/store/consultation-store';
@@ -55,7 +56,11 @@ export default function HomePage() {
   const { shopSettings } = useAppStore();
   const { activeDesignerName, role } = useAuthStore();
   const restoreLocale = useLocaleStore((s) => s.restoreLocale);
-  const allRecords = useRecordsStore((s) => s.getAllRecords);
+  const additionalRecords = useRecordsStore((s) => s.additionalRecords);
+  const records = useMemo(
+    () => [...additionalRecords, ...MOCK_CONSULTATIONS],
+    [additionalRecords],
+  );
 
   const CHANNEL_BADGE: Record<BookingChannel, { label: string; icon: string; variant: 'primary' | 'neutral' | 'success' | 'warning' }> = {
     kakao: { label: t('home.channel_kakao'), icon: '💬', variant: 'warning' },
@@ -76,7 +81,6 @@ export default function HomePage() {
   }, [searchParams]);
   const shopName = shopSettings.shopName || MOCK_SHOP.name;
 
-  const records = allRecords();
   const today = getTodayStr();
   const todayConsultations = records.filter(
     (r) => r.createdAt.startsWith(today),
@@ -92,12 +96,18 @@ export default function HomePage() {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 4);
 
-  const reservationStore = useReservationStore();
-  const todayReservations = reservationStore.getToday();
+  const allReservations = useReservationStore((s) => s.reservations);
+  const addReservation = useReservationStore((s) => s.addReservation);
+  const todayReservations = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    return allReservations
+      .filter((r) => r.reservationDate === todayStr)
+      .sort((a, b) => a.reservationTime.localeCompare(b.reservationTime));
+  }, [allReservations]);
   const addReferenceImage = useConsultationStore((s) => s.addReferenceImage);
 
   const handleAddReservation = (newBooking: BookingRequest) => {
-    reservationStore.addReservation({
+    addReservation({
       customerName: newBooking.customerName,
       phone: newBooking.phone,
       reservationDate: newBooking.reservationDate,

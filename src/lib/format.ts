@@ -44,6 +44,10 @@ export function formatDateShort(dateStr: string): string {
  * @example formatDateDot("2026-02-20") → "2026.02.20"
  */
 export function formatDateDot(dateStr: string): string {
+  if (dateStr && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+    const [year, month, day] = dateStr.split('-');
+    return `${year}.${month}.${day.slice(0, 2)}`;
+  }
   const d = new Date(dateStr);
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 }
@@ -72,9 +76,11 @@ export function formatDateDotWithTime(dateStr: string): string {
  * @example formatTime("14:30") → "오후 2:30"
  */
 export function formatTime(timeStr: string): string {
+  if (!timeStr || !timeStr.includes(':')) return timeStr ?? '';
   const [hourStr, minuteStr] = timeStr.split(':');
   const hour = parseInt(hourStr, 10);
   const minute = parseInt(minuteStr, 10);
+  if (isNaN(hour) || isNaN(minute)) return timeStr;
   const period = hour < 12 ? '오전' : '오후';
   const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
   return `${period} ${displayHour}:${String(minute).padStart(2, '0')}`;

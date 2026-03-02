@@ -4,8 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useConsultationStore } from '@/store/consultation-store';
 import { useAuthStore } from '@/store/auth-store';
-import { useRecordsStore } from '@/store/records-store';
-import type { ConsultationRecord } from '@/types/consultation';
 import { HandIllustration } from '@/components/canvas/HandIllustration';
 import { formatPrice } from '@/lib/format';
 import { calculatePrice } from '@/lib/price-calculator';
@@ -75,7 +73,6 @@ export default function TreatmentSheetPage() {
   const [smallTalkText, setSmallTalkText] = useState('');
   const [isSaved, setIsSaved] = useState(false);
   const [isFinalSaving, setIsFinalSaving] = useState(false);
-  const addRecord = useRecordsStore((s) => s.addRecord);
   const [checklist, setChecklist] = useState<DailyChecklistState>({
     shape: (consultation.nailShape ?? null) as NailShape | null,
     length: null,
@@ -137,7 +134,7 @@ export default function TreatmentSheetPage() {
         createdByDesignerId: activeDesignerId ?? designer?.id ?? 'unknown',
         createdByDesignerName: activeDesignerName ?? designer?.name ?? '디자이너',
       };
-      customer.smallTalkNotes.unshift(newNote);
+      customer.smallTalkNotes = [newNote, ...customer.smallTalkNotes];
     }
 
     setIsSaved(true);
@@ -151,25 +148,6 @@ export default function TreatmentSheetPage() {
     if (smallTalkText.trim()) {
       handleSaveSmallTalk();
     }
-
-    // Build & save consultation record
-    const now = new Date().toISOString();
-    const newId = `record-${Date.now()}`;
-    const customerId = consultation.customerId || 'customer-001';
-    const savedRecord: ConsultationRecord = {
-      id: newId,
-      shopId: 'shop-001',
-      designerId: consultation.designerId || activeDesignerId || 'designer-001',
-      customerId,
-      consultation: { ...consultation },
-      totalPrice: totalPrice,
-      estimatedMinutes,
-      finalPrice: priceBreakdown.finalPrice,
-      createdAt: now,
-      updatedAt: now,
-      notes: checklist.memo || undefined,
-    };
-    addRecord(savedRecord);
 
     await new Promise((r) => setTimeout(r, 400));
     reset();

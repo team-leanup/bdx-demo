@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui';
 import { MOCK_CUSTOMERS } from '@/data/mock-customers';
+import { MOCK_CONSULTATIONS } from '@/data/mock-consultations';
 import { useRecordsStore } from '@/store/records-store';
 import { cn } from '@/lib/cn';
 import { useT } from '@/lib/i18n';
@@ -46,7 +47,11 @@ export function CustomerInfoForm({
   className,
 }: CustomerInfoFormProps) {
   const t = useT();
-  const allRecords = useRecordsStore((s) => s.getAllRecords)();
+  const additionalRecords = useRecordsStore((s) => s.additionalRecords);
+  const allRecords = useMemo(
+    () => [...additionalRecords, ...MOCK_CONSULTATIONS],
+    [additionalRecords],
+  );
 
   const BODY_PART_LABEL: Record<string, string> = {
     hand: t('bodyPart.hand'),
