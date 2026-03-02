@@ -81,27 +81,27 @@ export default function DashboardPage() {
           {/* KPI Row: 4 × 1×1 BentoCards (returned as Fragment children) */}
           <KPICards />
 
-          {/* 매출 추이: 2×2 */}
-          <BentoCard span="2x2">
-            <div className="p-4 md:p-5 h-full flex flex-col">
-              <h2 className="text-sm font-semibold text-text-secondary mb-3">매출 추이</h2>
-              <div className="flex-1 min-h-0">
-                <RevenueChart />
-              </div>
+          {/* 이번 주 요약: 4×1 */}
+          <BentoCard span="4x1">
+            <div className="p-4 md:p-5">
+              <h2 className="text-sm font-semibold text-text-secondary mb-3">이번 주 요약</h2>
+              <WeeklySummary />
             </div>
           </BentoCard>
 
-          {/* 주간요약 + 디자이너 성과: 2×2 */}
-          <BentoCard span="2x2">
-            <div className="p-4 md:p-5 h-full flex flex-col gap-4">
-              <div>
-                <h2 className="text-sm font-semibold text-text-secondary mb-3">이번 주 요약</h2>
-                <WeeklySummary />
-              </div>
-              <div className="flex-1 min-h-0">
-                <h2 className="text-sm font-semibold text-text-secondary mb-3">선생님별 매출</h2>
-                <DesignerPerformance />
-              </div>
+          {/* 매출 추이: 4×1 */}
+          <BentoCard span="4x1">
+            <div className="p-4 md:p-5">
+              <h2 className="text-sm font-semibold text-text-secondary mb-3">매출 추이</h2>
+              <RevenueChart />
+            </div>
+          </BentoCard>
+
+          {/* 선생님별 매출: 4×1 */}
+          <BentoCard span="4x1">
+            <div className="p-4 md:p-5">
+              <h2 className="text-sm font-semibold text-text-secondary mb-3">선생님별 매출</h2>
+              <DesignerPerformance />
             </div>
           </BentoCard>
 

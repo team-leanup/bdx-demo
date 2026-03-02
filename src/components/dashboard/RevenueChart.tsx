@@ -103,7 +103,7 @@ export function RevenueChart() {
       </div>
 
       {/* 차트 */}
-      <div className="h-48 md:h-64">
+      <div className="h-36 md:h-44">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
           <defs>
