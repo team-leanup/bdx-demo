@@ -229,7 +229,7 @@ export function TourOverlay({ active, onComplete }: TourOverlayProps) {
           initial={{ opacity: 0, y: animInitialY, x: animInitialX }}
           animate={{ opacity: 1, y: 0, x: 0 }}
           transition={{ duration: 0.25, delay: 0.1 }}
-          className="absolute z-10 rounded-2xl bg-white px-5 py-4 shadow-xl"
+          className="absolute z-10 rounded-2xl bg-surface px-5 py-4 shadow-xl"
           style={tooltipStyle}
           onClick={(e) => e.stopPropagation()}
         >
@@ -238,9 +238,9 @@ export function TourOverlay({ active, onComplete }: TourOverlayProps) {
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white text-xs font-bold">
               {step + 1}
             </span>
-            <span className="text-sm font-bold text-gray-900">{currentStep.title}</span>
+            <span className="text-sm font-bold text-text">{currentStep.title}</span>
           </div>
-          <p className="text-sm text-gray-600 leading-relaxed">{currentStep.description}</p>
+          <p className="text-sm text-text-secondary leading-relaxed">{currentStep.description}</p>
 
           {/* Actions */}
           <div className="flex items-center justify-between mt-4">
@@ -249,7 +249,7 @@ export function TourOverlay({ active, onComplete }: TourOverlayProps) {
                 e.stopPropagation();
                 handleSkip();
               }}
-              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-xs text-text-muted hover:text-text-secondary transition-colors"
             >
               건너뛰기
             </button>
@@ -260,7 +260,7 @@ export function TourOverlay({ active, onComplete }: TourOverlayProps) {
                   <div
                     key={i}
                     className={`h-1.5 rounded-full transition-all duration-200 ${
-                      i === step ? 'w-4 bg-primary' : 'w-1.5 bg-gray-200'
+                      i === step ? 'w-4 bg-primary' : 'w-1.5 bg-border'
                     }`}
                   />
                 ))}

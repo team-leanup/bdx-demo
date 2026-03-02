@@ -285,7 +285,7 @@ export function PartsSelector({ className }: PartsSelectorProps) {
                                 ? 'bg-yellow-100 text-yellow-700'
                                 : gradeOpt.grade === 'A'
                                 ? 'bg-blue-100 text-blue-700'
-                                : 'bg-gray-100 text-gray-600',
+                                : 'bg-surface-alt text-text-secondary',
                             )}
                           >
                             {gradeOpt.grade}

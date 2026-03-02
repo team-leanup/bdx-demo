@@ -16,7 +16,7 @@ const CHANNEL_BADGE_STYLE: Record<BookingChannel, { className: string; emoji: st
   kakao: { className: 'bg-yellow-100 text-yellow-800 border-yellow-200', emoji: '💬' },
   naver: { className: 'bg-green-100 text-green-800 border-green-200', emoji: '🟢' },
   phone: { className: 'bg-blue-100 text-blue-800 border-blue-200', emoji: '📞' },
-  walk_in: { className: 'bg-gray-100 text-gray-700 border-gray-200', emoji: '🚶' },
+  walk_in: { className: 'bg-surface-alt text-text-secondary border-border', emoji: '🚶' },
 };
 
 const CHANNEL_I18N_KEY: Record<BookingChannel, string> = {
@@ -29,7 +29,7 @@ const CHANNEL_I18N_KEY: Record<BookingChannel, string> = {
 const STATUS_BADGE_STYLE: Record<BookingStatus, string> = {
   pending: 'bg-orange-100 text-orange-700 border-orange-200',
   confirmed: 'bg-green-100 text-green-700 border-green-200',
-  completed: 'bg-gray-100 text-gray-600 border-gray-200',
+  completed: 'bg-surface-alt text-text-secondary border-border',
   cancelled: 'bg-red-100 text-red-600 border-red-200',
 };
 
@@ -60,7 +60,7 @@ const LANGUAGE_OPTIONS: { value: Locale; label: string }[] = [
 const STATUS_DOT: Record<BookingStatus, string> = {
   pending: 'bg-orange-400',
   confirmed: 'bg-green-500',
-  completed: 'bg-gray-400',
+  completed: 'bg-text-muted',
   cancelled: 'bg-red-400',
 };
 

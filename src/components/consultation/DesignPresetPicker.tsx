@@ -40,9 +40,9 @@ export function DesignPresetPicker({ onSelect, selectedId }: DesignPresetPickerP
       label: t('design.solidTone'),
       koLabel: SCOPE_KO.solid_tone,
       icon: '◼',
-      bg: 'bg-gray-100',
-      text: 'text-gray-700',
-      border: 'border-gray-200',
+      bg: 'bg-surface-alt',
+      text: 'text-text-secondary',
+      border: 'border-border',
     },
     solid_point: {
       label: t('design.solidPoint'),

@@ -42,7 +42,7 @@ const HOUR_HEIGHT = 64;
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-orange-100 border-l-2 border-orange-500 text-orange-800',
   confirmed: 'border-l-2 text-text',
-  completed: 'bg-gray-100 border-l-2 border-gray-400 text-gray-600',
+  completed: 'bg-surface-alt border-l-2 border-border text-text-secondary',
   cancelled: 'bg-red-50 border-l-2 border-red-300 text-red-400 line-through',
   done: 'border-l-2 text-text',
 };
@@ -164,10 +164,10 @@ export function TimeGridCalendar({ events, weekStartDate, onEventClick, onWeekCh
       </div>
 
       {/* Grid */}
-      <div className="overflow-x-auto rounded-xl border border-border bg-white">
+      <div className="overflow-x-auto rounded-xl border border-border bg-surface">
         <div className="min-w-[600px]">
           {/* Day headers */}
-          <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border bg-white">
+          <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border bg-surface">
             <div className="p-2" />
             {weekDates.map((date) => {
               const { day, weekday } = formatShortDate(date);
@@ -185,7 +185,7 @@ export function TimeGridCalendar({ events, weekStartDate, onEventClick, onWeekCh
           </div>
 
           {/* Time grid body */}
-          <div className="relative bg-white" style={{ height: HOURS.length * HOUR_HEIGHT }}>
+          <div className="relative bg-surface" style={{ height: HOURS.length * HOUR_HEIGHT }}>
             {/* Hour lines + labels */}
             {HOURS.map((hour) => (
               <div

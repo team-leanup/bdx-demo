@@ -11,7 +11,7 @@ const CHANNEL_COLORS: Record<BookingChannel, string> = {
   kakao: 'bg-yellow-400',
   naver: 'bg-green-500',
   phone: 'bg-blue-400',
-  walk_in: 'bg-gray-400',
+  walk_in: 'bg-text-muted',
 };
 
 interface WeekCalendarProps {
