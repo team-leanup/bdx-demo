@@ -7,7 +7,6 @@
 BDX는 네일샵에서 고객 상담부터 가격 산출, 시술 기록, 고객 관리까지 전체 워크플로우를 태블릿에서 처리할 수 있는 플랫폼입니다. 이 데모는 **Mock 데이터 기반 인터랙티브 프로토타입**으로, 전체 서비스 흐름을 체험할 수 있습니다.
 
 - **데모**: https://bdx-demo.vercel.app
-- **플랫폼 소개**: https://bdx-demo.vercel.app/intro-demo
 
 ## 기술 스택
 
@@ -80,8 +79,7 @@ src/
 │   │   ├── customers/
 │   │   ├── dashboard/
 │   │   └── settings/
-│   ├── consultation/       # 상담 흐름 (탭바 숨김)
-│   └── intro-demo/         # 플랫폼 소개 페이지
+│   └── consultation/       # 상담 흐름 (탭바 숨김)
 ├── components/
 │   ├── ui/                 # 공용 UI (Button, Card, Modal 등)
 │   ├── layout/             # AppShell, TabBar, StatusBar
@@ -109,7 +107,6 @@ pnpm typecheck  # 타입 체크
 
 | 파일 | 내용 |
 |------|------|
-| [`docs/BDX-데모-소개.md`](docs/BDX-데모-소개.md) | 플랫폼 소개 문서 |
 | [`docs/BDX-데모-소개.docx`](docs/BDX-데모-소개.docx) | 플랫폼 소개 (Word) |
 | [`docs/prd.md`](docs/prd.md) | PRD v2.0 |
 | [`docs/BDS 기능명세서 v3.0.xlsx`](docs/BDS%20기능명세서%20v3.0.xlsx) | 기능명세서 |
