@@ -110,4 +110,8 @@ pnpm typecheck  # 타입 체크
 | 파일 | 내용 |
 |------|------|
 | [`docs/BDX-데모-소개.md`](docs/BDX-데모-소개.md) | 플랫폼 소개 문서 |
+| [`docs/BDX-데모-소개.docx`](docs/BDX-데모-소개.docx) | 플랫폼 소개 (Word) |
 | [`docs/prd.md`](docs/prd.md) | PRD v2.0 |
+| [`docs/BDS 기능명세서 v3.0.xlsx`](docs/BDS%20기능명세서%20v3.0.xlsx) | 기능명세서 |
+| [`docs/BDS 최종 UX 흐름도`](docs/BDS%20최종%20UX%20흐름도%20(마이페이지,온보딩%20포함).pdf) | UX 흐름도 |
+| [`docs/BDS 네일 용어 가이드북`](docs/BDS%20네일%20용어%20가이드북%20(네일%20쉐입%20이미지%20포함).pdf) | 네일 용어 가이드북 |
