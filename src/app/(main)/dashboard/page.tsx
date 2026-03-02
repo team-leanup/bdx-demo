@@ -57,7 +57,7 @@ export default function DashboardPage() {
         featureId="dashboard-intro"
         icon="📊"
         title="대시보드"
-        description="매출 추이, 인기 서비스, 고객 분석 등 매장 운영 현황을 한눈에 확인하세요."
+        description={"매출 추이, 인기 서비스, 고객 분석 등\n매장 운영 현황을 한눈에 확인하세요."}
       />
       {/* 헤더 */}
       <div className="px-4 md:px-0 pt-4">

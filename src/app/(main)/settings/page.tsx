@@ -884,7 +884,7 @@ export default function SettingsPage() {
           </svg>
         }
         title={t('settings.title')}
-        description="매장 정보, 서비스 가격, 파츠 등록, 테마 변경 등을 관리하세요."
+        description={"매장 정보, 서비스 가격, 파츠 등록, 테마 변경 등을\n관리하세요."}
       />
       {/* 헤더 */}
       <div className="px-4 md:px-0 pt-4 pb-3">
