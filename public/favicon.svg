@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <linearGradient id="fg" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0%" stop-color="#F9A8D4"/>
+      <stop offset="50%" stop-color="#F472B6"/>
+      <stop offset="100%" stop-color="#DB2777"/>
+    </linearGradient>
+  </defs>
+  <!-- Almond nail shape -->
+  <path
+    d="M16 2
+       C20 2 23.5 4 25.5 7.5
+       C27.5 11 28.5 15 28.5 19
+       C28.5 23 27 26 25 28
+       C23 30 19.5 31 16 31
+       C12.5 31 7.5 26 5.5 22
+       C3.5 18 3.5 13.5 5.5 9.5
+       C7.5 5.5 11 2 16 2Z"
+    fill="url(#fg)"
+  />
+  <!-- Check mark -->
+  <path
+    d="M11 17.5 L14.5 21 L21.5 13.5"
+    stroke="white"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    fill="none"
+  />
+  <!-- Sparkle -->
+  <path
+    d="M23 7 L23.5 9 L25.5 9.5 L23.5 10 L23 12 L22.5 10 L20.5 9.5 L22.5 9Z"
+    fill="white"
+    opacity="0.7"
+  />
+</svg>

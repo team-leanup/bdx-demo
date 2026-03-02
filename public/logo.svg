@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="nail-grad" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0%" stop-color="#F9A8D4"/>
+      <stop offset="50%" stop-color="#F472B6"/>
+      <stop offset="100%" stop-color="#DB2777"/>
+    </linearGradient>
+    <linearGradient id="sparkle-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#FCE7F3"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Almond nail tip shape - the core symbol -->
+  <path
+    d="M256 52
+       C310 52 358 78 388 120
+       C418 162 432 218 432 280
+       C432 342 406 394 370 428
+       C334 462 298 480 256 480
+       C214 480 178 462 142 428
+       C106 394 80 342 80 280
+       C80 218 94 162 124 120
+       C154 78 202 52 256 52Z"
+    fill="url(#nail-grad)"
+  />
+
+  <!-- Inner highlight - nail shine -->
+  <path
+    d="M256 88
+       C298 88 334 108 358 142
+       C382 176 394 222 394 272
+       C394 322 374 364 346 392
+       C318 420 290 436 256 436
+       C222 436 194 420 166 392
+       C138 364 118 322 118 272
+       C118 222 130 176 154 142
+       C178 108 214 88 256 88Z"
+    fill="none"
+    stroke="white"
+    stroke-width="2"
+    opacity="0.2"
+  />
+
+  <!-- Sparkle check mark - representing "Decision" -->
+  <path
+    d="M190 270 L235 315 L330 210"
+    stroke="white"
+    stroke-width="28"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    fill="none"
+  />
+
+  <!-- Small sparkle accent - top right -->
+  <path
+    d="M370 130 L375 148 L393 153 L375 158 L370 176 L365 158 L347 153 L365 148Z"
+    fill="white"
+    opacity="0.8"
+  />
+
+  <!-- Tiny sparkle -->
+  <path
+    d="M340 100 L342 108 L350 110 L342 112 L340 120 L338 112 L330 110 L338 108Z"
+    fill="white"
+    opacity="0.5"
+  />
+</svg>
