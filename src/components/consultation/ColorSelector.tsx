@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { useConsultationStore } from '@/store/consultation-store';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/cn';
-import { useT } from '@/lib/i18n';
 
 interface ColorSelectorProps {
   className?: string;
@@ -12,15 +11,7 @@ interface ColorSelectorProps {
 
 const EXTRA_COLOR_PRICE = 3000;
 
-// Decorative color swatch dots shown when colors are added
-const COLOR_SWATCHES = [
-  'bg-rose-400', 'bg-violet-400', 'bg-sky-400', 'bg-emerald-400',
-  'bg-amber-400', 'bg-orange-400', 'bg-teal-400', 'bg-pink-400',
-  'bg-indigo-400', 'bg-lime-400',
-];
-
 export function ColorSelector({ className }: ColorSelectorProps) {
-  const t = useT();
   const extraColorCount = useConsultationStore((s) => s.consultation.extraColorCount);
   const setExtraColorCount = useConsultationStore((s) => s.setExtraColorCount);
 
@@ -103,22 +94,6 @@ export function ColorSelector({ className }: ColorSelectorProps) {
           </motion.button>
         </div>
 
-        {/* Color swatch row — decorative */}
-        <div className="flex items-center gap-1.5">
-          <div className="w-4 h-4 rounded-full bg-white border-2 border-border flex-shrink-0" {...({'title': t('selector.baseColor')})} />
-          {Array.from({ length: extraColorCount }).map((_, i) => (
-            <motion.div
-              key={i}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: i * 0.05 }}
-              className={cn('w-4 h-4 rounded-full flex-shrink-0', COLOR_SWATCHES[i % COLOR_SWATCHES.length])}
-            />
-          ))}
-          {extraColorCount === 0 && (
-            <span className="text-xs text-text-muted ml-1">추가 컬러 없음</span>
-          )}
-        </div>
       </div>
 
       {/* Empty state hint when no colors selected */}
