@@ -305,7 +305,7 @@ const translations = {
       treatmentHistory: '시술 이력',
       tags: '시술 성향 태그',
       preference: '선호도 프로필',
-      smallTalk: '스몰토크 기록',
+      smallTalk: '고객 메모',
       addPhoto: '사진 추가',
       treatmentImages: '시술 기록',
       consultationImages: '상담 기록',

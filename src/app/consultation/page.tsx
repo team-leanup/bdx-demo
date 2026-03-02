@@ -24,7 +24,7 @@ const LANGUAGE_OPTIONS: { value: Locale; flag: string; label: string }[] = [
 const DESIGNER_GENDER: Record<string, 'male' | 'female'> = {
   'designer-001': 'female',
   'designer-002': 'male',
-  'designer-003': 'male',
+  'designer-003': 'female',
 };
 
 function MaleSilhouette({ className }: { className?: string }) {
@@ -209,7 +209,7 @@ export default function ConsultationStartPage() {
               </svg>
               <p className="text-sm font-bold text-text">{t('consultation.selectDesigner')}</p>
             </div>
-            <div className="flex flex-col gap-3 md:grid md:grid-cols-2">
+            <div className="flex flex-col gap-3">
               {MOCK_DESIGNERS.map((designer) => {
                 const isSelected = selectedDesignerId === designer.id;
                 const gender = DESIGNER_GENDER[designer.id] ?? 'female';

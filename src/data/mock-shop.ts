@@ -29,7 +29,7 @@ export const MOCK_DESIGNERS: Designer[] = [
   {
     id: 'designer-001',
     shopId: 'shop-001',
-    name: '효주',
+    name: '소율',
     role: 'owner',
     profileImageUrl: undefined,
     phone: '010-1111-2222',
@@ -39,7 +39,7 @@ export const MOCK_DESIGNERS: Designer[] = [
   {
     id: 'designer-002',
     shopId: 'shop-001',
-    name: '명훈',
+    name: '도윤',
     role: 'staff',
     profileImageUrl: undefined,
     phone: '010-3333-4444',
@@ -49,7 +49,7 @@ export const MOCK_DESIGNERS: Designer[] = [
   {
     id: 'designer-003',
     shopId: 'shop-001',
-    name: '자훈',
+    name: '하린',
     role: 'staff',
     profileImageUrl: undefined,
     phone: '010-5555-6666',

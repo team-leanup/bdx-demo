@@ -168,7 +168,7 @@ export const MOCK_PARTS_USAGE = {
 export const MOCK_DESIGNER_STATS: DesignerStats[] = [
   {
     designerId: 'designer-001',
-    designerName: '효주',
+    designerName: '소율',
     consultations: 62,
     revenue: 4836000,
     averagePrice: 78000,
@@ -176,7 +176,7 @@ export const MOCK_DESIGNER_STATS: DesignerStats[] = [
   },
   {
     designerId: 'designer-002',
-    designerName: '명훈',
+    designerName: '도윤',
     consultations: 41,
     revenue: 3198000,
     averagePrice: 78000,
@@ -184,7 +184,7 @@ export const MOCK_DESIGNER_STATS: DesignerStats[] = [
   },
   {
     designerId: 'designer-003',
-    designerName: '자훈',
+    designerName: '하린',
     consultations: 24,
     revenue: 1800000,
     averagePrice: 75000,

@@ -8,6 +8,7 @@ import { MOCK_CONSULTATIONS } from '@/data/mock-consultations';
 interface RecordsStore {
   additionalRecords: ConsultationRecord[];
   addRecord: (record: ConsultationRecord) => void;
+  removeRecord: (id: string) => void;
   getAllRecords: () => ConsultationRecord[];
 }
 
@@ -18,6 +19,10 @@ export const useRecordsStore = create<RecordsStore>()(
       addRecord: (record) =>
         set((state) => ({
           additionalRecords: [record, ...state.additionalRecords],
+        })),
+      removeRecord: (id) =>
+        set((state) => ({
+          additionalRecords: state.additionalRecords.filter((r) => r.id !== id),
         })),
       getAllRecords: () => [...get().additionalRecords, ...MOCK_CONSULTATIONS],
     }),

@@ -133,6 +133,8 @@ export default function RecordsPage() {
   const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
   const allReservations = useReservationStore((s) => s.reservations);
   const updateReservation = useReservationStore((s) => s.updateReservation);
+  const removeReservation = useReservationStore((s) => s.removeReservation);
+  const removeRecord = useRecordsStore((s) => s.removeRecord);
   const { shopSettings } = useAppStore();
   const allConsultations = useRecordsStore((s) => s.getAllRecords)();
 
@@ -417,6 +419,7 @@ export default function RecordsPage() {
                     >
                       {/* 1행: 시간 + 고객명 + 디자이너 + 금액 */}
                       <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center rounded px-1 py-0.5 text-[9px] font-bold bg-primary/10 text-primary shrink-0">상담</span>
                         <span className="text-xs font-semibold text-primary shrink-0" style={{ fontVariantNumeric: 'tabular-nums' }}>{timeStr}</span>
                         <span className="text-sm font-semibold text-text truncate">{c.customerName}</span>
                         <span className="text-xs text-text-muted shrink-0">· {getDesignerName(record.designerId)}</span>
@@ -663,6 +666,21 @@ export default function RecordsPage() {
                         닫기
                       </button>
                     </div>
+                    <button
+                      onClick={() => {
+                        if (confirm('이 기록을 삭제하시겠습니까?')) {
+                          if (selectedEvent.type === 'reservation') {
+                            removeReservation(selectedEvent.originalId);
+                          } else {
+                            removeRecord(selectedEvent.originalId);
+                          }
+                          setSelectedEvent(null);
+                        }
+                      }}
+                      className="mt-2 w-full rounded-xl py-2.5 text-xs font-medium text-error hover:bg-error/10 transition-colors"
+                    >
+                      삭제
+                    </button>
                   </>
                 )}
               </div>

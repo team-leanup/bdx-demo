@@ -7,6 +7,7 @@ import { cn } from '@/lib/cn';
 import { formatPrice, formatRelativeDate, formatDateDot } from '@/lib/format';
 import { BODY_PART_LABEL } from '@/lib/labels';
 import { getMockCustomerById, MOCK_CUSTOMERS } from '@/data/mock-customers';
+import { MOCK_DESIGNERS } from '@/data/mock-shop';
 import { TAG_PRESETS } from '@/data/tag-presets';
 import type { TagCategory } from '@/types/customer';
 import { PreferenceEditor } from '@/components/customer/PreferenceEditor';
@@ -68,6 +69,8 @@ function CustomerDetailContent({ id }: { id: string }) {
   const [newSmallTalk, setNewSmallTalk] = useState('');
   const [localSmallTalkNotes, setLocalSmallTalkNotes] = useState(customer?.smallTalkNotes ?? []);
   const [galleryTab, setGalleryTab] = useState<'consult' | 'treatment'>('treatment');
+  const [showDesignerPicker, setShowDesignerPicker] = useState(false);
+  const [assignedDesigner, setAssignedDesigner] = useState(customer?.assignedDesignerName ?? '');
   const [treatmentUploads, setTreatmentUploads] = useState<UploadedImage[]>([]);
   const [consultUploads, setConsultUploads] = useState<UploadedImage[]>([]);
   const treatmentFileRef = useRef<HTMLInputElement>(null);
@@ -195,9 +198,42 @@ function CustomerDetailContent({ id }: { id: string }) {
                 <p className="text-sm text-text-secondary">{customer.phone}</p>
               </div>
             </div>
-            <p className="mt-1 text-sm text-text-secondary">
-              담당: {customer.assignedDesignerName}
-            </p>
+            <div className="mt-1 flex items-center gap-1.5">
+              <p className="text-sm text-text-secondary">
+                담당: {assignedDesigner}
+              </p>
+              <button
+                onClick={() => setShowDesignerPicker((v) => !v)}
+                className="text-[11px] font-medium text-primary hover:underline"
+              >
+                변경
+              </button>
+            </div>
+            {showDesignerPicker && (
+              <div className="mt-2 flex gap-2 flex-wrap">
+                {MOCK_DESIGNERS.map((d) => (
+                  <button
+                    key={d.id}
+                    onClick={() => {
+                      setAssignedDesigner(d.name);
+                      const idx = MOCK_CUSTOMERS.findIndex((c) => c.id === id);
+                      if (idx !== -1) {
+                        MOCK_CUSTOMERS[idx] = { ...MOCK_CUSTOMERS[idx], assignedDesignerName: d.name, assignedDesignerId: d.id };
+                      }
+                      setShowDesignerPicker(false);
+                    }}
+                    className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+                    style={{
+                      background: assignedDesigner === d.name ? 'var(--color-primary)' : 'var(--color-surface-alt)',
+                      color: assignedDesigner === d.name ? 'white' : 'var(--color-text-secondary)',
+                      border: `1px solid ${assignedDesigner === d.name ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                    }}
+                  >
+                    {d.name} {d.role === 'owner' ? '원장' : '선생님'}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -654,7 +690,7 @@ function CustomerDetailContent({ id }: { id: string }) {
       {/* ─────────────────────────────── */}
       <Card className="mx-4 shadow-md rounded-2xl">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-text-secondary">스몰토크 기록</h2>
+          <h2 className="text-sm font-semibold text-text-secondary">고객 메모</h2>
           <button
             className="rounded-xl border px-3 py-1 text-xs font-medium transition-colors hover:bg-primary hover:text-white"
             style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}

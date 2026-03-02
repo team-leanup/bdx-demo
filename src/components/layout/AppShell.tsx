@@ -16,10 +16,10 @@ export function AppShell({ children, hideStatusBar, hideTabBar }: AppShellProps)
       <div className="flex flex-col flex-1 min-w-0">
         {!hideStatusBar && <StatusBar />}
         <main
-          className="flex-1 min-h-0 overflow-y-auto overscroll-contain md:!pt-0 md:!pb-0"
+          className="flex-1 min-h-0 overflow-y-auto md:!pt-0 md:!pb-0"
           style={{
             paddingTop: hideStatusBar ? 0 : '3.5rem',
-            paddingBottom: hideTabBar ? 0 : '4rem',
+            paddingBottom: hideTabBar ? 0 : 'calc(4rem + env(safe-area-inset-bottom, 0px))',
             WebkitOverflowScrolling: 'touch',
           }}
         >

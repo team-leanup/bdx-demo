@@ -48,11 +48,11 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const DESIGNER_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  // 효주 (owner) - primary/rose 계열
+  // 소율 (owner) - primary/rose 계열
   'designer-001': { bg: 'bg-rose-100', border: 'border-rose-500', text: 'text-rose-800' },
-  // 명훈 (staff) - success/green 계열
+  // 도윤 (staff) - success/green 계열
   'designer-002': { bg: 'bg-emerald-100', border: 'border-emerald-500', text: 'text-emerald-800' },
-  // 자훈 (staff) - blue/info 계열
+  // 하린 (staff) - blue/info 계열
   'designer-003': { bg: 'bg-sky-100', border: 'border-sky-500', text: 'text-sky-800' },
 };
 
@@ -224,7 +224,12 @@ export function TimeGridCalendar({ events, weekStartDate, onEventClick, onWeekCh
                         )}
                         style={{ top, height }}
                       >
-                        <div className="text-[10px] font-semibold truncate">{ev.title}</div>
+                        <div className="text-[10px] font-semibold truncate flex items-center gap-1">
+                          <span className={cn('inline-block px-0.5 rounded text-[8px] font-bold', ev.type === 'reservation' ? 'bg-orange-200/60 text-orange-700' : 'bg-primary/15 text-primary')}>
+                            {ev.type === 'reservation' ? '예약' : '상담'}
+                          </span>
+                          {ev.title}
+                        </div>
                         {ev.type === 'consultation' && ev.designScope && (
                           <div className="text-[9px] font-medium truncate">
                             {BODY_PART_LABEL[ev.bodyPart ?? ''] ?? ''} {DESIGN_SCOPE_LABEL[ev.designScope] ?? ev.designScope}

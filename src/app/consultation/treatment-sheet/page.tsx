@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useConsultationStore } from '@/store/consultation-store';
 import { useAuthStore } from '@/store/auth-store';
+import { useRecordsStore } from '@/store/records-store';
 import { HandIllustration } from '@/components/canvas/HandIllustration';
 import { formatPrice } from '@/lib/format';
 import { calculatePrice } from '@/lib/price-calculator';
@@ -72,6 +73,8 @@ export default function TreatmentSheetPage() {
   const { activeDesignerId, activeDesignerName } = useAuthStore();
   const [smallTalkText, setSmallTalkText] = useState('');
   const [isSaved, setIsSaved] = useState(false);
+  const [isFinalSaving, setIsFinalSaving] = useState(false);
+  const addRecord = useRecordsStore((s) => s.addRecord);
   const [checklist, setChecklist] = useState<DailyChecklistState>({
     shape: (consultation.nailShape ?? null) as NailShape | null,
     length: null,
@@ -140,7 +143,34 @@ export default function TreatmentSheetPage() {
     setSmallTalkText('');
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
+    setIsFinalSaving(true);
+
+    // Save small talk memo if present
+    if (smallTalkText.trim()) {
+      handleSaveSmallTalk();
+    }
+
+    // Build & save consultation record
+    const now = new Date().toISOString();
+    const newId = `record-${Date.now()}`;
+    const customerId = consultation.customerId || 'customer-001';
+    const savedRecord = {
+      id: newId,
+      shopId: 'shop-001',
+      designerId: consultation.designerId || activeDesignerId || 'designer-001',
+      customerId,
+      consultation: { ...consultation },
+      totalPrice: totalPrice,
+      estimatedMinutes,
+      finalPrice: priceBreakdown.finalPrice,
+      createdAt: now,
+      updatedAt: now,
+      notes: checklist.memo || undefined,
+    };
+    addRecord(savedRecord as any);
+
+    await new Promise((r) => setTimeout(r, 400));
     reset();
     router.push('/home');
   };
@@ -326,7 +356,7 @@ export default function TreatmentSheetPage() {
 
         {/* Small Talk Memo */}
         <div className="rounded-2xl border border-border bg-surface p-4">
-          <h3 className="text-sm font-bold text-text mb-1">스몰토크 메모</h3>
+          <h3 className="text-sm font-bold text-text mb-1">고객 메모</h3>
           <p className="text-[11px] text-text-muted mb-3">고객과 나눈 이야기를 기록해두면 다음 방문 때 활용할 수 있어요</p>
 
           {isSaved && (
@@ -367,10 +397,11 @@ export default function TreatmentSheetPage() {
       <div className="sticky bottom-0 px-4 py-4 border-t border-border bg-background" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
         <button
           onClick={handleComplete}
-          className="w-full py-3.5 rounded-xl font-bold text-sm text-white transition-all active:scale-[0.98]"
+          disabled={isFinalSaving}
+          className="w-full py-3.5 rounded-xl font-bold text-sm text-white transition-all active:scale-[0.98] disabled:opacity-60"
           style={{ background: 'var(--color-primary)' }}
         >
-          홈으로
+          {isFinalSaving ? '저장 중...' : '저장하기'}
         </button>
       </div>
     </div>
