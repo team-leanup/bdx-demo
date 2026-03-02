@@ -5,7 +5,7 @@ import { useConsultationStore } from '@/store/consultation-store';
 import { EXPRESSION_OPTIONS } from '@/data/service-options';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/cn';
-import { useT, useLocale } from '@/lib/i18n';
+import { useT, useLocale, useKo } from '@/lib/i18n';
 import type { ExpressionType } from '@/types/consultation';
 
 interface ExpressionSelectorProps {
@@ -130,14 +130,6 @@ const EXPRESSION_ICONS: Record<string, (selected: boolean) => React.ReactNode> =
   ),
 };
 
-// Korean labels for secondary display
-const KO_EXPR_LABELS: Record<string, string> = {
-  solid: '기본',
-  gradient: '그라데이션',
-  french: '프렌치',
-  magnetic: '마그네틱/캣아이',
-};
-
 // i18n key mapping for expression labels
 const EXPR_I18N_KEYS: Record<string, string> = {
   solid: 'expression.solid',
@@ -148,6 +140,7 @@ const EXPR_I18N_KEYS: Record<string, string> = {
 
 export function ExpressionSelector({ className }: ExpressionSelectorProps) {
   const t = useT();
+  const tKo = useKo();
   const locale = useLocale();
   const expressions = useConsultationStore((s) => s.consultation.expressions);
   const toggleExpression = useConsultationStore((s) => s.toggleExpression);
@@ -161,11 +154,14 @@ export function ExpressionSelector({ className }: ExpressionSelectorProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} stroke="currentColor" d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008z" />
             </svg>
           </div>
-          <p className="text-sm font-extrabold text-text-secondary tracking-tight">발색 방법</p>
+          <p className="text-sm font-extrabold text-text-secondary tracking-tight">
+            {t('selector.expression')}
+            {locale !== 'ko' && <span className="ml-2 text-xs font-medium text-text-muted opacity-60">{tKo('selector.expression')}</span>}
+          </p>
         </div>
-        <span className="text-[10px] font-black text-text-muted bg-surface-alt px-3 py-1 rounded-full border border-border uppercase tracking-widest">복수 선택 가능</span>
+        <span className="text-[10px] font-black text-text-muted bg-surface-alt px-3 py-1 rounded-full border border-border uppercase tracking-widest">{t('selector.multiSelect')}</span>
       </div>
-      
+
       <div className="grid grid-cols-2 gap-4">
         {EXPRESSION_OPTIONS.map((opt) => {
           const isSelected = expressions.includes(opt.value as ExpressionType);
@@ -201,7 +197,7 @@ export function ExpressionSelector({ className }: ExpressionSelectorProps) {
                   {t(EXPR_I18N_KEYS[opt.value])}
                 </span>
                 {locale !== 'ko' && (
-                  <span className="text-xs text-text-muted font-bold opacity-70">{KO_EXPR_LABELS[opt.value]}</span>
+                  <span className="text-xs text-text-muted font-bold opacity-70">{tKo(EXPR_I18N_KEYS[opt.value])}</span>
                 )}
               </div>
 
@@ -212,7 +208,7 @@ export function ExpressionSelector({ className }: ExpressionSelectorProps) {
                   ? 'bg-primary/20 text-primary'
                   : 'bg-surface-alt text-text-muted',
               )}>
-                {opt.price === 0 ? '포함' : opt.price !== undefined ? `+${formatPrice(opt.price)}` : ''}
+                {opt.price === 0 ? t('selector.includedFree') : opt.price !== undefined ? `+${formatPrice(opt.price)}` : ''}
               </span>
 
               {/* Selected checkmark */}

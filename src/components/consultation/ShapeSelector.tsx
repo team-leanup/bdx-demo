@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useConsultationStore } from '@/store/consultation-store';
 import { NAIL_SHAPE_OPTIONS } from '@/data/service-options';
 import { cn } from '@/lib/cn';
-import { useT, useLocale } from '@/lib/i18n';
+import { useT, useLocale, useKo } from '@/lib/i18n';
 import type { NailShape } from '@/types/consultation';
 
 interface ShapeSelectorProps {
@@ -116,19 +116,9 @@ const SHAPE_ICONS: Record<NailShape, (selected: boolean) => React.ReactNode> = {
   ),
 };
 
-// Korean labels for secondary display
-const KO_SHAPE_LABELS: Record<string, string> = {
-  round: '라운드',
-  oval: '오발',
-  square: '스퀘어',
-  squoval: '스퀘어 오프',
-  almond: '아몬드',
-  stiletto: '스틸레토',
-  coffin: '코핀',
-};
-
 export function ShapeSelector({ className }: ShapeSelectorProps) {
   const t = useT();
+  const tKo = useKo();
   const locale = useLocale();
   const nailShape = useConsultationStore((s) => s.consultation.nailShape);
   const setNailShape = useConsultationStore((s) => s.setNailShape);
@@ -141,7 +131,10 @@ export function ShapeSelector({ className }: ShapeSelectorProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} stroke="currentColor" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
           </svg>
         </div>
-        <p className="text-sm font-bold text-text-secondary">네일 쉐입</p>
+        <p className="text-sm font-bold text-text-secondary">
+          {t('selector.nailShape')}
+          {locale !== 'ko' && <span className="ml-2 text-xs font-medium text-text-muted opacity-60">{tKo('selector.nailShape')}</span>}
+        </p>
       </div>
       <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
         {NAIL_SHAPE_OPTIONS.map((opt) => {
@@ -170,7 +163,7 @@ export function ShapeSelector({ className }: ShapeSelectorProps) {
                 {/* Korean secondary label — shown only in non-Korean mode */}
                 {locale !== 'ko' && (
                   <span className="text-[9px] text-text-muted leading-none font-medium">
-                    {KO_SHAPE_LABELS[opt.value]}
+                    {tKo(`shape.${opt.value}`)}
                   </span>
                 )}
               </div>

@@ -21,26 +21,18 @@ interface CustomerInfoFormProps {
   className?: string;
 }
 
-function getRelativeDate(dateStr: string): string {
+function getRelativeDate(dateStr: string, t: (key: string) => string): string {
   const now = new Date();
   const date = new Date(dateStr);
   const diffMs = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return '오늘';
-  if (diffDays === 1) return '어제';
-  if (diffDays < 7) return `${diffDays}일 전`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)}주 전`;
-  if (diffDays < 365) return `${Math.floor(diffDays / 30)}개월 전`;
-  return `${Math.floor(diffDays / 365)}년 전`;
+  if (diffDays === 0) return t('customerForm.today');
+  if (diffDays === 1) return t('customerForm.yesterday');
+  if (diffDays < 7) return t('customerForm.daysAgo').replace('{count}', String(diffDays));
+  if (diffDays < 30) return t('customerForm.weeksAgo').replace('{count}', String(Math.floor(diffDays / 7)));
+  if (diffDays < 365) return t('customerForm.monthsAgo').replace('{count}', String(Math.floor(diffDays / 30)));
+  return t('customerForm.yearsAgo').replace('{count}', String(Math.floor(diffDays / 365)));
 }
-
-const BODY_PART_LABEL: Record<string, string> = { hand: '핸드', foot: '페디큐어' };
-const DESIGN_SCOPE_LABEL: Record<string, string> = {
-  solid_tone: '원컬러',
-  solid_point: '단색+포인트',
-  full_art: '풀아트',
-  monthly_art: '이달의 아트',
-};
 
 export function CustomerInfoForm({
   name,
@@ -55,6 +47,17 @@ export function CustomerInfoForm({
 }: CustomerInfoFormProps) {
   const t = useT();
   const allRecords = useRecordsStore((s) => s.getAllRecords)();
+
+  const BODY_PART_LABEL: Record<string, string> = {
+    hand: t('bodyPart.hand'),
+    foot: t('bodyPart.foot'),
+  };
+  const DESIGN_SCOPE_LABEL: Record<string, string> = {
+    solid_tone: t('design.solidTone'),
+    solid_point: t('design.solidPoint'),
+    full_art: t('design.fullArt'),
+    monthly_art: t('design.monthlyArt'),
+  };
   const [mode, setMode] = useState<'new' | 'existing'>('new');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -195,7 +198,7 @@ export function CustomerInfoForm({
                 {latest ? (
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-medium text-text">
-                      {getRelativeDate(latest.createdAt)}
+                      {getRelativeDate(latest.createdAt, t)}
                     </span>
                     <span className="text-text-muted text-xs">·</span>
                     <span className="text-xs text-text-secondary">

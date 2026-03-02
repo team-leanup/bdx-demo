@@ -3,9 +3,22 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/cn';
-import { useT } from '@/lib/i18n';
+import { useT, useLocale, useKo } from '@/lib/i18n';
 
 type TreatmentType = '원컬러' | '그라데이션' | '프렌치' | '마그네틱' | '포인트아트' | '풀아트' | '연장' | '리페어' | '오버레이' | '젤제거';
+
+const TREATMENT_TYPE_KEYS: Record<TreatmentType, string> = {
+  '원컬러': 'canvas.oneColor',
+  '그라데이션': 'expression.gradient',
+  '프렌치': 'expression.french',
+  '마그네틱': 'expression.magnetic',
+  '포인트아트': 'expression.pointArt',
+  '풀아트': 'expression.fullArt',
+  '연장': 'expression.extension',
+  '리페어': 'expression.repair',
+  '오버레이': 'expression.overlay',
+  '젤제거': 'expression.gelRemoval',
+};
 
 interface ColorPickerProps {
   selectedColor?: string;
@@ -127,6 +140,8 @@ export function ColorPicker({
   onTreatmentTypeChange,
 }: ColorPickerProps) {
   const t = useT();
+  const locale = useLocale();
+  const ko = useKo();
   const [inputValue, setInputValue] = useState(selectedColor ?? '');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -144,7 +159,12 @@ export function ColorPicker({
     <div className="flex flex-col gap-5 px-4 py-4">
       {/* Treatment type selection — 10 types with icons */}
       <div className="flex flex-col gap-2">
-        <p className="text-xs font-bold text-text-muted uppercase tracking-wider">시술 유형</p>
+        <div>
+          <p className="text-xs font-bold text-text-muted uppercase tracking-wider">{t('canvas.artType')}</p>
+          {locale !== 'ko' && (
+            <p className="text-[10px] text-text-muted mt-0.5">{ko('canvas.artType')}</p>
+          )}
+        </div>
         <div className="grid grid-cols-5 gap-2">
           {TREATMENT_OPTIONS.map((type) => {
             const isSelected = treatmentType === type.value;
@@ -162,7 +182,9 @@ export function ColorPicker({
                 )}
               >
                 <span className="block">{type.icon(isSelected)}</span>
-                <span className="text-[10px] font-bold leading-tight text-center whitespace-nowrap">{type.value}</span>
+                <span className="text-[10px] font-bold leading-tight text-center whitespace-nowrap">
+                  {t(TREATMENT_TYPE_KEYS[type.value])}
+                </span>
               </motion.button>
             );
           })}
@@ -173,14 +195,19 @@ export function ColorPicker({
 
       {/* Color memo text input */}
       <div className="flex flex-col gap-2">
-        <p className="text-xs font-bold text-text-muted uppercase tracking-wider">컬러 메모</p>
+        <div>
+          <p className="text-xs font-bold text-text-muted uppercase tracking-wider">{t('canvas.colorMemo')}</p>
+          {locale !== 'ko' && (
+            <p className="text-[10px] text-text-muted mt-0.5">{ko('canvas.colorMemo')}</p>
+          )}
+        </div>
         <div className="relative">
           <input
             ref={inputRef}
             type="text"
             value={inputValue}
             onChange={handleInputChange}
-            placeholder="예: 핑크 #243, 레드 골드, 오로라 젤..."
+            placeholder={t('canvas.colorMemoPlaceholder')}
             className="w-full pl-3 pr-10 py-3 rounded-2xl border-2 border-border bg-surface text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
           />
           {inputValue && (
@@ -195,7 +222,7 @@ export function ColorPicker({
             </button>
           )}
         </div>
-        <p className="text-[11px] text-text-muted">젤 브랜드명, 색상 번호, 색상 설명을 자유롭게 입력하세요</p>
+        <p className="text-[11px] text-text-muted">{t('canvas.colorMemoHint')}</p>
       </div>
 
       <div className="h-px bg-border" />
@@ -203,8 +230,11 @@ export function ColorPicker({
       {/* Point toggle */}
       <div className="flex items-center justify-between px-1">
         <div>
-          <p className="text-sm font-semibold text-text">포인트 아트</p>
-          <p className="text-xs text-text-muted mt-0.5">이 손가락을 포인트로 설정</p>
+          <p className="text-sm font-semibold text-text">{t('canvas.pointArt')}</p>
+          {locale !== 'ko' && (
+            <p className="text-[10px] text-text-muted">{ko('canvas.pointArt')}</p>
+          )}
+          <p className="text-xs text-text-muted mt-0.5">{t('canvas.setAsPoint')}</p>
         </div>
         <button
           type="button"
@@ -213,7 +243,7 @@ export function ColorPicker({
             'relative w-12 h-6 rounded-full transition-all duration-300 flex-shrink-0',
             isPoint ? 'bg-primary' : 'bg-border',
           )}
-          aria-label={isPoint ? '포인트 아트 해제' : '포인트 아트 설정'}
+          aria-label={isPoint ? t('canvas.pointArt') : t('canvas.setAsPoint')}
         >
           <span
             className={cn(
@@ -233,16 +263,16 @@ export function ColorPicker({
             </svg>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-text-muted">컬러 메모</p>
+            <p className="text-xs text-text-muted">{t('canvas.colorMemo')}</p>
             <p className="text-sm font-bold text-text truncate">{selectedColor}</p>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-xs bg-surface border border-border text-text-secondary px-2 py-0.5 rounded-full font-medium">
-              {treatmentType}
+              {t(TREATMENT_TYPE_KEYS[treatmentType])}
             </span>
             {isPoint && (
               <span className="text-xs bg-primary/15 text-primary px-2 py-0.5 rounded-full font-semibold">
-                포인트
+                {t('canvas.point')}
               </span>
             )}
           </div>

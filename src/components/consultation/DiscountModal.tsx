@@ -6,6 +6,7 @@ import { calculatePrice } from '@/lib/price-calculator';
 import { formatPrice } from '@/lib/format';
 import { Modal, Button, Input } from '@/components/ui';
 import { cn } from '@/lib/cn';
+import { useT, useLocale, useKo } from '@/lib/i18n';
 
 interface DiscountModalProps {
   isOpen: boolean;
@@ -13,6 +14,9 @@ interface DiscountModalProps {
 }
 
 export function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
+  const t = useT();
+  const tKo = useKo();
+  const locale = useLocale();
   const consultation = useConsultationStore((s) => s.consultation);
   const setDiscount = useConsultationStore((s) => s.setDiscount);
   const setDeposit = useConsultationStore((s) => s.setDeposit);
@@ -62,25 +66,28 @@ export function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="할인 / 예약금">
+    <Modal isOpen={isOpen} onClose={onClose} title={t('discountModal.title')}>
       <div className="p-5 flex flex-col gap-5">
         {/* Discount type toggle */}
         <div>
-          <p className="text-sm font-semibold text-text-secondary mb-3">할인 방식</p>
+          <div className="mb-3">
+            <p className="text-sm font-semibold text-text-secondary">{t('discountModal.discountMethod')}</p>
+            {locale !== 'ko' && <span className="text-xs text-text-muted opacity-60">{tKo('discountModal.discountMethod')}</span>}
+          </div>
           <div className="flex bg-surface-alt rounded-xl p-1 gap-1">
-            {(['fixed', 'percent'] as const).map((t) => (
+            {(['fixed', 'percent'] as const).map((discType) => (
               <button
-                key={t}
+                key={discType}
                 type="button"
-                onClick={() => setDiscountType(t)}
+                onClick={() => setDiscountType(discType)}
                 className={cn(
                   'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200',
-                  discountType === t
+                  discountType === discType
                     ? 'bg-surface text-primary shadow-sm'
                     : 'text-text-muted hover:text-text',
                 )}
               >
-                {t === 'fixed' ? '정액 할인 (₩)' : '퍼센트 할인 (%)'}
+                {discType === 'fixed' ? t('discountModal.fixedDiscount') : t('discountModal.percentDiscount')}
               </button>
             ))}
           </div>
@@ -88,9 +95,9 @@ export function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
 
         {/* Discount value */}
         <Input
-          label={discountType === 'fixed' ? '할인 금액 (원)' : '할인 비율 (%)'}
+          label={discountType === 'fixed' ? t('discountModal.discountAmount') : t('discountModal.discountPercent')}
           type="number"
-          placeholder={discountType === 'fixed' ? '예) 5000' : '예) 10'}
+          placeholder={discountType === 'fixed' ? t('discountModal.placeholderAmount') : t('discountModal.placeholderPercent')}
           value={discountValue}
           onChange={(e) => setDiscountValue(e.target.value)}
           min={0}
@@ -99,9 +106,9 @@ export function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
 
         {/* Deposit */}
         <Input
-          label="예약금 (원)"
+          label={t('discountModal.depositAmount')}
           type="number"
-          placeholder="예) 20000"
+          placeholder={t('discountModal.depositPlaceholder')}
           value={depositValue}
           onChange={(e) => setDepositValue(e.target.value)}
           min={0}
@@ -109,27 +116,30 @@ export function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
 
         {/* Preview */}
         <div className="rounded-2xl border border-border bg-surface-alt p-4 flex flex-col gap-2">
-          <p className="text-xs font-semibold text-text-secondary mb-1">계산 미리보기</p>
+          <div className="mb-1">
+            <p className="text-xs font-semibold text-text-secondary">{t('discountModal.preview')}</p>
+            {locale !== 'ko' && <span className="text-xs text-text-muted opacity-60">{tKo('discountModal.preview')}</span>}
+          </div>
           <div className="flex justify-between text-sm">
-            <span className="text-text-muted">소계</span>
+            <span className="text-text-muted">{t('discountModal.subtotal')}</span>
             <span className="text-text">{formatPrice(subtotal)}</span>
           </div>
           {previewDiscount > 0 && (
             <div className="flex justify-between text-sm">
               <span className="text-text-muted">
-                할인{discountType === 'percent' ? ` (${discountValue}%)` : ''}
+                {t('discountModal.discount')}{discountType === 'percent' ? ` (${discountValue}%)` : ''}
               </span>
               <span className="text-error">-{formatPrice(previewDiscount)}</span>
             </div>
           )}
           {previewDeposit > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-text-muted">예약금</span>
+              <span className="text-text-muted">{t('discountModal.deposit')}</span>
               <span className="text-warning">-{formatPrice(previewDeposit)}</span>
             </div>
           )}
           <div className="border-t border-border pt-2 flex justify-between">
-            <span className="font-bold text-text">최종 결제</span>
+            <span className="font-bold text-text">{t('discountModal.finalPayment')}</span>
             <span className="font-bold text-primary">{formatPrice(previewFinal)}</span>
           </div>
         </div>
@@ -142,7 +152,7 @@ export function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
             onClick={handleReset}
             className="flex-1"
           >
-            초기화
+            {t('discountModal.reset')}
           </Button>
           <Button
             variant="primary"
@@ -150,7 +160,7 @@ export function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
             onClick={handleApply}
             className="flex-1"
           >
-            적용
+            {t('discountModal.apply')}
           </Button>
         </div>
       </div>

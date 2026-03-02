@@ -5,14 +5,14 @@ import { useConsultationStore } from '@/store/consultation-store';
 import { OFF_TYPE_OPTIONS } from '@/data/service-options';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/cn';
-import { useT, useLocale } from '@/lib/i18n';
+import { useT, useLocale, useKo } from '@/lib/i18n';
 
 interface OffSelectorProps {
   className?: string;
 }
 
 // Iconic visuals for Off (Removal) - Context-aware "Our Shop" vs "Other Shop"
-const OFF_ICONS: Record<string, (selected: boolean) => React.ReactNode> = {
+const OFF_ICONS: Record<string, (selected: boolean, selfLabel: string, otherLabel: string) => React.ReactNode> = {
   // none: Natural clean nail with a "None" slash
   none: (selected) => (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
@@ -22,44 +22,37 @@ const OFF_ICONS: Record<string, (selected: boolean) => React.ReactNode> = {
     </svg>
   ),
   // same_shop: Focus on "Home/Our Shop" with a heart (Loyalty)
-  same_shop: (selected) => (
+  same_shop: (selected, selfLabel) => (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
       {/* Warm Shop Silhouette */}
       <path d="M14 52 L14 32 L32 16 L50 32 L50 52 Z" fill="currentColor" fillOpacity={selected ? '0.15' : '0.05'} stroke="currentColor" strokeWidth="2" />
       <path d="M26 52 L26 40 L38 40 L38 52" stroke="currentColor" strokeWidth="2" />
-      
+
       {/* Heart Symbol inside - Representing "Our regular customer" */}
       <path d="M32 35 C32 35 30 31 28 31 C26 31 25 33 25 35 C25 38 32 42 32 42 C32 42 39 38 39 35 C39 33 38 31 36 31 C34 31 32 35 32 35" fill="var(--color-primary)" fillOpacity={selected ? '1' : '0.3'} />
 
-      {/* "우리 샵" Badge */}
+      {/* Shop Badge */}
       <rect x="16" y="44" width="32" height="14" rx="7" fill={selected ? 'var(--color-primary)' : 'var(--color-surface)'} stroke="var(--color-primary)" strokeWidth="1.5" />
-      <text x="32" y="54" textAnchor="middle" fontSize="9" fontWeight="900" fill={selected ? 'white' : 'var(--color-primary)'} className="font-pretendard">우리 샵</text>
+      <text x="32" y="54" textAnchor="middle" fontSize="9" fontWeight="900" fill={selected ? 'white' : 'var(--color-primary)'} className="font-pretendard">{selfLabel}</text>
     </svg>
   ),
   // other_shop: Focus on "Transition" - From dotted shop to our shop
-  other_shop: (selected) => (
+  other_shop: (selected, _selfLabel, otherLabel) => (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
       {/* Other Shop (Dashed) */}
       <path d="M6 46 L6 34 L16 26 L26 34 L26 46 Z" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.4" />
-      
+
       {/* Arrow Pointing to Our Shop */}
       <path d="M28 36 L40 36 M36 32 L40 36 L36 40" stroke="var(--color-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      
+
       {/* Our Shop (Solid) */}
       <path d="M42 46 L42 26 L54 16 L66 26 L66 46" stroke="currentColor" strokeWidth="2" fill="currentColor" fillOpacity="0.05" />
 
-      {/* "다른 샵" Badge */}
+      {/* Shop Badge */}
       <rect x="2" y="44" width="32" height="14" rx="7" fill={selected ? 'var(--color-text)' : 'var(--color-surface)'} stroke="var(--color-text)" strokeWidth="1.5" />
-      <text x="18" y="54" textAnchor="middle" fontSize="9" fontWeight="900" fill={selected ? 'white' : 'var(--color-text)'} className="font-pretendard">다른 샵</text>
+      <text x="18" y="54" textAnchor="middle" fontSize="9" fontWeight="900" fill={selected ? 'white' : 'var(--color-text)'} className="font-pretendard">{otherLabel}</text>
     </svg>
   ),
-};
-
-// Korean labels for secondary display
-const KO_OFF_LABELS: Record<string, string> = {
-  none: '없음',
-  same_shop: '자샵오프',
-  other_shop: '타샵오프',
 };
 
 // i18n key mapping
@@ -71,9 +64,13 @@ const OFF_I18N_KEYS: Record<string, string> = {
 
 export function OffSelector({ className }: OffSelectorProps) {
   const t = useT();
+  const tKo = useKo();
   const locale = useLocale();
   const offType = useConsultationStore((s) => s.consultation.offType);
   const setOffType = useConsultationStore((s) => s.setOffType);
+
+  const selfLabel = t('consultation.selfRemoval');
+  const otherLabel = t('consultation.otherRemoval');
 
   return (
     <div className={cn('flex flex-col gap-5', className)}>
@@ -83,7 +80,10 @@ export function OffSelector({ className }: OffSelectorProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} stroke="currentColor" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
           </svg>
         </div>
-        <p className="text-base font-black text-text-secondary tracking-tight">제거 유형</p>
+        <p className="text-base font-black text-text-secondary tracking-tight">
+          {t('selector.offType')}
+          {locale !== 'ko' && <span className="ml-2 text-xs font-medium text-text-muted opacity-60">{tKo('selector.offType')}</span>}
+        </p>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
@@ -104,7 +104,7 @@ export function OffSelector({ className }: OffSelectorProps) {
             >
               {/* Context-Aware Iconic Visual */}
               <span className={cn('transition-all duration-300 transform', isSelected ? 'scale-110' : 'opacity-60 grayscale-[0.5]')}>
-                {OFF_ICONS[opt.value](isSelected)}
+                {OFF_ICONS[opt.value](isSelected, selfLabel, otherLabel)}
               </span>
 
               {/* Labels */}
@@ -115,7 +115,7 @@ export function OffSelector({ className }: OffSelectorProps) {
                 {/* Korean secondary label — shown only in non-Korean mode */}
                 {locale !== 'ko' && (
                   <span className="text-[10px] text-text-muted text-center font-bold opacity-70">
-                    {KO_OFF_LABELS[opt.value]}
+                    {tKo(OFF_I18N_KEYS[opt.value])}
                   </span>
                 )}
                 {opt.price !== undefined && opt.price > 0 && (
@@ -124,9 +124,9 @@ export function OffSelector({ className }: OffSelectorProps) {
                   </span>
                 )}
                 {opt.price === 0 && (
-                   <span className={cn('text-[11px] font-bold mt-1 px-2 py-0.5 rounded-full bg-surface-alt text-text-muted opacity-60')}>
-                     0원
-                   </span>
+                  <span className={cn('text-[11px] font-bold mt-1 px-2 py-0.5 rounded-full bg-surface-alt text-text-muted opacity-60')}>
+                    {t('selector.includedFree')}
+                  </span>
                 )}
               </div>
 

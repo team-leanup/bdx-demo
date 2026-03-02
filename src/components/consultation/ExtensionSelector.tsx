@@ -6,7 +6,7 @@ import { Counter } from '@/components/ui';
 import { EXTENSION_TYPE_OPTIONS } from '@/data/service-options';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/cn';
-import { useT, useLocale } from '@/lib/i18n';
+import { useT, useLocale, useKo } from '@/lib/i18n';
 
 interface ExtensionSelectorProps {
   className?: string;
@@ -43,13 +43,6 @@ const EXT_ICONS: Record<string, (selected: boolean) => React.ReactNode> = {
   ),
 };
 
-// Korean labels for secondary display
-const KO_EXT_LABELS: Record<string, string> = {
-  none: '없음',
-  repair: '리페어',
-  extension: '연장',
-};
-
 // i18n key mapping for extension option labels
 const EXT_OPTION_I18N_KEYS: Record<string, string> = {
   none: 'off.none',
@@ -59,6 +52,7 @@ const EXT_OPTION_I18N_KEYS: Record<string, string> = {
 
 export function ExtensionSelector({ className }: ExtensionSelectorProps) {
   const t = useT();
+  const tKo = useKo();
   const locale = useLocale();
   const extensionType = useConsultationStore((s) => s.consultation.extensionType);
   const repairCount = useConsultationStore((s) => s.consultation.repairCount ?? 1);
@@ -73,7 +67,10 @@ export function ExtensionSelector({ className }: ExtensionSelectorProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} stroke="currentColor" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
         </div>
-        <p className="text-sm font-extrabold text-text-secondary tracking-tight">연장/리페어</p>
+        <p className="text-sm font-extrabold text-text-secondary tracking-tight">
+          {t('selector.extensionRepair')}
+          {locale !== 'ko' && <span className="ml-2 text-xs font-medium text-text-muted opacity-60">{tKo('selector.extensionRepair')}</span>}
+        </p>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
@@ -103,11 +100,11 @@ export function ExtensionSelector({ className }: ExtensionSelectorProps) {
                   {t(EXT_OPTION_I18N_KEYS[opt.value])}
                 </span>
                 {locale !== 'ko' && (
-                  <span className="text-[10px] text-text-muted font-bold opacity-70">{KO_EXT_LABELS[opt.value]}</span>
+                  <span className="text-[10px] text-text-muted font-bold opacity-70">{tKo(EXT_OPTION_I18N_KEYS[opt.value])}</span>
                 )}
                 {opt.price !== undefined && opt.price > 0 && (
                   <span className={cn('text-[10px] font-black mt-1 px-2 py-0.5 rounded-full', isSelected ? 'bg-primary/20 text-primary' : 'bg-surface-alt text-text-muted')}>
-                    {opt.value === 'repair' ? `${formatPrice(opt.price)}/개` : formatPrice(opt.price)}
+                    {opt.value === 'repair' ? `${formatPrice(opt.price)}${t('selector.perUnit')}` : formatPrice(opt.price)}
                   </span>
                 )}
               </div>
@@ -137,14 +134,14 @@ export function ExtensionSelector({ className }: ExtensionSelectorProps) {
           className="p-4 rounded-3xl bg-surface border-2 border-primary/20 flex flex-col gap-3"
         >
           <Counter
-            label="리페어 수량"
+            label={t('selector.repairQuantity')}
             value={repairCount}
             onChange={setRepairCount}
             min={1}
             max={10}
           />
           <div className="flex justify-between items-center text-xs font-bold px-1">
-            <span className="text-text-muted">소계</span>
+            <span className="text-text-muted">{t('summary.subtotal')}</span>
             <span className="text-primary">{formatPrice(repairCount * 3000)}</span>
           </div>
         </motion.div>

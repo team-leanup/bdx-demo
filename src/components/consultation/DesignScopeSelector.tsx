@@ -5,7 +5,7 @@ import { useConsultationStore } from '@/store/consultation-store';
 import { DESIGN_SCOPE_OPTIONS } from '@/data/service-options';
 import { formatPrice } from '@/lib/format';
 import { cn } from '@/lib/cn';
-import { useT, useLocale } from '@/lib/i18n';
+import { useT, useLocale, useKo } from '@/lib/i18n';
 
 interface DesignScopeSelectorProps {
   className?: string;
@@ -58,13 +58,6 @@ const DESIGN_ICONS: Record<string, (selected: boolean) => React.ReactNode> = {
   ),
 };
 
-const KO_DESIGN_LABELS: Record<string, string> = {
-  solid_tone: '원컬러',
-  solid_point: '단색+포인트',
-  full_art: '풀아트',
-  monthly_art: '이달의 아트',
-};
-
 const DESIGN_I18N_KEYS: Record<string, string> = {
   solid_tone: 'design.solidTone',
   solid_point: 'design.solidPoint',
@@ -74,6 +67,7 @@ const DESIGN_I18N_KEYS: Record<string, string> = {
 
 export function DesignScopeSelector({ className }: DesignScopeSelectorProps) {
   const t = useT();
+  const tKo = useKo();
   const locale = useLocale();
   const designScope = useConsultationStore((s) => s.consultation.designScope);
   const setDesignScope = useConsultationStore((s) => s.setDesignScope);
@@ -86,7 +80,10 @@ export function DesignScopeSelector({ className }: DesignScopeSelectorProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} stroke="currentColor" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
           </svg>
         </div>
-        <p className="text-lg font-black text-text-secondary tracking-tight">디자인 범위</p>
+        <p className="text-lg font-black text-text-secondary tracking-tight">
+          {t('selector.designScope')}
+          {locale !== 'ko' && <span className="ml-2 text-xs font-medium text-text-muted opacity-60">{tKo('selector.designScope')}</span>}
+        </p>
       </div>
       <div className="grid grid-cols-2 gap-5 md:gap-10">
         {DESIGN_SCOPE_OPTIONS.map((opt) => {
@@ -118,7 +115,7 @@ export function DesignScopeSelector({ className }: DesignScopeSelectorProps) {
                     {t(DESIGN_I18N_KEYS[opt.value])}
                   </span>
                 </div>
-                
+
                 {/* Secondary description */}
                 <div className="flex flex-col items-center gap-0.5">
                   {isMonthly ? (
@@ -128,7 +125,7 @@ export function DesignScopeSelector({ className }: DesignScopeSelectorProps) {
                   ) : (
                     locale !== 'ko' && (
                       <span className="text-xs text-text-muted text-center font-bold opacity-60">
-                        {KO_DESIGN_LABELS[opt.value]}
+                        {tKo(DESIGN_I18N_KEYS[opt.value])}
                       </span>
                     )
                   )}
@@ -142,7 +139,7 @@ export function DesignScopeSelector({ className }: DesignScopeSelectorProps) {
                   ? 'bg-primary/20 text-primary'
                   : 'bg-surface-alt text-text-muted',
               )}>
-                {opt.price === 0 ? '포함' : `+${formatPrice(opt.price!)}`}
+                {opt.price === 0 ? t('selector.includedFree') : `+${formatPrice(opt.price!)}`}
               </div>
 
               {/* Selected checkmark */}

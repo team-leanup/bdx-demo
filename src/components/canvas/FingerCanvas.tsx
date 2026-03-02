@@ -9,7 +9,7 @@ import { FingerSummary } from './FingerSummary';
 import { PartsPalette } from './PartsPalette';
 import { ColorPicker } from './ColorPicker';
 import { cn } from '@/lib/cn';
-import { useT } from '@/lib/i18n';
+import { useT, useLocale, useKo } from '@/lib/i18n';
 import type { FingerPosition, FingerSelection, PartType, PartGrade } from '@/types/canvas';
 
 type HandSide = 'left' | 'right';
@@ -89,6 +89,8 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
   );
   const [modal, setModal] = useState<ModalState>(DEFAULT_MODAL);
   const t = useT();
+  const locale = useLocale();
+  const ko = useKo();
 
   const currentSel = selections[activeHand];
 
@@ -291,7 +293,7 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
                   : 'text-text-muted hover:text-text-secondary',
               )}
             >
-              {tab === 'color' ? '컬러 · 시술' : '파츠'}
+              {tab === 'color' ? t('canvas.colorAndTreatment') : t('canvas.parts')}
             </button>
           ))}
         </div>
@@ -323,11 +325,16 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
 
         {/* Memo textarea */}
         <div className="px-4 py-3 border-t border-border">
-          <p className="text-xs font-bold text-text-muted mb-1.5">시술 메모</p>
+          <div className="mb-1.5">
+            <p className="text-xs font-bold text-text-muted">{t('canvas.treatmentMemo')}</p>
+            {locale !== 'ko' && (
+              <p className="text-[10px] text-text-muted mt-0.5">{ko('canvas.treatmentMemo')}</p>
+            )}
+          </div>
           <textarea
             value={modal.draftMemo}
             onChange={(e) => setModal((prev) => ({ ...prev, draftMemo: e.target.value }))}
-            placeholder="시술 세부사항, 참고사항을 입력하세요..."
+            placeholder={t('canvas.treatmentMemoPlaceholder')}
             rows={2}
             className="w-full px-3 py-2.5 rounded-2xl border-2 border-border bg-surface-alt text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-none"
           />

@@ -134,7 +134,7 @@ export function DesignPresetPicker({ onSelect, selectedId }: DesignPresetPickerP
             {/* Parts badge — Korean */}
             {preset.hasParts && totalParts > 0 && (
               <span className="self-start px-2 py-0.5 rounded-full bg-primary/10 text-[10px] font-semibold text-primary border border-primary/20">
-                파츠 추가 {totalParts}
+                {t('selector.addParts')} {totalParts}
               </span>
             )}
           </motion.button>

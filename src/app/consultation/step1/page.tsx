@@ -47,21 +47,6 @@ export default function Step1Page() {
             transition={{ duration: 0.3 }}
             className="flex items-center gap-4 p-4 rounded-2xl bg-primary/5 border border-primary/15"
           >
-            <div className="w-16 h-16 rounded-2xl bg-primary/15 flex items-center justify-center flex-shrink-0">
-              {/* Hand / Nail SVG icon */}
-              <svg width="36" height="36" viewBox="0 0 64 64" fill="none" className="text-primary">
-                <rect x="18" y="36" width="28" height="18" rx="6" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2.5" />
-                <rect x="10" y="34" width="10" height="16" rx="5" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2.5" />
-                <rect x="20" y="14" width="8" height="24" rx="4" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2.5" />
-                <rect x="29" y="10" width="8" height="28" rx="4" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2.5" />
-                <rect x="38" y="13" width="8" height="25" rx="4" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2.5" />
-                <rect x="46" y="20" width="7" height="18" rx="3.5" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2.5" />
-                <rect x="21" y="15" width="6" height="7" rx="3" fill="currentColor" fillOpacity="0.6" />
-                <rect x="30" y="11" width="6" height="7" rx="3" fill="currentColor" fillOpacity="0.6" />
-                <rect x="39" y="14" width="6" height="7" rx="3" fill="currentColor" fillOpacity="0.6" />
-                <rect x="47" y="21" width="5" height="6" rx="2.5" fill="currentColor" fillOpacity="0.6" />
-              </svg>
-            </div>
             <div>
               <p className="text-[11px] font-bold text-primary uppercase tracking-widest mb-0.5">Basic Conditions</p>
               <h2 className="text-lg font-bold text-text">{t('consultation.step1Title')}</h2>
