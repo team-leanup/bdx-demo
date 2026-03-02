@@ -43,40 +43,9 @@
 }
 
 /* ============================================================
-   Default Theme: 파스텔 핑크 (Pastel Pink)
+   Default Theme: 로즈 핑크 (Rose Pink)
    ============================================================ */
 :root,
-[data-theme="pastel-pink"] {
-  --color-primary: #FDCFE8;
-  --color-primary-light: #FEF0F7;
-  --color-primary-dark: #F9A8D4;
-  --color-secondary: #FEE5F2;
-  --color-accent: #FAB8D9;
-  --color-background: #FFFAFB;
-  --color-surface: #FFFFFF;
-  --color-surface-alt: #FFF5FA;
-  --color-surface-elevated: #FFFFFF;
-  --color-surface-inset: #FFEEF6;
-  --color-text: #5C2854;
-  --color-text-secondary: #8E5A82;
-  --color-text-muted: #D4A6C6;
-  --color-border: #FDE4F0;
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-error: #EF4444;
-  --color-brand: #FDCFE8;
-  --color-chart-1: #FDCFE8;
-  --color-chart-2: #FEF0F7;
-  --color-chart-3: #F9A8D4;
-  --color-chart-4: #FAB8D9;
-  --shadow-bento: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
-  --shadow-bento-hover: 0 8px 25px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.06);
-  --shadow-bento-hero: 0 4px 20px rgba(253,207,232,0.35), 0 12px 40px rgba(253,207,232,0.2);
-}
-
-/* ============================================================
-   로즈 핑크 (Rose Pink)
-   ============================================================ */
 [data-theme="rose-pink"] {
   --color-primary: #F9A8D4;
   --color-primary-light: #FEF0F7;
@@ -134,37 +103,6 @@
   --shadow-bento: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
   --shadow-bento-hover: 0 8px 25px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.06);
   --shadow-bento-hero: 0 4px 20px rgba(200,184,162,0.3), 0 12px 40px rgba(200,184,162,0.18);
-}
-
-/* ============================================================
-   소프트 베이지 (Soft Ivory)
-   ============================================================ */
-[data-theme="soft-ivory"] {
-  --color-primary: #DFC8AE;
-  --color-primary-light: #FAF5EE;
-  --color-primary-dark: #BCA27A;
-  --color-secondary: #F5EDE0;
-  --color-accent: #D0BA9E;
-  --color-background: #FFFEFB;
-  --color-surface: #FFFFFF;
-  --color-surface-alt: #FAF5EE;
-  --color-surface-elevated: #FFFFFF;
-  --color-surface-inset: #F5EDE0;
-  --color-text: #4D4538;
-  --color-text-secondary: #7D7060;
-  --color-text-muted: #BAA88E;
-  --color-border: #F2E8D8;
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-error: #EF4444;
-  --color-brand: #DFC8AE;
-  --color-chart-1: #DFC8AE;
-  --color-chart-2: #FAF5EE;
-  --color-chart-3: #BCA27A;
-  --color-chart-4: #D0BA9E;
-  --shadow-bento: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
-  --shadow-bento-hover: 0 8px 25px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.06);
-  --shadow-bento-hero: 0 4px 20px rgba(223,200,174,0.3), 0 12px 40px rgba(223,200,174,0.18);
 }
 
 /* ============================================================
@@ -289,6 +227,37 @@
   --shadow-bento: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
   --shadow-bento-hover: 0 8px 25px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.06);
   --shadow-bento-hero: 0 4px 20px rgba(214,202,254,0.35), 0 12px 40px rgba(214,202,254,0.2);
+}
+
+/* ============================================================
+   웜 코랄 (Warm Coral)
+   ============================================================ */
+[data-theme="warm-coral"] {
+  --color-primary: #F4845F;
+  --color-primary-light: #FDE8E0;
+  --color-primary-dark: #E05A33;
+  --color-secondary: #FCEEE8;
+  --color-accent: #F09070;
+  --color-background: #FFFAF8;
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #FFF4F0;
+  --color-surface-elevated: #FFFFFF;
+  --color-surface-inset: #FCEAE2;
+  --color-text: #3D2017;
+  --color-text-secondary: #6B4A3A;
+  --color-text-muted: #C0978A;
+  --color-border: #F8DED4;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-brand: #F4845F;
+  --color-chart-1: #F4845F;
+  --color-chart-2: #FDE8E0;
+  --color-chart-3: #E05A33;
+  --color-chart-4: #F09070;
+  --shadow-bento: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-bento-hover: 0 8px 25px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.06);
+  --shadow-bento-hero: 0 4px 20px rgba(244,132,95,0.3), 0 12px 40px rgba(244,132,95,0.18);
 }
 
 /* ============================================================

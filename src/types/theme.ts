@@ -1,12 +1,11 @@
 export type ThemeId =
-  | 'pastel-pink'
   | 'rose-pink'
   | 'pure-ivory'
-  | 'soft-ivory'
   | 'clean-black'
   | 'olive-green'
   | 'pastel-blue'
-  | 'pastel-lilac';
+  | 'pastel-lilac'
+  | 'warm-coral';
 
 export interface ThemeColors {
   primary: string;
