@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useConsultationStore } from '@/store/consultation-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useRecordsStore } from '@/store/records-store';
+import type { ConsultationRecord } from '@/types/consultation';
 import { HandIllustration } from '@/components/canvas/HandIllustration';
 import { formatPrice } from '@/lib/format';
 import { calculatePrice } from '@/lib/price-calculator';
@@ -155,7 +156,7 @@ export default function TreatmentSheetPage() {
     const now = new Date().toISOString();
     const newId = `record-${Date.now()}`;
     const customerId = consultation.customerId || 'customer-001';
-    const savedRecord = {
+    const savedRecord: ConsultationRecord = {
       id: newId,
       shopId: 'shop-001',
       designerId: consultation.designerId || activeDesignerId || 'designer-001',
@@ -168,7 +169,7 @@ export default function TreatmentSheetPage() {
       updatedAt: now,
       notes: checklist.memo || undefined,
     };
-    addRecord(savedRecord as any);
+    addRecord(savedRecord);
 
     await new Promise((r) => setTimeout(r, 400));
     reset();

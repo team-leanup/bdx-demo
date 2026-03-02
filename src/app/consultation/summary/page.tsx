@@ -14,6 +14,7 @@ import { calculatePrice } from '@/lib/price-calculator';
 import { estimateTime } from '@/lib/time-calculator';
 import { MOCK_CUSTOMERS } from '@/data/mock-customers';
 import { useRecordsStore } from '@/store/records-store';
+import type { ConsultationRecord } from '@/types/consultation';
 
 export default function SummaryPage() {
   const router = useRouter();
@@ -39,7 +40,7 @@ export default function SummaryPage() {
     const breakdown = calculatePrice(consultation);
     const minutes = estimateTime(consultation);
     const now = new Date().toISOString();
-    const savedRecord = {
+    const savedRecord: ConsultationRecord = {
       id: newId,
       shopId: 'shop-001',
       designerId: consultation.designerId || 'designer-001',
@@ -54,8 +55,7 @@ export default function SummaryPage() {
     };
     sessionStorage.setItem(`bdx-saved-record-${newId}`, JSON.stringify(savedRecord));
 
-    // 기록 탭에 즉시 반영 (store 경유)
-    addRecord(savedRecord as any);
+    addRecord(savedRecord);
 
     // 스몰토크 메모 → MOCK_CUSTOMERS 해당 고객 smallTalkNotes에 자동 push
     if (customerMemo) {
