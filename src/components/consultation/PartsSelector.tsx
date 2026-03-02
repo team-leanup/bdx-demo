@@ -216,7 +216,7 @@ export function PartsSelector({ className }: PartsSelectorProps) {
                   <button
                     type="button"
                     onClick={() => removeCustomEntry(entry.id)}
-                    className="w-7 h-7 rounded-full border border-border bg-surface flex items-center justify-center text-text-muted hover:text-red-500 hover:border-red-300 hover:bg-red-50 transition-all flex-shrink-0"
+                    className="w-7 h-7 rounded-full border border-border bg-surface flex items-center justify-center text-text-muted hover:text-error hover:border-error/30 hover:bg-error/5 transition-all flex-shrink-0"
                     aria-label={t('common.delete')}
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">

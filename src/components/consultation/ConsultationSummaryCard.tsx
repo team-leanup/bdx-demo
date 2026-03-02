@@ -71,7 +71,7 @@ function PriceRow({
         <span
           className={cn(
             'font-semibold',
-            isFinal ? 'text-xl font-bold text-primary' : isDiscount ? 'text-sm text-red-500' : 'text-sm text-text',
+            isFinal ? 'text-xl font-bold text-primary' : isDiscount ? 'text-sm text-error' : 'text-sm text-text',
           )}
         >
           {isDiscount ? '-' : ''}{formatPrice(value)}

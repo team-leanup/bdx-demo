@@ -40,10 +40,10 @@ interface TimeGridCalendarProps {
 const HOUR_HEIGHT = 64;
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-orange-100 border-l-2 border-orange-500 text-orange-800',
+  pending: 'bg-warning/10 border-l-2 border-warning text-warning',
   confirmed: 'border-l-2 text-text',
   completed: 'bg-surface-alt border-l-2 border-border text-text-secondary',
-  cancelled: 'bg-red-50 border-l-2 border-red-300 text-red-400 line-through',
+  cancelled: 'bg-error/10 border-l-2 border-error/50 text-error/70 line-through',
   done: 'border-l-2 text-text',
 };
 
@@ -225,7 +225,7 @@ export function TimeGridCalendar({ events, weekStartDate, onEventClick, onWeekCh
                         style={{ top, height }}
                       >
                         <div className="text-[10px] font-semibold truncate flex items-center gap-1">
-                          <span className={cn('inline-block px-0.5 rounded text-[8px] font-bold', ev.type === 'reservation' ? 'bg-orange-200/60 text-orange-700' : 'bg-primary/15 text-primary')}>
+                          <span className={cn('inline-block px-0.5 rounded text-[8px] font-bold', ev.type === 'reservation' ? 'bg-warning/20 text-warning' : 'bg-primary/15 text-primary')}>
                             {ev.type === 'reservation' ? '예약' : '상담'}
                           </span>
                           {ev.title}
@@ -255,8 +255,8 @@ export function TimeGridCalendar({ events, weekStartDate, onEventClick, onWeekCh
                 className="absolute left-[60px] right-0 flex items-center z-10 pointer-events-none"
                 style={{ top: currentTimeTop }}
               >
-                <div className="w-2.5 h-2.5 rounded-full bg-red-500 -ml-1.5 flex-shrink-0" />
-                <div className="flex-1 h-0.5 bg-red-500" />
+                <div className="w-2.5 h-2.5 rounded-full bg-error -ml-1.5 flex-shrink-0" />
+                <div className="flex-1 h-0.5 bg-error" />
               </div>
             )}
           </div>

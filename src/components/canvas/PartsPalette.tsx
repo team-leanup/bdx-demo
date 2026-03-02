@@ -152,7 +152,7 @@ export function PartsPalette({
                   <button
                     type="button"
                     onClick={() => removeEntry(entry.id)}
-                    className="w-7 h-7 rounded-full border border-border bg-surface flex items-center justify-center text-text-muted hover:text-text hover:border-red-300 hover:bg-red-50 transition-all"
+                    className="w-7 h-7 rounded-full border border-border bg-surface flex items-center justify-center text-text-muted hover:text-error hover:border-error/30 hover:bg-error/5 transition-all"
                     aria-label="삭제"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -242,7 +242,7 @@ export function PartsPalette({
                           ? 'bg-yellow-100 text-yellow-700'
                           : gradeOpt.grade === 'A'
                           ? 'bg-blue-100 text-blue-700'
-                          : 'bg-gray-100 text-gray-600',
+                          : 'bg-surface-alt text-text-secondary',
                       )}
                     >
                       {gradeOpt.grade}

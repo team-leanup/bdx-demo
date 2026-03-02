@@ -27,10 +27,10 @@ const CHANNEL_I18N_KEY: Record<BookingChannel, string> = {
 };
 
 const STATUS_BADGE_STYLE: Record<BookingStatus, string> = {
-  pending: 'bg-orange-100 text-orange-700 border-orange-200',
-  confirmed: 'bg-green-100 text-green-700 border-green-200',
+  pending: 'bg-warning/10 text-warning border-warning/20',
+  confirmed: 'bg-success/10 text-success border-success/20',
   completed: 'bg-surface-alt text-text-secondary border-border',
-  cancelled: 'bg-red-100 text-red-600 border-red-200',
+  cancelled: 'bg-error/10 text-error border-error/20',
 };
 
 const STATUS_I18N_KEY: Record<BookingStatus, string> = {
@@ -58,10 +58,10 @@ const LANGUAGE_OPTIONS: { value: Locale; label: string }[] = [
 
 // Timeline dot colors by status
 const STATUS_DOT: Record<BookingStatus, string> = {
-  pending: 'bg-orange-400',
-  confirmed: 'bg-green-500',
+  pending: 'bg-warning',
+  confirmed: 'bg-success',
   completed: 'bg-text-muted',
-  cancelled: 'bg-red-400',
+  cancelled: 'bg-error',
 };
 
 interface DayReservationListProps {
