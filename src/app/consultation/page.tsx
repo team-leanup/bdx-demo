@@ -164,7 +164,7 @@ export default function ConsultationStartPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="flex-1 flex flex-col px-4 md:px-8 pt-6 pb-28 gap-6 md:gap-8 max-w-lg md:max-w-4xl mx-auto w-full overflow-y-auto"
+        className="flex-1 flex flex-col px-4 md:px-10 pt-6 pb-28 gap-6 md:gap-8 max-w-lg md:max-w-2xl mx-auto w-full overflow-y-auto"
       >
         {/* Single column layout: Hero → Steps → Designer → Language */}
         <div className="flex flex-col">

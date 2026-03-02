@@ -77,8 +77,8 @@ export default function LockPage() {
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col items-center mb-8"
         >
-          <span className="text-5xl font-black tracking-tight text-primary">BDX</span>
-          <span className="text-xs font-medium text-primary/50 mt-1.5 tracking-widest uppercase">
+          <span className="text-5xl font-black tracking-tight" style={{ color: '#F472B6' }}>BDX</span>
+          <span className="text-xs font-medium mt-1.5 tracking-widest uppercase" style={{ color: 'rgba(244,114,182,0.5)' }}>
             Beauty Decision eXperience
           </span>
         </motion.div>

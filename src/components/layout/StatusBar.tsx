@@ -28,7 +28,7 @@ export function StatusBar({ shopName = 'BDX' }: StatusBarProps) {
       <div className="flex items-center justify-between px-4 h-14 max-w-2xl mx-auto">
         {/* Left: shop name + role badge */}
         <div className="flex items-center gap-2">
-          <span className="font-bold text-base text-text">{shopName}</span>
+          <span className="font-bold text-base tracking-tight" style={{ color: '#F472B6' }}>{shopName}</span>
           {isLoggedIn() && <RoleBadge />}
         </div>
 

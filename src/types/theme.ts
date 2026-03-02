@@ -8,7 +8,8 @@ export type ThemeId =
   | 'pastel-pink'
   | 'pastel-mint'
   | 'pastel-yellow'
-  | 'pastel-mix';
+  | 'pastel-mix'
+  | 'pure-ivory';
 
 export interface ThemeColors {
   primary: string;
