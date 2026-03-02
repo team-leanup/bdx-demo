@@ -75,6 +75,68 @@
 }
 
 /* ============================================================
+   웜 코랄 (Warm Coral)
+   ============================================================ */
+[data-theme="warm-coral"] {
+  --color-primary: #F4845F;
+  --color-primary-light: #FDE8E0;
+  --color-primary-dark: #E05A33;
+  --color-secondary: #FCEEE8;
+  --color-accent: #F09070;
+  --color-background: #FFFAF8;
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #FFF4F0;
+  --color-surface-elevated: #FFFFFF;
+  --color-surface-inset: #FCEAE2;
+  --color-text: #3D2017;
+  --color-text-secondary: #6B4A3A;
+  --color-text-muted: #C0978A;
+  --color-border: #F8DED4;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-brand: #F4845F;
+  --color-chart-1: #F4845F;
+  --color-chart-2: #FDE8E0;
+  --color-chart-3: #E05A33;
+  --color-chart-4: #F09070;
+  --shadow-bento: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-bento-hover: 0 8px 25px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.06);
+  --shadow-bento-hero: 0 4px 20px rgba(244,132,95,0.3), 0 12px 40px rgba(244,132,95,0.18);
+}
+
+/* ============================================================
+   모카 브라운 (Mocha Brown)
+   ============================================================ */
+[data-theme="mocha-brown"] {
+  --color-primary: #A0826D;
+  --color-primary-light: #EDE4DE;
+  --color-primary-dark: #7A5F4E;
+  --color-secondary: #E8DDD5;
+  --color-accent: #8E7262;
+  --color-background: #FDFBF9;
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #F7F2EE;
+  --color-surface-elevated: #FFFFFF;
+  --color-surface-inset: #F0EAE4;
+  --color-text: #3B2E25;
+  --color-text-secondary: #6A584C;
+  --color-text-muted: #B8A698;
+  --color-border: #E8DDD5;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-brand: #A0826D;
+  --color-chart-1: #A0826D;
+  --color-chart-2: #EDE4DE;
+  --color-chart-3: #7A5F4E;
+  --color-chart-4: #8E7262;
+  --shadow-bento: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-bento-hover: 0 8px 25px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.06);
+  --shadow-bento-hero: 0 4px 20px rgba(160,130,109,0.3), 0 12px 40px rgba(160,130,109,0.18);
+}
+
+/* ============================================================
    퓨어 아이보리 (Pure Ivory)
    ============================================================ */
 [data-theme="pure-ivory"] {
@@ -103,37 +165,6 @@
   --shadow-bento: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
   --shadow-bento-hover: 0 8px 25px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.06);
   --shadow-bento-hero: 0 4px 20px rgba(200,184,162,0.3), 0 12px 40px rgba(200,184,162,0.18);
-}
-
-/* ============================================================
-   클린 블랙 (Clean Black)
-   ============================================================ */
-[data-theme="clean-black"] {
-  --color-primary: #1E293B;
-  --color-primary-light: #E8EDF3;
-  --color-primary-dark: #0F172A;
-  --color-secondary: #B0B8C4;
-  --color-accent: #7C8594;
-  --color-background: #FFFFFF;
-  --color-surface: #FAFBFD;
-  --color-surface-alt: #F4F6F9;
-  --color-surface-elevated: #FFFFFF;
-  --color-surface-inset: #ECEEF2;
-  --color-text: #1E293B;
-  --color-text-secondary: #5A6A7E;
-  --color-text-muted: #A4B0C0;
-  --color-border: #E8EDF3;
-  --color-success: #22C55E;
-  --color-warning: #F59E0B;
-  --color-error: #EF4444;
-  --color-brand: #1E293B;
-  --color-chart-1: #1E293B;
-  --color-chart-2: #E8EDF3;
-  --color-chart-3: #0F172A;
-  --color-chart-4: #7C8594;
-  --shadow-bento: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.08);
-  --shadow-bento-hover: 0 8px 25px rgba(0,0,0,0.14), 0 2px 6px rgba(0,0,0,0.08);
-  --shadow-bento-hero: 0 4px 20px rgba(30,41,59,0.2), 0 12px 40px rgba(30,41,59,0.12);
 }
 
 /* ============================================================
@@ -230,34 +261,65 @@
 }
 
 /* ============================================================
-   웜 코랄 (Warm Coral)
+   화이트 크리스탈 (White Crystal)
    ============================================================ */
-[data-theme="warm-coral"] {
-  --color-primary: #F4845F;
-  --color-primary-light: #FDE8E0;
-  --color-primary-dark: #E05A33;
-  --color-secondary: #FCEEE8;
-  --color-accent: #F09070;
-  --color-background: #FFFAF8;
+[data-theme="white-crystal"] {
+  --color-primary: #94A3B8;
+  --color-primary-light: #E2E8F0;
+  --color-primary-dark: #64748B;
+  --color-secondary: #E2E8F0;
+  --color-accent: #7E8FA5;
+  --color-background: #FCFCFD;
   --color-surface: #FFFFFF;
-  --color-surface-alt: #FFF4F0;
+  --color-surface-alt: #F5F7FA;
   --color-surface-elevated: #FFFFFF;
-  --color-surface-inset: #FCEAE2;
-  --color-text: #3D2017;
-  --color-text-secondary: #6B4A3A;
-  --color-text-muted: #C0978A;
-  --color-border: #F8DED4;
-  --color-success: #10B981;
+  --color-surface-inset: #EDF0F4;
+  --color-text: #1E293B;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94A3B8;
+  --color-border: #E2E8F0;
+  --color-success: #22C55E;
   --color-warning: #F59E0B;
   --color-error: #EF4444;
-  --color-brand: #F4845F;
-  --color-chart-1: #F4845F;
-  --color-chart-2: #FDE8E0;
-  --color-chart-3: #E05A33;
-  --color-chart-4: #F09070;
+  --color-brand: #94A3B8;
+  --color-chart-1: #94A3B8;
+  --color-chart-2: #E2E8F0;
+  --color-chart-3: #64748B;
+  --color-chart-4: #7E8FA5;
   --shadow-bento: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.06);
   --shadow-bento-hover: 0 8px 25px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.06);
-  --shadow-bento-hero: 0 4px 20px rgba(244,132,95,0.3), 0 12px 40px rgba(244,132,95,0.18);
+  --shadow-bento-hero: 0 4px 20px rgba(148,163,184,0.3), 0 12px 40px rgba(148,163,184,0.18);
+}
+
+/* ============================================================
+   클린 블랙 (Clean Black)
+   ============================================================ */
+[data-theme="clean-black"] {
+  --color-primary: #1E293B;
+  --color-primary-light: #E8EDF3;
+  --color-primary-dark: #0F172A;
+  --color-secondary: #B0B8C4;
+  --color-accent: #7C8594;
+  --color-background: #FFFFFF;
+  --color-surface: #FAFBFD;
+  --color-surface-alt: #F4F6F9;
+  --color-surface-elevated: #FFFFFF;
+  --color-surface-inset: #ECEEF2;
+  --color-text: #1E293B;
+  --color-text-secondary: #5A6A7E;
+  --color-text-muted: #A4B0C0;
+  --color-border: #E8EDF3;
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-brand: #1E293B;
+  --color-chart-1: #1E293B;
+  --color-chart-2: #E8EDF3;
+  --color-chart-3: #0F172A;
+  --color-chart-4: #7C8594;
+  --shadow-bento: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-bento-hover: 0 8px 25px rgba(0,0,0,0.14), 0 2px 6px rgba(0,0,0,0.08);
+  --shadow-bento-hero: 0 4px 20px rgba(30,41,59,0.2), 0 12px 40px rgba(30,41,59,0.12);
 }
 
 /* ============================================================

@@ -5,7 +5,9 @@ export type ThemeId =
   | 'olive-green'
   | 'pastel-blue'
   | 'pastel-lilac'
-  | 'warm-coral';
+  | 'warm-coral'
+  | 'mocha-brown'
+  | 'white-crystal';
 
 export interface ThemeColors {
   primary: string;
