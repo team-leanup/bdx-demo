@@ -12,7 +12,7 @@ interface OffSelectorProps {
 }
 
 // Iconic visuals for Off (Removal) - Context-aware "Our Shop" vs "Other Shop"
-const OFF_ICONS: Record<string, (selected: boolean, selfLabel: string, otherLabel: string) => React.ReactNode> = {
+const OFF_ICONS: Record<string, (selected: boolean) => React.ReactNode> = {
   // none: Natural clean nail with a "None" slash
   none: (selected) => (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
@@ -22,7 +22,7 @@ const OFF_ICONS: Record<string, (selected: boolean, selfLabel: string, otherLabe
     </svg>
   ),
   // same_shop: Focus on "Home/Our Shop" with a heart (Loyalty)
-  same_shop: (selected, selfLabel) => (
+  same_shop: (selected) => (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
       {/* Warm Shop Silhouette */}
       <path d="M14 52 L14 32 L32 16 L50 32 L50 52 Z" fill="currentColor" fillOpacity={selected ? '0.15' : '0.05'} stroke="currentColor" strokeWidth="2" />
@@ -33,11 +33,11 @@ const OFF_ICONS: Record<string, (selected: boolean, selfLabel: string, otherLabe
 
       {/* Shop Badge */}
       <rect x="16" y="44" width="32" height="14" rx="7" fill={selected ? 'var(--color-primary)' : 'var(--color-surface)'} stroke="var(--color-primary)" strokeWidth="1.5" />
-      <text x="32" y="54" textAnchor="middle" fontSize="9" fontWeight="900" fill={selected ? 'white' : 'var(--color-primary)'} className="font-pretendard">{selfLabel}</text>
+      <text x="32" y="54" textAnchor="middle" fontSize="9" fontWeight="900" fill={selected ? 'white' : 'var(--color-primary)'} className="font-pretendard">우리 샵</text>
     </svg>
   ),
   // other_shop: Focus on "Transition" - From dotted shop to our shop
-  other_shop: (selected, _selfLabel, otherLabel) => (
+  other_shop: (selected) => (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
       {/* Other Shop (Dashed) */}
       <path d="M6 46 L6 34 L16 26 L26 34 L26 46 Z" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.4" />
@@ -50,7 +50,7 @@ const OFF_ICONS: Record<string, (selected: boolean, selfLabel: string, otherLabe
 
       {/* Shop Badge */}
       <rect x="2" y="44" width="32" height="14" rx="7" fill={selected ? 'var(--color-text)' : 'var(--color-surface)'} stroke="var(--color-text)" strokeWidth="1.5" />
-      <text x="18" y="54" textAnchor="middle" fontSize="9" fontWeight="900" fill={selected ? 'white' : 'var(--color-text)'} className="font-pretendard">{otherLabel}</text>
+      <text x="18" y="54" textAnchor="middle" fontSize="9" fontWeight="900" fill={selected ? 'white' : 'var(--color-text)'} className="font-pretendard">다른 샵</text>
     </svg>
   ),
 };
@@ -68,9 +68,6 @@ export function OffSelector({ className }: OffSelectorProps) {
   const locale = useLocale();
   const offType = useConsultationStore((s) => s.consultation.offType);
   const setOffType = useConsultationStore((s) => s.setOffType);
-
-  const selfLabel = t('consultation.selfRemoval');
-  const otherLabel = t('consultation.otherRemoval');
 
   return (
     <div className={cn('flex flex-col gap-5', className)}>
@@ -104,7 +101,7 @@ export function OffSelector({ className }: OffSelectorProps) {
             >
               {/* Context-Aware Iconic Visual */}
               <span className={cn('transition-all duration-300 transform', isSelected ? 'scale-110' : 'opacity-60 grayscale-[0.5]')}>
-                {OFF_ICONS[opt.value](isSelected, selfLabel, otherLabel)}
+                {OFF_ICONS[opt.value](isSelected)}
               </span>
 
               {/* Labels */}

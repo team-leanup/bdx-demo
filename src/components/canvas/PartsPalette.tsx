@@ -7,6 +7,7 @@ import { cn } from '@/lib/cn';
 import type { CustomPart } from '@/types/canvas';
 import { PARTS_GRADE_OPTIONS, DEFAULT_CUSTOM_PARTS } from '@/data/service-options';
 import { usePartsStore } from '@/store/parts-store';
+import { useT, useLocale, useKo } from '@/lib/i18n';
 
 interface CustomPartEntry {
   id: string;
@@ -34,6 +35,9 @@ export function PartsPalette({
   customEntries = [],
   onCustomEntriesChange,
 }: PartsPaletteProps) {
+  const t = useT();
+  const locale = useLocale();
+  const ko = useKo();
   const quickPartsChips = usePartsStore((s) => s.customParts);
   const [textInput, setTextInput] = useState('');
   const [showGradeSystem, setShowGradeSystem] = useState(false);
@@ -80,7 +84,12 @@ export function PartsPalette({
     <div className="flex flex-col gap-5 px-4 py-4">
       {/* ── Custom text input (primary) ── */}
       <div className="flex flex-col gap-3">
-        <p className="text-xs font-bold text-text-muted uppercase tracking-wider">파츠 직접 입력</p>
+        <div>
+          <p className="text-xs font-bold text-text-muted uppercase tracking-wider">{t('selector.partsInput')}</p>
+          {locale !== 'ko' && (
+            <p className="text-[10px] text-text-muted mt-0.5">{ko('selector.partsInput')}</p>
+          )}
+        </div>
 
         {/* Text input row */}
         <div className="flex gap-2">
@@ -91,7 +100,7 @@ export function PartsPalette({
             onKeyDown={(e) => {
               if (e.key === 'Enter') addCustomEntry(textInput);
             }}
-            placeholder="파츠명을 입력하세요 (예: 큐빅 3개)"
+            placeholder={t('selector.partsInputPlaceholder')}
             className="flex-1 px-3 py-2.5 rounded-2xl border-2 border-border bg-surface text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
           />
           <button
@@ -100,7 +109,7 @@ export function PartsPalette({
             disabled={!textInput.trim()}
             className="px-4 py-2.5 rounded-2xl bg-primary text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary/90 active:scale-95 transition-all"
           >
-            추가
+            {t('selector.add')}
           </button>
         </div>
 
@@ -130,7 +139,7 @@ export function PartsPalette({
             className="flex flex-col gap-2"
           >
             <p className="text-xs font-bold text-text-muted uppercase tracking-wider">
-              추가된 파츠 ({customEntries.length}종)
+              {t('selector.addedParts').replace('{count}', String(customEntries.length))}
             </p>
             <div className="flex flex-col gap-2">
               {customEntries.map((entry) => (
@@ -153,7 +162,7 @@ export function PartsPalette({
                     type="button"
                     onClick={() => removeEntry(entry.id)}
                     className="w-7 h-7 rounded-full border border-border bg-surface flex items-center justify-center text-text-muted hover:text-error hover:border-error/30 hover:bg-error/5 transition-all"
-                    aria-label="삭제"
+                    aria-label={t('common.delete')}
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
@@ -176,7 +185,7 @@ export function PartsPalette({
           className="flex items-center justify-between"
         >
           <div className="flex items-center gap-2">
-            <p className="text-xs font-bold text-text-muted uppercase tracking-wider">등급별 파츠 시스템</p>
+            <p className="text-xs font-bold text-text-muted uppercase tracking-wider">{t('selector.gradePartsSystem')}</p>
             <span className="px-2 py-0.5 text-[10px] font-bold bg-gradient-to-r from-amber-400 to-amber-500 text-white rounded-full uppercase tracking-wider">
               PRO
             </span>
@@ -261,15 +270,17 @@ export function PartsPalette({
                     onChange={onQuantityChange}
                     min={1}
                     max={20}
-                    label="수량"
+                    label={t('selector.quantity')}
                   />
                   <div className="flex flex-col items-end gap-0.5">
-                    <span className="text-xs text-text-muted">파츠 금액</span>
+                    <span className="text-xs text-text-muted">{t('selector.partsAmount')}</span>
                     <span className="text-lg font-bold text-primary">
                       {totalGradePrice.toLocaleString()}원
                     </span>
                     <span className="text-[10px] text-text-muted">
-                      {selectedPart.pricePerUnit.toLocaleString()}원 × {quantity}개
+                      {t('selector.priceCalculation')
+                        .replace('{price}', `${selectedPart.pricePerUnit.toLocaleString()}원`)
+                        .replace('{count}', String(quantity))}
                     </span>
                   </div>
                 </div>
