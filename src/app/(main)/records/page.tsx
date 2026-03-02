@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Card, Badge, Input, BentoGrid, BentoCard } from '@/components/ui';
@@ -18,7 +18,8 @@ import { DayReservationList } from '@/components/calendar/DayReservationList';
 import { TimeGridCalendar } from '@/components/calendar/TimeGridCalendar';
 import type { TimeGridEvent } from '@/components/calendar/TimeGridCalendar';
 
-type ViewMode = 'timegrid' | 'month' | 'list';
+type MainTab = 'reservations' | 'consultations';
+type ViewMode = 'timegrid' | 'month';
 type FilterPeriod = 'all' | 'today' | 'week' | 'month';
 type ReservationFilter = 'all' | 'mine';
 
@@ -114,10 +115,9 @@ const FILTER_KEYS: { key: FilterPeriod; i18nKey: string }[] = [
 
 export default function RecordsPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const t = useT();
-  const initialView = (searchParams.get('view') as ViewMode) || 'timegrid';
-  const [viewMode, setViewMode] = useState<ViewMode>(initialView);
+  const [mainTab, setMainTab] = useState<MainTab>('reservations');
+  const [viewMode, setViewMode] = useState<ViewMode>('timegrid');
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterPeriod>('all');
   const [reservationFilter, setReservationFilter] = useState<ReservationFilter>('all');
@@ -201,7 +201,7 @@ export default function RecordsPage() {
   }, []);
 
   const timeGridEvents = useMemo(
-    () => toTimeGridEvents(filteredReservations, allConsultations),
+    () => toTimeGridEvents(filteredReservations, []),
     [filteredReservations],
   );
 
@@ -230,7 +230,6 @@ export default function RecordsPage() {
   const VIEW_OPTIONS: { key: ViewMode; label: string }[] = [
     { key: 'timegrid', label: '주간' },
     { key: 'month', label: '월간' },
-    { key: 'list', label: '리스트' },
   ];
 
   return (
@@ -239,141 +238,179 @@ export default function RecordsPage() {
         featureId="records-views"
         icon="🗂️"
         title="기록 관리"
-        description={"주간 타임그리드, 월간 캘린더, 리스트 뷰로\n예약과 상담 기록을 한눈에 관리하세요."}
+        description={"예약 관리와 상담 기록을\n탭으로 나누어 편리하게 관리하세요."}
       />
       {/* Header */}
       <div className="px-4 md:px-0 pt-4">
         <h1 className="text-2xl font-bold text-text">{t('nav.records')}</h1>
       </div>
 
-      {/* Stats Bento Strip */}
-      <BentoGrid cols={4} className="px-4 md:px-0">
-        <BentoCard span="1x1" variant="accent">
-          <div className="p-4 flex flex-col items-center justify-center h-full">
-            <span className="text-2xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
-              {weekStats.weekCount}
-            </span>
-            <span className="text-xs text-text-secondary mt-1">이번 주 예약</span>
-          </div>
-        </BentoCard>
-        <BentoCard span="1x1">
-          <div className="p-4 flex flex-col items-center justify-center h-full">
-            <span className="text-2xl font-extrabold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
-              {weekStats.todayRemainingCount}
-            </span>
-            <span className="text-xs text-text-secondary mt-1">오늘 남은 예약</span>
-          </div>
-        </BentoCard>
-        <BentoCard span="1x1">
-          <div className="p-4 flex flex-col items-center justify-center h-full">
-            <span className="text-2xl font-extrabold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
-              {allConsultations.length}
-            </span>
-            <span className="text-xs text-text-secondary mt-1">총 상담 기록</span>
-          </div>
-        </BentoCard>
-        <BentoCard span="1x1">
-          <div className="p-4 flex flex-col items-center justify-center h-full">
-            <span className="text-2xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
-              {todayConsultations}건
-            </span>
-            <span className="text-xs text-text-secondary mt-1">오늘 상담</span>
-          </div>
-        </BentoCard>
-      </BentoGrid>
-
-      {/* View toggle + filter row */}
-      <div className="flex items-center justify-between px-4 md:px-0">
-        {/* Pill segment control */}
-        <div className="flex gap-0.5 p-1 rounded-full bg-surface-alt border border-border">
-          {VIEW_OPTIONS.map((opt) => (
-            <button
-              key={opt.key}
-              onClick={() => setViewMode(opt.key)}
-              className={cn(
-                'px-4 py-1.5 rounded-full text-xs font-semibold transition-all',
-                viewMode === opt.key
-                  ? 'bg-primary text-white shadow-sm'
-                  : 'text-text-secondary hover:text-text',
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex gap-0.5 p-1 rounded-full bg-surface-alt border border-border">
+      {/* Main Tab UI */}
+      <div className="px-4 md:px-0">
+        <div className="flex border-b border-border">
           <button
-            onClick={() => setReservationFilter('all')}
+            onClick={() => setMainTab('reservations')}
             className={cn(
-              'px-3 py-1.5 rounded-full text-xs font-semibold transition-all',
-              reservationFilter === 'all'
-                ? 'bg-primary text-white shadow-sm'
-                : 'text-text-secondary hover:text-text',
+              'flex-1 py-3 text-sm font-semibold text-center transition-colors relative',
+              mainTab === 'reservations' ? 'text-primary' : 'text-text-secondary hover:text-text',
             )}
           >
-            전체
+            예약 관리
+            {mainTab === 'reservations' && (
+              <motion.div layoutId="mainTabIndicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+            )}
           </button>
           <button
-            onClick={() => setReservationFilter('mine')}
+            onClick={() => setMainTab('consultations')}
             className={cn(
-              'px-3 py-1.5 rounded-full text-xs font-semibold transition-all',
-              reservationFilter === 'mine'
-                ? 'bg-primary text-white shadow-sm'
-                : 'text-text-secondary hover:text-text',
+              'flex-1 py-3 text-sm font-semibold text-center transition-colors relative',
+              mainTab === 'consultations' ? 'text-primary' : 'text-text-secondary hover:text-text',
             )}
           >
-            내 예약
+            상담 기록
+            {mainTab === 'consultations' && (
+              <motion.div layoutId="mainTabIndicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+            )}
           </button>
         </div>
       </div>
 
-      {/* Timegrid View */}
-      {viewMode === 'timegrid' && (
-        <div className="px-4 md:px-0">
-          <TimeGridCalendar
-            events={timeGridEvents}
-            weekStartDate={weekStartDate}
-            onWeekChange={setWeekStartDate}
-            startHour={calendarStartHour}
-            endHour={calendarEndHour}
-            onEventClick={(ev) => {
-              if (ev.type === 'consultation') {
-                router.push(`/records/${ev.originalId}`);
-              } else if (ev.type === 'reservation') {
-                setSelectedEvent(ev);
-                setEditMode(false);
-                const booking = allReservations.find((r) => r.id === ev.originalId);
-                setEditForm({
-                  title: ev.title,
-                  phone: ev.customerPhone ?? '',
-                  startTime: ev.startTime,
-                  requestNote: ev.requestNote ?? '',
-                  referenceImages: booking?.referenceImageUrls ?? [],
-                });
-              }
-            }}
-          />
-        </div>
-      )}
-
-      {/* Month View */}
-      {viewMode === 'month' && (
-        <div className="flex flex-col gap-4 px-4 md:px-0">
-          <Card className="p-4">
-            <MonthCalendar
-              selectedDate={selectedDate}
-              onSelectDate={setSelectedDate}
-              reservations={filteredReservations}
-            />
-          </Card>
-          <DayReservationList date={selectedDate} reservations={dayReservations} />
-        </div>
-      )}
-
-      {/* List View */}
-      {viewMode === 'list' && (
+      {/* ════════ 예약 관리 탭 ════════ */}
+      {mainTab === 'reservations' && (
         <>
+          {/* Stats — 2 cols */}
+          <BentoGrid cols={2} className="px-4 md:px-0">
+            <BentoCard span="1x1" variant="accent">
+              <div className="p-4 flex flex-col items-center justify-center h-full">
+                <span className="text-2xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {weekStats.weekCount}
+                </span>
+                <span className="text-xs text-text-secondary mt-1">이번 주 예약</span>
+              </div>
+            </BentoCard>
+            <BentoCard span="1x1">
+              <div className="p-4 flex flex-col items-center justify-center h-full">
+                <span className="text-2xl font-extrabold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {weekStats.todayRemainingCount}
+                </span>
+                <span className="text-xs text-text-secondary mt-1">오늘 남은 예약</span>
+              </div>
+            </BentoCard>
+          </BentoGrid>
+
+          {/* View toggle + reservation filter */}
+          <div className="flex items-center justify-between px-4 md:px-0">
+            <div className="flex gap-0.5 p-1 rounded-full bg-surface-alt border border-border">
+              {VIEW_OPTIONS.map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => setViewMode(opt.key)}
+                  className={cn(
+                    'px-4 py-1.5 rounded-full text-xs font-semibold transition-all',
+                    viewMode === opt.key
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-text-secondary hover:text-text',
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-0.5 p-1 rounded-full bg-surface-alt border border-border">
+              <button
+                onClick={() => setReservationFilter('all')}
+                className={cn(
+                  'px-3 py-1.5 rounded-full text-xs font-semibold transition-all',
+                  reservationFilter === 'all'
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'text-text-secondary hover:text-text',
+                )}
+              >
+                전체
+              </button>
+              <button
+                onClick={() => setReservationFilter('mine')}
+                className={cn(
+                  'px-3 py-1.5 rounded-full text-xs font-semibold transition-all',
+                  reservationFilter === 'mine'
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'text-text-secondary hover:text-text',
+                )}
+              >
+                내 예약
+              </button>
+            </div>
+          </div>
+
+          {/* Timegrid View */}
+          {viewMode === 'timegrid' && (
+            <div className="px-4 md:px-0">
+              <TimeGridCalendar
+                events={timeGridEvents}
+                weekStartDate={weekStartDate}
+                onWeekChange={setWeekStartDate}
+                startHour={calendarStartHour}
+                endHour={calendarEndHour}
+                onEventClick={(ev) => {
+                  if (ev.type === 'consultation') {
+                    router.push(`/records/${ev.originalId}`);
+                  } else if (ev.type === 'reservation') {
+                    setSelectedEvent(ev);
+                    setEditMode(false);
+                    const booking = allReservations.find((r) => r.id === ev.originalId);
+                    setEditForm({
+                      title: ev.title,
+                      phone: ev.customerPhone ?? '',
+                      startTime: ev.startTime,
+                      requestNote: ev.requestNote ?? '',
+                      referenceImages: booking?.referenceImageUrls ?? [],
+                    });
+                  }
+                }}
+              />
+            </div>
+          )}
+
+          {/* Month View */}
+          {viewMode === 'month' && (
+            <div className="flex flex-col gap-4 px-4 md:px-0">
+              <Card className="p-4">
+                <MonthCalendar
+                  selectedDate={selectedDate}
+                  onSelectDate={setSelectedDate}
+                  reservations={filteredReservations}
+                />
+              </Card>
+              <DayReservationList date={selectedDate} reservations={dayReservations} />
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ════════ 상담 기록 탭 ════════ */}
+      {mainTab === 'consultations' && (
+        <>
+          {/* Stats — 2 cols */}
+          <BentoGrid cols={2} className="px-4 md:px-0">
+            <BentoCard span="1x1" variant="accent">
+              <div className="p-4 flex flex-col items-center justify-center h-full">
+                <span className="text-2xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {allConsultations.length}
+                </span>
+                <span className="text-xs text-text-secondary mt-1">총 상담 기록</span>
+              </div>
+            </BentoCard>
+            <BentoCard span="1x1">
+              <div className="p-4 flex flex-col items-center justify-center h-full">
+                <span className="text-2xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {todayConsultations}건
+                </span>
+                <span className="text-xs text-text-secondary mt-1">오늘 상담</span>
+              </div>
+            </BentoCard>
+          </BentoGrid>
+
+          {/* Search */}
           <div className="px-4 md:px-0">
             <Input
               placeholder={t('records.searchPlaceholder')}
@@ -381,6 +418,8 @@ export default function RecordsPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+
+          {/* Period filter */}
           <div className="flex gap-2 overflow-x-auto px-4 md:px-0 pb-1">
             {FILTER_KEYS.map(({ key, i18nKey }) => (
               <button
@@ -397,6 +436,8 @@ export default function RecordsPage() {
               </button>
             ))}
           </div>
+
+          {/* Consultation list */}
           <div className="rounded-xl border border-border overflow-hidden mx-4 md:mx-0">
             {listFiltered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center bg-surface">
@@ -454,6 +495,7 @@ export default function RecordsPage() {
           </div>
         </>
       )}
+
       {/* ── 예약 상세 모달 ── */}
       <AnimatePresence>
         {selectedEvent && (
