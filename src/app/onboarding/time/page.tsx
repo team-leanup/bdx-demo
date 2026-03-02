@@ -116,7 +116,7 @@ export default function TimePage() {
 
   const handleNext = () => {
     setShopSettings({ timeSettings: times });
-    router.push('/onboarding/complete');
+    router.push('/onboarding/theme');
   };
 
   return (
