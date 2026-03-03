@@ -32,7 +32,7 @@ const OFF_ICONS: Record<string, (selected: boolean, selfLabel: string, otherLabe
       <path d="M32 35 C32 35 30 31 28 31 C26 31 25 33 25 35 C25 38 32 42 32 42 C32 42 39 38 39 35 C39 33 38 31 36 31 C34 31 32 35 32 35" fill="var(--color-primary)" fillOpacity={selected ? '1' : '0.3'} />
 
       {/* Shop Badge */}
-      <rect x="16" y="44" width="32" height="14" rx="7" fill={selected ? 'var(--color-primary)' : 'var(--color-surface)'} stroke="var(--color-primary)" strokeWidth="1.5" />
+      <rect x="16" y="44" width="32" height="14" rx="7" fill={selected ? 'var(--color-primary-dark)' : 'var(--color-surface)'} stroke="var(--color-primary)" strokeWidth="1.5" />
       <text x="32" y="54" textAnchor="middle" fontSize="9" fontWeight="900" fill={selected ? 'white' : 'var(--color-primary)'} className="font-pretendard">{selfLabel}</text>
     </svg>
   ),
@@ -86,7 +86,7 @@ export function OffSelector({ className }: OffSelectorProps) {
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 md:gap-3">
         {OFF_TYPE_OPTIONS.map((opt) => {
           const isSelected = offType === opt.value;
           return (

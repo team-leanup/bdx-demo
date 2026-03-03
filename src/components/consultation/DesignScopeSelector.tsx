@@ -97,7 +97,7 @@ export function DesignScopeSelector({ className }: DesignScopeSelectorProps) {
               whileTap={{ scale: 0.95 }}
               onClick={() => setDesignScope(opt.value)}
               className={cn(
-                'relative flex flex-col items-center justify-center gap-5 py-10 px-6 rounded-[48px] border-2 transition-all duration-300 text-left',
+                'relative flex flex-col items-center justify-center gap-5 py-7 px-4 md:py-10 md:px-6 rounded-[32px] md:rounded-[48px] border-2 transition-all duration-300 text-left',
                 isSelected
                   ? 'border-primary bg-primary/10 text-primary shadow-2xl shadow-primary/20'
                   : 'border-border bg-surface text-text-muted hover:border-primary/40 hover:bg-surface-alt',

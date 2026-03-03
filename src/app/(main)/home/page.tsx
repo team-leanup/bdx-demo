@@ -189,7 +189,7 @@ export default function HomePage() {
       }} />
 
       {/* ── 히어로 CTA — 2 equal buttons ── */}
-      <motion.div data-tour-id="tour-new-consultation" variants={itemVariants} className="grid grid-cols-2 gap-3">
+      <motion.div data-tour-id="tour-new-consultation" variants={itemVariants} className="grid grid-cols-2 gap-3 md:gap-4">
         {/* 새 상담 시작 */}
         <motion.button
           onClick={() => router.push('/consultation')}
@@ -235,7 +235,7 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 60 }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-background px-4 pb-8 pt-4"
+              className="fixed bottom-0 left-0 right-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-background px-4 pb-8 pt-4 md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-1/2 md:-translate-x-1/2 md:right-auto md:w-full md:max-w-lg md:rounded-3xl"
             >
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-base font-bold text-text">{t('home.modal_title')}</h3>
@@ -408,7 +408,7 @@ export default function HomePage() {
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
               <IconScissors className="h-3.5 w-3.5 text-primary" />
             </div>
-            <span className="text-2xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
+            <span className="text-lg md:text-2xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
               {todayConsultations.length}
             </span>
             <span className="text-[10px] text-text-muted">{t('home.stat_consultation')}</span>
@@ -418,7 +418,7 @@ export default function HomePage() {
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
               <IconCalendar className="h-3.5 w-3.5 text-primary" />
             </div>
-            <span className="text-2xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
+            <span className="text-lg md:text-2xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
               {todayReservations.length}
             </span>
             <span className="text-[10px] text-text-muted">{t('home.stat_reservation')}</span>

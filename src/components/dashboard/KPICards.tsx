@@ -149,7 +149,7 @@ function KPIBottomSheet({ kpi, onClose }: BottomSheetProps) {
         onClick={onClose}
       />
       {/* 바텀시트 패널 */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-2xl bg-background shadow-xl">
+      <div className="fixed bottom-0 left-0 right-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-2xl bg-background shadow-xl md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-1/2 md:-translate-x-1/2 md:right-auto md:w-full md:max-w-lg md:rounded-3xl">
         {/* 핸들 */}
         <div className="flex justify-center pt-3 pb-1">
           <div className="h-1 w-10 rounded-full bg-border" />
@@ -162,7 +162,7 @@ function KPIBottomSheet({ kpi, onClose }: BottomSheetProps) {
           </div>
           <button
             onClick={onClose}
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-alt text-text-muted"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-alt text-text-muted"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

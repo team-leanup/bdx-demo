@@ -49,7 +49,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
                 <button
                   type="button"
                   onClick={onClose}
-                  className="w-8 h-8 rounded-full hover:bg-surface-alt flex items-center justify-center transition-colors"
+                  className="w-10 h-10 rounded-full hover:bg-surface-alt flex items-center justify-center transition-colors"
                 >
                   <svg
                     className="w-5 h-5 text-text-muted"

@@ -23,7 +23,7 @@ export function AppShell({ children, hideStatusBar, hideTabBar }: AppShellProps)
             WebkitOverflowScrolling: 'touch',
           }}
         >
-          <div className="max-w-2xl mx-auto w-full md:max-w-none md:px-14 md:pt-10">
+          <div className="max-w-2xl mx-auto w-full md:max-w-none md:px-8 md:pt-10">
             {children}
           </div>
         </main>

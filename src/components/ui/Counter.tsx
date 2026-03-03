@@ -38,7 +38,7 @@ export function Counter({
           type="button"
           onClick={decrement}
           disabled={value <= min}
-          className="w-10 h-10 rounded-xl border-2 border-border flex items-center justify-center text-text text-xl font-medium transition-all duration-150 hover:border-primary hover:text-primary active:scale-90 disabled:opacity-40 disabled:pointer-events-none"
+          className="w-11 h-11 rounded-xl border-2 border-border flex items-center justify-center text-text text-xl font-medium transition-all duration-150 hover:border-primary hover:text-primary active:scale-90 disabled:opacity-40 disabled:pointer-events-none"
         >
           −
         </button>
@@ -49,7 +49,7 @@ export function Counter({
           type="button"
           onClick={increment}
           disabled={value >= max}
-          className="w-10 h-10 rounded-xl border-2 border-border flex items-center justify-center text-text text-xl font-medium transition-all duration-150 hover:border-primary hover:text-primary active:scale-90 disabled:opacity-40 disabled:pointer-events-none"
+          className="w-11 h-11 rounded-xl border-2 border-border flex items-center justify-center text-text text-xl font-medium transition-all duration-150 hover:border-primary hover:text-primary active:scale-90 disabled:opacity-40 disabled:pointer-events-none"
         >
           +
         </button>

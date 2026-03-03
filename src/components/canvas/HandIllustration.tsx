@@ -155,10 +155,10 @@ export function HandIllustration({
         </div>
 
         {/* Hand SVG (smaller) */}
-        <div className="w-[180px] md:w-[240px] aspect-[320/260]">
+        <div className="w-[160px] md:w-[240px] overflow-hidden">
           <svg
             viewBox="0 0 320 260"
-            className="w-full h-full"
+            className="w-full"
             style={{ transform: !isLeft ? 'scaleX(-1)' : 'none' }}
             aria-label={isLeft ? t('canvas.leftHand') : t('canvas.rightHand')}
           >

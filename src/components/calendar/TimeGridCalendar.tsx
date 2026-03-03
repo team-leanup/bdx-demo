@@ -165,7 +165,7 @@ export function TimeGridCalendar({ events, weekStartDate, onEventClick, onWeekCh
 
       {/* Grid */}
       <div className="overflow-x-auto rounded-xl border border-border bg-surface">
-        <div className="min-w-[600px]">
+        <div className="min-w-[500px]">
           {/* Day headers */}
           <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border bg-surface">
             <div className="p-2" />
@@ -225,7 +225,7 @@ export function TimeGridCalendar({ events, weekStartDate, onEventClick, onWeekCh
                         style={{ top, height }}
                       >
                         <div className="text-[10px] font-semibold truncate flex items-center gap-1">
-                          <span className={cn('inline-block px-0.5 rounded text-[8px] font-bold', ev.type === 'reservation' ? 'bg-warning/20 text-warning' : 'bg-primary/15 text-primary')}>
+                          <span className={cn('inline-block px-0.5 rounded text-[9px] font-bold', ev.type === 'reservation' ? 'bg-warning/20 text-warning' : 'bg-primary/15 text-primary')}>
                             {ev.type === 'reservation' ? '예약' : '상담'}
                           </span>
                           {ev.title}
@@ -237,7 +237,7 @@ export function TimeGridCalendar({ events, weekStartDate, onEventClick, onWeekCh
                           </div>
                         )}
                         {ev.type === 'consultation' && ev.expressions && ev.expressions.length > 0 && height >= 56 && (
-                          <div className="text-[8px] opacity-60 truncate">
+                          <div className="text-[9px] opacity-60 truncate">
                             {ev.expressions.map((e) => EXPRESSION_LABEL[e] ?? e).join(', ')}
                           </div>
                         )}

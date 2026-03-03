@@ -62,7 +62,7 @@ export function BodyPartSelector({ className }: BodyPartSelectorProps) {
               whileTap={{ scale: 0.94 }}
               onClick={() => setBodyPart(opt.value)}
               className={cn(
-                'relative flex flex-col items-center justify-center gap-6 py-12 px-8 rounded-[48px] border-2 transition-all duration-300',
+                'relative flex flex-col items-center justify-center gap-6 py-8 px-6 md:py-12 md:px-8 rounded-[32px] md:rounded-[48px] border-2 transition-all duration-300',
                 isSelected
                   ? 'border-primary bg-primary/10 text-primary shadow-2xl shadow-primary/20'
                   : 'border-border bg-surface text-text-muted hover:border-primary/40 hover:bg-surface-alt hover:text-text',
