@@ -2,19 +2,21 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, Button, Input, LanguageSelector, Toggle, TimeInput, AddressInput } from '@/components/ui';
+import { Card, Button, Input, LanguageSelector, Toggle, TimeInput, AddressInput, ProfileAvatar } from '@/components/ui';
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { IconShop, IconService, IconPalette, IconGear } from '@/components/icons';
 import { useAppStore } from '@/store/app-store';
 import { useAuthStore } from '@/store/auth-store';
 import { usePartsStore } from '@/store/parts-store';
+import { useDesignerStore } from '@/store/designer-store';
 import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/cn';
 import { MOCK_SHOP, MOCK_DESIGNERS } from '@/data/mock-shop';
 import { DEFAULT_BASE_PRICES } from '@/data/service-options';
 import { formatPrice } from '@/lib/format';
 import { DesignPresetsManager } from '@/components/settings/DesignPresetsManager';
+import { resizeImageToBase64 } from '@/lib/image-utils';
 
 const DAY_LABEL_KEYS = ['days_mon', 'days_tue', 'days_wed', 'days_thu', 'days_fri', 'days_sat', 'days_sun'];
 
@@ -242,6 +244,104 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       </p>
       {children}
     </div>
+  );
+}
+
+// ── 선생님 관리 섹션 ──
+function StaffSection() {
+  const t = useT();
+  const { setProfileImage, removeProfileImage, profileImages } = useDesignerStore();
+
+  const handleFileChange = async (designerId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const base64 = await resizeImageToBase64(file);
+      setProfileImage(designerId, base64);
+    } catch {
+      // silently fail
+    }
+    e.target.value = '';
+  };
+
+  return (
+    <Section title={t('settings.staff_title')}>
+      <Card className="mx-4 md:mx-0">
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-sm font-medium text-text">{t('settings.staff_registered')}</span>
+          <button className="rounded-lg border border-primary px-3 py-1 text-xs font-medium text-primary">
+            {t('settings.staff_add')}
+          </button>
+        </div>
+        <div className="flex flex-col gap-2">
+          {MOCK_DESIGNERS.map((d) => {
+            const hasImage = !!profileImages[d.id];
+            const inputId = `profile-upload-${d.id}`;
+            return (
+              <div
+                key={d.id}
+                className="flex items-center gap-3 rounded-xl bg-surface-alt p-3"
+              >
+                {/* Avatar with camera overlay */}
+                <div className="relative flex-shrink-0">
+                  <ProfileAvatar designerId={d.id} name={d.name} size="sm" />
+                  <label
+                    htmlFor={inputId}
+                    className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full bg-primary text-white shadow-sm hover:bg-primary-dark transition-colors"
+                  >
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                  </label>
+                  <input
+                    id={inputId}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleFileChange(d.id, e)}
+                  />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-text">{d.name}</span>
+                    {d.role === 'owner' && (
+                      <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-medium text-primary">
+                        {t('settings.staff_owner')}
+                      </span>
+                    )}
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                        d.isActive
+                          ? 'bg-success/15 text-success'
+                          : 'bg-error/15 text-error'
+                      }`}
+                    >
+                      {d.isActive ? t('settings.staff_active') : t('settings.staff_inactive')}
+                    </span>
+                  </div>
+                  <p className="text-xs text-text-secondary">{d.phone}</p>
+                </div>
+
+                {/* Delete photo button */}
+                {hasImage && (
+                  <button
+                    onClick={() => removeProfileImage(d.id)}
+                    className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-border text-text-muted hover:border-error/40 hover:bg-error/10 hover:text-error transition-all"
+                    title="사진 삭제"
+                  >
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                      <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+    </Section>
   );
 }
 
@@ -584,48 +684,7 @@ export default function SettingsPage() {
           </Section>
 
           {/* 선생님 관리 */}
-          <Section title={t('settings.staff_title')}>
-            <Card className="mx-4 md:mx-0">
-              <div className="mb-3 flex items-center justify-between">
-                <span className="text-sm font-medium text-text">{t('settings.staff_registered')}</span>
-                <button className="rounded-lg border border-primary px-3 py-1 text-xs font-medium text-primary">
-                  {t('settings.staff_add')}
-                </button>
-              </div>
-              <div className="flex flex-col gap-2">
-                {MOCK_DESIGNERS.map((d) => (
-                  <div
-                    key={d.id}
-                    className="flex items-center gap-3 rounded-xl bg-surface-alt p-3"
-                  >
-                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
-                      {d.name.charAt(0)}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-text">{d.name}</span>
-                        {d.role === 'owner' && (
-                          <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-medium text-primary">
-                            {t('settings.staff_owner')}
-                          </span>
-                        )}
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                            d.isActive
-                              ? 'bg-success/15 text-success'
-                              : 'bg-error/15 text-error'
-                          }`}
-                        >
-                          {d.isActive ? t('settings.staff_active') : t('settings.staff_inactive')}
-                        </span>
-                      </div>
-                      <p className="text-xs text-text-secondary">{d.phone}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </Section>
+          <StaffSection />
 
           {/* 운영 정보 (영업시간 + 휴무일 통합) */}
           <OperatingHoursSection />

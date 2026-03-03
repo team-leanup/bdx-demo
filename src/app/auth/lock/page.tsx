@@ -8,6 +8,7 @@ import { MOCK_DESIGNERS } from '@/data/mock-shop';
 import type { UserRole } from '@/types/auth';
 import { cn } from '@/lib/cn';
 import { useT } from '@/lib/i18n';
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 
 type RoleStep = 'select_role' | 'select_designer';
 
@@ -157,9 +158,7 @@ export default function LockPage() {
                         : 'border-border bg-surface hover:border-primary/40',
                     )}
                   >
-                    <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-base flex-shrink-0">
-                      {d.name.charAt(0)}
-                    </div>
+                    <ProfileAvatar designerId={d.id} name={d.name} size="md" />
                     <span className={cn('font-semibold text-sm', selectedDesignerId === d.id ? 'text-primary' : 'text-text')}>
                       {d.name} {selectedRole === 'owner' ? t('auth.ownerSuffix') : t('auth.staffSuffix')}
                     </span>
