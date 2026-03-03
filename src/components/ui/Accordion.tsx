@@ -5,7 +5,7 @@ import { cn } from '@/lib/cn';
 import type { ReactNode } from 'react';
 
 interface AccordionProps {
-  title: string;
+  title: string | ReactNode;
   children: ReactNode;
   defaultOpen?: boolean;
   className?: string;

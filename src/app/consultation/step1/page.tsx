@@ -11,12 +11,14 @@ import { BodyPartSelector } from '@/components/consultation/BodyPartSelector';
 import { OffSelector } from '@/components/consultation/OffSelector';
 import { ExtensionSelector } from '@/components/consultation/ExtensionSelector';
 import { ShapeSelector } from '@/components/consultation/ShapeSelector';
-import { useT } from '@/lib/i18n';
+import { useT, useLocale, useKo } from '@/lib/i18n';
 
 export default function Step1Page() {
   const router = useRouter();
   const setStep = useConsultationStore((s) => s.setStep);
   const t = useT();
+  const tKo = useKo();
+  const locale = useLocale();
 
   const handleNext = () => {
     setStep(ConsultationStep.STEP2_DESIGN);
@@ -58,7 +60,12 @@ export default function Step1Page() {
 
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-text-muted font-medium">✨ 제거 · 연장</span>
+            <span className="text-xs text-text-muted font-medium flex flex-col items-center">
+              <span className="text-lg font-black">{t('step1.removalExtension')}</span>
+              {locale !== 'ko' && (
+                <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('step1.removalExtension')}</span>
+              )}
+            </span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
@@ -66,7 +73,12 @@ export default function Step1Page() {
 
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-text-muted font-medium">🔧 연장/리페어</span>
+            <span className="text-xs text-text-muted font-medium flex flex-col items-center">
+              <span className="text-lg font-black">{t('step1.extensionRepair')}</span>
+              {locale !== 'ko' && (
+                <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('step1.extensionRepair')}</span>
+              )}
+            </span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
@@ -74,7 +86,12 @@ export default function Step1Page() {
 
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-text-muted font-medium">💅 네일 쉐입</span>
+            <span className="text-xs text-text-muted font-medium flex flex-col items-center">
+              <span className="text-lg font-black">{t('step1.nailShape')}</span>
+              {locale !== 'ko' && (
+                <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('step1.nailShape')}</span>
+              )}
+            </span>
             <div className="flex-1 h-px bg-border" />
           </div>
 

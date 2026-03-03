@@ -57,6 +57,9 @@ interface ConsultationStore {
   // 담당 선생님
   setDesignerId: (id: string) => void;
 
+  // 연결된 예약 ID
+  setBookingId: (id: string) => void;
+
   // 단계 이동
   setStep: (step: ConsultationStep) => void;
   goNext: () => void;
@@ -172,6 +175,9 @@ export const useConsultationStore = create<ConsultationStore>()(
 
       setDesignerId: (id) =>
         set((state) => ({ consultation: { ...state.consultation, designerId: id } })),
+
+      setBookingId: (id) =>
+        set((s) => ({ consultation: { ...s.consultation, bookingId: id } })),
 
       setStep: (step) =>
         set((state) => ({

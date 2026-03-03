@@ -105,6 +105,9 @@ export interface ConsultationType {
   // 담당 선생님
   designerId?: string;
 
+  // 연결된 예약 ID
+  bookingId?: string;
+
   // 현재 단계
   currentStep: ConsultationStep;
 }

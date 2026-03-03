@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/cn';
-import { useT } from '@/lib/i18n';
+import { useT, useLocale, useKo } from '@/lib/i18n';
 import type { FingerPosition, FingerSelection } from '@/types/canvas';
 
 interface FingerSummaryProps {
@@ -21,9 +21,11 @@ interface FingerItemProps {
   selection?: FingerSelection;
   isActive: boolean;
   onTap?: () => void;
+  notSelectedLabel: string;
+  partsLabel: string;
 }
 
-function FingerItem({ handLabel, fingerLabel, finger, selection, isActive, onTap }: FingerItemProps) {
+function FingerItem({ handLabel, fingerLabel, finger, selection, isActive, onTap, notSelectedLabel, partsLabel }: FingerItemProps) {
   const hasColor = !!selection?.colorCode;
   const partsCount = selection?.parts?.length ?? 0;
   const treatmentType = selection?.note;
@@ -80,12 +82,12 @@ function FingerItem({ handLabel, fingerLabel, finger, selection, isActive, onTap
             )}
             {partsCount > 0 && (
               <span className="text-[9px] md:text-xs bg-surface-alt text-text-muted px-1.5 py-0.5 rounded font-bold">
-                Parts {partsCount}
+                {partsLabel} {partsCount}
               </span>
             )}
           </div>
         ) : (
-          <span className="text-[10px] md:text-xs text-text-muted block mt-0.5">미선택</span>
+          <span className="text-[10px] md:text-xs text-text-muted block mt-0.5">{notSelectedLabel}</span>
         )}
       </div>
 
@@ -111,6 +113,8 @@ export function FingerSummary({
   className,
 }: FingerSummaryProps) {
   const t = useT();
+  const tKo = useKo();
+  const locale = useLocale();
 
   const FINGER_LABELS: Record<FingerPosition, string> = {
     thumb: t('canvas.thumb'),
@@ -139,6 +143,8 @@ export function FingerSummary({
               selection={leftSelections[finger]}
               isActive={activeHand === 'left'}
               onTap={onFingerTap ? () => onFingerTap('left', finger) : undefined}
+              notSelectedLabel={t('canvas.notSelected')}
+              partsLabel={t('canvas.partsLabel')}
             />
           ))}
           <div />
@@ -161,6 +167,8 @@ export function FingerSummary({
               selection={rightSelections[finger]}
               isActive={activeHand === 'right'}
               onTap={onFingerTap ? () => onFingerTap('right', finger) : undefined}
+              notSelectedLabel={t('canvas.notSelected')}
+              partsLabel={t('canvas.partsLabel')}
             />
           ))}
           <div />

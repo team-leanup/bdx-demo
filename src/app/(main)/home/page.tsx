@@ -105,6 +105,7 @@ export default function HomePage() {
       .sort((a, b) => a.reservationTime.localeCompare(b.reservationTime));
   }, [allReservations]);
   const addReferenceImage = useConsultationStore((s) => s.addReferenceImage);
+  const setBookingId = useConsultationStore((s) => s.setBookingId);
 
   const handleAddReservation = (newBooking: BookingRequest) => {
     addReservation({
@@ -120,6 +121,8 @@ export default function HomePage() {
   };
 
   const handleStartConsultation = (booking: BookingRequest) => {
+    if (booking.status === 'completed') return;
+    setBookingId(booking.id);
     const params = new URLSearchParams();
     if (booking.customerName) params.set('name', booking.customerName);
     if (booking.phone) params.set('phone', booking.phone);
@@ -295,14 +298,15 @@ export default function HomePage() {
           <div className="flex flex-col divide-y divide-border">
             {todayReservations.map((booking, idx) => {
               const channelInfo = CHANNEL_BADGE[booking.channel];
+              const isCompleted = booking.status === 'completed';
               return (
                 <motion.div
                   key={booking.id}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.06, duration: 0.3 }}
-                  onClick={() => handleStartConsultation(booking)}
-                  className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-surface-alt active:bg-surface-alt transition-colors"
+                  onClick={() => !isCompleted && handleStartConsultation(booking)}
+                  className={`flex items-center gap-3 px-4 py-3 transition-colors ${isCompleted ? 'opacity-60 cursor-default' : 'cursor-pointer hover:bg-surface-alt active:bg-surface-alt'}`}
                 >
                   {/* 시간 라벨 */}
                   <div className="flex w-11 shrink-0 flex-col items-center">
@@ -327,10 +331,16 @@ export default function HomePage() {
                       <p className="text-xs text-text-muted line-clamp-2 whitespace-pre-line">{booking.requestNote.replace(/\.\s*/g, '.\n')}</p>
                     )}
                   </div>
-                  {/* 상담 시작 버튼 */}
-                  <button className="shrink-0 rounded-xl bg-primary px-3.5 py-2 text-xs font-bold text-white shadow-sm shadow-primary/20 active:scale-95 transition-transform">
-                    {t('home.section_startConsultation')}
-                  </button>
+                  {/* 상담 시작 / 상담 완료 버튼 */}
+                  {isCompleted ? (
+                    <span className="shrink-0 rounded-xl bg-surface-alt px-3.5 py-2 text-xs font-bold text-text-muted">
+                      상담 완료
+                    </span>
+                  ) : (
+                    <button className="shrink-0 rounded-xl bg-primary px-3.5 py-2 text-xs font-bold text-white shadow-sm shadow-primary/20 active:scale-95 transition-transform">
+                      {t('home.section_startConsultation')}
+                    </button>
+                  )}
                 </motion.div>
               );
             })}

@@ -1,6 +1,7 @@
 'use client';
 
 import { use, useState, useRef, useCallback, useEffect, Suspense } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, Badge, Button } from '@/components/ui';
 import { cn } from '@/lib/cn';
@@ -61,6 +62,8 @@ function CustomerDetailContent({ id }: { id: string }) {
   const fromChecklist = searchParams.get('fromChecklist') === 'true';
   const customer = getMockCustomerById(id);
   const [isVip, setIsVip] = useState(() => getMockCustomerById(id)?.isRegular ?? false);
+  const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [vipToast, setVipToast] = useState<string | null>(null);
   const [tagsExpanded, setTagsExpanded] = useState(false);
   const [editingTags, setEditingTags] = useState(false);
   const [localTags, setLocalTags] = useState(customer?.tags ?? []);
@@ -86,6 +89,26 @@ function CustomerDetailContent({ id }: { id: string }) {
       memo: p?.memo ?? '',
     };
   });
+
+  const handlePressStart = () => {
+    const timer = setTimeout(() => {
+      const newVal = !isVip;
+      setIsVip(newVal);
+      const idx = MOCK_CUSTOMERS.findIndex((c) => c.id === id);
+      if (idx !== -1) {
+        MOCK_CUSTOMERS[idx] = { ...MOCK_CUSTOMERS[idx], isRegular: newVal };
+      }
+      navigator.vibrate?.(50);
+      setVipToast(newVal ? 'VIP 지정됨' : 'VIP 해제됨');
+      setTimeout(() => setVipToast(null), 2000);
+    }, 500);
+    setPressTimer(timer);
+  };
+
+  const handlePressEnd = () => {
+    if (pressTimer) clearTimeout(pressTimer);
+    setPressTimer(null);
+  };
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>, tab: 'treatment' | 'consult') => {
@@ -158,7 +181,27 @@ function CustomerDetailContent({ id }: { id: string }) {
       {/* ─────────────────────────────── */}
       {/* 1. 기본 정보 카드 */}
       {/* ─────────────────────────────── */}
-      <Card className="mx-4 shadow-md rounded-2xl">
+      <div
+        className="mx-4 relative select-none cursor-pointer"
+        onPointerDown={handlePressStart}
+        onPointerUp={handlePressEnd}
+        onPointerLeave={handlePressEnd}
+        onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
+      >
+        <AnimatePresence>
+          {vipToast && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-x-0 top-0 z-10 flex items-center justify-center rounded-t-2xl py-2 text-sm font-bold text-white"
+              style={{ background: isVip ? 'var(--color-primary)' : 'var(--color-text-muted)' }}
+            >
+              {vipToast}
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <Card className="shadow-md rounded-2xl">
         {/* 프로필 상단 */}
         <div className="flex items-start gap-4">
           {/* 큰 아바타 */}
@@ -174,26 +217,16 @@ function CustomerDetailContent({ id }: { id: string }) {
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-bold text-text">{customer.name}</h2>
-                  {/* VIP 토글 버튼 */}
-                  <button
-                    onClick={() => {
-                      const newVal = !isVip;
-                      setIsVip(newVal);
-                      const idx = MOCK_CUSTOMERS.findIndex((c) => c.id === id);
-                      if (idx !== -1) {
-                        MOCK_CUSTOMERS[idx] = { ...MOCK_CUSTOMERS[idx], isRegular: newVal };
-                      }
-                    }}
-                    className="flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-semibold transition-all active:scale-95"
-                    style={
-                      isVip
-                        ? { background: 'var(--color-primary-light)', color: 'var(--color-primary-dark)' }
-                        : { background: 'var(--color-surface-alt)', color: 'var(--color-text-muted)', border: '1px solid var(--color-border)' }
-                    }
-                  >
-                    <IconStar className="h-3 w-3" />
-                    {isVip ? '단골' : '단골 아님'}
-                  </button>
+                  {/* VIP 읽기전용 배지 */}
+                  {isVip && (
+                    <span
+                      className="flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-semibold"
+                      style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary-dark)' }}
+                    >
+                      <IconStar className="h-3 w-3" />
+                      단골
+                    </span>
+                  )}
                 </div>
                 <p className="text-sm text-text-secondary">{customer.phone}</p>
               </div>
@@ -204,6 +237,7 @@ function CustomerDetailContent({ id }: { id: string }) {
               </p>
               <button
                 onClick={() => setShowDesignerPicker((v) => !v)}
+                onPointerDown={(e) => e.stopPropagation()}
                 className="text-[11px] font-medium text-primary hover:underline"
               >
                 변경
@@ -222,6 +256,7 @@ function CustomerDetailContent({ id }: { id: string }) {
                       }
                       setShowDesignerPicker(false);
                     }}
+                    onPointerDown={(e) => e.stopPropagation()}
                     className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
                     style={{
                       background: assignedDesigner === d.name ? 'var(--color-primary)' : 'var(--color-surface-alt)',
@@ -310,7 +345,9 @@ function CustomerDetailContent({ id }: { id: string }) {
           </div>
           <span className="text-base font-bold text-white">{formatPrice(customer.totalSpend)}</span>
         </div>
-      </Card>
+        </Card>
+      </div>
+      <p className="text-center text-[11px] text-text-muted opacity-50 mt-1">길게 누르면 VIP 설정</p>
 
       {/* ─────────────────────────────── */}
       {/* 2. 선호도 프로필 */}

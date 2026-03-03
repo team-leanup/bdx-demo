@@ -10,12 +10,14 @@ import { PriceSummaryBar } from '@/components/consultation/PriceSummaryBar';
 import { ExpressionSelector } from '@/components/consultation/ExpressionSelector';
 import { PartsSelector } from '@/components/consultation/PartsSelector';
 import { ColorSelector } from '@/components/consultation/ColorSelector';
-import { useT } from '@/lib/i18n';
+import { useT, useLocale, useKo } from '@/lib/i18n';
 
 export default function Step3Page() {
   const router = useRouter();
   const setStep = useConsultationStore((s) => s.setStep);
   const t = useT();
+  const tKo = useKo();
+  const locale = useLocale();
 
   const handleNext = () => {
     setStep(ConsultationStep.CANVAS);
@@ -66,7 +68,10 @@ export default function Step3Page() {
           {/* PRO 안내 배너 */}
           <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-amber-50 border border-amber-200">
             <span className="px-2 py-0.5 text-[10px] font-bold bg-gradient-to-r from-amber-400 to-amber-500 text-white rounded-full uppercase tracking-wider flex-shrink-0">
-              PRO
+              <span className="text-lg font-black">{t('step3.proBanner')}</span>
+              {locale !== 'ko' && (
+                <span className="text-xs opacity-80 font-bold ml-1">{tKo('step3.proBanner')}</span>
+              )}
             </span>
             <p className="text-xs text-amber-700">세부 시술 금액은 설정 &gt; 서비스 관리에서 변경 가능합니다</p>
           </div>
@@ -75,7 +80,12 @@ export default function Step3Page() {
 
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-text-muted font-medium">💎 파츠 추가</span>
+            <span className="text-xs text-text-muted font-medium flex flex-col items-center">
+              <span className="text-lg font-black">{t('step3.partsTitle')}</span>
+              {locale !== 'ko' && (
+                <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('step3.partsTitle')}</span>
+              )}
+            </span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
@@ -83,7 +93,12 @@ export default function Step3Page() {
 
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-text-muted font-medium">🌈 컬러 추가</span>
+            <span className="text-xs text-text-muted font-medium flex flex-col items-center">
+              <span className="text-lg font-black">{t('step3.colorTitle')}</span>
+              {locale !== 'ko' && (
+                <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('step3.colorTitle')}</span>
+              )}
+            </span>
             <div className="flex-1 h-px bg-border" />
           </div>
 

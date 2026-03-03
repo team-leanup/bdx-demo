@@ -11,7 +11,7 @@ import { ConsultationStep } from '@/types/consultation';
 import { cn } from '@/lib/cn';
 import { useLocaleStore } from '@/store/locale-store';
 import type { Locale } from '@/store/locale-store';
-import { useT } from '@/lib/i18n';
+import { useT, useLocale, useKo } from '@/lib/i18n';
 
 const LANGUAGE_OPTIONS: { value: Locale; flag: string; label: string }[] = [
   { value: 'ko', flag: '🇰🇷', label: '한국어' },
@@ -74,6 +74,7 @@ export default function ConsultationStartPage() {
   const [showResumeDialog, setShowResumeDialog] = useState(false);
   const { locale, setConsultationLocale } = useLocaleStore();
   const t = useT();
+  const tKo = useKo();
 
   useEffect(() => {
     if (
@@ -108,9 +109,17 @@ export default function ConsultationStartPage() {
       {showResumeDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="mx-4 w-full max-w-sm rounded-2xl bg-surface p-6 shadow-xl">
-            <h3 className="text-lg font-bold text-text mb-2">진행 중인 상담이 있어요</h3>
+            <h3 className="text-lg font-bold text-text mb-2">
+              {t('consultation.resumeTitle')}
+              {locale !== 'ko' && (
+                <span className="block text-xs text-text-muted opacity-60 font-bold mt-0.5">{tKo('consultation.resumeTitle')}</span>
+              )}
+            </h3>
             <p className="text-sm text-text-secondary mb-5">
-              {consultation.customerName}님 상담을 이어서 진행할까요?
+              {t('consultation.resumeDesc')}
+              {locale !== 'ko' && (
+                <span className="block text-xs text-text-muted opacity-60 font-bold mt-0.5">{tKo('consultation.resumeDesc')}</span>
+              )}
             </p>
             <div className="flex flex-col gap-2">
               <Button variant="primary" fullWidth onClick={() => {
@@ -125,13 +134,19 @@ export default function ConsultationStartPage() {
                 const route = stepRoutes[consultation.currentStep] || '/consultation/customer';
                 router.push(route);
               }}>
-                이어서 상담하기
+                <span className="text-lg font-black">{t('consultation.resumeBtn')}</span>
+                {locale !== 'ko' && (
+                  <span className="text-xs text-text-muted opacity-60 font-bold ml-1">{tKo('consultation.resumeBtn')}</span>
+                )}
               </Button>
               <Button variant="ghost" fullWidth onClick={() => {
                 setShowResumeDialog(false);
                 reset();
               }}>
-                새로 시작하기
+                <span className="text-lg font-black">{t('consultation.newBtn')}</span>
+                {locale !== 'ko' && (
+                  <span className="text-xs text-text-muted opacity-60 font-bold ml-1">{tKo('consultation.newBtn')}</span>
+                )}
               </Button>
             </div>
           </div>

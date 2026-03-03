@@ -8,24 +8,29 @@ import { ConsultationHeader } from '@/components/consultation/ConsultationHeader
 import { ConsultationSummaryCard } from '@/components/consultation/ConsultationSummaryCard';
 import { DiscountModal } from '@/components/consultation/DiscountModal';
 import { Button } from '@/components/ui';
-import { useT } from '@/lib/i18n';
+import { useT, useLocale, useKo } from '@/lib/i18n';
 import { useLocaleStore } from '@/store/locale-store';
 import { calculatePrice } from '@/lib/price-calculator';
 import { estimateTime } from '@/lib/time-calculator';
 import { MOCK_CUSTOMERS } from '@/data/mock-customers';
 import { useRecordsStore } from '@/store/records-store';
+import { useReservationStore } from '@/store/reservation-store';
 import type { ConsultationRecord } from '@/types/consultation';
 
 export default function SummaryPage() {
   const router = useRouter();
   const reset = useConsultationStore((s) => s.reset);
   const consultation = useConsultationStore((s) => s.consultation);
+  const bookingId = useConsultationStore((s) => s.consultation.bookingId);
+  const updateReservation = useReservationStore((s) => s.updateReservation);
   const restoreLocale = useLocaleStore((s) => s.restoreLocale);
   const [discountOpen, setDiscountOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [customerMemo, setCustomerMemo] = useState('');
   const addRecord = useRecordsStore((s) => s.addRecord);
   const t = useT();
+  const tKo = useKo();
+  const locale = useLocale();
 
   useEffect(() => {
     const memo = sessionStorage.getItem('consultation_customer_memo') ?? '';
@@ -56,6 +61,10 @@ export default function SummaryPage() {
     sessionStorage.setItem(`bdx-saved-record-${newId}`, JSON.stringify(savedRecord));
 
     addRecord(savedRecord);
+
+    if (bookingId) {
+      updateReservation(bookingId, { status: 'completed' as any });
+    }
 
     // 스몰토크 메모 → MOCK_CUSTOMERS 해당 고객 smallTalkNotes에 자동 push
     if (customerMemo) {
@@ -111,7 +120,12 @@ export default function SummaryPage() {
                 <svg className="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
-                <p className="text-xs font-bold text-amber-700">고객 메모</p>
+                <p className="text-xs font-bold text-amber-700">
+                  <span className="text-lg font-black">{t('summary.customerMemo')}</span>
+                  {locale !== 'ko' && (
+                    <span className="text-xs text-amber-600 opacity-60 font-bold ml-1">{tKo('summary.customerMemo')}</span>
+                  )}
+                </p>
                 <span className="text-[10px] text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full font-medium">저장 시 고객 기록에 자동 추가</span>
               </div>
               <p className="text-sm text-amber-800 leading-relaxed">{customerMemo}</p>

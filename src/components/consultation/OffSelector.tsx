@@ -11,8 +11,8 @@ interface OffSelectorProps {
   className?: string;
 }
 
-// Iconic visuals for Off (Removal) - Context-aware "Our Shop" vs "Other Shop"
-const OFF_ICONS: Record<string, (selected: boolean, selfLabel: string, otherLabel: string) => React.ReactNode> = {
+// Iconic visuals for Off (Removal) - SVG icons only (badges rendered as HTML overlay)
+const OFF_ICONS: Record<string, (selected: boolean) => React.ReactNode> = {
   // none: Natural clean nail with a "None" slash
   none: (selected) => (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
@@ -22,37 +22,28 @@ const OFF_ICONS: Record<string, (selected: boolean, selfLabel: string, otherLabe
     </svg>
   ),
   // same_shop: Focus on "Home/Our Shop" with a heart (Loyalty)
-  same_shop: (selected, selfLabel) => (
+  same_shop: (selected) => (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-      {/* Warm Shop Silhouette */}
       <path d="M14 52 L14 32 L32 16 L50 32 L50 52 Z" fill="currentColor" fillOpacity={selected ? '0.15' : '0.05'} stroke="currentColor" strokeWidth="2" />
       <path d="M26 52 L26 40 L38 40 L38 52" stroke="currentColor" strokeWidth="2" />
-
-      {/* Heart Symbol inside - Representing "Our regular customer" */}
       <path d="M32 35 C32 35 30 31 28 31 C26 31 25 33 25 35 C25 38 32 42 32 42 C32 42 39 38 39 35 C39 33 38 31 36 31 C34 31 32 35 32 35" fill="var(--color-primary)" fillOpacity={selected ? '1' : '0.3'} />
-
-      {/* Shop Badge */}
-      <rect x="16" y="44" width="32" height="14" rx="7" fill={selected ? 'var(--color-primary-dark)' : 'var(--color-surface)'} stroke="var(--color-primary)" strokeWidth="1.5" />
-      <text x="32" y="54" textAnchor="middle" fontSize="9" fontWeight="900" fill={selected ? 'white' : 'var(--color-primary)'} className="font-pretendard">{selfLabel}</text>
     </svg>
   ),
   // other_shop: Focus on "Transition" - From dotted shop to our shop
-  other_shop: (selected, _selfLabel, otherLabel) => (
+  other_shop: (selected) => (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-      {/* Other Shop (Dashed) */}
       <path d="M6 46 L6 34 L16 26 L26 34 L26 46 Z" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.4" />
-
-      {/* Arrow Pointing to Our Shop */}
       <path d="M28 36 L40 36 M36 32 L40 36 L36 40" stroke="var(--color-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-
-      {/* Our Shop (Solid) */}
       <path d="M42 46 L42 26 L54 16 L66 26 L66 46" stroke="currentColor" strokeWidth="2" fill="currentColor" fillOpacity="0.05" />
-
-      {/* Shop Badge */}
-      <rect x="2" y="44" width="32" height="14" rx="7" fill={selected ? 'var(--color-text)' : 'var(--color-surface)'} stroke="var(--color-text)" strokeWidth="1.5" />
-      <text x="18" y="54" textAnchor="middle" fontSize="9" fontWeight="900" fill={selected ? 'white' : 'var(--color-text)'} className="font-pretendard">{otherLabel}</text>
     </svg>
   ),
+};
+
+// Badge config per off type
+const OFF_BADGE_CONFIG: Record<string, { key: string; colorType: 'primary' | 'text' } | null> = {
+  none: null,
+  same_shop: { key: 'consultation.selfBadge', colorType: 'primary' },
+  other_shop: { key: 'consultation.otherBadge', colorType: 'text' },
 };
 
 // i18n key mapping
@@ -68,9 +59,6 @@ export function OffSelector({ className }: OffSelectorProps) {
   const locale = useLocale();
   const offType = useConsultationStore((s) => s.consultation.offType);
   const setOffType = useConsultationStore((s) => s.setOffType);
-
-  const selfLabel = t('consultation.selfRemoval');
-  const otherLabel = t('consultation.otherRemoval');
 
   return (
     <div className={cn('flex flex-col gap-5', className)}>
@@ -103,8 +91,24 @@ export function OffSelector({ className }: OffSelectorProps) {
               )}
             >
               {/* Context-Aware Iconic Visual */}
-              <span className={cn('transition-all duration-300 transform', isSelected ? 'scale-110' : 'opacity-60 grayscale-[0.5]')}>
-                {OFF_ICONS[opt.value](isSelected, selfLabel, otherLabel)}
+              <span className={cn('relative transition-all duration-300 transform', isSelected ? 'scale-110' : 'opacity-60 grayscale-[0.5]')}>
+                {OFF_ICONS[opt.value](isSelected)}
+                {OFF_BADGE_CONFIG[opt.value] && (() => {
+                  const badge = OFF_BADGE_CONFIG[opt.value]!;
+                  const isPrimary = badge.colorType === 'primary';
+                  return (
+                    <span
+                      className={cn(
+                        'absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1 px-2.5 py-0.5 rounded-full text-[9px] font-black whitespace-nowrap border-[1.5px] leading-tight',
+                        isPrimary
+                          ? isSelected ? 'bg-primary-dark text-white border-primary' : 'bg-surface text-primary border-primary'
+                          : isSelected ? 'bg-text text-white border-text' : 'bg-surface text-text border-text',
+                      )}
+                    >
+                      {t(badge.key)}
+                    </span>
+                  );
+                })()}
               </span>
 
               {/* Labels */}

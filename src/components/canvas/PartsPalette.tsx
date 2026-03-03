@@ -230,7 +230,7 @@ export function PartsPalette({
                         {part.name}
                       </span>
                       <span className={cn('text-sm font-bold', isSelected ? 'text-primary' : 'text-text-secondary')}>
-                        {part.pricePerUnit.toLocaleString()}원
+                        {part.pricePerUnit.toLocaleString()}{t('canvas.currencyUnit')}
                       </span>
                     </motion.button>
                   );
@@ -257,7 +257,7 @@ export function PartsPalette({
                       {gradeOpt.grade}
                     </span>
                     <span className="text-text-secondary">{gradeOpt.examples.join(' · ')}</span>
-                    <span className="ml-auto text-text-muted font-semibold">{gradeOpt.pricePerUnit.toLocaleString()}원/개</span>
+                    <span className="ml-auto text-text-muted font-semibold">{gradeOpt.pricePerUnit.toLocaleString()}{t('canvas.currencyUnit')}{t('selector.perUnit')}</span>
                   </div>
                 ))}
               </div>
@@ -275,11 +275,11 @@ export function PartsPalette({
                   <div className="flex flex-col items-end gap-0.5">
                     <span className="text-xs text-text-muted">{t('selector.partsAmount')}</span>
                     <span className="text-lg font-bold text-primary">
-                      {totalGradePrice.toLocaleString()}원
+                      {totalGradePrice.toLocaleString()}{t('canvas.currencyUnit')}
                     </span>
                     <span className="text-[10px] text-text-muted">
                       {t('selector.priceCalculation')
-                        .replace('{price}', `${selectedPart.pricePerUnit.toLocaleString()}원`)
+                        .replace('{price}', `${selectedPart.pricePerUnit.toLocaleString()}${t('canvas.currencyUnit')}`)
                         .replace('{count}', String(quantity))}
                     </span>
                   </div>

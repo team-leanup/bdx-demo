@@ -13,6 +13,7 @@ import { MOCK_CONSULTATIONS } from '@/data/mock-consultations';
 import { useAuthStore } from '@/store/auth-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { useAppStore } from '@/store/app-store';
+import { useConsultationStore } from '@/store/consultation-store';
 import { useT } from '@/lib/i18n';
 import { MonthCalendar } from '@/components/calendar/MonthCalendar';
 import { DayReservationList } from '@/components/calendar/DayReservationList';
@@ -127,8 +128,10 @@ export default function RecordsPage() {
   const [selectedEvent, setSelectedEvent] = useState<TimeGridEvent | null>(null);
 
   const [editMode, setEditMode] = useState(false);
-  const [editForm, setEditForm] = useState({ title: '', phone: '', startTime: '', requestNote: '', referenceImages: [] as string[] });
+  const [editForm, setEditForm] = useState({ title: '', phone: '', startTime: '', requestNote: '', referenceImages: [] as string[], language: 'ko' as 'ko' | 'en' | 'zh' | 'ja' });
   const editPhotoRef = useRef<HTMLInputElement>(null);
+
+  const setBookingId = useConsultationStore((s) => s.setBookingId);
 
   const role = useAuthStore((s) => s.role);
   const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
@@ -369,6 +372,7 @@ export default function RecordsPage() {
                       startTime: ev.startTime,
                       requestNote: ev.requestNote ?? '',
                       referenceImages: booking?.referenceImageUrls ?? [],
+                      language: (booking?.language ?? 'ko') as 'ko' | 'en' | 'zh' | 'ja',
                     });
                   }
                 }}
@@ -571,6 +575,19 @@ export default function RecordsPage() {
                         placeholder="요청사항이나 메모를 입력하세요"
                       />
                     </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-semibold text-text-muted">상담 언어</label>
+                      <select
+                        value={editForm.language}
+                        onChange={(e) => setEditForm((f) => ({ ...f, language: e.target.value as 'ko' | 'en' | 'zh' | 'ja' }))}
+                        className="rounded-xl border border-border bg-surface px-3 py-2.5 text-sm font-medium text-text focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      >
+                        <option value="ko">한국어</option>
+                        <option value="en">English</option>
+                        <option value="zh">中文</option>
+                        <option value="ja">日本語</option>
+                      </select>
+                    </div>
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-semibold text-text-secondary">참고 이미지</label>
                       <div className="flex gap-2 flex-wrap">
@@ -628,6 +645,7 @@ export default function RecordsPage() {
                             reservationTime: editForm.startTime,
                             requestNote: editForm.requestNote,
                             referenceImageUrls: editForm.referenceImages.length > 0 ? editForm.referenceImages : undefined,
+                            language: editForm.language,
                           });
                           setSelectedEvent(null);
                           setEditMode(false);
@@ -676,20 +694,27 @@ export default function RecordsPage() {
                       </div>
                     )}
                     <div className="mt-3 flex gap-2">
-                      <button
-                        onClick={() => {
-                          const params = new URLSearchParams();
-                          if (selectedEvent.title) params.set('name', selectedEvent.title);
-                          if (selectedEvent.customerPhone) params.set('phone', selectedEvent.customerPhone);
-                          if (selectedEvent.requestNote) params.set('note', selectedEvent.requestNote);
-                          if (selectedEvent.language) params.set('lang', selectedEvent.language);
-                          setSelectedEvent(null);
-                          router.push(`/consultation/customer?${params.toString()}`);
-                        }}
-                        className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
-                      >
-                        상담 시작
-                      </button>
+                      {selectedEvent.status === 'completed' ? (
+                        <span className="flex-1 rounded-xl bg-surface-alt px-4 py-3 text-sm font-bold text-text-muted text-center">
+                          상담 완료
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setBookingId(selectedEvent.originalId);
+                            const params = new URLSearchParams();
+                            if (selectedEvent.title) params.set('name', selectedEvent.title);
+                            if (selectedEvent.customerPhone) params.set('phone', selectedEvent.customerPhone);
+                            if (selectedEvent.requestNote) params.set('note', selectedEvent.requestNote);
+                            if (selectedEvent.language) params.set('lang', selectedEvent.language);
+                            setSelectedEvent(null);
+                            router.push(`/consultation/customer?${params.toString()}`);
+                          }}
+                          className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
+                        >
+                          상담 시작
+                        </button>
+                      )}
                       <button
                         onClick={() => {
                           setEditMode(true);
@@ -700,6 +725,7 @@ export default function RecordsPage() {
                             startTime: selectedEvent.startTime,
                             requestNote: selectedEvent.requestNote ?? '',
                             referenceImages: booking?.referenceImageUrls ?? [],
+                            language: (booking?.language ?? 'ko') as 'ko' | 'en' | 'zh' | 'ja',
                           });
                         }}
                         className="rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"

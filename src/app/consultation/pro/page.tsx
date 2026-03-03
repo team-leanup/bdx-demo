@@ -20,12 +20,16 @@ import { DiscountModal } from '@/components/consultation/DiscountModal';
 import { calculatePrice } from '@/lib/price-calculator';
 import { formatPrice } from '@/lib/format';
 import { useState } from 'react';
+import { useT, useLocale, useKo } from '@/lib/i18n';
 
 export default function ProPage() {
   const router = useRouter();
   const consultation = useConsultationStore((s) => s.consultation);
   const setStep = useConsultationStore((s) => s.setStep);
   const [discountOpen, setDiscountOpen] = useState(false);
+  const t = useT();
+  const tKo = useKo();
+  const locale = useLocale();
 
   const breakdown = calculatePrice(consultation);
 
@@ -39,7 +43,7 @@ export default function ProPage() {
       <ConsultationHeader
         stepNumber={2}
         totalSteps={3}
-        title="Pro 모드"
+        title={t('pro.title')}
         backHref="/consultation/customer"
       />
       <PriceSummaryBar />
@@ -53,12 +57,24 @@ export default function ProPage() {
         <div className="max-w-lg mx-auto flex flex-col gap-3">
           {/* Pro mode badge */}
           <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 rounded-xl border border-primary/20 mb-2">
-            <span className="text-sm font-semibold text-primary">Pro 모드</span>
+            <span className="text-sm font-semibold text-primary">
+              <span className="text-lg font-black">{t('pro.title')}</span>
+              {locale !== 'ko' && (
+                <span className="text-xs text-text-muted opacity-60 font-bold ml-1">{tKo('pro.title')}</span>
+              )}
+            </span>
             <span className="text-xs text-text-muted">— 모든 옵션을 한 화면에서 빠르게 선택하세요</span>
           </div>
 
           {/* 기본 조건 */}
-          <Accordion title="기본 조건" defaultOpen>
+          <Accordion title={
+            <span className="flex items-center gap-2">
+              <span className="text-lg font-black">{t('consultation.basicConditions')}</span>
+              {locale !== 'ko' && (
+                <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('consultation.basicConditions')}</span>
+              )}
+            </span>
+          } defaultOpen>
             <div className="flex flex-col gap-5 py-2">
               <BodyPartSelector />
               <OffSelector />
@@ -68,21 +84,42 @@ export default function ProPage() {
           </Accordion>
 
           {/* 시술 범위 */}
-          <Accordion title="시술 범위" defaultOpen>
+          <Accordion title={
+            <span className="flex items-center gap-2">
+              <span className="text-lg font-black">{t('consultation.designScope')}</span>
+              {locale !== 'ko' && (
+                <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('consultation.designScope')}</span>
+              )}
+            </span>
+          } defaultOpen>
             <div className="py-2">
               <DesignScopeSelector />
             </div>
           </Accordion>
 
           {/* 표현 기법 */}
-          <Accordion title="표현 기법">
+          <Accordion title={
+            <span className="flex items-center gap-2">
+              <span className="text-lg font-black">{t('consultation.expressionTitle')}</span>
+              {locale !== 'ko' && (
+                <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('consultation.expressionTitle')}</span>
+              )}
+            </span>
+          }>
             <div className="py-2">
               <ExpressionSelector />
             </div>
           </Accordion>
 
           {/* 파츠 & 컬러 */}
-          <Accordion title="파츠 & 컬러">
+          <Accordion title={
+            <span className="flex items-center gap-2">
+              <span className="text-lg font-black">{t('consultation.addParts')}</span>
+              {locale !== 'ko' && (
+                <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('consultation.addParts')}</span>
+              )}
+            </span>
+          }>
             <div className="flex flex-col gap-5 py-2">
               <PartsSelector />
               <ColorSelector />
@@ -90,7 +127,14 @@ export default function ProPage() {
           </Accordion>
 
           {/* 할인 & 예약금 */}
-          <Accordion title="할인 & 예약금">
+          <Accordion title={
+            <span className="flex items-center gap-2">
+              <span className="text-lg font-black">{t('consultation.discountApply')}</span>
+              {locale !== 'ko' && (
+                <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('consultation.discountApply')}</span>
+              )}
+            </span>
+          }>
             <div className="py-2">
               <button
                 type="button"

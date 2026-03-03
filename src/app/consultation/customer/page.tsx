@@ -12,7 +12,7 @@ import { CustomerInfoForm } from '@/components/consultation/CustomerInfoForm';
 import type { Customer } from '@/types/customer';
 import { useLocaleStore } from '@/store/locale-store';
 import type { Locale } from '@/store/locale-store';
-import { useT } from '@/lib/i18n';
+import { useT, useLocale, useKo } from '@/lib/i18n';
 
 const LANGUAGE_BADGE: Record<Locale, { flag: string; label: string }> = {
   ko: { flag: '🇰🇷', label: '한국어' },
@@ -28,8 +28,10 @@ function CustomerPageInner() {
   const consultation = useConsultationStore((s) => s.consultation);
   const addReferenceImage = useConsultationStore((s) => s.addReferenceImage);
   const removeReferenceImage = useConsultationStore((s) => s.removeReferenceImage);
-  const setLocale = useLocaleStore((s) => s.setLocale);
+  const setConsultationLocale = useLocaleStore((s) => s.setConsultationLocale);
   const t = useT();
+  const tKo = useKo();
+  const locale = useLocale();
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -66,9 +68,9 @@ function CustomerPageInner() {
       setMemo(note);
     }
     if (lang && ['ko', 'en', 'zh', 'ja'].includes(lang)) {
-      setLocale(lang);
+      setConsultationLocale(lang);
     }
-  }, [setLocale]);
+  }, [setConsultationLocale]);
 
   const handleExistingCustomer = (customer: Customer) => {
     setName(customer.name);
@@ -176,7 +178,10 @@ function CustomerPageInner() {
               <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              참고 이미지
+              <span className="text-lg font-black">{t('consultation.referenceTitle')}</span>
+              {locale !== 'ko' && (
+                <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('consultation.referenceTitle')}</span>
+              )}
             </p>
             {(consultation.referenceImages || []).length > 0 && (
               <div className="flex gap-2 flex-wrap mb-3">
@@ -201,7 +206,12 @@ function CustomerPageInner() {
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
-                <span className="text-sm font-medium">이미지 추가</span>
+                <span className="text-sm font-medium">
+                  <span className="text-lg font-black">{t('consultation.referenceAdd')}</span>
+                  {locale !== 'ko' && (
+                    <span className="text-xs text-text-muted opacity-60 font-bold ml-1">{tKo('consultation.referenceAdd')}</span>
+                  )}
+                </span>
                 <input
                   type="file"
                   accept="image/*"

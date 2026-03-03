@@ -84,19 +84,19 @@ export function HandSwitcher({
             </span>
 
             {/* Count badge */}
-            {count > 0 && (
-              <motion.span
-                key={count}
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className={cn(
-                  'text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-sm',
-                  isActive ? 'bg-primary text-white' : 'bg-border text-text-muted',
-                )}
-              >
-                {count}
-              </motion.span>
-            )}
+            <motion.span
+              key={count}
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className={cn(
+                'text-[10px] font-black min-w-[28px] h-5 rounded-full flex items-center justify-center shadow-sm px-1',
+                count > 0
+                  ? isActive ? 'bg-primary text-white' : 'bg-border text-text-muted'
+                  : 'bg-surface-alt text-text-muted/50',
+              )}
+            >
+              {count}/5
+            </motion.span>
           </button>
         );
       })}

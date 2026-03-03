@@ -134,6 +134,14 @@ const translations = {
       removal: '제거',
       selfRemoval: '자샵오프',
       otherRemoval: '타샵오프',
+      selfBadge: '자샵오프',
+      otherBadge: '타샵오프',
+      resumeTitle: '진행 중인 상담이 있어요',
+      resumeDesc: '이전 상담을 이어서 진행할까요?',
+      resumeBtn: '이어서 진행',
+      newBtn: '새로 시작',
+      referenceTitle: '참고 이미지',
+      referenceAdd: '사진 추가',
     },
     bodyPart: {
       hand: '핸드',
@@ -214,6 +222,9 @@ const translations = {
       colorAndTreatment: '컬러 · 시술',
       treatmentMemo: '시술 메모',
       treatmentMemoPlaceholder: '시술 세부사항, 참고사항을 입력하세요...',
+      notSelected: '미선택',
+      partsLabel: '파츠',
+      currencyUnit: '원',
     },
     settings: {
       title: '설정',
@@ -323,6 +334,9 @@ const translations = {
       addPhoto: '사진 추가',
       treatmentImages: '시술 기록',
       consultationImages: '상담 기록',
+      vipSet: 'VIP 지정',
+      vipUnset: 'VIP 해제',
+      longPressHint: '길게 누르면 VIP 설정',
     },
     onboarding: {
       welcome: '환영합니다',
@@ -359,6 +373,9 @@ const translations = {
       channel: '예약 채널',
       note: '요청사항',
       register: '등록',
+      language: '상담 언어',
+      consultComplete: '상담 완료',
+      consultStart: '상담 시작',
     },
     summary: {
       finalReview: '최종 확인',
@@ -391,6 +408,8 @@ const translations = {
       depositLabel: '예약금',
       approxTime: '약 {time}',
       designerName: '{name} 선생님',
+      customerMemo: '고객 메모',
+      memoPlaceholder: '특이사항을 입력하세요',
     },
     selector: {
       bodyPart: '시술 부위',
@@ -625,6 +644,28 @@ const translations = {
       reset: '초기화',
       apply: '적용',
     },
+    step1: {
+      removalExtension: '✨ 제거 · 연장',
+      extensionRepair: '🔧 연장/리페어',
+      nailShape: '💅 네일 쉐입',
+    },
+    step2: {
+      designPreset: '인기 디자인',
+      colorTheme: '컬러 테마',
+    },
+    step3: {
+      partsTitle: '💎 파츠 추가',
+      colorTitle: '🌈 컬러 추가',
+      proBanner: 'PRO 기능',
+    },
+    pro: {
+      title: 'PRO 시술 옵션',
+      nailRepair: '네일 리페어',
+      nailExtension: '네일 연장',
+      customColor: '커스텀 컬러',
+      specialCare: '스페셜 케어',
+      advancedDesign: '고급 디자인',
+    },
   },
 
   en: {
@@ -756,6 +797,14 @@ const translations = {
       removal: 'Removal',
       selfRemoval: 'In-house Removal',
       otherRemoval: 'Other Shop Removal',
+      selfBadge: 'In-house',
+      otherBadge: 'Other',
+      resumeTitle: 'You have an ongoing consultation',
+      resumeDesc: 'Would you like to continue?',
+      resumeBtn: 'Continue',
+      newBtn: 'Start New',
+      referenceTitle: 'Reference Images',
+      referenceAdd: 'Add Photo',
     },
     bodyPart: {
       hand: 'Hand',
@@ -836,6 +885,9 @@ const translations = {
       colorAndTreatment: 'Color · Treatment',
       treatmentMemo: 'Treatment Notes',
       treatmentMemoPlaceholder: 'Enter treatment details, notes...',
+      notSelected: 'Not Selected',
+      partsLabel: 'Parts',
+      currencyUnit: '₩',
     },
     settings: {
       title: 'Settings',
@@ -945,6 +997,9 @@ const translations = {
       addPhoto: 'Add Photo',
       treatmentImages: 'Treatment Records',
       consultationImages: 'Consultation Records',
+      vipSet: 'Set as VIP',
+      vipUnset: 'Remove VIP',
+      longPressHint: 'Long press for VIP',
     },
     onboarding: {
       welcome: 'Welcome',
@@ -981,6 +1036,9 @@ const translations = {
       channel: 'Channel',
       note: 'Request Note',
       register: 'Register',
+      language: 'Consultation Language',
+      consultComplete: 'Consultation Complete',
+      consultStart: 'Start Consultation',
     },
     summary: {
       finalReview: 'Final Review',
@@ -1013,6 +1071,8 @@ const translations = {
       depositLabel: 'Deposit',
       approxTime: 'Approx. {time}',
       designerName: '{name}',
+      customerMemo: 'Customer Memo',
+      memoPlaceholder: 'Enter special notes',
     },
     selector: {
       bodyPart: 'Body Part',
@@ -1247,6 +1307,28 @@ const translations = {
       reset: 'Reset',
       apply: 'Apply',
     },
+    step1: {
+      removalExtension: '✨ Removal · Extension',
+      extensionRepair: '🔧 Extension/Repair',
+      nailShape: '💅 Nail Shape',
+    },
+    step2: {
+      designPreset: 'Popular Designs',
+      colorTheme: 'Color Theme',
+    },
+    step3: {
+      partsTitle: '💎 Add Parts',
+      colorTitle: '🌈 Add Colors',
+      proBanner: 'PRO Features',
+    },
+    pro: {
+      title: 'PRO Treatment Options',
+      nailRepair: 'Nail Repair',
+      nailExtension: 'Nail Extension',
+      customColor: 'Custom Color',
+      specialCare: 'Special Care',
+      advancedDesign: 'Advanced Design',
+    },
   },
 
   zh: {
@@ -1378,6 +1460,14 @@ const translations = {
       removal: '卸除',
       selfRemoval: '本店卸甲',
       otherRemoval: '他店卸甲',
+      selfBadge: '本店卸甲',
+      otherBadge: '他店卸甲',
+      resumeTitle: '您有正在进行的咨询',
+      resumeDesc: '要继续之前的咨询吗？',
+      resumeBtn: '继续',
+      newBtn: '重新开始',
+      referenceTitle: '参考图片',
+      referenceAdd: '添加照片',
     },
     bodyPart: {
       hand: '手部',
@@ -1458,6 +1548,9 @@ const translations = {
       colorAndTreatment: '颜色·施术',
       treatmentMemo: '施术备注',
       treatmentMemoPlaceholder: '请输入施术详情、注意事项...',
+      notSelected: '未选择',
+      partsLabel: '配饰',
+      currencyUnit: '₩',
     },
     settings: {
       title: '设置',
@@ -1567,6 +1660,9 @@ const translations = {
       addPhoto: '添加照片',
       treatmentImages: '施术记录',
       consultationImages: '咨询记录',
+      vipSet: '设为VIP',
+      vipUnset: '取消VIP',
+      longPressHint: '长按设置VIP',
     },
     onboarding: {
       welcome: '欢迎',
@@ -1603,6 +1699,9 @@ const translations = {
       channel: '预约渠道',
       note: '备注',
       register: '登记',
+      language: '咨询语言',
+      consultComplete: '咨询完成',
+      consultStart: '开始咨询',
     },
     summary: {
       finalReview: '最终确认',
@@ -1635,6 +1734,8 @@ const translations = {
       depositLabel: '定金',
       approxTime: '约{time}',
       designerName: '{name}',
+      customerMemo: '客户备注',
+      memoPlaceholder: '请输入特殊事项',
     },
     selector: {
       bodyPart: '施术部位',
@@ -1869,6 +1970,28 @@ const translations = {
       reset: '重置',
       apply: '应用',
     },
+    step1: {
+      removalExtension: '✨ 去除 · 延长',
+      extensionRepair: '🔧 延长/修复',
+      nailShape: '💅 甲型',
+    },
+    step2: {
+      designPreset: '热门设计',
+      colorTheme: '色彩主题',
+    },
+    step3: {
+      partsTitle: '💎 添加配饰',
+      colorTitle: '🌈 添加颜色',
+      proBanner: 'PRO 功能',
+    },
+    pro: {
+      title: 'PRO 护理选项',
+      nailRepair: '指甲修复',
+      nailExtension: '指甲延长',
+      customColor: '自定义颜色',
+      specialCare: '特殊护理',
+      advancedDesign: '高级设计',
+    },
   },
 
   ja: {
@@ -2000,6 +2123,14 @@ const translations = {
       removal: '除去',
       selfRemoval: '自店オフ',
       otherRemoval: '他店オフ',
+      selfBadge: '自店オフ',
+      otherBadge: '他店オフ',
+      resumeTitle: '進行中のカウンセリングがあります',
+      resumeDesc: '前回のカウンセリングを続けますか？',
+      resumeBtn: '続ける',
+      newBtn: '新規開始',
+      referenceTitle: '参考画像',
+      referenceAdd: '写真を追加',
     },
     bodyPart: {
       hand: 'ハンド',
@@ -2080,6 +2211,9 @@ const translations = {
       colorAndTreatment: 'カラー・施術',
       treatmentMemo: '施術メモ',
       treatmentMemoPlaceholder: '施術の詳細、注意事項を入力...',
+      notSelected: '未選択',
+      partsLabel: 'パーツ',
+      currencyUnit: '₩',
     },
     settings: {
       title: '設定',
@@ -2189,6 +2323,9 @@ const translations = {
       addPhoto: '写真追加',
       treatmentImages: '施術記録',
       consultationImages: '相談記録',
+      vipSet: 'VIP指定',
+      vipUnset: 'VIP解除',
+      longPressHint: '長押しでVIP設定',
     },
     onboarding: {
       welcome: 'ようこそ',
@@ -2225,6 +2362,9 @@ const translations = {
       channel: '予約チャネル',
       note: 'リクエスト',
       register: '登録',
+      language: 'カウンセリング言語',
+      consultComplete: 'カウンセリング完了',
+      consultStart: 'カウンセリング開始',
     },
     summary: {
       finalReview: '最終確認',
@@ -2257,6 +2397,8 @@ const translations = {
       depositLabel: '予約金',
       approxTime: '約{time}',
       designerName: '{name} 先生',
+      customerMemo: 'お客様メモ',
+      memoPlaceholder: '特記事項を入力してください',
     },
     selector: {
       bodyPart: '施術部位',
@@ -2490,6 +2632,28 @@ const translations = {
       finalPayment: '最終支払い',
       reset: 'リセット',
       apply: '適用',
+    },
+    step1: {
+      removalExtension: '✨ 除去 · 延長',
+      extensionRepair: '🔧 延長/リペア',
+      nailShape: '💅 ネイルシェイプ',
+    },
+    step2: {
+      designPreset: '人気デザイン',
+      colorTheme: 'カラーテーマ',
+    },
+    step3: {
+      partsTitle: '💎 パーツ追加',
+      colorTitle: '🌈 カラー追加',
+      proBanner: 'PRO 機能',
+    },
+    pro: {
+      title: 'PRO 施術オプション',
+      nailRepair: 'ネイルリペア',
+      nailExtension: 'ネイル延長',
+      customColor: 'カスタムカラー',
+      specialCare: 'スペシャルケア',
+      advancedDesign: 'アドバンスドデザイン',
     },
   },
 } as const;

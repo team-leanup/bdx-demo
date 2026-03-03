@@ -11,7 +11,7 @@ import { PriceSummaryBar } from '@/components/consultation/PriceSummaryBar';
 import { DesignScopeSelector } from '@/components/consultation/DesignScopeSelector';
 import { DesignPresetPicker } from '@/components/consultation/DesignPresetPicker';
 import { usePartsStore, type DesignPreset } from '@/store/parts-store';
-import { useT } from '@/lib/i18n';
+import { useT, useLocale, useKo } from '@/lib/i18n';
 
 export default function Step2Page() {
   const router = useRouter();
@@ -37,6 +37,8 @@ export default function Step2Page() {
 
   const [selectedPresetId, setSelectedPresetId] = useState<string | undefined>(undefined);
   const t = useT();
+  const tKo = useKo();
+  const locale = useLocale();
 
   const handlePresetSelect = (preset: DesignPreset) => {
     setSelectedPresetId(preset.id);
@@ -145,10 +147,15 @@ export default function Step2Page() {
             </div>
           </motion.div>
 
-          {/* 디자인 프리셋 섹션 — 사장님용 한국어 고정 */}
+          {/* 디자인 프리셋 섹션 */}
           <div className="flex flex-col gap-3">
             <div>
-              <p className="text-sm font-bold text-text">💎 디자인 프리셋</p>
+              <p className="text-sm font-bold text-text flex items-center gap-2">
+                <span className="text-lg font-black">{t('step2.designPreset')}</span>
+                {locale !== 'ko' && (
+                  <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('step2.designPreset')}</span>
+                )}
+              </p>
               <p className="text-xs text-text-muted mt-0.5">자주 쓰는 디자인을 빠르게 선택</p>
             </div>
             <DesignPresetPicker
@@ -157,10 +164,15 @@ export default function Step2Page() {
             />
           </div>
 
-          {/* Divider — 사장님용 한국어 고정 */}
+          {/* Divider */}
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-text-muted font-medium">🎨 수동선택</span>
+            <span className="text-xs text-text-muted font-medium flex flex-col items-center">
+              <span className="text-lg font-black">{t('step2.colorTheme')}</span>
+              {locale !== 'ko' && (
+                <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('step2.colorTheme')}</span>
+              )}
+            </span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
