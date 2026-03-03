@@ -13,7 +13,7 @@ export function AppShell({ children, hideStatusBar, hideTabBar }: AppShellProps)
   return (
     <div className="flex h-dvh bg-background">
       {!hideTabBar && <SideNav className="hidden md:flex" />}
-      <div className="flex flex-col flex-1 min-w-0">
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {!hideStatusBar && <StatusBar />}
         <main
           className="flex-1 min-h-0 overflow-y-auto md:!pt-0 md:!pb-0"

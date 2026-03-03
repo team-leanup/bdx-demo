@@ -7,6 +7,8 @@ import type { ServiceStructure, SurchargeSettings, TimeSettings, BusinessHours }
 interface ShopSettings {
   shopName: string;
   shopPhone: string;
+  shopAddress: string;
+  shopAddressDetail: string;
   baseHandPrice: number;
   baseFootPrice: number;
   baseOffSameShop: number;
@@ -22,6 +24,8 @@ interface ShopSettings {
 const DEFAULT_SHOP_SETTINGS: ShopSettings = {
   shopName: '',
   shopPhone: '',
+  shopAddress: '',
+  shopAddressDetail: '',
   baseHandPrice: 60000,
   baseFootPrice: 70000,
   baseOffSameShop: 5000,

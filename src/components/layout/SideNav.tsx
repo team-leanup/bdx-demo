@@ -78,7 +78,7 @@ export function SideNav({ className }: SideNavProps) {
   return (
     <aside
       className={cn(
-        'w-[200px] h-dvh flex-shrink-0 flex flex-col bg-surface border-r border-border',
+        'w-[200px] h-full flex-shrink-0 flex flex-col bg-surface border-r border-border',
         className,
       )}
     >

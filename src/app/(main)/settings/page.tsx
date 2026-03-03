@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, Button, Input, LanguageSelector, Toggle, TimeInput } from '@/components/ui';
+import { Card, Button, Input, LanguageSelector, Toggle, TimeInput, AddressInput } from '@/components/ui';
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { IconShop, IconService, IconPalette, IconGear } from '@/components/icons';
@@ -406,7 +406,8 @@ export default function SettingsPage() {
   const [editingShop, setEditingShop] = useState(false);
   const [shopName, setShopName] = useState(MOCK_SHOP.name);
   const [shopPhone, setShopPhone] = useState(MOCK_SHOP.phone ?? '');
-  const [shopAddress, setShopAddress] = useState(MOCK_SHOP.address ?? '');
+  const [shopAddress, setShopAddress] = useState(shopSettings.shopAddress || MOCK_SHOP.address || '');
+  const [shopAddressDetail, setShopAddressDetail] = useState(shopSettings.shopAddressDetail || '');
 
   // 서비스 가격 인라인 편집
   const [editingPrices, setEditingPrices] = useState(false);
@@ -461,7 +462,7 @@ export default function SettingsPage() {
   const [pwSuccess, setPwSuccess] = useState(false);
 
   const handleSaveShop = () => {
-    setShopSettings({ shopName });
+    setShopSettings({ shopName, shopPhone, shopAddress, shopAddressDetail });
     setEditingShop(false);
   };
 
@@ -531,7 +532,10 @@ export default function SettingsPage() {
                   <div className="mt-3 flex flex-col gap-2 text-sm">
                     <div className="flex gap-2">
                       <span className="flex-shrink-0 text-text-muted">{t('settings.shop_address')}</span>
-                      <span className="text-text">{shopAddress}</span>
+                      <span className="text-text">
+                        {shopAddress}
+                        {shopAddressDetail && ` ${shopAddressDetail}`}
+                      </span>
                     </div>
                   </div>
                 </>
@@ -553,14 +557,14 @@ export default function SettingsPage() {
                       placeholder={t('settings.shop_phone')}
                     />
                   </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-text-secondary">{t('settings.shop_address')}</label>
-                    <Input
-                      value={shopAddress}
-                      onChange={(e) => setShopAddress(e.target.value)}
-                      placeholder={t('settings.shop_address')}
-                    />
-                  </div>
+                  <AddressInput
+                    label={t('settings.shop_address')}
+                    value={{ address: shopAddress, addressDetail: shopAddressDetail }}
+                    onChange={(addr, detail) => {
+                      setShopAddress(addr);
+                      setShopAddressDetail(detail);
+                    }}
+                  />
                   <div className="flex gap-2">
                     <Button
                       variant="ghost"

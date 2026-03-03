@@ -13,3 +13,4 @@ export type { ToastType, ToastData } from './Toast';
 export { Toggle } from './Toggle';
 export { TimeInput } from './TimeInput';
 export { BentoGrid, BentoCard } from './BentoGrid';
+export { AddressInput } from './AddressInput';

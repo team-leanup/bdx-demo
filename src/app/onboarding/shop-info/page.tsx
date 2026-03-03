@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { AddressInput } from '@/components/ui/AddressInput';
 import { TimeInput } from '@/components/ui/TimeInput';
 import { Toggle } from '@/components/ui/Toggle';
 import { useAppStore } from '@/store/app-store';
@@ -23,8 +24,9 @@ export default function ShopInfoPage() {
   const { shopSettings, setShopSettings } = useAppStore();
 
   const [shopName, setShopName] = useState(shopSettings.shopName || '');
-  const [address, setAddress] = useState('');
   const [phone, setPhone] = useState(shopSettings.shopPhone || '');
+  const [address, setAddress] = useState(shopSettings.shopAddress || '');
+  const [addressDetail, setAddressDetail] = useState(shopSettings.shopAddressDetail || '');
 
   // 일괄 vs 요일별
   const [bulkMode, setBulkMode] = useState(true);
@@ -71,7 +73,7 @@ export default function ShopInfoPage() {
         closeTime: daySchedules[idx].open ? daySchedules[idx].closeTime : undefined,
       };
     });
-    setShopSettings({ shopName, shopPhone: phone, businessHours });
+    setShopSettings({ shopName, shopPhone: phone, shopAddress: address, shopAddressDetail: addressDetail, businessHours });
     router.push('/onboarding/services');
   };
 
@@ -104,11 +106,13 @@ export default function ShopInfoPage() {
           />
         </div>
 
-        <Input
+        <AddressInput
           label="주소"
-          placeholder="주소를 입력하세요"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
+          value={{ address, addressDetail }}
+          onChange={(addr, detail) => {
+            setAddress(addr);
+            setAddressDetail(detail);
+          }}
         />
 
         {/* Business hours */}
