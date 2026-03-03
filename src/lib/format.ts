@@ -102,19 +102,26 @@ export function formatPhone(phone: string): string {
 }
 
 /**
- * 분을 시간/분 형식으로 포맷팅
+ * 분을 시간/분 형식으로 포맷팅 (locale-aware)
  * @example formatMinutes(90) → "1시간 30분"
+ * @example formatMinutes(90, 'en') → "1h 30min"
+ * @example formatMinutes(90, 'zh') → "1小时30分钟"
+ * @example formatMinutes(90, 'ja') → "1時間30分"
  */
-export function formatMinutes(minutes: number): string {
-  if (minutes < 60) {
-    return `${minutes}분`;
+export function formatMinutes(minutes: number, locale?: string): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+
+  switch (locale) {
+    case 'en':
+      return h > 0 ? (m > 0 ? `${h}h ${m}min` : `${h}h`) : `${m}min`;
+    case 'zh':
+      return h > 0 ? (m > 0 ? `${h}小时${m}分钟` : `${h}小时`) : `${m}分钟`;
+    case 'ja':
+      return h > 0 ? (m > 0 ? `${h}時間${m}分` : `${h}時間`) : `${m}分`;
+    default: // ko
+      return h > 0 ? (m > 0 ? `${h}시간 ${m}분` : `${h}시간`) : `${m}분`;
   }
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  if (mins === 0) {
-    return `${hours}시간`;
-  }
-  return `${hours}시간 ${mins}분`;
 }
 
 /**

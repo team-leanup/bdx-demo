@@ -1,27 +1,47 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useConsultationStore } from '@/store/consultation-store';
 import { calculatePrice } from '@/lib/price-calculator';
 import { estimateTime } from '@/lib/time-calculator';
 import { formatPrice, formatMinutes } from '@/lib/format';
 import { MOCK_DESIGNERS } from '@/data/mock-shop';
-import { NAIL_SHAPE_OPTIONS, DESIGN_SCOPE_OPTIONS, EXPRESSION_OPTIONS, PARTS_GRADE_OPTIONS } from '@/data/service-options';
+import { PARTS_GRADE_OPTIONS } from '@/data/service-options';
 import { Accordion } from '@/components/ui/Accordion';
 import { cn } from '@/lib/cn';
-import { useT } from '@/lib/i18n';
+import { useT, useKo, useLocale } from '@/lib/i18n';
+
+// 값 → i18n 키 맵 (service-options value → values.* 키)
+const VALUE_I18N_MAP: Record<string, string> = {
+  'solid_tone': 'values.solidTone',
+  'solid_point': 'values.solidPoint',
+  'full_art': 'values.fullArt',
+  'monthly_art': 'values.monthlyArt',
+  'solid': 'values.solid',
+  'gradient': 'values.gradient',
+  'french': 'values.french',
+  'magnetic': 'values.magnetic',
+  'round': 'values.round',
+  'oval': 'values.oval',
+  'square': 'values.square',
+  'squoval': 'values.squoval',
+  'almond': 'values.almond',
+  'stiletto': 'values.stiletto',
+  'coffin': 'values.coffin',
+};
 
 interface ConsultationSummaryCardProps {
   className?: string;
 }
 
-function SectionHeader({ icon, title, color = 'primary' }: { icon: React.ReactNode; title: string; color?: string }) {
+function SectionHeader({ icon, title, color = 'primary' }: { icon: React.ReactNode; title: ReactNode; color?: string }) {
   return (
     <div className={cn(
       'flex items-center gap-2.5 mb-3 pb-2.5 border-b',
       color === 'primary' ? 'border-primary/20' : 'border-border',
     )}>
       <div className={cn(
-        'w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0',
+        'w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0',
         color === 'primary' ? 'bg-primary/15' : 'bg-surface-alt',
       )}>
         <span className={cn('text-sm', color === 'primary' ? 'text-primary' : 'text-text-secondary')}>
@@ -33,7 +53,7 @@ function SectionHeader({ icon, title, color = 'primary' }: { icon: React.ReactNo
   );
 }
 
-function Row({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function Row({ label, value, highlight }: { label: ReactNode; value: ReactNode; highlight?: boolean }) {
   return (
     <div className="flex justify-between items-center py-1.5">
       <span className="text-sm text-text-muted">{label}</span>
@@ -51,7 +71,7 @@ function PriceRow({
   isDiscount,
   isFinal,
 }: {
-  label: string;
+  label: ReactNode;
   value: number;
   percentage?: number;
   isDiscount?: boolean;
@@ -91,15 +111,25 @@ function PriceRow({
 
 export function ConsultationSummaryCard({ className }: ConsultationSummaryCardProps) {
   const t = useT();
+  const tKo = useKo();
+  const locale = useLocale();
   const consultation = useConsultationStore((s) => s.consultation);
   const breakdown = calculatePrice(consultation);
   const minutes = estimateTime(consultation);
 
   const designer = MOCK_DESIGNERS.find((d) => d.id === consultation.designerId);
-  const shapeLabel = NAIL_SHAPE_OPTIONS.find((s) => s.value === consultation.nailShape)?.label ?? consultation.nailShape;
-  const designLabel = DESIGN_SCOPE_OPTIONS.find((d) => d.value === consultation.designScope)?.label ?? consultation.designScope;
+
+  const shapeLabel = t(VALUE_I18N_MAP[consultation.nailShape] ?? consultation.nailShape);
+  const shapeLabelKo = tKo(VALUE_I18N_MAP[consultation.nailShape] ?? consultation.nailShape);
+
+  const designLabel = t(VALUE_I18N_MAP[consultation.designScope] ?? consultation.designScope);
+  const designLabelKo = tKo(VALUE_I18N_MAP[consultation.designScope] ?? consultation.designScope);
+
   const expressionLabels = consultation.expressions
-    .map((e) => EXPRESSION_OPTIONS.find((o) => o.value === e)?.label ?? e)
+    .map((e) => t(VALUE_I18N_MAP[e] ?? e))
+    .join(', ');
+  const expressionLabelsKo = consultation.expressions
+    .map((e) => tKo(VALUE_I18N_MAP[e] ?? e))
     .join(', ');
 
   const offLabels: Record<string, string> = {
@@ -107,17 +137,47 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
     same_shop: t('off.sameShop'),
     other_shop: t('off.otherShop'),
   };
+  const offLabelsKo: Record<string, string> = {
+    none: tKo('off.none'),
+    same_shop: tKo('off.sameShop'),
+    other_shop: tKo('off.otherShop'),
+  };
 
-  const extensionLabels: Record<string, string> = {
+  const extLabels: Record<string, string> = {
     none: t('off.none'),
     repair: consultation.repairCount
       ? t('summary.repairCount').replace('{count}', String(consultation.repairCount))
       : t('summary.extensionLabel'),
     extension: t('summary.extensionLabel'),
   };
+  const extensionLabelsKo: Record<string, string> = {
+    none: tKo('off.none'),
+    repair: consultation.repairCount
+      ? tKo('summary.repairCount').replace('{count}', String(consultation.repairCount))
+      : tKo('summary.extensionLabel'),
+    extension: tKo('summary.extensionLabel'),
+  };
 
   // For progress bars: compute each item's percentage of subtotal
   const pct = (val: number) => breakdown.subtotal > 0 ? (val / breakdown.subtotal) * 100 : 0;
+
+  const biLabel = (key: string): ReactNode => (
+    <>
+      {t(key)}
+      {locale !== 'ko' && (
+        <span className="ml-1 text-[10px] opacity-60">{tKo(key)}</span>
+      )}
+    </>
+  );
+
+  const biValue = (main: string, ko: string): ReactNode => (
+    <>
+      {main}
+      {locale !== 'ko' && main !== ko && (
+        <span className="ml-1 text-[10px] opacity-60">{ko}</span>
+      )}
+    </>
+  );
 
   return (
     <div className={cn('flex flex-col gap-4', className)}>
@@ -132,7 +192,12 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
         </div>
         <div>
           <p className="text-[11px] font-bold text-primary uppercase tracking-widest">Final Review</p>
-          <h2 className="text-base font-bold text-text">{t('summary.finalReview')}</h2>
+          <h2 className="text-base font-bold text-text">
+            {t('summary.finalReview')}
+            {locale !== 'ko' && (
+              <span className="ml-1 text-[10px] font-medium text-text-muted opacity-60">{tKo('summary.finalReview')}</span>
+            )}
+          </h2>
         </div>
       </div>
 
@@ -142,7 +207,12 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
         <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10" />
         <div className="absolute -bottom-4 -left-4 w-16 h-16 rounded-full bg-white/10" />
 
-        <p className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-2 relative">{t('summary.finalPayment')}</p>
+        <p className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-2 relative">
+          {t('summary.finalPayment')}
+          {locale !== 'ko' && (
+            <span className="ml-1 text-[10px] text-white/50">{tKo('summary.finalPayment')}</span>
+          )}
+        </p>
         <p className="text-5xl font-bold text-white mb-3 relative tracking-tight">
           {formatPrice(breakdown.finalPrice)}
         </p>
@@ -151,7 +221,12 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
             <svg className="w-4 h-4 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span className="text-base font-semibold text-white">{t('summary.approxTime').replace('{time}', formatMinutes(minutes))}</span>
+            <span className="text-base font-semibold text-white">
+              {t('summary.approxTime').replace('{time}', formatMinutes(minutes, locale))}
+              {locale !== 'ko' && (
+                <span className="ml-1 text-xs text-white/60">{tKo('summary.approxTime').replace('{time}', formatMinutes(minutes, 'ko'))}</span>
+              )}
+            </span>
           </div>
           {designer && (
             <div className="flex items-center gap-1.5">
@@ -165,39 +240,39 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
       </div>
 
       {/* 1. 가격 상세 */}
-      <Accordion title={t('summary.priceDetail')}>
+      <Accordion title={biLabel('summary.priceDetail')}>
         <div className="flex flex-col">
           <PriceRow
-            label={consultation.bodyPart === 'hand' ? t('summary.handBase') : t('summary.footBase')}
+            label={biLabel(consultation.bodyPart === 'hand' ? 'summary.handBase' : 'summary.footBase')}
             value={breakdown.basePrice}
             percentage={pct(breakdown.basePrice)}
           />
           {breakdown.offSurcharge > 0 && (
-            <PriceRow label={t('summary.offLabel')} value={breakdown.offSurcharge} percentage={pct(breakdown.offSurcharge)} />
+            <PriceRow label={biLabel('summary.offLabel')} value={breakdown.offSurcharge} percentage={pct(breakdown.offSurcharge)} />
           )}
           {breakdown.extensionSurcharge > 0 && (
-            <PriceRow label={t('summary.extensionLabel')} value={breakdown.extensionSurcharge} percentage={pct(breakdown.extensionSurcharge)} />
+            <PriceRow label={biLabel('summary.extensionLabel')} value={breakdown.extensionSurcharge} percentage={pct(breakdown.extensionSurcharge)} />
           )}
           {breakdown.designSurcharge > 0 && (
-            <PriceRow label={t('summary.designLabel')} value={breakdown.designSurcharge} percentage={pct(breakdown.designSurcharge)} />
+            <PriceRow label={biLabel('summary.designLabel')} value={breakdown.designSurcharge} percentage={pct(breakdown.designSurcharge)} />
           )}
           {breakdown.expressionSurcharge > 0 && (
-            <PriceRow label={t('summary.expressionLabel')} value={breakdown.expressionSurcharge} percentage={pct(breakdown.expressionSurcharge)} />
+            <PriceRow label={biLabel('summary.expressionLabel')} value={breakdown.expressionSurcharge} percentage={pct(breakdown.expressionSurcharge)} />
           )}
           {breakdown.partsSurcharge > 0 && (
-            <PriceRow label={t('summary.partsLabel')} value={breakdown.partsSurcharge} percentage={pct(breakdown.partsSurcharge)} />
+            <PriceRow label={biLabel('summary.partsLabel')} value={breakdown.partsSurcharge} percentage={pct(breakdown.partsSurcharge)} />
           )}
           {breakdown.colorSurcharge > 0 && (
-            <PriceRow label={t('summary.colorLabel')} value={breakdown.colorSurcharge} percentage={pct(breakdown.colorSurcharge)} />
+            <PriceRow label={biLabel('summary.colorLabel')} value={breakdown.colorSurcharge} percentage={pct(breakdown.colorSurcharge)} />
           )}
           <div className="border-t border-border pt-2 mt-1">
-            <PriceRow label={t('summary.subtotal')} value={breakdown.subtotal} />
+            <PriceRow label={biLabel('summary.subtotal')} value={breakdown.subtotal} />
           </div>
           {breakdown.discountAmount > 0 && (
-            <PriceRow label={t('summary.discountLabel')} value={breakdown.discountAmount} isDiscount />
+            <PriceRow label={biLabel('summary.discountLabel')} value={breakdown.discountAmount} isDiscount />
           )}
           {breakdown.depositAmount > 0 && (
-            <PriceRow label={t('summary.depositLabel')} value={breakdown.depositAmount} isDiscount />
+            <PriceRow label={biLabel('summary.depositLabel')} value={breakdown.depositAmount} isDiscount />
           )}
         </div>
       </Accordion>
@@ -210,11 +285,11 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
               <circle cx="13.5" cy="6.5" r="2.5" /><circle cx="19" cy="13" r="2.5" /><circle cx="6" cy="13" r="2.5" /><circle cx="13.5" cy="19.5" r="2.5" /><path d="M13.5 9v3M15.8 7.7l2.3 3.3M11.2 7.7l-2.3 3.3M8.5 15.5l2.3 1M18.5 15.5l-2.3 1" strokeLinecap="round" />
             </svg>
           }
-          title={t('summary.design')}
+          title={biLabel('summary.design')}
           color="primary"
         />
-        <Row label={t('summary.designRange')} value={designLabel} />
-        <Row label={t('summary.expressionMethod')} value={expressionLabels || '-'} />
+        <Row label={biLabel('summary.designRange')} value={biValue(designLabel, designLabelKo)} />
+        <Row label={biLabel('summary.expressionMethod')} value={biValue(expressionLabels || '-', expressionLabelsKo || '-')} />
       </div>
 
       {/* 3. 시술 조건 */}
@@ -225,13 +300,25 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15M14.25 3.104c.251.023.501.05.75.082M19.8 15l-2.553 2.553A2.25 2.25 0 0115.662 18H8.338a2.25 2.25 0 01-1.585-.658L4.2 15m15.6 0l-4.8-4.5M4.2 15l4.8-4.5" />
             </svg>
           }
-          title={t('summary.conditions')}
+          title={biLabel('summary.conditions')}
           color="primary"
         />
-        <Row label={t('summary.bodyPartLabel')} value={consultation.bodyPart === 'hand' ? t('bodyPart.hand') : t('bodyPart.foot')} />
-        <Row label={t('summary.offLabel')} value={offLabels[consultation.offType]} />
-        <Row label={t('summary.extensionLabel')} value={extensionLabels[consultation.extensionType]} />
-        <Row label={t('summary.shapeLabel')} value={shapeLabel} />
+        <Row
+          label={biLabel('summary.bodyPartLabel')}
+          value={biValue(
+            consultation.bodyPart === 'hand' ? t('bodyPart.hand') : t('bodyPart.foot'),
+            consultation.bodyPart === 'hand' ? tKo('bodyPart.hand') : tKo('bodyPart.foot'),
+          )}
+        />
+        <Row
+          label={biLabel('summary.offLabel')}
+          value={biValue(offLabels[consultation.offType], offLabelsKo[consultation.offType])}
+        />
+        <Row
+          label={biLabel('summary.extensionLabel')}
+          value={biValue(extLabels[consultation.extensionType], extensionLabelsKo[consultation.extensionType])}
+        />
+        <Row label={biLabel('summary.shapeLabel')} value={biValue(shapeLabel, shapeLabelKo)} />
       </div>
 
       {/* 4. 추가 옵션 */}
@@ -242,7 +329,7 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
             </svg>
           }
-          title={t('summary.extraOptions')}
+          title={biLabel('summary.extraOptions')}
           color="primary"
         />
         {consultation.hasParts && consultation.partsSelections.length > 0 ? (
@@ -251,22 +338,32 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
             return (
               <Row
                 key={sel.grade}
-                label={`${t('summary.partsLabel')} ${sel.grade}`}
+                label={
+                  <>
+                    {`${t('summary.partsLabel')} ${sel.grade}`}
+                    {locale !== 'ko' && (
+                      <span className="ml-1 text-[10px] opacity-60">{`${tKo('summary.partsLabel')} ${sel.grade}`}</span>
+                    )}
+                  </>
+                }
                 value={`${sel.quantity} · ${formatPrice(gradePrice * sel.quantity)}`}
                 highlight
               />
             );
           })
         ) : (
-          <Row label={t('summary.partsLabel')} value={t('summary.noPartsSelected')} />
+          <Row label={biLabel('summary.partsLabel')} value={biValue(t('summary.noPartsSelected'), tKo('summary.noPartsSelected'))} />
         )}
         <Row
-          label={t('summary.colorLabel')}
-          value={
+          label={biLabel('summary.colorLabel')}
+          value={biValue(
             consultation.extraColorCount > 0
               ? t('summary.colorAdded').replace('{count}', String(consultation.extraColorCount))
-              : t('summary.noColorAdded')
-          }
+              : t('summary.noColorAdded'),
+            consultation.extraColorCount > 0
+              ? tKo('summary.colorAdded').replace('{count}', String(consultation.extraColorCount))
+              : tKo('summary.noColorAdded'),
+          )}
           highlight={consultation.extraColorCount > 0}
         />
       </div>
@@ -280,14 +377,14 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
               </svg>
             }
-            title={t('summary.customerInfo')}
+            title={biLabel('summary.customerInfo')}
             color="primary"
           />
           {consultation.customerName && (
-            <Row label={t('summary.name')} value={consultation.customerName} />
+            <Row label={biLabel('summary.name')} value={consultation.customerName} />
           )}
           {consultation.customerPhone && (
-            <Row label={t('summary.phone')} value={consultation.customerPhone} />
+            <Row label={biLabel('summary.phone')} value={consultation.customerPhone} />
           )}
         </div>
       )}

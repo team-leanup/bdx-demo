@@ -44,6 +44,7 @@ export default function ProPage() {
         stepNumber={2}
         totalSteps={3}
         title={t('pro.title')}
+        titleKo={tKo('pro.title')}
         backHref="/consultation/customer"
       />
       <PriceSummaryBar />
@@ -63,7 +64,7 @@ export default function ProPage() {
                 <span className="text-xs text-text-muted opacity-60 font-bold ml-1">{tKo('pro.title')}</span>
               )}
             </span>
-            <span className="text-xs text-text-muted">— 모든 옵션을 한 화면에서 빠르게 선택하세요</span>
+            <span className="text-xs text-text-muted">— {t('consultation.proGuide')}</span>
           </div>
 
           {/* 기본 조건 */}
@@ -141,7 +142,12 @@ export default function ProPage() {
                 onClick={() => setDiscountOpen(true)}
                 className="w-full py-3 px-4 rounded-xl border border-border bg-surface hover:bg-surface-alt transition-colors text-sm font-medium text-text flex items-center justify-between"
               >
-                <span>할인 / 예약금 설정</span>
+                <span>
+                  {t('consultation.discountApply')}
+                  {locale !== 'ko' && (
+                    <span className="ml-1 text-xs text-text-muted opacity-60">{tKo('consultation.discountApply')}</span>
+                  )}
+                </span>
                 <div className="flex items-center gap-2">
                   {(breakdown.discountAmount > 0 || breakdown.depositAmount > 0) && (
                     <span className="text-xs text-primary font-semibold">

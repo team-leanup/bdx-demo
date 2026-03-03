@@ -93,7 +93,7 @@ export default function CustomersPage() {
             <span className="text-xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
               {formatPrice(avgSpend)}
             </span>
-            <span className="text-xs text-text-secondary mt-1">평균 지출</span>
+            <span className="text-xs text-text-secondary mt-1">평균 시술 총액</span>
           </div>
         </BentoCard>
         <BentoCard span="1x1" variant="accent">

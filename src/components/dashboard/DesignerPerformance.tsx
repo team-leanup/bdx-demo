@@ -11,7 +11,6 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { MOCK_DESIGNER_STATS } from '@/data/mock-dashboard';
-import { formatPrice } from '@/lib/format';
 
 // 테마 색상 CSS 변수 사용 (hardcoded 색상 제거)
 const DESIGNER_COLORS = [
@@ -33,7 +32,7 @@ function CustomTooltip({ active, payload, label }: TooltipProps) {
       <p className="mb-1 text-xs font-medium text-text">{label}</p>
       {payload.map((p) => (
         <p key={p.name} className="text-xs text-text-secondary">
-          {p.name}: {p.name === '매출' ? formatPrice(p.value) : `${p.value}건`}
+          {p.name}: {p.value}건
         </p>
       ))}
     </div>
@@ -44,20 +43,19 @@ export function DesignerPerformance() {
   const chartData = MOCK_DESIGNER_STATS.map((d) => ({
     name: d.designerName,
     상담수: d.consultations,
-    매출: d.revenue,
   }));
 
-  // 총 매출 기준 최대값 (프로그레스 바용)
-  const maxRevenue = Math.max(...MOCK_DESIGNER_STATS.map((d) => d.revenue));
+  // 상담 건수 기준 최대값 (프로그레스 바용)
+  const maxConsultations = Math.max(...MOCK_DESIGNER_STATS.map((d) => d.consultations));
 
   return (
     <div className="flex flex-col gap-5 md:gap-6">
-      {/* 선생님별 매출 비교 - 수평 프로그레스 바 */}
+      {/* 디자이너별 상담 건수 비교 - 수평 프로그레스 바 */}
       <div>
-        <p className="mb-3 text-xs font-medium text-text-secondary">선생님별 매출 비교</p>
+        <p className="mb-3 text-xs font-medium text-text-secondary">디자이너별 상담 건수 비교</p>
         <div className="flex flex-col gap-3 md:gap-4">
           {MOCK_DESIGNER_STATS.map((d, i) => {
-            const pct = Math.round((d.revenue / maxRevenue) * 100);
+            const pct = Math.round((d.consultations / maxConsultations) * 100);
             return (
               <div key={d.designerId}>
                 <div className="mb-1 flex items-center justify-between">
@@ -70,7 +68,7 @@ export function DesignerPerformance() {
                     </div>
                     <span className="text-sm font-medium text-text">{d.designerName}</span>
                   </div>
-                  <span className="text-sm font-bold text-primary">{formatPrice(d.revenue)}</span>
+                  <span className="text-sm font-bold text-primary">{d.consultations}건</span>
                 </div>
                 <div className="h-2.5 md:h-3 w-full overflow-hidden rounded-full bg-surface-alt">
                   <div
@@ -103,6 +101,7 @@ export function DesignerPerformance() {
               tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
               axisLine={false}
               tickLine={false}
+              tickFormatter={(v) => `${v}건`}
             />
             <YAxis
               type="category"
@@ -139,14 +138,12 @@ export function DesignerPerformance() {
             <div className="flex-1">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-text">{d.designerName}</span>
-                <span className="text-sm font-bold text-primary">{formatPrice(d.revenue)}</span>
+                <span className="text-sm font-bold text-primary">{d.consultations}건</span>
               </div>
               <div className="mt-0.5 flex items-center gap-3 text-xs text-text-secondary">
-                <span>상담 {d.consultations}건</span>
-                <span>·</span>
-                <span>평균 {formatPrice(d.averagePrice)}</span>
-                <span>·</span>
                 <span>인기: {d.topDesign}</span>
+                <span>·</span>
+                <span>인기 쉐입: {d.topShape}</span>
               </div>
             </div>
           </div>

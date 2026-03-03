@@ -30,6 +30,7 @@ export default function Step3Page() {
         stepNumber={4}
         totalSteps={5}
         title={t('consultation.step3Title')}
+        titleKo={tKo('consultation.step3Title')}
         backHref="/consultation/step2"
       />
       <PriceSummaryBar />
@@ -59,9 +60,19 @@ export default function Step3Page() {
               </svg>
             </div>
             <div>
-              <p className="text-[11px] font-bold text-primary uppercase tracking-widest mb-0.5">Extra Options</p>
+              <p className="text-[11px] font-bold text-primary uppercase tracking-widest mb-0.5">
+                {t('consultation.step3Title')}
+                {locale !== 'ko' && (
+                  <span className="ml-1 text-[9px] opacity-60 normal-case">{tKo('consultation.step3Title')}</span>
+                )}
+              </p>
               <h2 className="text-lg font-bold text-text">{t('consultation.step3Title')}</h2>
-              <p className="text-xs text-text-muted mt-0.5">발색 방법 · 파츠 · 컬러</p>
+              <p className="text-xs text-text-muted mt-0.5">
+                {t('consultation.additionalOptions')}
+                {locale !== 'ko' && (
+                  <span className="ml-1 text-[9px] opacity-60">{tKo('consultation.additionalOptions')}</span>
+                )}
+              </p>
             </div>
           </motion.div>
 

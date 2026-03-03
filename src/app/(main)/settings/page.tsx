@@ -282,25 +282,8 @@ function StaffSection() {
                 key={d.id}
                 className="flex items-center gap-3 rounded-xl bg-surface-alt p-3"
               >
-                {/* Avatar with camera overlay */}
-                <div className="relative flex-shrink-0">
+                <div className="flex-shrink-0">
                   <ProfileAvatar designerId={d.id} name={d.name} size="sm" />
-                  <label
-                    htmlFor={inputId}
-                    className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full bg-primary text-white shadow-sm hover:bg-primary-dark transition-colors"
-                  >
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                      <circle cx="12" cy="13" r="4" />
-                    </svg>
-                  </label>
-                  <input
-                    id={inputId}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleFileChange(d.id, e)}
-                  />
                 </div>
 
                 <div className="flex-1 min-w-0">
@@ -324,18 +307,37 @@ function StaffSection() {
                   <p className="text-xs text-text-secondary">{d.phone}</p>
                 </div>
 
-                {/* Delete photo button */}
-                {hasImage && (
-                  <button
-                    onClick={() => removeProfileImage(d.id)}
-                    className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-border text-text-muted hover:border-error/40 hover:bg-error/10 hover:text-error transition-all"
-                    title="사진 삭제"
+                {/* Photo actions — far right */}
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  {hasImage && (
+                    <button
+                      onClick={() => removeProfileImage(d.id)}
+                      className="flex h-7 w-7 items-center justify-center rounded-full border border-border text-text-muted hover:border-error/40 hover:bg-error/10 hover:text-error transition-all"
+                      title="사진 삭제"
+                    >
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                        <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      </svg>
+                    </button>
+                  )}
+                  <label
+                    htmlFor={inputId}
+                    className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-border text-text-muted hover:border-primary/40 hover:bg-primary/10 hover:text-primary transition-all"
+                    title="사진 업로드"
                   >
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                      <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                      <circle cx="12" cy="13" r="4" />
                     </svg>
-                  </button>
-                )}
+                  </label>
+                  <input
+                    id={inputId}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleFileChange(d.id, e)}
+                  />
+                </div>
               </div>
             );
           })}

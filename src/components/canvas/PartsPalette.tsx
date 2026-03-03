@@ -9,6 +9,31 @@ import { PARTS_GRADE_OPTIONS, DEFAULT_CUSTOM_PARTS } from '@/data/service-option
 import { usePartsStore } from '@/store/parts-store';
 import { useT, useLocale, useKo } from '@/lib/i18n';
 
+// Map preset part IDs to i18n keys for bilingual display
+const PARTS_I18N_MAP: Record<string, string> = {
+  'preset-cubic': 'selector.partsCubic',
+  'preset-swarovski': 'selector.partsSwarovski',
+  'preset-pearl': 'selector.partsPearl',
+  'preset-glitter': 'selector.partsGlitter',
+  'preset-shell': 'selector.partsShell',
+  'preset-foil': 'selector.partsFoil',
+  'preset-sticker': 'selector.partsSticker',
+  'preset-charm': 'selector.partsCharm',
+};
+
+// Map Korean example names to i18n keys for grade parts translation
+const EXAMPLE_I18N: Record<string, string> = {
+  '큐빅': 'selector.partsCubic',
+  '스와로브스키 큐빅': 'selector.partsSwarovski',
+  '스와로브스키': 'selector.partsSwarovski',
+  '진주': 'selector.partsPearl',
+  '글리터': 'selector.partsGlitter',
+  '쉘': 'selector.partsShell',
+  '호일': 'selector.partsFoil',
+  '스티커': 'selector.partsSticker',
+  '참': 'selector.partsCharm',
+};
+
 interface CustomPartEntry {
   id: string;
   name: string;
@@ -109,23 +134,34 @@ export function PartsPalette({
             disabled={!textInput.trim()}
             className="px-4 py-2.5 rounded-2xl bg-primary text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary/90 active:scale-95 transition-all"
           >
-            {t('selector.add')}
+            <span>{t('selector.add')}</span>
+          {locale !== 'ko' && (
+            <span className="ml-0.5 text-[9px] opacity-70">{ko('selector.add')}</span>
+          )}
           </button>
         </div>
 
         {/* Quick chip presets — from parts store */}
         <div className="flex flex-wrap gap-1.5">
-          {quickPartsChips.map((part) => (
-            <motion.button
-              key={part.id}
-              type="button"
-              whileTap={{ scale: 0.92 }}
-              onClick={() => addCustomEntry(part.name)}
-              className="px-3 py-1.5 rounded-full border border-border bg-surface-alt text-xs font-semibold text-text hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all"
-            >
-              + {part.name}
-            </motion.button>
-          ))}
+          {quickPartsChips.map((part) => {
+            const i18nKey = PARTS_I18N_MAP[part.id];
+            const chipLabel = i18nKey ? t(i18nKey) : part.name;
+            const chipLabelKo = i18nKey ? ko(i18nKey) : part.name;
+            return (
+              <motion.button
+                key={part.id}
+                type="button"
+                whileTap={{ scale: 0.92 }}
+                onClick={() => addCustomEntry(part.name)}
+                className="px-3 py-1.5 rounded-full border border-border bg-surface-alt text-xs font-semibold text-text hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all"
+              >
+                + {chipLabel}
+                {locale !== 'ko' && i18nKey && (
+                  <span className="ml-0.5 text-[9px] opacity-60">{chipLabelKo}</span>
+                )}
+              </motion.button>
+            );
+          })}
         </div>
       </div>
 
@@ -140,6 +176,11 @@ export function PartsPalette({
           >
             <p className="text-xs font-bold text-text-muted uppercase tracking-wider">
               {t('selector.addedParts').replace('{count}', String(customEntries.length))}
+              {locale !== 'ko' && (
+                <span className="ml-2 text-[9px] font-medium opacity-60 normal-case">
+                  {ko('selector.addedParts').replace('{count}', String(customEntries.length))}
+                </span>
+              )}
             </p>
             <div className="flex flex-col gap-2">
               {customEntries.map((entry) => (
@@ -184,11 +225,16 @@ export function PartsPalette({
           onClick={() => setShowGradeSystem((v) => !v)}
           className="flex items-center justify-between"
         >
-          <div className="flex items-center gap-2">
-            <p className="text-xs font-bold text-text-muted uppercase tracking-wider">{t('selector.gradePartsSystem')}</p>
-            <span className="px-2 py-0.5 text-[10px] font-bold bg-gradient-to-r from-amber-400 to-amber-500 text-white rounded-full uppercase tracking-wider">
-              PRO
-            </span>
+          <div className="flex flex-col items-start">
+            <div className="flex items-center gap-2">
+              <p className="text-xs font-bold text-text-muted uppercase tracking-wider">{t('selector.gradePartsSystem')}</p>
+              <span className="px-2 py-0.5 text-[10px] font-bold bg-gradient-to-r from-amber-400 to-amber-500 text-white rounded-full uppercase tracking-wider">
+                PRO
+              </span>
+            </div>
+            {locale !== 'ko' && (
+              <span className="text-[9px] text-text-muted opacity-60">{ko('selector.gradePartsSystem')}</span>
+            )}
           </div>
           <svg
             width="16"
@@ -256,7 +302,14 @@ export function PartsPalette({
                     >
                       {gradeOpt.grade}
                     </span>
-                    <span className="text-text-secondary">{gradeOpt.examples.join(' · ')}</span>
+                    <span className="text-text-secondary">
+                      {gradeOpt.examples.map((ex, idx) => (
+                        <span key={ex}>
+                          {idx > 0 && ' · '}
+                          {EXAMPLE_I18N[ex] ? t(EXAMPLE_I18N[ex]) : ex}
+                        </span>
+                      ))}
+                    </span>
                     <span className="ml-auto text-text-muted font-semibold">{gradeOpt.pricePerUnit.toLocaleString()}{t('canvas.currencyUnit')}{t('selector.perUnit')}</span>
                   </div>
                 ))}

@@ -87,11 +87,11 @@ export default function ConsultationStartPage() {
   }, []);
 
   const STEP_FLOW = [
-    { icon: STEP_FLOW_ICONS[0], label: t('consultation.customerInfo') },
-    { icon: STEP_FLOW_ICONS[1], label: t('consultation.step1Title') },
-    { icon: STEP_FLOW_ICONS[2], label: t('consultation.step2Title') },
-    { icon: STEP_FLOW_ICONS[3], label: t('consultation.step3Title') },
-    { icon: STEP_FLOW_ICONS[4], label: t('consultation.summaryTitle') },
+    { icon: STEP_FLOW_ICONS[0], label: t('consultation.customerInfo'), koLabel: tKo('consultation.customerInfo') },
+    { icon: STEP_FLOW_ICONS[1], label: t('consultation.step1Title'), koLabel: tKo('consultation.step1Title') },
+    { icon: STEP_FLOW_ICONS[2], label: t('consultation.step2Title'), koLabel: tKo('consultation.step2Title') },
+    { icon: STEP_FLOW_ICONS[3], label: t('consultation.step3Title'), koLabel: tKo('consultation.step3Title') },
+    { icon: STEP_FLOW_ICONS[4], label: t('consultation.summaryTitle'), koLabel: tKo('consultation.summaryTitle') },
   ];
 
   const handleStart = () => {
@@ -110,16 +110,10 @@ export default function ConsultationStartPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="mx-4 w-full max-w-sm rounded-2xl bg-surface p-6 shadow-xl">
             <h3 className="text-lg font-bold text-text mb-2">
-              {t('consultation.resumeTitle')}
-              {locale !== 'ko' && (
-                <span className="block text-xs text-text-muted opacity-60 font-bold mt-0.5">{tKo('consultation.resumeTitle')}</span>
-              )}
+              {tKo('consultation.resumeTitle')}
             </h3>
             <p className="text-sm text-text-secondary mb-5">
-              {t('consultation.resumeDesc')}
-              {locale !== 'ko' && (
-                <span className="block text-xs text-text-muted opacity-60 font-bold mt-0.5">{tKo('consultation.resumeDesc')}</span>
-              )}
+              {tKo('consultation.resumeDesc')}
             </p>
             <div className="flex flex-col gap-2">
               <Button variant="primary" fullWidth onClick={() => {
@@ -134,19 +128,13 @@ export default function ConsultationStartPage() {
                 const route = stepRoutes[consultation.currentStep] || '/consultation/customer';
                 router.push(route);
               }}>
-                <span className="text-lg font-black">{t('consultation.resumeBtn')}</span>
-                {locale !== 'ko' && (
-                  <span className="text-xs text-text-muted opacity-60 font-bold ml-1">{tKo('consultation.resumeBtn')}</span>
-                )}
+                {tKo('consultation.resumeBtn')}
               </Button>
               <Button variant="ghost" fullWidth onClick={() => {
                 setShowResumeDialog(false);
                 reset();
               }}>
-                <span className="text-lg font-black">{t('consultation.newBtn')}</span>
-                {locale !== 'ko' && (
-                  <span className="text-xs text-text-muted opacity-60 font-bold ml-1">{tKo('consultation.newBtn')}</span>
-                )}
+                {tKo('consultation.newBtn')}
               </Button>
             </div>
           </div>
@@ -205,7 +193,12 @@ export default function ConsultationStartPage() {
                   <div className="w-9 h-9 md:w-12 md:h-12 rounded-xl bg-surface border border-border flex items-center justify-center text-base md:text-xl shadow-sm">
                     {step.icon}
                   </div>
-                  <span className="text-[9px] md:text-xs text-text-muted font-medium leading-tight text-center whitespace-nowrap">{step.label}</span>
+                  <span className="text-[9px] md:text-xs text-text-muted font-medium leading-tight text-center whitespace-nowrap">
+                    {step.label}
+                    {locale !== 'ko' && (
+                      <span className="block text-[7px] md:text-[9px] opacity-60">{step.koLabel}</span>
+                    )}
+                  </span>
                 </div>
                 {i < STEP_FLOW.length - 1 && (
                   <svg className="w-3 h-3 md:w-4 md:h-4 text-text-muted mx-0.5 md:mx-1.5 mb-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -222,7 +215,12 @@ export default function ConsultationStartPage() {
               <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
               </svg>
-              <p className="text-sm font-bold text-text">{t('consultation.selectDesigner')}</p>
+              <p className="text-sm font-bold text-text">
+                {t('consultation.selectDesigner')}
+                {locale !== 'ko' && (
+                  <span className="ml-1 text-xs text-text-muted opacity-60 font-medium">{tKo('consultation.selectDesigner')}</span>
+                )}
+              </p>
             </div>
             <div className="flex flex-col gap-3">
               {MOCK_DESIGNERS.map((designer) => {
@@ -298,7 +296,12 @@ export default function ConsultationStartPage() {
               <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 21l5.25-11.25L21 21m-9-3h7.5M3 5.621a48.474 48.474 0 016-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C11.176 10.658 7.69 15.08 3 17.502m9.334-12.138c.896.061 1.785.147 2.666.257m-4.589 8.495a18.023 18.023 0 01-3.827-5.802" />
               </svg>
-              <p className="text-sm font-bold text-text">{t('consultation.consultLanguage')}</p>
+              <p className="text-sm font-bold text-text">
+                {t('consultation.consultLanguage')}
+                {locale !== 'ko' && (
+                  <span className="ml-1 text-xs text-text-muted opacity-60 font-medium">{tKo('consultation.consultLanguage')}</span>
+                )}
+              </p>
             </div>
             <div className="flex gap-2 flex-wrap">
               {LANGUAGE_OPTIONS.map((opt) => {
@@ -337,7 +340,10 @@ export default function ConsultationStartPage() {
           disabled={!selectedDesignerId}
           className="shadow-lg shadow-primary/20"
         >
-          {t('consultation.startConsultation')}
+          <span>{t('consultation.startConsultation')}</span>
+          {locale !== 'ko' && (
+            <span className="ml-1 text-xs opacity-70">{tKo('consultation.startConsultation')}</span>
+          )}
         </Button>
         </div>
       </footer>

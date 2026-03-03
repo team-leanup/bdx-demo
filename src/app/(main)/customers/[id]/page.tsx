@@ -62,7 +62,6 @@ function CustomerDetailContent({ id }: { id: string }) {
   const fromChecklist = searchParams.get('fromChecklist') === 'true';
   const customer = getMockCustomerById(id);
   const [isVip, setIsVip] = useState(() => getMockCustomerById(id)?.isRegular ?? false);
-  const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [vipToast, setVipToast] = useState<string | null>(null);
   const [tagsExpanded, setTagsExpanded] = useState(false);
   const [editingTags, setEditingTags] = useState(false);
@@ -90,24 +89,16 @@ function CustomerDetailContent({ id }: { id: string }) {
     };
   });
 
-  const handlePressStart = () => {
-    const timer = setTimeout(() => {
-      const newVal = !isVip;
-      setIsVip(newVal);
-      const idx = MOCK_CUSTOMERS.findIndex((c) => c.id === id);
-      if (idx !== -1) {
-        MOCK_CUSTOMERS[idx] = { ...MOCK_CUSTOMERS[idx], isRegular: newVal };
-      }
-      navigator.vibrate?.(50);
-      setVipToast(newVal ? 'VIP 지정됨' : 'VIP 해제됨');
-      setTimeout(() => setVipToast(null), 2000);
-    }, 500);
-    setPressTimer(timer);
-  };
-
-  const handlePressEnd = () => {
-    if (pressTimer) clearTimeout(pressTimer);
-    setPressTimer(null);
+  const handleVipToggle = () => {
+    const newVal = !isVip;
+    setIsVip(newVal);
+    const idx = MOCK_CUSTOMERS.findIndex((c) => c.id === id);
+    if (idx !== -1) {
+      MOCK_CUSTOMERS[idx] = { ...MOCK_CUSTOMERS[idx], isRegular: newVal };
+    }
+    navigator.vibrate?.(50);
+    setVipToast(newVal ? 'VIP 지정됨' : 'VIP 해제됨');
+    setTimeout(() => setVipToast(null), 2000);
   };
 
   const handleFileChange = useCallback(
@@ -181,13 +172,7 @@ function CustomerDetailContent({ id }: { id: string }) {
       {/* ─────────────────────────────── */}
       {/* 1. 기본 정보 카드 */}
       {/* ─────────────────────────────── */}
-      <div
-        className="mx-4 relative select-none cursor-pointer"
-        onPointerDown={handlePressStart}
-        onPointerUp={handlePressEnd}
-        onPointerLeave={handlePressEnd}
-        onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
-      >
+      <div className="mx-4 relative">
         <AnimatePresence>
           {vipToast && (
             <motion.div
@@ -217,16 +202,23 @@ function CustomerDetailContent({ id }: { id: string }) {
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-bold text-text">{customer.name}</h2>
-                  {/* VIP 읽기전용 배지 */}
-                  {isVip && (
-                    <span
-                      className="flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-semibold"
-                      style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary-dark)' }}
-                    >
-                      <IconStar className="h-3 w-3" />
-                      단골
-                    </span>
-                  )}
+                  {/* VIP 토글 버튼 */}
+                  <button
+                    type="button"
+                    onClick={handleVipToggle}
+                    className={cn(
+                      'flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-all duration-200',
+                      isVip
+                        ? 'bg-primary/15 text-primary'
+                        : 'bg-surface-alt text-text-muted hover:bg-primary/10 hover:text-primary'
+                    )}
+                    aria-label={isVip ? 'VIP 해제' : 'VIP 지정'}
+                  >
+                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill={isVip ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                    </svg>
+                    단골
+                  </button>
                 </div>
                 <p className="text-sm text-text-secondary">{customer.phone}</p>
               </div>
@@ -237,7 +229,6 @@ function CustomerDetailContent({ id }: { id: string }) {
               </p>
               <button
                 onClick={() => setShowDesignerPicker((v) => !v)}
-                onPointerDown={(e) => e.stopPropagation()}
                 className="text-[11px] font-medium text-primary hover:underline"
               >
                 변경
@@ -256,7 +247,6 @@ function CustomerDetailContent({ id }: { id: string }) {
                       }
                       setShowDesignerPicker(false);
                     }}
-                    onPointerDown={(e) => e.stopPropagation()}
                     className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
                     style={{
                       background: assignedDesigner === d.name ? 'var(--color-primary)' : 'var(--color-surface-alt)',
@@ -347,7 +337,6 @@ function CustomerDetailContent({ id }: { id: string }) {
         </div>
         </Card>
       </div>
-      <p className="text-center text-[11px] text-text-muted opacity-50 mt-1">길게 누르면 VIP 설정</p>
 
       {/* ─────────────────────────────── */}
       {/* 2. 선호도 프로필 */}

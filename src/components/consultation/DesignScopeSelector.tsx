@@ -97,7 +97,7 @@ export function DesignScopeSelector({ className }: DesignScopeSelectorProps) {
               whileTap={{ scale: 0.95 }}
               onClick={() => setDesignScope(opt.value)}
               className={cn(
-                'relative flex flex-col items-center justify-center gap-5 py-7 px-4 md:py-10 md:px-6 rounded-[32px] md:rounded-[48px] border-2 transition-all duration-300 text-left',
+                'relative flex flex-col items-center justify-center gap-5 py-7 px-4 md:py-10 md:px-6 rounded-3xl border-2 transition-all duration-300 text-left',
                 isSelected
                   ? 'border-primary bg-primary/10 text-primary shadow-2xl shadow-primary/20'
                   : 'border-border bg-surface text-text-muted hover:border-primary/40 hover:bg-surface-alt',
@@ -119,9 +119,16 @@ export function DesignScopeSelector({ className }: DesignScopeSelectorProps) {
                 {/* Secondary description */}
                 <div className="flex flex-col items-center gap-0.5">
                   {isMonthly ? (
-                    <span className="text-[10px] text-primary/70 text-center font-bold italic">
-                      Special Design of the Month
-                    </span>
+                    <>
+                      <span className="text-[10px] text-primary/70 text-center font-bold italic">
+                        {t('design.monthlyArt')}
+                      </span>
+                      {locale !== 'ko' && (
+                        <span className="text-xs text-text-muted text-center font-bold opacity-60">
+                          {tKo(DESIGN_I18N_KEYS[opt.value])}
+                        </span>
+                      )}
+                    </>
                   ) : (
                     locale !== 'ko' && (
                       <span className="text-xs text-text-muted text-center font-bold opacity-60">

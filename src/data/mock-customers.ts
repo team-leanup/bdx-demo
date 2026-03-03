@@ -86,7 +86,7 @@ export const MOCK_CUSTOMERS: Customer[] = [
     lastVisitDate: '2026-02-25',
     visitCount: 2,
     averageSpend: 58000,
-    totalSpend: 696000,
+    totalSpend: 116000,
     tags: [
       { id: 't010', customerId: 'customer-002', category: 'design', value: '단색선호', isCustom: false, createdAt: '2025-05-10T10:00:00.000Z' },
       { id: 't011', customerId: 'customer-002', category: 'shape', value: '오발', isCustom: false, createdAt: '2025-05-10T10:00:00.000Z' },
@@ -152,7 +152,7 @@ export const MOCK_CUSTOMERS: Customer[] = [
     lastVisitDate: '2026-02-18',
     visitCount: 2,
     averageSpend: 95000,
-    totalSpend: 760000,
+    totalSpend: 190000,
     tags: [
       { id: 't020', customerId: 'customer-003', category: 'design', value: '이달의아트선호', isCustom: false, createdAt: '2025-08-05T10:00:00.000Z' },
       { id: 't021', customerId: 'customer-003', category: 'shape', value: '아몬드', isCustom: false, createdAt: '2025-08-05T10:00:00.000Z' },
@@ -211,7 +211,7 @@ export const MOCK_CUSTOMERS: Customer[] = [
     lastVisitDate: '2026-02-22',
     visitCount: 2,
     averageSpend: 68000,
-    totalSpend: 272000,
+    totalSpend: 136000,
     tags: [
       { id: 't030', customerId: 'customer-004', category: 'design', value: '포인트선호', isCustom: false, createdAt: '2025-11-01T10:00:00.000Z' },
       { id: 't031', customerId: 'customer-004', category: 'shape', value: '스퀘어', isCustom: false, createdAt: '2025-11-01T10:00:00.000Z' },
@@ -306,7 +306,7 @@ export const MOCK_CUSTOMERS: Customer[] = [
     lastVisitDate: '2026-02-15',
     visitCount: 1,
     averageSpend: 82000,
-    totalSpend: 738000,
+    totalSpend: 82000,
     tags: [
       { id: 't050', customerId: 'customer-006', category: 'design', value: '풀아트선호', isCustom: false, createdAt: '2025-06-20T10:00:00.000Z' },
       { id: 't051', customerId: 'customer-006', category: 'shape', value: '코핀', isCustom: false, createdAt: '2025-07-25T10:00:00.000Z' },

@@ -5,7 +5,7 @@ import { calculatePrice } from '@/lib/price-calculator';
 import { formatPrice } from '@/lib/format';
 import { Button } from '@/components/ui';
 import { cn } from '@/lib/cn';
-import { useT } from '@/lib/i18n';
+import { useT, useKo, useLocale } from '@/lib/i18n';
 
 interface ConsultationFooterProps {
   onNext: () => void;
@@ -23,6 +23,8 @@ export function ConsultationFooter({
   className,
 }: ConsultationFooterProps) {
   const t = useT();
+  const tKo = useKo();
+  const locale = useLocale();
   const consultation = useConsultationStore((s) => s.consultation);
   const breakdown = calculatePrice(consultation);
   const label = nextLabel ?? t('common.next');
@@ -38,7 +40,12 @@ export function ConsultationFooter({
       )}
     >
       <div className="flex flex-col gap-0.5">
-        <span className="text-xs text-text-muted">{t('consultation.estimatedAmount')}</span>
+        <span className="text-xs text-text-muted">
+          {t('consultation.estimatedAmount')}
+          {locale !== 'ko' && (
+            <span className="ml-1 text-[10px] opacity-60">{tKo('consultation.estimatedAmount')}</span>
+          )}
+        </span>
         <span className="text-base font-bold text-primary">{formatPrice(breakdown.subtotal)}</span>
       </div>
       <Button

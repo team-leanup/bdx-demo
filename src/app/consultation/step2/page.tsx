@@ -70,6 +70,7 @@ export default function Step2Page() {
         stepNumber={3}
         totalSteps={5}
         title={t('consultation.step2Title')}
+        titleKo={tKo('consultation.step2Title')}
         backHref="/consultation/step1"
       />
       <PriceSummaryBar />
@@ -86,10 +87,14 @@ export default function Step2Page() {
             const images = consultation.referenceImages || [];
             return (
               <div>
-                <p className="text-xs font-medium text-text-muted mb-2">참고 이미지 (최대 5장)</p>
+                <p className="text-xs font-medium text-text-muted mb-2">
+                  {t('consultation.referenceTitle')}
+                  {locale !== 'ko' && <span className="ml-1 text-[10px] opacity-60">{tKo('consultation.referenceTitle')}</span>}
+                  <span className="ml-1 opacity-50">(최대 5장)</span>
+                </p>
                 <div className="flex gap-2 overflow-x-auto pb-2 flex-wrap">
                   {images.map((url, i) => (
-                    <div key={i} className="relative w-40 h-40 rounded-lg overflow-hidden border border-border flex-shrink-0">
+                    <div key={i} className="relative w-40 h-40 rounded-xl overflow-hidden border border-border flex-shrink-0">
                       <img src={url} alt="" className="w-full h-full object-cover" />
                       <button
                         type="button"
@@ -103,11 +108,11 @@ export default function Step2Page() {
                     </div>
                   ))}
                   {images.length < 5 && (
-                    <label className="w-40 h-40 rounded-lg border border-dashed border-border bg-surface-alt flex flex-col items-center justify-center gap-1 text-text-muted cursor-pointer hover:border-primary hover:text-primary transition-colors flex-shrink-0">
+                    <label className="w-40 h-40 rounded-xl border border-dashed border-border bg-surface-alt flex flex-col items-center justify-center gap-1 text-text-muted cursor-pointer hover:border-primary hover:text-primary transition-colors flex-shrink-0">
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
-                      <span className="text-[10px]">추가</span>
+                      <span className="text-[10px]">{t('common.add')}</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -141,9 +146,19 @@ export default function Step2Page() {
               </svg>
             </div>
             <div>
-              <p className="text-[11px] font-bold text-primary uppercase tracking-widest mb-0.5">Design Scope</p>
+              <p className="text-[11px] font-bold text-primary uppercase tracking-widest mb-0.5">
+                {t('consultation.step2Title')}
+                {locale !== 'ko' && (
+                  <span className="ml-1 text-[9px] opacity-60 normal-case">{tKo('consultation.step2Title')}</span>
+                )}
+              </p>
               <h2 className="text-lg font-bold text-text">{t('consultation.step2Title')}</h2>
-              <p className="text-xs text-text-muted mt-0.5">디자인 범위</p>
+              <p className="text-xs text-text-muted mt-0.5">
+                {t('consultation.designScope')}
+                {locale !== 'ko' && (
+                  <span className="ml-1 text-[9px] opacity-60">{tKo('consultation.designScope')}</span>
+                )}
+              </p>
             </div>
           </motion.div>
 
@@ -156,7 +171,12 @@ export default function Step2Page() {
                   <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('step2.designPreset')}</span>
                 )}
               </p>
-              <p className="text-xs text-text-muted mt-0.5">자주 쓰는 디자인을 빠르게 선택</p>
+              <p className="text-xs text-text-muted mt-0.5">
+                {t('consultation.presetSubtitle')}
+                {locale !== 'ko' && (
+                  <span className="ml-1 text-[9px] opacity-60">{tKo('consultation.presetSubtitle')}</span>
+                )}
+              </p>
             </div>
             <DesignPresetPicker
               onSelect={handlePresetSelect}

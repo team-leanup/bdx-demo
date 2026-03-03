@@ -75,11 +75,7 @@ export function HourlyBookings() {
             {MOCK_HOURLY_DISTRIBUTION.map((d) => (
               <Cell
                 key={d.hour}
-                fill={
-                  d.count === maxCount
-                    ? 'var(--color-primary)'
-                    : 'var(--color-primary)'
-                }
+                fill="var(--color-primary)"
                 opacity={d.count === maxCount ? 1 : 0.45 + (d.count / maxCount) * 0.45}
               />
             ))}

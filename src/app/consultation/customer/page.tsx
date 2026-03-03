@@ -107,6 +107,7 @@ function CustomerPageInner() {
         stepNumber={1}
         totalSteps={5}
         title={t('consultation.customerInfo')}
+        titleKo={tKo('consultation.customerInfo')}
         backHref="/consultation"
       />
       <PriceSummaryBar />
@@ -155,9 +156,19 @@ function CustomerPageInner() {
               </svg>
             </div>
             <div>
-              <p className="text-[11px] font-bold text-primary uppercase tracking-widest mb-0.5">Customer Info</p>
+              <p className="text-[11px] font-bold text-primary uppercase tracking-widest mb-0.5">
+                {t('consultation.customerInfo')}
+                {locale !== 'ko' && (
+                  <span className="ml-1 text-[9px] opacity-60 normal-case">{tKo('consultation.customerInfo')}</span>
+                )}
+              </p>
               <h2 className="text-lg font-bold text-text">{t('consultation.customerInfo')}</h2>
-              <p className="text-xs text-text-muted mt-0.5">{t('consultation.searchExisting')}</p>
+              <p className="text-xs text-text-muted mt-0.5">
+                {t('consultation.searchExisting')}
+                {locale !== 'ko' && (
+                  <span className="ml-1 text-[9px] opacity-60">{tKo('consultation.searchExisting')}</span>
+                )}
+              </p>
             </div>
           </motion.div>
 
@@ -165,7 +176,7 @@ function CustomerPageInner() {
             name={name}
             phone={phone}
             memo={memo}
-            nameError={showNameError && !name.trim() ? t('customerForm.nameRequired') : undefined}
+            nameError={showNameError && !name.trim() ? tKo('customerForm.nameRequired') : undefined}
             onNameChange={(v) => { setName(v); setShowNameError(false); }}
             onPhoneChange={setPhone}
             onMemoChange={setMemo}
@@ -221,7 +232,12 @@ function CustomerPageInner() {
                 />
               </label>
             )}
-            <p className="text-[11px] text-text-muted mt-2">고객이 원하는 디자인 참고 이미지 (최대 5장)</p>
+            <p className="text-[11px] text-text-muted mt-2">
+              {t('consultation.referenceHint')}
+              {locale !== 'ko' && (
+                <span className="ml-1 opacity-60">{tKo('consultation.referenceHint')}</span>
+              )}
+            </p>
           </div>
         </div>
       </motion.main>

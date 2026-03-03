@@ -23,9 +23,23 @@ interface FingerItemProps {
   onTap?: () => void;
   notSelectedLabel: string;
   partsLabel: string;
+  t: (key: string) => string;
 }
 
-function FingerItem({ handLabel, fingerLabel, finger, selection, isActive, onTap, notSelectedLabel, partsLabel }: FingerItemProps) {
+const TREATMENT_TYPE_I18N: Record<string, string> = {
+  '원컬러': 'canvas.oneColor',
+  '그라데이션': 'expression.gradient',
+  '프렌치': 'expression.french',
+  '마그네틱': 'expression.magnetic',
+  '포인트아트': 'expression.pointArt',
+  '풀아트': 'expression.fullArt',
+  '연장': 'expression.extension',
+  '리페어': 'expression.repair',
+  '오버레이': 'expression.overlay',
+  '젤제거': 'expression.gelRemoval',
+};
+
+function FingerItem({ handLabel, fingerLabel, finger, selection, isActive, onTap, notSelectedLabel, partsLabel, t }: FingerItemProps) {
   const hasColor = !!selection?.colorCode;
   const partsCount = selection?.parts?.length ?? 0;
   const treatmentType = selection?.note;
@@ -43,16 +57,16 @@ function FingerItem({ handLabel, fingerLabel, finger, selection, isActive, onTap
       )}
     >
       {/* Iconic Finger Icon Indicator */}
-      <div className="relative w-8 h-10 flex-shrink-0 flex items-center justify-center">
+      <div className="relative w-8 h-10 flex-shrink-0">
         {/* Finger body mini */}
         <div className={cn(
-          "absolute inset-0 w-6 h-9 rounded-full border transition-all duration-300",
+          "absolute inset-0 m-auto w-6 h-9 rounded-full border transition-all duration-300",
           hasColor ? "bg-surface border-primary/20" : "bg-surface-alt border-border"
         )} />
         {/* Nail mini */}
-        <div 
+        <div
           className={cn(
-            "absolute top-1 w-4.5 h-5 rounded-t-full rounded-b-sm border shadow-sm transition-all duration-300",
+            "absolute top-0.5 left-1/2 -translate-x-1/2 w-4.5 h-5 rounded-t-full rounded-b-sm border shadow-sm transition-all duration-300",
             hasColor ? "border-white/40" : "border-border bg-surface"
           )}
           style={hasColor ? { backgroundColor: selection.colorCode } : {}}
@@ -72,12 +86,15 @@ function FingerItem({ handLabel, fingerLabel, finger, selection, isActive, onTap
           <div className="flex items-center flex-wrap gap-1 mt-0.5">
             {treatmentType && (
               <span className="text-[9px] md:text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded font-bold">
-                {treatmentType}
+                {(() => {
+                  const key = TREATMENT_TYPE_I18N[treatmentType];
+                  return key ? t(key) : treatmentType;
+                })()}
               </span>
             )}
             {selection?.isPoint && (
               <span className="text-[9px] md:text-xs bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded font-bold">
-                Point
+                {t('canvas.point')}
               </span>
             )}
             {partsCount > 0 && (
@@ -128,11 +145,21 @@ export function FingerSummary({
     <div className={cn('flex flex-col gap-2', className)}>
       <p className="text-[11px] font-extrabold text-text-muted uppercase tracking-[0.05em] px-1 mb-1">
         {t('canvas.selectFinger')}
+        {locale !== 'ko' && (
+          <span className="ml-2 text-[9px] font-medium opacity-60 normal-case tracking-normal">
+            {tKo('canvas.selectFinger')}
+          </span>
+        )}
       </p>
 
       {/* Left hand */}
       <div className="mb-2">
-        <p className="text-[10px] font-bold text-text-muted px-1 mb-1.5 opacity-70">{t('canvas.leftHand')}</p>
+        <p className="text-[10px] font-bold text-text-muted px-1 mb-1.5 opacity-70">
+          {t('canvas.leftHand')}
+          {locale !== 'ko' && (
+            <span className="ml-1 text-[8px] font-medium opacity-60">{tKo('canvas.leftHand')}</span>
+          )}
+        </p>
         <div className="grid grid-cols-2 gap-1.5">
           {FINGER_ORDER.map((finger) => (
             <FingerItem
@@ -145,6 +172,7 @@ export function FingerSummary({
               onTap={onFingerTap ? () => onFingerTap('left', finger) : undefined}
               notSelectedLabel={t('canvas.notSelected')}
               partsLabel={t('canvas.partsLabel')}
+              t={t}
             />
           ))}
           <div />
@@ -156,7 +184,12 @@ export function FingerSummary({
 
       {/* Right hand */}
       <div>
-        <p className="text-[10px] font-bold text-text-muted px-1 mb-1.5 opacity-70">{t('canvas.rightHand')}</p>
+        <p className="text-[10px] font-bold text-text-muted px-1 mb-1.5 opacity-70">
+          {t('canvas.rightHand')}
+          {locale !== 'ko' && (
+            <span className="ml-1 text-[8px] font-medium opacity-60">{tKo('canvas.rightHand')}</span>
+          )}
+        </p>
         <div className="grid grid-cols-2 gap-1.5">
           {FINGER_ORDER.map((finger) => (
             <FingerItem
@@ -169,6 +202,7 @@ export function FingerSummary({
               onTap={onFingerTap ? () => onFingerTap('right', finger) : undefined}
               notSelectedLabel={t('canvas.notSelected')}
               partsLabel={t('canvas.partsLabel')}
+              t={t}
             />
           ))}
           <div />

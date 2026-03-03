@@ -9,26 +9,25 @@ export interface KPICard {
   icon: string;
 }
 
-export interface DailyRevenue {
+export interface DailyConsultation {
   date: string;          // YYYY-MM-DD
-  revenue: number;
   consultations: number;
+  designScope?: string;  // 가장 인기 디자인
 }
 
 export interface ServiceBreakdown {
   name: string;
   count: number;
   percentage: number;
-  revenue: number;
 }
 
 export interface DesignerStats {
   designerId: string;
   designerName: string;
   consultations: number;
-  revenue: number;
-  averagePrice: number;
   topDesign: string;
+  topShape: string;
+  topExpression: string;
 }
 
 export interface CustomerAnalytics {
@@ -55,15 +54,7 @@ export interface WeeklyDistribution {
 // KPI 데이터 (2026년 2월 기준)
 export const MOCK_KPI_CARDS: KPICard[] = [
   {
-    label: '이달 매출',
-    value: '₩9,834,000',
-    rawValue: 9834000,
-    change: 8,
-    changeDirection: 'up',
-    icon: '💰',
-  },
-  {
-    label: '이달 상담 수',
+    label: '이달 상담 건수',
     value: '127건',
     rawValue: 127,
     change: 5,
@@ -71,12 +62,20 @@ export const MOCK_KPI_CARDS: KPICard[] = [
     icon: '✂️',
   },
   {
-    label: '객단가',
-    value: '₩77,000',
-    rawValue: 77000,
-    change: 3,
+    label: '인기 디자인',
+    value: '단색+포인트',
+    rawValue: 33,
+    change: 4,
     changeDirection: 'up',
-    icon: '📈',
+    icon: '🎨',
+  },
+  {
+    label: '평균 옵션 선택',
+    value: '3.2개',
+    rawValue: 3.2,
+    change: 6,
+    changeDirection: 'up',
+    icon: '📊',
   },
   {
     label: '재방문율',
@@ -104,54 +103,59 @@ export const MOCK_KPI_CARDS: KPICard[] = [
   },
 ];
 
-// 최근 30일 일별 매출 데이터
-export const MOCK_DAILY_REVENUE: DailyRevenue[] = [
-  { date: '2026-01-28', revenue: 280000, consultations: 4 },
-  { date: '2026-01-29', revenue: 350000, consultations: 5 },
-  { date: '2026-01-30', revenue: 195000, consultations: 3 },
-  { date: '2026-01-31', revenue: 420000, consultations: 6 },
-  { date: '2026-02-01', revenue: 0, consultations: 0 },       // 일요일 휴무
-  { date: '2026-02-02', revenue: 310000, consultations: 4 },
-  { date: '2026-02-03', revenue: 390000, consultations: 5 },
-  { date: '2026-02-04', revenue: 450000, consultations: 6 },
-  { date: '2026-02-05', revenue: 260000, consultations: 3 },
-  { date: '2026-02-06', revenue: 340000, consultations: 4 },
-  { date: '2026-02-07', revenue: 520000, consultations: 7 },  // 토요일 많음
-  { date: '2026-02-08', revenue: 0, consultations: 0 },       // 일요일 휴무
-  { date: '2026-02-09', revenue: 0, consultations: 0 },       // 설연휴
-  { date: '2026-02-10', revenue: 0, consultations: 0 },       // 설연휴
-  { date: '2026-02-11', revenue: 0, consultations: 0 },       // 설연휴
-  { date: '2026-02-12', revenue: 490000, consultations: 6 },
-  { date: '2026-02-13', revenue: 380000, consultations: 5 },
-  { date: '2026-02-14', revenue: 620000, consultations: 8 },  // 밸런타인데이
-  { date: '2026-02-15', revenue: 0, consultations: 0 },       // 일요일 휴무
-  { date: '2026-02-16', revenue: 320000, consultations: 4 },
-  { date: '2026-02-17', revenue: 410000, consultations: 5 },
-  { date: '2026-02-18', revenue: 350000, consultations: 5 },
-  { date: '2026-02-19', revenue: 290000, consultations: 4 },
-  { date: '2026-02-20', revenue: 430000, consultations: 5 },
-  { date: '2026-02-21', revenue: 550000, consultations: 7 },  // 토요일
-  { date: '2026-02-22', revenue: 0, consultations: 0 },       // 일요일 휴무
-  { date: '2026-02-23', revenue: 380000, consultations: 5 },
-  { date: '2026-02-24', revenue: 340000, consultations: 4 },
-  { date: '2026-02-25', revenue: 270000, consultations: 3 },
-  { date: '2026-02-26', revenue: 150000, consultations: 2 },  // 오늘 (현재)
+// 최근 30일 일별 상담 데이터
+export const MOCK_DAILY_CONSULTATIONS: DailyConsultation[] = [
+  { date: '2026-01-28', consultations: 4, designScope: '단색+포인트' },
+  { date: '2026-01-29', consultations: 5, designScope: '원컬러' },
+  { date: '2026-01-30', consultations: 3, designScope: '단색+포인트' },
+  { date: '2026-01-31', consultations: 6, designScope: '풀아트' },
+  { date: '2026-02-01', consultations: 0 },                            // 일요일 휴무
+  { date: '2026-02-02', consultations: 4, designScope: '단색+포인트' },
+  { date: '2026-02-03', consultations: 5, designScope: '원컬러' },
+  { date: '2026-02-04', consultations: 6, designScope: '풀아트' },
+  { date: '2026-02-05', consultations: 3, designScope: '단색+포인트' },
+  { date: '2026-02-06', consultations: 4, designScope: '이달의 아트' },
+  { date: '2026-02-07', consultations: 7, designScope: '풀아트' },     // 토요일 많음
+  { date: '2026-02-08', consultations: 0 },                            // 일요일 휴무
+  { date: '2026-02-09', consultations: 0 },                            // 설연휴
+  { date: '2026-02-10', consultations: 0 },                            // 설연휴
+  { date: '2026-02-11', consultations: 0 },                            // 설연휴
+  { date: '2026-02-12', consultations: 6, designScope: '단색+포인트' },
+  { date: '2026-02-13', consultations: 5, designScope: '원컬러' },
+  { date: '2026-02-14', consultations: 8, designScope: '풀아트' },     // 밸런타인데이
+  { date: '2026-02-15', consultations: 0 },                            // 일요일 휴무
+  { date: '2026-02-16', consultations: 4, designScope: '단색+포인트' },
+  { date: '2026-02-17', consultations: 5, designScope: '이달의 아트' },
+  { date: '2026-02-18', consultations: 5, designScope: '단색+포인트' },
+  { date: '2026-02-19', consultations: 4, designScope: '원컬러' },
+  { date: '2026-02-20', consultations: 5, designScope: '풀아트' },
+  { date: '2026-02-21', consultations: 7, designScope: '단색+포인트' }, // 토요일
+  { date: '2026-02-22', consultations: 0 },                            // 일요일 휴무
+  { date: '2026-02-23', consultations: 5, designScope: '원컬러' },
+  { date: '2026-02-24', consultations: 4, designScope: '단색+포인트' },
+  { date: '2026-02-25', consultations: 3, designScope: '풀아트' },
+  { date: '2026-02-26', consultations: 2, designScope: '원컬러' },
+  { date: '2026-02-27', consultations: 4, designScope: '단색+포인트' },
+  { date: '2026-02-28', consultations: 6, designScope: '풀아트' },
+  { date: '2026-03-01', consultations: 0 },                            // 일요일 휴무
+  { date: '2026-03-02', consultations: 5, designScope: '원컬러' },
+  { date: '2026-03-03', consultations: 3, designScope: '단색+포인트' },
 ];
 
 // 서비스 범위별 분석
 export const MOCK_DESIGN_SCOPE_BREAKDOWN: ServiceBreakdown[] = [
-  { name: '원컬러', count: 35, percentage: 27.6, revenue: 2100000 },
-  { name: '단색+포인트', count: 42, percentage: 33.1, revenue: 3150000 },
-  { name: '풀아트', count: 32, percentage: 25.2, revenue: 2880000 },
-  { name: '이달의 아트', count: 18, percentage: 14.2, revenue: 1704000 },
+  { name: '원컬러', count: 35, percentage: 27.6 },
+  { name: '단색+포인트', count: 42, percentage: 33.1 },
+  { name: '풀아트', count: 32, percentage: 25.2 },
+  { name: '이달의 아트', count: 18, percentage: 14.2 },
 ];
 
 // 표현 기법별 분석
 export const MOCK_EXPRESSION_BREAKDOWN: ServiceBreakdown[] = [
-  { name: '기본', count: 55, percentage: 43.3, revenue: 0 },
-  { name: '그라데이션', count: 38, percentage: 29.9, revenue: 190000 },
-  { name: '프렌치', count: 22, percentage: 17.3, revenue: 110000 },
-  { name: '마그네틱', count: 12, percentage: 9.4, revenue: 60000 },
+  { name: '기본', count: 55, percentage: 43.3 },
+  { name: '그라데이션', count: 38, percentage: 29.9 },
+  { name: '프렌치', count: 22, percentage: 17.3 },
+  { name: '마그네틱', count: 12, percentage: 9.4 },
 ];
 
 // 파츠 사용 분석
@@ -170,25 +174,25 @@ export const MOCK_DESIGNER_STATS: DesignerStats[] = [
     designerId: 'designer-001',
     designerName: '소율',
     consultations: 62,
-    revenue: 4836000,
-    averagePrice: 78000,
     topDesign: '풀아트',
+    topShape: '아몬드',
+    topExpression: '그라데이션',
   },
   {
     designerId: 'designer-002',
     designerName: '도윤',
     consultations: 41,
-    revenue: 3198000,
-    averagePrice: 78000,
     topDesign: '이달의 아트',
+    topShape: '라운드',
+    topExpression: '기본',
   },
   {
     designerId: 'designer-003',
     designerName: '하린',
     consultations: 24,
-    revenue: 1800000,
-    averagePrice: 75000,
     topDesign: '단색+포인트',
+    topShape: '스퀘어 오프',
+    topExpression: '프렌치',
   },
 ];
 

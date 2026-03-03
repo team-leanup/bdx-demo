@@ -31,6 +31,7 @@ export default function Step1Page() {
         stepNumber={2}
         totalSteps={5}
         title={t('consultation.step1Title')}
+        titleKo={tKo('consultation.step1Title')}
         backHref="/consultation/customer"
       />
       <PriceSummaryBar />
@@ -50,9 +51,19 @@ export default function Step1Page() {
             className="flex items-center gap-4 p-4 rounded-2xl bg-primary/5 border border-primary/15"
           >
             <div>
-              <p className="text-[11px] font-bold text-primary uppercase tracking-widest mb-0.5">Basic Conditions</p>
+              <p className="text-[11px] font-bold text-primary uppercase tracking-widest mb-0.5">
+                {t('consultation.step1Title')}
+                {locale !== 'ko' && (
+                  <span className="ml-1 text-[9px] opacity-60 normal-case">{tKo('consultation.step1Title')}</span>
+                )}
+              </p>
               <h2 className="text-lg font-bold text-text">{t('consultation.step1Title')}</h2>
-              <p className="text-xs text-text-muted mt-0.5">시술 부위 · 제거 · 연장 · 쉐입</p>
+              <p className="text-xs text-text-muted mt-0.5">
+                {t('consultation.basicConditions')}
+                {locale !== 'ko' && (
+                  <span className="ml-1 text-[9px] opacity-60">{tKo('consultation.basicConditions')}</span>
+                )}
+              </p>
             </div>
           </motion.div>
 

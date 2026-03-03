@@ -11,35 +11,31 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { cn } from '@/lib/cn';
-import { MOCK_DAILY_REVENUE } from '@/data/mock-dashboard';
-import { formatPrice } from '@/lib/format';
+import { MOCK_DAILY_CONSULTATIONS } from '@/data/mock-dashboard';
 
 type Period = 'daily' | 'weekly' | 'monthly';
 
 function aggregateWeekly() {
-  const weeks: Record<string, { revenue: number; consultations: number }> = {};
-  for (const d of MOCK_DAILY_REVENUE) {
+  const weeks: Record<string, { consultations: number }> = {};
+  for (const d of MOCK_DAILY_CONSULTATIONS) {
     const date = new Date(d.date);
-    // 주 시작 (월요일 기준)
     const day = date.getDay();
     const diff = (day + 6) % 7;
     const monday = new Date(date);
     monday.setDate(date.getDate() - diff);
     const key = `${monday.getMonth() + 1}/${monday.getDate()}주`;
-    if (!weeks[key]) weeks[key] = { revenue: 0, consultations: 0 };
-    weeks[key].revenue += d.revenue;
+    if (!weeks[key]) weeks[key] = { consultations: 0 };
     weeks[key].consultations += d.consultations;
   }
   return Object.entries(weeks).map(([label, v]) => ({ label, ...v }));
 }
 
 function aggregateMonthly() {
-  const months: Record<string, { revenue: number; consultations: number }> = {};
-  for (const d of MOCK_DAILY_REVENUE) {
+  const months: Record<string, { consultations: number }> = {};
+  for (const d of MOCK_DAILY_CONSULTATIONS) {
     const date = new Date(d.date);
     const key = `${date.getMonth() + 1}월`;
-    if (!months[key]) months[key] = { revenue: 0, consultations: 0 };
-    months[key].revenue += d.revenue;
+    if (!months[key]) months[key] = { consultations: 0 };
     months[key].consultations += d.consultations;
   }
   return Object.entries(months).map(([label, v]) => ({ label, ...v }));
@@ -56,7 +52,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   return (
     <div className="rounded-xl border border-border bg-surface px-3 py-2 shadow-lg">
       <p className="text-xs text-text-secondary">{label}</p>
-      <p className="text-sm font-bold text-primary">{formatPrice(payload[0].value)}</p>
+      <p className="text-sm font-bold text-primary">{payload[0].value}건</p>
     </div>
   );
 }
@@ -72,9 +68,8 @@ export function RevenueChart() {
 
   const data = (() => {
     if (period === 'daily') {
-      return MOCK_DAILY_REVENUE.slice(-14).map((d) => ({
+      return MOCK_DAILY_CONSULTATIONS.slice(-14).map((d) => ({
         label: d.date.slice(5).replace('-', '/'),
-        revenue: d.revenue,
         consultations: d.consultations,
       }));
     }
@@ -107,7 +102,7 @@ export function RevenueChart() {
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
           <defs>
-            <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id="consultationGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.25} />
               <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
             </linearGradient>
@@ -124,15 +119,15 @@ export function RevenueChart() {
             tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
             axisLine={false}
             tickLine={false}
-            tickFormatter={(v) => `${(v / 10000).toFixed(0)}만`}
+            tickFormatter={(v) => `${v}건`}
           />
           <Tooltip content={<CustomTooltip />} />
           <Area
             type="monotone"
-            dataKey="revenue"
+            dataKey="consultations"
             stroke="var(--color-primary)"
             strokeWidth={2}
-            fill="url(#revenueGrad)"
+            fill="url(#consultationGrad)"
             dot={false}
             activeDot={{ r: 4, fill: 'var(--color-primary)' }}
           />

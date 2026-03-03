@@ -2,12 +2,13 @@
 
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/cn';
-import { useT } from '@/lib/i18n';
+import { useT, useLocale } from '@/lib/i18n';
 
 interface ConsultationHeaderProps {
   stepNumber: number;
   totalSteps: number;
   title: string;
+  titleKo?: string;
   backHref?: string;
   onBack?: () => void;
   onClose?: () => void;
@@ -18,6 +19,7 @@ export function ConsultationHeader({
   stepNumber,
   totalSteps,
   title,
+  titleKo,
   backHref,
   onBack,
   onClose,
@@ -25,6 +27,7 @@ export function ConsultationHeader({
 }: ConsultationHeaderProps) {
   const router = useRouter();
   const t = useT();
+  const locale = useLocale();
 
   const handleBack = () => {
     if (onBack) {
@@ -75,6 +78,9 @@ export function ConsultationHeader({
           STEP {stepNumber}/{totalSteps}
         </span>
         <span className="text-sm font-bold text-text">{title}</span>
+        {locale !== 'ko' && titleKo && (
+          <span className="text-[10px] text-text-muted opacity-60">{titleKo}</span>
+        )}
       </div>
 
       {/* Close button */}

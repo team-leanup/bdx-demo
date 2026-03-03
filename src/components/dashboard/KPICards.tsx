@@ -6,27 +6,7 @@ import { BentoCard } from '@/components/ui';
 
 // KPI별 드릴다운 상세 데이터
 const KPI_DETAIL_MAP: Record<string, React.ReactNode> = {
-  '이달 매출': (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-        <span className="text-sm text-text-secondary">이달 매출</span>
-        <span className="font-bold text-text">₩9,834,000</span>
-      </div>
-      <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-        <span className="text-sm text-text-secondary">추정 원가</span>
-        <span className="font-bold text-text">₩3,934,000</span>
-      </div>
-      <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-        <span className="text-sm text-text-secondary">추정 이익</span>
-        <span className="font-bold text-success">₩5,900,000</span>
-      </div>
-      <div className="flex items-center justify-between rounded-xl bg-primary/10 p-3">
-        <span className="text-sm font-semibold text-primary">마진율</span>
-        <span className="font-bold text-primary">60%</span>
-      </div>
-    </div>
-  ),
-  '이달 상담 수': (
+  '이달 상담 건수': (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
         <span className="text-sm text-text-secondary">완료된 상담</span>
@@ -40,21 +20,49 @@ const KPI_DETAIL_MAP: Record<string, React.ReactNode> = {
         <span className="text-sm text-text-secondary">전월 대비</span>
         <span className="font-bold text-success">+5% ▲</span>
       </div>
+      <div className="flex items-center justify-between rounded-xl bg-primary/10 p-3">
+        <span className="text-sm font-semibold text-primary">이번 주 누계</span>
+        <span className="font-bold text-primary">14건</span>
+      </div>
     </div>
   ),
-  '객단가': (
+  '인기 디자인': (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-        <span className="text-sm text-text-secondary">이달 평균 객단가</span>
-        <span className="font-bold text-text">₩77,000</span>
+        <span className="text-sm text-text-secondary">원컬러</span>
+        <span className="font-bold text-text">28% (35건)</span>
+      </div>
+      <div className="flex items-center justify-between rounded-xl bg-primary/10 p-3">
+        <span className="text-sm font-semibold text-primary">단색+포인트</span>
+        <span className="font-bold text-primary">33% (42건)</span>
       </div>
       <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-        <span className="text-sm text-text-secondary">전월 객단가</span>
-        <span className="font-bold text-text">₩74,800</span>
+        <span className="text-sm text-text-secondary">풀아트</span>
+        <span className="font-bold text-text">25% (32건)</span>
+      </div>
+      <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
+        <span className="text-sm text-text-secondary">이달의 아트</span>
+        <span className="font-bold text-text">14% (18건)</span>
+      </div>
+    </div>
+  ),
+  '평균 옵션 선택': (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
+        <span className="text-sm text-text-secondary">상담당 평균</span>
+        <span className="font-bold text-text">3.2개</span>
+      </div>
+      <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
+        <span className="text-sm text-text-secondary">최다 선택 조합</span>
+        <span className="font-bold text-text">부위+쉐입+파츠</span>
+      </div>
+      <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
+        <span className="text-sm text-text-secondary">오프 포함 비율</span>
+        <span className="font-bold text-text">41%</span>
       </div>
       <div className="flex items-center justify-between rounded-xl bg-primary/10 p-3">
         <span className="text-sm font-semibold text-primary">전월 대비</span>
-        <span className="font-bold text-success">+₩2,200 ▲</span>
+        <span className="font-bold text-success">+6% ▲</span>
       </div>
     </div>
   ),
@@ -197,9 +205,9 @@ function KPIBottomSheet({ kpi, onClose }: BottomSheetProps) {
 
 // KPI 레이블 → 텍스트/심볼 아이콘 매핑
 const KPI_SYMBOL: Record<string, string> = {
-  '이달 매출': '₩',
-  '이달 상담 수': '#',
-  '객단가': 'avg',
+  '이달 상담 건수': '#',
+  '인기 디자인': '🎨',
+  '평균 옵션 선택': 'avg',
   '재방문율': '%',
   '단골 고객': 'vip',
   '오늘 예약': 'cal',

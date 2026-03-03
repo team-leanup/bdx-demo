@@ -84,7 +84,7 @@ export function OffSelector({ className }: OffSelectorProps) {
               whileTap={{ scale: 0.95 }}
               onClick={() => setOffType(opt.value)}
               className={cn(
-                'relative flex flex-col items-center justify-center gap-4 py-8 px-2 rounded-[40px] border-2 transition-all duration-300 text-left',
+                'relative flex flex-col items-center justify-center gap-4 py-8 px-2 rounded-3xl border-2 transition-all duration-300 text-left',
                 isSelected
                   ? 'border-primary bg-primary/10 text-primary shadow-2xl shadow-primary/15'
                   : 'border-border bg-surface text-text-muted hover:border-primary/40 hover:bg-surface-alt',
@@ -99,7 +99,7 @@ export function OffSelector({ className }: OffSelectorProps) {
                   return (
                     <span
                       className={cn(
-                        'absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1 px-2.5 py-0.5 rounded-full text-[9px] font-black whitespace-nowrap border-[1.5px] leading-tight',
+                        'absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1 px-2.5 py-0.5 rounded-full text-[9px] font-black border-[1.5px] leading-tight text-center whitespace-nowrap',
                         isPrimary
                           ? isSelected ? 'bg-primary-dark text-white border-primary' : 'bg-surface text-primary border-primary'
                           : isSelected ? 'bg-text text-white border-text' : 'bg-surface text-text border-text',

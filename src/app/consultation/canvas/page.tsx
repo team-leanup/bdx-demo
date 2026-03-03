@@ -8,7 +8,7 @@ import { FingerCanvas } from '@/components/canvas/FingerCanvas';
 import type { CanvasSelections } from '@/components/canvas/FingerCanvas';
 import type { FingerPosition } from '@/types/canvas';
 import type { FingerArtSelection, FingerPartSelection } from '@/types/consultation';
-import { useT } from '@/lib/i18n';
+import { useT, useKo } from '@/lib/i18n';
 
 const FINGER_ORDER: FingerPosition[] = ['thumb', 'index', 'middle', 'ring', 'pinky'];
 
@@ -16,6 +16,7 @@ export default function CanvasPage() {
   const router = useRouter();
   const { consultation, setStep } = useConsultationStore();
   const t = useT();
+  const tKo = useKo();
 
   const handleChange = (selections: CanvasSelections) => {
     // Convert canvas selections to ConsultationType.canvasData format
@@ -108,6 +109,7 @@ export default function CanvasPage() {
         stepNumber={4}
         totalSteps={5}
         title={t('consultation.canvasTitle')}
+        titleKo={tKo('consultation.canvasTitle')}
         onBack={handleBack}
       />
 

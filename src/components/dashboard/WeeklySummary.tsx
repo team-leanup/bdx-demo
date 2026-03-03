@@ -9,28 +9,34 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { MOCK_DAILY_REVENUE } from '@/data/mock-dashboard';
-import { formatPrice } from '@/lib/format';
+import { MOCK_DAILY_CONSULTATIONS } from '@/data/mock-dashboard';
 
-// 이번 주 데이터 (월~오늘, 2026-02-23 ~ 2026-02-26)
-const THIS_WEEK_DATA = MOCK_DAILY_REVENUE.filter((d) => {
-  const date = new Date(d.date);
-  // 2026년 2월 23일(월) ~ 26일(목) 데이터
-  return d.date >= '2026-02-23' && d.date <= '2026-02-26';
-}).map((d) => {
-  const date = new Date(d.date);
+// 현재 주의 월~일 범위 동적 계산
+const now = new Date();
+const dayOfWeek = now.getDay(); // 0=일 1=월 ... 6=토
+const monday = new Date(now);
+monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+const sunday = new Date(monday);
+sunday.setDate(monday.getDate() + 6);
+
+const mondayStr = monday.toISOString().slice(0, 10);
+const sundayStr = sunday.toISOString().slice(0, 10);
+
+const THIS_WEEK_DATA = MOCK_DAILY_CONSULTATIONS.filter(
+  (d) => d.date >= mondayStr && d.date <= sundayStr,
+).map((d) => {
+  const date = new Date(d.date + 'T00:00:00');
   const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
   return {
     label: dayNames[date.getDay()],
-    revenue: d.revenue,
     consultations: d.consultations,
   };
 });
 
-// 이번 주 통계
-const weekRevenue = THIS_WEEK_DATA.reduce((s, d) => s + d.revenue, 0);
+// 이번 주 통계 (모듈 레벨 상수이므로 초기 로드 시 계산)
 const weekConsultations = THIS_WEEK_DATA.reduce((s, d) => s + d.consultations, 0);
-const weekAvg = weekConsultations > 0 ? Math.round(weekRevenue / weekConsultations) : 0;
+const workDays = THIS_WEEK_DATA.filter((d) => d.consultations > 0).length;
+const dayAvg = workDays > 0 ? Math.round(weekConsultations / workDays) : 0;
 
 interface CustomTooltipProps {
   active?: boolean;
@@ -43,7 +49,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   return (
     <div className="rounded-xl border border-border bg-surface px-3 py-2 shadow-lg">
       <p className="text-xs text-text-secondary">{label}요일</p>
-      <p className="text-sm font-bold text-primary">{formatPrice(payload[0].value)}</p>
+      <p className="text-sm font-bold text-primary">{payload[0].value}건</p>
     </div>
   );
 }
@@ -54,16 +60,16 @@ export function WeeklySummary() {
       {/* 주간 통계 요약 */}
       <div className="grid grid-cols-3 gap-2 md:gap-4">
         <div className="flex flex-col items-center rounded-xl bg-surface-alt p-3 md:p-4">
-          <span className="text-base md:text-lg font-bold text-primary">{formatPrice(weekRevenue)}</span>
-          <span className="mt-0.5 text-[10px] md:text-xs text-text-muted">주간 매출</span>
-        </div>
-        <div className="flex flex-col items-center rounded-xl bg-surface-alt p-3 md:p-4">
-          <span className="text-base md:text-lg font-bold text-text">{weekConsultations}건</span>
+          <span className="text-base md:text-lg font-bold text-primary">{weekConsultations}건</span>
           <span className="mt-0.5 text-[10px] md:text-xs text-text-muted">주간 상담</span>
         </div>
         <div className="flex flex-col items-center rounded-xl bg-surface-alt p-3 md:p-4">
-          <span className="text-base md:text-lg font-bold text-text">{formatPrice(weekAvg)}</span>
-          <span className="mt-0.5 text-[10px] md:text-xs text-text-muted">평균 단가</span>
+          <span className="text-base md:text-lg font-bold text-text">{workDays}일</span>
+          <span className="mt-0.5 text-[10px] md:text-xs text-text-muted">영업일</span>
+        </div>
+        <div className="flex flex-col items-center rounded-xl bg-surface-alt p-3 md:p-4">
+          <span className="text-base md:text-lg font-bold text-text">{dayAvg}건</span>
+          <span className="mt-0.5 text-[10px] md:text-xs text-text-muted">일 평균</span>
         </div>
       </div>
 
@@ -85,11 +91,11 @@ export function WeeklySummary() {
               tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
               axisLine={false}
               tickLine={false}
-              tickFormatter={(v) => `${(v / 10000).toFixed(0)}만`}
+              tickFormatter={(v) => `${v}건`}
             />
             <Tooltip content={<CustomTooltip />} />
             <Bar
-              dataKey="revenue"
+              dataKey="consultations"
               fill="var(--color-primary)"
               radius={[6, 6, 0, 0]}
               opacity={0.85}

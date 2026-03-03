@@ -257,7 +257,10 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
-            {t('canvas.applyAll')}
+            <span>{t('canvas.applyAll')}</span>
+            {locale !== 'ko' && (
+              <span className="ml-1 text-[10px] text-text-muted opacity-60">{ko('canvas.applyAll')}</span>
+            )}
           </Button>
         </div>
       </div>
@@ -293,7 +296,12 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
                   : 'text-text-muted hover:text-text-secondary',
               )}
             >
-              {tab === 'color' ? t('canvas.colorAndTreatment') : t('canvas.parts')}
+              <span>{tab === 'color' ? t('canvas.colorAndTreatment') : t('canvas.parts')}</span>
+              {locale !== 'ko' && (
+                <span className="ml-1 text-[10px] text-text-muted opacity-60">
+                  {tab === 'color' ? ko('canvas.colorAndTreatment') : ko('canvas.parts')}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -352,7 +360,10 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
               }}
               className="flex-shrink-0"
             >
-              {t('canvas.reset')}
+              <span>{t('canvas.reset')}</span>
+              {locale !== 'ko' && (
+                <span className="ml-1 text-[10px] text-text-muted opacity-60">{ko('canvas.reset')}</span>
+              )}
             </Button>
           )}
           <Button
@@ -362,7 +373,10 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
             disabled={!modal.draftColor}
             fullWidth
           >
-            {t('canvas.apply')}
+            <span>{t('canvas.apply')}</span>
+            {locale !== 'ko' && (
+              <span className="ml-1 text-[10px] text-text-muted opacity-60">{ko('canvas.apply')}</span>
+            )}
           </Button>
         </div>
       </Modal>

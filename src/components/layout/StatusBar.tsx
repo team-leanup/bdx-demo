@@ -18,17 +18,17 @@ const LOCALE_LABELS: { value: Locale; label: string }[] = [
   { value: 'ja', label: '日本語' },
 ];
 
-export function StatusBar({ shopName = 'BDX' }: StatusBarProps) {
+export function StatusBar({ shopName = '네일숲' }: StatusBarProps) {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const { locale, setLocale } = useLocaleStore();
   const [showLangMenu, setShowLangMenu] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-30 bg-surface border-b border-border safe-top md:hidden">
-      <div className="flex items-center justify-between px-4 h-14 max-w-2xl mx-auto">
+    <header className="fixed top-0 left-0 right-0 z-30 bg-surface border-b border-border safe-top md:static md:z-auto">
+      <div className="flex items-center justify-between px-4 h-14 max-w-2xl mx-auto md:max-w-none md:px-8">
         {/* Left: shop name + role badge */}
         <div className="flex items-center gap-2">
-          <span className="font-bold text-base tracking-tight" style={{ color: '#F472B6' }}>{shopName}</span>
+          <span className="font-bold text-base tracking-tight text-primary">{shopName}</span>
           {isLoggedIn() && <RoleBadge />}
         </div>
 

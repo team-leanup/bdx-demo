@@ -159,7 +159,12 @@ export function ExpressionSelector({ className }: ExpressionSelectorProps) {
             {locale !== 'ko' && <span className="ml-2 text-xs font-medium text-text-muted opacity-60">{tKo('selector.expression')}</span>}
           </p>
         </div>
-        <span className="text-[10px] font-black text-text-muted bg-surface-alt px-3 py-1 rounded-full border border-border uppercase tracking-widest">{t('selector.multiSelect')}</span>
+        <span className="text-[10px] font-black text-text-muted bg-surface-alt px-3 py-1 rounded-full border border-border uppercase tracking-widest text-center">
+          {t('selector.multiSelect')}
+          {locale !== 'ko' && (
+            <span className="block text-[8px] opacity-60 normal-case tracking-normal mt-0.5">{tKo('selector.multiSelect')}</span>
+          )}
+        </span>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -173,7 +178,7 @@ export function ExpressionSelector({ className }: ExpressionSelectorProps) {
               whileTap={{ scale: 0.96 }}
               onClick={() => toggleExpression(opt.value as ExpressionType)}
               className={cn(
-                'relative flex flex-col items-center gap-4 py-8 px-4 rounded-[40px] border-2 transition-all duration-300',
+                'relative flex flex-col items-center gap-4 py-8 px-4 rounded-3xl border-2 transition-all duration-300',
                 isSelected
                   ? 'border-primary bg-primary/10 text-primary shadow-xl shadow-primary/15'
                   : 'border-border bg-surface text-text-muted hover:border-primary/30',
@@ -208,7 +213,14 @@ export function ExpressionSelector({ className }: ExpressionSelectorProps) {
                   ? 'bg-primary/20 text-primary'
                   : 'bg-surface-alt text-text-muted',
               )}>
-                {opt.price === 0 ? t('selector.includedFree') : opt.price !== undefined ? `+${formatPrice(opt.price)}` : ''}
+                {opt.price === 0 ? (
+                  <>
+                    {t('selector.includedFree')}
+                    {locale !== 'ko' && (
+                      <span className="block text-[8px] opacity-60 font-bold">{tKo('selector.includedFree')}</span>
+                    )}
+                  </>
+                ) : opt.price !== undefined ? `+${formatPrice(opt.price)}` : ''}
               </span>
 
               {/* Selected checkmark */}

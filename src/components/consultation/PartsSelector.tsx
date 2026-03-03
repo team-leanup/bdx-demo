@@ -23,6 +23,31 @@ interface CustomPartEntry {
   customPartId?: string; // links to parts store for price lookup
 }
 
+// Map preset part IDs to i18n keys for bilingual display
+const PARTS_I18N_MAP: Record<string, string> = {
+  'preset-cubic': 'selector.partsCubic',
+  'preset-swarovski': 'selector.partsSwarovski',
+  'preset-pearl': 'selector.partsPearl',
+  'preset-glitter': 'selector.partsGlitter',
+  'preset-shell': 'selector.partsShell',
+  'preset-foil': 'selector.partsFoil',
+  'preset-sticker': 'selector.partsSticker',
+  'preset-charm': 'selector.partsCharm',
+};
+
+// Map Korean example names to i18n keys for grade parts translation
+const EXAMPLE_I18N: Record<string, string> = {
+  '큐빅': 'selector.partsCubic',
+  '스와로브스키 큐빅': 'selector.partsSwarovski',
+  '스와로브스키': 'selector.partsSwarovski',
+  '진주': 'selector.partsPearl',
+  '글리터': 'selector.partsGlitter',
+  '쉘': 'selector.partsShell',
+  '호일': 'selector.partsFoil',
+  '스티커': 'selector.partsSticker',
+  '참': 'selector.partsCharm',
+};
+
 export function PartsSelector({ className }: PartsSelectorProps) {
   const t = useT();
   const ko = useKo();
@@ -112,7 +137,7 @@ export function PartsSelector({ className }: PartsSelectorProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-primary/15 flex items-center justify-center flex-shrink-0">
+          <div className="w-6 h-6 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-primary">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} stroke="currentColor" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
             </svg>
@@ -163,17 +188,23 @@ export function PartsSelector({ className }: PartsSelectorProps) {
 
         {/* Quick chips — from parts store */}
         <div className="flex flex-wrap gap-1.5">
-          {quickPartsChips.map((part) => (
-            <motion.button
-              key={part.id}
-              type="button"
-              whileTap={{ scale: 0.9 }}
-              onClick={() => addCustomEntry(part.name, part.id)}
-              className="px-3 py-1.5 rounded-full border border-border bg-surface-alt text-xs font-semibold text-text hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all"
-            >
-              + {part.name}
-            </motion.button>
-          ))}
+          {quickPartsChips.map((part) => {
+            const i18nKey = PARTS_I18N_MAP[part.id];
+            const chipLabel = i18nKey ? t(i18nKey) : part.name;
+            const chipLabelKo = i18nKey ? ko(i18nKey) : part.name;
+            return (
+              <motion.button
+                key={part.id}
+                type="button"
+                whileTap={{ scale: 0.9 }}
+                onClick={() => addCustomEntry(part.name, part.id)}
+                className="px-3 py-1.5 rounded-full border border-border bg-surface-alt text-xs font-semibold text-text hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all whitespace-nowrap"
+              >
+                + {chipLabel}
+                {!isKo && i18nKey && <span className="ml-0.5 text-[9px] opacity-60">{chipLabelKo}</span>}
+              </motion.button>
+            );
+          })}
         </div>
 
         {/* Added custom parts */}
@@ -202,7 +233,15 @@ export function PartsSelector({ className }: PartsSelectorProps) {
                       <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1" className="text-primary" fillOpacity="0" />
                     </svg>
                   </div>
-                  <span className="flex-1 text-sm font-semibold text-text">{entry.name}</span>
+                  <span className="flex-1 text-sm font-semibold text-text">
+                    {(() => {
+                      const key = entry.customPartId ? PARTS_I18N_MAP[entry.customPartId] : undefined;
+                      if (key) {
+                        return <>{t(key)}{!isKo && <span className="ml-1 text-[10px] text-text-muted opacity-60">{ko(key)}</span>}</>;
+                      }
+                      return entry.name;
+                    })()}
+                  </span>
                   <Counter
                     value={entry.quantity}
                     onChange={(qty) => updateCustomQuantity(entry.id, qty)}
@@ -308,11 +347,25 @@ export function PartsSelector({ className }: PartsSelectorProps) {
                           >
                             {gradeOpt.grade}
                           </span>
-                          <span className="text-sm font-semibold text-text">{gradeOpt.label}</span>
+                          <div>
+                            <span className="text-sm font-semibold text-text">
+                              {locale !== 'ko' ? gradeOpt.labelEn : gradeOpt.label}
+                            </span>
+                            {locale !== 'ko' && (
+                              <span className="block text-[10px] text-text-muted opacity-60">{gradeOpt.label}</span>
+                            )}
+                          </div>
                         </div>
                         <span className="text-xs text-text-muted">{gradeOpt.description}</span>
                       </div>
-                      <p className="text-xs text-text-muted">{gradeOpt.examples.join(' · ')}</p>
+                      <p className="text-xs text-text-muted">
+                        {gradeOpt.examples.map((ex, idx) => (
+                          <span key={ex}>
+                            {idx > 0 && ' · '}
+                            {EXAMPLE_I18N[ex] ? t(EXAMPLE_I18N[ex]) : ex}
+                          </span>
+                        ))}
+                      </p>
                       <div className="flex items-center justify-between mt-1">
                         <Counter
                           value={count}

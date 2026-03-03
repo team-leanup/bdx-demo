@@ -5,7 +5,7 @@ import { calculatePrice } from '@/lib/price-calculator';
 import { estimateTime } from '@/lib/time-calculator';
 import { formatPrice, formatMinutes } from '@/lib/format';
 import { cn } from '@/lib/cn';
-import { useT } from '@/lib/i18n';
+import { useT, useKo, useLocale } from '@/lib/i18n';
 
 interface PriceSummaryBarProps {
   className?: string;
@@ -13,6 +13,8 @@ interface PriceSummaryBarProps {
 
 export function PriceSummaryBar({ className }: PriceSummaryBarProps) {
   const t = useT();
+  const tKo = useKo();
+  const locale = useLocale();
   const consultation = useConsultationStore((s) => s.consultation);
   const breakdown = calculatePrice(consultation);
   const minutes = estimateTime(consultation);
@@ -25,13 +27,23 @@ export function PriceSummaryBar({ className }: PriceSummaryBarProps) {
       )}
     >
       <div className="flex items-center gap-1.5">
-        <span className="text-xs text-text-muted">{t('consultation.estimatedAmount')}</span>
+        <span className="text-xs text-text-muted">
+          {t('consultation.estimatedAmount')}
+          {locale !== 'ko' && (
+            <span className="ml-1 text-[10px] opacity-60">{tKo('consultation.estimatedAmount')}</span>
+          )}
+        </span>
         <span className="text-sm font-bold text-primary">{formatPrice(breakdown.subtotal)}</span>
       </div>
       <div className="w-px h-4 bg-border" />
       <div className="flex items-center gap-1.5">
-        <span className="text-xs text-text-muted">{t('consultation.estimatedTimeLabel')}</span>
-        <span className="text-sm font-semibold text-text">~{formatMinutes(minutes)}</span>
+        <span className="text-xs text-text-muted">
+          {t('consultation.estimatedTimeLabel')}
+          {locale !== 'ko' && (
+            <span className="ml-1 text-[10px] opacity-60">{tKo('consultation.estimatedTimeLabel')}</span>
+          )}
+        </span>
+        <span className="text-sm font-semibold text-text">~{formatMinutes(minutes, locale)}</span>
       </div>
     </div>
   );

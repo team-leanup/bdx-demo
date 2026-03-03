@@ -6,7 +6,7 @@ import { MOCK_CUSTOMERS } from '@/data/mock-customers';
 import { MOCK_CONSULTATIONS } from '@/data/mock-consultations';
 import { useRecordsStore } from '@/store/records-store';
 import { cn } from '@/lib/cn';
-import { useT } from '@/lib/i18n';
+import { useT, useKo, useLocale } from '@/lib/i18n';
 import type { Customer } from '@/types/customer';
 import type { ConsultationRecord } from '@/types/consultation';
 
@@ -47,6 +47,8 @@ export function CustomerInfoForm({
   className,
 }: CustomerInfoFormProps) {
   const t = useT();
+  const tKo = useKo();
+  const locale = useLocale();
   const additionalRecords = useRecordsStore((s) => s.additionalRecords);
   const allRecords = useMemo(
     () => [...additionalRecords, ...MOCK_CONSULTATIONS],
@@ -92,6 +94,11 @@ export function CustomerInfoForm({
             )}
           >
             {m === 'new' ? t('customerForm.newCustomer') : t('customerForm.existingCustomer')}
+            {locale !== 'ko' && (
+              <span className="ml-1 text-[10px] opacity-60">
+                {m === 'new' ? tKo('customerForm.newCustomer') : tKo('customerForm.existingCustomer')}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -101,7 +108,7 @@ export function CustomerInfoForm({
           <div className="flex gap-3">
             <div className="flex-1">
               <Input
-                label={t('customerForm.nameLabel')}
+                label={<>{t('customerForm.nameLabel')}{locale !== 'ko' && <span className="ml-1 text-[10px] text-text-muted opacity-60">{tKo('customerForm.nameLabel')}</span>}</>}
                 placeholder={t('customerForm.namePlaceholder')}
                 value={name}
                 onChange={(e) => onNameChange(e.target.value)}
@@ -110,7 +117,7 @@ export function CustomerInfoForm({
             </div>
             <div className="flex-1">
               <Input
-                label={t('customerForm.phoneLabel')}
+                label={<>{t('customerForm.phoneLabel')}{locale !== 'ko' && <span className="ml-1 text-[10px] text-text-muted opacity-60">{tKo('customerForm.phoneLabel')}</span>}</>}
                 placeholder="010-0000-0000"
                 type="tel"
                 value={phone}
@@ -119,7 +126,12 @@ export function CustomerInfoForm({
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-text-secondary">{t('customerForm.memoLabel')}</label>
+            <label className="text-sm font-medium text-text-secondary">
+              {t('customerForm.memoLabel')}
+              {locale !== 'ko' && (
+                <span className="ml-1 text-[10px] text-text-muted opacity-60">{tKo('customerForm.memoLabel')}</span>
+              )}
+            </label>
             <textarea
               placeholder={t('customerForm.memoPlaceholder')}
               value={memo ?? ''}

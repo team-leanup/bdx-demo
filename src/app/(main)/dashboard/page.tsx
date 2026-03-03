@@ -57,7 +57,7 @@ export default function DashboardPage() {
         featureId="dashboard-intro"
         icon="📊"
         title="대시보드"
-        description={"매출 추이, 인기 서비스, 고객 분석 등\n매장 운영 현황을 한눈에 확인하세요."}
+        description={"상담 건수, 인기 디자인, 선택 패턴 등\n상담 기록 기반 현황을 한눈에 확인하세요."}
       />
       {/* 헤더 */}
       <div className="px-4 md:px-0 pt-4">
@@ -89,18 +89,18 @@ export default function DashboardPage() {
             </div>
           </BentoCard>
 
-          {/* 매출 추이: 4×1 */}
+          {/* 상담 추이: 4×1 */}
           <BentoCard span="4x1">
             <div className="p-4 md:p-5">
-              <h2 className="text-sm font-semibold text-text-secondary mb-3">매출 추이</h2>
+              <h2 className="text-sm font-semibold text-text-secondary mb-3">상담 추이</h2>
               <RevenueChart />
             </div>
           </BentoCard>
 
-          {/* 선생님별 매출: 4×1 */}
+          {/* 디자이너별 상담 현황: 4×1 */}
           <BentoCard span="4x1">
             <div className="p-4 md:p-5">
-              <h2 className="text-sm font-semibold text-text-secondary mb-3">선생님별 매출</h2>
+              <h2 className="text-sm font-semibold text-text-secondary mb-3">디자이너별 상담 현황</h2>
               <DesignerPerformance />
             </div>
           </BentoCard>

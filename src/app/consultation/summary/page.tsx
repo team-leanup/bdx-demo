@@ -15,7 +15,7 @@ import { estimateTime } from '@/lib/time-calculator';
 import { MOCK_CUSTOMERS } from '@/data/mock-customers';
 import { useRecordsStore } from '@/store/records-store';
 import { useReservationStore } from '@/store/reservation-store';
-import type { ConsultationRecord } from '@/types/consultation';
+import type { ConsultationRecord, BookingStatus } from '@/types/consultation';
 
 export default function SummaryPage() {
   const router = useRouter();
@@ -63,7 +63,7 @@ export default function SummaryPage() {
     addRecord(savedRecord);
 
     if (bookingId) {
-      updateReservation(bookingId, { status: 'completed' as any });
+      updateReservation(bookingId, { status: 'completed' as BookingStatus });
     }
 
     // 스몰토크 메모 → MOCK_CUSTOMERS 해당 고객 smallTalkNotes에 자동 push
@@ -100,6 +100,7 @@ export default function SummaryPage() {
         stepNumber={5}
         totalSteps={5}
         title={t('consultation.summaryTitle')}
+        titleKo={tKo('consultation.summaryTitle')}
         backHref="/consultation/canvas"
         onClose={() => router.push('/home')}
       />
@@ -126,7 +127,12 @@ export default function SummaryPage() {
                     <span className="text-xs text-amber-600 opacity-60 font-bold ml-1">{tKo('summary.customerMemo')}</span>
                   )}
                 </p>
-                <span className="text-[10px] text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full font-medium">저장 시 고객 기록에 자동 추가</span>
+                <span className="text-[10px] text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full font-medium">
+                  {t('summary.autoSaveHint')}
+                  {locale !== 'ko' && (
+                    <span className="ml-1 opacity-60">{tKo('summary.autoSaveHint')}</span>
+                  )}
+                </span>
               </div>
               <p className="text-sm text-amber-800 leading-relaxed">{customerMemo}</p>
             </div>
@@ -147,6 +153,9 @@ export default function SummaryPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0c1.1.128 1.907 1.077 1.907 2.185z" />
             </svg>
             {t('consultation.discountApply')}
+            {locale !== 'ko' && (
+              <span className="ml-1 text-[10px] opacity-60">{tKo('consultation.discountApply')}</span>
+            )}
           </Button>
           <Button
             variant="ghost"
@@ -158,6 +167,9 @@ export default function SummaryPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
             </svg>
             {t('consultation.modifyConsultation')}
+            {locale !== 'ko' && (
+              <span className="ml-1 text-[10px] opacity-60">{tKo('consultation.modifyConsultation')}</span>
+            )}
           </Button>
         </div>
         <button
@@ -176,7 +188,17 @@ export default function SummaryPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           )}
-          {saving ? t('common.loading') : t('consultation.saveAndComplete')}
+          {saving ? (
+            <>
+              {t('common.loading')}
+              {locale !== 'ko' && <span className="ml-1 text-sm opacity-70">{tKo('common.loading')}</span>}
+            </>
+          ) : (
+            <>
+              {t('consultation.saveAndComplete')}
+              {locale !== 'ko' && <span className="ml-1 text-sm opacity-70">{tKo('consultation.saveAndComplete')}</span>}
+            </>
+          )}
         </button>
       </footer>
 

@@ -133,15 +133,23 @@ export function ExtensionSelector({ className }: ExtensionSelectorProps) {
           animate={{ opacity: 1, y: 0 }}
           className="p-4 rounded-3xl bg-surface border-2 border-primary/20 flex flex-col gap-3"
         >
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm font-medium text-text-secondary">{t('selector.repairQuantity')}</span>
+            {locale !== 'ko' && (
+              <span className="text-[10px] text-text-muted opacity-60">{tKo('selector.repairQuantity')}</span>
+            )}
+          </div>
           <Counter
-            label={t('selector.repairQuantity')}
             value={repairCount}
             onChange={setRepairCount}
             min={1}
             max={10}
           />
           <div className="flex justify-between items-center text-xs font-bold px-1">
-            <span className="text-text-muted">{t('summary.subtotal')}</span>
+            <span className="text-text-muted">
+              {t('summary.subtotal')}
+              {locale !== 'ko' && <span className="ml-1 text-[10px] opacity-60">{tKo('summary.subtotal')}</span>}
+            </span>
             <span className="text-primary">{formatPrice(repairCount * 3000)}</span>
           </div>
         </motion.div>

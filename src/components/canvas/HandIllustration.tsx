@@ -2,8 +2,8 @@
 
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/cn';
-import { useT } from '@/lib/i18n';
-import type { FingerPosition, FingerSelection } from '@/types/canvas';
+import { useT, useLocale } from '@/lib/i18n';
+import type { FingerPosition, FingerSelection, PartPlacement } from '@/types/canvas';
 
 function extractHexColor(colorCode?: string): string | null {
   if (!colorCode) return null;
@@ -60,6 +60,19 @@ const FINGER_NAMES: Record<string, Record<FingerPosition, string>> = {
   ko: { pinky: '소지', ring: '약지', middle: '중지', index: '검지', thumb: '엄지' },
 };
 
+const TREATMENT_TYPE_I18N: Record<string, string> = {
+  '원컬러': 'canvas.oneColor',
+  '그라데이션': 'expression.gradient',
+  '프렌치': 'expression.french',
+  '마그네틱': 'expression.magnetic',
+  '포인트아트': 'expression.pointArt',
+  '풀아트': 'expression.fullArt',
+  '연장': 'expression.extension',
+  '리페어': 'expression.repair',
+  '오버레이': 'expression.overlay',
+  '젤제거': 'expression.gelRemoval',
+};
+
 /** Annotation layout positions per hand */
 const ANNOTATION_LAYOUT: Record<'left' | 'right', {
   leftTop: FingerPosition;
@@ -71,19 +84,68 @@ const ANNOTATION_LAYOUT: Record<'left' | 'right', {
   right: { leftTop: 'thumb', leftBottom: 'index', rightTop: 'ring', rightBottom: 'pinky' },
 };
 
-function AnnotationCard({ fingerName, note, memo }: {
+/** Summarize parts: group by customPartId (name) and count */
+function summarizeParts(parts: PartPlacement[]): { name: string; count: number }[] {
+  const map = new Map<string, number>();
+  for (const p of parts) {
+    const name = p.customPartId || p.partType;
+    map.set(name, (map.get(name) || 0) + 1);
+  }
+  return Array.from(map.entries()).map(([name, count]) => ({ name, count }));
+}
+
+function AnnotationCard({ fingerName, fingerNameKo, selection, locale, t }: {
   fingerName: string;
-  note?: string;
-  memo?: string;
+  fingerNameKo?: string;
+  selection?: FingerSelection;
+  locale?: string;
+  t: (key: string) => string;
 }) {
+  const hexColor = extractHexColor(selection?.colorCode);
+  const partsSummary = selection?.parts ? summarizeParts(selection.parts) : [];
+  const totalParts = selection?.parts?.length || 0;
+  const showKo = locale && locale !== 'ko';
+
   return (
     <div className="bg-surface border-2 border-primary/20 rounded-2xl px-3 py-2.5 shadow-md">
-      <p className="text-[11px] font-bold text-text-muted">{fingerName}</p>
-      {note && (
-        <p className="text-sm font-extrabold text-primary leading-snug break-words">{note}</p>
+      {/* Finger name + color dot */}
+      <div className="flex items-center gap-1.5">
+        {hexColor && (
+          <span
+            className="inline-block w-3 h-3 rounded-full border border-white flex-shrink-0"
+            style={{ backgroundColor: hexColor, boxShadow: `0 0 4px ${hexColor}66` }}
+          />
+        )}
+        <p className="text-[11px] font-bold text-text-muted">
+          {fingerName}
+          {showKo && fingerNameKo && (
+            <span className="ml-0.5 opacity-60">{fingerNameKo}</span>
+          )}
+        </p>
+      </div>
+      {/* Art type (note) */}
+      {selection?.note && (
+        <p className="text-sm font-extrabold text-primary leading-snug break-words">
+          {TREATMENT_TYPE_I18N[selection.note] ? t(TREATMENT_TYPE_I18N[selection.note]) : selection.note}
+        </p>
       )}
-      {memo && (
-        <p className="text-xs text-text-muted mt-0.5 leading-snug break-words">{memo}</p>
+      {/* Color memo (colorCode text) */}
+      {selection?.colorCode && !hexColor && (
+        <p className="text-[10px] text-text-secondary leading-snug">{selection.colorCode}</p>
+      )}
+      {/* Treatment memo */}
+      {selection?.memo && (
+        <p className="text-xs text-text-muted mt-0.5 leading-snug break-words">{selection.memo}</p>
+      )}
+      {/* Parts summary */}
+      {totalParts > 0 && (
+        <div className="flex flex-wrap gap-1 mt-1">
+          {partsSummary.map((p) => (
+            <span key={p.name} className="inline-flex items-center gap-0.5 bg-accent/10 text-accent rounded-full px-1.5 py-0.5 text-[9px] font-bold">
+              {p.name}{p.count > 1 && <span>×{p.count}</span>}
+            </span>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -97,6 +159,7 @@ export function HandIllustration({
 }: HandIllustrationProps) {
   const isLeft = hand === 'left';
   const t = useT();
+  const locale = useLocale();
 
   const FINGER_LABELS: Record<FingerPosition, string> = {
     thumb: t('canvas.thumb'),
@@ -107,22 +170,27 @@ export function HandIllustration({
   };
 
   const layout = ANNOTATION_LAYOUT[hand];
-  const hasAnyLabel = (['pinky', 'ring', 'middle', 'index', 'thumb'] as FingerPosition[]).some((fid) => {
+
+  const hasFinger = (fid: FingerPosition) => {
     const s = selections[fid];
-    return s?.note || s?.memo;
-  });
+    return s?.note || s?.memo || s?.colorCode || (s?.parts && s.parts.length > 0);
+  };
+
+  const hasAnyLabel = (['pinky', 'ring', 'middle', 'index', 'thumb'] as FingerPosition[]).some(hasFinger);
 
   const middleSel = selections.middle;
-  const middleHasLabel = !!middleSel?.note || !!middleSel?.memo;
+  const middleHasLabel = hasFinger('middle');
 
   const renderCard = (fid: FingerPosition) => {
     const sel = selections[fid];
-    if (!sel?.note && !sel?.memo) return null;
+    if (!hasFinger(fid)) return null;
     return (
       <AnnotationCard
-        fingerName={FINGER_NAMES.ko[fid]}
-        note={sel?.note}
-        memo={sel?.memo}
+        fingerName={FINGER_LABELS[fid]}
+        fingerNameKo={FINGER_NAMES.ko[fid]}
+        selection={sel}
+        locale={locale}
+        t={t}
       />
     );
   };
@@ -134,9 +202,11 @@ export function HandIllustration({
         <div className="flex justify-center">
           <div className="max-w-[200px] md:max-w-[260px]">
             <AnnotationCard
-              fingerName={FINGER_NAMES.ko.middle}
-              note={middleSel?.note}
-              memo={middleSel?.memo}
+              fingerName={FINGER_LABELS.middle}
+              fingerNameKo={FINGER_NAMES.ko.middle}
+              selection={middleSel}
+              locale={locale}
+              t={t}
             />
           </div>
         </div>

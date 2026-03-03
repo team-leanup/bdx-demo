@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/cn';
-import { useT } from '@/lib/i18n';
+import { useT, useLocale, useKo } from '@/lib/i18n';
 import type { FingerPosition, FingerSelection } from '@/types/canvas';
 
 interface HandSwitcherProps {
@@ -25,6 +25,8 @@ export function HandSwitcher({
   className,
 }: HandSwitcherProps) {
   const t = useT();
+  const tKo = useKo();
+  const locale = useLocale();
   const leftCount = countSelected(leftSelections);
   const rightCount = countSelected(rightSelections);
 
@@ -79,8 +81,15 @@ export function HandSwitcher({
               <path d="M18 8a2 2 0 114 0v6a8 8 0 01-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 012.83-2.82L7 15" />
             </svg>
 
-            <span className="text-sm font-extrabold tracking-tight">
-              {hand === 'left' ? t('canvas.leftHand') : t('canvas.rightHand')}
+            <span className="flex flex-col items-start">
+              <span className="text-sm font-extrabold tracking-tight">
+                {hand === 'left' ? t('canvas.leftHand') : t('canvas.rightHand')}
+              </span>
+              {locale !== 'ko' && (
+                <span className="text-[9px] text-text-muted opacity-60 leading-none">
+                  {hand === 'left' ? tKo('canvas.leftHand') : tKo('canvas.rightHand')}
+                </span>
+              )}
             </span>
 
             {/* Count badge */}
