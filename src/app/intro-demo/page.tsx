@@ -92,8 +92,9 @@ function CodeBadge({ href, children }: { href?: string; children: React.ReactNod
 }
 
 function UrlBadge({ path }: { path: string }) {
+  const full = `https://bdx-demo.vercel.app${path}`;
   return (
-    <CodeBadge href={`https://bdx-demo.vercel.app${path}`}>{path}</CodeBadge>
+    <CodeBadge href={full}>{full}</CodeBadge>
   );
 }
 
@@ -946,6 +947,17 @@ export default function IntroDemoPage() {
           {/* ── Section 6: 전체 URL ── */}
           <section>
             <H2 id="urls">6. 전체 URL 목록</H2>
+
+            <H3>인증 / 첫 진입</H3>
+            <Table
+              headers={['화면', 'URL']}
+              rows={[
+                ['스플래시', <UrlBadge key="a1" path="/auth/splash" />],
+                ['인트로 슬라이드', <UrlBadge key="a2" path="/auth/intro" />],
+                ['로그인 / 회원가입', <UrlBadge key="a3" path="/auth/login" />],
+                ['잠금 화면 (데모 시작점)', <UrlBadge key="a4" path="/auth/lock" />],
+              ]}
+            />
 
             <H3>메인 화면</H3>
             <Table
