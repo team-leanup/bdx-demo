@@ -185,6 +185,11 @@ export function ColorPicker({
                 <span className="text-[10px] font-bold leading-tight text-center whitespace-nowrap">
                   {t(TREATMENT_TYPE_KEYS[type.value])}
                 </span>
+                {locale !== 'ko' && (
+                  <span className="text-[8px] leading-tight text-center opacity-50 whitespace-nowrap">
+                    {ko(TREATMENT_TYPE_KEYS[type.value])}
+                  </span>
+                )}
               </motion.button>
             );
           })}
@@ -235,6 +240,9 @@ export function ColorPicker({
             <p className="text-[10px] text-text-muted">{ko('canvas.pointArt')}</p>
           )}
           <p className="text-xs text-text-muted mt-0.5">{t('canvas.setAsPoint')}</p>
+          {locale !== 'ko' && (
+            <p className="text-[10px] text-text-muted opacity-50">{ko('canvas.setAsPoint')}</p>
+          )}
         </div>
         <button
           type="button"
@@ -269,6 +277,9 @@ export function ColorPicker({
           <div className="flex items-center gap-1.5">
             <span className="text-xs bg-surface border border-border text-text-secondary px-2 py-0.5 rounded-full font-medium">
               {t(TREATMENT_TYPE_KEYS[treatmentType])}
+              {locale !== 'ko' && (
+                <span className="ml-1 text-[9px] opacity-60">{ko(TREATMENT_TYPE_KEYS[treatmentType])}</span>
+              )}
             </span>
             {isPoint && (
               <span className="text-xs bg-primary/15 text-primary px-2 py-0.5 rounded-full font-semibold">

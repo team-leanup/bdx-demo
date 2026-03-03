@@ -212,6 +212,14 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
     ? `${modal.hand === 'left' ? t('canvas.leftHand') : t('canvas.rightHand')} ${FINGER_LABELS[modal.finger]}`
     : '';
 
+  const fingerLabelKo = modal.finger
+    ? `${modal.hand === 'left' ? ko('canvas.leftHand') : ko('canvas.rightHand')} ${ko(`canvas.${modal.finger}`)}`
+    : '';
+
+  const modalTitle = locale !== 'ko' && fingerLabelKo
+    ? <span>{fingerLabel} <span className="text-sm text-text-muted opacity-50 font-normal">{fingerLabelKo}</span></span>
+    : fingerLabel;
+
   return (
     <div className={cn('flex flex-col gap-4', className)}>
       {/* Hand switcher */}
@@ -279,7 +287,7 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
       <Modal
         isOpen={modal.isOpen}
         onClose={closeModal}
-        title={fingerLabel}
+        title={modalTitle}
         className="max-h-[80vh] md:max-w-2xl md:w-[90vw]"
       >
         {/* Tabs */}

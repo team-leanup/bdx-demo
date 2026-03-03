@@ -17,13 +17,18 @@ const FINGER_ORDER: FingerPosition[] = ['thumb', 'index', 'middle', 'ring', 'pin
 interface FingerItemProps {
   handLabel: string;
   fingerLabel: string;
+  handLabelKo: string;
+  fingerLabelKo: string;
   finger: FingerPosition;
   selection?: FingerSelection;
   isActive: boolean;
   onTap?: () => void;
   notSelectedLabel: string;
+  notSelectedLabelKo: string;
   partsLabel: string;
+  locale: string;
   t: (key: string) => string;
+  ko: (key: string) => string;
 }
 
 const TREATMENT_TYPE_I18N: Record<string, string> = {
@@ -39,7 +44,7 @@ const TREATMENT_TYPE_I18N: Record<string, string> = {
   '젤제거': 'expression.gelRemoval',
 };
 
-function FingerItem({ handLabel, fingerLabel, finger, selection, isActive, onTap, notSelectedLabel, partsLabel, t }: FingerItemProps) {
+function FingerItem({ handLabel, fingerLabel, handLabelKo, fingerLabelKo, finger, selection, isActive, onTap, notSelectedLabel, notSelectedLabelKo, partsLabel, locale, t, ko }: FingerItemProps) {
   const hasColor = !!selection?.colorCode;
   const partsCount = selection?.parts?.length ?? 0;
   const treatmentType = selection?.note;
@@ -82,6 +87,11 @@ function FingerItem({ handLabel, fingerLabel, finger, selection, isActive, onTap
         <span className="text-xs md:text-sm font-bold text-text-secondary">
           {handLabel} {fingerLabel}
         </span>
+        {locale !== 'ko' && (
+          <span className="text-[9px] text-text-muted opacity-50 block">
+            {handLabelKo} {fingerLabelKo}
+          </span>
+        )}
         {hasColor ? (
           <div className="flex items-center flex-wrap gap-1 mt-0.5">
             {treatmentType && (
@@ -90,11 +100,16 @@ function FingerItem({ handLabel, fingerLabel, finger, selection, isActive, onTap
                   const key = TREATMENT_TYPE_I18N[treatmentType];
                   return key ? t(key) : treatmentType;
                 })()}
+                {locale !== 'ko' && (() => {
+                  const key = TREATMENT_TYPE_I18N[treatmentType];
+                  return key ? <span className="ml-0.5 opacity-60">{ko(key)}</span> : null;
+                })()}
               </span>
             )}
             {selection?.isPoint && (
               <span className="text-[9px] md:text-xs bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded font-bold">
                 {t('canvas.point')}
+                {locale !== 'ko' && <span className="ml-0.5 opacity-60">{ko('canvas.point')}</span>}
               </span>
             )}
             {partsCount > 0 && (
@@ -104,7 +119,10 @@ function FingerItem({ handLabel, fingerLabel, finger, selection, isActive, onTap
             )}
           </div>
         ) : (
-          <span className="text-[10px] md:text-xs text-text-muted block mt-0.5">{notSelectedLabel}</span>
+          <span className="text-[10px] md:text-xs text-text-muted block mt-0.5">
+            {notSelectedLabel}
+            {locale !== 'ko' && <span className="ml-1 opacity-50">{notSelectedLabelKo}</span>}
+          </span>
         )}
       </div>
 
@@ -141,6 +159,14 @@ export function FingerSummary({
     pinky: t('canvas.pinky'),
   };
 
+  const FINGER_LABELS_KO: Record<FingerPosition, string> = {
+    thumb: tKo('canvas.thumb'),
+    index: tKo('canvas.index'),
+    middle: tKo('canvas.middle'),
+    ring: tKo('canvas.ring'),
+    pinky: tKo('canvas.pinky'),
+  };
+
   return (
     <div className={cn('flex flex-col gap-2', className)}>
       <p className="text-[11px] font-extrabold text-text-muted uppercase tracking-[0.05em] px-1 mb-1">
@@ -166,13 +192,18 @@ export function FingerSummary({
               key={`left-${finger}`}
               handLabel={t('canvas.leftHand')}
               fingerLabel={FINGER_LABELS[finger]}
+              handLabelKo={tKo('canvas.leftHand')}
+              fingerLabelKo={FINGER_LABELS_KO[finger]}
               finger={finger}
               selection={leftSelections[finger]}
               isActive={activeHand === 'left'}
               onTap={onFingerTap ? () => onFingerTap('left', finger) : undefined}
               notSelectedLabel={t('canvas.notSelected')}
+              notSelectedLabelKo={tKo('canvas.notSelected')}
               partsLabel={t('canvas.partsLabel')}
+              locale={locale}
               t={t}
+              ko={tKo}
             />
           ))}
           <div />
@@ -196,13 +227,18 @@ export function FingerSummary({
               key={`right-${finger}`}
               handLabel={t('canvas.rightHand')}
               fingerLabel={FINGER_LABELS[finger]}
+              handLabelKo={tKo('canvas.rightHand')}
+              fingerLabelKo={FINGER_LABELS_KO[finger]}
               finger={finger}
               selection={rightSelections[finger]}
               isActive={activeHand === 'right'}
               onTap={onFingerTap ? () => onFingerTap('right', finger) : undefined}
               notSelectedLabel={t('canvas.notSelected')}
+              notSelectedLabelKo={tKo('canvas.notSelected')}
               partsLabel={t('canvas.partsLabel')}
+              locale={locale}
               t={t}
+              ko={tKo}
             />
           ))}
           <div />

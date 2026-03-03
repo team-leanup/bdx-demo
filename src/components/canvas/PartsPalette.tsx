@@ -273,7 +273,10 @@ export function PartsPalette({
                       )}
                     >
                       <span className={cn('text-sm font-semibold', isSelected ? 'text-primary' : 'text-text')}>
-                        {part.name}
+                        {EXAMPLE_I18N[part.name] ? t(EXAMPLE_I18N[part.name]) : part.name}
+                        {locale !== 'ko' && EXAMPLE_I18N[part.name] && (
+                          <span className="ml-1 text-[10px] opacity-50">{part.name}</span>
+                        )}
                       </span>
                       <span className={cn('text-sm font-bold', isSelected ? 'text-primary' : 'text-text-secondary')}>
                         {part.pricePerUnit.toLocaleString()}{t('canvas.currencyUnit')}
@@ -307,6 +310,9 @@ export function PartsPalette({
                         <span key={ex}>
                           {idx > 0 && ' · '}
                           {EXAMPLE_I18N[ex] ? t(EXAMPLE_I18N[ex]) : ex}
+                          {locale !== 'ko' && EXAMPLE_I18N[ex] && (
+                            <span className="text-[9px] opacity-50 ml-0.5">({ex})</span>
+                          )}
                         </span>
                       ))}
                     </span>
