@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { RoleBadge } from '@/components/auth/RoleBadge';
 import { useAuthStore } from '@/store/auth-store';
 import { useLocaleStore } from '@/store/locale-store';
+import { useAppStore } from '@/store/app-store';
+import { MOCK_SHOP } from '@/data/mock-shop';
 import type { Locale } from '@/store/locale-store';
 import { cn } from '@/lib/cn';
 
@@ -18,9 +20,11 @@ const LOCALE_LABELS: { value: Locale; label: string }[] = [
   { value: 'ja', label: '日本語' },
 ];
 
-export function StatusBar({ shopName = '네일숲' }: StatusBarProps) {
+export function StatusBar({ shopName: shopNameProp }: StatusBarProps) {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const { locale, setLocale } = useLocaleStore();
+  const { shopSettings } = useAppStore();
+  const shopName = shopNameProp || shopSettings.shopName || MOCK_SHOP.name;
   const [showLangMenu, setShowLangMenu] = useState(false);
 
   return (

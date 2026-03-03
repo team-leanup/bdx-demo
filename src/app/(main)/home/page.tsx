@@ -161,7 +161,7 @@ export default function HomePage() {
 
   return (
     <motion.div
-      className="flex flex-col gap-4 px-4 pb-8 pt-5 md:px-0"
+      className="flex flex-col gap-4 px-4 pb-8 pt-2 md:px-0"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
