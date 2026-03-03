@@ -987,6 +987,20 @@ export default function IntroDemoPage() {
                 ['저장 완료', <UrlBadge key="f10" path="/consultation/save-complete" />],
               ]}
             />
+
+            <H3>온보딩</H3>
+            <Table
+              headers={['화면', 'URL']}
+              rows={[
+                ['매장 정보', <UrlBadge key="ob1" path="/onboarding/shop-info" />],
+                ['서비스 선택', <UrlBadge key="ob2" path="/onboarding/services" />],
+                ['기본 가격', <UrlBadge key="ob3" path="/onboarding/pricing" />],
+                ['추가금 설정', <UrlBadge key="ob4" path="/onboarding/surcharges" />],
+                ['시술 시간', <UrlBadge key="ob5" path="/onboarding/time" />],
+                ['테마 선택', <UrlBadge key="ob6" path="/onboarding/theme" />],
+                ['완료', <UrlBadge key="ob7" path="/onboarding/complete" />],
+              ]}
+            />
           </section>
 
           <SectionDivider />
