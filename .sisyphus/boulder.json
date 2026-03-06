@@ -1,11 +1,9 @@
 {
   "active_plan": "/Users/jahoon/Documents/Work/bdx-demo/.sisyphus/plans/crm-portfolio-pivot-local-demo.md",
-  "started_at": "2026-03-05T16:21:39.321Z",
-  "session_ids": [
+  "started_at": "2026-03-05T16:21:39.321Z",  "session_ids": [
     "ses_34bd5d6d4ffeh6IQSu08twiYaP",
     "ses_3414d6c34ffe5YER1wN5XLJwMU",
-    "ses_33e58bf0cffesX78bH5nVQm0Op",
-    "ses_33c38cc6bffeppx69qK2f0qsuo"
+    "ses_33e58bf0cffesX78bH5nVQm0Op"
   ],
   "plan_name": "crm-portfolio-pivot-local-demo",
   "worktree_path": "/Users/jahoon/Documents/Work/bdx-demo-wt/crm-portfolio-pivot-local-demo",
