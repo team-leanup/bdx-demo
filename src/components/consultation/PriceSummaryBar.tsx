@@ -22,7 +22,7 @@ export function PriceSummaryBar({ className }: PriceSummaryBarProps) {
   return (
     <div
       className={cn(
-        'flex items-center justify-between px-4 md:px-8 py-2 md:py-3 bg-primary/5 border-b border-primary/20',
+        'flex items-center justify-between px-4 md:px-8 py-2 md:py-3 bg-surface-alt border-b border-border',
         className,
       )}
     >
@@ -33,7 +33,7 @@ export function PriceSummaryBar({ className }: PriceSummaryBarProps) {
             <span className="ml-1 text-[10px] opacity-60">{tKo('consultation.estimatedAmount')}</span>
           )}
         </span>
-        <span className="text-sm font-bold text-primary">{formatPrice(breakdown.subtotal)}</span>
+        <span className="text-sm font-bold text-text">{formatPrice(breakdown.subtotal)}</span>
       </div>
       <div className="w-px h-4 bg-border" />
       <div className="flex items-center gap-1.5">

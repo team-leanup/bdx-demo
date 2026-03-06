@@ -19,7 +19,6 @@ interface FingerItemProps {
   fingerLabel: string;
   handLabelKo: string;
   fingerLabelKo: string;
-  finger: FingerPosition;
   selection?: FingerSelection;
   isActive: boolean;
   onTap?: () => void;
@@ -44,7 +43,7 @@ const TREATMENT_TYPE_I18N: Record<string, string> = {
   '젤제거': 'expression.gelRemoval',
 };
 
-function FingerItem({ handLabel, fingerLabel, handLabelKo, fingerLabelKo, finger, selection, isActive, onTap, notSelectedLabel, notSelectedLabelKo, partsLabel, locale, t, ko }: FingerItemProps) {
+function FingerItem({ handLabel, fingerLabel, handLabelKo, fingerLabelKo, selection, isActive, onTap, notSelectedLabel, notSelectedLabelKo, partsLabel, locale, t, ko }: FingerItemProps) {
   const hasColor = !!selection?.colorCode;
   const partsCount = selection?.parts?.length ?? 0;
   const treatmentType = selection?.note;
@@ -194,7 +193,6 @@ export function FingerSummary({
               fingerLabel={FINGER_LABELS[finger]}
               handLabelKo={tKo('canvas.leftHand')}
               fingerLabelKo={FINGER_LABELS_KO[finger]}
-              finger={finger}
               selection={leftSelections[finger]}
               isActive={activeHand === 'left'}
               onTap={onFingerTap ? () => onFingerTap('left', finger) : undefined}
@@ -229,7 +227,6 @@ export function FingerSummary({
               fingerLabel={FINGER_LABELS[finger]}
               handLabelKo={tKo('canvas.rightHand')}
               fingerLabelKo={FINGER_LABELS_KO[finger]}
-              finger={finger}
               selection={rightSelections[finger]}
               isActive={activeHand === 'right'}
               onTap={onFingerTap ? () => onFingerTap('right', finger) : undefined}

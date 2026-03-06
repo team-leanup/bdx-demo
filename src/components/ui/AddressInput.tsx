@@ -33,7 +33,7 @@ export function AddressInput({ value, onChange, label, className }: AddressInput
 
   const inputBase = cn(
     'w-full h-11 md:h-12 px-4 rounded-xl border bg-surface text-text text-base md:text-base placeholder:text-text-muted transition-all duration-200',
-    'focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
     'border-border hover:border-primary/40',
   );
 

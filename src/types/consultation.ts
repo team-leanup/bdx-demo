@@ -4,6 +4,7 @@ export enum ConsultationStep {
   STEP1_BASIC = 'step1_basic',
   STEP2_DESIGN = 'step2_design',
   STEP3_OPTIONS = 'step3_options',
+  TRAITS = 'traits',
   PRO_MODE = 'pro_mode',
   CANVAS = 'canvas',
   SUMMARY = 'summary',
@@ -95,6 +96,9 @@ export interface ConsultationType {
   // 참고 이미지
   referenceImages?: string[];
 
+  // 고객 특성 선택
+  selectedTraitValues?: string[];
+
   // 캔버스
   canvasData?: CanvasData[];
 
@@ -128,6 +132,8 @@ export interface BookingRequest {
   createdAt: string;
   language?: 'ko' | 'en' | 'zh' | 'ja';
   designerId?: string;
+  serviceLabel?: string;   // e.g., "자석젤", "원컬러", "그라데이션", "아트"
+  customerId?: string;     // link to customer in customer-store
 }
 
 export interface DailyChecklist {
@@ -150,6 +156,12 @@ export interface ConsultationRecord {
   finalPrice: number;        // totalPrice - discount - deposit
   createdAt: string;
   updatedAt: string;
+  finalizedAt?: string;
+  pricingAdjustments?: {
+    basePrice: number;
+    extras: { label: string; amount: number }[];
+    finalPrice: number;
+  };
   notes?: string;
   imageUrls?: string[];
   checklist?: DailyChecklist;

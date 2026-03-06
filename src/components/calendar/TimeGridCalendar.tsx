@@ -2,10 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/cn';
-import { useT } from '@/lib/i18n';
 import { DESIGN_SCOPE_LABEL, BODY_PART_LABEL, EXPRESSION_LABEL } from '@/lib/labels';
 import { formatPrice } from '@/lib/format';
-import type { BookingStatus, BookingChannel } from '@/types/consultation';
 
 export interface TimeGridEvent {
   id: string;
@@ -95,7 +93,6 @@ function timeToMinutes(time: string): number {
 }
 
 export function TimeGridCalendar({ events, weekStartDate, onEventClick, onWeekChange, startHour: propStartHour, endHour: propEndHour }: TimeGridCalendarProps) {
-  const t = useT();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   const START_HOUR = propStartHour ?? 10;
@@ -120,7 +117,7 @@ export function TimeGridCalendar({ events, weekStartDate, onEventClick, onWeekCh
     const m = currentTime.getMinutes();
     if (h < START_HOUR || h > END_HOUR) return null;
     return (h - START_HOUR) * HOUR_HEIGHT + (m / 60) * HOUR_HEIGHT;
-  }, [currentTime]);
+  }, [currentTime, START_HOUR, END_HOUR]);
 
   const eventsByDate = useMemo(() => {
     const map: Record<string, TimeGridEvent[]> = {};

@@ -95,8 +95,8 @@ export function DesignPresetPicker({ onSelect, selectedId }: DesignPresetPickerP
             className={cn(
               'flex-shrink-0 w-36 flex flex-col gap-2 p-3 rounded-2xl border-2 text-left transition-all',
               isSelected
-                ? 'ring-2 ring-primary border-primary bg-primary/5'
-                : `border-border bg-surface hover:border-primary/40`,
+                ? 'border-primary bg-white shadow-sm'
+                : `border-border bg-surface hover:border-gray-300`,
             )}
           >
             {/* Scope badge — Korean for shop owner */}
@@ -133,7 +133,7 @@ export function DesignPresetPicker({ onSelect, selectedId }: DesignPresetPickerP
 
             {/* Parts badge — Korean */}
             {preset.hasParts && totalParts > 0 && (
-              <span className="self-start px-2 py-0.5 rounded-full bg-primary/10 text-[10px] font-semibold text-primary border border-primary/20">
+              <span className="self-start px-2 py-0.5 rounded-full bg-surface-alt text-[10px] font-semibold text-primary border border-border">
                 {t('selector.addParts')} {totalParts}
               </span>
             )}

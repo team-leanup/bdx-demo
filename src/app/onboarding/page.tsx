@@ -17,7 +17,7 @@ export default function OnboardingWelcomePage() {
       >
         {/* Illustration */}
         <div
-          className="w-32 h-32 rounded-3xl flex items-center justify-center"
+          className="w-32 h-32 rounded-2xl flex items-center justify-center"
           style={{ backgroundColor: 'var(--color-primary-light)' }}
         >
           <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">

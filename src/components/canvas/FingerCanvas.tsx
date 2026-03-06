@@ -352,7 +352,7 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
             onChange={(e) => setModal((prev) => ({ ...prev, draftMemo: e.target.value }))}
             placeholder={t('canvas.treatmentMemoPlaceholder')}
             rows={2}
-            className="w-full px-3 py-2.5 rounded-2xl border-2 border-border bg-surface-alt text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-none"
+            className="w-full px-3 py-2.5 rounded-2xl border-2 border-border bg-surface-alt text-sm text-text placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary transition-all resize-none"
           />
         </div>
 

@@ -7,6 +7,8 @@ export type TagCategory =
   | 'color'        // 컬러 선호
   | 'etc';         // 특이사항
 
+export type TagAccent = 'rose' | 'amber' | 'emerald' | 'sky' | 'slate';
+
 export interface CustomerTag {
   id: string;
   customerId: string;
@@ -14,6 +16,9 @@ export interface CustomerTag {
   value: string;
   isCustom: boolean;
   createdAt: string;
+  pinned?: boolean;
+  accent?: TagAccent;
+  sortOrder?: number;  // lower = higher priority
 }
 
 export interface SmallTalkNote {

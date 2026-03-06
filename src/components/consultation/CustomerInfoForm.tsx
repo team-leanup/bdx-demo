@@ -137,7 +137,7 @@ export function CustomerInfoForm({
               value={memo ?? ''}
               onChange={(e) => onMemoChange(e.target.value)}
               rows={3}
-              className="w-full px-4 py-3 rounded-xl border border-border bg-surface text-text text-base placeholder:text-text-muted resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+              className="w-full px-4 py-3 rounded-xl border border-border bg-white text-text text-base placeholder:text-text-muted resize-none focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all duration-200"
             />
           </div>
         </div>
@@ -162,9 +162,9 @@ export function CustomerInfoForm({
                       setSelectedCustomer(customer);
                       onExistingCustomerSelect(customer);
                     }}
-                    className="flex items-center gap-3 p-3 rounded-xl border border-border bg-surface hover:border-primary/40 hover:bg-surface-alt transition-all duration-150 text-left"
+                    className="flex items-center gap-3 p-3 rounded-xl border border-border bg-white hover:border-primary transition-all duration-150 text-left"
                   >
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-surface-alt flex items-center justify-center flex-shrink-0">
                       <span className="text-sm font-bold text-primary">
                         {customer.name.slice(0, 1)}
                       </span>
@@ -208,7 +208,7 @@ export function CustomerInfoForm({
             const latest = records[0];
 
             return (
-              <div className="mt-1 rounded-xl border border-primary/20 bg-primary/5 p-3 flex flex-col gap-1.5">
+              <div className="mt-1 rounded-xl border border-border bg-white p-3 flex flex-col gap-1.5">
                 <p className="text-[11px] font-bold text-primary uppercase tracking-wide">
                   {t('customerForm.recentConsultation')}
                 </p>

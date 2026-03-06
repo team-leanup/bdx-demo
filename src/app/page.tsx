@@ -15,10 +15,10 @@ export default function RootPage() {
       if (isLoggedIn()) {
         router.replace('/home');
       } else {
-        router.replace('/auth/lock');
+        router.replace('/lock');
       }
     } else {
-      router.replace('/auth/splash');
+      router.replace('/splash');
     }
   }, [isOnboardingComplete, isLoggedIn, router]);
 

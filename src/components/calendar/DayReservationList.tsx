@@ -4,8 +4,14 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useReservationStore } from '@/store/reservation-store';
+import { useConsultationStore } from '@/store/consultation-store';
+import { useCustomerStore } from '@/store/customer-store';
 import { Button } from '@/components/ui/Button';
+import { PretreatmentAlertModal } from '@/components/alerts/PretreatmentAlertModal';
+import { LinkCustomerModal } from '@/components/reservations/LinkCustomerModal';
+import { ConsultationLinkModal } from '@/components/reservations/ConsultationLinkModal';
 import type { BookingChannel, BookingStatus, BookingRequest } from '@/types/consultation';
+import type { CustomerTag } from '@/types/customer';
 import type { Locale } from '@/store/locale-store';
 import { cn } from '@/lib/cn';
 import { useT } from '@/lib/i18n';
@@ -192,7 +198,13 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
   const router = useRouter();
   const t = useT();
   const locale = useLocaleStore((s) => s.locale);
+  const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
+  const setBookingId = useConsultationStore((s) => s.setBookingId);
   const [showForm, setShowForm] = useState(false);
+  const [alertBooking, setAlertBooking] = useState<BookingRequest | null>(null);
+  const [alertTags, setAlertTags] = useState<CustomerTag[]>([]);
+  const [linkModalBooking, setLinkModalBooking] = useState<BookingRequest | null>(null);
+  const [linkGenBooking, setLinkGenBooking] = useState<BookingRequest | null>(null);
 
   const localeMap: Record<string, string> = { ko: 'ko-KR', en: 'en-US', zh: 'zh-CN', ja: 'ja-JP' };
   const formatDate = (dateStr: string) => {
@@ -200,13 +212,40 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
     return d.toLocaleDateString(localeMap[locale] || 'ko-KR', { month: 'long', day: 'numeric', weekday: 'short' });
   };
 
-  const handleStartConsultation = (booking: BookingRequest) => {
+  const navigateToConsultation = (booking: BookingRequest): void => {
+    setBookingId(booking.id);
     const params = new URLSearchParams();
+    params.set('bookingId', booking.id);
     if (booking.customerName) params.set('name', booking.customerName);
     if (booking.phone) params.set('phone', booking.phone);
     if (booking.requestNote) params.set('note', booking.requestNote);
     if (booking.language) params.set('lang', booking.language);
     router.push(`/consultation/customer?${params.toString()}`);
+  };
+
+  const handleStartConsultation = (booking: BookingRequest): void => {
+    if (booking.customerId) {
+      const pinnedTags = getPinnedTags(booking.customerId);
+      if (pinnedTags.length > 0) {
+        setAlertBooking(booking);
+        setAlertTags(pinnedTags);
+        return;
+      }
+    }
+    navigateToConsultation(booking);
+  };
+
+  const handleAlertConfirm = (): void => {
+    if (alertBooking) {
+      navigateToConsultation(alertBooking);
+    }
+    setAlertBooking(null);
+    setAlertTags([]);
+  };
+
+  const handleAlertClose = (): void => {
+    setAlertBooking(null);
+    setAlertTags([]);
   };
 
   const getDesignerName = (id?: string) => {
@@ -304,16 +343,33 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
                         {booking.requestNote && (
                           <p className="text-xs text-text-muted truncate mt-1">{booking.requestNote}</p>
                         )}
+                        {!booking.customerId && (
+                          <button
+                            onClick={() => setLinkModalBooking(booking)}
+                            className="text-[10px] text-warning font-medium hover:underline mt-1"
+                          >
+                            고객 연결 필요
+                          </button>
+                        )}
                       </div>
 
-                      {/* Start button */}
-                      <Button
-                        size="sm"
-                        onClick={() => handleStartConsultation(booking)}
-                        className="flex-shrink-0 self-center"
-                      >
-                        {t('calendar.startConsultation')}
-                      </Button>
+                      <div className="flex gap-1.5 flex-shrink-0 self-center">
+                        <button
+                          onClick={() => setLinkGenBooking(booking)}
+                          className="rounded-lg bg-surface-alt border border-border px-2.5 py-2 text-xs font-semibold text-text-secondary hover:bg-border active:scale-95 transition-all"
+                          title={t('calendar.consultationLink')}
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                          </svg>
+                        </button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleStartConsultation(booking)}
+                        >
+                          {t('calendar.startConsultation')}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -339,6 +395,28 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
           </button>
         )}
       </AnimatePresence>
+
+      <PretreatmentAlertModal
+        isOpen={alertBooking !== null}
+        onClose={handleAlertClose}
+        onConfirm={handleAlertConfirm}
+        customerName={alertBooking?.customerName ?? ''}
+        pinnedTags={alertTags}
+      />
+
+      <LinkCustomerModal
+        isOpen={linkModalBooking !== null}
+        onClose={() => setLinkModalBooking(null)}
+        reservationId={linkModalBooking?.id ?? ''}
+        reservationName={linkModalBooking?.customerName ?? ''}
+        reservationPhone={linkModalBooking?.phone}
+      />
+
+      <ConsultationLinkModal
+        isOpen={linkGenBooking !== null}
+        onClose={() => setLinkGenBooking(null)}
+        booking={linkGenBooking}
+      />
     </div>
   );
 }

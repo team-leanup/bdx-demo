@@ -149,7 +149,7 @@ export function ExpressionSelector({ className }: ExpressionSelectorProps) {
     <div className={cn('flex flex-col gap-4', className)}>
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+          <div className="w-7 h-7 rounded-xl bg-surface-alt flex items-center justify-center flex-shrink-0">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-primary">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} stroke="currentColor" d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008z" />
             </svg>
@@ -178,15 +178,15 @@ export function ExpressionSelector({ className }: ExpressionSelectorProps) {
               whileTap={{ scale: 0.96 }}
               onClick={() => toggleExpression(opt.value as ExpressionType)}
               className={cn(
-                'relative flex flex-col items-center gap-4 py-8 px-4 rounded-3xl border-2 transition-all duration-300',
+                'relative flex flex-col items-center gap-4 py-8 px-4 rounded-2xl border-2 transition-all duration-300',
                 isSelected
-                  ? 'border-primary bg-primary/10 text-primary shadow-xl shadow-primary/15'
-                  : 'border-border bg-surface text-text-muted hover:border-primary/30',
+                  ? 'border-primary bg-white shadow-sm'
+                  : 'border-border bg-white text-text-muted hover:border-gray-300',
               )}
             >
               {/* PRO badge */}
               {isPro && (
-                <span className="absolute top-4 right-4 px-2 py-0.5 text-[9px] font-black bg-gradient-to-r from-amber-400 to-amber-500 text-white rounded-full uppercase tracking-wider shadow-sm">
+                <span className="absolute top-4 right-4 px-2 py-0.5 text-[9px] font-bold bg-amber-500 text-white rounded-md uppercase tracking-wider">
                   PRO
                 </span>
               )}
@@ -210,7 +210,7 @@ export function ExpressionSelector({ className }: ExpressionSelectorProps) {
               <span className={cn(
                 'text-xs font-black px-4 py-1.5 rounded-full tracking-tight',
                 isSelected
-                  ? 'bg-primary/20 text-primary'
+                  ? 'bg-surface-alt border border-primary text-primary'
                   : 'bg-surface-alt text-text-muted',
               )}>
                 {opt.price === 0 ? (
@@ -228,7 +228,7 @@ export function ExpressionSelector({ className }: ExpressionSelectorProps) {
                 <motion.span
                   initial={{ scale: 0, y: 5 }}
                   animate={{ scale: 1, y: 0 }}
-                  className="absolute top-4 left-4 w-7 h-7 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30 border-2 border-white"
+                  className="absolute top-4 left-4 w-7 h-7 rounded-full bg-primary flex items-center justify-center shadow-sm border-2 border-white"
                 >
                   <svg width="12" height="12" viewBox="0 0 10 10" fill="none">
                     <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />

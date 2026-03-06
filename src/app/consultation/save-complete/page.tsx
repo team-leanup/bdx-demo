@@ -83,16 +83,11 @@ function SaveCompleteContent() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.18 + idx * 0.08, duration: 0.25 }}
             onClick={() => router.push(href)}
-            className="w-full rounded-2xl p-5 text-left transition-all active:scale-[0.98]"
-            style={{
-              background: accent
-                ? 'var(--color-primary)'
-                : 'var(--color-surface)',
-              border: accent
-                ? 'none'
-                : '2px solid var(--color-primary)',
-              color: accent ? 'white' : 'var(--color-text)',
-            }}
+            className={`w-full rounded-2xl p-5 text-left transition-all active:scale-[0.98] ${
+              accent
+                ? 'bg-text text-white'
+                : 'bg-surface border-2 border-text text-text'
+            }`}
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl flex-shrink-0">{icon}</span>
@@ -101,27 +96,27 @@ function SaveCompleteContent() {
                   <p className="font-bold text-base leading-snug">{title}</p>
                   {badge && (
                     <span
-                      className="rounded-full px-2 py-0.5 text-[10px] font-bold flex-shrink-0"
-                      style={{
-                        background: accent ? 'rgba(255,255,255,0.25)' : 'var(--color-primary)',
-                        color: 'white',
-                      }}
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold flex-shrink-0 ${
+                        accent ? 'bg-white/25 text-white' : 'bg-text text-white'
+                      }`}
                     >
                       {badge}
                     </span>
                   )}
                 </div>
                 <p
-                  className="text-sm mt-0.5"
-                  style={{ opacity: accent ? 0.85 : undefined, color: accent ? undefined : 'var(--color-text-secondary)' }}
+                  className={`text-sm mt-0.5 ${
+                    accent ? 'opacity-85' : 'text-text-secondary'
+                  }`}
                 >
                   {subtitle}
                 </p>
               </div>
               <svg
-                className="h-5 w-5 flex-shrink-0"
+                className={`h-5 w-5 flex-shrink-0 ${
+                  accent ? 'opacity-80' : 'text-text'
+                }`}
                 fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
-                style={{ opacity: accent ? 0.8 : undefined, color: accent ? undefined : 'var(--color-primary)' }}
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>

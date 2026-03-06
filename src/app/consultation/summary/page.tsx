@@ -15,11 +15,13 @@ import { estimateTime } from '@/lib/time-calculator';
 import { MOCK_CUSTOMERS } from '@/data/mock-customers';
 import { useRecordsStore } from '@/store/records-store';
 import { useReservationStore } from '@/store/reservation-store';
+import { usePortfolioStore } from '@/store/portfolio-store';
 import type { ConsultationRecord, BookingStatus } from '@/types/consultation';
+import type { CustomerTag, TagCategory } from '@/types/customer';
+import { useCustomerStore } from '@/store/customer-store';
 
 export default function SummaryPage() {
   const router = useRouter();
-  const reset = useConsultationStore((s) => s.reset);
   const consultation = useConsultationStore((s) => s.consultation);
   const bookingId = useConsultationStore((s) => s.consultation.bookingId);
   const updateReservation = useReservationStore((s) => s.updateReservation);
@@ -28,6 +30,7 @@ export default function SummaryPage() {
   const [saving, setSaving] = useState(false);
   const [customerMemo, setCustomerMemo] = useState('');
   const addRecord = useRecordsStore((s) => s.addRecord);
+  const addPhoto = usePortfolioStore((s) => s.addPhoto);
   const t = useT();
   const tKo = useKo();
   const locale = useLocale();
@@ -66,6 +69,18 @@ export default function SummaryPage() {
       updateReservation(bookingId, { status: 'completed' as BookingStatus });
     }
 
+    if (customerId && consultation.referenceImages?.length) {
+      consultation.referenceImages.forEach((imageUrl) => {
+        if (!imageUrl.startsWith('data:image/')) return;
+        addPhoto({
+          customerId,
+          recordId: newId,
+          kind: 'reference',
+          imageDataUrl: imageUrl,
+        });
+      });
+    }
+
     // 스몰토크 메모 → MOCK_CUSTOMERS 해당 고객 smallTalkNotes에 자동 push
     if (customerMemo) {
       const customerName = consultation.customerName;
@@ -88,6 +103,30 @@ export default function SummaryPage() {
       }
     }
 
+    if (customerId && consultation.selectedTraitValues?.length) {
+      const { getById, updateTags } = useCustomerStore.getState();
+      const customer = getById(customerId);
+      if (customer) {
+        const existingValues = new Set(customer.tags.map((tag) => tag.value));
+        const newTags: CustomerTag[] = consultation.selectedTraitValues
+          .filter((value) => !existingValues.has(value))
+          .map((value, i) => ({
+            id: `tag-${Date.now()}-${i}`,
+            customerId,
+            category: 'etc' as TagCategory,
+            value,
+            isCustom: false,
+            createdAt: now,
+            pinned: true,
+            sortOrder: customer.tags.filter((tag) => tag.pinned).length + i,
+          }));
+
+        if (newTags.length > 0) {
+          updateTags(customerId, [...customer.tags, ...newTags]);
+        }
+      }
+    }
+
     sessionStorage.removeItem('consultation_customer_memo');
     restoreLocale();
     // reset()은 treatment-sheet에서 "홈으로" 클릭 시 수행됨
@@ -97,11 +136,11 @@ export default function SummaryPage() {
   return (
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
       <ConsultationHeader
-        stepNumber={5}
-        totalSteps={5}
+        stepNumber={6}
+        totalSteps={6}
         title={t('consultation.summaryTitle')}
         titleKo={tKo('consultation.summaryTitle')}
-        backHref="/consultation/canvas"
+        backHref="/consultation/traits"
         onClose={() => router.push('/home')}
       />
 
@@ -176,7 +215,7 @@ export default function SummaryPage() {
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-gradient-to-r from-primary to-primary/85 text-white font-bold text-base shadow-lg shadow-primary/30 hover:shadow-primary/40 hover:from-primary/95 active:scale-[0.98] transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-primary text-white font-bold text-base hover:bg-primary-dark active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving ? (
             <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">

@@ -1,0 +1,28 @@
+{
+  "root": {
+    "url": "http://localhost:3010/",
+    "status": 200,
+    "htmlTag": "<html lang=\"ko\" class=\"__variable_37bcf9\">",
+    "bodyTag": "<body class=\"min-h-screen bg-background text-text font-pretendard\">",
+    "preload": {
+      "count": 1,
+      "href": "/_next/static/media/ff840cfebfb63b0c-s.p.woff2",
+      "type": "font/woff2"
+    }
+  },
+  "consultationCustomer": {
+    "url": "http://localhost:3010/consultation/customer",
+    "status": 200,
+    "htmlTag": "<html lang=\"ko\" class=\"__variable_37bcf9\">",
+    "bodyTag": "<body class=\"min-h-screen bg-background text-text font-pretendard\">",
+    "preload": {
+      "count": 1,
+      "href": "/_next/static/media/ff840cfebfb63b0c-s.p.woff2",
+      "type": "font/woff2"
+    }
+  },
+  "notes": [
+    "In this build, next/font did not inline @font-face in HTML; preload link was present and html variable class was applied.",
+    "Font family is applied via Tailwind token font-pretendard mapped to var(--next-font-pretendard) in globals.css."
+  ]
+}

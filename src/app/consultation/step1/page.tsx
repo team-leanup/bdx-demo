@@ -48,7 +48,7 @@ export default function Step1Page() {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="flex items-center gap-4 p-4 rounded-2xl bg-primary/5 border border-primary/15"
+            className="flex items-center gap-4 p-4 rounded-2xl bg-surface-alt border border-border"
           >
             <div>
               <p className="text-[11px] font-bold text-primary uppercase tracking-widest mb-0.5">
@@ -110,7 +110,7 @@ export default function Step1Page() {
         </div>
       </motion.main>
 
-      <ConsultationFooter onNext={handleNext} />
+      <ConsultationFooter onNext={handleNext} showEstimated={false} />
     </div>
   );
 }

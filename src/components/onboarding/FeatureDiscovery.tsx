@@ -40,7 +40,7 @@ function SimpleModal({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.92, y: 12 }}
       transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-      className="w-full max-w-sm mx-auto rounded-3xl border border-border bg-surface shadow-xl p-6 flex flex-col items-center text-center gap-4"
+      className="w-full max-w-sm mx-auto rounded-2xl border border-border bg-surface shadow-xl p-6 flex flex-col items-center text-center gap-4"
     >
       {/* Icon circle */}
       <div
@@ -104,7 +104,7 @@ function MultiStepModal({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.92, y: 12 }}
       transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-      className="w-full max-w-sm mx-auto rounded-3xl border border-border bg-surface shadow-xl p-5 flex flex-col gap-4"
+      className="w-full max-w-sm mx-auto rounded-2xl border border-border bg-surface shadow-xl p-5 flex flex-col gap-4"
     >
       {/* Header */}
       <div className="flex items-center gap-3">

@@ -47,11 +47,11 @@ export default function IntroPage() {
     if (current < SLIDES.length - 1) {
       setCurrent((c) => c + 1);
     } else {
-      router.push('/auth/login');
+      router.push('/login');
     }
   };
 
-  const skip = () => router.push('/auth/login');
+  const skip = () => router.push('/login');
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
@@ -98,7 +98,7 @@ export default function IntroPage() {
             transition={{ duration: 0.35, ease: 'easeInOut' }}
             className="flex flex-col items-center justify-center text-center w-full gap-8 md:gap-12"
           >
-            <div className="flex items-center justify-center w-36 h-36 md:w-56 md:h-56 rounded-3xl md:rounded-[2rem] bg-surface shadow-sm">
+            <div className="flex items-center justify-center w-36 h-36 md:w-56 md:h-56 rounded-2xl md:rounded-[2rem] bg-surface shadow-sm">
               <div className="md:scale-150">
                 {SLIDES[current].icon}
               </div>
