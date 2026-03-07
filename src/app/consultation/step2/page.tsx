@@ -17,8 +17,7 @@ interface TreatmentOption {
   id: TreatmentType;
   icon: string;
   labelKey: string;
-  descKey: string;
-  designScope: 'solid_tone' | 'solid_point' | 'full_art';
+  designScope: 'solid_tone' | 'full_art';
   expressions: ('solid' | 'gradient' | 'magnetic')[];
 }
 
@@ -26,33 +25,29 @@ const TREATMENT_OPTIONS: TreatmentOption[] = [
   {
     id: 'oneColor',
     icon: '💅',
-    labelKey: 'step2.oneColor',
-    descKey: 'step2.oneColorDesc',
+    labelKey: 'consultation.treatmentType.oneColor',
     designScope: 'solid_tone',
     expressions: ['solid'],
   },
   {
     id: 'gradient',
     icon: '🌈',
-    labelKey: 'step2.gradient',
-    descKey: 'step2.gradientDesc',
+    labelKey: 'consultation.treatmentType.gradient',
     designScope: 'solid_tone',
     expressions: ['gradient'],
   },
   {
     id: 'magneticGel',
     icon: '✨',
-    labelKey: 'step2.magneticGel',
-    descKey: 'step2.magneticGelDesc',
+    labelKey: 'consultation.treatmentType.magnetic',
     designScope: 'solid_tone',
     expressions: ['magnetic'],
   },
   {
     id: 'art',
     icon: '🎨',
-    labelKey: 'step2.art',
-    descKey: 'step2.artDesc',
-    designScope: 'solid_point',
+    labelKey: 'consultation.treatmentType.art',
+    designScope: 'full_art',
     expressions: ['solid'],
   },
 ];
@@ -72,7 +67,7 @@ export default function Step2Page() {
     const { expressions } = consultation;
     if (expressions.includes('magnetic')) return 'magneticGel';
     if (expressions.includes('gradient')) return 'gradient';
-    if (consultation.designScope === 'solid_point' || consultation.designScope === 'full_art') return 'art';
+    if (consultation.designScope === 'full_art') return 'art';
     return 'oneColor';
   };
 
@@ -94,8 +89,8 @@ export default function Step2Page() {
       <ConsultationHeader
         stepNumber={3}
         totalSteps={5}
-        title={t('step2.treatmentTypeTitle')}
-        titleKo={tKo('step2.treatmentTypeTitle')}
+        title={t('consultation.treatmentType.title')}
+        titleKo={tKo('consultation.treatmentType.title')}
         backHref="/consultation/step1"
       />
       <PriceSummaryBar />
@@ -121,19 +116,13 @@ export default function Step2Page() {
                 STEP 3
               </p>
               <h2 className="text-lg font-bold text-text">
-                {t('step2.treatmentTypeTitle')}
+                {t('consultation.treatmentType.title')}
                 {locale !== 'ko' && (
                   <span className="ml-2 text-sm font-medium text-text-muted opacity-60">
-                    {tKo('step2.treatmentTypeTitle')}
+                    {tKo('consultation.treatmentType.title')}
                   </span>
                 )}
               </h2>
-              <p className="text-xs text-text-muted mt-0.5">
-                {t('step2.treatmentTypeSubtitle')}
-                {locale !== 'ko' && (
-                  <span className="ml-1 text-[9px] opacity-60">{tKo('step2.treatmentTypeSubtitle')}</span>
-                )}
-              </p>
             </div>
           </motion.div>
 
@@ -197,9 +186,6 @@ export default function Step2Page() {
                         {tKo(option.labelKey)}
                       </p>
                     )}
-                    <p className="text-xs text-text-muted mt-1">
-                      {t(option.descKey)}
-                    </p>
                   </div>
                 </motion.button>
               );
@@ -221,9 +207,9 @@ export default function Step2Page() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
             <span className="text-sm font-medium">
-              {t('consultation.step3Title')}
+              {t('consultation.treatmentType.detailedOptions')}
               {locale !== 'ko' && (
-                <span className="ml-1 text-xs opacity-60">({tKo('consultation.step3Title')})</span>
+                <span className="ml-1 text-xs opacity-60">({tKo('consultation.treatmentType.detailedOptions')})</span>
               )}
             </span>
           </motion.button>

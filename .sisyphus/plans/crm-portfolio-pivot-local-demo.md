@@ -701,7 +701,7 @@ Wave 4 (Polish + hardening): quota UX + settings cleanup + regression QA
 
   **Commit**: YES | Message: `feat(alerts): show pinned trait alert before treatment start` | Files: [`src/components/home/TodayReservationCard.tsx`, `src/components/calendar/DayReservationList.tsx`, `src/components/alerts/PretreatmentAlertModal.tsx`]
 
-- [ ] 13. Simplify Consultation Content to Minimal CRM Capture (Default Path)
+- [x] 13. Simplify Consultation Content to Minimal CRM Capture (Default Path)
 
   **What to do**:
   - Reduce required input to match the interview-driven minimal flow, while reusing existing pages for low churn:
@@ -765,7 +765,7 @@ Wave 4 (Polish + hardening): quota UX + settings cleanup + regression QA
 
   **Commit**: YES | Message: `feat(consultation): simplify default flow to minimal CRM capture` | Files: [`src/types/consultation.ts`, `src/store/consultation-store.ts`, `src/app/consultation/page.tsx`, `src/app/consultation/step2/page.tsx`]
 
-- [ ] 14. Settings: Storage Management + Demo Reset
+- [x] 14. Settings: Storage Management + Demo Reset
 
   **What to do**:
   - Add section in `src/app/(main)/settings/page.tsx`:
@@ -812,7 +812,7 @@ Wave 4 (Polish + hardening): quota UX + settings cleanup + regression QA
 
   **Commit**: YES | Message: `feat(settings): add storage management and demo reset` | Files: [`src/app/(main)/settings/page.tsx`, `src/lib/storage-budget.ts`]
 
-- [ ] 15. Reservation ↔ Customer Linking UI (Backfill Existing Reservations)
+- [x] 15. Reservation ↔ Customer Linking UI (Backfill Existing Reservations)
 
   **What to do**:
   - Add a “고객 연결” flow for reservations that lack `customerId`:
@@ -866,7 +866,7 @@ Wave 4 (Polish + hardening): quota UX + settings cleanup + regression QA
 
   **Commit**: YES | Message: `feat(reservations): add explicit customer linking flow` | Files: [`src/components/home/TodayReservationCard.tsx`, `src/components/calendar/DayReservationList.tsx`, `src/components/reservations/LinkCustomerModal.tsx`]
 
-- [ ] 16. Consultation Link / QR for Local Demo (Kiosk Self-Input Simulation)
+- [x] 16. Consultation Link / QR for Local Demo (Kiosk Self-Input Simulation)
 
   **What to do**:
   - In reservation detail UI (home and/or records), add a “상담 링크” action that generates a URL using existing query param conventions:
@@ -914,7 +914,7 @@ Wave 4 (Polish + hardening): quota UX + settings cleanup + regression QA
 
   **Commit**: YES | Message: `feat(consultation): add local demo consultation link generator` | Files: [`src/components/reservations/ConsultationLinkModal.tsx`, `src/components/home/TodayReservationCard.tsx`]
 
-- [ ] 17. Persist Customer Gallery + Auto-Create Portfolio Entries from Flows
+- [x] 17. Persist Customer Gallery + Auto-Create Portfolio Entries from Flows
 
   **What to do**:
   - Replace in-memory objectURL galleries with portfolio-store persistence:
@@ -962,10 +962,10 @@ Wave 4 (Polish + hardening): quota UX + settings cleanup + regression QA
   **Commit**: YES | Message: `feat(portfolio): persist customer gallery uploads into portfolio store` | Files: [`src/app/(main)/customers/[id]/page.tsx`, `src/store/portfolio-store.ts`]
 
 ## Final Verification Wave (4 parallel agents, ALL must APPROVE)
-- [ ] F1. Plan Compliance Audit — oracle
-- [ ] F2. Code Quality Review — unspecified-high
-- [ ] F3. UI Smoke QA (Playwright MCP) — unspecified-high
-- [ ] F4. Scope Fidelity Check — deep
+- [x] F1. Plan Compliance Audit — oracle
+- [x] F2. Code Quality Review — unspecified-high
+- [x] F3. UI Smoke QA (Playwright MCP) — unspecified-high
+- [x] F4. Scope Fidelity Check — deep
 
 ## Commit Strategy
 - Commit 1: customer identity + store + phone normalization

@@ -136,8 +136,8 @@ export default function SummaryPage() {
   return (
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
       <ConsultationHeader
-        stepNumber={6}
-        totalSteps={6}
+        stepNumber={5}
+        totalSteps={5}
         title={t('consultation.summaryTitle')}
         titleKo={tKo('consultation.summaryTitle')}
         backHref="/consultation/traits"

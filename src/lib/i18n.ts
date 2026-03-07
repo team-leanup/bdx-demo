@@ -148,6 +148,14 @@ const translations = {
       referenceTitle: '참고 이미지',
       referenceAdd: '사진 추가',
       referenceHint: '고객이 원하는 디자인 참고 이미지 (최대 5장)',
+      treatmentType: {
+        title: '시술 유형',
+        oneColor: '원컬러',
+        gradient: '그라데이션',
+        magnetic: '자석젤',
+        art: '아트',
+        detailedOptions: '상세 옵션(선택)',
+      },
     },
     bodyPart: {
       hand: '핸드',
@@ -876,6 +884,14 @@ const translations = {
       referenceTitle: 'Reference Images',
       referenceAdd: 'Add Photo',
       referenceHint: 'Reference images for desired design (max 5)',
+      treatmentType: {
+        title: 'Treatment Type',
+        oneColor: 'One Color',
+        gradient: 'Gradient',
+        magnetic: 'Magnetic Gel',
+        art: 'Art Design',
+        detailedOptions: 'Detailed Options (Optional)',
+      },
     },
     bodyPart: {
       hand: 'Hand',
@@ -1604,6 +1620,14 @@ const translations = {
       referenceTitle: '参考图片',
       referenceAdd: '添加照片',
       referenceHint: '客户想要的设计参考图片（最多5张）',
+      treatmentType: {
+        title: '美甲类型',
+        oneColor: '单色',
+        gradient: '渐变',
+        magnetic: '猫眼胶',
+        art: '美甲艺术',
+        detailedOptions: '详细选项（可选）',
+      },
     },
     bodyPart: {
       hand: '手部',
@@ -2331,6 +2355,14 @@ const translations = {
       referenceTitle: '参考画像',
       referenceAdd: '写真を追加',
       referenceHint: 'ご希望デザインの参考画像（最大5枚）',
+      treatmentType: {
+        title: '施術タイプ',
+        oneColor: 'ワンカラー',
+        gradient: 'グラデーション',
+        magnetic: 'マグネットジェル',
+        art: 'アート',
+        detailedOptions: '詳細オプション（任意）',
+      },
     },
     bodyPart: {
       hand: 'ハンド',

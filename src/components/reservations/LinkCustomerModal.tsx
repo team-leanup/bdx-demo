@@ -14,6 +14,7 @@ interface LinkCustomerModalProps {
   reservationId: string;
   reservationName: string;
   reservationPhone?: string;
+  onLinked?: (customerId: string) => void;
 }
 
 export function LinkCustomerModal({
@@ -22,9 +23,11 @@ export function LinkCustomerModal({
   reservationId,
   reservationName,
   reservationPhone,
+  onLinked,
 }: LinkCustomerModalProps): React.ReactElement {
   const customers = useCustomerStore((s) => s.customers);
   const createCustomer = useCustomerStore((s) => s.createCustomer);
+  const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
   const updateReservation = useReservationStore((s) => s.updateReservation);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -46,6 +49,7 @@ export function LinkCustomerModal({
 
   const handleSelectCustomer = (customer: Customer): void => {
     updateReservation(reservationId, { customerId: customer.id });
+    onLinked?.(customer.id);
     setLinkSuccess(true);
     setTimeout(() => {
       setLinkSuccess(false);
@@ -60,6 +64,7 @@ export function LinkCustomerModal({
       phone: newPhone.trim(),
     });
     updateReservation(reservationId, { customerId: newCustomer.id });
+    onLinked?.(newCustomer.id);
     setLinkSuccess(true);
     setTimeout(() => {
       setLinkSuccess(false);
@@ -147,28 +152,43 @@ export function LinkCustomerModal({
                       </button>
                     </div>
                   ) : (
-                    filteredCustomers.map((customer) => (
-                      <button
-                        key={customer.id}
-                        onClick={() => handleSelectCustomer(customer)}
-                        className="flex items-center gap-3 p-3 rounded-xl border border-border bg-surface hover:bg-surface-alt transition-colors text-left"
-                      >
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <span className="text-sm font-bold text-primary">
-                            {customer.name.charAt(0)}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-text truncate">{customer.name}</p>
-                          {customer.phone && (
-                            <p className="text-xs text-text-secondary">{customer.phone}</p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-text-muted">
-                          <span>방문 {customer.visitCount}회</span>
-                        </div>
-                      </button>
-                    ))
+                    filteredCustomers.map((customer) => {
+                      const pinnedTags = getPinnedTags(customer.id).slice(0, 3);
+                      return (
+                        <button
+                          key={customer.id}
+                          onClick={() => handleSelectCustomer(customer)}
+                          className="flex items-center gap-3 p-3 rounded-xl border border-border bg-surface hover:bg-surface-alt transition-colors text-left"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <span className="text-sm font-bold text-primary">
+                              {customer.name.charAt(0)}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-text truncate">{customer.name}</p>
+                            {customer.phone && (
+                              <p className="text-xs text-text-secondary">{customer.phone}</p>
+                            )}
+                            {pinnedTags.length > 0 && (
+                              <div className="flex gap-1 mt-1 flex-wrap">
+                                {pinnedTags.map((tag) => (
+                                  <span
+                                    key={tag.id}
+                                    className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-surface-alt text-text-muted"
+                                  >
+                                    {tag.value}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-text-muted flex-shrink-0">
+                            <span>방문 {customer.visitCount}회</span>
+                          </div>
+                        </button>
+                      );
+                    })
                   )}
                 </div>
               </div>

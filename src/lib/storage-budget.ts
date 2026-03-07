@@ -9,16 +9,27 @@ export interface StorageUsageInfo {
   label: string;
 }
 
-export function getStorageUsage(keys: string[]): StorageUsageInfo[] {
+// Unified helper. If `keys` is provided, returns usage for those keys.
+// If omitted, returns usage for the demo app keys with Korean labels.
+export function getStorageUsage(keys?: string[]): StorageUsageInfo[] {
   if (typeof window === 'undefined') return [];
 
-  return keys.map((key) => {
+  const defaultKeys: { key: string; label: string }[] = [
+    { key: 'bdx-customers', label: '고객' },
+    { key: 'bdx-reservations', label: '예약' },
+    { key: 'bdx-records', label: '상담기록' },
+    { key: 'bdx-portfolio', label: '포트폴리오' },
+  ];
+
+  const target = keys && keys.length > 0 ? keys.map((k) => ({ key: k, label: k })) : defaultKeys;
+
+  return target.map(({ key, label }) => {
     const item = localStorage.getItem(key);
     const bytes = item ? new Blob([item]).size : 0;
     return {
       key,
       bytes,
-      label: formatBytes(bytes),
+      label,
     };
   });
 }

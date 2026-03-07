@@ -65,6 +65,13 @@ function FemaleSilhouette({ className }: { className?: string }) {
 
 const STEP_FLOW_ICONS = ['👤', '✋', '💅', '🏷️', '📋'];
 
+function getOptionalLabel(locale: Locale): string {
+  if (locale === 'en') return '(Optional)';
+  if (locale === 'zh') return '（可选）';
+  if (locale === 'ja') return '（任意）';
+  return '(선택)';
+}
+
 export default function ConsultationStartPage() {
   const router = useRouter();
   const consultation = useConsultationStore((s) => s.consultation);
@@ -91,7 +98,7 @@ export default function ConsultationStartPage() {
   const STEP_FLOW = [
     { icon: STEP_FLOW_ICONS[0], label: t('consultation.customerInfo'), koLabel: tKo('consultation.customerInfo') },
     { icon: STEP_FLOW_ICONS[1], label: t('consultation.step1Title'), koLabel: tKo('consultation.step1Title') },
-    { icon: STEP_FLOW_ICONS[2], label: t('step2.treatmentTypeTitle'), koLabel: tKo('step2.treatmentTypeTitle') },
+    { icon: STEP_FLOW_ICONS[2], label: t('consultation.treatmentType.title'), koLabel: tKo('consultation.treatmentType.title') },
     { icon: STEP_FLOW_ICONS[3], label: t('consultation.traitsTitle'), koLabel: tKo('consultation.traitsTitle') },
     { icon: STEP_FLOW_ICONS[4], label: t('consultation.summaryTitle'), koLabel: tKo('consultation.summaryTitle') },
   ];
@@ -210,6 +217,17 @@ export default function ConsultationStartPage() {
                 )}
               </div>
             ))}
+          </div>
+
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <span className="inline-flex items-center gap-1 rounded-full border border-border bg-surface-alt px-3 py-1 text-[11px] font-semibold text-text-muted">
+              {t('consultation.treatmentType.detailedOptions')}
+              {locale !== 'ko' && <span className="opacity-60">{tKo('consultation.treatmentType.detailedOptions')}</span>}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-border bg-surface-alt px-3 py-1 text-[11px] font-semibold text-text-muted">
+              {t('consultation.canvasTitle')} {getOptionalLabel(locale)}
+              {locale !== 'ko' && <span className="opacity-60">{tKo('consultation.canvasTitle')} (선택)</span>}
+            </span>
           </div>
 
           {/* Designer selection */}
