@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import { useConsultationStore } from '@/store/consultation-store';
 import { useAuthStore } from '@/store/auth-store';
+import { useRecordsStore } from '@/store/records-store';
 import { HandIllustration } from '@/components/canvas/HandIllustration';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, formatPriceNumber } from '@/lib/format';
 import { calculatePrice } from '@/lib/price-calculator';
 import { estimateTime } from '@/lib/time-calculator';
 import { MOCK_DESIGNERS } from '@/data/mock-shop';
@@ -25,6 +27,12 @@ const CUTICLE_LABELS = { low: '예민하지 않음', medium: '보통', high: '�
 type LengthType = 'short' | 'medium' | 'long';
 type ThicknessType = 'thin' | 'medium' | 'thick';
 type CuticleType = 'low' | 'medium' | 'high';
+
+interface PricingExtra {
+  id: string;
+  label: string;
+  amount: number;
+}
 
 interface DailyChecklistState {
   shape: NailShape | null;
@@ -52,12 +60,11 @@ function SegmentControl<T extends string>({
           key={opt}
           type="button"
           onClick={() => onChange(opt)}
-          className="px-4 py-2 rounded-xl text-sm font-semibold transition-all active:scale-[0.97]"
-          style={{
-            background: value === opt ? 'var(--color-primary)' : 'var(--color-background)',
-            color: value === opt ? 'white' : 'var(--color-text-secondary)',
-            border: `1.5px solid ${value === opt ? 'var(--color-primary)' : 'var(--color-border)'}`,
-          }}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all active:scale-[0.97] border ${
+            value === opt
+              ? 'bg-text text-white border-text'
+              : 'bg-surface-alt text-text-secondary border-border'
+          }`}
         >
           {labels[opt]}
         </button>
@@ -68,8 +75,11 @@ function SegmentControl<T extends string>({
 
 export default function TreatmentSheetPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const consultationId = searchParams.get('consultationId');
   const { consultation, reset } = useConsultationStore();
   const { activeDesignerId, activeDesignerName } = useAuthStore();
+  const updateRecord = useRecordsStore((s) => s.updateRecord);
   const [smallTalkText, setSmallTalkText] = useState('');
   const [isSaved, setIsSaved] = useState(false);
   const [isFinalSaving, setIsFinalSaving] = useState(false);
@@ -86,6 +96,14 @@ export default function TreatmentSheetPage() {
   const totalPrice = priceBreakdown.subtotal;
   const estimatedMinutes = estimateTime(consultation);
   const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const [basePrice, setBasePrice] = useState<number>(totalPrice);
+  const [extras, setExtras] = useState<PricingExtra[]>([]);
+  const [isPriceFinalized, setIsPriceFinalized] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
+
+  const extrasSum = extras.reduce((sum, e) => sum + e.amount, 0);
+  const calculatedFinalPrice = basePrice + extrasSum;
 
   // Build canvas selections for read-only display from canvasData
   const buildSelections = (handSide: 'left_hand' | 'right_hand'): Partial<Record<FingerPosition, FingerSelection>> => {
@@ -152,6 +170,42 @@ export default function TreatmentSheetPage() {
     await new Promise((r) => setTimeout(r, 400));
     reset();
     router.push('/home');
+  };
+
+  const handleAddExtra = () => {
+    setExtras(prev => [...prev, { id: `extra-${Date.now()}`, label: '', amount: 0 }]);
+  };
+
+  const handleUpdateExtra = (id: string, field: 'label' | 'amount', value: string | number) => {
+    setExtras(prev =>
+      prev.map(e => (e.id === id ? { ...e, [field]: value } : e))
+    );
+  };
+
+  const handleRemoveExtra = (id: string) => {
+    setExtras(prev => prev.filter(e => e.id !== id));
+  };
+
+  const handleFinalizePrice = async () => {
+    if (!consultationId || basePrice <= 0) return;
+
+    setIsFinalizing(true);
+
+    const validExtras = extras.filter(e => e.label.trim() && e.amount !== 0);
+
+    await new Promise((r) => setTimeout(r, 300));
+
+    updateRecord(consultationId, {
+      finalizedAt: new Date().toISOString(),
+      pricingAdjustments: {
+        basePrice,
+        extras: validExtras.map(({ label, amount }) => ({ label: label.trim(), amount })),
+        finalPrice: calculatedFinalPrice,
+      },
+    });
+
+    setIsPriceFinalized(true);
+    setIsFinalizing(false);
   };
 
   const hasCanvas = consultation.canvasData && consultation.canvasData.length > 0;
@@ -255,7 +309,7 @@ export default function TreatmentSheetPage() {
                 onChange={(e) => setChecklist(prev => ({ ...prev, memo: e.target.value }))}
                 placeholder="특이사항 메모 (ex. 손톱이 얇음, 큐티클 주의)"
                 rows={2}
-                className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               />
             </div>
           </div>
@@ -267,8 +321,8 @@ export default function TreatmentSheetPage() {
             <h3 className="text-sm font-bold text-text mb-3">참고 이미지</h3>
             <div className="grid grid-cols-2 gap-3">
               {consultation.referenceImages!.map((url, i) => (
-                <div key={i} className="rounded-xl overflow-hidden border border-border">
-                  <img src={url} alt="" className="w-full h-auto object-contain" />
+                <div key={i} className="relative rounded-xl overflow-hidden border border-border aspect-square">
+                  <Image src={url} alt="" fill unoptimized className="object-contain" />
                 </div>
               ))}
             </div>
@@ -333,6 +387,139 @@ export default function TreatmentSheetPage() {
           </div>
         </div>
 
+        {/* Price Finalization Editor */}
+        <div className="rounded-2xl border border-border bg-surface p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold text-text">가격 확정</h3>
+            {isPriceFinalized && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
+                <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                확정됨
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-text-secondary">기본 금액</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-muted">₩</span>
+                <input
+                  type="number"
+                  value={basePrice}
+                  onChange={(e) => setBasePrice(Number(e.target.value))}
+                  disabled={isPriceFinalized}
+                  className="w-full rounded-xl border border-border bg-background pl-8 pr-3 py-2.5 text-sm text-text text-right font-semibold placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 disabled:bg-surface-alt"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-text-secondary">추가 항목</span>
+                {!isPriceFinalized && (
+                  <button
+                    type="button"
+                    onClick={handleAddExtra}
+                    className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-dark transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    추가 항목 추가
+                  </button>
+                )}
+              </div>
+
+              {extras.length === 0 && !isPriceFinalized && (
+                <p className="text-xs text-text-muted py-2">추가 비용이나 할인을 입력하세요 (할인은 음수로 입력)</p>
+              )}
+
+              {extras.map((extra) => (
+                <div key={extra.id} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={extra.label}
+                    onChange={(e) => handleUpdateExtra(extra.id, 'label', e.target.value)}
+                    placeholder="항목명"
+                    disabled={isPriceFinalized}
+                    className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 disabled:bg-surface-alt"
+                  />
+                  <div className="relative w-28">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-text-muted">₩</span>
+                    <input
+                      type="number"
+                      value={extra.amount}
+                      onChange={(e) => handleUpdateExtra(extra.id, 'amount', Number(e.target.value))}
+                      placeholder="0"
+                      disabled={isPriceFinalized}
+                      className="w-full rounded-xl border border-border bg-background pl-6 pr-2 py-2 text-sm text-text text-right font-medium placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 disabled:bg-surface-alt"
+                    />
+                  </div>
+                  {!isPriceFinalized && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveExtra(extra.id)}
+                      className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-error hover:bg-error/10 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-2 pt-3 border-t border-border">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-sm font-bold text-text">확정 금액</span>
+                <span
+                  className="text-xl font-extrabold"
+                  style={{ color: calculatedFinalPrice >= 0 ? 'var(--color-primary)' : 'var(--color-error, #ef4444)' }}
+                >
+                  {formatPrice(calculatedFinalPrice)}
+                </span>
+              </div>
+
+              {extras.length > 0 && (
+                <div className="text-xs text-text-muted mb-3">
+                  기본 {formatPriceNumber(basePrice)}원
+                  {extrasSum !== 0 && (
+                    <span className={extrasSum > 0 ? 'text-primary' : 'text-error'}>
+                      {extrasSum > 0 ? ` + ${formatPriceNumber(extrasSum)}` : ` - ${formatPriceNumber(Math.abs(extrasSum))}`}원
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {!isPriceFinalized ? (
+                <button
+                  type="button"
+                  onClick={handleFinalizePrice}
+                  disabled={isFinalizing || basePrice <= 0 || !consultationId}
+                  className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all active:scale-[0.98] disabled:opacity-40"
+                  style={{ background: 'var(--color-primary)' }}
+                >
+                  {isFinalizing ? '확정 중...' : '가격 확정'}
+                </button>
+              ) : (
+                <div
+                  className="w-full py-2.5 rounded-xl text-sm font-semibold text-center flex items-center justify-center gap-1.5"
+                  style={{ background: 'color-mix(in srgb, var(--color-success) 12%, var(--color-surface))', color: 'var(--color-success)' }}
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  가격이 확정되었습니다
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Small Talk Memo */}
         <div className="rounded-2xl border border-border bg-surface p-4">
           <h3 className="text-sm font-bold text-text mb-1">고객 메모</h3>
@@ -355,7 +542,7 @@ export default function TreatmentSheetPage() {
             onChange={(e) => setSmallTalkText(e.target.value)}
             placeholder="고객과 나눈 이야기를 메모해두세요 (취미, 관심사 등)"
             rows={3}
-            className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-text placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           />
 
           <button

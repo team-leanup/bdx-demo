@@ -62,7 +62,7 @@ export function ExtensionSelector({ className }: ExtensionSelectorProps) {
   return (
     <div className={cn('flex flex-col gap-4', className)}>
       <div className="flex items-center gap-2.5 px-1">
-        <div className="w-7 h-7 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+        <div className="w-7 h-7 rounded-xl bg-surface-alt flex items-center justify-center flex-shrink-0">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-primary">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} stroke="currentColor" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
@@ -83,10 +83,10 @@ export function ExtensionSelector({ className }: ExtensionSelectorProps) {
               whileTap={{ scale: 0.95 }}
               onClick={() => setExtensionType(opt.value)}
               className={cn(
-                'relative flex flex-col items-center justify-center gap-3 py-6 px-2 rounded-3xl border-2 transition-all duration-300',
+                'relative flex flex-col items-center justify-center gap-3 py-6 px-2 rounded-2xl transition-all duration-300',
                 isSelected
-                  ? 'border-primary bg-primary/10 text-primary shadow-lg shadow-primary/10'
-                  : 'border-border bg-surface text-text-muted hover:border-primary/30',
+                  ? 'border-2 border-primary bg-white shadow-sm'
+                  : 'border border-border bg-white hover:border-gray-300',
               )}
             >
               {/* Icon */}
@@ -103,7 +103,7 @@ export function ExtensionSelector({ className }: ExtensionSelectorProps) {
                   <span className="text-[10px] text-text-muted font-bold opacity-70">{tKo(EXT_OPTION_I18N_KEYS[opt.value])}</span>
                 )}
                 {opt.price !== undefined && opt.price > 0 && (
-                  <span className={cn('text-[10px] font-black mt-1 px-2 py-0.5 rounded-full', isSelected ? 'bg-primary/20 text-primary' : 'bg-surface-alt text-text-muted')}>
+                  <span className={cn('text-[10px] font-black mt-1 px-2 py-0.5 rounded-full', isSelected ? 'bg-gray-100 text-primary' : 'bg-surface-alt text-text-muted')}>
                     {opt.value === 'repair' ? `${formatPrice(opt.price)}${t('selector.perUnit')}` : formatPrice(opt.price)}
                   </span>
                 )}
@@ -131,7 +131,7 @@ export function ExtensionSelector({ className }: ExtensionSelectorProps) {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-4 rounded-3xl bg-surface border-2 border-primary/20 flex flex-col gap-3"
+          className="p-4 rounded-2xl bg-white border border-border flex flex-col gap-3"
         >
           <div className="flex flex-col gap-0.5">
             <span className="text-sm font-medium text-text-secondary">{t('selector.repairQuantity')}</span>

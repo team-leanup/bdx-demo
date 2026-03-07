@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(git:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(mkdir:*)",
+      "Bash(rm -rf .next)",
+      "Bash(pkill -f next)",
+      "Bash(chmod:*)",
+      "Bash(curl:*)",
+      "Bash(du:*)",
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "mcp__playwright__*"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(rm -rf ~)",
+      "Bash(rm -rf /*)"
+    ]
+  },
+  "env": {
+    "NEXT_TELEMETRY_DISABLED": "1",
+    "FORCE_COLOR": "1"
+  },
+  "hooks": {
+    "PreCommit": [".claude/hooks/pre-commit.sh"],
+    "PostBuild": [".claude/hooks/post-build.sh"]
+  }
+}

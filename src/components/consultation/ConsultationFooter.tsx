@@ -13,6 +13,7 @@ interface ConsultationFooterProps {
   disabled?: boolean;
   loading?: boolean;
   className?: string;
+  showEstimated?: boolean;
 }
 
 export function ConsultationFooter({
@@ -21,6 +22,7 @@ export function ConsultationFooter({
   disabled = false,
   loading = false,
   className,
+  showEstimated = true,
 }: ConsultationFooterProps) {
   const t = useT();
   const tKo = useKo();
@@ -39,15 +41,17 @@ export function ConsultationFooter({
         className,
       )}
     >
-      <div className="flex flex-col gap-0.5">
-        <span className="text-xs text-text-muted">
-          {t('consultation.estimatedAmount')}
-          {locale !== 'ko' && (
-            <span className="ml-1 text-[10px] opacity-60">{tKo('consultation.estimatedAmount')}</span>
-          )}
-        </span>
-        <span className="text-base font-bold text-primary">{formatPrice(breakdown.subtotal)}</span>
-      </div>
+      {showEstimated !== false && (
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-text-muted">
+            {t('consultation.estimatedAmount')}
+            {locale !== 'ko' && (
+              <span className="ml-1 text-[10px] opacity-60">{tKo('consultation.estimatedAmount')}</span>
+            )}
+          </span>
+          <span className="text-base font-bold text-text">{formatPrice(breakdown.subtotal)}</span>
+        </div>
+      )}
       <Button
         variant="primary"
         size="lg"

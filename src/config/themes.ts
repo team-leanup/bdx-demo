@@ -1,4 +1,4 @@
-import type { ThemePreset } from '@/types/theme';
+import type { ThemeId, ThemePreset } from '@/types/theme';
 
 export const THEME_PRESETS: ThemePreset[] = [
   {
@@ -228,7 +228,7 @@ export const THEME_PRESETS: ThemePreset[] = [
   },
 ];
 
-export const DEFAULT_THEME_ID = 'rose-pink';
+export const DEFAULT_THEME_ID: ThemeId = 'rose-pink';
 
 export function getThemeById(id: string): ThemePreset {
   return THEME_PRESETS.find((t) => t.id === id) ?? THEME_PRESETS[0];

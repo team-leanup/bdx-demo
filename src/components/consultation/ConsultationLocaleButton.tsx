@@ -61,7 +61,7 @@ export function ConsultationLocaleButton() {
                 }}
                 className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-colors text-left ${
                   locale === l.locale
-                    ? 'bg-primary/10 text-primary'
+                    ? 'bg-surface-alt text-primary border border-primary'
                     : 'text-text hover:bg-surface-alt'
                 }`}
               >

@@ -168,6 +168,16 @@ export default function RecordDetailPage({ params }: Props) {
       <Card className="mx-4">
         <h2 className="mb-3 text-sm font-semibold text-text-secondary">{t('recordDetail.sectionPrice')}</h2>
         <div className="flex flex-col gap-2">
+          {record.finalizedAt ? (
+            <div className="mb-1 inline-flex w-fit items-center rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">
+              {`✓ 가격 확정됨 · ${formatDateDotWithTime(record.finalizedAt)}`}
+            </div>
+          ) : (
+            <div className="mb-1 inline-flex w-fit items-center rounded-full bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700">
+              가격 미확정
+            </div>
+          )}
+
           {breakdown.items
             .filter((item) => !item.isDiscount)
             .map((item, i) => (

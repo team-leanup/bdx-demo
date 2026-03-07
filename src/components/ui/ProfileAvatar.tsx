@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useDesignerStore } from '@/store/designer-store';
 import { cn } from '@/lib/cn';
 
@@ -26,15 +27,19 @@ export function ProfileAvatar({
 
   if (imageUrl) {
     return (
-      <img
-        src={imageUrl}
-        alt={name}
-        className={cn(
-          'rounded-full object-cover flex-shrink-0',
-          SIZES[size],
-          className,
-        )}
-      />
+      <div className={cn(
+        'relative rounded-full overflow-hidden flex-shrink-0',
+        SIZES[size],
+        className,
+      )}>
+        <Image
+          src={imageUrl}
+          alt={name}
+          fill
+          unoptimized
+          className="object-cover"
+        />
+      </div>
     );
   }
 

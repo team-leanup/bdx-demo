@@ -16,6 +16,7 @@ const INITIAL_CONSULTATION: ConsultationType = {
   partsSelections: [],
   extraColorCount: 0,
   referenceImages: [] as string[],
+  selectedTraitValues: [] as string[],
   currentStep: ConsultationStep.START,
 };
 
@@ -54,6 +55,10 @@ interface ConsultationStore {
   addReferenceImage: (url: string) => void;
   removeReferenceImage: (url: string) => void;
 
+  // 고객 특성
+  setSelectedTraitValues: (values: string[]) => void;
+  toggleTraitValue: (value: string) => void;
+
   // 담당 선생님
   setDesignerId: (id: string) => void;
 
@@ -74,8 +79,7 @@ const STEP_ORDER: ConsultationStep[] = [
   ConsultationStep.CUSTOMER_INFO,
   ConsultationStep.STEP1_BASIC,
   ConsultationStep.STEP2_DESIGN,
-  ConsultationStep.STEP3_OPTIONS,
-  ConsultationStep.CANVAS,
+  ConsultationStep.TRAITS,
   ConsultationStep.SUMMARY,
 ];
 
@@ -172,6 +176,20 @@ export const useConsultationStore = create<ConsultationStore>()(
             referenceImages: (state.consultation.referenceImages || []).filter((u) => u !== url),
           },
         })),
+
+      setSelectedTraitValues: (values) =>
+        set((state) => ({
+          consultation: { ...state.consultation, selectedTraitValues: values },
+        })),
+
+      toggleTraitValue: (value) =>
+        set((state) => {
+          const current = state.consultation.selectedTraitValues || [];
+          const next = current.includes(value)
+            ? current.filter((v) => v !== value)
+            : [...current, value];
+          return { consultation: { ...state.consultation, selectedTraitValues: next } };
+        }),
 
       setDesignerId: (id) =>
         set((state) => ({ consultation: { ...state.consultation, designerId: id } })),

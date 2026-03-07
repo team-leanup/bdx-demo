@@ -12,9 +12,9 @@ export function Card({ children, className, onClick, hoverable }: CardProps) {
   return (
     <div
       className={cn(
-        'bg-surface rounded-3xl shadow-[var(--shadow-bento)] border border-border p-4 md:p-6',
+        'bg-surface rounded-2xl border border-border p-4 md:p-5',
         hoverable &&
-          'cursor-pointer transition-all duration-200 hover:shadow-[var(--shadow-bento-hover)] hover:-translate-y-1 active:scale-[0.99]',
+          'cursor-pointer transition-all duration-200 hover:bg-surface-alt active:scale-[0.99]',
         onClick && 'cursor-pointer',
         className,
       )}

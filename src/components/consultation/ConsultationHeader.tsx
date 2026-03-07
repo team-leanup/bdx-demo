@@ -74,7 +74,7 @@ export function ConsultationHeader({
 
       {/* Step info */}
       <div className="flex flex-col items-center gap-0.5">
-        <span className="text-xs font-semibold text-primary tracking-wider uppercase">
+        <span className="text-xs font-semibold text-text-secondary tracking-wider uppercase">
           STEP {stepNumber}/{totalSteps}
         </span>
         <span className="text-sm font-bold text-text">{title}</span>

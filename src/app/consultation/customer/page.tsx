@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { useConsultationStore } from '@/store/consultation-store';
 import { ConsultationStep } from '@/types/consultation';
 import { ConsultationHeader } from '@/components/consultation/ConsultationHeader';
@@ -24,7 +25,9 @@ const LANGUAGE_BADGE: Record<Locale, { flag: string; label: string }> = {
 function CustomerPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { setCustomerInfo, setStep } = useConsultationStore();
+  const setCustomerInfo = useConsultationStore((s) => s.setCustomerInfo);
+  const setBookingId = useConsultationStore((s) => s.setBookingId);
+  const setStep = useConsultationStore((s) => s.setStep);
   const consultation = useConsultationStore((s) => s.consultation);
   const addReferenceImage = useConsultationStore((s) => s.addReferenceImage);
   const removeReferenceImage = useConsultationStore((s) => s.removeReferenceImage);
@@ -48,6 +51,7 @@ function CustomerPageInner() {
   const prefillPhone = searchParams.get('phone') ?? '';
   const prefillNote = searchParams.get('note') ?? '';
   const prefillLang = searchParams.get('lang') as Locale | null;
+  const prefillBookingId = searchParams.get('bookingId') ?? '';
 
   const [name, setName] = useState(consultation.customerName ?? prefillName);
   const [phone, setPhone] = useState(consultation.customerPhone ?? prefillPhone);
@@ -55,9 +59,25 @@ function CustomerPageInner() {
 
   // 쿼리 파라미터가 있으면 초기 로드 시 상태 동기화
   // initialRef captures values at mount time so we can safely use an empty deps array
-  const initialRef = useRef({ prefillName, prefillPhone, prefillNote, prefillLang, customerName: consultation.customerName, customerPhone: consultation.customerPhone });
+  const initialRef = useRef({
+    prefillName,
+    prefillPhone,
+    prefillNote,
+    prefillLang,
+    prefillBookingId,
+    customerName: consultation.customerName,
+    customerPhone: consultation.customerPhone,
+  });
   useEffect(() => {
-    const { prefillName: name, prefillPhone: phone, prefillNote: note, prefillLang: lang, customerName, customerPhone } = initialRef.current;
+    const {
+      prefillName: name,
+      prefillPhone: phone,
+      prefillNote: note,
+      prefillLang: lang,
+      prefillBookingId: bookingId,
+      customerName,
+      customerPhone,
+    } = initialRef.current;
     if (name && !customerName) {
       setName(name);
     }
@@ -70,7 +90,10 @@ function CustomerPageInner() {
     if (lang && ['ko', 'en', 'zh', 'ja'].includes(lang)) {
       setConsultationLocale(lang);
     }
-  }, [setConsultationLocale]);
+    if (bookingId) {
+      setBookingId(bookingId);
+    }
+  }, [setBookingId, setConsultationLocale]);
 
   const handleExistingCustomer = (customer: Customer) => {
     setName(customer.name);
@@ -114,7 +137,7 @@ function CustomerPageInner() {
 
       {/* 예약 연동 안내 배너 */}
       {prefillName && (
-        <div className="mx-4 mt-3 flex items-center gap-2 rounded-xl bg-primary/10 px-4 py-2.5">
+        <div className="mx-4 mt-3 flex items-center gap-2 rounded-xl bg-surface-alt border border-border px-4 py-2.5">
           <svg className="h-4 w-4 flex-shrink-0 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -147,9 +170,9 @@ function CustomerPageInner() {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="flex items-center gap-4 p-4 rounded-2xl bg-primary/5 border border-primary/15"
+            className="flex items-center gap-4 p-4 rounded-2xl bg-surface-alt border border-border"
           >
-            <div className="w-16 h-16 rounded-2xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+            <div className="w-16 h-16 rounded-2xl bg-surface-alt border border-border flex items-center justify-center flex-shrink-0">
               <svg width="36" height="36" viewBox="0 0 56 56" fill="none" className="text-primary">
                 <circle cx="28" cy="18" r="9" fill="currentColor" fillOpacity="0.25" stroke="currentColor" strokeWidth="2.5" />
                 <path d="M10 46 C10 36 18 30 28 30 C38 30 46 36 46 46" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
@@ -198,7 +221,7 @@ function CustomerPageInner() {
               <div className="flex gap-2 flex-wrap mb-3">
                 {(consultation.referenceImages || []).map((url, i) => (
                   <div key={i} className="relative w-28 h-28 rounded-xl overflow-hidden border border-border flex-shrink-0">
-                    <img src={url} alt="" className="w-full h-full object-cover" />
+                    <Image src={url} alt="" fill unoptimized className="object-cover" />
                     <button
                       type="button"
                       onClick={() => removeReferenceImage(url)}
@@ -242,7 +265,7 @@ function CustomerPageInner() {
         </div>
       </motion.main>
 
-      <ConsultationFooter onNext={handleNextWithValidation} disabled={false} />
+      <ConsultationFooter onNext={handleNextWithValidation} disabled={false} showEstimated={false} />
     </div>
   );
 }

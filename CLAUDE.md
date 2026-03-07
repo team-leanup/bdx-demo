@@ -1,83 +1,130 @@
-# BDX (Beauty Decision eXperience) — Claude Code 프로젝트 가이드
+# BDX (Beauty Decision eXperience)
 
-## 프로젝트 개요
 네일 샵 상담 플로우 앱. 사장님이 외국인 고객과 상담할 때 다국어 UI를 제공.
 
-## 기술 스택
-- **프레임워크**: Next.js App Router + TypeScript
-- **스타일**: Tailwind CSS v4 (`@theme` 블록, CSS 변수 기반)
-- **상태 관리**: Zustand
-- **애니메이션**: framer-motion
-- **패키지 매니저**: `pnpm`
-- **배포**: Vercel (`bdx-demo.vercel.app`)
+## Tech Stack
 
-## 주요 명령어
+| Category | Technology |
+|----------|------------|
+| Framework | Next.js 15 (App Router, Turbopack) |
+| Language | TypeScript 5 (strict mode) |
+| Styling | Tailwind CSS v4 (`@theme` 블록, CSS 변수 기반) |
+| State | Zustand 5 |
+| Animation | framer-motion 11 |
+| Package Manager | **pnpm** (npm/yarn 절대 금지) |
+| Deployment | Vercel |
+
+## Commands
+
 ```bash
-pnpm dev          # 개발 서버 (turbopack)
-pnpm build        # 프로덕션 빌드
-pnpm lint         # ESLint
-npx tsc --noEmit  # 타입 체크
-npx vercel --prod --yes  # Vercel 프로덕션 배포
+pnpm dev              # 개발 서버 (turbopack)
+pnpm build            # 프로덕션 빌드
+pnpm lint             # ESLint
+npx tsc --noEmit      # 타입 체크
+npx vercel --prod     # Vercel 프로덕션 배포
 ```
 
-## 디렉토리 구조
+## Directory Structure
+
 ```
 src/
 ├── app/
-│   ├── (main)/          # 사장님 전용 (항상 한국어)
-│   │   ├── layout.tsx   # setLocale('ko') 강제
-│   │   ├── home/        # 홈 대시보드
-│   │   ├── records/     # 예약/상담 기록
-│   │   ├── customers/   # 고객 관리
-│   │   ├── dashboard/   # 통계
-│   │   └── settings/    # 설정
-│   ├── consultation/    # 상담 플로우 (다국어 ko/en/zh/ja)
-│   │   ├── customer/    # Step 1: 고객 정보
-│   │   ├── step1/       # Step 2: 기본 조건 (부위/오프/연장/쉐입)
-│   │   ├── step2/       # Step 3: 시술 범위
-│   │   ├── step3/       # Step 4: 추가 옵션
-│   │   ├── canvas/      # 네일 디자인 캔버스
-│   │   └── summary/     # 최종 확인
-│   └── globals.css      # Tailwind v4 테마 (핑크/오렌지/브라운 등)
-├── components/          # UI 컴포넌트
-├── store/               # Zustand 스토어
+│   ├── (main)/              # 사장님 전용 (항상 한국어)
+│   │   ├── home/            # 홈 대시보드
+│   │   ├── records/         # 예약/상담 기록
+│   │   ├── customers/       # 고객 관리
+│   │   ├── dashboard/       # 통계
+│   │   └── settings/        # 설정
+│   ├── consultation/        # 상담 플로우 (다국어 ko/en/zh/ja)
+│   │   ├── customer/        # Step 1: 고객 정보
+│   │   ├── step1~3/         # 시술 옵션 선택
+│   │   ├── canvas/          # 네일 디자인 캔버스
+│   │   └── summary/         # 최종 확인
+│   └── globals.css          # Tailwind v4 테마
+├── components/
+│   ├── ui/                  # 공용 UI 컴포넌트
+│   ├── layout/              # AppShell, TabBar, StatusBar
+│   ├── consultation/        # 상담 전용 컴포넌트
+│   └── canvas/              # 캔버스 컴포넌트
+├── store/                   # Zustand 스토어
 ├── lib/
-│   └── i18n.ts          # 다국어 시스템 (ko/en/zh/ja)
-├── types/               # TypeScript 타입 정의
-└── data/                # 목업 데이터, 서비스 옵션
+│   └── i18n.ts              # 다국어 시스템
+├── types/                   # TypeScript 타입 정의
+└── data/                    # 목업 데이터
 ```
 
-## i18n 시스템 (중요!)
+## Code Standards
 
-### 3개의 i18n 훅
-| 훅 | 용도 |
-|---|------|
-| `useT()` → `t(key)` | 현재 선택 언어로 번역 |
-| `useKo()` → `tKo(key)` | 항상 한국어 (보조 라벨용) |
+### TypeScript
+- `strict: true` 필수
+- `as any`, `@ts-ignore`, `@ts-expect-error` 절대 금지
+- 내보내는 함수는 명시적 반환 타입 작성
+- `unknown` + 타입 가드 패턴 선호
+
+### React / Next.js
+- Server Components 기본 (클라이언트 필요시만 `'use client'`)
+- 컴포넌트 파일명: PascalCase (Button.tsx)
+- Props interface는 컴포넌트 바로 위에 정의
+- JSX 내 인라인 함수 최소화
+
+### Tailwind CSS v4
+- `@theme` 블록에서 CSS 변수 정의
+- `--color-primary`, `--color-text` 등 → `bg-primary`, `text-text` 유틸리티 자동 생성
+- 인라인 스타일 금지, Tailwind 유틸리티만 사용
+- 반응형: mobile-first (`sm:`, `md:`, `lg:`)
+
+### Zustand Store
+```tsx
+// 타입 정의 패턴
+interface StoreState {
+  items: Item[];
+  addItem: (item: Item) => void;
+}
+
+export const useStore = create<StoreState>((set) => ({
+  items: [],
+  addItem: (item) => set((s) => ({ items: [...s.items, item] })),
+}));
+```
+
+## i18n System (Critical!)
+
+### 지원 언어
+`ko` (한국어) | `en` (영어) | `zh` (중국어) | `ja` (일본어)
+
+### 3가지 i18n 훅
+| Hook | Purpose |
+|------|---------|
+| `useT()` → `t('namespace.key')` | 현재 선택 언어로 번역 (함수 직접 반환) |
+| `useKo()` → `tKo('namespace.key')` | 항상 한국어 (함수 직접 반환) |
 | `useLocale()` | 현재 언어 코드 반환 |
 
-### 이중 언어 표시 패턴 (상담 페이지)
+### 번역 키 구조
+중첩 구조 사용: `t('common.next')`, `t('consultation.step1.title')`
+
+### Dual Language Display Pattern
+상담 페이지에서 외국어 + 한국어 보조 표시:
+
 ```tsx
-<span className="text-lg font-black">{t(key)}</span>
+const t = useT();       // 함수 직접 반환 (NOT destructuring)
+const tKo = useKo();    // 함수 직접 반환
+const locale = useLocale();
+
+<span className="text-lg font-black">{t('common.next')}</span>
 {locale !== 'ko' && (
-  <span className="text-xs text-text-muted opacity-60">{tKo(key)}</span>
+  <span className="text-xs text-text-muted opacity-60">{tKo('common.next')}</span>
 )}
 ```
 
-### 페이지별 언어 정책
-- `(main)/*` → **항상 한국어** (layout.tsx에서 강제)
+### Page Language Policy
+- `(main)/*` → **항상 한국어** (layout.tsx에서 `setLocale('ko')` 강제)
 - `consultation/*` → **선택 언어 + 한국어 보조**
 
 ### setLocale vs setConsultationLocale
-- `setLocale(locale)`: 직접 설정 (이전 언어 백업 안 함)
-- `setConsultationLocale(locale)`: 이전 언어 백업 후 설정 → 상담 종료 시 복원
+- `setLocale(locale)`: 직접 설정 (백업 없음)
+- `setConsultationLocale(locale)`: 이전 언어 백업 → 상담 종료 시 복원
 
-## Tailwind CSS v4 참고
-- `@theme` 블록에서 CSS 변수 기반 색상 정의
-- `--color-primary`, `--color-primary-dark`, `--color-text` 등
-- 자동으로 `bg-primary`, `bg-primary-dark`, `text-text` 등 유틸리티 생성
-
-## 알려진 이슈 & 해결법
+## Known Issues & Solutions
 
 ### .next 캐시 손상
 ```bash
@@ -87,5 +134,27 @@ pkill -f "next" && rm -rf .next && pnpm dev
 ### SVG 내 텍스트 다국어
 SVG `<text>`는 동적 크기 불가 → HTML 오버레이 뱃지 사용 (OffSelector 참고)
 
-### 에이전트 위임 시
-`dontAsk` 모드 사용 (`bypassPermissions`는 Edit 도구 권한 문제 있음)
+### 빌드 전 체크
+```bash
+pnpm lint && npx tsc --noEmit && pnpm build
+```
+
+## DO NOT
+
+- npm/yarn 사용 (pnpm만 사용)
+- `as any` 타입 단언
+- 빈 catch 블록 `catch(e) {}`
+- 테스트 삭제로 "통과" 처리
+- `.env` 파일 커밋
+- 인라인 스타일 (Tailwind 사용)
+- 버그 수정 중 리팩토링
+
+## File Naming Convention
+
+| Type | Convention | Example |
+|------|------------|---------|
+| Component | PascalCase | `Button.tsx`, `CustomerCard.tsx` |
+| Hook | camelCase, use prefix | `useAuth.ts`, `useConsultation.ts` |
+| Utility | camelCase | `formatPrice.ts`, `i18n.ts` |
+| Store | kebab-case | `auth-store.ts`, `consultation-store.ts` |
+| Type | kebab-case | `customer-types.ts` |

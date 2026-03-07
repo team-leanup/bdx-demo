@@ -126,7 +126,7 @@ export function ShapeSelector({ className }: ShapeSelectorProps) {
   return (
     <div className={cn('flex flex-col gap-3', className)}>
       <div className="flex items-center gap-2">
-        <div className="w-6 h-6 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+        <div className="w-6 h-6 rounded-xl bg-surface-alt flex items-center justify-center flex-shrink-0">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-primary">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} stroke="currentColor" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
           </svg>
@@ -147,10 +147,10 @@ export function ShapeSelector({ className }: ShapeSelectorProps) {
               whileTap={{ scale: 0.93 }}
               onClick={() => setNailShape(shape)}
               className={cn(
-                'relative flex flex-col items-center gap-2 pt-4 pb-3 px-2 rounded-3xl border-2 transition-all duration-200',
+                'relative flex flex-col items-center gap-2 pt-4 pb-3 px-2 rounded-2xl transition-all duration-200',
                 isSelected
-                  ? 'border-primary bg-primary/10 text-primary shadow-sm'
-                  : 'border-border bg-surface text-text-muted hover:border-primary/30 hover:bg-surface-alt hover:text-text',
+                  ? 'border-2 border-primary bg-white shadow-sm'
+                  : 'border border-border bg-white hover:border-gray-300',
               )}
             >
               {/* Shape icon — primary visual */}

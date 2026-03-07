@@ -57,8 +57,8 @@ export default function ProPage() {
       >
         <div className="max-w-lg mx-auto flex flex-col gap-3">
           {/* Pro mode badge */}
-          <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 rounded-xl border border-primary/20 mb-2">
-            <span className="text-sm font-semibold text-primary">
+          <div className="flex items-center gap-2 px-3 py-2 bg-surface-alt rounded-xl border border-border mb-2">
+            <span className="text-sm font-semibold text-text">
               <span className="text-lg font-black">{t('pro.title')}</span>
               {locale !== 'ko' && (
                 <span className="text-xs text-text-muted opacity-60 font-bold ml-1">{tKo('pro.title')}</span>

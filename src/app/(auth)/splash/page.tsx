@@ -9,7 +9,7 @@ export default function SplashPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.push('/auth/intro');
+      router.push('/intro');
     }, 5000);
     return () => clearTimeout(timer);
   }, [router]);

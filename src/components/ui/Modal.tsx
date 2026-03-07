@@ -22,8 +22,8 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm"
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 bg-backdrop z-40"
             onClick={onClose}
           />
           <motion.div
@@ -31,11 +31,11 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
             initial={{ y: '100%', opacity: 0.5 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            transition={{ type: 'spring', damping: 30, stiffness: 350 }}
             className={cn(
-              'fixed bottom-0 left-0 right-0 z-50 bg-surface rounded-t-3xl shadow-2xl',
+              'fixed bottom-0 left-0 right-0 z-50 bg-surface rounded-t-2xl',
               'max-h-[90vh] flex flex-col',
-              'md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-1/2 md:-translate-x-1/2 md:right-auto md:w-full md:max-w-lg md:rounded-3xl',
+              'md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-1/2 md:-translate-x-1/2 md:right-auto md:w-full md:max-w-lg md:rounded-2xl',
               className,
             )}
           >

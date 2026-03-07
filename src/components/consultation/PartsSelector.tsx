@@ -55,7 +55,7 @@ export function PartsSelector({ className }: PartsSelectorProps) {
   const isKo = locale === 'ko';
   const currentLocale = useLocaleStore((s) => s.locale);
   const localeMap: Record<string, string> = { ko: 'ko-KR', en: 'en-US', zh: 'zh-CN', ja: 'ja-JP' };
-  const hasParts = useConsultationStore((s) => s.consultation.hasParts);
+  const _hasParts = useConsultationStore((s) => s.consultation.hasParts);
   const partsSelections = useConsultationStore((s) => s.consultation.partsSelections);
   const setHasParts = useConsultationStore((s) => s.setHasParts);
   const setPartsSelections = useConsultationStore((s) => s.setPartsSelections);
@@ -137,7 +137,7 @@ export function PartsSelector({ className }: PartsSelectorProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+          <div className="w-6 h-6 rounded-xl bg-surface-alt flex items-center justify-center flex-shrink-0">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-primary">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} stroke="currentColor" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
             </svg>
@@ -150,7 +150,7 @@ export function PartsSelector({ className }: PartsSelectorProps) {
           </div>
         </div>
         {totalAllCount > 0 && (
-          <span className="text-sm font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">
+          <span className="text-sm font-bold text-primary bg-surface-alt border border-primary px-2.5 py-0.5 rounded-full">
             {t('selector.total').replace('{count}', String(totalAllCount))}
             {totalGradePartsPrice > 0 && ` · ${formatPrice(totalGradePartsPrice)}`}
           </span>
@@ -158,7 +158,7 @@ export function PartsSelector({ className }: PartsSelectorProps) {
       </div>
 
       {/* ── 1. Custom text input (primary, above grade system) ── */}
-      <div className="flex flex-col gap-3 p-4 rounded-3xl border-2 border-border bg-surface">
+      <div className="flex flex-col gap-3 p-4 rounded-2xl border-2 border-border bg-surface">
         <div>
           <p className="text-xs font-bold text-text-muted uppercase tracking-wider">{t('selector.partsInput')}</p>
           {!isKo && (
@@ -174,7 +174,7 @@ export function PartsSelector({ className }: PartsSelectorProps) {
             onChange={(e) => setTextInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') addCustomEntry(textInput); }}
             placeholder={t('selector.partsInputPlaceholder')}
-            className="flex-1 px-3 py-2.5 rounded-2xl border-2 border-border bg-surface-alt text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+            className="flex-1 px-3 py-2.5 rounded-2xl border-2 border-border bg-surface-alt text-sm text-text placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary transition-all"
           />
           <button
             type="button"
@@ -198,7 +198,7 @@ export function PartsSelector({ className }: PartsSelectorProps) {
                 type="button"
                 whileTap={{ scale: 0.9 }}
                 onClick={() => addCustomEntry(part.name, part.id)}
-                className="px-3 py-1.5 rounded-full border border-border bg-surface-alt text-xs font-semibold text-text hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all whitespace-nowrap"
+                className="px-3 py-1.5 rounded-full border border-border bg-surface-alt text-xs font-semibold text-text hover:border-gray-300 hover:bg-white hover:text-primary transition-all whitespace-nowrap"
               >
                 + {chipLabel}
                 {!isKo && i18nKey && <span className="ml-0.5 text-[9px] opacity-60">{chipLabelKo}</span>}
@@ -224,10 +224,10 @@ export function PartsSelector({ className }: PartsSelectorProps) {
                   initial={{ opacity: 0, y: -6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-2xl border-2 border-primary/25 bg-primary/5"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-2xl border-2 border-primary bg-white"
                 >
                   {/* Part icon dot */}
-                  <div className="w-7 h-7 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center flex-shrink-0">
+                  <div className="w-7 h-7 rounded-xl bg-surface-alt border border-border flex items-center justify-center flex-shrink-0">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                       <circle cx="7" cy="7" r="3" fill="currentColor" className="text-primary" />
                       <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1" className="text-primary" fillOpacity="0" />
@@ -283,7 +283,7 @@ export function PartsSelector({ className }: PartsSelectorProps) {
       </div>
 
       {/* ── 2. Grade-based system (PRO, collapsible) ── */}
-      <div className="flex flex-col gap-0 rounded-3xl border-2 border-border bg-surface overflow-hidden">
+      <div className="flex flex-col gap-0 rounded-2xl border-2 border-border bg-surface overflow-hidden">
         <button
           type="button"
           onClick={() => setShowGradeSystem((v) => !v)}
@@ -296,7 +296,7 @@ export function PartsSelector({ className }: PartsSelectorProps) {
                 <p className="text-[10px] text-text-muted/60">{ko('selector.gradePartsSystem')}</p>
               )}
             </div>
-            <span className="px-2 py-0.5 text-[10px] font-bold bg-gradient-to-r from-amber-400 to-amber-500 text-white rounded-full uppercase tracking-wider">
+            <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-500 text-white rounded-md uppercase tracking-wider">
               PRO
             </span>
           </div>
@@ -384,7 +384,7 @@ export function PartsSelector({ className }: PartsSelectorProps) {
                 })}
 
                 {totalGradePartsCount > 0 && (
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-primary/5 border border-primary/20">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-surface-alt border border-border">
                     <span className="text-sm text-text-secondary">
                       {t('selector.gradeParts').replace('{count}', String(totalGradePartsCount))}
                     </span>
@@ -399,7 +399,7 @@ export function PartsSelector({ className }: PartsSelectorProps) {
 
       {/* Total summary */}
       {totalAllCount > 0 && (
-        <div className="flex items-center justify-between p-3 rounded-xl bg-primary/5 border border-primary/20">
+        <div className="flex items-center justify-between p-3 rounded-xl bg-surface-alt border border-border">
           <span className="text-sm text-text-secondary">
             {t('selector.totalParts').replace('{count}', String(totalAllCount))}
           </span>

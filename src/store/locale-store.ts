@@ -1,6 +1,7 @@
 'use client';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { STORAGE_KEYS } from '@/constants/storage-keys';
 
 export type Locale = 'ko' | 'en' | 'zh' | 'ja';
 
@@ -28,7 +29,7 @@ export const useLocaleStore = create<LocaleStore>()(
       },
     }),
     {
-      name: 'bdx-locale',
+      name: STORAGE_KEYS.locale,
       storage: createJSONStorage(() =>
         typeof window !== 'undefined'
           ? localStorage

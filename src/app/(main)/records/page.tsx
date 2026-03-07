@@ -1,13 +1,11 @@
 'use client';
 
 import { useState, useMemo, useRef } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Card, Badge, Input, BentoGrid, BentoCard } from '@/components/ui';
-import { cn } from '@/lib/cn';
-import { formatPrice } from '@/lib/format';
-import { DESIGN_SCOPE_LABEL, BODY_PART_LABEL, EXPRESSION_LABEL, getDesignerName } from '@/lib/labels';
+import { Card, Input } from '@/components/ui';
 import { useRecordsStore } from '@/store/records-store';
 import { MOCK_CONSULTATIONS } from '@/data/mock-consultations';
 import { useAuthStore } from '@/store/auth-store';
@@ -19,6 +17,14 @@ import { MonthCalendar } from '@/components/calendar/MonthCalendar';
 import { DayReservationList } from '@/components/calendar/DayReservationList';
 import { TimeGridCalendar } from '@/components/calendar/TimeGridCalendar';
 import type { TimeGridEvent } from '@/components/calendar/TimeGridCalendar';
+import { DESIGN_SCOPE_LABEL } from '@/lib/labels';
+import {
+  MainTabBar,
+  StatsCards,
+  ViewModeToggle,
+  ConsultationList,
+  PeriodFilter,
+} from '@/components/records';
 
 type MainTab = 'reservations' | 'consultations';
 type ViewMode = 'timegrid' | 'month';
@@ -108,13 +114,6 @@ function toTimeGridEvents(
   return events;
 }
 
-const FILTER_KEYS: { key: FilterPeriod; i18nKey: string }[] = [
-  { key: 'all', i18nKey: 'records.filterAll' },
-  { key: 'today', i18nKey: 'records.filterToday' },
-  { key: 'week', i18nKey: 'records.filterWeek' },
-  { key: 'month', i18nKey: 'records.filterMonth' },
-];
-
 export default function RecordsPage() {
   const router = useRouter();
   const t = useT();
@@ -146,7 +145,6 @@ export default function RecordsPage() {
     [additionalRecords],
   );
 
-  // Derive calendar hours from business hours
   const { calendarStartHour, calendarEndHour } = useMemo(() => {
     const openHours = shopSettings.businessHours
       .filter((bh) => bh.isOpen && bh.openTime && bh.closeTime)
@@ -235,10 +233,82 @@ export default function RecordsPage() {
     });
   }, [sorted, search, filter, role, activeDesignerId]);
 
-  const VIEW_OPTIONS: { key: ViewMode; label: string }[] = [
-    { key: 'timegrid', label: '주간' },
-    { key: 'month', label: '월간' },
-  ];
+  const handleEventClick = (ev: TimeGridEvent) => {
+    if (ev.type === 'consultation') {
+      router.push(`/records/${ev.originalId}`);
+    } else if (ev.type === 'reservation') {
+      setSelectedEvent(ev);
+      setEditMode(false);
+      const booking = allReservations.find((r) => r.id === ev.originalId);
+      setEditForm({
+        title: ev.title,
+        phone: ev.customerPhone ?? '',
+        startTime: ev.startTime,
+        requestNote: ev.requestNote ?? '',
+        referenceImages: booking?.referenceImageUrls ?? [],
+        language: (booking?.language ?? 'ko') as 'ko' | 'en' | 'zh' | 'ja',
+      });
+    }
+  };
+
+  const handleSaveReservation = () => {
+    if (!selectedEvent) return;
+    updateReservation(selectedEvent.originalId, {
+      customerName: editForm.title,
+      phone: editForm.phone,
+      reservationTime: editForm.startTime,
+      requestNote: editForm.requestNote,
+      referenceImageUrls: editForm.referenceImages.length > 0 ? editForm.referenceImages : undefined,
+      language: editForm.language,
+    });
+    setSelectedEvent(null);
+    setEditMode(false);
+  };
+
+  const handleStartConsultation = () => {
+    if (!selectedEvent) return;
+    setBookingId(selectedEvent.originalId);
+    const params = new URLSearchParams();
+    if (selectedEvent.title) params.set('name', selectedEvent.title);
+    if (selectedEvent.customerPhone) params.set('phone', selectedEvent.customerPhone);
+    if (selectedEvent.requestNote) params.set('note', selectedEvent.requestNote);
+    if (selectedEvent.language) params.set('lang', selectedEvent.language);
+    setSelectedEvent(null);
+    router.push(`/consultation/customer?${params.toString()}`);
+  };
+
+  const handleDeleteRecord = () => {
+    if (!selectedEvent) return;
+    if (confirm('이 기록을 삭제하시겠습니까?')) {
+      if (selectedEvent.type === 'reservation') {
+        removeReservation(selectedEvent.originalId);
+      } else {
+        removeRecord(selectedEvent.originalId);
+      }
+      setSelectedEvent(null);
+    }
+  };
+
+  const handleEditModeEnter = () => {
+    if (!selectedEvent) return;
+    setEditMode(true);
+    const booking = allReservations.find((r) => r.id === selectedEvent.originalId);
+    setEditForm({
+      title: selectedEvent.title,
+      phone: selectedEvent.customerPhone ?? '',
+      startTime: selectedEvent.startTime,
+      requestNote: selectedEvent.requestNote ?? '',
+      referenceImages: booking?.referenceImageUrls ?? [],
+      language: (booking?.language ?? 'ko') as 'ko' | 'en' | 'zh' | 'ja',
+    });
+  };
+
+  const periodLabels: Record<FilterPeriod, string> = {
+    all: t('records.filterAll'),
+    today: t('records.filterToday'),
+    week: t('records.filterWeek'),
+    month: t('records.filterMonth'),
+  };
 
   return (
     <div className="flex flex-col gap-4 pb-6">
@@ -248,109 +318,29 @@ export default function RecordsPage() {
         title="기록 관리"
         description={"예약 관리와 상담 기록을\n탭으로 나누어 편리하게 관리하세요."}
       />
-      {/* Header */}
+
       <div className="px-4 md:px-0 pt-4">
         <h1 className="text-2xl font-bold text-text">{t('nav.records')}</h1>
       </div>
 
-      {/* Main Tab UI */}
-      <div className="px-4 md:px-0">
-        <div className="flex border-b border-border">
-          <button
-            onClick={() => setMainTab('reservations')}
-            className={cn(
-              'flex-1 py-3 text-sm font-semibold text-center transition-colors relative',
-              mainTab === 'reservations' ? 'text-primary' : 'text-text-secondary hover:text-text',
-            )}
-          >
-            예약 관리
-            {mainTab === 'reservations' && (
-              <motion.div layoutId="mainTabIndicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-            )}
-          </button>
-          <button
-            onClick={() => setMainTab('consultations')}
-            className={cn(
-              'flex-1 py-3 text-sm font-semibold text-center transition-colors relative',
-              mainTab === 'consultations' ? 'text-primary' : 'text-text-secondary hover:text-text',
-            )}
-          >
-            상담 기록
-            {mainTab === 'consultations' && (
-              <motion.div layoutId="mainTabIndicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-            )}
-          </button>
-        </div>
-      </div>
+      <MainTabBar activeTab={mainTab} onTabChange={setMainTab} />
 
-      {/* ════════ 예약 관리 탭 ════════ */}
       {mainTab === 'reservations' && (
         <>
-          {/* Stats — 2 cols */}
-          <BentoGrid cols={2} className="px-4 md:px-0">
-            <BentoCard span="1x1" variant="accent">
-              <div className="p-4 flex flex-col items-center justify-center h-full">
-                <span className="text-2xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                  {weekStats.weekCount}
-                </span>
-                <span className="text-xs text-text-secondary mt-1">이번 주 예약</span>
-              </div>
-            </BentoCard>
-            <BentoCard span="1x1">
-              <div className="p-4 flex flex-col items-center justify-center h-full">
-                <span className="text-2xl font-extrabold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                  {weekStats.todayRemainingCount}
-                </span>
-                <span className="text-xs text-text-secondary mt-1">오늘 남은 예약</span>
-              </div>
-            </BentoCard>
-          </BentoGrid>
+          <StatsCards
+            primaryValue={weekStats.weekCount}
+            primaryLabel="이번 주 예약"
+            secondaryValue={weekStats.todayRemainingCount}
+            secondaryLabel="오늘 남은 예약"
+          />
 
-          {/* View toggle + reservation filter */}
-          <div className="flex items-center justify-between px-4 md:px-0">
-            <div className="flex gap-0.5 p-1 rounded-full bg-surface-alt border border-border">
-              {VIEW_OPTIONS.map((opt) => (
-                <button
-                  key={opt.key}
-                  onClick={() => setViewMode(opt.key)}
-                  className={cn(
-                    'px-4 py-1.5 rounded-full text-xs font-semibold transition-all',
-                    viewMode === opt.key
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'text-text-secondary hover:text-text',
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-0.5 p-1 rounded-full bg-surface-alt border border-border">
-              <button
-                onClick={() => setReservationFilter('all')}
-                className={cn(
-                  'px-3 py-1.5 rounded-full text-xs font-semibold transition-all',
-                  reservationFilter === 'all'
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'text-text-secondary hover:text-text',
-                )}
-              >
-                전체
-              </button>
-              <button
-                onClick={() => setReservationFilter('mine')}
-                className={cn(
-                  'px-3 py-1.5 rounded-full text-xs font-semibold transition-all',
-                  reservationFilter === 'mine'
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'text-text-secondary hover:text-text',
-                )}
-              >
-                내 예약
-              </button>
-            </div>
-          </div>
+          <ViewModeToggle
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            reservationFilter={reservationFilter}
+            onReservationFilterChange={setReservationFilter}
+          />
 
-          {/* Timegrid View */}
           {viewMode === 'timegrid' && (
             <div className="px-4 md:px-0">
               <TimeGridCalendar
@@ -359,28 +349,11 @@ export default function RecordsPage() {
                 onWeekChange={setWeekStartDate}
                 startHour={calendarStartHour}
                 endHour={calendarEndHour}
-                onEventClick={(ev) => {
-                  if (ev.type === 'consultation') {
-                    router.push(`/records/${ev.originalId}`);
-                  } else if (ev.type === 'reservation') {
-                    setSelectedEvent(ev);
-                    setEditMode(false);
-                    const booking = allReservations.find((r) => r.id === ev.originalId);
-                    setEditForm({
-                      title: ev.title,
-                      phone: ev.customerPhone ?? '',
-                      startTime: ev.startTime,
-                      requestNote: ev.requestNote ?? '',
-                      referenceImages: booking?.referenceImageUrls ?? [],
-                      language: (booking?.language ?? 'ko') as 'ko' | 'en' | 'zh' | 'ja',
-                    });
-                  }
-                }}
+                onEventClick={handleEventClick}
               />
             </div>
           )}
 
-          {/* Month View */}
           {viewMode === 'month' && (
             <div className="flex flex-col gap-4 px-4 md:px-0">
               <Card className="p-4">
@@ -396,30 +369,15 @@ export default function RecordsPage() {
         </>
       )}
 
-      {/* ════════ 상담 기록 탭 ════════ */}
       {mainTab === 'consultations' && (
         <>
-          {/* Stats — 2 cols */}
-          <BentoGrid cols={2} className="px-4 md:px-0">
-            <BentoCard span="1x1" variant="accent">
-              <div className="p-4 flex flex-col items-center justify-center h-full">
-                <span className="text-2xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                  {allConsultations.length}
-                </span>
-                <span className="text-xs text-text-secondary mt-1">총 상담 기록</span>
-              </div>
-            </BentoCard>
-            <BentoCard span="1x1">
-              <div className="p-4 flex flex-col items-center justify-center h-full">
-                <span className="text-2xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                  {todayConsultations}건
-                </span>
-                <span className="text-xs text-text-secondary mt-1">오늘 상담</span>
-              </div>
-            </BentoCard>
-          </BentoGrid>
+          <StatsCards
+            primaryValue={allConsultations.length}
+            primaryLabel="총 상담 기록"
+            secondaryValue={`${todayConsultations}건`}
+            secondaryLabel="오늘 상담"
+          />
 
-          {/* Search */}
           <div className="px-4 md:px-0">
             <Input
               placeholder={t('records.searchPlaceholder')}
@@ -428,84 +386,21 @@ export default function RecordsPage() {
             />
           </div>
 
-          {/* Period filter */}
-          <div className="flex gap-2 overflow-x-auto px-4 md:px-0 pb-1">
-            {FILTER_KEYS.map(({ key, i18nKey }) => (
-              <button
-                key={key}
-                onClick={() => setFilter(key)}
-                className={cn(
-                  'flex-shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-all',
-                  filter === key
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'bg-surface border border-border text-text-secondary',
-                )}
-              >
-                {t(i18nKey)}
-              </button>
-            ))}
-          </div>
+          <PeriodFilter
+            filter={filter}
+            onFilterChange={setFilter}
+            labels={periodLabels}
+          />
 
-          {/* Consultation list */}
-          <div className="rounded-xl border border-border overflow-hidden mx-4 md:mx-0">
-            {listFiltered.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center bg-surface">
-                <svg className="mb-3 h-10 w-10 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <p className="text-base font-medium text-text-secondary">{t('records.noResults')}</p>
-                <p className="mt-1 text-sm text-text-muted">{t('records.noResultsHint')}</p>
-              </div>
-            ) : (
-              <div className="flex flex-col divide-y divide-border bg-surface">
-                {listFiltered.map((record) => {
-                  const c = record.consultation;
-                  const timeStr = record.createdAt.split('T')[1]?.substring(0, 5) ?? '';
-                  return (
-                    <button
-                      key={record.id}
-                      onClick={() => router.push(`/records/${record.id}`)}
-                      className="flex flex-col gap-1.5 px-4 py-3 text-left hover:bg-surface-alt active:bg-surface-alt transition-colors"
-                    >
-                      {/* 1행: 시간 + 고객명 + 디자이너 + 금액 */}
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center rounded px-1 py-0.5 text-[9px] font-bold bg-primary/10 text-primary shrink-0">상담</span>
-                        <span className="text-xs font-semibold text-primary shrink-0" style={{ fontVariantNumeric: 'tabular-nums' }}>{timeStr}</span>
-                        <span className="text-sm font-semibold text-text truncate">{c.customerName}</span>
-                        <span className="text-xs text-text-muted shrink-0">· {getDesignerName(record.designerId)}</span>
-                        <span className="ml-auto text-sm font-bold text-primary shrink-0" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                          {formatPrice(record.finalPrice)}
-                        </span>
-                      </div>
-                      {/* 2행: 시술 부위 + 디자인 + 기법 태그 */}
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="inline-flex items-center rounded-md bg-surface-alt px-1.5 py-0.5 text-[10px] font-semibold text-text-secondary">
-                          {BODY_PART_LABEL[c.bodyPart] ?? c.bodyPart}
-                        </span>
-                        <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-                          {DESIGN_SCOPE_LABEL[c.designScope] ?? c.designScope}
-                        </span>
-                        {c.expressions.map((exp) => (
-                          <span key={exp} className="inline-flex items-center rounded-md bg-surface-alt px-1.5 py-0.5 text-[10px] text-text-muted">
-                            {EXPRESSION_LABEL[exp] ?? exp}
-                          </span>
-                        ))}
-                        {c.hasParts && c.partsSelections.length > 0 && (
-                          <span className="inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] text-amber-700">
-                            파츠 {c.partsSelections.reduce((sum, p) => sum + p.quantity, 0)}개
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <ConsultationList
+            records={listFiltered}
+            onRecordClick={(id) => router.push(`/records/${id}`)}
+            emptyTitle={t('records.noResults')}
+            emptyDescription={t('records.noResultsHint')}
+          />
         </>
       )}
 
-      {/* ── 예약 상세 모달 ── */}
       <AnimatePresence>
         {selectedEvent && (
           <>
@@ -521,7 +416,7 @@ export default function RecordsPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 60 }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-background px-5 pb-8 pt-5 md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-1/2 md:-translate-x-1/2 md:right-auto md:w-full md:max-w-lg md:rounded-3xl md:max-h-[85vh] md:overflow-y-auto"
+              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-background px-5 pb-8 pt-5 md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-1/2 md:-translate-x-1/2 md:right-auto md:w-full md:max-w-lg md:rounded-2xl md:max-h-[85vh] md:overflow-y-auto"
             >
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-base font-bold text-text">
@@ -544,7 +439,7 @@ export default function RecordsPage() {
                       <input
                         value={editForm.title}
                         onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
-                        className="rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/40"
+                        className="rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
@@ -552,7 +447,7 @@ export default function RecordsPage() {
                       <input
                         value={editForm.phone}
                         onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))}
-                        className="rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/40"
+                        className="rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                         placeholder="010-0000-0000"
                       />
                     </div>
@@ -562,7 +457,7 @@ export default function RecordsPage() {
                         type="time"
                         value={editForm.startTime}
                         onChange={(e) => setEditForm((f) => ({ ...f, startTime: e.target.value }))}
-                        className="rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/40"
+                        className="rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
@@ -571,7 +466,7 @@ export default function RecordsPage() {
                         value={editForm.requestNote}
                         onChange={(e) => setEditForm((f) => ({ ...f, requestNote: e.target.value }))}
                         rows={2}
-                        className="rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                        className="rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 resize-none"
                         placeholder="요청사항이나 메모를 입력하세요"
                       />
                     </div>
@@ -580,7 +475,7 @@ export default function RecordsPage() {
                       <select
                         value={editForm.language}
                         onChange={(e) => setEditForm((f) => ({ ...f, language: e.target.value as 'ko' | 'en' | 'zh' | 'ja' }))}
-                        className="rounded-xl border border-border bg-surface px-3 py-2.5 text-sm font-medium text-text focus:outline-none focus:ring-2 focus:ring-primary/40"
+                        className="rounded-xl border border-border bg-surface px-3 py-2.5 text-sm font-medium text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                       >
                         <option value="ko">한국어</option>
                         <option value="en">English</option>
@@ -593,7 +488,7 @@ export default function RecordsPage() {
                       <div className="flex gap-2 flex-wrap">
                         {editForm.referenceImages.map((url, i) => (
                           <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-border flex-shrink-0">
-                            <img src={url} alt="" className="w-full h-full object-cover" />
+                            <Image src={url} alt="" fill unoptimized className="object-cover" />
                             <button
                               type="button"
                               onClick={() => setEditForm((f) => ({ ...f, referenceImages: f.referenceImages.filter((_, idx) => idx !== i) }))}
@@ -638,18 +533,7 @@ export default function RecordsPage() {
                     </div>
                     <div className="mt-3 flex gap-2">
                       <button
-                        onClick={() => {
-                          updateReservation(selectedEvent.originalId, {
-                            customerName: editForm.title,
-                            phone: editForm.phone,
-                            reservationTime: editForm.startTime,
-                            requestNote: editForm.requestNote,
-                            referenceImageUrls: editForm.referenceImages.length > 0 ? editForm.referenceImages : undefined,
-                            language: editForm.language,
-                          });
-                          setSelectedEvent(null);
-                          setEditMode(false);
-                        }}
+                        onClick={handleSaveReservation}
                         className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
                       >
                         저장
@@ -700,34 +584,14 @@ export default function RecordsPage() {
                         </span>
                       ) : (
                         <button
-                          onClick={() => {
-                            setBookingId(selectedEvent.originalId);
-                            const params = new URLSearchParams();
-                            if (selectedEvent.title) params.set('name', selectedEvent.title);
-                            if (selectedEvent.customerPhone) params.set('phone', selectedEvent.customerPhone);
-                            if (selectedEvent.requestNote) params.set('note', selectedEvent.requestNote);
-                            if (selectedEvent.language) params.set('lang', selectedEvent.language);
-                            setSelectedEvent(null);
-                            router.push(`/consultation/customer?${params.toString()}`);
-                          }}
+                          onClick={handleStartConsultation}
                           className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
                         >
                           상담 시작
                         </button>
                       )}
                       <button
-                        onClick={() => {
-                          setEditMode(true);
-                          const booking = allReservations.find((r) => r.id === selectedEvent.originalId);
-                          setEditForm({
-                            title: selectedEvent.title,
-                            phone: selectedEvent.customerPhone ?? '',
-                            startTime: selectedEvent.startTime,
-                            requestNote: selectedEvent.requestNote ?? '',
-                            referenceImages: booking?.referenceImageUrls ?? [],
-                            language: (booking?.language ?? 'ko') as 'ko' | 'en' | 'zh' | 'ja',
-                          });
-                        }}
+                        onClick={handleEditModeEnter}
                         className="rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
                       >
                         수정
@@ -740,16 +604,7 @@ export default function RecordsPage() {
                       </button>
                     </div>
                     <button
-                      onClick={() => {
-                        if (confirm('이 기록을 삭제하시겠습니까?')) {
-                          if (selectedEvent.type === 'reservation') {
-                            removeReservation(selectedEvent.originalId);
-                          } else {
-                            removeRecord(selectedEvent.originalId);
-                          }
-                          setSelectedEvent(null);
-                        }
-                      }}
+                      onClick={handleDeleteRecord}
                       className="mt-2 w-full rounded-xl py-2.5 text-xs font-medium text-error hover:bg-error/10 transition-colors"
                     >
                       삭제

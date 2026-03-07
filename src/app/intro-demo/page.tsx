@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { cn } from '@/lib/cn';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 const N = {
@@ -673,7 +672,7 @@ export default function IntroDemoPage() {
             <Callout icon="🔐" type="blue">
               <strong>로그인 방법</strong>
               <br />
-              잠금 화면(<UrlBadge path="/auth/lock" />) 접속 → 역할 선택 → 선생님 선택 →
+              잠금 화면(<UrlBadge path="/lock" />) 접속 → 역할 선택 → 선생님 선택 →
               PIN 입력 (아래 표 참고)
             </Callout>
 
@@ -741,19 +740,19 @@ export default function IntroDemoPage() {
             <H3 id="screens-splash">3-1. 스플래시 &amp; 첫 진입 화면</H3>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
               <span style={{ fontSize: '13px', color: N.textSecondary }}>URL</span>
-              <UrlBadge path="/auth/splash" />
+              <UrlBadge path="/splash" />
             </div>
             <Para>
-              앱에 처음 접속하면 BDX 로고와 "상담을 정리하는 가장 쉬운 방법" 메시지가 표시되는
+              앱에 처음 접속하면 BDX 로고와 &quot;상담을 정리하는 가장 쉬운 방법&quot; 메시지가 표시되는
               스플래시 화면이 나타납니다. 5초 후 자동으로 다음 화면으로 전환됩니다.
             </Para>
             <Table
               headers={['화면', 'URL']}
               rows={[
-                ['스플래시', <UrlBadge key="s1" path="/auth/splash" />],
-                ['인트로 슬라이드', <UrlBadge key="s2" path="/auth/intro" />],
-                ['로그인 / 회원가입', <UrlBadge key="s3" path="/auth/login" />],
-                ['잠금 화면 (데모 시작점)', <UrlBadge key="s4" path="/auth/lock" />],
+                ['스플래시', <UrlBadge key="s1" path="/splash" />],
+                ['인트로 슬라이드', <UrlBadge key="s2" path="/intro" />],
+                ['로그인 / 회원가입', <UrlBadge key="s3" path="/login" />],
+                ['잠금 화면 (데모 시작점)', <UrlBadge key="s4" path="/lock" />],
               ]}
             />
 
@@ -952,10 +951,10 @@ export default function IntroDemoPage() {
             <Table
               headers={['화면', 'URL']}
               rows={[
-                ['스플래시', <UrlBadge key="a1" path="/auth/splash" />],
-                ['인트로 슬라이드', <UrlBadge key="a2" path="/auth/intro" />],
-                ['로그인 / 회원가입', <UrlBadge key="a3" path="/auth/login" />],
-                ['잠금 화면 (데모 시작점)', <UrlBadge key="a4" path="/auth/lock" />],
+                ['스플래시', <UrlBadge key="a1" path="/splash" />],
+                ['인트로 슬라이드', <UrlBadge key="a2" path="/intro" />],
+                ['로그인 / 회원가입', <UrlBadge key="a3" path="/login" />],
+                ['잠금 화면 (데모 시작점)', <UrlBadge key="a4" path="/lock" />],
               ]}
             />
 

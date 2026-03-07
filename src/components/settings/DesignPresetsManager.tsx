@@ -231,7 +231,7 @@ function PresetForm({
 }
 
 export function DesignPresetsManager() {
-  const { designPresets, customParts, addDesignPreset, updateDesignPreset, removeDesignPreset } =
+  const { designPresets, addDesignPreset, updateDesignPreset, removeDesignPreset } =
     usePartsStore();
 
   const [showAddForm, setShowAddForm] = useState(false);

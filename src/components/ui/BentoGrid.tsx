@@ -76,16 +76,16 @@ export function BentoCard({
   return (
     <motion.div
       variants={itemVariants}
-      whileHover={isInteractive ? { y: -4, scale: 1.015, transition: { duration: 0.2 } } : undefined}
+      whileHover={isInteractive ? { scale: 1.01, transition: { duration: 0.15 } } : undefined}
       whileTap={isInteractive ? { scale: 0.98, transition: { duration: 0.1 } } : undefined}
       onClick={onClick}
       className={cn(
-        'rounded-3xl overflow-hidden transition-shadow duration-300',
+        'rounded-2xl overflow-hidden transition-colors duration-150',
         SPAN_CLASSES[span],
-        variant === 'default' && 'bg-surface-elevated border border-border shadow-[var(--shadow-bento)] hover:shadow-[var(--shadow-bento-hover)]',
-        variant === 'hero' && 'bg-gradient-to-br from-primary to-primary-dark text-white shadow-[var(--shadow-bento-hero)]',
-        variant === 'accent' && 'bg-primary/10 border border-primary/20',
-        variant === 'glass' && 'bg-surface/80 backdrop-blur-xl border border-border/50 shadow-[var(--shadow-bento)]',
+        variant === 'default' && 'bg-surface border border-border hover:bg-surface-alt',
+        variant === 'hero' && 'bg-primary text-white',
+        variant === 'accent' && 'bg-primary-light border border-primary/10',
+        variant === 'glass' && 'bg-surface/90 backdrop-blur-sm border border-border',
         isInteractive && 'cursor-pointer',
         className,
       )}

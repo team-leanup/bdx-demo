@@ -30,7 +30,7 @@ export function ColorSelector({ className }: ColorSelectorProps) {
     <div className={cn('flex flex-col gap-3', className)}>
       <div className="flex items-center gap-2 mb-1">
         {/* Paint palette icon */}
-        <div className="w-7 h-7 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+        <div className="w-7 h-7 rounded-xl bg-surface-alt flex items-center justify-center flex-shrink-0">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-primary">
             <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
             <circle cx="8" cy="9" r="1.5" fill="currentColor" />
@@ -69,7 +69,7 @@ export function ColorSelector({ className }: ColorSelectorProps) {
               key={extraColorCount}
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="text-base font-bold text-primary bg-primary/10 px-3 py-1 rounded-full"
+              className="text-base font-bold text-primary bg-surface-alt border border-primary px-3 py-1 rounded-full"
             >
               +{formatPrice(extraColorCount * EXTRA_COLOR_PRICE)}
             </motion.span>
@@ -83,7 +83,7 @@ export function ColorSelector({ className }: ColorSelectorProps) {
             whileTap={{ scale: 0.9 }}
             onClick={handleDecrement}
             disabled={extraColorCount <= 0}
-            className="w-12 h-12 rounded-2xl bg-surface-alt border-2 border-border flex items-center justify-center text-xl font-bold text-text disabled:opacity-30 disabled:cursor-not-allowed hover:border-primary/50 hover:bg-primary/5 hover:text-primary transition-all duration-200"
+            className="w-12 h-12 rounded-2xl bg-surface-alt border-2 border-border flex items-center justify-center text-xl font-bold text-text disabled:opacity-30 disabled:cursor-not-allowed hover:border-gray-300 hover:bg-white hover:text-primary transition-all duration-200"
           >
             −
           </motion.button>
@@ -108,7 +108,7 @@ export function ColorSelector({ className }: ColorSelectorProps) {
             whileTap={{ scale: 0.9 }}
             onClick={handleIncrement}
             disabled={extraColorCount >= 10}
-            className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-xl font-bold text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/90 active:bg-primary/80 shadow-sm shadow-primary/30 transition-all duration-200"
+            className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-xl font-bold text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/90 active:bg-primary/80 shadow-sm transition-all duration-200"
           >
             +
           </motion.button>
