@@ -87,6 +87,20 @@ export function formatTime(timeStr: string): string {
 }
 
 /**
+ * 날짜를 한국어 일간 스케줄 레이블로 포맷팅
+ * @example formatDayLabelKo("2026-03-02") → "3월 2일 (월요일)"
+ */
+export function formatDayLabelKo(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d.getTime())) return dateStr;
+  const WEEKDAYS = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+  const month = d.getMonth() + 1;
+  const day = d.getDate();
+  const weekday = WEEKDAYS[d.getDay()];
+  return `${month}월 ${day}일 (${weekday})`;
+}
+
+/**
  * 전화번호를 한국 형식으로 포맷팅
  * @example formatPhone("01012345678") → "010-1234-5678"
  */

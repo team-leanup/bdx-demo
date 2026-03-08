@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Card, Input } from '@/components/ui';
@@ -12,12 +12,15 @@ import { useAuthStore } from '@/store/auth-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { useAppStore } from '@/store/app-store';
 import { useConsultationStore } from '@/store/consultation-store';
+import { useCustomerStore } from '@/store/customer-store';
 import { useT } from '@/lib/i18n';
 import { MonthCalendar } from '@/components/calendar/MonthCalendar';
 import { DayReservationList } from '@/components/calendar/DayReservationList';
-import { TimeGridCalendar } from '@/components/calendar/TimeGridCalendar';
+import { WeekCalendar } from '@/components/calendar/WeekCalendar';
+import { DesignerDayGridCalendar } from '@/components/calendar/DesignerDayGridCalendar';
 import type { TimeGridEvent } from '@/components/calendar/TimeGridCalendar';
 import { DESIGN_SCOPE_LABEL } from '@/lib/labels';
+import { MOCK_DESIGNERS } from '@/data/mock-shop';
 import {
   MainTabBar,
   StatsCards,
@@ -27,7 +30,7 @@ import {
 } from '@/components/records';
 
 type MainTab = 'reservations' | 'consultations';
-type ViewMode = 'timegrid' | 'month';
+type ViewMode = 'day' | 'month';
 type FilterPeriod = 'all' | 'today' | 'week' | 'month';
 type ReservationFilter = 'all' | 'mine';
 
@@ -83,6 +86,8 @@ function toTimeGridEvents(
       language: r.language,
       designerId: r.designerId,
       originalId: r.id,
+      customerId: r.customerId,
+      serviceLabel: r.serviceLabel,
     });
   }
 
@@ -116,9 +121,10 @@ function toTimeGridEvents(
 
 export default function RecordsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const t = useT();
   const [mainTab, setMainTab] = useState<MainTab>('reservations');
-  const [viewMode, setViewMode] = useState<ViewMode>('timegrid');
+  const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterPeriod>('all');
   const [reservationFilter, setReservationFilter] = useState<ReservationFilter>('all');
@@ -131,6 +137,7 @@ export default function RecordsPage() {
   const editPhotoRef = useRef<HTMLInputElement>(null);
 
   const setBookingId = useConsultationStore((s) => s.setBookingId);
+  const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
 
   const role = useAuthStore((s) => s.role);
   const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
@@ -303,12 +310,39 @@ export default function RecordsPage() {
     });
   };
 
+  const handleEventMove = (reservationId: string, updates: { reservationTime: string; designerId?: string }): void => {
+    updateReservation(reservationId, updates);
+  };
+
   const periodLabels: Record<FilterPeriod, string> = {
     all: t('records.filterAll'),
     today: t('records.filterToday'),
     week: t('records.filterWeek'),
     month: t('records.filterMonth'),
   };
+
+  useEffect(() => {
+    const legacyView = searchParams.get('view');
+    if (!legacyView) return;
+
+    switch (legacyView) {
+      case 'list':
+        setMainTab('consultations');
+        break;
+      case 'month':
+        setMainTab('reservations');
+        setViewMode('month');
+        break;
+      case 'day':
+      case 'daily':
+      case 'timegrid':
+      case 'week':
+      default:
+        setMainTab('reservations');
+        setViewMode('day');
+        break;
+    }
+  }, [searchParams]);
 
   return (
     <div className="flex flex-col gap-4 pb-6">
@@ -341,15 +375,25 @@ export default function RecordsPage() {
             onReservationFilterChange={setReservationFilter}
           />
 
-          {viewMode === 'timegrid' && (
-            <div className="px-4 md:px-0">
-              <TimeGridCalendar
+          {viewMode === 'day' && (
+            <div className="flex flex-col gap-4 px-4 md:px-0">
+              <Card className="p-3">
+                <WeekCalendar
+                  selectedDate={selectedDate}
+                  onSelectDate={setSelectedDate}
+                  reservations={filteredReservations}
+                />
+              </Card>
+              <DesignerDayGridCalendar
+                date={selectedDate}
                 events={timeGridEvents}
-                weekStartDate={weekStartDate}
-                onWeekChange={setWeekStartDate}
+                designers={MOCK_DESIGNERS.filter((d) => d.isActive).map((d) => ({ id: d.id, name: d.name }))}
                 startHour={calendarStartHour}
                 endHour={calendarEndHour}
                 onEventClick={handleEventClick}
+                onEventMove={handleEventMove}
+                role={role}
+                activeDesignerId={activeDesignerId}
               />
             </div>
           )}
@@ -576,6 +620,37 @@ export default function RecordsPage() {
                       <div className="mt-2 rounded-xl bg-surface-alt p-3">
                         <p className="text-xs text-text-secondary">{selectedEvent.requestNote}</p>
                       </div>
+                    )}
+                    {selectedEvent.customerId && (() => {
+                      const pinnedTags = getPinnedTags(selectedEvent.customerId!);
+                      if (pinnedTags.length === 0) return null;
+                      return (
+                        <div className="mt-2 rounded-xl border border-red-200 bg-red-50 p-3">
+                          <p className="text-[10px] font-bold text-red-700 mb-1.5">주의 / 특이사항</p>
+                          <div className="flex flex-wrap gap-1">
+                            {pinnedTags.map((tag) => (
+                              <span
+                                key={tag.id}
+                                className={
+                                  tag.accent === 'rose'
+                                    ? 'text-[10px] px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200 font-medium'
+                                    : 'text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium'
+                                }
+                              >
+                                {tag.value}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    {selectedEvent.customerId && (
+                      <button
+                        onClick={() => router.push(`/customers/${selectedEvent.customerId}`)}
+                        className="mt-2 w-full rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+                      >
+                        고객 상세 보기
+                      </button>
                     )}
                     <div className="mt-3 flex gap-2">
                       {selectedEvent.status === 'completed' ? (

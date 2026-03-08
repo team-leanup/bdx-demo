@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/cn';
 
-type ViewMode = 'timegrid' | 'month';
+type ViewMode = 'day' | 'month';
 type ReservationFilter = 'all' | 'mine';
 
 interface ViewModeToggleProps {
@@ -10,7 +10,7 @@ interface ViewModeToggleProps {
   onViewModeChange: (mode: ViewMode) => void;
   reservationFilter: ReservationFilter;
   onReservationFilterChange: (filter: ReservationFilter) => void;
-  viewLabels?: { timegrid: string; month: string };
+  viewLabels?: { day: string; month: string };
   filterLabels?: { all: string; mine: string };
 }
 
@@ -19,11 +19,11 @@ export function ViewModeToggle({
   onViewModeChange,
   reservationFilter,
   onReservationFilterChange,
-  viewLabels = { timegrid: '주간', month: '월간' },
+  viewLabels = { day: '일간', month: '월간' },
   filterLabels = { all: '전체', mine: '내 예약' },
 }: ViewModeToggleProps): React.ReactElement {
   const VIEW_OPTIONS: { key: ViewMode; label: string }[] = [
-    { key: 'timegrid', label: viewLabels.timegrid },
+    { key: 'day', label: viewLabels.day },
     { key: 'month', label: viewLabels.month },
   ];
 

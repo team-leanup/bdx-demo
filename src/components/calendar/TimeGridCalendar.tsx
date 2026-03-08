@@ -19,6 +19,8 @@ export interface TimeGridEvent {
   language?: string;
   designerId?: string;
   originalId: string;
+  customerId?: string;
+  serviceLabel?: string;
   // Consultation details
   designScope?: string;
   bodyPart?: string;
