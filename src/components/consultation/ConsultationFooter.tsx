@@ -30,18 +30,20 @@ export function ConsultationFooter({
   const consultation = useConsultationStore((s) => s.consultation);
   const breakdown = calculatePrice(consultation);
   const label = nextLabel ?? t('common.next');
+  const shouldShowEstimated = showEstimated !== false;
 
   return (
     <footer
       className={cn(
         'fixed bottom-0 left-0 right-0 z-30 bg-surface border-t border-border',
         'md:static md:flex-shrink-0',
-        'flex items-center justify-between px-4 md:px-8 py-3 gap-4',
+        'flex items-center px-4 md:px-8 py-3 gap-4',
+        shouldShowEstimated ? 'justify-between' : 'justify-center',
         'safe-bottom',
         className,
       )}
     >
-      {showEstimated !== false && (
+      {shouldShowEstimated && (
         <div className="flex flex-col gap-0.5">
           <span className="text-xs text-text-muted">
             {t('consultation.estimatedAmount')}
@@ -58,7 +60,9 @@ export function ConsultationFooter({
         onClick={onNext}
         disabled={disabled}
         loading={loading}
-        className="flex-1 max-w-48 md:max-w-xs"
+        className={cn(
+          shouldShowEstimated ? 'flex-1 max-w-48 md:max-w-xs' : 'w-full max-w-48 md:max-w-xs',
+        )}
       >
         {label}
       </Button>
