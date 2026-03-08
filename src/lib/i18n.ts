@@ -439,6 +439,8 @@ const translations = {
       customerMemo: '고객 메모',
       memoPlaceholder: '특이사항을 입력하세요',
       autoSaveHint: '저장 시 고객 기록에 자동 추가',
+      additionalCharge: '추가 금액',
+      totalAmount: '최종 금액',
     },
     selector: {
       bodyPart: '시술 부위',
@@ -1175,6 +1177,8 @@ const translations = {
       customerMemo: 'Customer Memo',
       memoPlaceholder: 'Enter special notes',
       autoSaveHint: 'Auto-saved to customer record',
+      additionalCharge: 'Additional Charge',
+      totalAmount: 'Total Amount',
     },
     selector: {
       bodyPart: 'Body Part',
@@ -1910,6 +1914,8 @@ const translations = {
       customerMemo: '客户备注',
       memoPlaceholder: '请输入特殊事项',
       autoSaveHint: '保存时自动添加到客户记录',
+      additionalCharge: '追加金额',
+      totalAmount: '最终金额',
     },
     selector: {
       bodyPart: '施术部位',
@@ -2645,6 +2651,8 @@ const translations = {
       customerMemo: 'お客様メモ',
       memoPlaceholder: '特記事項を入力してください',
       autoSaveHint: '保存時に顧客記録に自動追加',
+      additionalCharge: '追加金額',
+      totalAmount: '最終金額',
     },
     selector: {
       bodyPart: '施術部位',

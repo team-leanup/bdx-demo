@@ -195,38 +195,26 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
         </div>
       </div>
 
-      {/* 히어로 카드: 최종금액 + 예상시간 */}
-      <div className="bg-white border border-border rounded-2xl p-5">
-        <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">
-          {t('summary.finalPayment')}
-          {locale !== 'ko' && (
-            <span className="ml-1 text-[10px] text-text-muted">{tKo('summary.finalPayment')}</span>
-          )}
-        </p>
-        <p className="text-5xl font-bold text-primary mb-3 tracking-tight">
-          {formatPrice(breakdown.finalPrice)}
-        </p>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <svg className="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-base font-semibold text-text">
-              {t('summary.approxTime').replace('{time}', formatMinutes(minutes, locale))}
-              {locale !== 'ko' && (
-                <span className="ml-1 text-xs text-text-muted">{tKo('summary.approxTime').replace('{time}', formatMinutes(minutes, 'ko'))}</span>
-              )}
-            </span>
-          </div>
-          {designer && (
-            <div className="flex items-center gap-1.5">
-              <div className="w-5 h-5 rounded-full bg-surface-alt flex items-center justify-center">
-                <span className="text-[10px] font-bold text-text-secondary">{designer.name.slice(0, 1)}</span>
-              </div>
-              <span className="text-sm text-text-secondary">{designer.name}{t('common.designerSuffix')}</span>
-            </div>
-          )}
+      <div className="flex items-center gap-4 bg-white border border-border rounded-2xl px-4 py-3">
+        <div className="flex items-center gap-1.5">
+          <svg className="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="text-sm font-semibold text-text">
+            {t('summary.approxTime').replace('{time}', formatMinutes(minutes, locale))}
+            {locale !== 'ko' && (
+              <span className="ml-1 text-xs text-text-muted">{tKo('summary.approxTime').replace('{time}', formatMinutes(minutes, 'ko'))}</span>
+            )}
+          </span>
         </div>
+        {designer && (
+          <div className="flex items-center gap-1.5">
+            <div className="w-5 h-5 rounded-full bg-surface-alt flex items-center justify-center">
+              <span className="text-[10px] font-bold text-text-secondary">{designer.name.slice(0, 1)}</span>
+            </div>
+            <span className="text-sm text-text-secondary">{designer.name}{t('common.designerSuffix')}</span>
+          </div>
+        )}
       </div>
 
       {/* 1. 가격 상세 */}

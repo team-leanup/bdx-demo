@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useConsultationStore } from '@/store/consultation-store';
@@ -12,6 +12,7 @@ import { useT, useLocale, useKo } from '@/lib/i18n';
 import { useLocaleStore } from '@/store/locale-store';
 import { calculatePrice } from '@/lib/price-calculator';
 import { estimateTime } from '@/lib/time-calculator';
+import { formatPrice, formatPriceNumber } from '@/lib/format';
 import { MOCK_CUSTOMERS } from '@/data/mock-customers';
 import { useRecordsStore } from '@/store/records-store';
 import { useReservationStore } from '@/store/reservation-store';
@@ -29,6 +30,11 @@ export default function SummaryPage() {
   const [discountOpen, setDiscountOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [customerMemo, setCustomerMemo] = useState('');
+  const [additionalCharge, setAdditionalCharge] = useState(0);
+  const [additionalChargeInput, setAdditionalChargeInput] = useState('');
+
+  const breakdown = useMemo(() => calculatePrice(consultation), [consultation]);
+  const adjustedFinalPrice = breakdown.finalPrice + additionalCharge;
   const addRecord = useRecordsStore((s) => s.addRecord);
   const addPhoto = usePortfolioStore((s) => s.addPhoto);
   const t = useT();
@@ -45,7 +51,6 @@ export default function SummaryPage() {
     await new Promise((r) => setTimeout(r, 600));
     const customerId = consultation.customerId || 'customer-001';
     const newId = `record-${Date.now()}`;
-    const breakdown = calculatePrice(consultation);
     const minutes = estimateTime(consultation);
     const now = new Date().toISOString();
     const savedRecord: ConsultationRecord = {
@@ -56,7 +61,7 @@ export default function SummaryPage() {
       consultation: { ...consultation },
       totalPrice: breakdown.subtotal,
       estimatedMinutes: minutes,
-      finalPrice: breakdown.finalPrice,
+      finalPrice: adjustedFinalPrice,
       createdAt: now,
       updatedAt: now,
       notes: customerMemo || undefined,
@@ -153,7 +158,70 @@ export default function SummaryPage() {
         <div className="max-w-2xl md:max-w-3xl mx-auto flex flex-col gap-4">
           <ConsultationSummaryCard />
 
-          {/* Customer memo / small talk note — auto-saved to customer record on save */}
+          <div className="rounded-2xl border border-border bg-white p-4 flex flex-col gap-3">
+            <div className="flex items-center gap-2 pb-2 border-b border-border">
+              <div className="w-7 h-7 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <svg className="w-3.5 h-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-sm font-bold text-text">
+                {t('summary.finalPayment')}
+                {locale !== 'ko' && (
+                  <span className="ml-1 text-[10px] font-medium text-text-muted opacity-60">{tKo('summary.finalPayment')}</span>
+                )}
+              </h3>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-text-muted">
+                {t('consultation.basePrice')}
+                {locale !== 'ko' && <span className="ml-1 text-[10px] opacity-60">{tKo('consultation.basePrice')}</span>}
+              </span>
+              <span className="text-sm font-medium text-text">{formatPrice(breakdown.subtotal)}</span>
+            </div>
+
+            {breakdown.discountAmount > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-text-muted">
+                  {t('summary.discountLabel')}
+                  {locale !== 'ko' && <span className="ml-1 text-[10px] opacity-60">{tKo('summary.discountLabel')}</span>}
+                </span>
+                <span className="text-sm font-medium text-error">-{formatPrice(breakdown.discountAmount)}</span>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-text-muted">
+                {t('summary.additionalCharge')}
+                {locale !== 'ko' && <span className="ml-1 text-[10px] opacity-60">{tKo('summary.additionalCharge')}</span>}
+              </span>
+              <div className="flex items-center gap-1">
+                <span className="text-sm text-text-muted">₩</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={additionalChargeInput}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/[^0-9-]/g, '');
+                    setAdditionalChargeInput(raw);
+                    const num = parseInt(raw, 10);
+                    setAdditionalCharge(isNaN(num) ? 0 : num);
+                  }}
+                  placeholder="0"
+                  className="w-24 text-right text-sm font-medium text-text bg-surface-alt border border-border rounded-lg px-2 py-1.5 focus:outline-none focus:border-primary"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center pt-2 border-t-2 border-border">
+              <span className="text-sm font-bold text-text">
+                {t('summary.totalAmount')}
+                {locale !== 'ko' && <span className="ml-1 text-[10px] font-medium text-text-muted opacity-60">{tKo('summary.totalAmount')}</span>}
+              </span>
+              <span className="text-lg font-bold text-primary">{formatPrice(adjustedFinalPrice)}</span>
+            </div>
+          </div>
           {customerMemo && (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 flex flex-col gap-2">
               <div className="flex items-center gap-2">

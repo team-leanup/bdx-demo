@@ -76,20 +76,6 @@ export default function Step3Page() {
             </div>
           </motion.div>
 
-          {/* PRO 안내 배너 */}
-          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-100">
-            <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-500 text-white rounded-md uppercase tracking-wider flex-shrink-0">
-              PRO
-            </span>
-            <div>
-              <span className="text-sm font-bold text-amber-900">{t('step3.proBanner')}</span>
-              {locale !== 'ko' && (
-                <span className="text-xs text-amber-700 ml-1">{tKo('step3.proBanner')}</span>
-              )}
-              <p className="text-xs text-amber-700 mt-0.5">세부 시술 금액은 설정 &gt; 서비스 관리에서 변경 가능합니다</p>
-            </div>
-          </div>
-
           <PartsSelector />
 
           <div className="flex items-center gap-3">
