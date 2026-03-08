@@ -3,106 +3,100 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Button, Input } from '@/components/ui';
 
-export default function LoginPage() {
+export default function LoginPage(): React.ReactElement {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
+  const isReady = email.trim().length > 0 && password.trim().length > 0;
+
+  const handleLogin = (): void => {
     router.push('/onboarding');
   };
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = (): void => {
     router.push('/onboarding');
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <div className="flex-1 flex flex-col items-center justify-center px-8 md:px-12 py-12 max-w-lg mx-auto w-full">
-        {/* Logo */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="flex flex-col items-center mb-12"
-        >
-          <span className="text-5xl md:text-6xl font-black tracking-tight text-primary">
-            BDX
-          </span>
-          <span className="text-sm font-medium text-primary/50 mt-1 tracking-widest uppercase">
-            Beauty Decision eXperience
-          </span>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15, ease: 'easeOut' }}
-          className="w-full flex flex-col gap-4"
-        >
-          {/* Google login button */}
-          <button
-            onClick={handleGoogleLogin}
-            className="flex items-center justify-center gap-3 w-full h-14 rounded-2xl bg-[#4285F4] text-white font-semibold text-base hover:bg-[#3367D6] active:scale-[0.98] transition-all duration-200 shadow-md"
+    <div className="min-h-screen bg-[#f8f9fb] text-text">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1480px] flex-col">
+        <div className="flex flex-1 items-center justify-center px-6 py-16 sm:px-8 lg:px-12">
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            className="w-full max-w-[360px]"
           >
-            <svg className="h-5 w-5" viewBox="0 0 24 24">
-              <path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
-              <path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-              <path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-            Google로 시작하기
-          </button>
+            <div className="mb-10 flex flex-col items-center text-center">
+              <div className="text-[26px] font-black tracking-[-0.04em] text-primary">BDX</div>
+            </div>
 
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-1">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-text-muted">또는</span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
+            <div className="flex flex-col gap-4">
+              <button
+                onClick={handleGoogleLogin}
+                className="flex h-[52px] w-full items-center justify-center gap-3 rounded-[14px] border border-[#d7dce3] bg-white px-4 text-[15px] font-semibold text-slate-800 transition-colors duration-200 hover:border-[#c6ccd5] hover:bg-slate-50 active:scale-[0.995]"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="#4285F4" d="M21.805 10.023h-9.72v3.955h5.573c-.24 1.273-.96 2.35-2.045 3.068v2.548h3.305c1.935-1.782 3.047-4.41 3.047-7.545 0-.677-.06-1.329-.16-2.026z" />
+                  <path fill="#34A853" d="M12.084 22c2.76 0 5.08-.915 6.773-2.474l-3.305-2.548c-.916.614-2.086.978-3.468.978-2.664 0-4.923-1.798-5.73-4.215H2.938v2.629A10.224 10.224 0 0012.084 22z" />
+                  <path fill="#FBBC05" d="M6.354 13.741A6.144 6.144 0 015.988 12c0-.603.131-1.183.366-1.741V7.63H2.938A10.224 10.224 0 001.854 12c0 1.642.393 3.198 1.084 4.37l3.416-2.629z" />
+                  <path fill="#EA4335" d="M12.084 6.044c1.5 0 2.848.516 3.91 1.53l2.932-2.932C17.157 2.998 14.844 2 12.084 2A10.224 10.224 0 002.938 7.63l3.416 2.629c.807-2.417 3.066-4.215 5.73-4.215z" />
+                </svg>
+                Google 로그인
+              </button>
 
-          {/* Email input */}
-          <Input
-            label="이메일"
-            type="email"
-            placeholder="이메일을 입력하세요"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+              <div className="flex items-center gap-3 py-1">
+                <div className="h-px flex-1 bg-[#d9dde4]" />
+                <span className="text-[11px] font-medium text-slate-400">또는</span>
+                <div className="h-px flex-1 bg-[#d9dde4]" />
+              </div>
 
-          {/* Password input */}
-          <Input
-            label="비밀번호"
-            type="password"
-            placeholder="비밀번호를 입력하세요"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+              <div className="flex flex-col gap-3.5">
+                <Input
+                  id="login-email"
+                  label="이메일"
+                  type="email"
+                  placeholder="manager@bdx.kr"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-[52px] rounded-[14px] border-[#d7dce3] bg-white px-4 text-[15px] placeholder:text-slate-400 hover:border-[#c6ccd5] focus-visible:ring-primary/20"
+                />
+                <Input
+                  id="login-password"
+                  label="비밀번호"
+                  type="password"
+                  placeholder="비밀번호를 입력하세요"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-[52px] rounded-[14px] border-[#d7dce3] bg-white px-4 text-[15px] placeholder:text-slate-400 hover:border-[#c6ccd5] focus-visible:ring-primary/20"
+                />
+              </div>
 
-          {/* Login button */}
-          <Button size="lg" fullWidth onClick={handleLogin}>
-            로그인
-          </Button>
-        </motion.div>
+              <Button
+                size="lg"
+                fullWidth
+                onClick={handleLogin}
+                disabled={!isReady}
+                className="mt-2 h-[52px] rounded-[14px] bg-primary text-[15px] font-semibold text-white shadow-none hover:bg-primary-dark"
+              >
+                로그인
+              </Button>
+            </div>
 
-        {/* Sign up link */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.35 }}
-          className="flex items-center gap-2 mt-8"
-        >
-          <span className="text-sm text-text-muted">계정이 없으신가요?</span>
-          <button
-            onClick={() => router.push('/onboarding')}
-            className="text-sm font-medium text-primary underline underline-offset-2"
-          >
-            회원가입
-          </button>
-        </motion.div>
+            <div className="mt-8 flex items-center justify-center gap-2 text-sm text-slate-500">
+              <span>계정이 없으신가요?</span>
+              <button
+                onClick={() => router.push('/onboarding')}
+                className="font-semibold text-primary transition-colors hover:text-primary-dark"
+              >
+                회원가입
+              </button>
+            </div>
+          </motion.section>
+        </div>
       </div>
     </div>
   );

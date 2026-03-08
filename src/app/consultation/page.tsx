@@ -352,7 +352,7 @@ export default function ConsultationStartPage() {
 
       {/* Footer */}
       <footer className="fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur-sm border-t border-border px-4 py-4 safe-bottom md:static md:flex-shrink-0 md:px-8">
-        <div className="md:max-w-4xl md:mx-auto">
+        <div className="w-full md:max-w-4xl md:mx-auto">
         <Button
           variant="primary"
           size="lg"
