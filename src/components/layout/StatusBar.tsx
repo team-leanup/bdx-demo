@@ -28,13 +28,12 @@ export function StatusBar({ shopName: shopNameProp }: StatusBarProps) {
   const [showLangMenu, setShowLangMenu] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-30 bg-surface border-b border-border safe-top md:static md:z-auto">
+    <header className="fixed top-0 left-0 right-0 z-30 bg-surface border-b border-border safe-top md:hidden">
       <div className="flex items-center justify-between px-4 h-14 max-w-2xl mx-auto md:max-w-none md:px-8">
         <div className="flex items-center gap-2 md:hidden">
           <span className="font-bold text-base tracking-tight text-primary">{shopName}</span>
           {isLoggedIn() && <RoleBadge />}
         </div>
-        <div className="hidden md:block" />
 
         {/* Right: lang toggle + bell */}
         <div className="flex items-center gap-1 relative">
