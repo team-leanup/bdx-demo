@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { TourOverlay } from '@/components/onboarding/TourOverlay';
 import { MOCK_SHOP } from '@/data/mock-shop';
 import { useRecordsStore } from '@/store/records-store';
@@ -20,6 +20,7 @@ import {
   QuickActions,
   ReservationForm,
 } from '@/components/home';
+import { Modal } from '@/components/ui';
 import { useT } from '@/lib/i18n';
 import { useAuthStore } from '@/store/auth-store';
 import { useLocaleStore } from '@/store/locale-store';
@@ -205,45 +206,19 @@ export default function HomePage() {
         itemVariants={itemVariants}
       />
 
-      <AnimatePresence>
-        {showReservationModal && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-black/50"
-              onClick={() => setShowReservationModal(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, y: 60 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 60 }}
-              transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-              className="fixed bottom-0 left-0 right-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-background px-4 pb-8 pt-4 md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-1/2 md:-translate-x-1/2 md:right-auto md:w-full md:max-w-lg md:rounded-2xl"
-            >
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-base font-bold text-text">{t('home.modal_title')}</h3>
-                <button
-                  onClick={() => setShowReservationModal(false)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-alt text-text-muted hover:bg-border transition-colors"
-                >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <ReservationForm
-                initialOpen={true}
-                onSubmit={(newBooking) => {
-                  handleAddReservation(newBooking);
-                  setShowReservationModal(false);
-                }}
-              />
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      <Modal
+        isOpen={showReservationModal}
+        onClose={() => setShowReservationModal(false)}
+        title={t('home.modal_title')}
+      >
+        <ReservationForm
+          onCancel={() => setShowReservationModal(false)}
+          onSubmit={(newBooking) => {
+            handleAddReservation(newBooking);
+            setShowReservationModal(false);
+          }}
+        />
+      </Modal>
 
       <HeroCTA
         onStartConsultation={() => router.push('/consultation')}

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Image from 'next/image';
-import { Button, Card } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { useCustomerStore } from '@/store/customer-store';
 import { MOCK_DESIGNERS } from '@/data/mock-shop';
 import type { BookingChannel, BookingRequest } from '@/types/consultation';
@@ -39,14 +39,12 @@ const SERVICE_OPTIONS = ['원컬러', '그라데이션', '자석젤', '아트'];
 
 interface ReservationFormProps {
   onSubmit: (reservation: BookingRequest) => void;
-  initialOpen?: boolean;
+  onCancel?: () => void;
 }
 
-export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFormProps) {
+export function ReservationForm({ onSubmit, onCancel }: ReservationFormProps) {
   const today = new Date().toISOString().split('T')[0];
   const customers = useCustomerStore((s) => s.customers);
-
-  const [formOpen, setFormOpen] = useState(initialOpen);
   const [formName, setFormName] = useState('');
   const [formPhone, setFormPhone] = useState('');
   const [formDate, setFormDate] = useState(today);
@@ -138,38 +136,11 @@ export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFo
     setServiceLabel('');
     setCustomerSearch('');
     setSelectedCustomerId(null);
-    setFormOpen(false);
+    onCancel?.();
   };
 
-  if (!formOpen) {
-    return (
-      <button
-        onClick={() => setFormOpen(true)}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-surface-alt py-3 text-sm font-medium text-text-secondary transition-colors hover:border-primary hover:text-primary active:scale-95"
-      >
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-        새 예약 등록
-      </button>
-    );
-  }
-
   return (
-    <Card className="p-4">
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-text">예약 등록</h3>
-        <button
-          onClick={() => setFormOpen(false)}
-          className="flex h-6 w-6 items-center justify-center rounded-full bg-surface-alt text-text-muted"
-        >
-          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 p-5">
         {/* 고객 검색 */}
         <div className="relative">
           <label className="mb-1 block text-xs font-medium text-text-secondary">
@@ -395,7 +366,6 @@ export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFo
         >
           등록
         </Button>
-      </div>
-    </Card>
+    </div>
   );
 }
