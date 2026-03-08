@@ -18,7 +18,7 @@ export function AuthGuard({ children, requiredRole, fallbackPath = '/home' }: Au
   useEffect(() => {
     if (!mounted) return;
     if (!isLoggedIn()) {
-      router.replace('/auth/lock');
+      router.replace('/lock');
       return;
     }
     if (requiredRole && role !== requiredRole) {

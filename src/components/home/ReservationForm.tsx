@@ -1,7 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import Image from 'next/image';
 import { Button, Card } from '@/components/ui';
+import { useCustomerStore } from '@/store/customer-store';
+import { MOCK_DESIGNERS } from '@/data/mock-shop';
 import type { BookingChannel, BookingRequest } from '@/types/consultation';
 import type { Locale } from '@/store/locale-store';
 
@@ -32,6 +35,8 @@ const LANGUAGE_OPTIONS: { value: Locale; flag: string; label: string }[] = [
   { value: 'ja', flag: '🇯🇵', label: '日本語' },
 ];
 
+const SERVICE_OPTIONS = ['원컬러', '그라데이션', '자석젤', '아트'];
+
 interface ReservationFormProps {
   onSubmit: (reservation: BookingRequest) => void;
   initialOpen?: boolean;
@@ -39,6 +44,7 @@ interface ReservationFormProps {
 
 export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFormProps) {
   const today = new Date().toISOString().split('T')[0];
+  const customers = useCustomerStore((s) => s.customers);
 
   const [formOpen, setFormOpen] = useState(initialOpen);
   const [formName, setFormName] = useState('');
@@ -49,6 +55,42 @@ export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFo
   const [formNote, setFormNote] = useState('');
   const [formLanguage, setFormLanguage] = useState<Locale>('ko');
   const [formImages, setFormImages] = useState<string[]>([]);
+  const [formDesignerId, setFormDesignerId] = useState('');
+  const [serviceLabel, setServiceLabel] = useState('');
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+
+  const filteredCustomers = useMemo(() => {
+    if (!customerSearch.trim()) return [];
+    const query = customerSearch.toLowerCase();
+    return customers.filter((c) => 
+      c.name.toLowerCase().includes(query) ||
+      c.phone?.includes(customerSearch)
+    ).slice(0, 5);
+  }, [customerSearch, customers]);
+
+  const handleSelectCustomer = (customerId: string): void => {
+    const customer = customers.find((c) => c.id === customerId);
+    if (customer) {
+      setSelectedCustomerId(customerId);
+      setFormName(customer.name);
+      setFormPhone(customer.phone || '');
+      setCustomerSearch(customer.name);
+      setShowCustomerDropdown(false);
+    }
+  };
+
+  const handleCustomerSearchChange = (value: string): void => {
+    setCustomerSearch(value);
+    setShowCustomerDropdown(true);
+    if (selectedCustomerId) {
+      const customer = customers.find((c) => c.id === selectedCustomerId);
+      if (customer && customer.name !== value) {
+        setSelectedCustomerId(null);
+      }
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -79,9 +121,11 @@ export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFo
       status: 'confirmed',
       createdAt: new Date().toISOString(),
       language: formLanguage,
+      designerId: formDesignerId || undefined,
+      serviceLabel: serviceLabel || undefined,
+      customerId: selectedCustomerId || undefined,
     };
     onSubmit(newBooking);
-    // 폼 초기화
     setFormName('');
     setFormPhone('');
     setFormDate(today);
@@ -90,6 +134,10 @@ export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFo
     setFormNote('');
     setFormLanguage('ko');
     setFormImages([]);
+    setFormDesignerId('');
+    setServiceLabel('');
+    setCustomerSearch('');
+    setSelectedCustomerId(null);
     setFormOpen(false);
   };
 
@@ -122,6 +170,39 @@ export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFo
       </div>
 
       <div className="flex flex-col gap-3">
+        {/* 고객 검색 */}
+        <div className="relative">
+          <label className="mb-1 block text-xs font-medium text-text-secondary">
+            고객 검색 <span className="text-text-muted">(선택)</span>
+          </label>
+          <input
+            type="text"
+            value={customerSearch}
+            onChange={(e) => handleCustomerSearchChange(e.target.value)}
+            onFocus={() => setShowCustomerDropdown(true)}
+            placeholder="고객 이름 또는 전화번호"
+            className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text placeholder-text-muted outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
+          />
+          {selectedCustomerId && (
+            <span className="absolute right-3 top-8 text-[10px] text-success font-medium">연결됨</span>
+          )}
+          {showCustomerDropdown && filteredCustomers.length > 0 && (
+            <div className="absolute z-10 mt-1 w-full rounded-xl border border-border bg-surface shadow-lg max-h-40 overflow-y-auto">
+              {filteredCustomers.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => handleSelectCustomer(c.id)}
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-surface-alt transition-colors flex justify-between items-center"
+                >
+                  <span className="font-medium text-text">{c.name}</span>
+                  <span className="text-xs text-text-muted">{c.phone}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* 고객명 */}
         <div>
           <label className="mb-1 block text-xs font-medium text-text-secondary">
@@ -132,7 +213,7 @@ export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFo
             value={formName}
             onChange={(e) => setFormName(e.target.value)}
             placeholder="고객 이름 입력"
-            className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text placeholder-text-muted outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
+            className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text placeholder-text-muted outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
           />
         </div>
 
@@ -146,8 +227,44 @@ export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFo
             value={formPhone}
             onChange={(e) => setFormPhone(e.target.value)}
             placeholder="010-0000-0000"
-            className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text placeholder-text-muted outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
+            className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text placeholder-text-muted outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
           />
+        </div>
+
+        {/* 시술 종류 */}
+        <div>
+          <label className="mb-1 block text-xs font-medium text-text-secondary">
+            시술 종류
+          </label>
+          <select
+            value={serviceLabel}
+            onChange={(e) => setServiceLabel(e.target.value)}
+            className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
+          >
+            <option value="">선택 안함</option>
+            {SERVICE_OPTIONS.map((opt) => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* 담당 디자이너 */}
+        <div>
+          <label className="mb-1 block text-xs font-medium text-text-secondary">
+            담당 디자이너
+          </label>
+          <select
+            value={formDesignerId}
+            onChange={(e) => setFormDesignerId(e.target.value)}
+            className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
+          >
+            <option value="">미정</option>
+            {MOCK_DESIGNERS.filter((d) => d.isActive).map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}{d.role === 'owner' ? ' (원장)' : ''}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* 예약 일자 & 시간 */}
@@ -160,7 +277,7 @@ export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFo
               type="date"
               value={formDate}
               onChange={(e) => setFormDate(e.target.value)}
-              className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
+              className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
             />
           </div>
           <div>
@@ -170,7 +287,7 @@ export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFo
             <select
               value={formTime}
               onChange={(e) => setFormTime(e.target.value)}
-              className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
+              className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
             >
               <option value="">시간 선택</option>
               {generateTimeSlots().map((slot) => (
@@ -188,7 +305,7 @@ export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFo
           <select
             value={formChannel}
             onChange={(e) => setFormChannel(e.target.value as BookingChannel)}
-            className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
+            className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
           >
             {CHANNEL_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -206,7 +323,7 @@ export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFo
           <select
             value={formLanguage}
             onChange={(e) => setFormLanguage(e.target.value as Locale)}
-            className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
+            className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
           >
             {LANGUAGE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -226,7 +343,7 @@ export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFo
             onChange={(e) => setFormNote(e.target.value)}
             placeholder="고객 요청 사항을 입력하세요"
             rows={3}
-            className="w-full resize-none rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text placeholder-text-muted outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
+            className="w-full resize-none rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text placeholder-text-muted outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
           />
         </div>
 
@@ -237,10 +354,10 @@ export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFo
           </label>
           {formImages.length > 0 && (
             <div className="flex gap-2 mb-2 flex-wrap">
-              {formImages.map((url, i) => (
-                <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
-                  <img src={url} alt="" className="w-full h-full object-cover" />
-                  <button
+            {formImages.map((url, i) => (
+              <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
+                <Image src={url} alt="" fill unoptimized className="object-cover" />
+                <button
                     type="button"
                     onClick={() => removeImage(i)}
                     className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center"

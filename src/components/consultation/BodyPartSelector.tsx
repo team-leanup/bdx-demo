@@ -42,7 +42,7 @@ export function BodyPartSelector({ className }: BodyPartSelectorProps) {
   return (
     <div className={cn('flex flex-col gap-6', className)}>
       <div className="flex items-center gap-3 px-2">
-        <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-xl bg-surface-alt flex items-center justify-center flex-shrink-0">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-primary">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} stroke="currentColor" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" />
           </svg>
@@ -62,10 +62,10 @@ export function BodyPartSelector({ className }: BodyPartSelectorProps) {
               whileTap={{ scale: 0.94 }}
               onClick={() => setBodyPart(opt.value)}
               className={cn(
-                'relative flex flex-col items-center justify-center gap-6 py-8 px-6 md:py-12 md:px-8 rounded-3xl border-2 transition-all duration-300',
+                'relative flex flex-col items-center justify-center gap-6 py-8 px-6 md:py-12 md:px-8 rounded-2xl transition-all duration-300',
                 isSelected
-                  ? 'border-primary bg-primary/10 text-primary shadow-2xl shadow-primary/20'
-                  : 'border-border bg-surface text-text-muted hover:border-primary/40 hover:bg-surface-alt hover:text-text',
+                  ? 'border-2 border-primary bg-white shadow-sm'
+                  : 'border border-border bg-white hover:border-gray-300',
               )}
             >
               {/* Intuitive Hand/Foot SVG */}
@@ -81,7 +81,7 @@ export function BodyPartSelector({ className }: BodyPartSelectorProps) {
                   <span className="text-sm text-text-muted font-bold opacity-60">{tKo(`bodyPart.${opt.value}`)}</span>
                 )}
                 {opt.price && (
-                  <span className={cn('text-sm font-black mt-3 px-5 py-2 rounded-full', isSelected ? 'bg-primary/20 text-primary' : 'bg-surface-alt text-text-muted')}>
+                  <span className={cn('text-sm font-black mt-3 px-5 py-2 rounded-full', isSelected ? 'bg-gray-100 text-primary' : 'bg-surface-alt text-text-muted')}>
                     {formatPrice(opt.price)}~
                   </span>
                 )}
@@ -90,7 +90,7 @@ export function BodyPartSelector({ className }: BodyPartSelectorProps) {
                 <motion.span
                   initial={{ scale: 0, y: 15 }}
                   animate={{ scale: 1, y: 0 }}
-                  className="absolute top-6 right-6 w-9 h-9 rounded-full bg-primary flex items-center justify-center shadow-xl shadow-primary/40 border-4 border-white"
+                  className="absolute top-6 right-6 w-9 h-9 rounded-full bg-primary flex items-center justify-center shadow-sm border-4 border-white"
                 >
                   <svg width="16" height="16" viewBox="0 0 12 12" fill="none">
                     <path d="M2.5 6l2.5 2.5 5-5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />

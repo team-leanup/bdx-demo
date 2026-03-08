@@ -12,25 +12,25 @@ interface OffSelectorProps {
 }
 
 // Iconic visuals for Off (Removal) - SVG icons only (badges rendered as HTML overlay)
-const OFF_ICONS: Record<string, (selected: boolean) => React.ReactNode> = {
+const OFF_ICONS: Record<string, () => React.ReactNode> = {
   // none: Natural clean nail with a "None" slash
-  none: (selected) => (
+  none: () => (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-      <rect x="22" y="24" width="20" height="26" rx="10" fill="currentColor" fillOpacity={selected ? '0.2' : '0.08'} stroke="currentColor" strokeWidth="2" />
-      <path d="M22 24 Q22 14 32 14 Q42 14 42 24" fill="currentColor" fillOpacity={selected ? '0.2' : '0.08'} stroke="currentColor" strokeWidth="2" />
+      <rect x="22" y="24" width="20" height="26" rx="10" fill="currentColor" fillOpacity="0.08" stroke="currentColor" strokeWidth="2" />
+      <path d="M22 24 Q22 14 32 14 Q42 14 42 24" fill="currentColor" fillOpacity="0.08" stroke="currentColor" strokeWidth="2" />
       <line x1="15" y1="45" x2="49" y2="15" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" opacity="0.3" />
     </svg>
   ),
   // same_shop: Focus on "Home/Our Shop" with a heart (Loyalty)
-  same_shop: (selected) => (
+  same_shop: () => (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-      <path d="M14 52 L14 32 L32 16 L50 32 L50 52 Z" fill="currentColor" fillOpacity={selected ? '0.15' : '0.05'} stroke="currentColor" strokeWidth="2" />
+      <path d="M14 52 L14 32 L32 16 L50 32 L50 52 Z" fill="currentColor" fillOpacity="0.05" stroke="currentColor" strokeWidth="2" />
       <path d="M26 52 L26 40 L38 40 L38 52" stroke="currentColor" strokeWidth="2" />
-      <path d="M32 35 C32 35 30 31 28 31 C26 31 25 33 25 35 C25 38 32 42 32 42 C32 42 39 38 39 35 C39 33 38 31 36 31 C34 31 32 35 32 35" fill="var(--color-primary)" fillOpacity={selected ? '1' : '0.3'} />
+      <path d="M32 35 C32 35 30 31 28 31 C26 31 25 33 25 35 C25 38 32 42 32 42 C32 42 39 38 39 35 C39 33 38 31 36 31 C34 31 32 35 32 35" fill="var(--color-primary)" fillOpacity="0.3" />
     </svg>
   ),
   // other_shop: Focus on "Transition" - From dotted shop to our shop
-  other_shop: (selected) => (
+  other_shop: () => (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
       <path d="M6 46 L6 34 L16 26 L26 34 L26 46 Z" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.4" />
       <path d="M28 36 L40 36 M36 32 L40 36 L36 40" stroke="var(--color-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -63,7 +63,7 @@ export function OffSelector({ className }: OffSelectorProps) {
   return (
     <div className={cn('flex flex-col gap-5', className)}>
       <div className="flex items-center gap-2.5 px-2">
-        <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-xl bg-surface-alt flex items-center justify-center flex-shrink-0">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-primary">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} stroke="currentColor" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
           </svg>
@@ -84,15 +84,15 @@ export function OffSelector({ className }: OffSelectorProps) {
               whileTap={{ scale: 0.95 }}
               onClick={() => setOffType(opt.value)}
               className={cn(
-                'relative flex flex-col items-center justify-center gap-4 py-8 px-2 rounded-3xl border-2 transition-all duration-300 text-left',
+                'relative flex flex-col items-center justify-center gap-4 py-8 px-2 rounded-2xl transition-all duration-300 text-left',
                 isSelected
-                  ? 'border-primary bg-primary/10 text-primary shadow-2xl shadow-primary/15'
-                  : 'border-border bg-surface text-text-muted hover:border-primary/40 hover:bg-surface-alt',
+                  ? 'border-2 border-primary bg-white shadow-sm'
+                  : 'border border-border bg-white hover:border-gray-300',
               )}
             >
               {/* Context-Aware Iconic Visual */}
               <span className={cn('relative transition-all duration-300 transform', isSelected ? 'scale-110' : 'opacity-60 grayscale-[0.5]')}>
-                {OFF_ICONS[opt.value](isSelected)}
+                {OFF_ICONS[opt.value]()}
                 {OFF_BADGE_CONFIG[opt.value] && (() => {
                   const badge = OFF_BADGE_CONFIG[opt.value]!;
                   const isPrimary = badge.colorType === 'primary';
@@ -123,7 +123,7 @@ export function OffSelector({ className }: OffSelectorProps) {
                   </span>
                 )}
                 {opt.price !== undefined && opt.price > 0 && (
-                  <span className={cn('text-[11px] font-black mt-1 px-3 py-1 rounded-full', isSelected ? 'bg-primary/20 text-primary' : 'bg-surface-alt text-text-muted')}>
+                  <span className={cn('text-[11px] font-black mt-1 px-3 py-1 rounded-full', isSelected ? 'bg-gray-100 text-primary' : 'bg-surface-alt text-text-muted')}>
                     +{formatPrice(opt.price)}
                   </span>
                 )}
@@ -139,7 +139,7 @@ export function OffSelector({ className }: OffSelectorProps) {
                 <motion.span
                   initial={{ scale: 0, y: 5 }}
                   animate={{ scale: 1, y: 0 }}
-                  className="absolute top-4 right-4 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30 border-2 border-white"
+                  className="absolute top-4 right-4 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-sm border-2 border-white"
                 >
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                     <path d="M2 5l2 2 4-4" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />

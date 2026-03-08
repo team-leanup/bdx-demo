@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Input, BentoGrid, BentoCard } from '@/components/ui';
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
 import { formatPrice } from '@/lib/format';
-import { MOCK_CUSTOMERS } from '@/data/mock-customers';
+import { useCustomerStore } from '@/store/customer-store';
+import { normalizePhone } from '@/lib/phone';
 import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/cn';
 
@@ -13,17 +14,7 @@ const now = new Date();
 const thisMonth = now.getMonth();
 const thisYear = now.getFullYear();
 
-const newThisMonth = MOCK_CUSTOMERS.filter((c) => {
-  if (c.visitCount === 1) return true;
-  const d = new Date(c.firstVisitDate);
-  return d.getFullYear() === thisYear && d.getMonth() === thisMonth;
-}).length;
-
-const avgSpend = Math.round(
-  MOCK_CUSTOMERS.reduce((sum, c) => sum + c.averageSpend, 0) / MOCK_CUSTOMERS.length,
-);
-
-const vipCount = MOCK_CUSTOMERS.filter((c) => c.isRegular || c.visitCount >= 5).length;
+// stats will be derived from store inside component (hooks cannot be used at module scope)
 
 type FilterTab = 'all' | 'vip' | 'regular';
 
@@ -33,23 +24,44 @@ export default function CustomersPage() {
   const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const role = useAuthStore((s) => s.role);
   const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
+  const customers = useCustomerStore((s) => s.customers);
+
+  // derive stats from store
+  const newThisMonth = useMemo(() => {
+    return customers.filter((c) => {
+      if (!c?.createdAt) return false;
+      const d = new Date(c.createdAt);
+      return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+    }).length;
+  }, [customers]);
+
+  const avgSpend = useMemo(() => {
+    if (customers.length === 0) return 0;
+    const sum = customers.reduce((acc, c) => acc + (Number(c.totalSpend) || 0), 0);
+    return Math.round(sum / customers.length);
+  }, [customers]);
+
+  const vipCount = useMemo(() => {
+    return customers.filter((c) => c.isRegular || (c.visitCount ?? 0) >= 5).length;
+  }, [customers]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return MOCK_CUSTOMERS.filter((c) => {
+    const normalizedQ = normalizePhone(search || '');
+    return customers.filter((c) => {
       if (role === 'staff' && activeDesignerId && c.assignedDesignerId !== activeDesignerId) {
         return false;
       }
       if (filterTab === 'vip' && !c.isRegular) return false;
       if (filterTab === 'regular' && c.isRegular) return false;
-      if (!q) return true;
+      if (!q && !normalizedQ) return true;
       return (
         c.name.toLowerCase().includes(q) ||
-        c.phone.includes(q) ||
-        (c.assignedDesignerName ?? '').includes(q)
+        (normalizePhone(c.phone || '') || '').includes(normalizedQ) ||
+        (c.assignedDesignerName ?? '').toLowerCase().includes(q)
       );
     });
-  }, [search, role, activeDesignerId, filterTab]);
+  }, [search, role, activeDesignerId, filterTab, customers]);
 
   const FILTER_TABS: { key: FilterTab; label: string }[] = [
     { key: 'all', label: '전체' },
@@ -75,7 +87,7 @@ export default function CustomersPage() {
         <BentoCard span="1x1" variant="accent">
           <div className="p-4 flex flex-col items-center justify-center h-full">
             <span className="text-2xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
-              {MOCK_CUSTOMERS.length}
+              {customers.length}
             </span>
             <span className="text-xs text-text-secondary mt-1">총 고객</span>
           </div>

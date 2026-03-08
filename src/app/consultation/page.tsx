@@ -11,7 +11,7 @@ import { ConsultationStep } from '@/types/consultation';
 import { cn } from '@/lib/cn';
 import { useLocaleStore } from '@/store/locale-store';
 import type { Locale } from '@/store/locale-store';
-import { useT, useLocale, useKo } from '@/lib/i18n';
+import { useT, useKo } from '@/lib/i18n';
 
 const LANGUAGE_OPTIONS: { value: Locale; flag: string; label: string }[] = [
   { value: 'ko', flag: '🇰🇷', label: '한국어' },
@@ -63,12 +63,21 @@ function FemaleSilhouette({ className }: { className?: string }) {
   );
 }
 
-const STEP_FLOW_ICONS = ['👤', '✋', '🎨', '✨', '📋'];
+const STEP_FLOW_ICONS = ['👤', '✋', '💅', '🏷️', '📋'];
+
+function getOptionalLabel(locale: Locale): string {
+  if (locale === 'en') return '(Optional)';
+  if (locale === 'zh') return '（可选）';
+  if (locale === 'ja') return '（任意）';
+  return '(선택)';
+}
 
 export default function ConsultationStartPage() {
   const router = useRouter();
   const consultation = useConsultationStore((s) => s.consultation);
-  const { reset, setDesignerId, setStep } = useConsultationStore();
+  const reset = useConsultationStore((s) => s.reset);
+  const setDesignerId = useConsultationStore((s) => s.setDesignerId);
+  const setStep = useConsultationStore((s) => s.setStep);
   const authDesignerId = useAuthStore((s) => s.activeDesignerId);
   const [selectedDesignerId, setSelectedDesignerId] = useState<string>(authDesignerId || '');
   const [showResumeDialog, setShowResumeDialog] = useState(false);
@@ -84,13 +93,13 @@ export default function ConsultationStartPage() {
     ) {
       setShowResumeDialog(true);
     }
-  }, []);
+  }, [consultation.currentStep, consultation.customerName]);
 
   const STEP_FLOW = [
     { icon: STEP_FLOW_ICONS[0], label: t('consultation.customerInfo'), koLabel: tKo('consultation.customerInfo') },
     { icon: STEP_FLOW_ICONS[1], label: t('consultation.step1Title'), koLabel: tKo('consultation.step1Title') },
-    { icon: STEP_FLOW_ICONS[2], label: t('consultation.step2Title'), koLabel: tKo('consultation.step2Title') },
-    { icon: STEP_FLOW_ICONS[3], label: t('consultation.step3Title'), koLabel: tKo('consultation.step3Title') },
+    { icon: STEP_FLOW_ICONS[2], label: t('consultation.treatmentType.title'), koLabel: tKo('consultation.treatmentType.title') },
+    { icon: STEP_FLOW_ICONS[3], label: t('consultation.traitsTitle'), koLabel: tKo('consultation.traitsTitle') },
     { icon: STEP_FLOW_ICONS[4], label: t('consultation.summaryTitle'), koLabel: tKo('consultation.summaryTitle') },
   ];
 
@@ -108,7 +117,7 @@ export default function ConsultationStartPage() {
       {/* Resume dialog */}
       {showResumeDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="mx-4 w-full max-w-sm rounded-2xl bg-surface p-6 shadow-xl">
+          <div className="mx-4 w-full max-w-sm rounded-2xl bg-surface p-6 shadow-sm">
             <h3 className="text-lg font-bold text-text mb-2">
               {tKo('consultation.resumeTitle')}
             </h3>
@@ -122,6 +131,7 @@ export default function ConsultationStartPage() {
                   [ConsultationStep.STEP1_BASIC]: '/consultation/step1',
                   [ConsultationStep.STEP2_DESIGN]: '/consultation/step2',
                   [ConsultationStep.STEP3_OPTIONS]: '/consultation/step3',
+                  [ConsultationStep.TRAITS]: '/consultation/traits',
                   [ConsultationStep.CANVAS]: '/consultation/canvas',
                   [ConsultationStep.SUMMARY]: '/consultation/summary',
                 };
@@ -173,7 +183,7 @@ export default function ConsultationStartPage() {
         <div className="flex flex-col">
           {/* Visual hero header */}
           <div className="text-center py-2 mb-5">
-            <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+            <div className="w-20 h-20 bg-surface-alt border border-border rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
               <svg width="42" height="42" viewBox="0 0 56 56" fill="none" className="text-primary">
                 <rect x="19" y="28" width="18" height="22" rx="4" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2.5" />
                 <rect x="22" y="20" width="12" height="10" rx="3" fill="currentColor" fillOpacity="0.3" stroke="currentColor" strokeWidth="2" />
@@ -209,6 +219,17 @@ export default function ConsultationStartPage() {
             ))}
           </div>
 
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <span className="inline-flex items-center gap-1 rounded-full border border-border bg-surface-alt px-3 py-1 text-[11px] font-semibold text-text-muted">
+              {t('consultation.treatmentType.detailedOptions')}
+              {locale !== 'ko' && <span className="opacity-60">{tKo('consultation.treatmentType.detailedOptions')}</span>}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-border bg-surface-alt px-3 py-1 text-[11px] font-semibold text-text-muted">
+              {t('consultation.canvasTitle')} {getOptionalLabel(locale)}
+              {locale !== 'ko' && <span className="opacity-60">{tKo('consultation.canvasTitle')} (선택)</span>}
+            </span>
+          </div>
+
           {/* Designer selection */}
           <div className="flex flex-col gap-3 mb-6">
             <div className="flex items-center gap-2">
@@ -233,17 +254,17 @@ export default function ConsultationStartPage() {
                     whileTap={{ scale: 0.97 }}
                     onClick={() => setSelectedDesignerId(designer.id)}
                     className={cn(
-                      'flex items-center gap-4 p-4 md:p-5 rounded-2xl border-2 transition-all duration-200 text-left relative overflow-hidden',
+                      'flex items-center gap-4 p-4 md:p-5 rounded-2xl transition-all duration-200 text-left relative overflow-hidden',
                       isSelected
-                        ? 'border-primary bg-primary/5 shadow-md shadow-primary/10'
-                        : 'border-border bg-surface hover:border-primary/40 hover:shadow-sm',
+                        ? 'border-2 border-primary bg-white shadow-sm'
+                        : 'border border-border bg-white hover:border-gray-300 hover:shadow-sm',
                     )}
                   >
                     {/* Avatar */}
                     <div
                       className={cn(
-                        'w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 text-white shadow-md overflow-hidden',
-                        isSelected ? 'bg-primary' : 'bg-primary/80',
+                        'w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 text-white shadow-sm overflow-hidden',
+                        isSelected ? 'bg-primary' : 'bg-gray-400',
                       )}
                     >
                       {gender === 'female' ? (
@@ -313,10 +334,10 @@ export default function ConsultationStartPage() {
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setConsultationLocale(opt.value)}
                     className={cn(
-                      'flex items-center gap-1.5 rounded-full border-2 px-4 py-2 text-sm font-medium transition-all duration-200',
+                      'flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200',
                       isLangSelected
-                        ? 'border-primary bg-primary/10 text-primary shadow-sm'
-                        : 'border-border bg-surface text-text-secondary hover:border-primary/40 hover:bg-surface-alt',
+                        ? 'border-2 border-primary bg-white text-primary shadow-sm'
+                        : 'border border-border bg-white text-text-secondary hover:border-gray-300',
                     )}
                   >
                     <span>{opt.flag}</span>
@@ -338,7 +359,7 @@ export default function ConsultationStartPage() {
           fullWidth
           onClick={handleStart}
           disabled={!selectedDesignerId}
-          className="shadow-lg shadow-primary/20"
+          className="shadow-sm"
         >
           <span>{t('consultation.startConsultation')}</span>
           {locale !== 'ko' && (

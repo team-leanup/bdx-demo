@@ -29,21 +29,12 @@ const TOP_SERVICES = [
   { name: '이달의 아트', count: 18, maxCount: 42 },
 ];
 
-interface TooltipProps {
+interface _TooltipProps {
   active?: boolean;
   payload?: Array<{ name: string; value: number; payload: { percentage: number } }>;
 }
 
-function CustomTooltip({ active, payload }: TooltipProps) {
-  if (!active || !payload?.length) return null;
-  const d = payload[0];
-  return (
-    <div className="rounded-xl border border-border bg-surface px-3 py-2 shadow-lg">
-      <p className="text-xs font-medium text-text">{d.name}</p>
-      <p className="text-xs text-text-secondary">{d.payload.percentage}% · {d.value}건</p>
-    </div>
-  );
-}
+
 
 export function ServiceAnalytics() {
   return (

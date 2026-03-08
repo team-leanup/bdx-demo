@@ -36,7 +36,7 @@ function PriceInput({
             const raw = e.target.value.replace(/[^0-9]/g, '');
             onChange(raw === '' ? 0 : parseInt(raw, 10));
           }}
-          className="w-full h-10 pl-7 pr-3 rounded-xl border bg-surface text-text text-sm border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent hover:border-primary/40 transition-all duration-200 text-right"
+          className="w-full h-10 pl-7 pr-3 rounded-xl border bg-surface text-text text-sm border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 hover:border-primary/40 transition-all duration-200 text-right"
         />
       </div>
     </div>

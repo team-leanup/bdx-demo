@@ -213,7 +213,7 @@ export function ColorPicker({
             value={inputValue}
             onChange={handleInputChange}
             placeholder={t('canvas.colorMemoPlaceholder')}
-            className="w-full pl-3 pr-10 py-3 rounded-2xl border-2 border-border bg-surface text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+            className="w-full pl-3 pr-10 py-3 rounded-2xl border-2 border-border bg-surface text-sm text-text placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary transition-all"
           />
           {inputValue && (
             <button

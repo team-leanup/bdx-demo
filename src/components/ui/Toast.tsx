@@ -62,7 +62,7 @@ export function Toast({ toast, onDismiss }: ToastProps) {
       exit={{ opacity: 0, y: -20, scale: 0.95 }}
       transition={{ type: 'spring', damping: 25, stiffness: 300 }}
       className={cn(
-        'flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg min-w-[240px] max-w-sm',
+        'flex items-center gap-3 px-4 py-3 rounded-2xl shadow-elevated min-w-[240px] max-w-sm',
         styles[toast.type],
       )}
     >

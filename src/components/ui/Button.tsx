@@ -4,7 +4,7 @@ import { cn } from '@/lib/cn';
 import type { ReactNode, ButtonHTMLAttributes } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'outline' | 'danger' | 'success';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   fullWidth?: boolean;
@@ -24,15 +24,21 @@ export function Button({
   ...props
 }: ButtonProps) {
   const base =
-    'inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none';
+    'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-40 select-none';
 
   const variants = {
     primary:
-      'bg-primary text-white hover:opacity-90 active:scale-[0.98] shadow-sm',
+      'bg-primary text-white hover:bg-primary-dark active:scale-[0.98]',
     secondary:
-      'border-2 border-primary text-primary bg-transparent hover:bg-primary/10 active:scale-[0.98]',
+      'border border-border text-text bg-surface hover:bg-surface-alt active:scale-[0.98]',
     ghost:
       'bg-transparent text-text-secondary hover:bg-surface-alt active:scale-[0.98]',
+    outline:
+      'border-2 border-primary text-primary bg-transparent hover:bg-primary/5 active:scale-[0.98]',
+    danger:
+      'bg-error text-white hover:bg-error/90 active:scale-[0.98]',
+    success:
+      'bg-success text-white hover:bg-success/90 active:scale-[0.98]',
   };
 
   const sizes = {

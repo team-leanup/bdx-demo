@@ -75,7 +75,7 @@ export function DesignScopeSelector({ className }: DesignScopeSelectorProps) {
   return (
     <div className={cn('flex flex-col gap-6', className)}>
       <div className="flex items-center gap-3 px-2">
-        <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-xl bg-surface-alt flex items-center justify-center flex-shrink-0">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-primary">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} stroke="currentColor" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
           </svg>
@@ -97,10 +97,10 @@ export function DesignScopeSelector({ className }: DesignScopeSelectorProps) {
               whileTap={{ scale: 0.95 }}
               onClick={() => setDesignScope(opt.value)}
               className={cn(
-                'relative flex flex-col items-center justify-center gap-5 py-7 px-4 md:py-10 md:px-6 rounded-3xl border-2 transition-all duration-300 text-left',
+                'relative flex flex-col items-center justify-center gap-5 py-7 px-4 md:py-10 md:px-6 rounded-2xl border-2 transition-all duration-300 text-left',
                 isSelected
-                  ? 'border-primary bg-primary/10 text-primary shadow-2xl shadow-primary/20'
-                  : 'border-border bg-surface text-text-muted hover:border-primary/40 hover:bg-surface-alt',
+                  ? 'border-primary bg-white shadow-sm'
+                  : 'border-border bg-white text-text-muted hover:border-gray-300',
               )}
             >
               {/* Context-Aware Iconic Visual */}
@@ -143,7 +143,7 @@ export function DesignScopeSelector({ className }: DesignScopeSelectorProps) {
               <div className={cn(
                 'px-5 py-2 rounded-full text-sm font-black tracking-tight',
                 isSelected
-                  ? 'bg-primary/20 text-primary'
+                  ? 'bg-surface-alt border border-primary text-primary'
                   : 'bg-surface-alt text-text-muted',
               )}>
                 {opt.price === 0 ? t('selector.includedFree') : `+${formatPrice(opt.price!)}`}
@@ -154,7 +154,7 @@ export function DesignScopeSelector({ className }: DesignScopeSelectorProps) {
                 <motion.span
                   initial={{ scale: 0, y: 15 }}
                   animate={{ scale: 1, y: 0 }}
-                  className="absolute top-6 right-6 w-9 h-9 rounded-full bg-primary flex items-center justify-center shadow-xl shadow-primary/40 border-4 border-white"
+                  className="absolute top-6 right-6 w-9 h-9 rounded-full bg-primary flex items-center justify-center shadow-sm border-4 border-white"
                 >
                   <svg width="16" height="16" viewBox="0 0 12 12" fill="none">
                     <path d="M2.5 6l2.5 2.5 5-5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />

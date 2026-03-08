@@ -7,7 +7,7 @@ import { ConsultationStep } from '@/types/consultation';
 import { ConsultationHeader } from '@/components/consultation/ConsultationHeader';
 import { ConsultationFooter } from '@/components/consultation/ConsultationFooter';
 import { PriceSummaryBar } from '@/components/consultation/PriceSummaryBar';
-import { ExpressionSelector } from '@/components/consultation/ExpressionSelector';
+
 import { PartsSelector } from '@/components/consultation/PartsSelector';
 import { ColorSelector } from '@/components/consultation/ColorSelector';
 import { useT, useLocale, useKo } from '@/lib/i18n';
@@ -20,15 +20,15 @@ export default function Step3Page() {
   const locale = useLocale();
 
   const handleNext = () => {
-    setStep(ConsultationStep.CANVAS);
-    router.push('/consultation/canvas');
+    setStep(ConsultationStep.STEP3_OPTIONS);
+    router.push('/consultation/traits');
   };
 
   return (
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
       <ConsultationHeader
         stepNumber={4}
-        totalSteps={5}
+        totalSteps={6}
         title={t('consultation.step3Title')}
         titleKo={tKo('consultation.step3Title')}
         backHref="/consultation/step2"
@@ -47,9 +47,9 @@ export default function Step3Page() {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="flex items-center gap-4 p-4 rounded-2xl bg-primary/5 border border-primary/15"
+            className="flex items-center gap-4 p-4 rounded-2xl bg-surface-alt border border-border"
           >
-            <div className="w-16 h-16 rounded-2xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+            <div className="w-16 h-16 rounded-2xl bg-surface-alt border border-border flex items-center justify-center flex-shrink-0">
               {/* Sparkles icon */}
               <svg width="36" height="36" viewBox="0 0 56 56" fill="none" className="text-primary">
                 <path d="M28 8 L30 20 L42 22 L30 24 L28 36 L26 24 L14 22 L26 20 Z" fill="currentColor" fillOpacity="0.8" />
@@ -76,30 +76,6 @@ export default function Step3Page() {
             </div>
           </motion.div>
 
-          {/* PRO 안내 배너 */}
-          <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-amber-50 border border-amber-200">
-            <span className="px-2 py-0.5 text-[10px] font-bold bg-gradient-to-r from-amber-400 to-amber-500 text-white rounded-full uppercase tracking-wider flex-shrink-0">
-              <span className="text-lg font-black">{t('step3.proBanner')}</span>
-              {locale !== 'ko' && (
-                <span className="text-xs opacity-80 font-bold ml-1">{tKo('step3.proBanner')}</span>
-              )}
-            </span>
-            <p className="text-xs text-amber-700">세부 시술 금액은 설정 &gt; 서비스 관리에서 변경 가능합니다</p>
-          </div>
-
-          <ExpressionSelector />
-
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-text-muted font-medium flex flex-col items-center">
-              <span className="text-lg font-black">{t('step3.partsTitle')}</span>
-              {locale !== 'ko' && (
-                <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('step3.partsTitle')}</span>
-              )}
-            </span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
-
           <PartsSelector />
 
           <div className="flex items-center gap-3">
@@ -114,10 +90,25 @@ export default function Step3Page() {
           </div>
 
           <ColorSelector />
+
+          <div className="flex items-center justify-center pt-4">
+            <button
+              onClick={() => {
+                setStep(ConsultationStep.CANVAS);
+                router.push('/consultation/canvas');
+              }}
+              className="px-4 py-2 text-sm font-medium text-text-secondary bg-surface-alt rounded-xl hover:bg-surface-alt/80 transition-colors"
+            >
+              캔버스 (선택)
+              {locale !== 'ko' && (
+                <span className="ml-1 text-xs opacity-60">Canvas (Optional)</span>
+              )}
+            </button>
+          </div>
         </div>
       </motion.main>
 
-      <ConsultationFooter onNext={handleNext} />
+      <ConsultationFooter onNext={handleNext} showEstimated={false} />
     </div>
   );
 }

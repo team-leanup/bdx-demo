@@ -34,17 +34,11 @@ interface ConsultationSummaryCardProps {
   className?: string;
 }
 
-function SectionHeader({ icon, title, color = 'primary' }: { icon: React.ReactNode; title: ReactNode; color?: string }) {
+function SectionHeader({ icon, title }: { icon: React.ReactNode; title: ReactNode }) {
   return (
-    <div className={cn(
-      'flex items-center gap-2.5 mb-3 pb-2.5 border-b',
-      color === 'primary' ? 'border-primary/20' : 'border-border',
-    )}>
-      <div className={cn(
-        'w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0',
-        color === 'primary' ? 'bg-primary/15' : 'bg-surface-alt',
-      )}>
-        <span className={cn('text-sm', color === 'primary' ? 'text-primary' : 'text-text-secondary')}>
+    <div className="flex items-center gap-2.5 mb-3 pb-2.5 border-b border-border">
+      <div className="w-7 h-7 rounded-xl bg-surface-alt flex items-center justify-center flex-shrink-0">
+        <span className="text-sm text-text-secondary">
           {icon}
         </span>
       </div>
@@ -81,7 +75,7 @@ function PriceRow({
     <div
       className={cn(
         'flex flex-col gap-1.5 py-2',
-        isFinal && 'border-t-2 border-primary/30 pt-3 mt-1',
+        isFinal && 'border-t-2 border-border pt-3 mt-1',
       )}
     >
       <div className="flex justify-between items-center">
@@ -100,7 +94,7 @@ function PriceRow({
       {percentage !== undefined && percentage > 0 && !isDiscount && !isFinal && (
         <div className="h-1.5 bg-surface-alt rounded-full overflow-hidden">
           <div
-            className="h-full bg-primary/40 rounded-full transition-all duration-500"
+            className="h-full bg-primary rounded-full transition-all duration-500"
             style={{ width: `${Math.min(percentage, 100)}%` }}
           />
         </div>
@@ -183,7 +177,7 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
     <div className={cn('flex flex-col gap-4', className)}>
       {/* Visual header */}
       <div className="flex items-center gap-3 px-1 pb-1">
-        <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+        <div className="w-12 h-12 rounded-xl bg-surface-alt flex items-center justify-center flex-shrink-0">
           <svg width="26" height="26" viewBox="0 0 56 56" fill="none" className="text-primary">
             <rect x="10" y="22" width="36" height="28" rx="5" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2.5" />
             <path d="M10 22 Q10 8 28 8 Q46 8 46 22" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2.5" />
@@ -201,42 +195,26 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
         </div>
       </div>
 
-      {/* 히어로 카드: 최종금액 + 예상시간 */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary-dark to-primary rounded-2xl p-5 shadow-md">
-        {/* Decorative circles */}
-        <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10" />
-        <div className="absolute -bottom-4 -left-4 w-16 h-16 rounded-full bg-white/10" />
-
-        <p className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-2 relative">
-          {t('summary.finalPayment')}
-          {locale !== 'ko' && (
-            <span className="ml-1 text-[10px] text-white/50">{tKo('summary.finalPayment')}</span>
-          )}
-        </p>
-        <p className="text-5xl font-bold text-white mb-3 relative tracking-tight">
-          {formatPrice(breakdown.finalPrice)}
-        </p>
-        <div className="flex items-center gap-4 relative">
-          <div className="flex items-center gap-1.5">
-            <svg className="w-4 h-4 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-base font-semibold text-white">
-              {t('summary.approxTime').replace('{time}', formatMinutes(minutes, locale))}
-              {locale !== 'ko' && (
-                <span className="ml-1 text-xs text-white/60">{tKo('summary.approxTime').replace('{time}', formatMinutes(minutes, 'ko'))}</span>
-              )}
-            </span>
-          </div>
-          {designer && (
-            <div className="flex items-center gap-1.5">
-              <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
-                <span className="text-[10px] font-bold text-white">{designer.name.slice(0, 1)}</span>
-              </div>
-              <span className="text-sm text-white/80">{designer.name}{t('common.designerSuffix')}</span>
-            </div>
-          )}
+      <div className="flex items-center gap-4 bg-white border border-border rounded-2xl px-4 py-3">
+        <div className="flex items-center gap-1.5">
+          <svg className="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="text-sm font-semibold text-text">
+            {t('summary.approxTime').replace('{time}', formatMinutes(minutes, locale))}
+            {locale !== 'ko' && (
+              <span className="ml-1 text-xs text-text-muted">{tKo('summary.approxTime').replace('{time}', formatMinutes(minutes, 'ko'))}</span>
+            )}
+          </span>
         </div>
+        {designer && (
+          <div className="flex items-center gap-1.5">
+            <div className="w-5 h-5 rounded-full bg-surface-alt flex items-center justify-center">
+              <span className="text-[10px] font-bold text-text-secondary">{designer.name.slice(0, 1)}</span>
+            </div>
+            <span className="text-sm text-text-secondary">{designer.name}{t('common.designerSuffix')}</span>
+          </div>
+        )}
       </div>
 
       {/* 1. 가격 상세 */}
@@ -278,7 +256,7 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
       </Accordion>
 
       {/* 2. 디자인 */}
-      <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm">
+      <div className="bg-white rounded-2xl border border-border p-4">
         <SectionHeader
           icon={
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -286,14 +264,13 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
             </svg>
           }
           title={biLabel('summary.design')}
-          color="primary"
         />
         <Row label={biLabel('summary.designRange')} value={biValue(designLabel, designLabelKo)} />
         <Row label={biLabel('summary.expressionMethod')} value={biValue(expressionLabels || '-', expressionLabelsKo || '-')} />
       </div>
 
       {/* 3. 시술 조건 */}
-      <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm">
+      <div className="bg-white rounded-2xl border border-border p-4">
         <SectionHeader
           icon={
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -301,7 +278,6 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
             </svg>
           }
           title={biLabel('summary.conditions')}
-          color="primary"
         />
         <Row
           label={biLabel('summary.bodyPartLabel')}
@@ -322,7 +298,7 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
       </div>
 
       {/* 4. 추가 옵션 */}
-      <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm">
+      <div className="bg-white rounded-2xl border border-border p-4">
         <SectionHeader
           icon={
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -330,7 +306,6 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
             </svg>
           }
           title={biLabel('summary.extraOptions')}
-          color="primary"
         />
         {consultation.hasParts && consultation.partsSelections.length > 0 ? (
           consultation.partsSelections.map((sel) => {
@@ -370,7 +345,7 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
 
       {/* 5. 고객 정보 */}
       {(consultation.customerName || consultation.customerId) && (
-        <div className="bg-surface rounded-2xl border border-border p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-border p-4">
           <SectionHeader
             icon={
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -378,7 +353,6 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
               </svg>
             }
             title={biLabel('summary.customerInfo')}
-            color="primary"
           />
           {consultation.customerName && (
             <Row label={biLabel('summary.name')} value={consultation.customerName} />

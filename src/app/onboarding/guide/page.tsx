@@ -277,7 +277,7 @@ export default function GuidePage() {
           >
             {/* 아이콘 */}
             <div
-              className="flex h-20 w-20 items-center justify-center rounded-3xl text-5xl shadow-md"
+              className="flex h-20 w-20 items-center justify-center rounded-2xl text-5xl shadow-md"
               style={{ background: 'var(--color-primary-light)' }}
             >
               {slide.icon}

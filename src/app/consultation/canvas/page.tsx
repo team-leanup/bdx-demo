@@ -14,9 +14,13 @@ const FINGER_ORDER: FingerPosition[] = ['thumb', 'index', 'middle', 'ring', 'pin
 
 export default function CanvasPage() {
   const router = useRouter();
-  const { consultation, setStep } = useConsultationStore();
+  const consultation = useConsultationStore((s) => s.consultation);
+  const setStep = useConsultationStore((s) => s.setStep);
   const t = useT();
   const tKo = useKo();
+
+  void consultation;
+  void setStep;
 
   const handleChange = (selections: CanvasSelections) => {
     // Convert canvas selections to ConsultationType.canvasData format

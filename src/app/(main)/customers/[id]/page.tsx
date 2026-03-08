@@ -1,6 +1,7 @@
 'use client';
 
-import { use, useState, useRef, useCallback, useEffect, Suspense } from 'react';
+import { use, useState, useRef, useCallback, Suspense, useEffect } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, Badge, Button } from '@/components/ui';
@@ -10,26 +11,15 @@ import { BODY_PART_LABEL } from '@/lib/labels';
 import { getMockCustomerById, MOCK_CUSTOMERS } from '@/data/mock-customers';
 import { MOCK_DESIGNERS } from '@/data/mock-shop';
 import { TAG_PRESETS } from '@/data/tag-presets';
-import type { TagCategory } from '@/types/customer';
+import type { TagCategory, TagAccent } from '@/types/customer';
 import { PreferenceEditor } from '@/components/customer/PreferenceEditor';
+import { useCustomerStore } from '@/store/customer-store';
+import { usePortfolioStore } from '@/store/portfolio-store';
+import type { PortfolioPhoto, PortfolioPhotoKind } from '@/types/portfolio';
 import {
-  IconShape,
-  IconRuler,
-  IconLayers,
-  IconHands,
-  IconHealth,
-  IconNote,
   IconCamera,
-  IconStar,
   IconCalendar,
-  IconWon,
 } from '@/components/icons';
-
-const CUTILE_LABEL: Record<string, string> = {
-  normal: '보통',
-  sensitive: '민감',
-};
-
 
 const TAG_CATEGORY_BADGE: Record<TagCategory, 'primary' | 'neutral' | 'success' | 'warning'> = {
   design: 'primary',
@@ -50,10 +40,29 @@ const DESIGN_SCOPE_ICON: Record<string, string> = {
   포인트: '◆',
 };
 
-interface UploadedImage {
-  url: string;
-  name: string;
-  addedAt: string;
+const ACCENT_BG: Record<TagAccent, string> = {
+  rose: 'bg-rose-100 text-rose-700 border-rose-200',
+  amber: 'bg-amber-100 text-amber-700 border-amber-200',
+  emerald: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  sky: 'bg-sky-100 text-sky-700 border-sky-200',
+  slate: 'bg-slate-100 text-slate-700 border-slate-200',
+};
+
+const ACCENT_DOT: Record<TagAccent, string> = {
+  rose: 'bg-rose-400',
+  amber: 'bg-amber-400',
+  emerald: 'bg-emerald-400',
+  sky: 'bg-sky-400',
+  slate: 'bg-slate-400',
+};
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 function CustomerDetailContent({ id }: { id: string }) {
@@ -61,6 +70,15 @@ function CustomerDetailContent({ id }: { id: string }) {
   const searchParams = useSearchParams();
   const fromChecklist = searchParams.get('fromChecklist') === 'true';
   const customer = getMockCustomerById(id);
+
+  const toggleTagPinned = useCustomerStore((s) => s.toggleTagPinned);
+  const setTagAccent = useCustomerStore((s) => s.setTagAccent);
+  const reorderPinnedTags = useCustomerStore((s) => s.reorderPinnedTags);
+  const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
+  const updateTagsInStore = useCustomerStore((s) => s.updateTags);
+
+  const pinnedTags = getPinnedTags(id);
+
   const [isVip, setIsVip] = useState(() => getMockCustomerById(id)?.isRegular ?? false);
   const [vipToast, setVipToast] = useState<string | null>(null);
   const [tagsExpanded, setTagsExpanded] = useState(false);
@@ -70,13 +88,21 @@ function CustomerDetailContent({ id }: { id: string }) {
   const [showSmallTalkInput, setShowSmallTalkInput] = useState(false);
   const [newSmallTalk, setNewSmallTalk] = useState('');
   const [localSmallTalkNotes, setLocalSmallTalkNotes] = useState(customer?.smallTalkNotes ?? []);
-  const [galleryTab, setGalleryTab] = useState<'consult' | 'treatment'>('treatment');
+  const [galleryTab, setGalleryTab] = useState<'reference' | 'treatment'>('treatment');
   const [showDesignerPicker, setShowDesignerPicker] = useState(false);
   const [assignedDesigner, setAssignedDesigner] = useState(customer?.assignedDesignerName ?? '');
-  const [treatmentUploads, setTreatmentUploads] = useState<UploadedImage[]>([]);
-  const [consultUploads, setConsultUploads] = useState<UploadedImage[]>([]);
   const treatmentFileRef = useRef<HTMLInputElement>(null);
   const consultFileRef = useRef<HTMLInputElement>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const addPhoto = usePortfolioStore((s) => s.addPhoto);
+  const removePhoto = usePortfolioStore((s) => s.removePhoto);
+  const getByCustomerId = usePortfolioStore((s) => s.getByCustomerId);
+
+  const customerPhotos = getByCustomerId(id);
+  const treatmentPhotos = customerPhotos.filter((p) => p.kind === 'treatment');
+  const consultPhotos = customerPhotos.filter((p) => p.kind === 'reference');
+
   const [prefData, setPrefData] = useState(() => {
     const p = getMockCustomerById(id)?.preference;
     return {
@@ -102,32 +128,40 @@ function CustomerDetailContent({ id }: { id: string }) {
   };
 
   const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>, tab: 'treatment' | 'consult') => {
+    async (e: React.ChangeEvent<HTMLInputElement>, kind: PortfolioPhotoKind) => {
       const files = e.target.files;
       if (!files) return;
-      const today = new Date().toISOString().slice(0, 10);
-      Array.from(files).forEach((file) => {
-        const url = URL.createObjectURL(file);
-        const img: UploadedImage = { url, name: file.name, addedAt: today };
-        if (tab === 'treatment') {
-          setTreatmentUploads((prev) => [img, ...prev]);
-        } else {
-          setConsultUploads((prev) => [img, ...prev]);
+      
+      setUploadError(null);
+      
+      for (const file of Array.from(files)) {
+        try {
+          const dataUrl = await fileToDataUrl(file);
+          const result = addPhoto({
+            customerId: id,
+            kind,
+            imageDataUrl: dataUrl,
+          });
+          
+          if (!result.success && result.error) {
+            setUploadError(result.error);
+            setTimeout(() => setUploadError(null), 3000);
+            break;
+          }
+        } catch {
+          setUploadError('이미지 변환에 실패했습니다');
+          setTimeout(() => setUploadError(null), 3000);
         }
-      });
+      }
+      
       e.target.value = '';
     },
-    [],
+    [id, addPhoto],
   );
 
-  const removeUpload = useCallback((url: string, tab: 'treatment' | 'consult') => {
-    URL.revokeObjectURL(url);
-    if (tab === 'treatment') {
-      setTreatmentUploads((prev) => prev.filter((img) => img.url !== url));
-    } else {
-      setConsultUploads((prev) => prev.filter((img) => img.url !== url));
-    }
-  }, []);
+  const handleRemovePhoto = useCallback((photoId: string) => {
+    removePhoto(photoId);
+  }, [removePhoto]);
 
   if (!customer) {
     return (
@@ -140,9 +174,6 @@ function CustomerDetailContent({ id }: { id: string }) {
     );
   }
 
-  const pref = customer.preference;
-
-  // 태그를 카테고리별로 분류 (localTags 기반)
   const tagsByCategory: Partial<Record<TagCategory, string[]>> = {};
   for (const tag of localTags) {
     if (!tagsByCategory[tag.category]) tagsByCategory[tag.category] = [];
@@ -339,6 +370,31 @@ function CustomerDetailContent({ id }: { id: string }) {
       </div>
 
       {/* ─────────────────────────────── */}
+      {/* 1.5 고정 특이사항 (Pinned Traits) */}
+      {/* ─────────────────────────────── */}
+      <Card className="mx-4 shadow-md rounded-2xl">
+        <h2 className="mb-3 text-sm font-semibold text-text-secondary">특이사항</h2>
+        {pinnedTags.length === 0 ? (
+          <p className="text-sm text-text-muted">특이사항 없음</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {pinnedTags.map((tag) => (
+              <span
+                key={tag.id}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium border',
+                  tag.accent ? ACCENT_BG[tag.accent] : 'bg-surface-alt text-text border-border'
+                )}
+              >
+                <span className="text-xs">📌</span>
+                {tag.value}
+              </span>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {/* ─────────────────────────────── */}
       {/* 2. 선호도 프로필 */}
       {/* ─────────────────────────────── */}
       <div className="mx-4 shadow-md rounded-2xl">
@@ -402,7 +458,7 @@ function CustomerDetailContent({ id }: { id: string }) {
             accept="image/*"
             multiple
             className="hidden"
-            onChange={(e) => handleFileChange(e, 'consult')}
+            onChange={(e) => handleFileChange(e, 'reference')}
           />
         </div>
 
@@ -420,10 +476,10 @@ function CustomerDetailContent({ id }: { id: string }) {
             시술 기록
           </button>
           <button
-            onClick={() => setGalleryTab('consult')}
+            onClick={() => setGalleryTab('reference')}
             className={cn(
               'flex-1 rounded-lg py-1.5 text-xs font-semibold transition-all',
-              galleryTab === 'consult'
+              galleryTab === 'reference'
                 ? 'bg-surface text-text shadow-sm'
                 : 'text-text-muted',
             )}
@@ -432,30 +488,37 @@ function CustomerDetailContent({ id }: { id: string }) {
           </button>
         </div>
 
-        {/* ── 시술 기록 탭 ── */}
+        {uploadError && (
+          <div className="mb-3 rounded-xl bg-error/10 border border-error/20 px-3 py-2">
+            <p className="text-xs font-medium text-error">{uploadError}</p>
+          </div>
+        )}
+
         {galleryTab === 'treatment' && (
           <div className="flex flex-col gap-5">
-            {treatmentUploads.length > 0 ? (
+            {treatmentPhotos.length > 0 ? (
               <div>
                 <div className="mb-2 flex items-center gap-2">
-                  <p className="text-xs font-medium text-text-muted">오늘</p>
+                  <p className="text-xs font-medium text-text-muted">시술 사진</p>
                   <span
                     className="rounded-full px-2 py-0.5 text-xs font-medium"
                     style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary-dark)' }}
                   >
-                    내가 추가한 사진
+                    {treatmentPhotos.length}장
                   </span>
                 </div>
                 <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
-                  {treatmentUploads.map((img) => (
-                    <div key={img.url} className="relative aspect-square group">
-                      <img
-                        src={img.url}
-                        alt={img.name}
-                        className="h-full w-full rounded-xl object-cover shadow-sm"
+                  {treatmentPhotos.map((photo) => (
+                    <div key={photo.id} className="relative aspect-square group">
+                      <Image
+                        src={photo.imageDataUrl}
+                        alt="시술 사진"
+                        fill
+                        unoptimized
+                        className="rounded-xl object-cover shadow-sm"
                       />
                       <button
-                        onClick={() => removeUpload(img.url, 'treatment')}
+                        onClick={() => handleRemovePhoto(photo.id)}
                         className="absolute -top-1 -right-1 hidden group-hover:flex h-5 w-5 items-center justify-center rounded-full bg-error text-white text-xs shadow-md"
                       >
                         ×
@@ -485,30 +548,31 @@ function CustomerDetailContent({ id }: { id: string }) {
           </div>
         )}
 
-        {/* ── 상담 기록 탭 ── */}
-        {galleryTab === 'consult' && (
+        {galleryTab === 'reference' && (
           <div className="flex flex-col gap-5">
-            {consultUploads.length > 0 ? (
+            {consultPhotos.length > 0 ? (
               <div>
                 <div className="mb-2 flex items-center gap-2">
-                  <p className="text-xs font-medium text-text-muted">오늘</p>
+                  <p className="text-xs font-medium text-text-muted">상담 사진</p>
                   <span
                     className="rounded-full px-2 py-0.5 text-xs font-medium"
                     style={{ background: 'color-mix(in srgb, var(--color-accent) 15%, var(--color-surface))', color: 'var(--color-accent)' }}
                   >
-                    내가 추가한 사진
+                    {consultPhotos.length}장
                   </span>
                 </div>
                 <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
-                  {consultUploads.map((img) => (
-                    <div key={img.url} className="relative aspect-square group">
-                      <img
-                        src={img.url}
-                        alt={img.name}
-                        className="h-full w-full rounded-xl object-cover shadow-sm"
+                  {consultPhotos.map((photo) => (
+                    <div key={photo.id} className="relative aspect-square group">
+                      <Image
+                        src={photo.imageDataUrl}
+                        alt="상담 사진"
+                        fill
+                        unoptimized
+                        className="rounded-xl object-cover shadow-sm"
                       />
                       <button
-                        onClick={() => removeUpload(img.url, 'consult')}
+                        onClick={() => handleRemovePhoto(photo.id)}
                         className="absolute -top-1 -right-1 hidden group-hover:flex h-5 w-5 items-center justify-center rounded-full bg-error text-white text-xs shadow-md"
                       >
                         ×
@@ -609,7 +673,12 @@ function CustomerDetailContent({ id }: { id: string }) {
             <h2 className="text-sm font-semibold text-text-secondary">시술 성향 태그</h2>
             <button
               className="text-xs text-primary"
-              onClick={() => setEditingTags((prev) => !prev)}
+              onClick={() => {
+                if (editingTags) {
+                  updateTagsInStore(id, localTags);
+                }
+                setEditingTags((prev) => !prev);
+              }}
             >
               {editingTags ? '완료' : '편집'}
             </button>
@@ -617,7 +686,7 @@ function CustomerDetailContent({ id }: { id: string }) {
           {/* 카테고리별 그룹 표시 */}
           <div className="flex flex-col gap-3">
             {registeredPresets.map((preset) => {
-              const tagsForCategory = tagsByCategory[preset.category] ?? [];
+              const tagsForCategory = localTags.filter((t) => t.category === preset.category);
               if (tagsForCategory.length === 0 && !editingTags) return null;
               return (
                 <div key={preset.category}>
@@ -633,25 +702,74 @@ function CustomerDetailContent({ id }: { id: string }) {
                       tagsExpanded || editingTags ? 'max-h-none' : 'max-h-20',
                     )}
                   >
-                    {tagsForCategory.map((val) => (
-                      <Badge
-                        key={`${preset.category}-${val}`}
-                        variant={TAG_CATEGORY_BADGE[preset.category]}
-                        size="sm"
-                        className="px-3 py-1 text-xs"
-                      >
-                        {val}
+                    {tagsForCategory.map((tag) => (
+                      <div key={tag.id} className="flex items-center gap-1">
+                        <Badge
+                          variant={TAG_CATEGORY_BADGE[preset.category]}
+                          size="sm"
+                          className={cn(
+                            'px-3 py-1 text-xs',
+                            tag.pinned && tag.accent && ACCENT_BG[tag.accent]
+                          )}
+                        >
+                          {tag.pinned && <span className="mr-1">📌</span>}
+                          {tag.value}
+                          {editingTags && (
+                            <button
+                              className="ml-1 text-[10px] opacity-60 hover:opacity-100"
+                              onClick={() => setLocalTags((prev) =>
+                                prev.filter((t) => t.id !== tag.id)
+                              )}
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </Badge>
                         {editingTags && (
-                          <button
-                            className="ml-1 text-[10px] opacity-60 hover:opacity-100"
-                            onClick={() => setLocalTags((prev) =>
-                              prev.filter((t) => !(t.category === preset.category && t.value === val))
+                          <>
+                            <button
+                              onClick={() => {
+                                toggleTagPinned(id, tag.id);
+                                setLocalTags((prev) =>
+                                  prev.map((t) =>
+                                    t.id === tag.id
+                                      ? { ...t, pinned: !t.pinned, accent: !t.pinned ? t.accent : undefined }
+                                      : t
+                                  )
+                                );
+                              }}
+                              className={cn(
+                                'ml-1 text-xs opacity-60 hover:opacity-100 transition-opacity',
+                                tag.pinned && 'text-primary opacity-100'
+                              )}
+                            >
+                              📌
+                            </button>
+                            {tag.pinned && (
+                              <div className="flex gap-1 ml-1">
+                                {(['rose', 'amber', 'emerald', 'sky', 'slate'] as const).map((color) => (
+                                  <button
+                                    key={color}
+                                    onClick={() => {
+                                      setTagAccent(id, tag.id, color);
+                                      setLocalTags((prev) =>
+                                        prev.map((t) =>
+                                          t.id === tag.id ? { ...t, accent: color } : t
+                                        )
+                                      );
+                                    }}
+                                    className={cn(
+                                      'w-4 h-4 rounded-full border-2 transition-all',
+                                      ACCENT_DOT[color],
+                                      tag.accent === color ? 'border-text ring-2 ring-offset-1' : 'border-transparent'
+                                    )}
+                                  />
+                                ))}
+                              </div>
                             )}
-                          >
-                            ✕
-                          </button>
+                          </>
                         )}
-                      </Badge>
+                      </div>
                     ))}
                   </div>
                 </div>

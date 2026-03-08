@@ -21,7 +21,7 @@ export function StepIndicator({ currentStep, totalSteps, className }: StepIndica
               isCurrent
                 ? 'w-6 h-2 bg-primary'
                 : isCompleted
-                ? 'w-2 h-2 bg-primary/60'
+                ? 'w-2 h-2 bg-gray-400'
                 : 'w-2 h-2 bg-border',
             )}
           />

@@ -22,7 +22,7 @@ export const useDesignerStore = create<DesignerStore>()(
 
       removeProfileImage: (designerId) =>
         set((state) => {
-          const { [designerId]: _, ...rest } = state.profileImages;
+          const { [designerId]: _removed, ...rest } = state.profileImages;
           return { profileImages: rest };
         }),
 
