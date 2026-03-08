@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useEffect } from 'react';
+import { use, useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, Badge, Button } from '@/components/ui';
 import { formatPrice, formatDateDotWithTime } from '@/lib/format';
@@ -35,6 +35,23 @@ export default function RecordDetailPage({ params }: Props) {
 
   const record = mockRecord ?? savedRecord;
   const [checklistData, setChecklistData] = useState<DailyChecklistType | undefined>(record?.checklist);
+  const [editingFinalPrice, setEditingFinalPrice] = useState(false);
+  const [finalPriceValue, setFinalPriceValue] = useState(record?.finalPrice ?? 0);
+  const [savedFinalPrice, setSavedFinalPrice] = useState<number | null>(null);
+  const [savedFinalizedAt, setSavedFinalizedAt] = useState<string | null>(null);
+  const priceInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem(`bdx-final-price-${id}`);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as { finalPrice: number; finalizedAt: string };
+        setSavedFinalPrice(parsed.finalPrice);
+        setSavedFinalizedAt(parsed.finalizedAt);
+        setFinalPriceValue(parsed.finalPrice);
+      } catch { /* ignore */ }
+    }
+  }, [id]);
 
   if (!loaded) {
     return (
@@ -57,6 +74,25 @@ export default function RecordDetailPage({ params }: Props) {
 
   const c = record.consultation;
   const breakdown = calculatePrice(c);
+
+  const displayFinalPrice = savedFinalPrice ?? record.finalPrice;
+  const displayFinalizedAt = savedFinalizedAt ?? record.finalizedAt;
+
+  const handleSaveFinalPrice = (): void => {
+    const now = new Date().toISOString();
+    setSavedFinalPrice(finalPriceValue);
+    setSavedFinalizedAt(now);
+    setEditingFinalPrice(false);
+    sessionStorage.setItem(
+      `bdx-final-price-${id}`,
+      JSON.stringify({ finalPrice: finalPriceValue, finalizedAt: now }),
+    );
+  };
+
+  const handleStartEditing = (): void => {
+    setEditingFinalPrice(true);
+    setTimeout(() => priceInputRef.current?.focus(), 0);
+  };
 
   return (
     <div className="flex flex-col gap-4 pb-6">
@@ -168,9 +204,9 @@ export default function RecordDetailPage({ params }: Props) {
       <Card className="mx-4">
         <h2 className="mb-3 text-sm font-semibold text-text-secondary">{t('recordDetail.sectionPrice')}</h2>
         <div className="flex flex-col gap-2">
-          {record.finalizedAt ? (
+          {displayFinalizedAt ? (
             <div className="mb-1 inline-flex w-fit items-center rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">
-              {`✓ 가격 확정됨 · ${formatDateDotWithTime(record.finalizedAt)}`}
+              {`✓ 가격 확정됨 · ${formatDateDotWithTime(displayFinalizedAt)}`}
             </div>
           ) : (
             <div className="mb-1 inline-flex w-fit items-center rounded-full bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700">
@@ -205,9 +241,58 @@ export default function RecordDetailPage({ params }: Props) {
               </div>
             ))}
 
-          <div className="mt-2 flex items-center justify-between rounded-xl bg-primary/10 p-3">
-            <span className="font-bold text-primary">{t('recordDetail.finalPayment')}</span>
-            <span className="text-xl font-bold text-primary">{formatPrice(record.finalPrice)}</span>
+          <div className="mt-2 rounded-xl bg-primary/10 p-3">
+            {editingFinalPrice ? (
+              <div className="flex flex-col gap-3">
+                <span className="text-sm font-bold text-primary">최종 결제 금액 설정</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-primary">₩</span>
+                  <input
+                    ref={priceInputRef}
+                    type="number"
+                    value={finalPriceValue || ''}
+                    onChange={(e) => setFinalPriceValue(Number(e.target.value))}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleSaveFinalPrice(); }}
+                    className="flex-1 rounded-xl border-2 border-primary/30 bg-white px-3 py-2 text-right text-lg font-bold text-primary focus:border-primary focus:outline-none"
+                    min={0}
+                    placeholder={String(breakdown.finalPrice)}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingFinalPrice(false);
+                      setFinalPriceValue(displayFinalPrice);
+                    }}
+                    className="flex-1 rounded-xl border border-border bg-white py-2 text-sm font-semibold text-text-secondary"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveFinalPrice}
+                    className="flex-1 rounded-xl bg-primary py-2 text-sm font-bold text-white"
+                  >
+                    저장
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-primary">{t('recordDetail.finalPayment')}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl font-bold text-primary">{formatPrice(displayFinalPrice)}</span>
+                  <button
+                    type="button"
+                    onClick={handleStartEditing}
+                    className="rounded-lg bg-primary/20 px-2.5 py-1 text-xs font-bold text-primary hover:bg-primary/30 transition-colors"
+                  >
+                    수정
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </Card>

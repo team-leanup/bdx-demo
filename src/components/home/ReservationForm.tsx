@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { Button, Card } from '@/components/ui';
 import { useCustomerStore } from '@/store/customer-store';
+import { MOCK_DESIGNERS } from '@/data/mock-shop';
 import type { BookingChannel, BookingRequest } from '@/types/consultation';
 import type { Locale } from '@/store/locale-store';
 
@@ -54,6 +55,7 @@ export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFo
   const [formNote, setFormNote] = useState('');
   const [formLanguage, setFormLanguage] = useState<Locale>('ko');
   const [formImages, setFormImages] = useState<string[]>([]);
+  const [formDesignerId, setFormDesignerId] = useState('');
   const [serviceLabel, setServiceLabel] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
@@ -119,6 +121,7 @@ export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFo
       status: 'confirmed',
       createdAt: new Date().toISOString(),
       language: formLanguage,
+      designerId: formDesignerId || undefined,
       serviceLabel: serviceLabel || undefined,
       customerId: selectedCustomerId || undefined,
     };
@@ -131,6 +134,7 @@ export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFo
     setFormNote('');
     setFormLanguage('ko');
     setFormImages([]);
+    setFormDesignerId('');
     setServiceLabel('');
     setCustomerSearch('');
     setSelectedCustomerId(null);
@@ -240,6 +244,25 @@ export function ReservationForm({ onSubmit, initialOpen = false }: ReservationFo
             <option value="">선택 안함</option>
             {SERVICE_OPTIONS.map((opt) => (
               <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* 담당 디자이너 */}
+        <div>
+          <label className="mb-1 block text-xs font-medium text-text-secondary">
+            담당 디자이너
+          </label>
+          <select
+            value={formDesignerId}
+            onChange={(e) => setFormDesignerId(e.target.value)}
+            className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
+          >
+            <option value="">미정</option>
+            {MOCK_DESIGNERS.filter((d) => d.isActive).map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}{d.role === 'owner' ? ' (원장)' : ''}
+              </option>
             ))}
           </select>
         </div>
