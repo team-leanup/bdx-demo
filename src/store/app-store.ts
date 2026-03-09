@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { ServiceStructure, SurchargeSettings, TimeSettings, BusinessHours } from '@/types/shop';
+import type { ServiceStructure, SurchargeSettings, TimeSettings, BusinessHours, Shop } from '@/types/shop';
 
 interface ShopSettings {
   shopName: string;
@@ -86,6 +86,7 @@ interface AppStore {
 
   setOnboardingComplete: (complete: boolean) => void;
   setShopSettings: (settings: Partial<ShopSettings>) => void;
+  syncShopSettingsFromShop: (shop: Shop | null) => void;
   resetApp: () => void;
 }
 
@@ -102,6 +103,27 @@ export const useAppStore = create<AppStore>()(
         set((state) => ({
           shopSettings: { ...state.shopSettings, ...settings },
         })),
+
+      syncShopSettingsFromShop: (shop) => {
+        if (!shop) {
+          return;
+        }
+
+        set((state) => ({
+          shopSettings: {
+            ...state.shopSettings,
+            shopName: shop.name,
+            shopPhone: shop.phone ?? '',
+            shopAddress: shop.address ?? '',
+            baseHandPrice: shop.baseHandPrice,
+            baseFootPrice: shop.baseFootPrice,
+            businessHours:
+              shop.businessHours.length > 0
+                ? shop.businessHours
+                : state.shopSettings.businessHours,
+          },
+        }));
+      },
 
       resetApp: () =>
         set({

@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { BookingRequest } from '@/types/consultation';
+import { useAuthStore } from '@/store/auth-store';
 import {
   fetchBookingRequests,
   dbUpsertReservation,
@@ -13,7 +14,7 @@ interface ReservationStore {
   _dbReady: boolean;
 
   hydrateFromDB: () => Promise<void>;
-  addReservation: (reservation: Omit<BookingRequest, 'id' | 'createdAt' | 'status'>) => void;
+  addReservation: (reservation: Omit<BookingRequest, 'id' | 'createdAt' | 'status' | 'shopId'>) => void;
   updateReservation: (id: string, updates: Partial<BookingRequest>) => void;
   removeReservation: (id: string) => void;
   getByDate: (date: string) => BookingRequest[];
@@ -30,14 +31,22 @@ export const useReservationStore = create<ReservationStore>()(
       _dbReady: false,
 
       hydrateFromDB: async () => {
-        const reservations = await fetchBookingRequests();
+        const currentShopId = useAuthStore.getState().currentShopId;
+        const reservations = await fetchBookingRequests(currentShopId);
         set({ reservations, _dbReady: true });
       },
 
       addReservation: (reservation) => {
+        const currentShopId = useAuthStore.getState().currentShopId;
+        if (!currentShopId) {
+          console.error('[reservation-store] addReservation called without active shop');
+          return;
+        }
+
         const newEntry: BookingRequest = {
           ...reservation,
           id: `booking-${Date.now()}`,
+          shopId: currentShopId,
           status: 'pending' as const,
           createdAt: new Date().toISOString(),
         };
@@ -60,10 +69,11 @@ export const useReservationStore = create<ReservationStore>()(
       },
 
       removeReservation: (id) => {
+        const currentShopId = useAuthStore.getState().currentShopId ?? undefined;
         set((state) => ({
           reservations: state.reservations.filter((r) => r.id !== id),
         }));
-        dbDeleteReservation(id).catch(console.error);
+        dbDeleteReservation(id, currentShopId).catch(console.error);
       },
 
       getByDate: (date) => {

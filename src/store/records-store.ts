@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { ConsultationRecord } from '@/types/consultation';
+import { useAuthStore } from '@/store/auth-store';
 import {
   fetchConsultationRecords,
   dbUpsertRecord,
@@ -28,7 +29,8 @@ export const useRecordsStore = create<RecordsStore>()(
       _dbReady: false,
 
       hydrateFromDB: async () => {
-        const records = await fetchConsultationRecords();
+        const currentShopId = useAuthStore.getState().currentShopId;
+        const records = await fetchConsultationRecords(currentShopId);
         set({ records, _dbReady: true });
       },
 
@@ -56,10 +58,11 @@ export const useRecordsStore = create<RecordsStore>()(
       },
 
       removeRecord: (id) => {
+        const currentShopId = useAuthStore.getState().currentShopId ?? undefined;
         set((state) => ({
           records: state.records.filter((r) => r.id !== id),
         }));
-        dbDeleteRecord(id).catch(console.error);
+        dbDeleteRecord(id, currentShopId).catch(console.error);
       },
 
       getRecordById: (id) => get().records.find((r) => r.id === id),

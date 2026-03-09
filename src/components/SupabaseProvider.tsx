@@ -1,26 +1,61 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 import { useCustomerStore } from '@/store/customer-store';
+import usePortfolioStore from '@/store/portfolio-store';
 import { useRecordsStore } from '@/store/records-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { useShopStore } from '@/store/shop-store';
+import { useAuthStore } from '@/store/auth-store';
+import { useAppStore } from '@/store/app-store';
 
 export default function SupabaseProvider({ children }: { children: React.ReactNode }) {
-  const hydrated = useRef(false);
+  const initializeAuth = useAuthStore((s) => s.initializeAuth);
+  const isInitialized = useAuthStore((s) => s.isInitialized);
+  const currentShopId = useAuthStore((s) => s.currentShopId);
+  const syncShopSettingsFromShop = useAppStore((s) => s.syncShopSettingsFromShop);
 
   useEffect(() => {
-    if (hydrated.current) return;
-    hydrated.current = true;
+    void initializeAuth();
 
-    // Fire all hydration in parallel
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      void initializeAuth();
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [initializeAuth]);
+
+  useEffect(() => {
+    if (!isInitialized) {
+      return;
+    }
+
+    if (!currentShopId) {
+      useShopStore.setState({ shop: null, designers: [], _dbReady: true });
+      useCustomerStore.setState({ customers: [], _dbReady: true });
+      useRecordsStore.setState({ records: [], _dbReady: true });
+      useReservationStore.setState({ reservations: [], _dbReady: true });
+      usePortfolioStore.setState({ photos: [], _dbReady: true, migrationNotice: null });
+      return;
+    }
+
     Promise.all([
       useShopStore.getState().hydrateFromDB(),
       useCustomerStore.getState().hydrateFromDB(),
       useRecordsStore.getState().hydrateFromDB(),
       useReservationStore.getState().hydrateFromDB(),
-    ]).catch(console.error);
-  }, []);
+      usePortfolioStore.getState().hydrateFromDB(),
+    ])
+      .then(() => {
+        syncShopSettingsFromShop(useShopStore.getState().shop);
+      })
+      .catch(console.error);
+  }, [currentShopId, isInitialized, syncShopSettingsFromShop]);
 
   return <>{children}</>;
 }

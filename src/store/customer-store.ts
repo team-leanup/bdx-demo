@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Customer, CustomerTag, SmallTalkNote, TagAccent } from '@/types/customer';
+import { useAuthStore } from '@/store/auth-store';
 import {
   fetchCustomers,
   dbUpsertCustomer,
@@ -90,7 +91,8 @@ export const useCustomerStore = create<CustomerStore>()(
       _dbReady: false,
 
       hydrateFromDB: async () => {
-        const customers = await fetchCustomers();
+        const currentShopId = useAuthStore.getState().currentShopId;
+        const customers = await fetchCustomers(currentShopId);
         set({ customers: customers.map(normalizeCustomer), _dbReady: true });
       },
 
@@ -105,10 +107,15 @@ export const useCustomerStore = create<CustomerStore>()(
         const nowIso = new Date().toISOString();
         const today = nowIso.split('T')[0];
         const id = input.id ?? `customer-${Date.now()}`;
+        const activeShopId = input.shopId ?? useAuthStore.getState().currentShopId;
+
+        if (!activeShopId) {
+          throw new Error('No active shop session');
+        }
 
         const next: Customer = {
           id,
-          shopId: input.shopId ?? 'shop-001',
+          shopId: activeShopId,
           name: input.name ?? '새 고객',
           phone: input.phone ?? '',
           assignedDesignerId: input.assignedDesignerId,

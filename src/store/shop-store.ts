@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Shop, Designer } from '@/types/shop';
 import { fetchShop, fetchDesigners, dbUpsertShop } from '@/lib/db';
+import { useAuthStore } from '@/store/auth-store';
 
 interface ShopStore {
   shop: Shop | null;
@@ -25,7 +26,16 @@ export const useShopStore = create<ShopStore>()(
       _dbReady: false,
 
       hydrateFromDB: async () => {
-        const [shop, designers] = await Promise.all([fetchShop(), fetchDesigners()]);
+        const currentShopId = useAuthStore.getState().currentShopId;
+        if (!currentShopId) {
+          set({ shop: null, designers: [], _dbReady: true });
+          return;
+        }
+
+        const [shop, designers] = await Promise.all([
+          fetchShop(currentShopId),
+          fetchDesigners(currentShopId),
+        ]);
         set({ shop, designers, _dbReady: true });
       },
 
