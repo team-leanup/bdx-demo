@@ -4,7 +4,8 @@ import { use, useState, Suspense } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button, Badge, Card, Modal } from '@/components/ui';
+import { Button, Badge, Card, Modal, ToastContainer } from '@/components/ui';
+import type { ToastData } from '@/components/ui';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { useRecordsStore } from '@/store/records-store';
@@ -56,6 +57,8 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
   const getAllRecords = useRecordsStore((s) => s.getAllRecords);
   
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [toasts, setToasts] = useState<ToastData[]>([]);
 
   const photo = photos.find((p) => p.id === id);
   const customer = photo ? getCustomerById(photo.customerId) : undefined;
@@ -66,10 +69,30 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
   const effectiveDate = photo ? (photo.takenAt ?? photo.createdAt) : undefined;
   const effectivePrice = photo?.price ?? linkedRecord?.finalPrice;
 
-  const handleDelete = (): void => {
+  const handleDismissToast = (id: string): void => {
+    setToasts((current) => current.filter((toast) => toast.id !== id));
+  };
+
+  const handleDelete = async (): Promise<void> => {
     if (!photo) return;
-    removePhoto(photo.id);
-    router.push('/portfolio');
+
+    setDeleting(true);
+    const result = await removePhoto(photo.id);
+    setDeleting(false);
+
+    if (!result.success) {
+      setToasts((current) => [
+        ...current,
+        {
+          id: `toast-${Date.now()}`,
+          type: 'error',
+          message: result.error ?? '사진 삭제에 실패했어요',
+        },
+      ]);
+      return;
+    }
+
+    router.push('/portfolio?toast=deleted');
   };
 
   if (!photo) {
@@ -89,6 +112,7 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
 
   return (
     <div className="flex flex-col gap-6 pb-8 md:px-6">
+      <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
       <div className="flex items-center gap-3 px-4 pt-4">
         <button
           onClick={() => router.back()}
@@ -291,6 +315,8 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
                 <Button
                   variant="danger"
                   className="flex-1"
+                  loading={deleting}
+                  disabled={deleting}
                   onClick={handleDelete}
                 >
                   삭제

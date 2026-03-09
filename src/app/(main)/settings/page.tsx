@@ -523,48 +523,50 @@ function StorageManagementSection() {
   const totalBytes = storageInfo.reduce((acc, item) => acc + (item.bytes || 0), 0);
 
   const handleClearPortfolio = () => {
-    // remove only portfolio key and reset portfolio store in-memory
-    try {
-      localStorage.removeItem('bdx-portfolio');
-    } catch {
-      // ignore
-    }
-    // try to reset in-memory store if available
-    try {
-      const ps = usePortfolioStore.getState();
-      if (ps && typeof ps.photos !== 'undefined') {
-        // replace with empty photos
-        usePortfolioStore.setState({ photos: [] });
-      }
-    } catch {
-      // ignore
-    }
+    void (async () => {
+      const result = await portfolioClearAll();
 
-    setConfirmClearPortfolio(false);
-    setClearSuccess(t('settings.storage_cleared'));
-    refreshStorageInfo();
-    setTimeout(() => setClearSuccess(null), 2000);
+      setConfirmClearPortfolio(false);
+
+      if (!result.success) {
+        setClearSuccess(result.error ?? '포트폴리오 초기화에 실패했습니다');
+        setTimeout(() => setClearSuccess(null), 2500);
+        return;
+      }
+
+      setClearSuccess(t('settings.storage_cleared'));
+      refreshStorageInfo();
+      setTimeout(() => setClearSuccess(null), 2000);
+    })();
   };
 
   const handleClearAll = () => {
-    // remove only demo keys (customers, reservations, records, portfolio)
-    ['bdx-customers', 'bdx-reservations', 'bdx-records', 'bdx-portfolio'].forEach((k) => {
-      try { localStorage.removeItem(k); } catch { /* noop */ }
-    });
+    void (async () => {
+      const portfolioResult = await portfolioClearAll();
+      if (!portfolioResult.success) {
+        setConfirmClearAll(false);
+        setClearSuccess(portfolioResult.error ?? '포트폴리오 초기화에 실패했습니다');
+        setTimeout(() => setClearSuccess(null), 2500);
+        return;
+      }
 
-    // reset in-memory stores where possible
-    try { useCustomerStore.setState({ customers: [] }); } catch {}
-    try { useReservationStore.setState({ reservations: [] }); } catch {}
-    try { useRecordsStore.setState({ records: [] }); } catch {}
-    try { usePortfolioStore.setState({ photos: [] }); } catch {}
+      ['bdx-customers', 'bdx-reservations', 'bdx-records', 'bdx-portfolio'].forEach((k) => {
+        try { localStorage.removeItem(k); } catch { /* noop */ }
+      });
 
-    setConfirmClearAll(false);
-    setClearSuccess(t('settings.storage_cleared'));
-    refreshStorageInfo();
-    setTimeout(() => {
-      setClearSuccess(null);
-      try { window.location.reload(); } catch {}
-    }, 1000);
+      try { useCustomerStore.setState({ customers: [] }); } catch {}
+      try { useReservationStore.setState({ reservations: [] }); } catch {}
+      try { useRecordsStore.setState({ records: [] }); } catch {}
+      try { usePortfolioStore.setState({ photos: [] }); } catch {}
+
+      setConfirmClearAll(false);
+      setClearSuccess(t('settings.storage_cleared'));
+      refreshStorageInfo();
+      setTimeout(() => {
+        setClearSuccess(null);
+        try { window.location.reload(); } catch {}
+      }, 1000);
+    })();
   };
 
   return (
@@ -684,7 +686,7 @@ function StorageManagementSection() {
 export default function SettingsPage() {
   const router = useRouter();
   const t = useT();
-  const { shopSettings, setShopSettings, resetApp } = useAppStore();
+  const { shopSettings, setShopSettings } = useAppStore();
   const { role, activeDesignerId, logout, setPassword, checkPassword } = useAuthStore();
   const shop = useShopStore((s) => s.shop);
   const settingsDesigners = useShopStore((s) => s.designers);
@@ -758,9 +760,9 @@ export default function SettingsPage() {
   };
 
   const handleLogout = () => {
-    logout();
-    resetApp();
-    router.push('/lock');
+    void logout().then(() => {
+      router.push('/login');
+    });
   };
 
   const handlePasswordChange = () => {
@@ -1101,7 +1103,7 @@ export default function SettingsPage() {
 
                 {/* 계정 전환 */}
                 <button
-                  onClick={() => router.push('/lock')}
+                  onClick={handleLogout}
                   className="flex items-center gap-3 rounded-xl border border-border px-3 py-3 text-left transition-colors hover:bg-surface-alt"
                 >
                   {/* sync/refresh SVG */}

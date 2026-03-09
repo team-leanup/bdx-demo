@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { Input, BentoGrid, BentoCard, Button } from '@/components/ui';
+import { Input, BentoGrid, BentoCard, Button, ToastContainer } from '@/components/ui';
+import type { ToastData } from '@/components/ui';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { useRecordsStore } from '@/store/records-store';
@@ -29,9 +30,13 @@ const DESIGN_SCOPE_LABEL: Record<string, string> = {
 
 export default function PortfolioPage(): React.ReactElement {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const photos = usePortfolioStore((s) => s.photos);
+  const migrationNotice = usePortfolioStore((s) => s.migrationNotice);
+  const clearMigrationNotice = usePortfolioStore((s) => s.clearMigrationNotice);
   const getById = useCustomerStore((s) => s.getById);
   const getAllRecords = useRecordsStore((s) => s.getAllRecords);
+  const [toasts, setToasts] = useState<ToastData[]>([]);
   
   const [search, setSearch] = useState('');
   const [filterKind, setFilterKind] = useState<FilterKind>('all');
@@ -39,6 +44,47 @@ export default function PortfolioPage(): React.ReactElement {
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
   const records = getAllRecords();
+
+  useEffect(() => {
+    const actionToast = searchParams.get('toast');
+    if (!actionToast) {
+      return;
+    }
+
+    const messageMap: Record<string, string> = {
+      uploaded: '포트폴리오 사진을 저장했어요',
+      deleted: '포트폴리오 사진을 삭제했어요',
+    };
+
+    const message = messageMap[actionToast];
+    if (message) {
+      setToasts((current) => [
+        ...current,
+        { id: `toast-${Date.now()}`, type: 'success', message },
+      ]);
+    }
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete('toast');
+    const nextQuery = nextParams.toString();
+    router.replace(nextQuery ? `/portfolio?${nextQuery}` : '/portfolio');
+  }, [router, searchParams]);
+
+  useEffect(() => {
+    if (!migrationNotice) {
+      return;
+    }
+
+    setToasts((current) => [
+      ...current,
+      { id: `toast-${Date.now()}`, type: migrationNotice.type, message: migrationNotice.message },
+    ]);
+    clearMigrationNotice();
+  }, [clearMigrationNotice, migrationNotice]);
+
+  const handleDismissToast = (id: string): void => {
+    setToasts((current) => current.filter((toast) => toast.id !== id));
+  };
 
   const recordMap = useMemo(() => new Map(records.map((record) => [record.id, record])), [records]);
 
@@ -139,6 +185,7 @@ export default function PortfolioPage(): React.ReactElement {
 
   return (
     <div className="flex flex-col gap-4 pb-6">
+      <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
       <div className="px-4 md:px-0 pt-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-text">포트폴리오</h1>
         <Button
