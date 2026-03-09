@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { supabase } from '@/lib/supabase';
+import { hasSupabaseEnv, supabase, supabaseConfigErrorMessage } from '@/lib/supabase';
 import { DEMO_ACCOUNT_EMAIL, DEMO_ACCOUNT_PASSWORD } from '@/lib/demo-account';
 import {
   dbCreateShopAccount,
@@ -113,6 +113,11 @@ export const useAuthStore = create<AuthStore>()(
       passwords: {},
 
       initializeAuth: async () => {
+        if (!hasSupabaseEnv) {
+          set({ isInitialized: true, ...getLoggedOutState() });
+          return;
+        }
+
         const {
           data: { session },
           error,
@@ -144,6 +149,10 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       loginWithPassword: async (email, password) => {
+        if (!hasSupabaseEnv) {
+          return { success: false, error: supabaseConfigErrorMessage };
+        }
+
         const normalizedEmail = normalizeEmail(email);
         const { data, error } = await supabase.auth.signInWithPassword({
           email: normalizedEmail,
@@ -171,6 +180,10 @@ export const useAuthStore = create<AuthStore>()(
       loginAsDemo: async () => get().loginWithPassword(DEMO_ACCOUNT_EMAIL, DEMO_ACCOUNT_PASSWORD),
 
       signupShopAccount: async ({ shopName, ownerName, email, password }) => {
+        if (!hasSupabaseEnv) {
+          return { success: false, error: supabaseConfigErrorMessage };
+        }
+
         const normalizedEmail = normalizeEmail(email);
         const { data, error } = await supabase.auth.signUp({
           email: normalizedEmail,
@@ -210,6 +223,14 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       logout: async () => {
+        if (!hasSupabaseEnv) {
+          set({
+            isInitialized: true,
+            ...getLoggedOutState(),
+          });
+          return;
+        }
+
         const { error } = await supabase.auth.signOut();
         if (error) {
           console.error('[auth] signOut error:', error);
