@@ -2,6 +2,8 @@ import type { ConsultationRecord } from '@/types/consultation';
 import type { BookingRequest } from '@/types/consultation';
 import type { Customer } from '@/types/customer';
 import type { Designer } from '@/types/shop';
+import { calculatePrice } from '@/lib/price-calculator';
+import { getReservationReadiness } from '@/lib/reservation-readiness';
 
 // ─── Dashboard Types ─────────────────────────────────────────────────────────
 
@@ -30,9 +32,51 @@ export interface DesignerStats {
   designerId: string;
   designerName: string;
   consultations: number;
+  bookings: number;
+  revenue: number;
+  assignedBookingRate: number;
+  completedReservations: number;
+  consultationCompletionRate: number;
   topDesign: string;
   topShape: string;
   topExpression: string;
+}
+
+export interface UpsellMetrics {
+  totalUpsellRevenue: number;
+  upsellConsultations: number;
+  upsellRate: number;
+  averageUpsellRevenue: number;
+  topCategoryLabel: string;
+  topCategoryRevenue: number;
+}
+
+export interface ForeignLanguageStatus {
+  language: 'en' | 'zh' | 'ja';
+  label: string;
+  flag: string;
+  total: number;
+  ready: number;
+  pending: number;
+  readyRate: number;
+}
+
+export interface ForeignReservationSummary {
+  foreignerCount: number;
+  totalReady: number;
+  totalPending: number;
+  statuses: ForeignLanguageStatus[];
+}
+
+export interface GoldenTimeTarget {
+  customerId: string;
+  customerName: string;
+  phone: string;
+  assignedDesignerName: string;
+  expectedReservationDate: string;
+  daysSinceLastVisit: number;
+  recentServiceLabel: string;
+  reminderMessage: string;
 }
 
 export interface CustomerAnalytics {
@@ -53,6 +97,35 @@ export interface HourlyDistribution {
 // Helper: get YYYY-MM-DD string
 function toDateStr(date: Date): string {
   return date.toISOString().split('T')[0];
+}
+
+function toLocalDate(value: string): Date {
+  return value.includes('T') ? new Date(value) : new Date(`${value}T12:00:00`);
+}
+
+function addDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function startOfWeek(date: Date): Date {
+  const start = new Date(date);
+  const day = start.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  start.setDate(start.getDate() + diff);
+  start.setHours(0, 0, 0, 0);
+  return start;
+}
+
+function endOfWeek(date: Date): Date {
+  const end = addDays(startOfWeek(date), 6);
+  end.setHours(23, 59, 59, 999);
+  return end;
+}
+
+function roundToSingleDecimal(value: number): number {
+  return Math.round(value * 10) / 10;
 }
 
 // Get label for design scope key
@@ -205,11 +278,19 @@ export function computeExpressionBreakdown(records: ConsultationRecord[]): Servi
 export function computeDesignerStats(
   records: ConsultationRecord[],
   designers: Designer[],
+  reservations: BookingRequest[],
 ): DesignerStats[] {
+  const activeReservations = reservations.filter((reservation) => reservation.status !== 'cancelled');
+  const totalActiveReservations = Math.max(activeReservations.length, 1);
+
   return designers
     .filter((d) => d.isActive)
     .map((designer) => {
       const designerRecords = records.filter((r) => r.designerId === designer.id);
+      const designerReservations = activeReservations.filter((reservation) => reservation.designerId === designer.id);
+      const completedReservations = designerReservations.filter(
+        (reservation) => reservation.status === 'completed',
+      ).length;
 
       const scopeCounts: Record<string, number> = {};
       const exprCounts: Record<string, number> = {};
@@ -238,12 +319,171 @@ export function computeDesignerStats(
         designerId: designer.id,
         designerName: designer.name,
         consultations: designerRecords.length,
+        bookings: designerReservations.length,
+        revenue: designerRecords.reduce((sum, record) => sum + record.finalPrice, 0),
+        assignedBookingRate: roundToSingleDecimal(
+          (designerReservations.length / totalActiveReservations) * 100,
+        ),
+        completedReservations,
+        consultationCompletionRate: designerReservations.length > 0
+          ? roundToSingleDecimal((completedReservations / designerReservations.length) * 100)
+          : 0,
         topDesign: topScopeEntry ? (DESIGN_SCOPE_LABEL[topScopeEntry[0]] ?? topScopeEntry[0]) : '-',
         topShape: topShapeEntry ? (SHAPE_LABEL[topShapeEntry[0]] ?? topShapeEntry[0]) : '-',
         topExpression: topExprEntry ? (EXPRESSION_LABEL[topExprEntry[0]] ?? topExprEntry[0]) : '-',
       };
     })
     .sort((a, b) => b.consultations - a.consultations);
+}
+
+export function computeUpsellMetrics(records: ConsultationRecord[]): UpsellMetrics {
+  const categoryTotals = {
+    design: 0,
+    expression: 0,
+    parts: 0,
+    color: 0,
+    manual: 0,
+  };
+
+  let totalUpsellRevenue = 0;
+  let upsellConsultations = 0;
+
+  records.forEach((record) => {
+    const breakdown = calculatePrice(record.consultation);
+    const manualExtras = record.pricingAdjustments?.extras.reduce(
+      (sum, extra) => sum + extra.amount,
+      0,
+    ) ?? 0;
+
+    const consultationUpsell =
+      breakdown.designSurcharge
+      + breakdown.expressionSurcharge
+      + breakdown.partsSurcharge
+      + breakdown.colorSurcharge
+      + manualExtras;
+
+    categoryTotals.design += breakdown.designSurcharge;
+    categoryTotals.expression += breakdown.expressionSurcharge;
+    categoryTotals.parts += breakdown.partsSurcharge;
+    categoryTotals.color += breakdown.colorSurcharge;
+    categoryTotals.manual += manualExtras;
+
+    totalUpsellRevenue += consultationUpsell;
+
+    if (consultationUpsell > 0) {
+      upsellConsultations += 1;
+    }
+  });
+
+  const topCategory = Object.entries({
+    '아트/디자인': categoryTotals.design,
+    '표현 기법': categoryTotals.expression,
+    파츠: categoryTotals.parts,
+    '추가 컬러': categoryTotals.color,
+    '현장 추가금': categoryTotals.manual,
+  }).sort((a, b) => b[1] - a[1])[0] ?? ['-', 0];
+
+  return {
+    totalUpsellRevenue,
+    upsellConsultations,
+    upsellRate: records.length > 0 ? roundToSingleDecimal((upsellConsultations / records.length) * 100) : 0,
+    averageUpsellRevenue: upsellConsultations > 0
+      ? Math.round(totalUpsellRevenue / upsellConsultations)
+      : 0,
+    topCategoryLabel: topCategory[0],
+    topCategoryRevenue: topCategory[1],
+  };
+}
+
+const FOREIGN_LANGUAGE_META: Record<NonNullable<BookingRequest['language']>, { label: string; flag: string }> = {
+  ko: { label: '한국어', flag: 'KR' },
+  en: { label: '영어', flag: 'EN' },
+  zh: { label: '중국어', flag: 'ZH' },
+  ja: { label: '일본어', flag: 'JA' },
+};
+
+export function computeForeignReservationSummary(
+  reservations: BookingRequest[],
+): ForeignReservationSummary {
+  const today = toDateStr(new Date());
+  const todayReservations = reservations.filter(
+    (reservation) => reservation.status !== 'cancelled' && reservation.reservationDate === today,
+  );
+  const foreignReservations = todayReservations.filter(
+    (reservation) => reservation.language != null && reservation.language !== 'ko',
+  ) as Array<BookingRequest & { language: 'en' | 'zh' | 'ja' }>;
+
+  const statuses: ForeignLanguageStatus[] = (['en', 'zh', 'ja'] as const).map((language) => {
+    const bookings = foreignReservations.filter((reservation) => reservation.language === language);
+    const ready = bookings.filter(
+      (reservation) => getReservationReadiness(reservation).state === 'ready',
+    ).length;
+    const total = bookings.length;
+
+    return {
+      language,
+      label: FOREIGN_LANGUAGE_META[language].label,
+      flag: FOREIGN_LANGUAGE_META[language].flag,
+      total,
+      ready,
+      pending: total - ready,
+      readyRate: total > 0 ? roundToSingleDecimal((ready / total) * 100) : 0,
+    };
+  });
+
+  return {
+    foreignerCount: foreignReservations.length,
+    totalReady: statuses.reduce((sum, status) => sum + status.ready, 0),
+    totalPending: statuses.reduce((sum, status) => sum + status.pending, 0),
+    statuses,
+  };
+}
+
+export function computeGoldenTimeTargets(
+  customers: Customer[],
+  reservations: BookingRequest[],
+  averageCycleDays = 28,
+): GoldenTimeTarget[] {
+  const today = new Date();
+  const weekStart = startOfWeek(today);
+  const weekEnd = endOfWeek(today);
+  const reservedCustomerIds = new Set(
+    reservations
+      .filter((reservation) => reservation.status !== 'cancelled' && reservation.customerId)
+      .filter((reservation) => {
+        const reservationDate = toLocalDate(reservation.reservationDate);
+        return reservationDate >= weekStart && reservationDate <= weekEnd;
+      })
+      .map((reservation) => reservation.customerId as string),
+  );
+
+  return customers
+    .filter((customer) => customer.visitCount >= 2)
+    .filter((customer) => !reservedCustomerIds.has(customer.id))
+    .map((customer) => {
+      const lastVisitDate = toLocalDate(customer.lastVisitDate);
+      const expectedReservationDate = addDays(lastVisitDate, averageCycleDays);
+      const recentServiceLabel = customer.treatmentHistory[0]?.designScope ?? '최근 시술';
+
+      return {
+        customerId: customer.id,
+        customerName: customer.name,
+        phone: customer.phone,
+        assignedDesignerName: customer.assignedDesignerName ?? '담당 디자이너',
+        expectedReservationDate: toDateStr(expectedReservationDate),
+        daysSinceLastVisit: Math.max(
+          0,
+          Math.round((today.getTime() - lastVisitDate.getTime()) / (1000 * 60 * 60 * 24)),
+        ),
+        recentServiceLabel,
+        reminderMessage: `${customer.name}님, 안녕하세요. ${customer.assignedDesignerName ?? 'BDX'}입니다. 지난 ${recentServiceLabel} 시술 후 4주차가 되어 이번 주 관리 타이밍 안내드립니다. 편하신 시간에 예약 도와드릴게요.`,
+      };
+    })
+    .filter((target) => {
+      const expectedDate = toLocalDate(target.expectedReservationDate);
+      return expectedDate >= weekStart && expectedDate <= weekEnd;
+    })
+    .sort((a, b) => a.expectedReservationDate.localeCompare(b.expectedReservationDate));
 }
 
 // Compute customer analytics

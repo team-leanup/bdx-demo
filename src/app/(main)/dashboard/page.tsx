@@ -3,7 +3,8 @@
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { BentoGrid, BentoCard, Button, Modal } from '@/components/ui';
+import { BentoGrid, BentoCard, Button, Modal, ToastContainer } from '@/components/ui';
+import type { ToastData } from '@/components/ui';
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
 import { KPICards } from '@/components/dashboard/KPICards';
 import { RevenueChart } from '@/components/dashboard/RevenueChart';
@@ -22,6 +23,9 @@ import { useReservationStore } from '@/store/reservation-store';
 import {
   computeRegularVisitRate,
   computePeakHours,
+  computeUpsellMetrics,
+  computeForeignReservationSummary,
+  computeGoldenTimeTargets,
 } from '@/lib/analytics';
 import type { ConsultationRecord } from '@/types/consultation';
 
@@ -56,9 +60,19 @@ export default function DashboardPage() {
   const photos = usePortfolioStore((s) => s.photos);
   const reservations = useReservationStore((s) => s.reservations);
   const [selectedTreatment, setSelectedTreatment] = useState<PopularTreatmentThumbnail | null>(null);
+  const [toasts, setToasts] = useState<ToastData[]>([]);
 
   const regularVisitRate = useMemo(() => computeRegularVisitRate(customers), [customers]);
   const peakHours = useMemo(() => computePeakHours(reservations), [reservations]);
+  const upsellMetrics = useMemo(() => computeUpsellMetrics(records), [records]);
+  const foreignReservationSummary = useMemo(
+    () => computeForeignReservationSummary(reservations),
+    [reservations],
+  );
+  const goldenTimeTargets = useMemo(
+    () => computeGoldenTimeTargets(customers, reservations),
+    [customers, reservations],
+  );
   const recordMap = useMemo<Map<string, ConsultationRecord>>(
     () => new Map(records.map((record) => [record.id, record])),
     [records],
@@ -127,6 +141,25 @@ export default function DashboardPage() {
       }));
   }, [photos, recordMap, getCustomerById]);
 
+  const handleDismissToast = (id: string) => {
+    setToasts((current) => current.filter((toast) => toast.id !== id));
+  };
+
+  const handleCopyReminder = async (message: string) => {
+    try {
+      await navigator.clipboard.writeText(message);
+      setToasts((current) => [
+        ...current,
+        { id: `toast-${Date.now()}`, type: 'success', message: '리마인더 문구를 복사했어요' },
+      ]);
+    } catch {
+      setToasts((current) => [
+        ...current,
+        { id: `toast-${Date.now()}`, type: 'error', message: '복사에 실패했어요. 다시 시도해 주세요' },
+      ]);
+    }
+  };
+
   if (!isOwner()) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-6 text-center">
@@ -170,6 +203,132 @@ export default function DashboardPage() {
       {/* Full Bento Grid */}
       <div className="px-4 md:px-0">
         <BentoGrid cols={4}>
+          <BentoCard span="4x1" variant="accent">
+            <div className="flex h-full flex-col gap-4 p-4 md:p-5">
+              <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-text-secondary">업셀링 리포트</p>
+                  <div className="mt-2 flex items-end gap-2">
+                    <span className="text-3xl font-extrabold leading-none text-primary md:text-4xl">
+                      {formatPrice(upsellMetrics.totalUpsellRevenue)}
+                    </span>
+                    <span className="pb-1 text-xs font-medium text-text-muted">BDX 상담으로 추가된 옵션 매출</span>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-border bg-surface/80 px-4 py-3">
+                  <p className="text-[11px] text-text-muted">업셀링 적용 상담</p>
+                  <p className="mt-1 text-lg font-bold text-text">{upsellMetrics.upsellConsultations}건</p>
+                  <p className="text-[11px] text-text-muted">전체 상담의 {upsellMetrics.upsellRate}%</p>
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-2xl border border-border bg-surface/80 px-4 py-3">
+                  <p className="text-[11px] text-text-muted">상담당 평균 추가 매출</p>
+                  <p className="mt-1 text-lg font-bold text-text">{formatPrice(upsellMetrics.averageUpsellRevenue)}</p>
+                </div>
+                <div className="rounded-2xl border border-border bg-surface/80 px-4 py-3">
+                  <p className="text-[11px] text-text-muted">가장 크게 견인한 옵션</p>
+                  <p className="mt-1 text-lg font-bold text-text">{upsellMetrics.topCategoryLabel}</p>
+                  <p className="text-[11px] text-text-muted">{formatPrice(upsellMetrics.topCategoryRevenue)}</p>
+                </div>
+                <div className="rounded-2xl border border-border bg-surface/80 px-4 py-3">
+                  <p className="text-[11px] text-text-muted">원장님 체감 포인트</p>
+                  <p className="mt-1 text-sm font-semibold text-text">디자인/파츠 제안이 바로 추가 매출로 연결되고 있어요.</p>
+                </div>
+              </div>
+            </div>
+          </BentoCard>
+
+          <BentoCard span="2x1">
+            <div className="flex h-full flex-col gap-4 p-4 md:p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-semibold text-text-secondary">글로벌 대시보드</h2>
+                  <p className="mt-1 text-xs text-text-muted">오늘 외국어 예약과 언어별 상담 준비 상태</p>
+                </div>
+                <div className="rounded-2xl bg-primary/10 px-3 py-2 text-right">
+                  <p className="text-[10px] text-primary">오늘의 외국인 예약</p>
+                  <p className="text-2xl font-extrabold text-primary">{foreignReservationSummary.foreignerCount}명</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl border border-border bg-surface-alt px-4 py-3">
+                  <p className="text-[11px] text-text-muted">준비 완료</p>
+                  <p className="mt-1 text-lg font-bold text-text">{foreignReservationSummary.totalReady}건</p>
+                </div>
+                <div className="rounded-2xl border border-border bg-surface-alt px-4 py-3">
+                  <p className="text-[11px] text-text-muted">추가 준비 필요</p>
+                  <p className="mt-1 text-lg font-bold text-text">{foreignReservationSummary.totalPending}건</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2.5">
+                {foreignReservationSummary.statuses.map((status) => (
+                  <div
+                    key={status.language}
+                    className={`rounded-2xl border border-border px-4 py-3 ${status.total === 0 ? 'bg-surface/50 opacity-60' : 'bg-surface-alt'}`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-xs font-bold text-primary">{status.flag}</span>
+                        <div>
+                          <p className="text-sm font-semibold text-text">{status.label}</p>
+                          <p className="text-[11px] text-text-muted">예약 {status.total}건 · 준비 완료 {status.ready}건</p>
+                        </div>
+                      </div>
+                      <span className="text-sm font-bold text-primary">{status.readyRate}%</span>
+                    </div>
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface">
+                      <div className="h-full rounded-full bg-primary" style={{ width: `${status.readyRate}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </BentoCard>
+
+          <BentoCard span="2x1">
+            <div className="flex h-full flex-col gap-4 p-4 md:p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-semibold text-text-secondary">재방문 골든타임 알림</h2>
+                  <p className="mt-1 text-xs text-text-muted">평균 주기 28일 기준 이번 주 리마인더 대상</p>
+                </div>
+                <div className="rounded-2xl bg-amber-100 px-3 py-2 text-right text-amber-800">
+                  <p className="text-[10px]">이번 주 대상</p>
+                  <p className="text-2xl font-extrabold">{goldenTimeTargets.length}명</p>
+                </div>
+              </div>
+
+              {goldenTimeTargets.length === 0 ? (
+                <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-border bg-surface-alt px-4 text-center text-sm text-text-muted">
+                  이번 주에는 별도 리마인더가 필요한 고객이 없습니다.
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2.5">
+                  {goldenTimeTargets.map((target) => (
+                    <div key={target.customerId} className="rounded-2xl border border-border bg-surface-alt px-4 py-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-text">{target.customerName}</p>
+                          <p className="mt-0.5 text-[11px] text-text-muted">
+                            {target.assignedDesignerName} · {target.recentServiceLabel} · 마지막 방문 후 {target.daysSinceLastVisit}일
+                          </p>
+                          <p className="mt-1 text-[11px] text-text-muted">권장 연락일 {formatDateDot(target.expectedReservationDate)}</p>
+                        </div>
+                        <Button size="sm" variant="secondary" onClick={() => handleCopyReminder(target.reminderMessage)}>
+                          문구 복사
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </BentoCard>
+
           {/* KPI Row: 4 × 1×1 BentoCards (returned as Fragment children) */}
           <KPICards />
 
@@ -317,6 +476,8 @@ export default function DashboardPage() {
           </BentoCard>
         </BentoGrid>
       </div>
+
+      <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
 
       <Modal
         isOpen={selectedTreatment !== null}

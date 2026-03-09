@@ -12,8 +12,10 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { useRecordsStore } from '@/store/records-store';
+import { useReservationStore } from '@/store/reservation-store';
 import { useShopStore } from '@/store/shop-store';
 import { computeDesignerStats } from '@/lib/analytics';
+import { formatPrice } from '@/lib/format';
 
 // 테마 색상 CSS 변수 사용 (hardcoded 색상 제거)
 const DESIGNER_COLORS = [
@@ -30,12 +32,13 @@ interface TooltipProps {
 
 function CustomTooltip({ active, payload, label }: TooltipProps) {
   if (!active || !payload?.length) return null;
+
   return (
     <div className="rounded-xl border border-border bg-surface px-3 py-2 shadow-lg">
       <p className="mb-1 text-xs font-medium text-text">{label}</p>
       {payload.map((p) => (
         <p key={p.name} className="text-xs text-text-secondary">
-          {p.name}: {p.value}건
+          {p.name}: {p.name.includes('율') ? `${p.value}%` : `${p.value}건`}
         </p>
       ))}
     </div>
@@ -44,15 +47,22 @@ function CustomTooltip({ active, payload, label }: TooltipProps) {
 
 export function DesignerPerformance() {
   const records = useRecordsStore((s) => s.records);
+  const reservations = useReservationStore((s) => s.reservations);
   const designers = useShopStore((s) => s.designers);
   const designerStats = useMemo(
-    () => computeDesignerStats(records, designers),
-    [records, designers],
+    () => computeDesignerStats(records, designers, reservations),
+    [records, designers, reservations],
   );
 
-  const chartData = designerStats.map((d) => ({
+  const consultationChartData = designerStats.map((d) => ({
     name: d.designerName,
     상담수: d.consultations,
+  }));
+
+  const rateChartData = designerStats.map((d) => ({
+    name: d.designerName,
+    '예약 배정률': d.assignedBookingRate,
+    '상담 완료율': d.consultationCompletionRate,
   }));
 
   // 상담 건수 기준 최대값 (프로그레스 바용)
@@ -76,7 +86,10 @@ export function DesignerPerformance() {
                     >
                       {d.designerName.charAt(0)}
                     </div>
-                    <span className="text-sm font-medium text-text">{d.designerName}</span>
+                    <div>
+                      <span className="text-sm font-medium text-text">{d.designerName}</span>
+                      <p className="text-[11px] text-text-muted">매출 {formatPrice(d.revenue)}</p>
+                    </div>
                   </div>
                   <span className="text-sm font-bold text-primary">{d.consultations}건</span>
                 </div>
@@ -99,36 +112,63 @@ export function DesignerPerformance() {
       <div>
         <p className="mb-3 text-xs font-medium text-text-secondary">선생님별 상담 건수</p>
         <div className="h-[130px] md:h-44">
-      <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={chartData}
-            layout="vertical"
-            margin={{ top: 0, right: 8, left: 8, bottom: 0 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" horizontal={false} />
-            <XAxis
-              type="number"
-              tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
-              axisLine={false}
-              tickLine={false}
-              tickFormatter={(v) => `${v}건`}
-            />
-            <YAxis
-              type="category"
-              dataKey="name"
-              tick={{ fontSize: 11, fill: 'var(--color-text)' }}
-              axisLine={false}
-              tickLine={false}
-              width={36}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="상담수" radius={[0, 6, 6, 0]}>
-              {chartData.map((_, i) => (
-                <Cell key={i} fill={DESIGNER_COLORS[i % DESIGNER_COLORS.length]} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+          <ResponsiveContainer width="100%" height="100%">
+           <BarChart
+             data={consultationChartData}
+             layout="vertical"
+             margin={{ top: 0, right: 8, left: 8, bottom: 0 }}
+           >
+             <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" horizontal={false} />
+             <XAxis
+               type="number"
+               tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
+               axisLine={false}
+               tickLine={false}
+               tickFormatter={(v) => `${v}건`}
+             />
+             <YAxis
+               type="category"
+               dataKey="name"
+               tick={{ fontSize: 11, fill: 'var(--color-text)' }}
+               axisLine={false}
+               tickLine={false}
+               width={36}
+             />
+             <Tooltip content={<CustomTooltip />} />
+             <Bar dataKey="상담수" radius={[0, 6, 6, 0]}>
+               {consultationChartData.map((_, i) => (
+                 <Cell key={i} fill={DESIGNER_COLORS[i % DESIGNER_COLORS.length]} />
+               ))}
+             </Bar>
+           </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-3 text-xs font-medium text-text-secondary">예약 배정률 / 상담 완료율</p>
+        <div className="h-[160px] md:h-48">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={rateChartData} margin={{ top: 0, right: 8, left: -12, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 11, fill: 'var(--color-text)' }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(value) => `${value}%`}
+                domain={[0, 100]}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar dataKey="예약 배정률" radius={[6, 6, 0, 0]} fill="var(--color-primary)" />
+              <Bar dataKey="상담 완료율" radius={[6, 6, 0, 0]} fill="var(--color-success)" />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
@@ -148,9 +188,27 @@ export function DesignerPerformance() {
             <div className="flex-1">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-text">{d.designerName}</span>
-                <span className="text-sm font-bold text-primary">{d.consultations}건</span>
+                <span className="text-sm font-bold text-primary">{formatPrice(d.revenue)}</span>
               </div>
-              <div className="mt-0.5 flex items-center gap-3 text-xs text-text-secondary">
+              <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-text-secondary">
+                <div className="rounded-lg bg-surface-alt px-3 py-2">
+                  <p className="text-[10px] text-text-muted">상담 건수</p>
+                  <p className="mt-0.5 font-semibold text-text">{d.consultations}건</p>
+                </div>
+                <div className="rounded-lg bg-surface-alt px-3 py-2">
+                  <p className="text-[10px] text-text-muted">예약 배정률</p>
+                  <p className="mt-0.5 font-semibold text-text">{d.assignedBookingRate}%</p>
+                </div>
+                <div className="rounded-lg bg-surface-alt px-3 py-2">
+                  <p className="text-[10px] text-text-muted">상담 완료율</p>
+                  <p className="mt-0.5 font-semibold text-text">{d.consultationCompletionRate}%</p>
+                </div>
+                <div className="rounded-lg bg-surface-alt px-3 py-2">
+                  <p className="text-[10px] text-text-muted">완료 예약</p>
+                  <p className="mt-0.5 font-semibold text-text">{d.completedReservations}/{d.bookings}건</p>
+                </div>
+              </div>
+              <div className="mt-2 flex items-center gap-3 text-xs text-text-secondary">
                 <span>인기: {d.topDesign}</span>
                 <span>·</span>
                 <span>인기 쉐입: {d.topShape}</span>
