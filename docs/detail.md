@@ -379,6 +379,7 @@ BDX를 "상담 시스템"에서 **"고객 관리 CRM + 시술 기록 시스템"*
 - `src/store/auth-store.ts` — Supabase `getSession()`과 `onAuthStateChange()`로 세션을 복원하고, `owner_id = auth.user.id` 기준으로 `currentShopId`와 원장 프로필을 복구함. 디자이너 PIN 비밀번호만 로컬에 보조 저장
 - `src/lib/demo-account.ts` — 고정 데모 계정 credential을 정의하고, auth CTA에서 해당 계정으로 즉시 로그인 가능
 - Supabase에는 `demo@bdx.kr` / `shop-demo` 데모 샵이 seeded 되어 있어 로그인 없이 체험하기로 바로 실제 예시 데이터 화면을 볼 수 있음
+- `src/lib/supabase.ts` — 공개 env가 누락된 배포에서는 placeholder 호출을 숨기지 않고, auth flow가 즉시 설정 오류 메시지를 보여주도록 guard 정보(`hasSupabaseEnv`)를 함께 제공
 - 기존 `src/app/(auth)/lock/page.tsx` 잠금 화면은 제거되었고, 루트/가드/로그아웃 진입점은 모두 `/login`으로 통일됨
 - 로그인 UX는 원장/직원 선택 대신 샵 계정 단일 진입으로 정리되었고, 디자이너는 로그인 후 앱 내부 프로필 개념으로 다뤄짐
 - `src/middleware.ts` — 보안 헤더만 추가, 아직 Supabase 세션 검증은 하지 않음
@@ -404,6 +405,7 @@ BDX를 "상담 시스템"에서 **"고객 관리 CRM + 시술 기록 시스템"*
 | 2026-03-10 | 로그인/회원가입의 로컬 계정을 Supabase Auth로 교체하고, 세션 복원 시 auth user와 연결된 샵/owner 프로필을 자동 hydrate 하도록 전환 |
 | 2026-03-10 | `fetchShopByOwnerId()`를 `maybeSingle()` 기반으로 바꿔, 샵이 아직 연결되지 않은 세션의 초기화 과정에서 불필요한 콘솔 에러가 발생하지 않게 수정 |
 | 2026-03-10 | `로그인 없이 서비스 체험하기`가 Supabase 데모 계정으로 바로 로그인하도록 바꾸고, `shop-demo`에 샘플 고객/예약/기록/포트폴리오 데이터를 seeded 해 실제 서비스처럼 체험 가능하게 구성 |
+| 2026-03-10 | 배포 환경에 Supabase 공개 env가 누락됐을 때 auth 요청이 `placeholder.supabase.co`로 나가지 않도록 guard를 추가하고, 명시적인 배포 설정 오류 메시지를 반환하도록 수정 |
 
 ---
 

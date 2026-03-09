@@ -199,6 +199,7 @@
 ### 13.1 🔵 Supabase Auth 이메일 로그인 연결
 - **지금**: `src/app/(auth)/login/page.tsx`, `src/app/(auth)/signup/page.tsx`, `src/store/auth-store.ts`가 Supabase Auth `signUp` / `signInWithPassword` / `getSession` 기반으로 실제 샵 계정 로그인을 처리함. 회원가입 시 빈 `shops` row와 owner `designers` row를 만들고, 이후 세션은 `currentShopId` 기준으로 복원됨
 - **완료 추가**: `로그인 없이 서비스 체험하기` CTA는 이제 `demo@bdx.kr` Supabase 데모 계정으로 바로 로그인하고, `shop-demo` 샵의 seeded 데이터(고객/예약/기록/포트폴리오)로 진입함
+- **완료 추가**: 배포 환경에서 Supabase 공개 env가 빠졌을 때는 placeholder 네트워크 호출 대신 명시적인 설정 오류 메시지를 반환하도록 auth bootstrap을 보강함
 - **남은 일**: 이메일 인증 UX, 비밀번호 재설정, 에러 메시지 정교화, 서버 측 세션 검증 추가
 
 ### 13.2 ⬜ 구글 OAuth Provider 연동
