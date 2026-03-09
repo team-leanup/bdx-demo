@@ -27,6 +27,7 @@ export type Database = {
           reservation_date: string
           reservation_time: string
           service_label: string | null
+          shop_id: string
           status: string | null
         }
         Insert: {
@@ -43,6 +44,7 @@ export type Database = {
           reservation_date: string
           reservation_time: string
           service_label?: string | null
+          shop_id: string
           status?: string | null
         }
         Update: {
@@ -59,6 +61,7 @@ export type Database = {
           reservation_date?: string
           reservation_time?: string
           service_label?: string | null
+          shop_id?: string
           status?: string | null
         }
         Relationships: []
@@ -257,35 +260,53 @@ export type Database = {
       }
       portfolio_photos: {
         Row: {
+          color_labels: Json
           created_at: string | null
           customer_id: string
+          design_type: string | null
           id: string
           image_data_url: string | null
+          image_path: string | null
           kind: string
           note: string | null
+          price: number | null
           record_id: string | null
+          service_type: string | null
+          shop_id: string
           tags: Json | null
           taken_at: string | null
         }
         Insert: {
+          color_labels?: Json
           created_at?: string | null
           customer_id: string
+          design_type?: string | null
           id: string
           image_data_url?: string | null
+          image_path?: string | null
           kind: string
           note?: string | null
+          price?: number | null
           record_id?: string | null
+          service_type?: string | null
+          shop_id: string
           tags?: Json | null
           taken_at?: string | null
         }
         Update: {
+          color_labels?: Json
           created_at?: string | null
           customer_id?: string
+          design_type?: string | null
           id?: string
           image_data_url?: string | null
+          image_path?: string | null
           kind?: string
           note?: string | null
+          price?: number | null
           record_id?: string | null
+          service_type?: string | null
+          shop_id?: string
           tags?: Json | null
           taken_at?: string | null
         }
@@ -301,6 +322,7 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          onboarding_completed_at: string | null
           owner_id: string | null
           phone: string | null
           theme_id: string | null
@@ -315,6 +337,7 @@ export type Database = {
           id: string
           logo_url?: string | null
           name: string
+          onboarding_completed_at?: string | null
           owner_id?: string | null
           phone?: string | null
           theme_id?: string | null
@@ -329,6 +352,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          onboarding_completed_at?: string | null
           owner_id?: string | null
           phone?: string | null
           theme_id?: string | null

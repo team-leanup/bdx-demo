@@ -67,6 +67,7 @@ export interface Shop {
   baseHandPrice: number;   // 핸드 기본가
   baseFootPrice: number;   // 페디큐어 기본가
   logoUrl?: string;
+  onboardingCompletedAt?: string;
   createdAt: string;
   updatedAt: string;
 }

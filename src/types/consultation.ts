@@ -123,6 +123,7 @@ export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
 
 export interface BookingRequest {
   id: string;
+  shopId: string;
   customerName: string;
   phone: string;
   reservationDate: string;
