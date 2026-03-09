@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BDX Logo v15</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: #FFFFFF;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 24px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .top-bar {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 28px;
+    border-bottom: 1px solid #FFD6E8;
+    margin-bottom: 48px;
+  }
+  .top-bar-left {
+    font-size: 11px; font-weight: 300;
+    letter-spacing: 4px; text-transform: uppercase;
+    color: #CC0055;
+  }
+  .top-bar-right {
+    font-size: 10px; font-weight: 200;
+    letter-spacing: 2px; color: #FF3385;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 24px;
+    max-width: 1200px;
+    width: 100%;
+  }
+
+  .card {
+    background: #FFFFFF;
+    border: 1px solid #FFE0EE;
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 56px 36px 40px;
+    position: relative;
+  }
+
+  .card:nth-child(1) { grid-column: span 3; min-height: 420px; }
+  .card:nth-child(2) { grid-column: span 3; min-height: 420px; }
+  .card:nth-child(3) { grid-column: span 2; min-height: 400px; }
+  .card:nth-child(4) { grid-column: span 2; min-height: 400px; }
+  .card:nth-child(5) { grid-column: span 2; min-height: 400px; }
+
+  .card-label {
+    position: absolute; top: 20px; left: 24px;
+    font-size: 9px; font-weight: 300; letter-spacing: 3px;
+    text-transform: uppercase; color: #FF3385;
+  }
+  .card-number {
+    position: absolute; top: 20px; right: 24px;
+    font-size: 9px; font-weight: 200; color: #FF80AA;
+  }
+
+  .symbol-wrap { width: 220px; height: 220px; }
+  .h-lockup { width: 100%; max-width: 400px; }
+
+  .v-lockup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .v-lockup .v-symbol { width: 140px; height: 140px; margin-bottom: 22px; }
+  .v-lockup .v-text { width: 150px; text-align: center; }
+
+  .footer {
+    margin-top: 48px; padding-top: 28px;
+    border-top: 1px solid #FFD6E8;
+    width: 100%; max-width: 1200px; text-align: center;
+  }
+  .footer-text {
+    font-size: 10px; font-weight: 200; letter-spacing: 3px;
+    text-transform: uppercase; color: #FF3385;
+  }
+
+  @media (max-width: 900px) {
+    .cards { grid-template-columns: 1fr; }
+    .card:nth-child(n) { grid-column: span 1; min-height: 380px; }
+    .symbol-wrap { width: 180px; height: 180px; }
+    .h-lockup { max-width: 320px; }
+  }
+</style>
+</head>
+<body>
+
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden">
+<defs>
+  <!-- 꽃잎 3D 그라디언트 -->
+  <linearGradient id="g0" gradientUnits="userSpaceOnUse" x1="50" y1="100" x2="150" y2="100">
+    <stop offset="0%" stop-color="#FF0066"/><stop offset="20%" stop-color="#FF1A75"/>
+    <stop offset="45%" stop-color="#FF4D99"/><stop offset="50%" stop-color="#FF66AA"/>
+    <stop offset="55%" stop-color="#FF4D99"/><stop offset="80%" stop-color="#FF1A75"/>
+    <stop offset="100%" stop-color="#FF0066"/>
+  </linearGradient>
+  <linearGradient id="g45" gradientUnits="userSpaceOnUse" x1="50" y1="50" x2="150" y2="150">
+    <stop offset="0%" stop-color="#FF0066"/><stop offset="20%" stop-color="#FF1A75"/>
+    <stop offset="45%" stop-color="#FF4D99"/><stop offset="50%" stop-color="#FF66AA"/>
+    <stop offset="55%" stop-color="#FF4D99"/><stop offset="80%" stop-color="#FF1A75"/>
+    <stop offset="100%" stop-color="#FF0066"/>
+  </linearGradient>
+  <linearGradient id="g90" gradientUnits="userSpaceOnUse" x1="100" y1="50" x2="100" y2="150">
+    <stop offset="0%" stop-color="#FF0066"/><stop offset="20%" stop-color="#FF1A75"/>
+    <stop offset="45%" stop-color="#FF4D99"/><stop offset="50%" stop-color="#FF66AA"/>
+    <stop offset="55%" stop-color="#FF4D99"/><stop offset="80%" stop-color="#FF1A75"/>
+    <stop offset="100%" stop-color="#FF0066"/>
+  </linearGradient>
+  <linearGradient id="g135" gradientUnits="userSpaceOnUse" x1="150" y1="50" x2="50" y2="150">
+    <stop offset="0%" stop-color="#FF0066"/><stop offset="20%" stop-color="#FF1A75"/>
+    <stop offset="45%" stop-color="#FF4D99"/><stop offset="50%" stop-color="#FF66AA"/>
+    <stop offset="55%" stop-color="#FF4D99"/><stop offset="80%" stop-color="#FF1A75"/>
+    <stop offset="100%" stop-color="#FF0066"/>
+  </linearGradient>
+
+  <!-- 텍스트 그라데이션 -->
+  <linearGradient id="txtGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="#1A1A1A"/><stop offset="100%" stop-color="#FF0066"/>
+  </linearGradient>
+  <linearGradient id="subGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="#990044"/><stop offset="100%" stop-color="#FF3385"/>
+  </linearGradient>
+</defs>
+</svg>
+
+
+<div class="top-bar">
+  <div class="top-bar-left">BDX Brand Logo</div>
+  <div class="top-bar-right">v15.0 — Flower</div>
+</div>
+
+<div class="cards">
+
+  <!-- ━━━ 01: SYMBOL ━━━ -->
+  <div class="card">
+    <span class="card-label">Symbol Mark</span>
+    <span class="card-number">01</span>
+    <div class="symbol-wrap">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="100" cy="100" r="86" fill="none" stroke="#FF0066" stroke-width="1" stroke-opacity="0.35"/>
+        <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" fill="url(#g0)" fill-opacity="0.2"/>
+        <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" transform="rotate(45, 100, 100)" fill="url(#g45)" fill-opacity="0.2"/>
+        <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" transform="rotate(90, 100, 100)" fill="url(#g90)" fill-opacity="0.2"/>
+        <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" transform="rotate(135, 100, 100)" fill="url(#g135)" fill-opacity="0.2"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ━━━ 02: HORIZONTAL LOCKUP ━━━ -->
+  <div class="card">
+    <span class="card-label">Horizontal Lockup</span>
+    <span class="card-number">02</span>
+    <div class="h-lockup">
+      <svg viewBox="0 0 420 120" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+        <svg x="0" y="0" width="120" height="120" viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="86" fill="none" stroke="#FF0066" stroke-width="1" stroke-opacity="0.35"/>
+          <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" fill="url(#g0)" fill-opacity="0.2"/>
+          <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" transform="rotate(45, 100, 100)" fill="url(#g45)" fill-opacity="0.2"/>
+          <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" transform="rotate(90, 100, 100)" fill="url(#g90)" fill-opacity="0.2"/>
+          <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" transform="rotate(135, 100, 100)" fill="url(#g135)" fill-opacity="0.2"/>
+        </svg>
+        <text x="148" y="72" font-family="Outfit, sans-serif"
+              font-size="68" font-weight="200" fill="#2D2D2D"
+              textLength="260" lengthAdjust="spacing">BDX</text>
+        <text x="148" y="98" font-family="Outfit, sans-serif"
+              font-size="13" font-weight="300" fill="#8A7F84"
+              textLength="260" lengthAdjust="spacing">BEAUTY DECISION EXPERIENCE</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ━━━ 03: VERTICAL — BLACK ━━━ -->
+  <div class="card">
+    <span class="card-label">Black</span>
+    <span class="card-number">03</span>
+    <div class="v-lockup">
+      <div class="v-symbol">
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="100" cy="100" r="86" fill="none" stroke="#FF0066" stroke-width="1" stroke-opacity="0.35"/>
+          <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" fill="url(#g0)" fill-opacity="0.2"/>
+          <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" transform="rotate(45, 100, 100)" fill="url(#g45)" fill-opacity="0.2"/>
+          <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" transform="rotate(90, 100, 100)" fill="url(#g90)" fill-opacity="0.2"/>
+          <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" transform="rotate(135, 100, 100)" fill="url(#g135)" fill-opacity="0.2"/>
+        </svg>
+      </div>
+      <div class="v-text">
+        <svg viewBox="0 0 160 48" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;overflow:visible;">
+          <text x="80" y="26" text-anchor="middle" font-family="Outfit, sans-serif"
+                font-size="32" font-weight="200" fill="#2D2D2D"
+                textLength="140" lengthAdjust="spacing">BDX</text>
+          <text x="80" y="42" text-anchor="middle" font-family="Outfit, sans-serif"
+                font-size="7" font-weight="300" fill="#8A7F84"
+                textLength="140" lengthAdjust="spacing">BEAUTY DECISION EXPERIENCE</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ━━━ 04: VERTICAL — PINK ━━━ -->
+  <div class="card">
+    <span class="card-label">Pink</span>
+    <span class="card-number">04</span>
+    <div class="v-lockup">
+      <div class="v-symbol">
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="100" cy="100" r="86" fill="none" stroke="#FF0066" stroke-width="1" stroke-opacity="0.35"/>
+          <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" fill="url(#g0)" fill-opacity="0.2"/>
+          <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" transform="rotate(45, 100, 100)" fill="url(#g45)" fill-opacity="0.2"/>
+          <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" transform="rotate(90, 100, 100)" fill="url(#g90)" fill-opacity="0.2"/>
+          <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" transform="rotate(135, 100, 100)" fill="url(#g135)" fill-opacity="0.2"/>
+        </svg>
+      </div>
+      <div class="v-text">
+        <svg viewBox="0 0 160 48" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;overflow:visible;">
+          <text x="80" y="26" text-anchor="middle" font-family="Outfit, sans-serif"
+                font-size="32" font-weight="200" fill="#FF0066"
+                textLength="140" lengthAdjust="spacing">BDX</text>
+          <text x="80" y="42" text-anchor="middle" font-family="Outfit, sans-serif"
+                font-size="7" font-weight="200" fill="#FF3385"
+                textLength="140" lengthAdjust="spacing">BEAUTY DECISION EXPERIENCE</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ━━━ 05: VERTICAL — GRADIENT ━━━ -->
+  <div class="card">
+    <span class="card-label">Gradient</span>
+    <span class="card-number">05</span>
+    <div class="v-lockup">
+      <div class="v-symbol">
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="100" cy="100" r="86" fill="none" stroke="#FF0066" stroke-width="1" stroke-opacity="0.35"/>
+          <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" fill="url(#g0)" fill-opacity="0.2"/>
+          <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" transform="rotate(45, 100, 100)" fill="url(#g45)" fill-opacity="0.2"/>
+          <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" transform="rotate(90, 100, 100)" fill="url(#g90)" fill-opacity="0.2"/>
+          <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" transform="rotate(135, 100, 100)" fill="url(#g135)" fill-opacity="0.2"/>
+        </svg>
+      </div>
+      <div class="v-text">
+        <svg viewBox="0 0 160 48" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;overflow:visible;">
+          <text x="80" y="26" text-anchor="middle" font-family="Outfit, sans-serif"
+                font-size="32" font-weight="200" fill="url(#txtGrad)"
+                textLength="140" lengthAdjust="spacing">BDX</text>
+          <text x="80" y="42" text-anchor="middle" font-family="Outfit, sans-serif"
+                font-size="7" font-weight="200" fill="url(#subGrad)"
+                textLength="140" lengthAdjust="spacing">BEAUTY DECISION EXPERIENCE</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <div class="footer-text">BDX &middot; Beauty Decision Experience</div>
+</div>
+
+</body>
+</html>

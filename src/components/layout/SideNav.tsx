@@ -102,9 +102,7 @@ export function SideNav({ className }: SideNavProps) {
       {/* Top: Logo */}
       <div className="px-5 py-5 border-b border-border">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(244,114,182,0.15)' }}>
-            <span className="text-sm font-extrabold" style={{ color: '#F472B6' }}>B</span>
-          </div>
+          <img src="/bdx-logo/bdx-symbol.svg" alt="BDX" className="w-7 h-7" />
           <span className="text-base font-bold tracking-tight" style={{ color: '#F472B6' }}>BDX</span>
         </div>
       </div>

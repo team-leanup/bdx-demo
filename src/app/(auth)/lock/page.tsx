@@ -80,10 +80,7 @@ export default function LockPage() {
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col items-center mb-8"
         >
-          <span className="text-5xl font-black tracking-tight" style={{ color: '#F472B6' }}>BDX</span>
-          <span className="text-xs font-medium mt-1.5 tracking-widest uppercase" style={{ color: 'rgba(244,114,182,0.5)' }}>
-            Beauty Decision eXperience
-          </span>
+          <img src="/bdx-logo/bdx-logo-vertical-pink.svg" alt="BDX — Beauty Decision eXperience" className="h-32" />
         </motion.div>
 
         <AnimatePresence mode="wait">

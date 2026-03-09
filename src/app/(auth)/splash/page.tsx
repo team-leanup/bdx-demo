@@ -28,17 +28,7 @@ export default function SplashPage() {
           transition={{ duration: 0.6, delay: 0.15, ease: 'easeOut' }}
           className="flex flex-col items-center"
         >
-          <span
-            className="text-7xl md:text-8xl font-black tracking-tight text-primary"
-          >
-            BDX
-          </span>
-          <span
-            className="text-base md:text-lg font-medium mt-2 tracking-widest uppercase text-primary/50"
-            style={{ letterSpacing: '0.18em' }}
-          >
-            Beauty Decision eXperience
-          </span>
+          <img src="/bdx-logo/bdx-logo-vertical-pink.svg" alt="BDX — Beauty Decision eXperience" className="h-48 md:h-56" />
           <span className="text-sm md:text-base font-medium mt-4 text-text-secondary">
             상담을 정리하는 가장 쉬운 방법
           </span>
