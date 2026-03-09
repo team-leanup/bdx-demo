@@ -31,7 +31,7 @@ export default function LoginPage(): React.ReactElement {
             className="w-full max-w-[360px]"
           >
             <div className="mb-10 flex flex-col items-center text-center">
-              <img src="/bdx-logo/bdx-logo-horizontal.svg" alt="BDX — Beauty Decision eXperience" className="h-14" />
+              <img src="/bdx-logo/bdx-symbol.svg" alt="BDX" className="h-20" />
             </div>
 
             <div className="flex flex-col gap-4">
