@@ -1,16 +1,9 @@
 'use client';
 
-import { Modal } from '@/components/ui/Modal';
 import { cn } from '@/lib/cn';
+import { getSafetyTagMeta, sortSafetyTags } from '@/lib/tag-safety';
+import { Modal } from '@/components/ui/Modal';
 import type { CustomerTag } from '@/types/customer';
-
-const ACCENT_BG: Record<string, string> = {
-  rose: 'bg-rose-100 text-rose-700 border-rose-200',
-  amber: 'bg-amber-100 text-amber-700 border-amber-200',
-  emerald: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  sky: 'bg-sky-100 text-sky-700 border-sky-200',
-  slate: 'bg-slate-100 text-slate-700 border-slate-200',
-};
 
 interface PretreatmentAlertModalProps {
   isOpen: boolean;
@@ -27,7 +20,7 @@ export function PretreatmentAlertModal({
   customerName,
   pinnedTags,
 }: PretreatmentAlertModalProps): React.ReactElement {
-  const displayTags = pinnedTags.slice(0, 5);
+  const displayTags = sortSafetyTags(pinnedTags).slice(0, 5);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="시술 전 확인사항">
@@ -58,22 +51,33 @@ export function PretreatmentAlertModal({
         </div>
 
         <p className="text-sm text-text-secondary text-center leading-relaxed">
-          이 고객에게 <span className="font-semibold text-text">주의가 필요한 특이사항</span>이 있습니다.<br />
-          시술 전 반드시 확인해 주세요.
+          고객 특이사항을 먼저 확인하고 시술에 들어가면 실수를 줄일 수 있어요.
         </p>
 
-        <div className="flex flex-wrap justify-center gap-2">
-          {displayTags.map((tag) => (
-            <span
-              key={tag.id}
-              className={cn(
-                'px-3 py-1.5 text-sm font-semibold rounded-full border',
-                tag.accent ? ACCENT_BG[tag.accent] : 'bg-surface-alt text-text-muted border-border'
-              )}
-            >
-              {tag.value}
-            </span>
-          ))}
+        <div className="flex flex-col gap-2">
+          {displayTags.map((tag) => {
+            const safety = getSafetyTagMeta(tag);
+
+            return (
+              <div
+                key={tag.id}
+                className={cn('rounded-2xl border px-4 py-3', safety.className)}
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-lg leading-none">{safety.icon}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-bold">{tag.value}</p>
+                      <span className="rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-semibold">
+                        {safety.label}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs leading-relaxed opacity-90">{safety.description}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <div className="flex gap-3 pt-2">

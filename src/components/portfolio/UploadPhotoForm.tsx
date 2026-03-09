@@ -36,6 +36,12 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
   const [selectedRecordId, setSelectedRecordId] = useState<string>('');
   const [selectedKind, setSelectedKind] = useState<PortfolioPhotoKind>('treatment');
   const [note, setNote] = useState('');
+  const [takenAt, setTakenAt] = useState(() => new Date().toISOString().slice(0, 10));
+  const [serviceType, setServiceType] = useState('');
+  const [designType, setDesignType] = useState('');
+  const [priceInput, setPriceInput] = useState('');
+  const [tagInput, setTagInput] = useState('');
+  const [colorInput, setColorInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [customerSearch, setCustomerSearch] = useState('');
@@ -50,6 +56,17 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
     ? records.filter((record) => record.customerId === selectedCustomerId)
     : [];
 
+  const selectedRecord = customerRecords.find((record) => record.id === selectedRecordId);
+
+  const parseList = useCallback((value: string): string[] | undefined => {
+    const parsed = value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    return parsed.length > 0 ? parsed : undefined;
+  }, []);
+
   const resetForm = useCallback((): void => {
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
@@ -61,6 +78,12 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
     setSelectedRecordId('');
     setSelectedKind('treatment');
     setNote('');
+    setTakenAt(new Date().toISOString().slice(0, 10));
+    setServiceType('');
+    setDesignType('');
+    setPriceInput('');
+    setTagInput('');
+    setColorInput('');
     setError(null);
     setCustomerSearch('');
 
@@ -96,13 +119,23 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
 
     try {
       const dataUrl = await resizePortfolioImage(selectedFile);
+      const derivedServiceType = selectedRecord
+        ? DESIGN_SCOPE_LABEL[selectedRecord.consultation.designScope] ?? selectedRecord.consultation.designScope
+        : serviceType.trim() || undefined;
+      const derivedPrice = selectedRecord?.finalPrice ?? (priceInput ? Number(priceInput) : undefined);
 
       const result = addPhoto({
         customerId: selectedCustomerId,
         recordId: selectedRecordId || undefined,
         kind: selectedKind,
         imageDataUrl: dataUrl,
+        takenAt: takenAt || undefined,
         note: note.trim() || undefined,
+        serviceType: derivedServiceType,
+        designType: designType.trim() || undefined,
+        price: Number.isFinite(derivedPrice) ? derivedPrice : undefined,
+        tags: parseList(tagInput),
+        colorLabels: parseList(colorInput),
       });
 
       if (!result.success) {
@@ -266,6 +299,64 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
           className="w-full resize-none rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text placeholder:text-text-muted"
           rows={3}
         />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-text-secondary">촬영일</label>
+          <input
+            type="date"
+            value={takenAt}
+            onChange={(e) => setTakenAt(e.target.value)}
+            className="h-12 w-full rounded-xl border border-border bg-surface px-4 text-sm text-text"
+          />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-text-secondary">시술 종류</label>
+          <Input
+            value={selectedRecord ? (DESIGN_SCOPE_LABEL[selectedRecord.consultation.designScope] ?? selectedRecord.consultation.designScope) : serviceType}
+            onChange={(e) => setServiceType(e.target.value)}
+            disabled={Boolean(selectedRecord)}
+            placeholder="예: 원컬러, 풀아트"
+          />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-text-secondary">디자인 타입</label>
+          <Input
+            value={designType}
+            onChange={(e) => setDesignType(e.target.value)}
+            placeholder="예: 웨딩, 시럽, 키치"
+          />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-text-secondary">가격</label>
+          <Input
+            value={selectedRecord ? String(selectedRecord.finalPrice) : priceInput}
+            onChange={(e) => setPriceInput(e.target.value.replace(/[^0-9]/g, ''))}
+            disabled={Boolean(selectedRecord)}
+            placeholder="예: 85000"
+            inputMode="numeric"
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-text-secondary">태그</label>
+          <Input
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            placeholder="쉼표로 구분: 봄, 웨딩, 자석젤"
+          />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-text-secondary">컬러</label>
+          <Input
+            value={colorInput}
+            onChange={(e) => setColorInput(e.target.value)}
+            placeholder="쉼표로 구분: 핑크, 누드, 브라운"
+          />
+        </div>
       </div>
 
       {error && <div className="rounded-xl bg-error/10 px-4 py-3 text-sm text-error">{error}</div>}

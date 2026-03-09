@@ -10,4 +10,8 @@ export interface PortfolioPhoto {
   imageDataUrl: string;
   note?: string;
   tags?: string[];
+  colorLabels?: string[];
+  designType?: string;
+  serviceType?: string;
+  price?: number;
 }

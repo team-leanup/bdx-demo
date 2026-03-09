@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { PretreatmentAlertModal } from '@/components/alerts/PretreatmentAlertModal';
 import { LinkCustomerModal } from '@/components/reservations/LinkCustomerModal';
 import { ConsultationLinkModal } from '@/components/reservations/ConsultationLinkModal';
+import { ReservationReadinessBadge } from '@/components/reservations/ReservationReadinessBadge';
 import type { BookingChannel, BookingStatus, BookingRequest } from '@/types/consultation';
 import type { CustomerTag } from '@/types/customer';
 import type { Locale } from '@/store/locale-store';
@@ -200,8 +201,8 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
   const t = useT();
   const locale = useLocaleStore((s) => s.locale);
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
-  const setBookingId = useConsultationStore((s) => s.setBookingId);
   const getDesignerNameFromStore = useShopStore((s) => s.getDesignerName);
+  const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const [showForm, setShowForm] = useState(false);
   const [alertBooking, setAlertBooking] = useState<BookingRequest | null>(null);
   const [alertTags, setAlertTags] = useState<CustomerTag[]>([]);
@@ -215,7 +216,15 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
   };
 
   const navigateToConsultation = (booking: BookingRequest): void => {
-    setBookingId(booking.id);
+    hydrateConsultation({
+      ...booking.preConsultationData,
+      bookingId: booking.id,
+      customerName: booking.customerName,
+      customerPhone: booking.phone,
+      customerId: booking.customerId ?? booking.preConsultationData?.customerId,
+      referenceImages: booking.preConsultationData?.referenceImages ?? booking.referenceImageUrls ?? [],
+      entryPoint: 'staff',
+    });
     const params = new URLSearchParams();
     params.set('bookingId', booking.id);
     if (booking.customerName) params.set('name', booking.customerName);
@@ -336,6 +345,7 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
                           >
                             {t(STATUS_I18N_KEY[booking.status])}
                           </span>
+                          <ReservationReadinessBadge booking={booking} size="sm" compact />
                           {booking.designerId && getDesignerName(booking.designerId) && (
                             <span className="text-[10px] font-medium text-text-muted">
                               {getDesignerName(booking.designerId)}{t('common.designerSuffix')}

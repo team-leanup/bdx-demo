@@ -10,6 +10,10 @@ import {
   dbInsertSmallTalkNote,
 } from '@/lib/db';
 
+interface LegacyCustomerTagAccent {
+  accentColor?: TagAccent;
+}
+
 interface CustomerStore {
   customers: Customer[];
   _dbReady: boolean;
@@ -29,6 +33,7 @@ interface CustomerStore {
   setTagAccent: (customerId: string, tagId: string, accent: TagAccent | undefined) => void;
   reorderPinnedTags: (customerId: string, orderedTagIds: string[]) => void;
   getPinnedTags: (customerId: string) => CustomerTag[];
+  getPrimaryTags: (customerId: string) => CustomerTag[];
 
   appendSmallTalkNote: (customerId: string, note: SmallTalkNote) => void;
 }
@@ -42,6 +47,42 @@ function normalizePhoneRaw(phone: string | undefined): string {
   return phone.replace(/\D/g, '');
 }
 
+function sortTagsByPriority(tags: CustomerTag[]): CustomerTag[] {
+  return [...tags].sort((a, b) => {
+    if (Boolean(a.pinned) !== Boolean(b.pinned)) {
+      return a.pinned ? -1 : 1;
+    }
+
+    const sortDiff = (a.sortOrder ?? Number.MAX_SAFE_INTEGER) - (b.sortOrder ?? Number.MAX_SAFE_INTEGER);
+    if (sortDiff !== 0) {
+      return sortDiff;
+    }
+
+    return a.createdAt.localeCompare(b.createdAt);
+  });
+}
+
+function normalizeCustomerTags(tags: CustomerTag[] | undefined): CustomerTag[] {
+  return (tags ?? []).map((tag) => {
+    const legacyTag = tag as CustomerTag & LegacyCustomerTagAccent;
+    if (legacyTag.accent || !legacyTag.accentColor) {
+      return legacyTag;
+    }
+
+    return {
+      ...legacyTag,
+      accent: legacyTag.accentColor,
+    };
+  });
+}
+
+function normalizeCustomer(customer: Customer): Customer {
+  return {
+    ...customer,
+    tags: normalizeCustomerTags(customer.tags),
+  };
+}
+
 export const useCustomerStore = create<CustomerStore>()(
   persist(
     (set, get) => ({
@@ -50,7 +91,7 @@ export const useCustomerStore = create<CustomerStore>()(
 
       hydrateFromDB: async () => {
         const customers = await fetchCustomers();
-        set({ customers, _dbReady: true });
+        set({ customers: customers.map(normalizeCustomer), _dbReady: true });
       },
 
       getById: (id) => get().customers.find((c) => c.id === id),
@@ -155,7 +196,7 @@ export const useCustomerStore = create<CustomerStore>()(
                 ...t,
                 pinned: nowPinned,
                 sortOrder: nowPinned ? (c.tags?.filter((x) => x.pinned).length ?? 0) : undefined,
-                accent: nowPinned ? t.accent : undefined,
+                accent: t.accent,
               };
             });
             return { ...c, tags, updatedAt: new Date().toISOString() };
@@ -205,9 +246,13 @@ export const useCustomerStore = create<CustomerStore>()(
       getPinnedTags: (customerId) => {
         const customer = get().customers.find((c) => c.id === customerId);
         if (!customer) return [];
-        return (customer.tags ?? [])
-          .filter((t) => t.pinned)
-          .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+        return sortTagsByPriority((customer.tags ?? []).filter((t) => t.pinned));
+      },
+
+      getPrimaryTags: (customerId) => {
+        const customer = get().customers.find((c) => c.id === customerId);
+        if (!customer) return [];
+        return sortTagsByPriority(customer.tags ?? []);
       },
     }),
     {
@@ -225,7 +270,11 @@ export const useCustomerStore = create<CustomerStore>()(
       merge: (persisted, current) => {
         const p = persisted as Partial<CustomerStore> | undefined;
         if (!p) return current;
-        return { ...current, ...p } as CustomerStore;
+        return {
+          ...current,
+          ...p,
+          customers: (p.customers ?? current.customers).map(normalizeCustomer),
+        } as CustomerStore;
       },
     },
   ),

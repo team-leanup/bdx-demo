@@ -9,6 +9,52 @@ function SaveCompleteContent() {
   const searchParams = useSearchParams();
   const consultationId = searchParams.get('consultationId') ?? 'record-001';
   const customerId = searchParams.get('customerId') ?? '';
+  const mode = searchParams.get('mode') ?? 'default';
+
+  if (mode === 'preconsultation') {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 py-12">
+        <motion.div
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+          className="mb-6 flex flex-col items-center gap-3"
+        >
+          <div
+            className="flex h-20 w-20 items-center justify-center rounded-full"
+            style={{ background: 'color-mix(in srgb, var(--color-success) 15%, var(--color-surface))' }}
+          >
+            <span className="text-4xl">🟢</span>
+          </div>
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-text">사전 상담이 저장됐어요</h1>
+            <p className="mt-1.5 text-sm text-text-secondary">
+              예약 카드에 디자인 확정 상태로 표시됩니다.
+            </p>
+          </div>
+        </motion.div>
+
+        <div className="w-full max-w-sm flex flex-col gap-3">
+          {customerId && (
+            <button
+              onClick={() => router.push(`/customers/${customerId}`)}
+              className="w-full rounded-2xl border border-border bg-surface px-5 py-4 text-left transition-all active:scale-[0.98]"
+            >
+              <p className="text-base font-bold text-text">고객 상세 보기</p>
+              <p className="mt-1 text-sm text-text-secondary">저장된 선호와 특이사항을 확인할 수 있어요</p>
+            </button>
+          )}
+          <button
+            onClick={() => router.push('/home')}
+            className="w-full rounded-2xl bg-text px-5 py-4 text-left text-white transition-all active:scale-[0.98]"
+          >
+            <p className="text-base font-bold">홈으로 돌아가기</p>
+            <p className="mt-1 text-sm opacity-85">예약 준비 상태를 바로 확인할 수 있어요</p>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const primaryOptions = [
     {

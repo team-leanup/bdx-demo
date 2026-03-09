@@ -98,8 +98,7 @@ export default function HomePage() {
       .filter((r) => r.reservationDate === todayStr)
       .sort((a, b) => a.reservationTime.localeCompare(b.reservationTime));
   }, [allReservations]);
-  const addReferenceImage = useConsultationStore((s) => s.addReferenceImage);
-  const setBookingId = useConsultationStore((s) => s.setBookingId);
+  const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
 
   const handleAddReservation = (newBooking: BookingRequest) => {
     addReservation({
@@ -118,16 +117,21 @@ export default function HomePage() {
 
   const handleStartConsultation = (booking: BookingRequest) => {
     if (booking.status === 'completed') return;
-    setBookingId(booking.id);
+    hydrateConsultation({
+      ...booking.preConsultationData,
+      bookingId: booking.id,
+      customerName: booking.customerName,
+      customerPhone: booking.phone,
+      customerId: booking.customerId ?? booking.preConsultationData?.customerId,
+      referenceImages: booking.preConsultationData?.referenceImages ?? booking.referenceImageUrls ?? [],
+      entryPoint: 'staff',
+    });
     const params = new URLSearchParams();
     params.set('bookingId', booking.id);
     if (booking.customerName) params.set('name', booking.customerName);
     if (booking.phone) params.set('phone', booking.phone);
     if (booking.requestNote) params.set('note', booking.requestNote);
     if (booking.language) params.set('lang', booking.language);
-    if (booking.referenceImageUrls?.length) {
-      booking.referenceImageUrls.forEach(url => addReferenceImage(url));
-    }
     router.push(`/consultation/customer?${params.toString()}`);
   };
 

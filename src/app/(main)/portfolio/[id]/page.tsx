@@ -61,6 +61,10 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
   const customer = photo ? getCustomerById(photo.customerId) : undefined;
   const records = getAllRecords();
   const linkedRecord = photo?.recordId ? records.find((r) => r.id === photo.recordId) : undefined;
+  const serviceType = photo?.serviceType
+    ?? (linkedRecord ? DESIGN_SCOPE_LABEL[linkedRecord.consultation.designScope] ?? linkedRecord.consultation.designScope : undefined);
+  const effectiveDate = photo ? (photo.takenAt ?? photo.createdAt) : undefined;
+  const effectivePrice = photo?.price ?? linkedRecord?.finalPrice;
 
   const handleDelete = (): void => {
     if (!photo) return;
@@ -130,7 +134,7 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
               </div>
               <div>
                 <p className="font-semibold text-text">{customer?.name ?? '알 수 없는 고객'}</p>
-                <p className="text-xs text-text-muted">{formatDateDot(photo.createdAt)}</p>
+                <p className="text-xs text-text-muted">{formatDateDot(effectiveDate ?? photo.createdAt)}</p>
               </div>
             </div>
             <Badge
@@ -145,6 +149,48 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
             <div className="rounded-xl bg-surface-alt p-4">
               <p className="text-xs font-medium text-text-muted mb-1">메모</p>
               <p className="text-sm text-text leading-relaxed">{photo.note}</p>
+            </div>
+          )}
+
+          {(serviceType || photo.designType || photo.colorLabels?.length || effectivePrice != null) && (
+            <div className="rounded-xl bg-surface-alt p-4">
+              <p className="text-xs font-medium text-text-muted mb-2">검색 메타데이터</p>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {serviceType && (
+                  <div>
+                    <p className="text-[10px] font-medium text-text-muted mb-0.5">시술 종류</p>
+                    <p className="font-medium text-text">{serviceType}</p>
+                  </div>
+                )}
+                {photo.designType && (
+                  <div>
+                    <p className="text-[10px] font-medium text-text-muted mb-0.5">디자인 타입</p>
+                    <p className="font-medium text-text">{photo.designType}</p>
+                  </div>
+                )}
+                {effectivePrice != null && (
+                  <div>
+                    <p className="text-[10px] font-medium text-text-muted mb-0.5">가격</p>
+                    <p className="font-medium text-text">{formatPrice(effectivePrice)}</p>
+                  </div>
+                )}
+                {effectiveDate && (
+                  <div>
+                    <p className="text-[10px] font-medium text-text-muted mb-0.5">촬영일</p>
+                    <p className="font-medium text-text">{formatDateDot(effectiveDate)}</p>
+                  </div>
+                )}
+              </div>
+              {photo.colorLabels && photo.colorLabels.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-[10px] font-medium text-text-muted mb-1">컬러</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {photo.colorLabels.map((color, idx) => (
+                      <Badge key={`${color}-${idx}`} variant="warning" size="sm">{color}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

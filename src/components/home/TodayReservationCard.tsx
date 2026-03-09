@@ -2,23 +2,17 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { CustomerTagChip } from '@/components/customer/CustomerTagChip';
+import { ReservationReadinessBadge } from '@/components/reservations/ReservationReadinessBadge';
 import { Badge } from '@/components/ui';
 import { IconCalendar } from '@/components/icons';
+import { useConsultationStore } from '@/store/consultation-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { PretreatmentAlertModal } from '@/components/alerts/PretreatmentAlertModal';
 import { LinkCustomerModal } from '@/components/reservations/LinkCustomerModal';
 import ConsultationLinkModal from '@/components/reservations/ConsultationLinkModal';
-import { cn } from '@/lib/cn';
 import type { BookingChannel, BookingRequest } from '@/types/consultation';
 import type { CustomerTag } from '@/types/customer';
-
-const ACCENT_BG: Record<string, string> = {
-  rose: 'bg-rose-100 text-rose-700',
-  amber: 'bg-amber-100 text-amber-700',
-  emerald: 'bg-emerald-100 text-emerald-700',
-  sky: 'bg-sky-100 text-sky-700',
-  slate: 'bg-slate-100 text-slate-700',
-};
 
 interface ChannelBadgeInfo {
   label: string;
@@ -55,6 +49,8 @@ export function TodayReservationCard({
   itemVariants,
 }: TodayReservationCardProps): React.ReactElement {
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
+  const getPrimaryTags = useCustomerStore((s) => s.getPrimaryTags);
+  const setEntryPoint = useConsultationStore((s) => s.setEntryPoint);
 
   const [alertBooking, setAlertBooking] = useState<BookingRequest | null>(null);
   const [alertTags, setAlertTags] = useState<CustomerTag[]>([]);
@@ -70,11 +66,13 @@ export function TodayReservationCard({
         return;
       }
     }
+    setEntryPoint('staff');
     onStartConsultation(booking);
   };
 
   const handleAlertConfirm = (): void => {
     if (alertBooking) {
+      setEntryPoint('staff');
       onStartConsultation(alertBooking);
     }
     setAlertBooking(null);
@@ -122,7 +120,7 @@ export function TodayReservationCard({
           {reservations.map((booking, idx) => {
             const channelInfo = channelBadge[booking.channel];
             const isCompleted = booking.status === 'completed';
-            const pinnedTags = booking.customerId ? getPinnedTags(booking.customerId).slice(0, 5) : [];
+            const primaryTags = booking.customerId ? getPrimaryTags(booking.customerId).slice(0, 3) : [];
             return (
               <motion.div
                 key={booking.id}
@@ -152,22 +150,15 @@ export function TodayReservationCard({
                         {booking.serviceLabel}
                       </span>
                     )}
+                    <ReservationReadinessBadge booking={booking} size="sm" compact />
                     <Badge variant={channelInfo.variant} size="sm">
                       {channelInfo.icon} {channelInfo.label}
                     </Badge>
                   </div>
-                  {pinnedTags.length > 0 && (
-                    <div className="flex gap-1 flex-wrap">
-                      {pinnedTags.map((tag) => (
-                        <span
-                          key={tag.id}
-                          className={cn(
-                            'px-2 py-0.5 text-[10px] font-medium rounded',
-                            tag.accent ? ACCENT_BG[tag.accent] : 'bg-surface-alt text-text-muted'
-                          )}
-                        >
-                          {tag.value}
-                        </span>
+                  {primaryTags.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {primaryTags.map((tag) => (
+                        <CustomerTagChip key={tag.id} tag={tag} size="sm" />
                       ))}
                     </div>
                   )}

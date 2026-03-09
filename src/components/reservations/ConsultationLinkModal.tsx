@@ -22,6 +22,7 @@ export function ConsultationLinkModal({ isOpen, onClose, booking }: Props) {
     if (booking.requestNote) params.set("note", booking.requestNote);
     params.set("lang", booking.language ?? "ko");
     params.set("bookingId", booking.id);
+    params.set("entry", "customer-link");
     return `${window.location.origin}/consultation/customer?${params.toString()}`;
   }, [booking]);
 

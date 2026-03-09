@@ -15,6 +15,7 @@ export const MOCK_RESERVATIONS: BookingRequest[] = [
     createdAt: '2026-02-25T20:30:00.000Z',
     customerId: 'customer-009',
     serviceLabel: '아트',
+    preConsultationCompletedAt: '2026-02-25T22:10:00.000Z',
   },
   {
     id: 'booking-002',
@@ -72,6 +73,7 @@ export const MOCK_RESERVATIONS: BookingRequest[] = [
     createdAt: '2026-02-25T18:00:00.000Z',
     customerId: 'customer-001',
     serviceLabel: '자석젤',
+    preConsultationCompletedAt: '2026-02-26T08:40:00.000Z',
   },
   {
     id: 'booking-006',
@@ -102,6 +104,7 @@ export const MOCK_RESERVATIONS: BookingRequest[] = [
     createdAt: '2026-03-07T09:40:00.000Z',
     customerId: 'customer-005',
     serviceLabel: '원컬러',
+    preConsultationCompletedAt: '2026-03-07T20:05:00.000Z',
   },
   {
     id: 'booking-008',

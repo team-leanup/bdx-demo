@@ -27,6 +27,7 @@ function CustomerPageInner() {
   const searchParams = useSearchParams();
   const setCustomerInfo = useConsultationStore((s) => s.setCustomerInfo);
   const setBookingId = useConsultationStore((s) => s.setBookingId);
+  const setEntryPoint = useConsultationStore((s) => s.setEntryPoint);
   const setStep = useConsultationStore((s) => s.setStep);
   const consultation = useConsultationStore((s) => s.consultation);
   const addReferenceImage = useConsultationStore((s) => s.addReferenceImage);
@@ -52,6 +53,9 @@ function CustomerPageInner() {
   const prefillNote = searchParams.get('note') ?? '';
   const prefillLang = searchParams.get('lang') as Locale | null;
   const prefillBookingId = searchParams.get('bookingId') ?? '';
+  const prefillEntry: 'staff' | 'customer_link' = searchParams.get('entry') === 'customer-link'
+    ? 'customer_link'
+    : 'staff';
 
   const [name, setName] = useState(consultation.customerName ?? prefillName);
   const [phone, setPhone] = useState(consultation.customerPhone ?? prefillPhone);
@@ -63,10 +67,11 @@ function CustomerPageInner() {
     prefillName,
     prefillPhone,
     prefillNote,
-    prefillLang,
-    prefillBookingId,
-    customerName: consultation.customerName,
-    customerPhone: consultation.customerPhone,
+      prefillLang,
+      prefillBookingId,
+      prefillEntry,
+      customerName: consultation.customerName,
+      customerPhone: consultation.customerPhone,
   });
   useEffect(() => {
     const {
@@ -75,6 +80,7 @@ function CustomerPageInner() {
       prefillNote: note,
       prefillLang: lang,
       prefillBookingId: bookingId,
+      prefillEntry: entryPoint,
       customerName,
       customerPhone,
     } = initialRef.current;
@@ -93,7 +99,8 @@ function CustomerPageInner() {
     if (bookingId) {
       setBookingId(bookingId);
     }
-  }, [setBookingId, setConsultationLocale]);
+    setEntryPoint(entryPoint);
+  }, [setBookingId, setConsultationLocale, setEntryPoint]);
 
   const handleExistingCustomer = (customer: Customer) => {
     setName(customer.name);

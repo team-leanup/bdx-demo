@@ -112,6 +112,8 @@ export interface ConsultationType {
   // 연결된 예약 ID
   bookingId?: string;
 
+  entryPoint?: 'staff' | 'customer_link';
+
   // 현재 단계
   currentStep: ConsultationStep;
 }
@@ -134,6 +136,8 @@ export interface BookingRequest {
   designerId?: string;
   serviceLabel?: string;   // e.g., "자석젤", "원컬러", "그라데이션", "아트"
   customerId?: string;     // link to customer in customer-store
+  preConsultationCompletedAt?: string;
+  preConsultationData?: ConsultationType;
 }
 
 export interface DailyChecklist {

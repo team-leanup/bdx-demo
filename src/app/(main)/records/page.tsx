@@ -3,6 +3,8 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { CustomerTagChip } from '@/components/customer/CustomerTagChip';
+import { ReservationReadinessBadge } from '@/components/reservations/ReservationReadinessBadge';
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Card, Input } from '@/components/ui';
@@ -17,6 +19,7 @@ import { MonthCalendar } from '@/components/calendar/MonthCalendar';
 import { DayReservationList } from '@/components/calendar/DayReservationList';
 import { WeekCalendar } from '@/components/calendar/WeekCalendar';
 import { DesignerDayGridCalendar } from '@/components/calendar/DesignerDayGridCalendar';
+import { getSafetyTagMeta, sortSafetyTags } from '@/lib/tag-safety';
 import type { TimeGridEvent } from '@/components/calendar/TimeGridCalendar';
 import { DESIGN_SCOPE_LABEL } from '@/lib/labels';
 import { useShopStore } from '@/store/shop-store';
@@ -87,6 +90,7 @@ function toTimeGridEvents(
       originalId: r.id,
       customerId: r.customerId,
       serviceLabel: r.serviceLabel,
+      preConsultationCompletedAt: r.preConsultationCompletedAt,
     });
   }
 
@@ -135,7 +139,7 @@ export default function RecordsPage() {
   const [editForm, setEditForm] = useState({ title: '', phone: '', startTime: '', requestNote: '', referenceImages: [] as string[], language: 'ko' as 'ko' | 'en' | 'zh' | 'ja' });
   const editPhotoRef = useRef<HTMLInputElement>(null);
 
-  const setBookingId = useConsultationStore((s) => s.setBookingId);
+  const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
 
   const activeDesigners = useShopStore((s) => s.getActiveDesigners());
@@ -271,7 +275,18 @@ export default function RecordsPage() {
 
   const handleStartConsultation = () => {
     if (!selectedEvent) return;
-    setBookingId(selectedEvent.originalId);
+    const booking = allReservations.find((reservation) => reservation.id === selectedEvent.originalId);
+    if (booking) {
+      hydrateConsultation({
+        ...booking.preConsultationData,
+        bookingId: booking.id,
+        customerName: booking.customerName,
+        customerPhone: booking.phone,
+        customerId: booking.customerId ?? booking.preConsultationData?.customerId,
+        referenceImages: booking.preConsultationData?.referenceImages ?? booking.referenceImageUrls ?? [],
+        entryPoint: 'staff',
+      });
+    }
     const params = new URLSearchParams();
     if (selectedEvent.title) params.set('name', selectedEvent.title);
     if (selectedEvent.customerPhone) params.set('phone', selectedEvent.customerPhone);
@@ -613,30 +628,45 @@ export default function RecordsPage() {
                         <span className="text-sm font-medium text-text">{selectedEvent.customerPhone}</span>
                       </div>
                     )}
+                    {selectedEvent.type === 'reservation' && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-text-secondary">상담 준비</span>
+                        <ReservationReadinessBadge
+                          booking={{ preConsultationCompletedAt: selectedEvent.preConsultationCompletedAt }}
+                          size="sm"
+                        />
+                      </div>
+                    )}
                     {selectedEvent.requestNote && (
                       <div className="mt-2 rounded-xl bg-surface-alt p-3">
                         <p className="text-xs text-text-secondary">{selectedEvent.requestNote}</p>
                       </div>
                     )}
                     {selectedEvent.customerId && (() => {
-                      const pinnedTags = getPinnedTags(selectedEvent.customerId!);
+                      const pinnedTags = sortSafetyTags(getPinnedTags(selectedEvent.customerId!));
                       if (pinnedTags.length === 0) return null;
                       return (
                         <div className="mt-2 rounded-xl border border-red-200 bg-red-50 p-3">
                           <p className="text-[10px] font-bold text-red-700 mb-1.5">주의 / 특이사항</p>
-                          <div className="flex flex-wrap gap-1">
-                            {pinnedTags.map((tag) => (
-                              <span
-                                key={tag.id}
-                                className={
-                                  tag.accent === 'rose'
-                                    ? 'text-[10px] px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200 font-medium'
-                                    : 'text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium'
-                                }
-                              >
-                                {tag.value}
-                              </span>
-                            ))}
+                          <div className="flex flex-col gap-2">
+                            {pinnedTags.map((tag) => {
+                              const safety = getSafetyTagMeta(tag);
+
+                              return (
+                                <div key={tag.id} className="rounded-xl border border-white/60 bg-white/60 px-3 py-2">
+                                  <div className="flex items-start gap-2">
+                                    <span className="text-sm leading-none">{safety.icon}</span>
+                                    <div className="min-w-0 flex-1">
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        <CustomerTagChip tag={tag} size="sm" />
+                                        <span className="text-[10px] font-semibold text-red-700">{safety.label}</span>
+                                      </div>
+                                      <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">{safety.description}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       );

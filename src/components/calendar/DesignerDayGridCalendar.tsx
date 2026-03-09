@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, useAnimationControls } from 'framer-motion';
+import { CustomerTagChip } from '@/components/customer/CustomerTagChip';
+import { ReservationReadinessBadge } from '@/components/reservations/ReservationReadinessBadge';
 import { cn } from '@/lib/cn';
 import { formatDayLabelKo } from '@/lib/format';
 import { useCustomerStore } from '@/store/customer-store';
@@ -15,6 +17,7 @@ import {
 } from '@/lib/schedule/moveValidation';
 import type { TimeGridEvent } from '@/components/calendar/TimeGridCalendar';
 import type { UserRole } from '@/types/auth';
+import type { CustomerTag } from '@/types/customer';
 
 interface DesignerDayGridCalendarProps {
   date: string;
@@ -69,7 +72,7 @@ interface DraggableEventProps {
   top: number;
   height: number;
   color: { bg: string; border: string; text: string };
-  pinnedTags: Array<{ id: string; value: string; accent?: string }>;
+  pinnedTags: CustomerTag[];
   gridRef: React.RefObject<HTMLDivElement | null>;
   columns: { id: string; name: string }[];
   events: TimeGridEvent[];
@@ -210,6 +213,15 @@ function DraggableEvent({
           {ev.serviceLabel}
         </span>
       )}
+      {ev.type === 'reservation' && (
+        <div className="mt-0.5">
+          <ReservationReadinessBadge
+            booking={{ preConsultationCompletedAt: ev.preConsultationCompletedAt }}
+            size="xs"
+            compact
+          />
+        </div>
+      )}
       <div className="flex items-center gap-1 flex-wrap mt-0.5">
         {ev.channel && CHANNEL_EMOJI[ev.channel] && (
           <span className="text-[10px]">{CHANNEL_EMOJI[ev.channel]}</span>
@@ -218,23 +230,13 @@ function DraggableEvent({
           <span className="text-[10px]">{LANGUAGE_FLAG[ev.language]}</span>
         )}
       </div>
-      {displayTags.length > 0 && (
-        <div className="flex items-center gap-1 flex-wrap mt-1">
-          {displayTags.map((tag) => (
-            <span
-              key={tag.id}
-              className={cn(
-                'text-[9px] px-1.5 py-0.5 rounded-full border font-medium',
-                tag.accent === 'rose'
-                  ? 'bg-red-100 text-red-700 border-red-200'
-                  : 'bg-amber-50 text-amber-700 border-amber-200',
-              )}
-            >
-              {tag.value}
-            </span>
-          ))}
-          {extraTagCount > 0 && (
-            <span className="text-[9px] text-text-muted">+{extraTagCount}</span>
+        {displayTags.length > 0 && (
+          <div className="flex items-center gap-1 flex-wrap mt-1">
+            {displayTags.map((tag) => (
+              <CustomerTagChip key={tag.id} tag={tag} size="xs" />
+            ))}
+            {extraTagCount > 0 && (
+              <span className="text-[9px] text-text-muted">+{extraTagCount}</span>
           )}
         </div>
       )}

@@ -12,7 +12,8 @@ import { useT, useLocale, useKo } from '@/lib/i18n';
 import { useLocaleStore } from '@/store/locale-store';
 import { calculatePrice } from '@/lib/price-calculator';
 import { estimateTime } from '@/lib/time-calculator';
-import { formatPrice, formatPriceNumber } from '@/lib/format';
+import { formatPrice } from '@/lib/format';
+import { DESIGN_SCOPE_LABEL, EXPRESSION_LABEL } from '@/lib/labels';
 import { useRecordsStore } from '@/store/records-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
@@ -24,6 +25,7 @@ export default function SummaryPage() {
   const router = useRouter();
   const consultation = useConsultationStore((s) => s.consultation);
   const bookingId = useConsultationStore((s) => s.consultation.bookingId);
+  const entryPoint = useConsultationStore((s) => s.consultation.entryPoint);
   const updateReservation = useReservationStore((s) => s.updateReservation);
   const restoreLocale = useLocaleStore((s) => s.restoreLocale);
   const [discountOpen, setDiscountOpen] = useState(false);
@@ -52,37 +54,55 @@ export default function SummaryPage() {
     const newId = `record-${Date.now()}`;
     const minutes = estimateTime(consultation);
     const now = new Date().toISOString();
-    const savedRecord: ConsultationRecord = {
-      id: newId,
-      shopId: 'shop-001',
-      designerId: consultation.designerId || 'designer-001',
-      customerId,
-      consultation: { ...consultation },
-      totalPrice: breakdown.subtotal,
-      estimatedMinutes: minutes,
-      finalPrice: adjustedFinalPrice,
-      createdAt: now,
-      updatedAt: now,
-      notes: customerMemo || undefined,
-    };
-    sessionStorage.setItem(`bdx-saved-record-${newId}`, JSON.stringify(savedRecord));
+    const isCustomerLinkFlow = entryPoint === 'customer_link';
+    const consultationSnapshot = { ...consultation };
 
-    addRecord(savedRecord);
-
-    if (bookingId) {
-      updateReservation(bookingId, { status: 'completed' as BookingStatus });
-    }
-
-    if (customerId && consultation.referenceImages?.length) {
-      consultation.referenceImages.forEach((imageUrl) => {
-        if (!imageUrl.startsWith('data:image/')) return;
-        addPhoto({
-          customerId,
-          recordId: newId,
-          kind: 'reference',
-          imageDataUrl: imageUrl,
-        });
+    if (isCustomerLinkFlow && bookingId) {
+      updateReservation(bookingId, {
+        preConsultationCompletedAt: now,
+        preConsultationData: consultationSnapshot,
       });
+    } else {
+      const savedRecord: ConsultationRecord = {
+        id: newId,
+        shopId: 'shop-001',
+        designerId: consultation.designerId || 'designer-001',
+        customerId,
+        consultation: consultationSnapshot,
+        totalPrice: breakdown.subtotal,
+        estimatedMinutes: minutes,
+        finalPrice: adjustedFinalPrice,
+        createdAt: now,
+        updatedAt: now,
+        notes: customerMemo || undefined,
+      };
+      sessionStorage.setItem(`bdx-saved-record-${newId}`, JSON.stringify(savedRecord));
+
+      addRecord(savedRecord);
+
+      if (bookingId) {
+        updateReservation(bookingId, { status: 'completed' as BookingStatus });
+      }
+
+      if (customerId && consultation.referenceImages?.length) {
+        consultation.referenceImages.forEach((imageUrl) => {
+          if (!imageUrl.startsWith('data:image/')) return;
+          addPhoto({
+            customerId,
+            recordId: newId,
+            kind: 'reference',
+            imageDataUrl: imageUrl,
+            takenAt: now,
+            tags: consultation.selectedTraitValues,
+            serviceType: DESIGN_SCOPE_LABEL[consultation.designScope] ?? consultation.designScope,
+            designType: consultation.expressions
+              .filter((expression) => expression !== 'solid')
+              .map((expression) => EXPRESSION_LABEL[expression] ?? expression)
+              .join(', ') || undefined,
+            price: adjustedFinalPrice,
+          });
+        });
+      }
     }
 
     // 스몰토크 메모 → customer store smallTalkNotes에 자동 push
@@ -132,7 +152,12 @@ export default function SummaryPage() {
 
     sessionStorage.removeItem('consultation_customer_memo');
     restoreLocale();
-    // reset()은 treatment-sheet에서 "홈으로" 클릭 시 수행됨
+
+    if (isCustomerLinkFlow) {
+      router.push(`/consultation/save-complete?mode=preconsultation&customerId=${customerId}`);
+      return;
+    }
+
     router.push(`/consultation/treatment-sheet?consultationId=${newId}&customerId=${customerId}`);
   };
 

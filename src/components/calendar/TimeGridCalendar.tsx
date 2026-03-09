@@ -21,6 +21,7 @@ export interface TimeGridEvent {
   originalId: string;
   customerId?: string;
   serviceLabel?: string;
+  preConsultationCompletedAt?: string;
   // Consultation details
   designScope?: string;
   bodyPart?: string;

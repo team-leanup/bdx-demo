@@ -4,13 +4,15 @@ import { use, useState, useRef, useCallback, Suspense, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { CustomerTagChip } from '@/components/customer/CustomerTagChip';
 import { Card, Badge, Button } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { formatPrice, formatRelativeDate, formatDateDot } from '@/lib/format';
+import { CUSTOMER_TAG_ACCENTS, getCustomerTagDotClasses } from '@/lib/customer-tags';
 import { BODY_PART_LABEL } from '@/lib/labels';
 import { TAG_PRESETS } from '@/data/tag-presets';
 import { useShopStore } from '@/store/shop-store';
-import type { TagCategory, TagAccent } from '@/types/customer';
+import type { TagCategory } from '@/types/customer';
 import { PreferenceEditor } from '@/components/customer/PreferenceEditor';
 import { useCustomerStore } from '@/store/customer-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
@@ -20,16 +22,6 @@ import {
   IconCalendar,
 } from '@/components/icons';
 
-const TAG_CATEGORY_BADGE: Record<TagCategory, 'primary' | 'neutral' | 'success' | 'warning'> = {
-  design: 'primary',
-  shape: 'neutral',
-  length: 'neutral',
-  expression: 'neutral',
-  parts: 'success',
-  color: 'warning',
-  etc: 'neutral',
-};
-
 // Design type icon mapping for timeline
 const DESIGN_SCOPE_ICON: Record<string, string> = {
   원컬러: '●',
@@ -37,22 +29,6 @@ const DESIGN_SCOPE_ICON: Record<string, string> = {
   그라데이션: '◑',
   프렌치: '◻',
   포인트: '◆',
-};
-
-const ACCENT_BG: Record<TagAccent, string> = {
-  rose: 'bg-rose-100 text-rose-700 border-rose-200',
-  amber: 'bg-amber-100 text-amber-700 border-amber-200',
-  emerald: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  sky: 'bg-sky-100 text-sky-700 border-sky-200',
-  slate: 'bg-slate-100 text-slate-700 border-slate-200',
-};
-
-const ACCENT_DOT: Record<TagAccent, string> = {
-  rose: 'bg-rose-400',
-  amber: 'bg-amber-400',
-  emerald: 'bg-emerald-400',
-  sky: 'bg-sky-400',
-  slate: 'bg-slate-400',
 };
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -374,16 +350,7 @@ function CustomerDetailContent({ id }: { id: string }) {
         ) : (
           <div className="flex flex-wrap gap-2">
             {pinnedTags.map((tag) => (
-              <span
-                key={tag.id}
-                className={cn(
-                  'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium border',
-                  tag.accent ? ACCENT_BG[tag.accent] : 'bg-surface-alt text-text border-border'
-                )}
-              >
-                <span className="text-xs">📌</span>
-                {tag.value}
-              </span>
+              <CustomerTagChip key={tag.id} tag={tag} size="md" showPin />
             ))}
           </div>
         )}
@@ -694,37 +661,25 @@ function CustomerDetailContent({ id }: { id: string }) {
                     )}
                   >
                     {tagsForCategory.map((tag) => (
-                      <div key={tag.id} className="flex items-center gap-1">
-                        <Badge
-                          variant={TAG_CATEGORY_BADGE[preset.category]}
-                          size="sm"
-                          className={cn(
-                            'px-3 py-1 text-xs',
-                            tag.pinned && tag.accent && ACCENT_BG[tag.accent]
-                          )}
-                        >
-                          {tag.pinned && <span className="mr-1">📌</span>}
-                          {tag.value}
-                          {editingTags && (
+                      <div key={tag.id} className="flex items-center gap-1.5 flex-wrap">
+                        <CustomerTagChip tag={tag} size="sm" showPin={Boolean(tag.pinned)} />
+                        {editingTags && (
+                          <>
                             <button
-                              className="ml-1 text-[10px] opacity-60 hover:opacity-100"
+                              className="text-[10px] opacity-60 hover:opacity-100"
                               onClick={() => setLocalTags((prev) =>
                                 prev.filter((t) => t.id !== tag.id)
                               )}
                             >
                               ✕
                             </button>
-                          )}
-                        </Badge>
-                        {editingTags && (
-                          <>
                             <button
                               onClick={() => {
                                 toggleTagPinned(id, tag.id);
                                 setLocalTags((prev) =>
                                   prev.map((t) =>
                                     t.id === tag.id
-                                      ? { ...t, pinned: !t.pinned, accent: !t.pinned ? t.accent : undefined }
+                                      ? { ...t, pinned: !t.pinned }
                                       : t
                                   )
                                 );
@@ -736,28 +691,44 @@ function CustomerDetailContent({ id }: { id: string }) {
                             >
                               📌
                             </button>
-                            {tag.pinned && (
-                              <div className="flex gap-1 ml-1">
-                                {(['rose', 'amber', 'emerald', 'sky', 'slate'] as const).map((color) => (
-                                  <button
-                                    key={color}
-                                    onClick={() => {
-                                      setTagAccent(id, tag.id, color);
-                                      setLocalTags((prev) =>
-                                        prev.map((t) =>
-                                          t.id === tag.id ? { ...t, accent: color } : t
-                                        )
-                                      );
-                                    }}
-                                    className={cn(
-                                      'w-4 h-4 rounded-full border-2 transition-all',
-                                      ACCENT_DOT[color],
-                                      tag.accent === color ? 'border-text ring-2 ring-offset-1' : 'border-transparent'
-                                    )}
-                                  />
-                                ))}
-                              </div>
-                            )}
+                            <button
+                              onClick={() => {
+                                setTagAccent(id, tag.id, undefined);
+                                setLocalTags((prev) =>
+                                  prev.map((t) =>
+                                    t.id === tag.id ? { ...t, accent: undefined } : t
+                                  )
+                                );
+                              }}
+                              className={cn(
+                                'rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors',
+                                tag.accent === undefined
+                                  ? 'border-primary bg-primary/10 text-primary'
+                                  : 'border-border text-text-muted hover:bg-surface-alt'
+                              )}
+                            >
+                              기본
+                            </button>
+                            <div className="flex gap-1">
+                              {CUSTOMER_TAG_ACCENTS.map((color) => (
+                                <button
+                                  key={color}
+                                  onClick={() => {
+                                    setTagAccent(id, tag.id, color);
+                                    setLocalTags((prev) =>
+                                      prev.map((t) =>
+                                        t.id === tag.id ? { ...t, accent: color } : t
+                                      )
+                                    );
+                                  }}
+                                  className={cn(
+                                    'h-4 w-4 rounded-full border-2 transition-all',
+                                    getCustomerTagDotClasses(color),
+                                    tag.accent === color ? 'border-text ring-2 ring-offset-1' : 'border-transparent'
+                                  )}
+                                />
+                              ))}
+                            </div>
                           </>
                         )}
                       </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { CustomerTagChip } from '@/components/customer/CustomerTagChip';
 import { Modal, Button, Input } from '@/components/ui';
 import { useCustomerStore } from '@/store/customer-store';
 import { useReservationStore } from '@/store/reservation-store';
@@ -173,12 +174,7 @@ export function LinkCustomerModal({
                             {pinnedTags.length > 0 && (
                               <div className="flex gap-1 mt-1 flex-wrap">
                                 {pinnedTags.map((tag) => (
-                                  <span
-                                    key={tag.id}
-                                    className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-surface-alt text-text-muted"
-                                  >
-                                    {tag.value}
-                                  </span>
+                                  <CustomerTagChip key={tag.id} tag={tag} size="sm" />
                                 ))}
                               </div>
                             )}
