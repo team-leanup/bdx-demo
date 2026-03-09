@@ -4,9 +4,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { TourOverlay } from '@/components/onboarding/TourOverlay';
-import { MOCK_SHOP } from '@/data/mock-shop';
+import { useShopStore } from '@/store/shop-store';
 import { useRecordsStore } from '@/store/records-store';
-import { MOCK_CONSULTATIONS } from '@/data/mock-consultations';
 import { useAppStore } from '@/store/app-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { useConsultationStore } from '@/store/consultation-store';
@@ -58,11 +57,8 @@ export default function HomePage() {
   const { shopSettings } = useAppStore();
   const { activeDesignerName, role } = useAuthStore();
   const restoreLocale = useLocaleStore((s) => s.restoreLocale);
-  const additionalRecords = useRecordsStore((s) => s.additionalRecords);
-  const records = useMemo(
-    () => [...additionalRecords, ...MOCK_CONSULTATIONS],
-    [additionalRecords],
-  );
+  const getAllRecords = useRecordsStore((s) => s.getAllRecords);
+  const records = useMemo(() => getAllRecords(), [getAllRecords]);
 
   const CHANNEL_BADGE: Record<BookingChannel, { label: string; icon: string; variant: 'primary' | 'neutral' | 'success' | 'warning' }> = {
     kakao: { label: t('home.channel_kakao'), icon: '💬', variant: 'warning' },
@@ -81,7 +77,8 @@ export default function HomePage() {
       return () => clearTimeout(timer);
     }
   }, [searchParams]);
-  const shopName = shopSettings.shopName || MOCK_SHOP.name;
+  const storeShopName = useShopStore((s) => s.shop?.name);
+  const shopName = shopSettings.shopName || (storeShopName ?? '네일숲');
 
   const today = getTodayStr();
   const todayConsultations = records.filter(

@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui';
 import { useCustomerStore } from '@/store/customer-store';
-import { MOCK_DESIGNERS } from '@/data/mock-shop';
+import { useShopStore } from '@/store/shop-store';
 import type { BookingChannel, BookingRequest } from '@/types/consultation';
 import type { Locale } from '@/store/locale-store';
 
@@ -45,6 +45,7 @@ interface ReservationFormProps {
 export function ReservationForm({ onSubmit, onCancel }: ReservationFormProps) {
   const today = new Date().toISOString().split('T')[0];
   const customers = useCustomerStore((s) => s.customers);
+  const designers = useShopStore((s) => s.designers);
   const [formName, setFormName] = useState('');
   const [formPhone, setFormPhone] = useState('');
   const [formDate, setFormDate] = useState(today);
@@ -230,7 +231,7 @@ export function ReservationForm({ onSubmit, onCancel }: ReservationFormProps) {
             className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
           >
             <option value="">미정</option>
-            {MOCK_DESIGNERS.filter((d) => d.isActive).map((d) => (
+            {designers.filter((d) => d.isActive).map((d) => (
               <option key={d.id} value={d.id}>
                 {d.name}{d.role === 'owner' ? ' (원장)' : ''}
               </option>

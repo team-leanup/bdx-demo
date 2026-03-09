@@ -1,8 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { MOCK_KPI_CARDS, KPICard } from '@/data/mock-dashboard';
+import { useState, useMemo } from 'react';
+import type { KPICard } from '@/lib/analytics';
 import { BentoCard } from '@/components/ui';
+import { useRecordsStore } from '@/store/records-store';
+import { useCustomerStore } from '@/store/customer-store';
+import { useReservationStore } from '@/store/reservation-store';
+import { computeKPICards } from '@/lib/analytics';
 
 // KPI별 드릴다운 상세 데이터
 const KPI_DETAIL_MAP: Record<string, React.ReactNode> = {
@@ -215,10 +219,17 @@ const KPI_SYMBOL: Record<string, string> = {
 
 export function KPICards() {
   const [selectedKPI, setSelectedKPI] = useState<KPICard | null>(null);
+  const records = useRecordsStore((s) => s.records);
+  const customers = useCustomerStore((s) => s.customers);
+  const reservations = useReservationStore((s) => s.reservations);
+  const kpiCards = useMemo(
+    () => computeKPICards(records, customers, reservations),
+    [records, customers, reservations],
+  );
 
   return (
     <>
-      {MOCK_KPI_CARDS.map((kpi) => (
+      {kpiCards.map((kpi) => (
         <BentoCard
           key={kpi.label}
           span="1x1"

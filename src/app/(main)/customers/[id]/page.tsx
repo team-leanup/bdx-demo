@@ -8,9 +8,8 @@ import { Card, Badge, Button } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { formatPrice, formatRelativeDate, formatDateDot } from '@/lib/format';
 import { BODY_PART_LABEL } from '@/lib/labels';
-import { getMockCustomerById, MOCK_CUSTOMERS } from '@/data/mock-customers';
-import { MOCK_DESIGNERS } from '@/data/mock-shop';
 import { TAG_PRESETS } from '@/data/tag-presets';
+import { useShopStore } from '@/store/shop-store';
 import type { TagCategory, TagAccent } from '@/types/customer';
 import { PreferenceEditor } from '@/components/customer/PreferenceEditor';
 import { useCustomerStore } from '@/store/customer-store';
@@ -69,17 +68,19 @@ function CustomerDetailContent({ id }: { id: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromChecklist = searchParams.get('fromChecklist') === 'true';
-  const customer = getMockCustomerById(id);
+  const customer = useCustomerStore((s) => s.getById(id));
+  const updateCustomer = useCustomerStore((s) => s.updateCustomer);
 
   const toggleTagPinned = useCustomerStore((s) => s.toggleTagPinned);
   const setTagAccent = useCustomerStore((s) => s.setTagAccent);
   const reorderPinnedTags = useCustomerStore((s) => s.reorderPinnedTags);
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
   const updateTagsInStore = useCustomerStore((s) => s.updateTags);
+  const designers = useShopStore((s) => s.designers);
 
   const pinnedTags = getPinnedTags(id);
 
-  const [isVip, setIsVip] = useState(() => getMockCustomerById(id)?.isRegular ?? false);
+  const [isVip, setIsVip] = useState(() => useCustomerStore.getState().getById(id)?.isRegular ?? false);
   const [vipToast, setVipToast] = useState<string | null>(null);
   const [tagsExpanded, setTagsExpanded] = useState(false);
   const [editingTags, setEditingTags] = useState(false);
@@ -104,7 +105,7 @@ function CustomerDetailContent({ id }: { id: string }) {
   const consultPhotos = customerPhotos.filter((p) => p.kind === 'reference');
 
   const [prefData, setPrefData] = useState(() => {
-    const p = getMockCustomerById(id)?.preference;
+    const p = useCustomerStore.getState().getById(id)?.preference;
     return {
       shape: p?.preferredShape ?? '',
       length: p?.preferredLength ?? '',
@@ -118,10 +119,7 @@ function CustomerDetailContent({ id }: { id: string }) {
   const handleVipToggle = () => {
     const newVal = !isVip;
     setIsVip(newVal);
-    const idx = MOCK_CUSTOMERS.findIndex((c) => c.id === id);
-    if (idx !== -1) {
-      MOCK_CUSTOMERS[idx] = { ...MOCK_CUSTOMERS[idx], isRegular: newVal };
-    }
+    updateCustomer(id, { isRegular: newVal });
     navigator.vibrate?.(50);
     setVipToast(newVal ? 'VIP 지정됨' : 'VIP 해제됨');
     setTimeout(() => setVipToast(null), 2000);
@@ -267,15 +265,12 @@ function CustomerDetailContent({ id }: { id: string }) {
             </div>
             {showDesignerPicker && (
               <div className="mt-2 flex gap-2 flex-wrap">
-                {MOCK_DESIGNERS.map((d) => (
+                {designers.map((d) => (
                   <button
                     key={d.id}
                     onClick={() => {
                       setAssignedDesigner(d.name);
-                      const idx = MOCK_CUSTOMERS.findIndex((c) => c.id === id);
-                      if (idx !== -1) {
-                        MOCK_CUSTOMERS[idx] = { ...MOCK_CUSTOMERS[idx], assignedDesignerName: d.name, assignedDesignerId: d.id };
-                      }
+                      updateCustomer(id, { assignedDesignerName: d.name, assignedDesignerId: d.id });
                       setShowDesignerPicker(false);
                     }}
                     className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
@@ -404,23 +399,19 @@ function CustomerDetailContent({ id }: { id: string }) {
           initialEditing={fromChecklist}
           onSave={(updated) => {
             setPrefData(updated);
-            // in-memory mock 업데이트
-            const idx = MOCK_CUSTOMERS.findIndex((c) => c.id === id);
-            if (idx !== -1 && MOCK_CUSTOMERS[idx].preference) {
-              MOCK_CUSTOMERS[idx] = {
-                ...MOCK_CUSTOMERS[idx],
-                preference: {
-                  ...MOCK_CUSTOMERS[idx].preference!,
-                  preferredShape: updated.shape,
-                  preferredLength: updated.length,
-                  preferredThickness: updated.thickness,
-                  cuticleSensitivity: (updated.cuticle as 'normal' | 'sensitive') || undefined,
-                  nailCondition: updated.nailCondition,
-                  memo: updated.memo,
-                  updatedAt: new Date().toISOString(),
-                },
-              };
-            }
+            updateCustomer(id, {
+              preference: {
+                customerId: id,
+                ...(customer?.preference ?? {}),
+                preferredShape: updated.shape,
+                preferredLength: updated.length,
+                preferredThickness: updated.thickness,
+                cuticleSensitivity: (updated.cuticle as 'normal' | 'sensitive') || undefined,
+                nailCondition: updated.nailCondition,
+                memo: updated.memo,
+                updatedAt: new Date().toISOString(),
+              },
+            });
           }}
         />
       </div>

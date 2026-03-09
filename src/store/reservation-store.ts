@@ -2,11 +2,17 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { BookingRequest } from '@/types/consultation';
-import { MOCK_RESERVATIONS } from '@/data/mock-reservations';
+import {
+  fetchBookingRequests,
+  dbUpsertReservation,
+  dbDeleteReservation,
+} from '@/lib/db';
 
 interface ReservationStore {
   reservations: BookingRequest[];
+  _dbReady: boolean;
 
+  hydrateFromDB: () => Promise<void>;
   addReservation: (reservation: Omit<BookingRequest, 'id' | 'createdAt' | 'status'>) => void;
   updateReservation: (id: string, updates: Partial<BookingRequest>) => void;
   removeReservation: (id: string) => void;
@@ -20,32 +26,45 @@ interface ReservationStore {
 export const useReservationStore = create<ReservationStore>()(
   persist(
     (set, get) => ({
-      reservations: [...MOCK_RESERVATIONS],
+      reservations: [],
+      _dbReady: false,
 
-      addReservation: (reservation) =>
+      hydrateFromDB: async () => {
+        const reservations = await fetchBookingRequests();
+        set({ reservations, _dbReady: true });
+      },
+
+      addReservation: (reservation) => {
+        const newEntry: BookingRequest = {
+          ...reservation,
+          id: `booking-${Date.now()}`,
+          status: 'pending' as const,
+          createdAt: new Date().toISOString(),
+        };
         set((state) => ({
-          reservations: [
-            ...state.reservations,
-            {
-              ...reservation,
-              id: `booking-${Date.now()}`,
-              status: 'pending' as const,
-              createdAt: new Date().toISOString(),
-            },
-          ],
-        })),
+          reservations: [...state.reservations, newEntry],
+        }));
+        dbUpsertReservation(newEntry).catch(console.error);
+      },
 
-      updateReservation: (id, updates) =>
+      updateReservation: (id, updates) => {
         set((state) => ({
           reservations: state.reservations.map((r) =>
             r.id === id ? { ...r, ...updates } : r,
           ),
-        })),
+        }));
+        const updated = get().reservations.find((r) => r.id === id);
+        if (updated) {
+          dbUpsertReservation(updated).catch(console.error);
+        }
+      },
 
-      removeReservation: (id) =>
+      removeReservation: (id) => {
         set((state) => ({
           reservations: state.reservations.filter((r) => r.id !== id),
-        })),
+        }));
+        dbDeleteReservation(id).catch(console.error);
+      },
 
       getByDate: (date) => {
         return get().reservations

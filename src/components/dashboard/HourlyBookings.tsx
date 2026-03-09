@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -10,7 +11,8 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
-import { MOCK_HOURLY_DISTRIBUTION } from '@/data/mock-dashboard';
+import { useReservationStore } from '@/store/reservation-store';
+import { computeHourlyDistribution } from '@/lib/analytics';
 
 interface CustomTooltipProps {
   active?: boolean;
@@ -28,12 +30,12 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   );
 }
 
-// 피크 시간대 탐지
-const maxCount = Math.max(...MOCK_HOURLY_DISTRIBUTION.map((d) => d.count));
-
 export function HourlyBookings() {
-  const peakHour = MOCK_HOURLY_DISTRIBUTION.find((d) => d.count === maxCount);
-  const totalBookings = MOCK_HOURLY_DISTRIBUTION.reduce((s, d) => s + d.count, 0);
+  const reservations = useReservationStore((s) => s.reservations);
+  const hourlyData = useMemo(() => computeHourlyDistribution(reservations), [reservations]);
+  const maxCount = Math.max(...hourlyData.map((d) => d.count), 0);
+  const peakHour = hourlyData.find((d) => d.count === maxCount && maxCount > 0);
+  const totalBookings = hourlyData.reduce((s, d) => s + d.count, 0);
 
   return (
     <div className="flex flex-col gap-3 md:gap-4">
@@ -42,7 +44,7 @@ export function HourlyBookings() {
         <div className="flex-1 rounded-xl bg-primary/10 p-3 md:p-4">
           <p className="text-xs text-text-secondary">피크 시간대</p>
           <p className="text-base md:text-lg font-bold text-primary">{peakHour?.label ?? '-'}</p>
-          <p className="text-xs text-text-muted">{peakHour?.count}건 집중</p>
+          <p className="text-xs text-text-muted">{peakHour ? `${peakHour.count}건 집중` : '데이터 없음'}</p>
         </div>
         <div className="flex-1 rounded-xl bg-surface-alt p-3 md:p-4">
           <p className="text-xs text-text-secondary">월 총 예약</p>
@@ -55,7 +57,7 @@ export function HourlyBookings() {
       <div className="h-[140px] md:h-48">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
-          data={MOCK_HOURLY_DISTRIBUTION}
+          data={hourlyData}
           margin={{ top: 4, right: 4, left: -28, bottom: 0 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
@@ -72,11 +74,11 @@ export function HourlyBookings() {
           />
           <Tooltip content={<CustomTooltip />} />
           <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-            {MOCK_HOURLY_DISTRIBUTION.map((d) => (
+            {hourlyData.map((d) => (
               <Cell
                 key={d.hour}
                 fill="var(--color-primary)"
-                opacity={d.count === maxCount ? 1 : 0.45 + (d.count / maxCount) * 0.45}
+                opacity={maxCount > 0 && d.count === maxCount ? 1 : 0.45 + (maxCount > 0 ? (d.count / maxCount) * 0.45 : 0)}
               />
             ))}
           </Bar>
@@ -87,7 +89,7 @@ export function HourlyBookings() {
       {/* 시간대별 텍스트 리스트 (상위 3개 강조) */}
       <div className="flex flex-col gap-1.5">
         <p className="text-xs font-medium text-text-secondary">상위 예약 시간대</p>
-        {[...MOCK_HOURLY_DISTRIBUTION]
+        {[...hourlyData]
           .sort((a, b) => b.count - a.count)
           .slice(0, 3)
           .map((d, idx) => (

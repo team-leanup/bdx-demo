@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   AreaChart,
   Area,
@@ -11,13 +11,15 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { cn } from '@/lib/cn';
-import { MOCK_DAILY_CONSULTATIONS } from '@/data/mock-dashboard';
+import { useRecordsStore } from '@/store/records-store';
+import { computeDailyConsultations } from '@/lib/analytics';
+import type { DailyConsultation } from '@/lib/analytics';
 
 type Period = 'daily' | 'weekly' | 'monthly';
 
-function aggregateWeekly() {
+function aggregateWeekly(daily: DailyConsultation[]) {
   const weeks: Record<string, { consultations: number }> = {};
-  for (const d of MOCK_DAILY_CONSULTATIONS) {
+  for (const d of daily) {
     const date = new Date(d.date);
     const day = date.getDay();
     const diff = (day + 6) % 7;
@@ -30,9 +32,9 @@ function aggregateWeekly() {
   return Object.entries(weeks).map(([label, v]) => ({ label, ...v }));
 }
 
-function aggregateMonthly() {
+function aggregateMonthly(daily: DailyConsultation[]) {
   const months: Record<string, { consultations: number }> = {};
-  for (const d of MOCK_DAILY_CONSULTATIONS) {
+  for (const d of daily) {
     const date = new Date(d.date);
     const key = `${date.getMonth() + 1}월`;
     if (!months[key]) months[key] = { consultations: 0 };
@@ -65,17 +67,20 @@ const PERIOD_LABELS: { key: Period; label: string }[] = [
 
 export function RevenueChart() {
   const [period, setPeriod] = useState<Period>('daily');
+  const records = useRecordsStore((s) => s.records);
 
-  const data = (() => {
+  const dailyData = useMemo(() => computeDailyConsultations(records, 60), [records]);
+
+  const data = useMemo(() => {
     if (period === 'daily') {
-      return MOCK_DAILY_CONSULTATIONS.slice(-14).map((d) => ({
+      return dailyData.slice(-14).map((d) => ({
         label: d.date.slice(5).replace('-', '/'),
         consultations: d.consultations,
       }));
     }
-    if (period === 'weekly') return aggregateWeekly();
-    return aggregateMonthly();
-  })();
+    if (period === 'weekly') return aggregateWeekly(dailyData);
+    return aggregateMonthly(dailyData);
+  }, [period, dailyData]);
 
   return (
     <div>

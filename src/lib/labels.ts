@@ -1,4 +1,4 @@
-import { MOCK_DESIGNERS } from '@/data/mock-shop';
+import { useShopStore } from '@/store/shop-store';
 
 export const BODY_PART_LABEL: Record<string, string> = {
   hand: '핸드',
@@ -26,5 +26,5 @@ export const OFF_TYPE_LABEL: Record<string, string> = {
 };
 
 export function getDesignerName(designerId: string): string {
-  return MOCK_DESIGNERS.find((d) => d.id === designerId)?.name ?? '미정';
+  return useShopStore.getState().getDesignerName(designerId);
 }

@@ -3,10 +3,17 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { ConsultationRecord } from '@/types/consultation';
-import { MOCK_CONSULTATIONS } from '@/data/mock-consultations';
+import {
+  fetchConsultationRecords,
+  dbUpsertRecord,
+  dbDeleteRecord,
+} from '@/lib/db';
 
 interface RecordsStore {
-  additionalRecords: ConsultationRecord[];
+  records: ConsultationRecord[];
+  _dbReady: boolean;
+
+  hydrateFromDB: () => Promise<void>;
   addRecord: (record: ConsultationRecord) => void;
   updateRecord: (id: string, patch: Partial<ConsultationRecord>) => void;
   removeRecord: (id: string) => void;
@@ -17,59 +24,47 @@ interface RecordsStore {
 export const useRecordsStore = create<RecordsStore>()(
   persist(
     (set, get) => ({
-      additionalRecords: [],
-      addRecord: (record) =>
+      records: [],
+      _dbReady: false,
+
+      hydrateFromDB: async () => {
+        const records = await fetchConsultationRecords();
+        set({ records, _dbReady: true });
+      },
+
+      addRecord: (record) => {
         set((state) => ({
-          additionalRecords: [record, ...state.additionalRecords],
-        })),
-      updateRecord: (id, patch) =>
+          records: [record, ...state.records],
+        }));
+        dbUpsertRecord(record).catch(console.error);
+      },
+
+      updateRecord: (id, patch) => {
         set((state) => {
           const now = new Date().toISOString();
-          const existing = state.additionalRecords.find((record) => record.id === id);
-
-          if (existing) {
-            return {
-              additionalRecords: state.additionalRecords.map((record) =>
-                record.id === id
-                  ? { ...existing, ...patch, updatedAt: now }
-                  : record,
-              ),
-            };
-          }
-
-          const mockRecord = MOCK_CONSULTATIONS.find((record) => record.id === id);
-          if (!mockRecord) {
-            return state;
-          }
-
-          const updatedRecord: ConsultationRecord = {
-            ...mockRecord,
-            ...patch,
-            updatedAt: now,
-          };
-
+          const existing = state.records.find((r) => r.id === id);
+          if (!existing) return state;
+          const updated: ConsultationRecord = { ...existing, ...patch, updatedAt: now };
           return {
-            additionalRecords: [
-              updatedRecord,
-              ...state.additionalRecords.filter((record) => record.id !== id),
-            ],
+            records: state.records.map((r) => (r.id === id ? updated : r)),
           };
-        }),
-      removeRecord: (id) =>
-        set((state) => ({
-          additionalRecords: state.additionalRecords.filter((r) => r.id !== id),
-        })),
-      getRecordById: (id) =>
-        get().additionalRecords.find((record) => record.id === id)
-        ?? MOCK_CONSULTATIONS.find((record) => record.id === id),
-      getAllRecords: () => {
-        const additionalRecords = get().additionalRecords;
-        const additionalIds = new Set(additionalRecords.map((record) => record.id));
-        return [
-          ...additionalRecords,
-          ...MOCK_CONSULTATIONS.filter((record) => !additionalIds.has(record.id)),
-        ];
+        });
+        const updated = get().records.find((r) => r.id === id);
+        if (updated) {
+          dbUpsertRecord(updated).catch(console.error);
+        }
       },
+
+      removeRecord: (id) => {
+        set((state) => ({
+          records: state.records.filter((r) => r.id !== id),
+        }));
+        dbDeleteRecord(id).catch(console.error);
+      },
+
+      getRecordById: (id) => get().records.find((r) => r.id === id),
+
+      getAllRecords: () => get().records,
     }),
     {
       name: 'bdx-records',

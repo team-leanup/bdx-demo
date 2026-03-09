@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, Badge, Button } from '@/components/ui';
 import { formatPrice, formatDateDotWithTime } from '@/lib/format';
 import { BODY_PART_LABEL, DESIGN_SCOPE_LABEL, EXPRESSION_LABEL, OFF_TYPE_LABEL, getDesignerName } from '@/lib/labels';
-import { getMockConsultationById } from '@/data/mock-consultations';
+import { useRecordsStore } from '@/store/records-store';
 import { calculatePrice } from '@/lib/price-calculator';
 import { useT } from '@/lib/i18n';
 import { DailyChecklist } from '@/components/consultation/DailyChecklist';
@@ -19,21 +19,21 @@ export default function RecordDetailPage({ params }: Props) {
   const { id } = use(params);
   const router = useRouter();
   const t = useT();
-  const mockRecord = getMockConsultationById(id);
+  const storeRecord = useRecordsStore((s) => s.getRecordById(id));
   const [savedRecord, setSavedRecord] = useState<ConsultationRecord | undefined>(undefined);
-  const [loaded, setLoaded] = useState(!!mockRecord);
+  const [loaded, setLoaded] = useState(!!storeRecord);
 
   useEffect(() => {
-    if (!mockRecord) {
+    if (!storeRecord) {
       const saved = sessionStorage.getItem(`bdx-saved-record-${id}`);
       if (saved) {
         try { setSavedRecord(JSON.parse(saved)); } catch { /* ignore */ }
       }
       setLoaded(true);
     }
-  }, [id, mockRecord]);
+  }, [id, storeRecord]);
 
-  const record = mockRecord ?? savedRecord;
+  const record = storeRecord ?? savedRecord;
   const [checklistData, setChecklistData] = useState<DailyChecklistType | undefined>(record?.checklist);
   const [editingFinalPrice, setEditingFinalPrice] = useState(false);
   const [finalPriceValue, setFinalPriceValue] = useState(record?.finalPrice ?? 0);

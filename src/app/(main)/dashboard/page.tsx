@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { BentoGrid, BentoCard } from '@/components/ui';
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
 import { KPICards } from '@/components/dashboard/KPICards';
@@ -10,21 +11,14 @@ import { DesignerPerformance } from '@/components/dashboard/DesignerPerformance'
 import { WeeklySummary } from '@/components/dashboard/WeeklySummary';
 import { HourlyBookings } from '@/components/dashboard/HourlyBookings';
 import { useAuthStore } from '@/store/auth-store';
-
-// 인사이트 카드 데이터
-const POPULAR_TREATMENTS = [
-  { rank: 1, name: '원컬러+포인트', count: 42 },
-  { rank: 2, name: '그라데이션', count: 38 },
-  { rank: 3, name: '풀아트', count: 32 },
-];
-
-const REGULAR_VISIT_RATE = 68; // %
-
-const PEAK_HOURS = [
-  { time: '13:00~14:00', label: '점심 후', count: 24 },
-  { time: '15:00~16:00', label: '오후', count: 19 },
-  { time: '11:00~12:00', label: '오전 말', count: 15 },
-];
+import { useRecordsStore } from '@/store/records-store';
+import { useCustomerStore } from '@/store/customer-store';
+import { useReservationStore } from '@/store/reservation-store';
+import {
+  computePopularTreatments,
+  computeRegularVisitRate,
+  computePeakHours,
+} from '@/lib/analytics';
 
 export default function DashboardPage() {
   const today = new Date().toLocaleDateString('ko-KR', {
@@ -34,6 +28,13 @@ export default function DashboardPage() {
   const role = useAuthStore((s) => s.role);
   const isOwner = useAuthStore((s) => s.isOwner);
   const activeDesignerName = useAuthStore((s) => s.activeDesignerName);
+  const records = useRecordsStore((s) => s.records);
+  const customers = useCustomerStore((s) => s.customers);
+  const reservations = useReservationStore((s) => s.reservations);
+
+  const popularTreatments = useMemo(() => computePopularTreatments(records), [records]);
+  const regularVisitRate = useMemo(() => computeRegularVisitRate(customers), [customers]);
+  const peakHours = useMemo(() => computePeakHours(reservations), [reservations]);
 
   if (!isOwner()) {
     return (
@@ -118,7 +119,7 @@ export default function DashboardPage() {
             <div className="p-4 md:p-5 h-full flex flex-col">
               <h2 className="text-sm font-semibold text-text-secondary mb-3">인기 시술 Top 3</h2>
               <div className="flex flex-col gap-2.5 flex-1">
-                {POPULAR_TREATMENTS.map((t) => (
+                {popularTreatments.map((t) => (
                   <div key={t.rank} className="flex items-center gap-3">
                     <div
                       className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
@@ -143,12 +144,12 @@ export default function DashboardPage() {
                   className="text-3xl font-extrabold text-primary leading-none"
                   style={{ fontVariantNumeric: 'tabular-nums' }}
                 >
-                  {REGULAR_VISIT_RATE}%
+                  {regularVisitRate}%
                 </span>
                 <div className="h-2 w-full rounded-full bg-surface-alt overflow-hidden">
                   <div
                     className="h-full rounded-full"
-                    style={{ width: `${REGULAR_VISIT_RATE}%`, background: 'var(--color-primary)' }}
+                    style={{ width: `${regularVisitRate}%`, background: 'var(--color-primary)' }}
                   />
                 </div>
               </div>
@@ -161,7 +162,7 @@ export default function DashboardPage() {
             <div className="p-4 h-full flex flex-col gap-2">
               <span className="text-xs font-semibold text-text-secondary">피크타임</span>
               <div className="flex flex-col gap-1.5 flex-1">
-                {PEAK_HOURS.map((h, i) => (
+                {peakHours.map((h, i) => (
                   <div key={h.time} className="flex items-center gap-2">
                     <div
                       className="h-1.5 rounded-full flex-1"

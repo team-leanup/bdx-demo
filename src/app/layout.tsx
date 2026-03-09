@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
+import SupabaseProvider from '@/components/SupabaseProvider';
 import { pretendard } from '@/lib/fonts';
 import { STORAGE_KEYS } from '@/constants/storage-keys';
 
@@ -53,7 +54,9 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
       </head>
       <body className="min-h-screen bg-background text-text font-pretendard">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <SupabaseProvider>{children}</SupabaseProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

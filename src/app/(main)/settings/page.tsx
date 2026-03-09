@@ -18,7 +18,7 @@ import { getStorageUsage, formatBytes, clearAllDemoData } from '@/lib/storage-bu
 import { Modal } from '@/components/ui/Modal';
 import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/cn';
-import { MOCK_SHOP, MOCK_DESIGNERS } from '@/data/mock-shop';
+import { useShopStore } from '@/store/shop-store';
 import { DEFAULT_BASE_PRICES } from '@/data/service-options';
 import { formatPrice } from '@/lib/format';
 import { DesignPresetsManager } from '@/components/settings/DesignPresetsManager';
@@ -257,6 +257,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function StaffSection() {
   const t = useT();
   const { setProfileImage, removeProfileImage, profileImages } = useDesignerStore();
+  const designers = useShopStore((s) => s.designers);
 
   const handleFileChange = async (designerId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -280,7 +281,7 @@ function StaffSection() {
           </button>
         </div>
         <div className="flex flex-col gap-2">
-          {MOCK_DESIGNERS.map((d) => {
+          {designers.map((d) => {
             const hasImage = !!profileImages[d.id];
             const inputId = `profile-upload-${d.id}`;
             return (
@@ -554,7 +555,7 @@ function StorageManagementSection() {
     // reset in-memory stores where possible
     try { useCustomerStore.setState({ customers: [] }); } catch {}
     try { useReservationStore.setState({ reservations: [] }); } catch {}
-    try { useRecordsStore.setState({ additionalRecords: [] }); } catch {}
+    try { useRecordsStore.setState({ records: [] }); } catch {}
     try { usePortfolioStore.setState({ photos: [] }); } catch {}
 
     setConfirmClearAll(false);
@@ -685,6 +686,8 @@ export default function SettingsPage() {
   const t = useT();
   const { shopSettings, setShopSettings, resetApp } = useAppStore();
   const { role, activeDesignerId, logout, setPassword, checkPassword } = useAuthStore();
+  const shop = useShopStore((s) => s.shop);
+  const settingsDesigners = useShopStore((s) => s.designers);
 
   const [activeTab, setActiveTab] = useState<TabId>('shop');
 
@@ -692,9 +695,9 @@ export default function SettingsPage() {
 
   // 매장 정보 편집
   const [editingShop, setEditingShop] = useState(false);
-  const [shopName, setShopName] = useState(MOCK_SHOP.name);
-  const [shopPhone, setShopPhone] = useState(MOCK_SHOP.phone ?? '');
-  const [shopAddress, setShopAddress] = useState(shopSettings.shopAddress || MOCK_SHOP.address || '');
+  const [shopName, setShopName] = useState(shopSettings.shopName || shop?.name || '');
+  const [shopPhone, setShopPhone] = useState(shopSettings.shopPhone || shop?.phone || '');
+  const [shopAddress, setShopAddress] = useState(shopSettings.shopAddress || shop?.address || '');
   const [shopAddressDetail, setShopAddressDetail] = useState(shopSettings.shopAddressDetail || '');
 
   // 서비스 가격 인라인 편집
@@ -742,7 +745,7 @@ export default function SettingsPage() {
   };
 
   // 비밀번호 변경
-  const [pwTargetId, setPwTargetId] = useState(activeDesignerId || (MOCK_DESIGNERS[0]?.id ?? ''));
+  const [pwTargetId, setPwTargetId] = useState(activeDesignerId || (settingsDesigners[0]?.id ?? ''));
   const [pwCurrent, setPwCurrent] = useState('');
   const [pwNew, setPwNew] = useState('');
   const [pwConfirm, setPwConfirm] = useState('');
@@ -1024,7 +1027,7 @@ export default function SettingsPage() {
                       onChange={(e) => setPwTargetId(e.target.value)}
                       className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text focus:outline-none focus:border-primary transition-colors"
                     >
-                      {MOCK_DESIGNERS.map((d) => (
+                      {settingsDesigners.map((d) => (
                         <option key={d.id} value={d.id}>
                           {d.name} {d.role === 'owner' ? t('settings.staff_owner') : t('common.designerSuffix').trim() || t('common.roleStaff')}
                         </option>
@@ -1032,7 +1035,7 @@ export default function SettingsPage() {
                     </select>
                   </div>
                   ) : (
-                  <p className="text-sm text-text-secondary">{MOCK_DESIGNERS.find(d => d.id === activeDesignerId)?.name ?? ''} 비밀번호 변경</p>
+                  <p className="text-sm text-text-secondary">{settingsDesigners.find(d => d.id === activeDesignerId)?.name ?? ''} 비밀번호 변경</p>
                   )}
                   <div>
                     <label className="mb-1 block text-xs font-medium text-text-secondary">{t('settings.password_current')}</label>

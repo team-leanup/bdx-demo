@@ -3,10 +3,18 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Customer, CustomerTag, SmallTalkNote, TagAccent } from '@/types/customer';
-import { MOCK_CUSTOMERS } from '@/data/mock-customers';
+import {
+  fetchCustomers,
+  dbUpsertCustomer,
+  dbUpsertCustomerTags,
+  dbInsertSmallTalkNote,
+} from '@/lib/db';
 
 interface CustomerStore {
   customers: Customer[];
+  _dbReady: boolean;
+
+  hydrateFromDB: () => Promise<void>;
 
   getById: (id: string) => Customer | undefined;
   findByPhoneNormalized: (phone: string) => Customer | undefined;
@@ -37,7 +45,13 @@ function normalizePhoneRaw(phone: string | undefined): string {
 export const useCustomerStore = create<CustomerStore>()(
   persist(
     (set, get) => ({
-      customers: deepClone(MOCK_CUSTOMERS),
+      customers: [],
+      _dbReady: false,
+
+      hydrateFromDB: async () => {
+        const customers = await fetchCustomers();
+        set({ customers, _dbReady: true });
+      },
 
       getById: (id) => get().customers.find((c) => c.id === id),
 
@@ -77,18 +91,35 @@ export const useCustomerStore = create<CustomerStore>()(
         };
 
         set((state) => ({ customers: [...state.customers, next] }));
+
+        dbUpsertCustomer(next).catch(console.error);
+        dbUpsertCustomerTags(next.id, next.tags ?? []).catch(console.error);
+
         return next;
       },
 
-      updateCustomer: (id, updates) =>
+      updateCustomer: (id, updates) => {
         set((state) => ({
-          customers: state.customers.map((c) => (c.id === id ? { ...c, ...updates, updatedAt: new Date().toISOString() } : c)),
-        })),
+          customers: state.customers.map((c) =>
+            c.id === id ? { ...c, ...updates, updatedAt: new Date().toISOString() } : c,
+          ),
+        }));
+        const updated = get().customers.find((c) => c.id === id);
+        if (updated) {
+          dbUpsertCustomer(updated).catch(console.error);
+        }
+      },
 
-      updateTags: (customerId, nextTags) =>
+      updateTags: (customerId, nextTags) => {
         set((state) => ({
-          customers: state.customers.map((c) => (c.id === customerId ? { ...c, tags: deepClone(nextTags), updatedAt: new Date().toISOString() } : c)),
-        })),
+          customers: state.customers.map((c) =>
+            c.id === customerId
+              ? { ...c, tags: deepClone(nextTags), updatedAt: new Date().toISOString() }
+              : c,
+          ),
+        }));
+        dbUpsertCustomerTags(customerId, nextTags).catch(console.error);
+      },
 
       setPinnedTraits: (customerId, pinnedValues) =>
         set((state) => ({
@@ -102,16 +133,18 @@ export const useCustomerStore = create<CustomerStore>()(
           }),
         })),
 
-      appendSmallTalkNote: (customerId, note) =>
+      appendSmallTalkNote: (customerId, note) => {
         set((state) => ({
           customers: state.customers.map((c) => {
             if (c.id !== customerId) return c;
             const nextNotes = [...(c.smallTalkNotes ?? []), note];
             return { ...c, smallTalkNotes: nextNotes, updatedAt: new Date().toISOString() };
           }),
-        })),
+        }));
+        dbInsertSmallTalkNote(note).catch(console.error);
+      },
 
-      toggleTagPinned: (customerId, tagId) =>
+      toggleTagPinned: (customerId, tagId) => {
         set((state) => ({
           customers: state.customers.map((c) => {
             if (c.id !== customerId) return c;
@@ -127,20 +160,30 @@ export const useCustomerStore = create<CustomerStore>()(
             });
             return { ...c, tags, updatedAt: new Date().toISOString() };
           }),
-        })),
+        }));
+        const updated = get().customers.find((c) => c.id === customerId);
+        if (updated) {
+          dbUpsertCustomerTags(customerId, updated.tags ?? []).catch(console.error);
+        }
+      },
 
-      setTagAccent: (customerId, tagId, accent) =>
+      setTagAccent: (customerId, tagId, accent) => {
         set((state) => ({
           customers: state.customers.map((c) => {
             if (c.id !== customerId) return c;
             const tags = (c.tags ?? []).map((t) =>
-              t.id === tagId ? { ...t, accent } : t
+              t.id === tagId ? { ...t, accent } : t,
             );
             return { ...c, tags, updatedAt: new Date().toISOString() };
           }),
-        })),
+        }));
+        const updated = get().customers.find((c) => c.id === customerId);
+        if (updated) {
+          dbUpsertCustomerTags(customerId, updated.tags ?? []).catch(console.error);
+        }
+      },
 
-      reorderPinnedTags: (customerId, orderedTagIds) =>
+      reorderPinnedTags: (customerId, orderedTagIds) => {
         set((state) => ({
           customers: state.customers.map((c) => {
             if (c.id !== customerId) return c;
@@ -152,7 +195,12 @@ export const useCustomerStore = create<CustomerStore>()(
             });
             return { ...c, tags, updatedAt: new Date().toISOString() };
           }),
-        })),
+        }));
+        const updated = get().customers.find((c) => c.id === customerId);
+        if (updated) {
+          dbUpsertCustomerTags(customerId, updated.tags ?? []).catch(console.error);
+        }
+      },
 
       getPinnedTags: (customerId) => {
         const customer = get().customers.find((c) => c.id === customerId);
@@ -177,9 +225,6 @@ export const useCustomerStore = create<CustomerStore>()(
       merge: (persisted, current) => {
         const p = persisted as Partial<CustomerStore> | undefined;
         if (!p) return current;
-        if (!p.customers || p.customers.length === 0) {
-          return { ...current, customers: deepClone(MOCK_CUSTOMERS) };
-        }
         return { ...current, ...p } as CustomerStore;
       },
     },

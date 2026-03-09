@@ -5,7 +5,7 @@ import { RoleBadge } from '@/components/auth/RoleBadge';
 import { useAuthStore } from '@/store/auth-store';
 import { useLocaleStore } from '@/store/locale-store';
 import { useAppStore } from '@/store/app-store';
-import { MOCK_SHOP } from '@/data/mock-shop';
+import { useShopStore } from '@/store/shop-store';
 import type { Locale } from '@/store/locale-store';
 import { cn } from '@/lib/cn';
 
@@ -24,7 +24,8 @@ export function StatusBar({ shopName: shopNameProp }: StatusBarProps) {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const { locale, setLocale } = useLocaleStore();
   const { shopSettings } = useAppStore();
-  const shopName = shopNameProp || shopSettings.shopName || MOCK_SHOP.name;
+  const storeShopName = useShopStore((s) => s.shop?.name);
+  const shopName = shopNameProp || shopSettings.shopName || (storeShopName ?? '네일숲');
   const [showLangMenu, setShowLangMenu] = useState(false);
 
   return (

@@ -2,8 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui';
-import { MOCK_CUSTOMERS } from '@/data/mock-customers';
-import { MOCK_CONSULTATIONS } from '@/data/mock-consultations';
+import { useCustomerStore } from '@/store/customer-store';
 import { useRecordsStore } from '@/store/records-store';
 import { cn } from '@/lib/cn';
 import { useT, useKo, useLocale } from '@/lib/i18n';
@@ -49,11 +48,8 @@ export function CustomerInfoForm({
   const t = useT();
   const tKo = useKo();
   const locale = useLocale();
-  const additionalRecords = useRecordsStore((s) => s.additionalRecords);
-  const allRecords = useMemo(
-    () => [...additionalRecords, ...MOCK_CONSULTATIONS],
-    [additionalRecords],
-  );
+  const getAllRecords = useRecordsStore((s) => s.getAllRecords);
+  const allRecords = useMemo(() => getAllRecords(), [getAllRecords]);
 
   const BODY_PART_LABEL: Record<string, string> = {
     hand: t('bodyPart.hand'),
@@ -65,12 +61,13 @@ export function CustomerInfoForm({
     full_art: t('design.fullArt'),
     monthly_art: t('design.monthlyArt'),
   };
+  const customers = useCustomerStore((s) => s.customers);
   const [mode, setMode] = useState<'new' | 'existing'>('new');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
   const filtered = searchQuery.trim()
-    ? MOCK_CUSTOMERS.filter(
+    ? customers.filter(
         (c) =>
           c.name.includes(searchQuery) ||
           c.phone.replace(/-/g, '').includes(searchQuery.replace(/-/g, '')),

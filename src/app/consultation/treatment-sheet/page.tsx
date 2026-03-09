@@ -10,8 +10,8 @@ import { HandIllustration } from '@/components/canvas/HandIllustration';
 import { formatPrice, formatPriceNumber } from '@/lib/format';
 import { calculatePrice } from '@/lib/price-calculator';
 import { estimateTime } from '@/lib/time-calculator';
-import { MOCK_DESIGNERS } from '@/data/mock-shop';
-import { MOCK_CUSTOMERS } from '@/data/mock-customers';
+import { useShopStore } from '@/store/shop-store';
+import { useCustomerStore } from '@/store/customer-store';
 import type { FingerPosition, FingerSelection } from '@/types/canvas';
 import type { NailShape } from '@/types/consultation';
 
@@ -91,7 +91,8 @@ export default function TreatmentSheetPage() {
     memo: '',
   });
 
-  const designer = MOCK_DESIGNERS.find(d => d.id === (consultation.designerId || activeDesignerId));
+  const designers = useShopStore((s) => s.designers);
+  const designer = designers.find(d => d.id === (consultation.designerId || activeDesignerId));
   const priceBreakdown = calculatePrice(consultation);
   const totalPrice = priceBreakdown.subtotal;
   const estimatedMinutes = estimateTime(consultation);
@@ -140,8 +141,8 @@ export default function TreatmentSheetPage() {
   const handleSaveSmallTalk = () => {
     if (!smallTalkText.trim()) return;
 
-    // Find customer by name in MOCK_CUSTOMERS
-    const customer = MOCK_CUSTOMERS.find(c => c.name === consultation.customerName);
+    const { customers, appendSmallTalkNote } = useCustomerStore.getState();
+    const customer = customers.find(c => c.name === consultation.customerName);
     if (customer) {
       const newNote = {
         id: `stn-${Date.now()}`,
@@ -152,7 +153,7 @@ export default function TreatmentSheetPage() {
         createdByDesignerId: activeDesignerId ?? designer?.id ?? 'unknown',
         createdByDesignerName: activeDesignerName ?? designer?.name ?? '디자이너',
       };
-      customer.smallTalkNotes = [newNote, ...customer.smallTalkNotes];
+      appendSmallTalkNote(customer.id, newNote);
     }
 
     setIsSaved(true);

@@ -5,7 +5,7 @@ import { useConsultationStore } from '@/store/consultation-store';
 import { calculatePrice } from '@/lib/price-calculator';
 import { estimateTime } from '@/lib/time-calculator';
 import { formatPrice, formatMinutes } from '@/lib/format';
-import { MOCK_DESIGNERS } from '@/data/mock-shop';
+import { useShopStore } from '@/store/shop-store';
 import { PARTS_GRADE_OPTIONS } from '@/data/service-options';
 import { Accordion } from '@/components/ui/Accordion';
 import { cn } from '@/lib/cn';
@@ -110,8 +110,9 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
   const consultation = useConsultationStore((s) => s.consultation);
   const breakdown = calculatePrice(consultation);
   const minutes = estimateTime(consultation);
+  const getDesignerById = useShopStore((s) => s.getDesignerById);
 
-  const designer = MOCK_DESIGNERS.find((d) => d.id === consultation.designerId);
+  const designer = getDesignerById(consultation.designerId ?? '');
 
   const shapeLabel = t(VALUE_I18N_MAP[consultation.nailShape] ?? consultation.nailShape);
   const shapeLabelKo = tKo(VALUE_I18N_MAP[consultation.nailShape] ?? consultation.nailShape);

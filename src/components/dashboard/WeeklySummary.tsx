@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -9,34 +10,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { MOCK_DAILY_CONSULTATIONS } from '@/data/mock-dashboard';
-
-// 현재 주의 월~일 범위 동적 계산
-const now = new Date();
-const dayOfWeek = now.getDay(); // 0=일 1=월 ... 6=토
-const monday = new Date(now);
-monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-const sunday = new Date(monday);
-sunday.setDate(monday.getDate() + 6);
-
-const mondayStr = monday.toISOString().slice(0, 10);
-const sundayStr = sunday.toISOString().slice(0, 10);
-
-const THIS_WEEK_DATA = MOCK_DAILY_CONSULTATIONS.filter(
-  (d) => d.date >= mondayStr && d.date <= sundayStr,
-).map((d) => {
-  const date = new Date(d.date + 'T00:00:00');
-  const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-  return {
-    label: dayNames[date.getDay()],
-    consultations: d.consultations,
-  };
-});
-
-// 이번 주 통계 (모듈 레벨 상수이므로 초기 로드 시 계산)
-const weekConsultations = THIS_WEEK_DATA.reduce((s, d) => s + d.consultations, 0);
-const workDays = THIS_WEEK_DATA.filter((d) => d.consultations > 0).length;
-const dayAvg = workDays > 0 ? Math.round(weekConsultations / workDays) : 0;
+import { useRecordsStore } from '@/store/records-store';
+import { computeDailyConsultations } from '@/lib/analytics';
 
 interface CustomTooltipProps {
   active?: boolean;
@@ -55,6 +30,32 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 }
 
 export function WeeklySummary() {
+  const records = useRecordsStore((s) => s.records);
+
+  const THIS_WEEK_DATA = useMemo(() => {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const mondayStr = monday.toISOString().slice(0, 10);
+    const sundayStr = sunday.toISOString().slice(0, 10);
+
+    const daily = computeDailyConsultations(records, 14);
+    return daily
+      .filter((d) => d.date >= mondayStr && d.date <= sundayStr)
+      .map((d) => {
+        const date = new Date(d.date + 'T00:00:00');
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+        return { label: dayNames[date.getDay()], consultations: d.consultations };
+      });
+  }, [records]);
+
+  const weekConsultations = THIS_WEEK_DATA.reduce((s, d) => s + d.consultations, 0);
+  const workDays = THIS_WEEK_DATA.filter((d) => d.consultations > 0).length;
+  const dayAvg = workDays > 0 ? Math.round(weekConsultations / workDays) : 0;
+
   return (
     <div className="flex flex-col gap-4">
       {/* 주간 통계 요약 */}

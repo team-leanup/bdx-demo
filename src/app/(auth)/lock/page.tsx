@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/store/auth-store';
-import { MOCK_DESIGNERS } from '@/data/mock-shop';
+import { useShopStore } from '@/store/shop-store';
 import type { UserRole } from '@/types/auth';
 import { cn } from '@/lib/cn';
 import { useT } from '@/lib/i18n';
@@ -16,6 +16,7 @@ export default function LockPage() {
   const router = useRouter();
   const t = useT();
   const { login, checkPassword } = useAuthStore();
+  const designers = useShopStore((s) => s.designers);
 
   const [step, setStep] = useState<RoleStep>('select_role');
   const [selectedRole, setSelectedRole] = useState<'owner' | 'staff' | null>(null);
@@ -24,8 +25,8 @@ export default function LockPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const ownerDesigners = MOCK_DESIGNERS.filter((d) => d.role === 'owner' && d.isActive);
-  const staffDesigners = MOCK_DESIGNERS.filter((d) => d.role === 'staff' && d.isActive);
+  const ownerDesigners = designers.filter((d) => d.role === 'owner' && d.isActive);
+  const staffDesigners = designers.filter((d) => d.role === 'staff' && d.isActive);
 
   const handleRoleSelect = (role: 'owner' | 'staff') => {
     setSelectedRole(role);
@@ -58,7 +59,8 @@ export default function LockPage() {
 
     const valid = checkPassword(selectedDesignerId, password);
     if (valid) {
-      login(selectedDesignerId, selectedRole as UserRole);
+      const designer = designers.find((d) => d.id === selectedDesignerId);
+      login(selectedDesignerId, selectedRole as UserRole, designer?.name);
       router.replace('/home');
     } else {
       setError(t('auth.passwordError'));
@@ -67,7 +69,7 @@ export default function LockPage() {
     setLoading(false);
   };
 
-  const designers = selectedRole === 'owner' ? ownerDesigners : staffDesigners;
+  const displayDesigners = selectedRole === 'owner' ? ownerDesigners : staffDesigners;
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
@@ -147,7 +149,7 @@ export default function LockPage() {
 
               {/* Designer list */}
               <div className="flex flex-col gap-2">
-                {designers.map((d) => (
+                {displayDesigners.map((d) => (
                   <button
                     key={d.id}
                     onClick={() => setSelectedDesignerId(d.id)}

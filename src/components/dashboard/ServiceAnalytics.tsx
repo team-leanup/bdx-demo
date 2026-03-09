@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -10,7 +11,12 @@ import {
   Cell,
   ResponsiveContainer,
 } from 'recharts';
-import { MOCK_DESIGN_SCOPE_BREAKDOWN, MOCK_EXPRESSION_BREAKDOWN } from '@/data/mock-dashboard';
+import { useRecordsStore } from '@/store/records-store';
+import {
+  computeDesignScopeBreakdown,
+  computeExpressionBreakdown,
+  computePopularTreatments,
+} from '@/lib/analytics';
 
 // Primary 계열 색상 팔레트 (CSS 변수 기반)
 const THEME_COLORS = [
@@ -20,30 +26,24 @@ const THEME_COLORS = [
   'color-mix(in srgb, var(--color-primary) 50%, white)',
 ];
 
-// 인기 시술 TOP 5 데이터 (디자인 범위 + 기법 통합)
-const TOP_SERVICES = [
-  { name: '단색+포인트', count: 42, maxCount: 42 },
-  { name: '원컬러', count: 35, maxCount: 42 },
-  { name: '풀아트', count: 32, maxCount: 42 },
-  { name: '그라데이션', count: 38, maxCount: 42 },
-  { name: '이달의 아트', count: 18, maxCount: 42 },
-];
-
-interface _TooltipProps {
-  active?: boolean;
-  payload?: Array<{ name: string; value: number; payload: { percentage: number } }>;
-}
-
-
-
 export function ServiceAnalytics() {
+  const records = useRecordsStore((s) => s.records);
+  const designScopeBreakdown = useMemo(() => computeDesignScopeBreakdown(records), [records]);
+  const expressionBreakdown = useMemo(() => computeExpressionBreakdown(records), [records]);
+  const popularTreatments = useMemo(() => computePopularTreatments(records), [records]);
+
+  const maxCount = Math.max(...popularTreatments.map((t) => t.count), 1);
+  const topServices = popularTreatments
+    .slice(0, 5)
+    .map((t) => ({ name: t.name, count: t.count, maxCount }));
+
   return (
     <div className="flex flex-col gap-6 md:gap-8">
       {/* 인기 시술 TOP 5 - 프로그레스 바 */}
       <div>
         <p className="mb-3 text-xs font-medium text-text-secondary">인기 시술 TOP 5</p>
         <div className="flex flex-col gap-2.5">
-          {TOP_SERVICES.map((service, idx) => {
+          {topServices.map((service, idx) => {
             const pct = Math.round((service.count / service.maxCount) * 100);
             return (
               <div key={service.name}>
@@ -80,7 +80,7 @@ export function ServiceAnalytics() {
         <div className="h-[130px] md:h-44">
       <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={MOCK_EXPRESSION_BREAKDOWN}
+            data={expressionBreakdown}
             margin={{ top: 0, right: 4, left: -25, bottom: 0 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
@@ -108,7 +108,7 @@ export function ServiceAnalytics() {
               }}
             />
             <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-              {MOCK_EXPRESSION_BREAKDOWN.map((_, i) => (
+              {expressionBreakdown.map((_, i) => (
                 <Cell key={i} fill={THEME_COLORS[i % THEME_COLORS.length]} />
               ))}
             </Bar>
@@ -121,7 +121,7 @@ export function ServiceAnalytics() {
       <div>
         <p className="mb-3 text-xs font-medium text-text-secondary">시술 범위별 비율</p>
         <div className="flex flex-col gap-2">
-          {MOCK_DESIGN_SCOPE_BREAKDOWN.map((d, i) => (
+          {designScopeBreakdown.map((d, i) => (
             <div key={d.name} className="flex items-center gap-3">
               <div
                 className="h-2.5 w-2.5 flex-shrink-0 rounded-full"

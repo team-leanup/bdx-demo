@@ -16,7 +16,7 @@ import type { Locale } from '@/store/locale-store';
 import { cn } from '@/lib/cn';
 import { useT } from '@/lib/i18n';
 import { useLocaleStore } from '@/store/locale-store';
-import { MOCK_DESIGNERS } from '@/data/mock-shop';
+import { useShopStore } from '@/store/shop-store';
 
 const CHANNEL_BADGE_STYLE: Record<BookingChannel, { className: string; emoji: string }> = {
   kakao: { className: 'bg-yellow-100 text-yellow-800 border-yellow-200', emoji: '💬' },
@@ -78,6 +78,7 @@ interface DayReservationListProps {
 function AddReservationForm({ date, onDone }: { date: string; onDone: () => void }) {
   const t = useT();
   const addReservation = useReservationStore((s) => s.addReservation);
+  const designers = useShopStore((s) => s.designers);
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -160,7 +161,7 @@ function AddReservationForm({ date, onDone }: { date: string; onDone: () => void
         className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-sm text-text focus:outline-none focus:border-primary"
       >
         <option value="">{t('calendar.addFormDesignerPlaceholder')}</option>
-        {MOCK_DESIGNERS.map((d) => (
+        {designers.map((d) => (
           <option key={d.id} value={d.id}>{d.name}</option>
         ))}
       </select>
@@ -200,6 +201,7 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
   const locale = useLocaleStore((s) => s.locale);
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
   const setBookingId = useConsultationStore((s) => s.setBookingId);
+  const getDesignerNameFromStore = useShopStore((s) => s.getDesignerName);
   const [showForm, setShowForm] = useState(false);
   const [alertBooking, setAlertBooking] = useState<BookingRequest | null>(null);
   const [alertTags, setAlertTags] = useState<CustomerTag[]>([]);
@@ -250,7 +252,8 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
 
   const getDesignerName = (id?: string) => {
     if (!id) return null;
-    return MOCK_DESIGNERS.find((d) => d.id === id)?.name ?? null;
+    const name = getDesignerNameFromStore(id);
+    return name || null;
   };
 
   return (

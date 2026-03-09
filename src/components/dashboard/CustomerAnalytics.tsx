@@ -1,8 +1,11 @@
 'use client';
 
+import { useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-import { MOCK_CUSTOMER_ANALYTICS } from '@/data/mock-dashboard';
 import { formatPrice } from '@/lib/format';
+import { useRecordsStore } from '@/store/records-store';
+import { useCustomerStore } from '@/store/customer-store';
+import { computeCustomerAnalytics } from '@/lib/analytics';
 
 interface TooltipProps {
   active?: boolean;
@@ -19,12 +22,19 @@ function CustomTooltip({ active, payload }: TooltipProps) {
   );
 }
 
-const pieData = [
-  { name: '재방문', value: MOCK_CUSTOMER_ANALYTICS.returningCustomers },
-  { name: '신규', value: MOCK_CUSTOMER_ANALYTICS.newCustomers },
-];
-
 export function CustomerAnalytics() {
+  const records = useRecordsStore((s) => s.records);
+  const customers = useCustomerStore((s) => s.customers);
+  const analytics = useMemo(
+    () => computeCustomerAnalytics(records, customers),
+    [records, customers],
+  );
+
+  const pieData = [
+    { name: '재방문', value: analytics.returningCustomers },
+    { name: '신규', value: analytics.newCustomers },
+  ];
+
   return (
     <div className="flex flex-col gap-6 md:gap-8">
       {/* 신규 vs 재방문 */}
@@ -57,10 +67,10 @@ export function CustomerAnalytics() {
                 <span className="text-xs text-text">재방문</span>
               </div>
               <p className="mt-0.5 text-lg font-bold text-text">
-                {MOCK_CUSTOMER_ANALYTICS.returningCustomers}명
+                {analytics.returningCustomers}명
               </p>
               <p className="text-xs text-text-muted">
-                {MOCK_CUSTOMER_ANALYTICS.returningPercentage}%
+                {analytics.returningPercentage}%
               </p>
             </div>
             <div>
@@ -69,17 +79,17 @@ export function CustomerAnalytics() {
                 <span className="text-xs text-text">신규</span>
               </div>
               <p className="mt-0.5 text-lg font-bold text-text">
-                {MOCK_CUSTOMER_ANALYTICS.newCustomers}명
+                {analytics.newCustomers}명
               </p>
               <p className="text-xs text-text-muted">
-                {MOCK_CUSTOMER_ANALYTICS.newPercentage}%
+                {analytics.newPercentage}%
               </p>
             </div>
           </div>
         </div>
         <div className="mt-3 rounded-xl bg-surface-alt p-3 text-center">
           <p className="text-xs text-text-secondary">
-            평균 방문 주기: <span className="font-semibold text-primary">{MOCK_CUSTOMER_ANALYTICS.averageVisitInterval}일</span>
+            평균 방문 주기: <span className="font-semibold text-primary">{analytics.averageVisitInterval}일</span>
           </p>
         </div>
       </div>
@@ -88,7 +98,7 @@ export function CustomerAnalytics() {
       <div>
         <p className="mb-3 text-xs font-medium text-text-secondary">VIP 고객 TOP 5</p>
         <div className="flex flex-col gap-2">
-          {MOCK_CUSTOMER_ANALYTICS.vipCustomers.map((vip, idx) => (
+          {analytics.vipCustomers.map((vip, idx) => (
             <div
               key={vip.name}
               className="flex items-center gap-3 rounded-xl bg-surface-alt p-3 md:p-4"

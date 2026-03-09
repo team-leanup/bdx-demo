@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useConsultationStore } from '@/store/consultation-store';
 import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/ui';
-import { MOCK_DESIGNERS } from '@/data/mock-shop';
+import { useShopStore } from '@/store/shop-store';
 import { ConsultationStep } from '@/types/consultation';
 import { cn } from '@/lib/cn';
 import { useLocaleStore } from '@/store/locale-store';
@@ -78,6 +78,7 @@ export default function ConsultationStartPage() {
   const reset = useConsultationStore((s) => s.reset);
   const setDesignerId = useConsultationStore((s) => s.setDesignerId);
   const setStep = useConsultationStore((s) => s.setStep);
+  const designers = useShopStore((s) => s.designers);
   const authDesignerId = useAuthStore((s) => s.activeDesignerId);
   const [selectedDesignerId, setSelectedDesignerId] = useState<string>(authDesignerId || '');
   const [showResumeDialog, setShowResumeDialog] = useState(false);
@@ -244,7 +245,7 @@ export default function ConsultationStartPage() {
               </p>
             </div>
             <div className="flex flex-col gap-3">
-              {MOCK_DESIGNERS.map((designer) => {
+              {designers.map((designer) => {
                 const isSelected = selectedDesignerId === designer.id;
                 const gender = DESIGNER_GENDER[designer.id] ?? 'female';
                 return (

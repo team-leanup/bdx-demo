@@ -13,7 +13,6 @@ import { useLocaleStore } from '@/store/locale-store';
 import { calculatePrice } from '@/lib/price-calculator';
 import { estimateTime } from '@/lib/time-calculator';
 import { formatPrice, formatPriceNumber } from '@/lib/format';
-import { MOCK_CUSTOMERS } from '@/data/mock-customers';
 import { useRecordsStore } from '@/store/records-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
@@ -86,13 +85,12 @@ export default function SummaryPage() {
       });
     }
 
-    // 스몰토크 메모 → MOCK_CUSTOMERS 해당 고객 smallTalkNotes에 자동 push
+    // 스몰토크 메모 → customer store smallTalkNotes에 자동 push
     if (customerMemo) {
       const customerName = consultation.customerName;
       const designerId = consultation.designerId || 'designer-001';
-      const customer = MOCK_CUSTOMERS.find(
-        (c) => c.name === customerName || c.id === customerId,
-      );
+      const { customers, appendSmallTalkNote } = useCustomerStore.getState();
+      const customer = customers.find((c) => c.name === customerName || c.id === customerId);
       if (customer) {
         const newNote = {
           id: `stn-${Date.now()}`,
@@ -104,7 +102,7 @@ export default function SummaryPage() {
           createdByDesignerName:
             customer.assignedDesignerName ?? '디자이너',
         };
-        customer.smallTalkNotes = [...customer.smallTalkNotes, newNote];
+        appendSmallTalkNote(customer.id, newNote);
       }
     }
 

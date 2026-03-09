@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -10,7 +11,9 @@ import {
   Cell,
   ResponsiveContainer,
 } from 'recharts';
-import { MOCK_DESIGNER_STATS } from '@/data/mock-dashboard';
+import { useRecordsStore } from '@/store/records-store';
+import { useShopStore } from '@/store/shop-store';
+import { computeDesignerStats } from '@/lib/analytics';
 
 // 테마 색상 CSS 변수 사용 (hardcoded 색상 제거)
 const DESIGNER_COLORS = [
@@ -40,13 +43,20 @@ function CustomTooltip({ active, payload, label }: TooltipProps) {
 }
 
 export function DesignerPerformance() {
-  const chartData = MOCK_DESIGNER_STATS.map((d) => ({
+  const records = useRecordsStore((s) => s.records);
+  const designers = useShopStore((s) => s.designers);
+  const designerStats = useMemo(
+    () => computeDesignerStats(records, designers),
+    [records, designers],
+  );
+
+  const chartData = designerStats.map((d) => ({
     name: d.designerName,
     상담수: d.consultations,
   }));
 
   // 상담 건수 기준 최대값 (프로그레스 바용)
-  const maxConsultations = Math.max(...MOCK_DESIGNER_STATS.map((d) => d.consultations));
+  const maxConsultations = Math.max(...designerStats.map((d) => d.consultations), 1);
 
   return (
     <div className="flex flex-col gap-5 md:gap-6">
@@ -54,7 +64,7 @@ export function DesignerPerformance() {
       <div>
         <p className="mb-3 text-xs font-medium text-text-secondary">디자이너별 상담 건수 비교</p>
         <div className="flex flex-col gap-3 md:gap-4">
-          {MOCK_DESIGNER_STATS.map((d, i) => {
+          {designerStats.map((d, i) => {
             const pct = Math.round((d.consultations / maxConsultations) * 100);
             return (
               <div key={d.designerId}>
@@ -124,7 +134,7 @@ export function DesignerPerformance() {
 
       {/* 개인별 카드 */}
       <div className="flex flex-col gap-2">
-        {MOCK_DESIGNER_STATS.map((d, i) => (
+        {designerStats.map((d, i) => (
           <div
             key={d.designerId}
             className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 md:p-4"

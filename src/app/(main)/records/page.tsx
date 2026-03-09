@@ -7,7 +7,6 @@ import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Card, Input } from '@/components/ui';
 import { useRecordsStore } from '@/store/records-store';
-import { MOCK_CONSULTATIONS } from '@/data/mock-consultations';
 import { useAuthStore } from '@/store/auth-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { useAppStore } from '@/store/app-store';
@@ -20,7 +19,7 @@ import { WeekCalendar } from '@/components/calendar/WeekCalendar';
 import { DesignerDayGridCalendar } from '@/components/calendar/DesignerDayGridCalendar';
 import type { TimeGridEvent } from '@/components/calendar/TimeGridCalendar';
 import { DESIGN_SCOPE_LABEL } from '@/lib/labels';
-import { MOCK_DESIGNERS } from '@/data/mock-shop';
+import { useShopStore } from '@/store/shop-store';
 import {
   MainTabBar,
   StatsCards,
@@ -139,6 +138,7 @@ export default function RecordsPage() {
   const setBookingId = useConsultationStore((s) => s.setBookingId);
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
 
+  const activeDesigners = useShopStore((s) => s.getActiveDesigners());
   const role = useAuthStore((s) => s.role);
   const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
   const allReservations = useReservationStore((s) => s.reservations);
@@ -146,11 +146,8 @@ export default function RecordsPage() {
   const removeReservation = useReservationStore((s) => s.removeReservation);
   const removeRecord = useRecordsStore((s) => s.removeRecord);
   const { shopSettings } = useAppStore();
-  const additionalRecords = useRecordsStore((s) => s.additionalRecords);
-  const allConsultations = useMemo(
-    () => [...additionalRecords, ...MOCK_CONSULTATIONS],
-    [additionalRecords],
-  );
+  const getAllRecords = useRecordsStore((s) => s.getAllRecords);
+  const allConsultations = useMemo(() => getAllRecords(), [getAllRecords]);
 
   const { calendarStartHour, calendarEndHour } = useMemo(() => {
     const openHours = shopSettings.businessHours
@@ -387,7 +384,7 @@ export default function RecordsPage() {
               <DesignerDayGridCalendar
                 date={selectedDate}
                 events={timeGridEvents}
-                designers={MOCK_DESIGNERS.filter((d) => d.isActive).map((d) => ({ id: d.id, name: d.name }))}
+                designers={activeDesigners.map((d) => ({ id: d.id, name: d.name }))}
                 startHour={calendarStartHour}
                 endHour={calendarEndHour}
                 onEventClick={handleEventClick}

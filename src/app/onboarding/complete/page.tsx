@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { useAppStore } from '@/store/app-store';
 import { useAuthStore } from '@/store/auth-store';
-import { MOCK_DESIGNERS } from '@/data/mock-shop';
+import { useShopStore } from '@/store/shop-store';
 import { formatPrice, formatMinutes } from '@/lib/format';
 
 const SERVICE_LABELS: Record<string, string> = {
@@ -40,6 +40,7 @@ export default function CompletePage() {
   const router = useRouter();
   const { setOnboardingComplete, shopSettings } = useAppStore();
   const { login, isLoggedIn } = useAuthStore();
+  const designers = useShopStore((s) => s.designers);
 
   const {
     shopName,
@@ -53,8 +54,8 @@ export default function CompletePage() {
 
   const autoLogin = () => {
     if (!isLoggedIn()) {
-      const owner = MOCK_DESIGNERS.find((d) => d.role === 'owner' && d.isActive);
-      if (owner) login(owner.id, 'owner');
+      const owner = designers.find((d) => d.role === 'owner' && d.isActive);
+      if (owner) login(owner.id, 'owner', owner.name);
     }
   };
 

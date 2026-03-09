@@ -3,9 +3,18 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { UserRole } from '@/types/auth';
-import { MOCK_DESIGNERS } from '@/data/mock-shop';
 
 const SALT = 'bdx-salt';
+const DEFAULT_PASSWORD_HASH = (() => {
+  let hash = 0;
+  const str = '1234' + SALT;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return 'h_' + Math.abs(hash).toString(36);
+})();
 
 function hashPassword(password: string): string {
   let hash = 0;
@@ -18,21 +27,13 @@ function hashPassword(password: string): string {
   return 'h_' + Math.abs(hash).toString(36);
 }
 
-function buildDefaultPasswords(): Record<string, string> {
-  const result: Record<string, string> = {};
-  for (const designer of MOCK_DESIGNERS) {
-    result[designer.id] = hashPassword('1234');
-  }
-  return result;
-}
-
 interface AuthStore {
   role: UserRole;
   activeDesignerId: string | null;
   activeDesignerName: string | null;
   passwords: Record<string, string>;
 
-  login: (designerId: string, role: UserRole) => void;
+  login: (designerId: string, role: UserRole, designerName?: string) => void;
   logout: () => void;
   setPassword: (designerId: string, newPassword: string) => void;
   checkPassword: (designerId: string, password: string) => boolean;
@@ -47,14 +48,13 @@ export const useAuthStore = create<AuthStore>()(
       role: null,
       activeDesignerId: null,
       activeDesignerName: null,
-      passwords: buildDefaultPasswords(),
+      passwords: {},
 
-      login: (designerId, role) => {
-        const designer = MOCK_DESIGNERS.find((d) => d.id === designerId);
+      login: (designerId, role, designerName) => {
         set({
           role,
           activeDesignerId: designerId,
-          activeDesignerName: designer?.name ?? null,
+          activeDesignerName: designerName ?? null,
         });
       },
 
@@ -75,6 +75,9 @@ export const useAuthStore = create<AuthStore>()(
 
       checkPassword: (designerId, password) => {
         const stored = get().passwords[designerId];
+        if (!stored) {
+          return hashPassword(password) === DEFAULT_PASSWORD_HASH;
+        }
         return stored === hashPassword(password);
       },
 
