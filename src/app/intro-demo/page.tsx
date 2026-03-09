@@ -665,46 +665,39 @@ export default function IntroDemoPage() {
           <section>
             <H2 id="accounts">2. 데모 계정 안내</H2>
             <Para>
-              데모는 온보딩이 완료된 상태로, 잠금 화면에서 바로 시작합니다. 역할을 선택하고
-              선생님을 고른 후 비밀번호를 입력하면 됩니다.
+              데모는 온보딩이 완료된 상태로, 로그인 화면에서 바로 시작합니다.
+              샵 계정 하나로 로그인한 뒤, 디자이너는 앱 안에서 프로필로 관리하는 흐름입니다.
             </Para>
 
             <Callout icon="🔐" type="blue">
               <strong>로그인 방법</strong>
               <br />
-              잠금 화면(<UrlBadge path="/lock" />) 접속 → 역할 선택 → 선생님 선택 →
-              PIN 입력 (아래 표 참고)
+              로그인 화면(<UrlBadge path="/login" />) 접속 → 샵 이메일 + 비밀번호 입력 또는 Google 로그인 →
+              앱 진입
             </Callout>
 
             <Table
-              headers={['역할', '이름', 'PIN', '접근 권한']}
+              headers={['방식', '입력값', '설명', '다음 이동']}
               rows={[
                 [
-                  <Badge key="owner" color="yellow">원장님</Badge>,
-                  '소율',
-                  <CodeBadge key="pin1">1234</CodeBadge>,
-                  '모든 화면 + 대시보드 + 설정 전체',
+                  <Badge key="email" color="yellow">이메일 로그인</Badge>,
+                  'shop@bdx.kr / 1234',
+                  '샵 계정 1개로 로그인 후 앱 사용',
+                  '홈',
                 ],
                 [
-                  <Badge key="staff1" color="gray">직원</Badge>,
-                  '도윤',
-                  <CodeBadge key="pin2">1234</CodeBadge>,
-                  '본인 고객/예약만 접근',
-                ],
-                [
-                  <Badge key="staff2" color="gray">직원</Badge>,
-                  '하린',
-                  <CodeBadge key="pin3">1234</CodeBadge>,
-                  '본인 고객/예약만 접근',
+                  <Badge key="google" color="gray">Google 로그인</Badge>,
+                  '버튼 클릭',
+                  '현재 데모에서는 OAuth 없이 샵 계정으로 바로 진입',
+                  '홈',
                 ],
               ]}
             />
 
             <Callout icon="💡" type="yellow">
-              <strong>원장님으로 로그인하시면 모든 기능을 체험하실 수 있습니다.</strong>
+              <strong>현재 데모 로그인은 실제 인증이 아니라 진입 플로우용 화면입니다.</strong>
               <br />
-              직원 계정은 본인이 담당하는 고객, 예약, 상담 기록만 조회할 수 있으며, 다른 선생님의
-              데이터나 대시보드는 접근할 수 없습니다.
+              실제 서비스 단계에서는 샵 계정 중심 인증과 디자이너 프로필 기반 운영 구조로 정리할 예정입니다.
             </Callout>
           </section>
 
@@ -752,7 +745,7 @@ export default function IntroDemoPage() {
                 ['스플래시', <UrlBadge key="s1" path="/splash" />],
                 ['인트로 슬라이드', <UrlBadge key="s2" path="/intro" />],
                 ['로그인 / 회원가입', <UrlBadge key="s3" path="/login" />],
-                ['잠금 화면 (데모 시작점)', <UrlBadge key="s4" path="/lock" />],
+                ['로그인 화면 (데모 시작점)', <UrlBadge key="s4" path="/login" />],
               ]}
             />
 
@@ -954,7 +947,7 @@ export default function IntroDemoPage() {
                 ['스플래시', <UrlBadge key="a1" path="/splash" />],
                 ['인트로 슬라이드', <UrlBadge key="a2" path="/intro" />],
                 ['로그인 / 회원가입', <UrlBadge key="a3" path="/login" />],
-                ['잠금 화면 (데모 시작점)', <UrlBadge key="a4" path="/lock" />],
+                ['로그인 화면 (데모 시작점)', <UrlBadge key="a4" path="/login" />],
               ]}
             />
 
@@ -1077,7 +1070,7 @@ export default function IntroDemoPage() {
               rows={[
                 ['데이터 저장', '브라우저 로컬 스토리지', '서버 DB 연동'],
                 ['로그인', '로그인 UI만 구현', '완전 구현 (구글 로그인 포함)'],
-                ['계정 전환', '앱 재시작 필요', '잠금 화면에서 빠른 전환'],
+                ['계정 전환', '앱 재시작 필요', '로그인 화면에서 빠른 전환'],
                 ['가격 체계', '기본가 + 추가금', '파츠/디자인별 정확한 단가'],
                 ['상담 플로우', '기본 구현', '피드백 반영 고도화'],
                 ['Pro 모드', '기본 구현', '피드백 반영 고도화'],

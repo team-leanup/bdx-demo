@@ -7,6 +7,7 @@ import type { AuthGuardProps } from '@/types/auth';
 
 export function AuthGuard({ children, requiredRole, fallbackPath = '/home' }: AuthGuardProps) {
   const router = useRouter();
+  const isInitialized = useAuthStore((s) => s.isInitialized);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const role = useAuthStore((s) => s.role);
   const [mounted, setMounted] = useState(false);
@@ -16,17 +17,17 @@ export function AuthGuard({ children, requiredRole, fallbackPath = '/home' }: Au
   }, []);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || !isInitialized) return;
     if (!isLoggedIn()) {
-      router.replace('/lock');
+      router.replace('/login');
       return;
     }
     if (requiredRole && role !== requiredRole) {
       router.replace(fallbackPath);
     }
-  }, [mounted, isLoggedIn, role, requiredRole, fallbackPath, router]);
+  }, [mounted, isInitialized, isLoggedIn, role, requiredRole, fallbackPath, router]);
 
-  if (!mounted) return null;
+  if (!mounted || !isInitialized) return null;
   if (!isLoggedIn()) return null;
   if (requiredRole && role !== requiredRole) return null;
 

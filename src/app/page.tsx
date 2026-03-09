@@ -2,25 +2,25 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAppStore } from '@/store/app-store';
 import { useAuthStore } from '@/store/auth-store';
 
 export default function RootPage() {
   const router = useRouter();
-  const isOnboardingComplete = useAppStore((s) => s.isOnboardingComplete);
+  const isInitialized = useAuthStore((s) => s.isInitialized);
+  const currentShopOnboardingComplete = useAuthStore((s) => s.currentShopOnboardingComplete);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
 
   useEffect(() => {
-    if (isOnboardingComplete) {
-      if (isLoggedIn()) {
-        router.replace('/home');
-      } else {
-        router.replace('/lock');
-      }
+    if (!isInitialized) {
+      return;
+    }
+
+    if (isLoggedIn()) {
+      router.replace(currentShopOnboardingComplete ? '/home' : '/onboarding');
     } else {
       router.replace('/splash');
     }
-  }, [isOnboardingComplete, isLoggedIn, router]);
+  }, [currentShopOnboardingComplete, isInitialized, isLoggedIn, router]);
 
   return null;
 }
