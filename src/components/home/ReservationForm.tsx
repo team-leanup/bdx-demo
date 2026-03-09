@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui';
+import { useAuthStore } from '@/store/auth-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { useShopStore } from '@/store/shop-store';
 import type { BookingChannel, BookingRequest } from '@/types/consultation';
@@ -44,6 +45,7 @@ interface ReservationFormProps {
 
 export function ReservationForm({ onSubmit, onCancel }: ReservationFormProps) {
   const today = new Date().toISOString().split('T')[0];
+  const currentShopId = useAuthStore((s) => s.currentShopId);
   const customers = useCustomerStore((s) => s.customers);
   const designers = useShopStore((s) => s.designers);
   const [formName, setFormName] = useState('');
@@ -107,9 +109,11 @@ export function ReservationForm({ onSubmit, onCancel }: ReservationFormProps) {
   };
 
   const handleSubmit = () => {
-    if (!formName.trim() || !formTime) return;
+    if (!formName.trim() || !formTime || !currentShopId) return;
+
     const newBooking: BookingRequest = {
       id: `booking-new-${Date.now()}`,
+      shopId: currentShopId,
       customerName: formName.trim(),
       phone: formPhone.trim(),
       reservationDate: formDate,

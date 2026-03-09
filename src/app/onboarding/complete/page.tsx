@@ -39,8 +39,8 @@ function SummaryRow({ icon, label, value }: SummaryRowProps) {
 export default function CompletePage() {
   const router = useRouter();
   const { setOnboardingComplete, shopSettings } = useAppStore();
-  const { login, isLoggedIn } = useAuthStore();
-  const designers = useShopStore((s) => s.designers);
+  const setCurrentShopOnboardingComplete = useAuthStore((s) => s.setCurrentShopOnboardingComplete);
+  const updateShop = useShopStore((s) => s.updateShop);
 
   const {
     shopName,
@@ -52,22 +52,35 @@ export default function CompletePage() {
     timeSettings,
   } = shopSettings;
 
-  const autoLogin = () => {
-    if (!isLoggedIn()) {
-      const owner = designers.find((d) => d.role === 'owner' && d.isActive);
-      if (owner) login(owner.id, 'owner', owner.name);
-    }
-  };
-
   const handleTour = () => {
-    autoLogin();
+    const onboardingCompletedAt = new Date().toISOString();
+    updateShop({
+      name: shopName || '우리 샵',
+      phone: shopSettings.shopPhone || undefined,
+      address: shopSettings.shopAddress || undefined,
+      businessHours: shopSettings.businessHours,
+      baseHandPrice,
+      baseFootPrice,
+      onboardingCompletedAt,
+    });
     setOnboardingComplete(true);
+    setCurrentShopOnboardingComplete(true);
     router.push('/home?tour=true');
   };
 
   const handleHome = () => {
-    autoLogin();
+    const onboardingCompletedAt = new Date().toISOString();
+    updateShop({
+      name: shopName || '우리 샵',
+      phone: shopSettings.shopPhone || undefined,
+      address: shopSettings.shopAddress || undefined,
+      businessHours: shopSettings.businessHours,
+      baseHandPrice,
+      baseFootPrice,
+      onboardingCompletedAt,
+    });
     setOnboardingComplete(true);
+    setCurrentShopOnboardingComplete(true);
     router.push('/home');
   };
 

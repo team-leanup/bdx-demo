@@ -124,7 +124,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
         : serviceType.trim() || undefined;
       const derivedPrice = selectedRecord?.finalPrice ?? (priceInput ? Number(priceInput) : undefined);
 
-      const result = addPhoto({
+      const result = await addPhoto({
         customerId: selectedCustomerId,
         recordId: selectedRecordId || undefined,
         kind: selectedKind,

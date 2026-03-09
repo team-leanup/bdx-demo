@@ -16,6 +16,7 @@ function getRelativeDateTime(daysFromToday: number, hour: number, minute: number
 export const MOCK_RESERVATIONS: BookingRequest[] = [
   {
     id: 'booking-001',
+    shopId: 'shop-001',
     customerName: '한소희',
     phone: '010-8901-2345',
     reservationDate: getRelativeDate(0),
@@ -33,6 +34,7 @@ export const MOCK_RESERVATIONS: BookingRequest[] = [
   },
   {
     id: 'booking-002',
+    shopId: 'shop-001',
     customerName: '이지은',
     phone: '010-6789-0123',
     reservationDate: getRelativeDate(0),
@@ -48,6 +50,7 @@ export const MOCK_RESERVATIONS: BookingRequest[] = [
   },
   {
     id: 'booking-003',
+    shopId: 'shop-001',
     customerName: '강민지',
     phone: '010-5555-6666',
     reservationDate: getRelativeDate(0),
@@ -63,6 +66,7 @@ export const MOCK_RESERVATIONS: BookingRequest[] = [
   },
   {
     id: 'booking-004',
+    shopId: 'shop-001',
     customerName: '오지영',
     phone: '010-7777-8888',
     reservationDate: getRelativeDate(1),
@@ -76,6 +80,7 @@ export const MOCK_RESERVATIONS: BookingRequest[] = [
   },
   {
     id: 'booking-005',
+    shopId: 'shop-001',
     customerName: '김미영',
     phone: '010-1234-5678',
     reservationDate: getRelativeDate(1),
@@ -93,6 +98,7 @@ export const MOCK_RESERVATIONS: BookingRequest[] = [
   },
   {
     id: 'booking-006',
+    shopId: 'shop-001',
     customerName: '박지현',
     phone: '010-9012-3456',
     reservationDate: getRelativeDate(-2),
@@ -110,6 +116,7 @@ export const MOCK_RESERVATIONS: BookingRequest[] = [
   },
   {
     id: 'booking-007',
+    shopId: 'shop-001',
     customerName: '정다은',
     phone: '010-7890-1234',
     reservationDate: getRelativeDate(-1),
@@ -127,6 +134,7 @@ export const MOCK_RESERVATIONS: BookingRequest[] = [
   },
   {
     id: 'booking-008',
+    shopId: 'shop-001',
     customerName: '최은서',
     phone: '010-3456-7890',
     reservationDate: getRelativeDate(-4),
@@ -144,6 +152,7 @@ export const MOCK_RESERVATIONS: BookingRequest[] = [
   },
   {
     id: 'booking-009',
+    shopId: 'shop-001',
     customerName: '한소희',
     phone: '010-8901-2345',
     reservationDate: getRelativeDate(-3),

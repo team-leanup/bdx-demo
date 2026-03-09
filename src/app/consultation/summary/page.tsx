@@ -17,6 +17,7 @@ import { DESIGN_SCOPE_LABEL, EXPRESSION_LABEL } from '@/lib/labels';
 import { useRecordsStore } from '@/store/records-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
+import { useAuthStore } from '@/store/auth-store';
 import type { ConsultationRecord, BookingStatus } from '@/types/consultation';
 import type { CustomerTag, TagCategory } from '@/types/customer';
 import { useCustomerStore } from '@/store/customer-store';
@@ -26,6 +27,8 @@ export default function SummaryPage() {
   const consultation = useConsultationStore((s) => s.consultation);
   const bookingId = useConsultationStore((s) => s.consultation.bookingId);
   const entryPoint = useConsultationStore((s) => s.consultation.entryPoint);
+  const currentShopId = useAuthStore((s) => s.currentShopId);
+  const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
   const updateReservation = useReservationStore((s) => s.updateReservation);
   const restoreLocale = useLocaleStore((s) => s.restoreLocale);
   const [discountOpen, setDiscountOpen] = useState(false);
@@ -38,6 +41,7 @@ export default function SummaryPage() {
   const adjustedFinalPrice = breakdown.finalPrice + additionalCharge;
   const addRecord = useRecordsStore((s) => s.addRecord);
   const addPhoto = usePortfolioStore((s) => s.addPhoto);
+  const createCustomer = useCustomerStore((s) => s.createCustomer);
   const t = useT();
   const tKo = useKo();
   const locale = useLocale();
@@ -50,7 +54,19 @@ export default function SummaryPage() {
   const handleSave = async () => {
     setSaving(true);
     await new Promise((r) => setTimeout(r, 600));
-    const customerId = consultation.customerId || 'customer-001';
+    if (!currentShopId || !activeDesignerId) {
+      setSaving(false);
+      return;
+    }
+
+    const designerId = consultation.designerId || activeDesignerId;
+    const customerId = consultation.customerId || createCustomer({
+      name: consultation.customerName ?? '새 고객',
+      phone: consultation.customerPhone ?? '',
+      assignedDesignerId: designerId,
+      assignedDesignerName: '원장',
+      shopId: currentShopId,
+    }).id;
     const newId = `record-${Date.now()}`;
     const minutes = estimateTime(consultation);
     const now = new Date().toISOString();
@@ -65,8 +81,8 @@ export default function SummaryPage() {
     } else {
       const savedRecord: ConsultationRecord = {
         id: newId,
-        shopId: 'shop-001',
-        designerId: consultation.designerId || 'designer-001',
+        shopId: currentShopId,
+        designerId,
         customerId,
         consultation: consultationSnapshot,
         totalPrice: breakdown.subtotal,
@@ -85,9 +101,9 @@ export default function SummaryPage() {
       }
 
       if (customerId && consultation.referenceImages?.length) {
-        consultation.referenceImages.forEach((imageUrl) => {
+        await Promise.all(consultation.referenceImages.map(async (imageUrl) => {
           if (!imageUrl.startsWith('data:image/')) return;
-          addPhoto({
+          await addPhoto({
             customerId,
             recordId: newId,
             kind: 'reference',
@@ -101,14 +117,13 @@ export default function SummaryPage() {
               .join(', ') || undefined,
             price: adjustedFinalPrice,
           });
-        });
+        }));
       }
     }
 
     // 스몰토크 메모 → customer store smallTalkNotes에 자동 push
     if (customerMemo) {
       const customerName = consultation.customerName;
-      const designerId = consultation.designerId || 'designer-001';
       const { customers, appendSmallTalkNote } = useCustomerStore.getState();
       const customer = customers.find((c) => c.name === customerName || c.id === customerId);
       if (customer) {

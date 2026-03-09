@@ -5,7 +5,8 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CustomerTagChip } from '@/components/customer/CustomerTagChip';
-import { Card, Badge, Button } from '@/components/ui';
+import { Card, Badge, Button, ToastContainer } from '@/components/ui';
+import type { ToastData } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { formatPrice, formatRelativeDate, formatDateDot } from '@/lib/format';
 import {
@@ -20,6 +21,8 @@ import type { CustomerTag, TagCategory } from '@/types/customer';
 import { PreferenceEditor } from '@/components/customer/PreferenceEditor';
 import { useCustomerStore } from '@/store/customer-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
+import { useAuthStore } from '@/store/auth-store';
+import { resizePortfolioImage } from '@/lib/image-utils';
 import type { PortfolioPhotoKind } from '@/types/portfolio';
 import {
   IconCamera,
@@ -34,15 +37,6 @@ const DESIGN_SCOPE_ICON: Record<string, string> = {
   프렌치: '◻',
   포인트: '◆',
 };
-
-function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
 
 function sortTagsByDisplayOrder(tags: CustomerTag[]): CustomerTag[] {
   return [...tags].sort((a, b) => {
@@ -132,14 +126,25 @@ function CustomerDetailContent({ id }: { id: string }) {
   const treatmentFileRef = useRef<HTMLInputElement>(null);
   const consultFileRef = useRef<HTMLInputElement>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<ToastData[]>([]);
 
   const addPhoto = usePortfolioStore((s) => s.addPhoto);
   const removePhoto = usePortfolioStore((s) => s.removePhoto);
+  const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
+  const activeDesignerName = useAuthStore((s) => s.activeDesignerName);
   const getByCustomerId = usePortfolioStore((s) => s.getByCustomerId);
 
   const customerPhotos = getByCustomerId(id);
   const treatmentPhotos = customerPhotos.filter((p) => p.kind === 'treatment');
   const consultPhotos = customerPhotos.filter((p) => p.kind === 'reference');
+
+  const handleDismissToast = useCallback((toastId: string): void => {
+    setToasts((current) => current.filter((toast) => toast.id !== toastId));
+  }, []);
+
+  const pushToast = useCallback((type: ToastData['type'], message: string): void => {
+    setToasts((current) => [...current, { id: `toast-${Date.now()}`, type, message }]);
+  }, []);
 
   const [prefData, setPrefData] = useState(() => {
     const p = useCustomerStore.getState().getById(id)?.preference;
@@ -270,35 +275,45 @@ function CustomerDetailContent({ id }: { id: string }) {
       if (!files) return;
       
       setUploadError(null);
-      
-      for (const file of Array.from(files)) {
-        try {
-          const dataUrl = await fileToDataUrl(file);
-          const result = addPhoto({
-            customerId: id,
-            kind,
-            imageDataUrl: dataUrl,
+        
+        for (const file of Array.from(files)) {
+          try {
+            const dataUrl = await resizePortfolioImage(file);
+            const result = await addPhoto({
+              customerId: id,
+              kind,
+              imageDataUrl: dataUrl,
           });
-          
-          if (!result.success && result.error) {
-            setUploadError(result.error);
+            
+            if (!result.success && result.error) {
+              setUploadError(result.error);
+              pushToast('error', result.error);
+              setTimeout(() => setUploadError(null), 3000);
+              break;
+            }
+
+            pushToast('success', '포트폴리오 사진을 저장했어요');
+          } catch {
+            setUploadError('이미지 변환에 실패했습니다');
+            pushToast('error', '이미지 변환에 실패했습니다');
             setTimeout(() => setUploadError(null), 3000);
-            break;
           }
-        } catch {
-          setUploadError('이미지 변환에 실패했습니다');
-          setTimeout(() => setUploadError(null), 3000);
         }
-      }
       
       e.target.value = '';
     },
-    [id, addPhoto],
+    [id, addPhoto, pushToast],
   );
 
-  const handleRemovePhoto = useCallback((photoId: string) => {
-    removePhoto(photoId);
-  }, [removePhoto]);
+  const handleRemovePhoto = useCallback(async (photoId: string) => {
+    const result = await removePhoto(photoId);
+    if (!result.success) {
+      pushToast('error', result.error ?? '사진 삭제에 실패했어요');
+      return;
+    }
+
+    pushToast('success', '사진을 삭제했어요');
+  }, [pushToast, removePhoto]);
 
   if (!customer) {
     return (
@@ -324,6 +339,7 @@ function CustomerDetailContent({ id }: { id: string }) {
 
   return (
     <div className="flex flex-col gap-6 pb-8 overflow-y-auto md:px-6">
+      <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
       {/* 헤더 */}
       <div className="flex items-center gap-3 px-4 pt-4">
         <button
@@ -1043,8 +1059,8 @@ function CustomerDetailContent({ id }: { id: string }) {
                     customerId: customer.id,
                     noteText: newSmallTalk.trim(),
                     createdAt: new Date().toISOString(),
-                    createdByDesignerId: 'designer-001',
-                    createdByDesignerName: '나',
+                    createdByDesignerId: activeDesignerId ?? 'designer-session',
+                    createdByDesignerName: activeDesignerName ?? '나',
                   }, ...prev]);
                   setNewSmallTalk('');
                   setShowSmallTalkInput(false);
