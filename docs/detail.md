@@ -65,6 +65,7 @@ BDX를 "상담 시스템"에서 **"고객 관리 CRM + 시술 기록 시스템"*
 | 2026-03-10 | 홈 예약 카드가 `customerId` 기반으로 고객 주요 태그를 칩 형태로 표시하도록 반영. pinned 태그가 없을 때도 기존 고객 태그를 우선순위대로 노출 |
 | 2026-03-10 | 고객 태그 색상 규칙을 공통 resolver로 통합. `accent` 커스텀 색상 + 카테고리 기본 색상을 스케줄, 고객 상세, 예약 연결 모달, 시술 전 알림, 기록 상세에 일관 적용 |
 | 2026-03-10 | 예약별 사전 상담 완료 시점을 저장하고, 홈/예약 리스트/캘린더/예약 상세에 `디자인 확정` / `현장 상담 필요` 준비 상태 아이콘을 추가 |
+| 2026-03-10 | 기록 관리 페이지에서 `useShopStore` method selector가 새 배열을 반환하던 문제를 제거하고, 활성 디자이너 목록을 `designers` 기반 `useMemo` 파생값으로 바꿔 `getSnapshot` 무한 루프 경고를 수정 |
 
 ---
 
@@ -100,6 +101,8 @@ BDX를 "상담 시스템"에서 **"고객 관리 CRM + 시술 기록 시스템"*
 | 2026-03-09 | 요구사항 정리 |
 | 2026-03-10 | 포트폴리오 갤러리에 시술 종류/기간/가격 필터를 추가하고, 검색 대상을 태그·컬러·디자인 타입까지 확장. 업로드 폼도 메타데이터 입력을 지원하도록 보강 |
 | 2026-03-10 | 대시보드 `인기 시술 Top 3`를 포트폴리오 `시술` 사진 기반 썸네일 카드로 교체하고, 클릭 시 컬러번호와 가격을 확인할 수 있는 팝업을 추가 |
+| 2026-03-10 | 포트폴리오 사진을 localStorage base64 저장 대신 Supabase Storage `portfolio-images` 버킷 + `portfolio_photos` 메타데이터 테이블로 전환하고, 앱 시작 시 DB hydrate 되도록 연결 |
+| 2026-03-10 | 기존 localStorage 포트폴리오 사진을 첫 로드 시 Supabase로 자동 이관하고, 포트폴리오 업로드/삭제/초기화 결과를 토스트/상태 메시지로 확인할 수 있게 보강 |
 
 ---
 
@@ -371,26 +374,36 @@ BDX를 "상담 시스템"에서 **"고객 관리 CRM + 시술 기록 시스템"*
 현재 BDX는 인증이 전혀 없는 프로토타입 상태. 실서비스를 위해 구글 OAuth 기반의 실제 인증 시스템을 구축한다.
 
 ### 현재 상태
-- `src/app/(auth)/login/page.tsx` — UI만 존재. `handleGoogleLogin()`이 검증 없이 `/onboarding`으로 이동
-- `src/store/auth-store.ts` — `MOCK_DESIGNERS` 하드코딩으로 모의 인증. 비밀번호는 단순 비트연산 해시(`'1234'`)
-- `src/middleware.ts` — 보안 헤더만 추가, 인증 미검증
-- 외부 인증 라이브러리 없음
+- `src/app/(auth)/login/page.tsx` — Supabase Auth 이메일/비밀번호 로그인 후, 현재 샵의 온보딩 완료 여부에 따라 `/home` 또는 `/onboarding`으로 이동
+- `src/app/(auth)/signup/page.tsx` — Supabase Auth 회원가입 후 빈 `shops` row와 owner `designers` row를 생성하고 즉시 로그인한 뒤 온보딩으로 연결
+- `src/store/auth-store.ts` — Supabase `getSession()`과 `onAuthStateChange()`로 세션을 복원하고, `owner_id = auth.user.id` 기준으로 `currentShopId`와 원장 프로필을 복구함. 디자이너 PIN 비밀번호만 로컬에 보조 저장
+- `src/lib/demo-account.ts` — 고정 데모 계정 credential을 정의하고, auth CTA에서 해당 계정으로 즉시 로그인 가능
+- Supabase에는 `demo@bdx.kr` / `shop-demo` 데모 샵이 seeded 되어 있어 로그인 없이 체험하기로 바로 실제 예시 데이터 화면을 볼 수 있음
+- 기존 `src/app/(auth)/lock/page.tsx` 잠금 화면은 제거되었고, 루트/가드/로그아웃 진입점은 모두 `/login`으로 통일됨
+- 로그인 UX는 원장/직원 선택 대신 샵 계정 단일 진입으로 정리되었고, 디자이너는 로그인 후 앱 내부 프로필 개념으로 다뤄짐
+- `src/middleware.ts` — 보안 헤더만 추가, 아직 Supabase 세션 검증은 하지 않음
 
 ### 기술 설계
-1. **NextAuth.js (Auth.js v5)** 도입
-   - `auth.ts` 설정 파일 + `app/api/auth/[...nextauth]/route.ts`
-2. **Google OAuth Provider**
-   - Google Cloud Console → OAuth 2.0 클라이언트 ID 발급
-   - `.env.local`에 `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `AUTH_SECRET`
-3. **미들웨어 인증 가드**
-   - NextAuth 토큰 검증, 비로그인 → `/login` 리다이렉트
-4. **기존 auth store 전환**
-   - `useAuthStore` (localStorage) → `useSession()` (NextAuth)
+1. **Supabase Auth 이메일/비밀번호 로그인**
+   - 클라이언트에서 `signUp`, `signInWithPassword`, `getSession`, `onAuthStateChange` 사용
+2. **샵 계정 ↔ 도메인 데이터 연결**
+   - 회원가입 시 auth user id를 `shops.owner_id` 와 owner `designers.id` 에 연결
+3. **샵 세션 복원**
+   - 로그인/새로고침 시 `owner_id = auth.user.id` 로 샵을 조회하고 `currentShopId` 컨텍스트 복원
+4. **추가 예정**
+   - Google OAuth, 서버 검증 미들웨어, 비밀번호 재설정, 디자이너 개별 계정
 
 ### 히스토리
 | 날짜 | 내용 |
 |------|------|
 | 2026-03-09 | 인프라 항목으로 추가 |
+| 2026-03-10 | `/lock` 잠금 화면 라우트를 제거하고, 비로그인 진입/가드/로그아웃 경로를 `/login`으로 통일 |
+| 2026-03-10 | `/login`을 샵 계정 단일 로그인 UX로 단순화하고, 데모 흐름에서 원장/직원 선택 없는 진입 방식으로 정리 |
+| 2026-03-10 | `/signup` 회원가입 페이지를 추가하고, 회원가입 → 자동 로그인 → 미온보딩 계정 온보딩 진입 흐름을 로컬 샵 계정 기준으로 연결 |
+| 2026-03-10 | 회원가입 시 빈 샵과 owner 디자이너를 실제 Supabase에 생성하고, 이후 로그인 세션과 core CRUD를 `currentShopId` 기준으로 분리해 샵 간 데이터 공유를 막음 |
+| 2026-03-10 | 로그인/회원가입의 로컬 계정을 Supabase Auth로 교체하고, 세션 복원 시 auth user와 연결된 샵/owner 프로필을 자동 hydrate 하도록 전환 |
+| 2026-03-10 | `fetchShopByOwnerId()`를 `maybeSingle()` 기반으로 바꿔, 샵이 아직 연결되지 않은 세션의 초기화 과정에서 불필요한 콘솔 에러가 발생하지 않게 수정 |
+| 2026-03-10 | `로그인 없이 서비스 체험하기`가 Supabase 데모 계정으로 바로 로그인하도록 바꾸고, `shop-demo`에 샘플 고객/예약/기록/포트폴리오 데이터를 seeded 해 실제 서비스처럼 체험 가능하게 구성 |
 
 ---
 
@@ -403,6 +416,7 @@ BDX를 "상담 시스템"에서 **"고객 관리 CRM + 시술 기록 시스템"*
 - DB 관련 패키지 없음, `.env` 없음
 - 데이터 흐름: `mock-*.ts` → Zustand → localStorage
 - 이미지: base64로 localStorage에 직접 저장
+- `shops`, `customers`, `consultation_records`, `booking_requests`, `portfolio_photos`는 이제 `shop_id` 기반 분리 구조를 사용하며, 신규 회원가입은 빈 샵으로 시작함
 
 ### 기술 설계
 1. **DB**: Supabase PostgreSQL (Auth + DB + Storage 통합)
@@ -421,4 +435,31 @@ BDX를 "상담 시스템"에서 **"고객 관리 CRM + 시술 기록 시스템"*
 ### 히스토리
 | 날짜 | 내용 |
 |------|------|
+| 2026-03-10 | `booking_requests`, `portfolio_photos`에 `shop_id`를 추가/백필하고, fetch/mutation/store hydration을 모두 현재 샵 기준으로 제한해 멀티샵 데이터 분리를 구현 |
 | 2026-03-09 | 인프라 항목으로 추가 |
+
+---
+
+## 15. 개발 도구 / Supabase MCP
+
+### 개요
+개발 워크스페이스에서 Supabase MCP를 기본 조회 전용으로 연결해, 실수로 쓰기 작업을 실행할 위험을 낮춘다.
+
+### 현재 상태
+- 루트 `.mcp.json`에 Supabase MCP 원격 서버가 등록되어 있음
+- 별도 `.env` 예시 파일은 없고, 첫 연결 시 클라이언트의 브라우저 인증 또는 수동 스코프 설정이 필요함
+
+### 기술 설계
+1. `.mcp.json`의 Supabase MCP URL에 `read_only=true`를 적용해 기본 모드를 조회 전용으로 제한
+2. 최초 연결은 Supabase 공식 hosted MCP의 브라우저 인증 플로우를 사용
+3. 특정 프로젝트로 범위를 제한해야 하면 `project_ref` 쿼리 파라미터를 추가하는 방식으로 확장
+
+### 운영 메모
+- 기본 URL: `https://mcp.supabase.com/mcp?read_only=true`
+- 특정 프로젝트만 연결하려면 `https://mcp.supabase.com/mcp?project_ref=<PROJECT_REF>&read_only=true` 형태로 스코프 가능
+- PAT 없이 브라우저 인증이 가능한 클라이언트에서는 추가 토큰 없이 로그인만 수행하면 됨
+
+### 히스토리
+| 날짜 | 내용 |
+|------|------|
+| 2026-03-10 | 워크스페이스 `.mcp.json`의 Supabase MCP를 `read_only` 기본값으로 조정하고, 최초 인증/프로젝트 스코프 운영 메모를 문서화 |

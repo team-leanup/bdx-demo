@@ -22,6 +22,7 @@
 
 ### 2.1 🟢 홈 화면을 스케줄표 중심으로 변경
 - **완료**: 스케줄표 중심 레이아웃 적용됨
+- **완료 추가**: 기록 관리 페이지에서 `useShopStore((s) => s.getActiveDesigners())`처럼 새 배열을 반환하던 selector를 제거하고, 원본 `designers` 상태를 `useMemo`로 파생하도록 바꿔 React `getSnapshot` 무한 루프 경고를 해소함
 
 ### 2.2 🟢 예약 카드에 고객 특징 태그 표시
 - **완료**: 예약 카드가 `customerId`로 고객의 주요 태그를 조회해 칩 형태로 최대 3개까지 표시함. pinned 태그가 있으면 우선 노출하고, 없으면 기존 고객 태그를 우선순위대로 보여줌
@@ -195,21 +196,23 @@
 
 > 핵심: 현재 **인증이 전혀 없음** (로그인 버튼 누르면 검증 없이 통과). 실서비스를 위해 구글 OAuth 필수
 
-### 13.1 ⬜ NextAuth.js (Auth.js) 설정
-- **지금**: 로그인 페이지(`src/app/(auth)/login/page.tsx`)가 있으나, `handleLogin()`과 `handleGoogleLogin()` 모두 **검증 없이 `/onboarding`으로 바로 이동**. 실제 인증 라이브러리(NextAuth, Supabase Auth 등) 전혀 없음
-- **할 일**: NextAuth.js (Auth.js v5) 설치 및 설정. `auth.ts` 설정 파일 + `app/api/auth/[...nextauth]/route.ts` API 라우트 생성
+### 13.1 🔵 Supabase Auth 이메일 로그인 연결
+- **지금**: `src/app/(auth)/login/page.tsx`, `src/app/(auth)/signup/page.tsx`, `src/store/auth-store.ts`가 Supabase Auth `signUp` / `signInWithPassword` / `getSession` 기반으로 실제 샵 계정 로그인을 처리함. 회원가입 시 빈 `shops` row와 owner `designers` row를 만들고, 이후 세션은 `currentShopId` 기준으로 복원됨
+- **완료 추가**: `로그인 없이 서비스 체험하기` CTA는 이제 `demo@bdx.kr` Supabase 데모 계정으로 바로 로그인하고, `shop-demo` 샵의 seeded 데이터(고객/예약/기록/포트폴리오)로 진입함
+- **남은 일**: 이메일 인증 UX, 비밀번호 재설정, 에러 메시지 정교화, 서버 측 세션 검증 추가
 
 ### 13.2 ⬜ 구글 OAuth Provider 연동
-- **지금**: 구글 로그인 버튼 UI만 존재 (아이콘 + "Google로 시작하기")
+- **지금**: 현재 auth 화면은 이메일/비밀번호 기반 Supabase Auth만 연결됨. Google OAuth는 아직 미연동
 - **할 일**: Google Cloud Console에서 OAuth 2.0 클라이언트 ID 발급 → NextAuth Google Provider 설정 → `.env.local`에 `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` 추가
 
 ### 13.3 ⬜ 미들웨어 인증 가드
 - **지금**: `src/middleware.ts`가 보안 헤더만 추가하고 **인증 여부를 전혀 검증하지 않음**. 로그인 안 해도 모든 페이지 접근 가능
 - **할 일**: NextAuth 세션 기반으로 미들웨어에서 토큰 검증. 비로그인 시 `/login`으로 리다이렉트. 공개 라우트(login, splash, intro)만 예외 처리
 
-### 13.4 ⬜ 인증 상태 관리 전환
-- **지금**: `useAuthStore` (Zustand + localStorage)에서 `MOCK_DESIGNERS` 하드코딩 데이터로 모의 인증. 비밀번호도 단순 비트연산 해시(`'1234'`)
-- **할 일**: Zustand 모의 인증 → NextAuth 세션 기반으로 전환. `useSession()` 훅 사용. 기존 `role`, `activeDesignerId` 등은 DB 유저 테이블에서 조회
+### 13.4 🔵 인증 상태 관리 전환
+- **지금**: `useAuthStore`가 Supabase 세션을 `initializeAuth()` / `onAuthStateChange()`로 복원하고, `owner_id = auth.user.id` 기준으로 현재 샵/원장 프로필을 찾아 `currentShopId`, `activeDesignerId`, 온보딩 완료 여부를 세션 컨텍스트로 유지함
+- **완료 추가**: 샵 row가 아직 없거나 연결되지 않은 세션은 `fetchShopByOwnerId().maybeSingle()`로 조용히 null 처리해, auth bootstrap 시 불필요한 콘솔 에러가 뜨지 않게 정리함
+- **남은 일**: 현재는 owner 샵 계정 중심 인증만 지원함. 디자이너 개별 계정, 서버 검증 미들웨어, 권한 세분화는 추가 필요
 
 ---
 
@@ -247,11 +250,21 @@
   - `useCustomerStore` (`bdx-customers`) — mock 데이터 deepClone 후 localStorage
   - `useRecordsStore` (`bdx-records`) — 추가분만 persist, 조회 시 mock과 merge
   - `useReservationStore` (`bdx-reservations`) — 전체 persist
+- **완료 추가**: Supabase hydrate 대상인 `shop`, `customers`, `consultation_records`, `booking_requests`, `portfolio_photos`는 현재 로그인된 `currentShopId` 기준으로만 읽고 쓰도록 스토어/DB helper를 정리해 샵 간 데이터가 섞이지 않게 함
 - **할 일**: store의 데이터 소스를 localStorage → API fetch로 전환. SWR 또는 React Query 도입 검토. localStorage는 오프라인 캐시 용도로만 유지
 
-### 14.5 ⬜ 이미지 스토리지
-- **지금**: 포트폴리오 사진, 참고 이미지가 **base64로 localStorage에 저장** (용량 한계, 성능 이슈)
-- **할 일**: 외부 스토리지 서비스로 전환 (Supabase Storage, Vercel Blob, Cloudinary 등). base64 → URL 참조 방식으로 변경
+### 14.5 🟢 이미지 스토리지
+- **완료**: 포트폴리오 사진을 Supabase Storage `portfolio-images` 버킷에 업로드하고, 메타데이터는 `portfolio_photos` 테이블에서 관리하도록 전환함. 앱은 공개 URL 기반으로 이미지를 렌더링하고, 포트폴리오 스토어를 DB hydrate 흐름에 포함시킴
+- **완료 추가**: 기존 `bdx-portfolio` localStorage base64 사진은 첫 hydrate 시 Supabase로 순차 이관하고, 업로드/삭제/초기화 결과를 사용자 피드백으로 노출함
+
+---
+
+## 15. 개발 도구 — Supabase MCP
+
+> 핵심: 개발 워크스페이스에서 Supabase 프로젝트를 MCP로 안전하게 조회할 수 있어야 함
+
+### 15.1 🟢 Supabase MCP 워크스페이스 연동
+- **완료**: 루트 `.mcp.json`의 Supabase MCP 서버를 `read_only=true`로 고정해 기본 조회 전용으로 연결하고, 최초 브라우저 인증 및 `project_ref` 스코프 옵션을 개발 문서에 기록함
 
 ---
 
@@ -270,6 +283,7 @@
 | 리포트 기념품화 | 7 | 0 | 0 | 0 | 7 (MVP 이후) |
 | 대시보드 | 4 | 4 | 0 | 0 | 0 |
 | 트렌드 분석 | 2 | 0 | 0 | 0 | 2 |
-| **인증** | **4** | **0** | **0** | **0** | **4** |
-| **데이터베이스** | **5** | **0** | **0** | **0** | **5** |
-| **합계** | **44** | **25** | **0** | **0** | **19** |
+| **인증** | **4** | **0** | **0** | **2** | **2** |
+| **데이터베이스** | **5** | **1** | **0** | **0** | **4** |
+| 개발 도구 | 1 | 1 | 0 | 0 | 0 |
+| **합계** | **45** | **27** | **0** | **2** | **16** |
