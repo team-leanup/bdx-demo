@@ -142,7 +142,7 @@ export default function RecordsPage() {
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
 
-  const activeDesigners = useShopStore((s) => s.getActiveDesigners());
+  const designers = useShopStore((s) => s.designers);
   const role = useAuthStore((s) => s.role);
   const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
   const allReservations = useReservationStore((s) => s.reservations);
@@ -165,6 +165,11 @@ export default function RecordsPage() {
     const latest = Math.max(...openHours.map((h) => h.close));
     return { calendarStartHour: earliest, calendarEndHour: latest };
   }, [shopSettings.businessHours]);
+
+  const activeDesigners = useMemo(
+    () => designers.filter((designer) => designer.isActive),
+    [designers],
+  );
 
   const filteredReservations = useMemo(() => {
     if (reservationFilter === 'mine' && activeDesignerId) {
