@@ -1,0 +1,37 @@
+import { cn } from '@/lib/cn';
+import { getCustomerTagChipClasses } from '@/lib/customer-tags';
+import type { CustomerTag } from '@/types/customer';
+
+interface CustomerTagChipProps {
+  tag: Pick<CustomerTag, 'accent' | 'category' | 'value'>;
+  size?: 'xs' | 'sm' | 'md';
+  className?: string;
+  showPin?: boolean;
+}
+
+const SIZE_CLASSES: Record<NonNullable<CustomerTagChipProps['size']>, string> = {
+  xs: 'px-1.5 py-0.5 text-[9px]',
+  sm: 'px-2 py-0.5 text-[10px]',
+  md: 'px-3 py-1.5 text-sm',
+};
+
+export function CustomerTagChip({
+  tag,
+  size = 'sm',
+  className,
+  showPin = false,
+}: CustomerTagChipProps): React.ReactElement {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full border font-medium',
+        SIZE_CLASSES[size],
+        getCustomerTagChipClasses(tag),
+        className,
+      )}
+    >
+      {showPin && <span className="text-[10px]">📌</span>}
+      <span>{tag.value}</span>
+    </span>
+  );
+}

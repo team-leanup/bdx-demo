@@ -8,15 +8,19 @@ import { CustomerTagChip } from '@/components/customer/CustomerTagChip';
 import { Card, Badge, Button } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { formatPrice, formatRelativeDate, formatDateDot } from '@/lib/format';
-import { CUSTOMER_TAG_ACCENTS, getCustomerTagDotClasses } from '@/lib/customer-tags';
+import {
+  CUSTOMER_TAG_ACCENTS,
+  getCustomerTagDotClasses,
+  resolveCustomerTagAccent,
+} from '@/lib/customer-tags';
 import { BODY_PART_LABEL } from '@/lib/labels';
 import { TAG_PRESETS } from '@/data/tag-presets';
 import { useShopStore } from '@/store/shop-store';
-import type { TagCategory } from '@/types/customer';
+import type { CustomerTag, TagCategory } from '@/types/customer';
 import { PreferenceEditor } from '@/components/customer/PreferenceEditor';
 import { useCustomerStore } from '@/store/customer-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
-import type { PortfolioPhoto, PortfolioPhotoKind } from '@/types/portfolio';
+import type { PortfolioPhotoKind } from '@/types/portfolio';
 import {
   IconCamera,
   IconCalendar,
@@ -40,27 +44,84 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+function sortTagsByDisplayOrder(tags: CustomerTag[]): CustomerTag[] {
+  return [...tags].sort((a, b) => {
+    if (Boolean(a.pinned) !== Boolean(b.pinned)) {
+      return a.pinned ? -1 : 1;
+    }
+
+    const sortDiff = (a.sortOrder ?? Number.MAX_SAFE_INTEGER) - (b.sortOrder ?? Number.MAX_SAFE_INTEGER);
+    if (sortDiff !== 0) {
+      return sortDiff;
+    }
+
+    return a.createdAt.localeCompare(b.createdAt);
+  });
+}
+
+function resequencePinnedTags(tags: CustomerTag[]): CustomerTag[] {
+  const orderedPinnedIds = sortTagsByDisplayOrder(tags)
+    .filter((tag) => tag.pinned)
+    .map((tag) => tag.id);
+  const orderMap = new Map(orderedPinnedIds.map((tagId, index) => [tagId, index]));
+
+  return tags.map((tag) => {
+    if (!tag.pinned) {
+      return { ...tag, sortOrder: undefined };
+    }
+
+    return {
+      ...tag,
+      sortOrder: orderMap.get(tag.id) ?? 0,
+    };
+  });
+}
+
+function movePinnedTag(tags: CustomerTag[], draggedId: string, targetId: string): CustomerTag[] {
+  if (draggedId === targetId) {
+    return tags;
+  }
+
+  const pinnedTags = sortTagsByDisplayOrder(tags).filter((tag) => tag.pinned);
+  const draggedIndex = pinnedTags.findIndex((tag) => tag.id === draggedId);
+  const targetIndex = pinnedTags.findIndex((tag) => tag.id === targetId);
+
+  if (draggedIndex === -1 || targetIndex === -1) {
+    return tags;
+  }
+
+  const nextPinnedTags = [...pinnedTags];
+  const [draggedTag] = nextPinnedTags.splice(draggedIndex, 1);
+  nextPinnedTags.splice(targetIndex, 0, draggedTag);
+
+  const orderMap = new Map(nextPinnedTags.map((tag, index) => [tag.id, index]));
+  return tags.map((tag) => {
+    if (!tag.pinned) {
+      return tag;
+    }
+
+    return {
+      ...tag,
+      sortOrder: orderMap.get(tag.id) ?? tag.sortOrder,
+    };
+  });
+}
+
 function CustomerDetailContent({ id }: { id: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromChecklist = searchParams.get('fromChecklist') === 'true';
   const customer = useCustomerStore((s) => s.getById(id));
   const updateCustomer = useCustomerStore((s) => s.updateCustomer);
-
-  const toggleTagPinned = useCustomerStore((s) => s.toggleTagPinned);
-  const setTagAccent = useCustomerStore((s) => s.setTagAccent);
-  const reorderPinnedTags = useCustomerStore((s) => s.reorderPinnedTags);
-  const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
   const updateTagsInStore = useCustomerStore((s) => s.updateTags);
   const designers = useShopStore((s) => s.designers);
-
-  const pinnedTags = getPinnedTags(id);
 
   const [isVip, setIsVip] = useState(() => useCustomerStore.getState().getById(id)?.isRegular ?? false);
   const [vipToast, setVipToast] = useState<string | null>(null);
   const [tagsExpanded, setTagsExpanded] = useState(false);
   const [editingTags, setEditingTags] = useState(false);
   const [localTags, setLocalTags] = useState(customer?.tags ?? []);
+  const [draggedPinnedTagId, setDraggedPinnedTagId] = useState<string | null>(null);
   const [newTagValue, setNewTagValue] = useState('');
   const [showSmallTalkInput, setShowSmallTalkInput] = useState(false);
   const [newSmallTalk, setNewSmallTalk] = useState('');
@@ -92,6 +153,15 @@ function CustomerDetailContent({ id }: { id: string }) {
     };
   });
 
+  useEffect(() => {
+    if (!editingTags) {
+      setLocalTags(customer?.tags ?? []);
+    }
+  }, [customer?.tags, editingTags]);
+
+  const orderedTags = sortTagsByDisplayOrder(localTags);
+  const pinnedTags = orderedTags.filter((tag) => tag.pinned);
+
   const handleVipToggle = () => {
     const newVal = !isVip;
     setIsVip(newVal);
@@ -99,6 +169,99 @@ function CustomerDetailContent({ id }: { id: string }) {
     navigator.vibrate?.(50);
     setVipToast(newVal ? 'VIP 지정됨' : 'VIP 해제됨');
     setTimeout(() => setVipToast(null), 2000);
+  };
+
+  const handleStartTagEdit = (): void => {
+    setLocalTags(customer?.tags ?? []);
+    setEditingTags(true);
+  };
+
+  const handleCancelTagEdit = (): void => {
+    setLocalTags(customer?.tags ?? []);
+    setNewTagValue('');
+    setDraggedPinnedTagId(null);
+    setEditingTags(false);
+  };
+
+  const handleSaveTagEdit = (): void => {
+    updateTagsInStore(id, resequencePinnedTags(localTags));
+    setDraggedPinnedTagId(null);
+    setEditingTags(false);
+  };
+
+  const handleToggleTagPinned = (tagId: string): void => {
+    setLocalTags((prev) => {
+      const pinnedCount = prev.filter((tag) => tag.pinned).length;
+      return resequencePinnedTags(
+        prev.map((tag) => {
+          if (tag.id !== tagId) {
+            return tag;
+          }
+
+          const nextPinned = !tag.pinned;
+          return {
+            ...tag,
+            pinned: nextPinned,
+            sortOrder: nextPinned ? pinnedCount : undefined,
+          };
+        }),
+      );
+    });
+  };
+
+  const handleToggleTagAccent = (tagId: string): void => {
+    setLocalTags((prev) =>
+      prev.map((tag) => {
+        if (tag.id !== tagId) {
+          return tag;
+        }
+
+        return {
+          ...tag,
+          accent: tag.accent ? undefined : resolveCustomerTagAccent(tag),
+        };
+      }),
+    );
+  };
+
+  const handleSetTagAccent = (tagId: string, accent: CustomerTag['accent']): void => {
+    setLocalTags((prev) =>
+      prev.map((tag) => (tag.id === tagId ? { ...tag, accent } : tag)),
+    );
+  };
+
+  const handleRemoveTag = (tagId: string): void => {
+    setLocalTags((prev) => resequencePinnedTags(prev.filter((tag) => tag.id !== tagId)));
+  };
+
+  const handlePinnedTagDrop = (targetTagId: string): void => {
+    if (!draggedPinnedTagId || draggedPinnedTagId === targetTagId) {
+      setDraggedPinnedTagId(null);
+      return;
+    }
+
+    setLocalTags((prev) => movePinnedTag(prev, draggedPinnedTagId, targetTagId));
+    setDraggedPinnedTagId(null);
+  };
+
+  const handleAppendCustomTag = (): void => {
+    const nextValue = newTagValue.trim();
+    if (!nextValue) {
+      return;
+    }
+
+    setLocalTags((prev) => [
+      ...prev,
+      {
+        id: `t-${Date.now()}`,
+        customerId: id,
+        category: 'etc',
+        value: nextValue,
+        isCustom: true,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+    setNewTagValue('');
   };
 
   const handleFileChange = useCallback(
@@ -625,86 +788,161 @@ function CustomerDetailContent({ id }: { id: string }) {
       {/* ─────────────────────────────── */}
       {/* 5. 시술 성향 태그 */}
       {/* ─────────────────────────────── */}
-      {registeredPresets.length > 0 && (
-        <Card className="mx-4 shadow-md rounded-2xl">
-          <div className="mb-4 flex items-center justify-between">
+      <Card className="mx-4 shadow-md rounded-2xl">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
             <h2 className="text-sm font-semibold text-text-secondary">시술 성향 태그</h2>
-            <button
-              className="text-xs text-primary"
-              onClick={() => {
-                if (editingTags) {
-                  updateTagsInStore(id, localTags);
-                }
-                setEditingTags((prev) => !prev);
-              }}
-            >
-              {editingTags ? '완료' : '편집'}
-            </button>
+            {editingTags && (
+              <p className="mt-1 text-[11px] text-text-muted">
+                강조, 색상, 상단 고정, 노출 순서를 한 번에 조정합니다.
+              </p>
+            )}
           </div>
-          {/* 카테고리별 그룹 표시 */}
-          <div className="flex flex-col gap-3">
-            {registeredPresets.map((preset) => {
-              const tagsForCategory = localTags.filter((t) => t.category === preset.category);
-              if (tagsForCategory.length === 0 && !editingTags) return null;
-              return (
-                <div key={preset.category}>
-                  <p
-                    className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide"
-                    style={{ color: 'var(--color-text-muted)' }}
-                  >
-                    {preset.categoryLabel}
-                  </p>
-                  <div
+          {editingTags ? (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="rounded-full border border-border px-3 py-1 text-xs font-medium text-text-muted"
+                onClick={handleCancelTagEdit}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white"
+                onClick={handleSaveTagEdit}
+              >
+                완료
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="text-xs font-semibold text-primary"
+              onClick={handleStartTagEdit}
+            >
+              편집
+            </button>
+          )}
+        </div>
+
+        {editingTags && (
+          <div className="mb-4 rounded-2xl border border-border bg-surface-alt p-3">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold text-text">상단 카드 노출 순서</p>
+                <p className="mt-1 text-[11px] text-text-muted">고정한 태그를 드래그해서 홈/예약 카드 우선순서를 정하세요.</p>
+              </div>
+              <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-primary">
+                {pinnedTags.length}개 고정
+              </span>
+            </div>
+            {pinnedTags.length === 0 ? (
+              <p className="text-xs text-text-muted">아래 태그에서 `상단 고정`을 켜면 이 영역에 추가됩니다.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {pinnedTags.map((tag, index) => (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    draggable
+                    onDragStart={() => setDraggedPinnedTagId(tag.id)}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={() => handlePinnedTagDrop(tag.id)}
+                    onDragEnd={() => setDraggedPinnedTagId(null)}
                     className={cn(
-                      'flex flex-wrap gap-1.5 overflow-hidden transition-all duration-300',
-                      tagsExpanded || editingTags ? 'max-h-none' : 'max-h-20',
+                      'flex items-center gap-2 rounded-2xl border border-border bg-surface px-3 py-2 text-left transition-shadow',
+                      draggedPinnedTagId === tag.id && 'opacity-60 shadow-sm',
                     )}
                   >
-                    {tagsForCategory.map((tag) => (
-                      <div key={tag.id} className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] font-semibold text-text-muted">{index + 1}</span>
+                    <span className="text-text-muted">⋮⋮</span>
+                    <CustomerTagChip tag={tag} size="sm" showPin />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3">
+          {registeredPresets.map((preset) => {
+            const tagsForCategory = orderedTags.filter((tag) => tag.category === preset.category);
+            if (tagsForCategory.length === 0 && !editingTags) return null;
+
+            return (
+              <div key={preset.category}>
+                <p
+                  className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide"
+                  style={{ color: 'var(--color-text-muted)' }}
+                >
+                  {preset.categoryLabel}
+                </p>
+                <div
+                  className={cn(
+                    'flex flex-wrap gap-2 overflow-hidden transition-all duration-300',
+                    tagsExpanded || editingTags ? 'max-h-none' : 'max-h-24',
+                  )}
+                >
+                  {tagsForCategory.map((tag) => (
+                    <div
+                      key={tag.id}
+                      className={cn(
+                        'rounded-2xl border border-border bg-surface p-2.5',
+                        editingTags ? 'min-w-[240px] flex-1' : '',
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-2">
                         <CustomerTagChip tag={tag} size="sm" showPin={Boolean(tag.pinned)} />
                         {editingTags && (
-                          <>
+                          <button
+                            type="button"
+                            className="text-[10px] font-medium text-text-muted"
+                            onClick={() => handleRemoveTag(tag.id)}
+                          >
+                            삭제
+                          </button>
+                        )}
+                      </div>
+
+                      {editingTags && (
+                        <div className="mt-2 flex flex-col gap-2">
+                          <div className="flex flex-wrap gap-1.5">
                             <button
-                              className="text-[10px] opacity-60 hover:opacity-100"
-                              onClick={() => setLocalTags((prev) =>
-                                prev.filter((t) => t.id !== tag.id)
-                              )}
-                            >
-                              ✕
-                            </button>
-                            <button
-                              onClick={() => {
-                                toggleTagPinned(id, tag.id);
-                                setLocalTags((prev) =>
-                                  prev.map((t) =>
-                                    t.id === tag.id
-                                      ? { ...t, pinned: !t.pinned }
-                                      : t
-                                  )
-                                );
-                              }}
+                              type="button"
+                              onClick={() => handleToggleTagAccent(tag.id)}
                               className={cn(
-                                'ml-1 text-xs opacity-60 hover:opacity-100 transition-opacity',
-                                tag.pinned && 'text-primary opacity-100'
+                                'rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors',
+                                tag.accent
+                                  ? 'border-primary bg-primary/10 text-primary'
+                                  : 'border-border text-text-muted hover:bg-surface-alt',
                               )}
                             >
-                              📌
+                              {tag.accent ? '✔ 강조' : '강조'}
                             </button>
                             <button
-                              onClick={() => {
-                                setTagAccent(id, tag.id, undefined);
-                                setLocalTags((prev) =>
-                                  prev.map((t) =>
-                                    t.id === tag.id ? { ...t, accent: undefined } : t
-                                  )
-                                );
-                              }}
+                              type="button"
+                              onClick={() => handleToggleTagPinned(tag.id)}
+                              className={cn(
+                                'rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors',
+                                tag.pinned
+                                  ? 'border-primary bg-primary/10 text-primary'
+                                  : 'border-border text-text-muted hover:bg-surface-alt',
+                              )}
+                            >
+                              {tag.pinned ? '📌 상단 고정됨' : '상단 고정'}
+                            </button>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleSetTagAccent(tag.id, undefined)}
                               className={cn(
                                 'rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors',
                                 tag.accent === undefined
                                   ? 'border-primary bg-primary/10 text-primary'
-                                  : 'border-border text-text-muted hover:bg-surface-alt'
+                                  : 'border-border text-text-muted hover:bg-surface-alt',
                               )}
                             >
                               기본
@@ -713,83 +951,66 @@ function CustomerDetailContent({ id }: { id: string }) {
                               {CUSTOMER_TAG_ACCENTS.map((color) => (
                                 <button
                                   key={color}
-                                  onClick={() => {
-                                    setTagAccent(id, tag.id, color);
-                                    setLocalTags((prev) =>
-                                      prev.map((t) =>
-                                        t.id === tag.id ? { ...t, accent: color } : t
-                                      )
-                                    );
-                                  }}
+                                  type="button"
+                                  onClick={() => handleSetTagAccent(tag.id, color)}
                                   className={cn(
-                                    'h-4 w-4 rounded-full border-2 transition-all',
+                                    'h-5 w-5 rounded-full border-2 transition-all',
                                     getCustomerTagDotClasses(color),
-                                    tag.accent === color ? 'border-text ring-2 ring-offset-1' : 'border-transparent'
+                                    tag.accent === color ? 'border-text ring-2 ring-offset-1' : 'border-transparent',
+                                    !tag.accent && 'opacity-45',
                                   )}
+                                  aria-label={`${tag.value} 색상 ${color}`}
                                 />
                               ))}
                             </div>
-                          </>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              );
-            })}
-          </div>
-          {editingTags && (
-            <div className="mt-3 flex gap-2">
-              <input
-                type="text"
-                value={newTagValue}
-                onChange={(e) => setNewTagValue(e.target.value)}
-                placeholder="새 태그 입력"
-                className="flex-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-text placeholder:text-text-muted"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && newTagValue.trim()) {
-                    setLocalTags((prev) => [...prev, {
-                      id: `t-${Date.now()}`,
-                      customerId: customer.id,
-                      category: 'etc' as TagCategory,
-                      value: newTagValue.trim(),
-                      isCustom: true,
-                      createdAt: new Date().toISOString(),
-                    }]);
-                    setNewTagValue('');
-                  }
-                }}
-              />
-              <button
-                onClick={() => {
-                  if (newTagValue.trim()) {
-                    setLocalTags((prev) => [...prev, {
-                      id: `t-${Date.now()}`,
-                      customerId: customer.id,
-                      category: 'etc' as TagCategory,
-                      value: newTagValue.trim(),
-                      isCustom: true,
-                      createdAt: new Date().toISOString(),
-                    }]);
-                    setNewTagValue('');
-                  }
-                }}
-                className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white"
-              >
-                추가
-              </button>
-            </div>
+              </div>
+            );
+          })}
+
+          {!editingTags && orderedTags.length === 0 && (
+            <p className="text-sm text-text-muted">등록된 태그가 없습니다</p>
           )}
-          {registeredPresets.length > 2 && !editingTags && (
+        </div>
+
+        {editingTags && (
+          <div className="mt-4 flex gap-2">
+            <input
+              type="text"
+              value={newTagValue}
+              onChange={(e) => setNewTagValue(e.target.value)}
+              placeholder="새 태그 입력"
+              className="flex-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-text placeholder:text-text-muted"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleAppendCustomTag();
+                }
+              }}
+            />
             <button
-              onClick={() => setTagsExpanded((prev) => !prev)}
-              className="mt-3 text-xs font-medium text-primary"
+              type="button"
+              onClick={handleAppendCustomTag}
+              className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white"
             >
-              {tagsExpanded ? '접기' : '더보기'}
+              추가
             </button>
-          )}
-        </Card>
-      )}
+          </div>
+        )}
+
+        {registeredPresets.length > 2 && !editingTags && (
+          <button
+            onClick={() => setTagsExpanded((prev) => !prev)}
+            className="mt-3 text-xs font-medium text-primary"
+          >
+            {tagsExpanded ? '접기' : '더보기'}
+          </button>
+        )}
+      </Card>
 
       {/* ─────────────────────────────── */}
       {/* 6. 스몰토크 기록 */}
