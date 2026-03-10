@@ -12,6 +12,7 @@ import { useRecordsStore } from '@/store/records-store';
 import { formatDateDot, formatPrice } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import type { PortfolioPhotoKind } from '@/types/portfolio';
+import { InstagramHashtags } from '@/components/portfolio/InstagramHashtags';
 
 const KIND_LABEL: Record<PortfolioPhotoKind, string> = {
   reference: '레퍼런스',
@@ -279,6 +280,17 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
               )}
             </div>
           )}
+
+          {/* PF-4: 인스타 해시태그 */}
+          <div className="rounded-xl bg-surface-alt overflow-hidden">
+            <InstagramHashtags
+              tags={photo.tags}
+              colorLabels={photo.colorLabels}
+              serviceType={serviceType}
+              designType={photo.designType}
+              price={effectivePrice}
+            />
+          </div>
 
           {customer && (
             <Button

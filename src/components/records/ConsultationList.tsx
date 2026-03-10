@@ -6,6 +6,7 @@ import { ConsultationListItem } from './ConsultationListItem';
 interface ConsultationListProps {
   records: ConsultationRecord[];
   onRecordClick: (recordId: string) => void;
+  onRecordPreview?: (record: ConsultationRecord) => void;
   emptyTitle: string;
   emptyDescription: string;
 }
@@ -13,6 +14,7 @@ interface ConsultationListProps {
 export function ConsultationList({
   records,
   onRecordClick,
+  onRecordPreview,
   emptyTitle,
   emptyDescription,
 }: ConsultationListProps): React.ReactElement {
@@ -33,6 +35,7 @@ export function ConsultationList({
               key={record.id}
               record={record}
               onClick={() => onRecordClick(record.id)}
+              onPreview={onRecordPreview ? () => onRecordPreview(record) : undefined}
             />
           ))}
         </div>

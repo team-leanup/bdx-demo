@@ -126,6 +126,25 @@ export function ExtensionSelector({ className }: ExtensionSelectorProps) {
         })}
       </div>
 
+      {/* Extension Info */}
+      {extensionType === 'extension' && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-start gap-3 p-3.5 rounded-2xl bg-blue-50 border border-blue-200"
+        >
+          <span className="text-blue-500 flex-shrink-0 mt-0.5 text-base">ℹ️</span>
+          <div>
+            <p className="text-sm font-bold text-blue-800">
+              {t('consultation.extensionWarning')}
+              {locale !== 'ko' && (
+                <span className="ml-1 text-xs font-medium opacity-60">{tKo('consultation.extensionWarning')}</span>
+              )}
+            </p>
+          </div>
+        </motion.div>
+      )}
+
       {/* Repair Count Control */}
       {extensionType === 'repair' && (
         <motion.div

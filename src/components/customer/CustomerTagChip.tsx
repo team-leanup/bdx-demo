@@ -7,6 +7,7 @@ interface CustomerTagChipProps {
   size?: 'xs' | 'sm' | 'md';
   className?: string;
   showPin?: boolean;
+  icon?: string;
 }
 
 const SIZE_CLASSES: Record<NonNullable<CustomerTagChipProps['size']>, string> = {
@@ -20,6 +21,7 @@ export function CustomerTagChip({
   size = 'sm',
   className,
   showPin = false,
+  icon,
 }: CustomerTagChipProps): React.ReactElement {
   return (
     <span
@@ -31,6 +33,7 @@ export function CustomerTagChip({
       )}
     >
       {showPin && <span className="text-[10px]">📌</span>}
+      {icon && <span className={size === 'xs' ? 'text-[9px]' : 'text-[11px]'}>{icon}</span>}
       <span>{tag.value}</span>
     </span>
   );

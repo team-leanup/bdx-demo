@@ -59,6 +59,10 @@ interface ConsultationStore {
   setSelectedTraitValues: (values: string[]) => void;
   toggleTraitValue: (value: string) => void;
 
+  // 무드 태그
+  setMoodTags: (tags: string[]) => void;
+  toggleMoodTag: (tag: string) => void;
+
   // 담당 선생님
   setDesignerId: (id: string) => void;
 
@@ -76,12 +80,23 @@ interface ConsultationStore {
   reset: () => void;
 }
 
+// Staff 모드: 고객 정보 먼저
 const STEP_ORDER: ConsultationStep[] = [
   ConsultationStep.START,
   ConsultationStep.CUSTOMER_INFO,
   ConsultationStep.STEP1_BASIC,
   ConsultationStep.STEP2_DESIGN,
   ConsultationStep.TRAITS,
+  ConsultationStep.SUMMARY,
+];
+
+// Customer Link 모드: 개인정보 마지막
+const CUSTOMER_LINK_STEP_ORDER: ConsultationStep[] = [
+  ConsultationStep.START,
+  ConsultationStep.STEP1_BASIC,
+  ConsultationStep.STEP2_DESIGN,
+  ConsultationStep.TRAITS,
+  ConsultationStep.CUSTOMER_INFO,
   ConsultationStep.SUMMARY,
 ];
 
@@ -193,6 +208,20 @@ export const useConsultationStore = create<ConsultationStore>()(
           return { consultation: { ...state.consultation, selectedTraitValues: next } };
         }),
 
+      setMoodTags: (tags) =>
+        set((state) => ({
+          consultation: { ...state.consultation, moodTags: tags },
+        })),
+
+      toggleMoodTag: (tag) =>
+        set((state) => {
+          const current = state.consultation.moodTags || [];
+          const next = current.includes(tag)
+            ? current.filter((t) => t !== tag)
+            : [...current, tag];
+          return { consultation: { ...state.consultation, moodTags: next } };
+        }),
+
       setDesignerId: (id) =>
         set((state) => ({ consultation: { ...state.consultation, designerId: id } })),
 
@@ -216,28 +245,36 @@ export const useConsultationStore = create<ConsultationStore>()(
         })),
 
       goNext: () => {
-        const current = get().consultation.currentStep;
-        const idx = STEP_ORDER.indexOf(current);
+        const state = get();
+        const current = state.consultation.currentStep;
+        const order = state.consultation.entryPoint === 'customer_link'
+          ? CUSTOMER_LINK_STEP_ORDER
+          : STEP_ORDER;
+        const idx = order.indexOf(current);
         if (idx === -1) return;
-        if (idx < STEP_ORDER.length - 1) {
-          set((state) => ({
+        if (idx < order.length - 1) {
+          set((s) => ({
             consultation: {
-              ...state.consultation,
-              currentStep: STEP_ORDER[idx + 1],
+              ...s.consultation,
+              currentStep: order[idx + 1],
             },
           }));
         }
       },
 
       goPrev: () => {
-        const current = get().consultation.currentStep;
-        const idx = STEP_ORDER.indexOf(current);
+        const state = get();
+        const current = state.consultation.currentStep;
+        const order = state.consultation.entryPoint === 'customer_link'
+          ? CUSTOMER_LINK_STEP_ORDER
+          : STEP_ORDER;
+        const idx = order.indexOf(current);
         if (idx === -1) return;
         if (idx > 0) {
-          set((state) => ({
+          set((s) => ({
             consultation: {
-              ...state.consultation,
-              currentStep: STEP_ORDER[idx - 1],
+              ...s.consultation,
+              currentStep: order[idx - 1],
             },
           }));
         }

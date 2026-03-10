@@ -99,6 +99,9 @@ export interface ConsultationType {
   // 고객 특성 선택
   selectedTraitValues?: string[];
 
+  // 무드 태그 (customer_link 모드)
+  moodTags?: string[];
+
   // 캔버스
   canvasData?: CanvasData[];
 
@@ -162,6 +165,7 @@ export interface ConsultationRecord {
   createdAt: string;
   updatedAt: string;
   finalizedAt?: string;
+  language?: 'ko' | 'en' | 'zh' | 'ja';
   pricingAdjustments?: {
     basePrice: number;
     extras: { label: string; amount: number }[];

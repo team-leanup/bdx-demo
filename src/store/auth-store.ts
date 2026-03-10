@@ -132,6 +132,8 @@ function getGoogleOwnerName(user: { user_metadata?: Record<string, unknown> } | 
   return '';
 }
 
+let _initPromise: Promise<void> | null = null;
+
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
@@ -141,6 +143,8 @@ export const useAuthStore = create<AuthStore>()(
       passwords: {},
 
       initializeAuth: async () => {
+        if (_initPromise) return _initPromise;
+        _initPromise = (async () => {
         if (!hasSupabaseEnv) {
           set({ isInitialized: true, ...getLoggedOutState() });
           return;
@@ -190,6 +194,8 @@ export const useAuthStore = create<AuthStore>()(
           pendingGoogleSignup: null,
           ...context,
         });
+        })().finally(() => { _initPromise = null; });
+        return _initPromise;
       },
 
       loginWithPassword: async (email, password) => {
@@ -245,6 +251,10 @@ export const useAuthStore = create<AuthStore>()(
       loginAsDemo: async () => get().loginWithPassword(DEMO_ACCOUNT_EMAIL, DEMO_ACCOUNT_PASSWORD),
 
       completePendingGoogleSignup: async ({ shopName, ownerName }) => {
+        if (!hasSupabaseEnv) {
+          return { success: false, error: supabaseConfigErrorMessage };
+        }
+
         const pendingGoogleSignup = get().pendingGoogleSignup;
         if (!pendingGoogleSignup) {
           return { success: false, error: 'Google 회원가입 세션을 찾을 수 없습니다.' };

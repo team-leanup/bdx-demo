@@ -8,9 +8,13 @@ import type { ToastData } from '@/components/ui';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { useRecordsStore } from '@/store/records-store';
+import { useReservationStore } from '@/store/reservation-store';
+import { PortfolioOverlay } from '@/components/portfolio/PortfolioOverlay';
 import { cn } from '@/lib/cn';
 import { formatDateDot, formatPrice } from '@/lib/format';
 import type { PortfolioPhotoKind } from '@/types/portfolio';
+import type { Customer } from '@/types/customer';
+import type { ConsultationRecord } from '@/types/consultation';
 
 type FilterKind = 'all' | PortfolioPhotoKind;
 type DateFilter = 'all' | '30d' | '90d' | '1y';
@@ -43,7 +47,11 @@ export default function PortfolioPage(): React.ReactElement {
   const [serviceFilter, setServiceFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
+  const [moodFilter, setMoodFilter] = useState<string | null>(null);
+  const [globalBestFilter, setGlobalBestFilter] = useState(false);
+  const [overlayPhotoId, setOverlayPhotoId] = useState<string | null>(null);
   const records = getAllRecords();
+  const reservations = useReservationStore((s) => s.reservations);
 
   useEffect(() => {
     const actionToast = searchParams.get('toast');
@@ -88,6 +96,28 @@ export default function PortfolioPage(): React.ReactElement {
 
   const recordMap = useMemo(() => new Map(records.map((record) => [record.id, record])), [records]);
 
+  // PF-2: 글로벌 베스트 — 외국어 고객 ID 집합
+  const foreignCustomerIds = useMemo(() => {
+    const ids = new Set<string>();
+    reservations.forEach((r) => {
+      if (r.language && r.language !== 'ko' && r.customerId) ids.add(r.customerId);
+    });
+    return ids;
+  }, [reservations]);
+
+  const customerMap = useMemo(
+    () =>
+      new Map(
+        photos
+          .map((p) => p.customerId)
+          .filter((cid, i, arr) => arr.indexOf(cid) === i)
+          .map((cid) => [cid, getById(cid)] as [string, Customer | undefined])
+          .filter((entry): entry is [string, Customer] => entry[1] !== undefined),
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [photos, getById],
+  );
+
   const photoCards = useMemo(() => {
     return photos.map((photo) => {
       const customer = getById(photo.customerId);
@@ -123,11 +153,10 @@ export default function PortfolioPage(): React.ReactElement {
   const filteredPhotos = useMemo(() => {
     const q = search.toLowerCase();
     const now = Date.now();
-    
+
     return photoCards
       .filter(({ photo, searchSource, serviceType, price, effectiveDate }) => {
         if (filterKind !== 'all' && photo.kind !== filterKind) return false;
-
         if (serviceFilter !== 'all' && serviceType !== serviceFilter) return false;
 
         if (dateFilter !== 'all') {
@@ -143,11 +172,17 @@ export default function PortfolioPage(): React.ReactElement {
           if (priceFilter === '90000plus' && price < 90000) return false;
         }
 
+        // PF-2: 분위기 필터
+        if (moodFilter && !(photo.tags ?? []).some((t) => t.includes(moodFilter.replace('#', '')))) return false;
+
+        // PF-2: 글로벌 베스트
+        if (globalBestFilter && !foreignCustomerIds.has(photo.customerId)) return false;
+
         if (!q) return true;
         return searchSource.includes(q);
       })
       .sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
-  }, [photoCards, filterKind, serviceFilter, dateFilter, priceFilter, search]);
+  }, [photoCards, filterKind, serviceFilter, dateFilter, priceFilter, moodFilter, globalBestFilter, foreignCustomerIds, search]);
 
   const stats = useMemo(() => {
     const referenceCount = photos.filter((p) => p.kind === 'reference').length;
@@ -186,6 +221,18 @@ export default function PortfolioPage(): React.ReactElement {
   return (
     <div className="flex flex-col gap-4 pb-6">
       <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
+
+      {/* PF-3: 오버레이 */}
+      {overlayPhotoId && (
+        <PortfolioOverlay
+          photoIds={filteredPhotos.map((fp) => fp.photo.id)}
+          initialPhotoId={overlayPhotoId}
+          photos={photos}
+          customerMap={customerMap}
+          recordMap={recordMap}
+          onClose={() => setOverlayPhotoId(null)}
+        />
+      )}
       <div className="px-4 md:px-0 pt-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-text">포트폴리오</h1>
         <Button
@@ -235,6 +282,34 @@ export default function PortfolioPage(): React.ReactElement {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+        {/* PF-2: 분위기 필터 + 글로벌 베스트 */}
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {['#심플', '#화려', '#웨딩', '#키치', '#글리터', '#내추럴'].map((mood) => (
+            <button
+              key={mood}
+              onClick={() => setMoodFilter(moodFilter === mood ? null : mood)}
+              className={cn(
+                'flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors border',
+                moodFilter === mood
+                  ? 'bg-primary text-white border-primary'
+                  : 'border-border text-text-secondary hover:border-primary/40 hover:text-primary bg-surface',
+              )}
+            >
+              {mood}
+            </button>
+          ))}
+          <button
+            onClick={() => setGlobalBestFilter((v) => !v)}
+            className={cn(
+              'flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors border',
+              globalBestFilter
+                ? 'bg-amber-500 text-white border-amber-500'
+                : 'border-border text-text-secondary hover:border-amber-400 hover:text-amber-600 bg-surface',
+            )}
+          >
+            🌍 글로벌 베스트
+          </button>
+        </div>
         <div className="flex gap-0.5 p-1 rounded-full bg-surface-alt border border-border self-start">
           {FILTER_TABS.map(({ key, label }) => (
             <button
@@ -322,7 +397,7 @@ export default function PortfolioPage(): React.ReactElement {
               return (
                 <button
                   key={photo.id}
-                  onClick={() => router.push(`/portfolio/${photo.id}`)}
+                  onClick={() => setOverlayPhotoId(photo.id)}
                   className="group relative aspect-square rounded-xl overflow-hidden bg-surface-alt shadow-sm hover:shadow-md transition-shadow"
                 >
                   <Image
