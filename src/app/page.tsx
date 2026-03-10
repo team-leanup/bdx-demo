@@ -9,9 +9,15 @@ export default function RootPage() {
   const isInitialized = useAuthStore((s) => s.isInitialized);
   const currentShopOnboardingComplete = useAuthStore((s) => s.currentShopOnboardingComplete);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const pendingGoogleSignup = useAuthStore((s) => s.pendingGoogleSignup);
 
   useEffect(() => {
     if (!isInitialized) {
+      return;
+    }
+
+    if (pendingGoogleSignup) {
+      router.replace('/signup/google');
       return;
     }
 
@@ -20,7 +26,7 @@ export default function RootPage() {
     } else {
       router.replace('/splash');
     }
-  }, [currentShopOnboardingComplete, isInitialized, isLoggedIn, router]);
+  }, [currentShopOnboardingComplete, isInitialized, isLoggedIn, pendingGoogleSignup, router]);
 
   return null;
 }

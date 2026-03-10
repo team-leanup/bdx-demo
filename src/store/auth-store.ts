@@ -38,6 +38,12 @@ function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
+interface PendingGoogleSignup {
+  userId: string;
+  email: string;
+  ownerName: string;
+}
+
 interface AuthStore {
   isInitialized: boolean;
   role: UserRole;
@@ -45,11 +51,14 @@ interface AuthStore {
   currentShopOnboardingComplete: boolean;
   activeDesignerId: string | null;
   activeDesignerName: string | null;
+  pendingGoogleSignup: PendingGoogleSignup | null;
   passwords: Record<string, string>;
 
   initializeAuth: () => Promise<void>;
   loginWithPassword: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   loginAsDemo: () => Promise<{ success: boolean; error?: string }>;
+  completePendingGoogleSignup: (payload: { shopName: string; ownerName: string }) => Promise<{ success: boolean; error?: string }>;
   signupShopAccount: (payload: {
     shopName: string;
     ownerName: string;
@@ -105,11 +114,26 @@ function getLoggedOutState(): Pick<
   };
 }
 
+function getGoogleOwnerName(user: { user_metadata?: Record<string, unknown> } | null): string {
+  const fullName = user?.user_metadata?.full_name;
+  if (typeof fullName === 'string' && fullName.trim()) {
+    return fullName.trim();
+  }
+
+  const name = user?.user_metadata?.name;
+  if (typeof name === 'string' && name.trim()) {
+    return name.trim();
+  }
+
+  return '';
+}
+
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
       isInitialized: false,
       ...getLoggedOutState(),
+      pendingGoogleSignup: null,
       passwords: {},
 
       initializeAuth: async () => {
@@ -131,19 +155,35 @@ export const useAuthStore = create<AuthStore>()(
 
         const userId = session?.user?.id;
         if (!userId) {
-          set({ isInitialized: true, ...getLoggedOutState() });
+          set({ isInitialized: true, pendingGoogleSignup: null, ...getLoggedOutState() });
           return;
         }
 
-        const context = await resolveAuthContext(userId);
+        let context = await resolveAuthContext(userId);
+        if (!context) {
+          if (session.user.app_metadata.provider === 'google') {
+            set({
+              isInitialized: true,
+              pendingGoogleSignup: {
+                userId,
+                email: session.user.email ?? '',
+                ownerName: getGoogleOwnerName(session.user),
+              },
+              ...getLoggedOutState(),
+            });
+            return;
+          }
+        }
+
         if (!context) {
           await supabase.auth.signOut();
-          set({ isInitialized: true, ...getLoggedOutState() });
+          set({ isInitialized: true, pendingGoogleSignup: null, ...getLoggedOutState() });
           return;
         }
 
         set({
           isInitialized: true,
+          pendingGoogleSignup: null,
           ...context,
         });
       },
@@ -171,13 +211,63 @@ export const useAuthStore = create<AuthStore>()(
 
         set({
           isInitialized: true,
+          pendingGoogleSignup: null,
           ...context,
         });
 
         return { success: true };
       },
 
+      loginWithGoogle: async () => {
+        if (!hasSupabaseEnv) {
+          return { success: false, error: supabaseConfigErrorMessage };
+        }
+
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/auth/callback?next=/login`,
+            scopes: 'email profile',
+          },
+        });
+
+        if (error) {
+          return { success: false, error: error.message };
+        }
+
+        return { success: true };
+      },
+
       loginAsDemo: async () => get().loginWithPassword(DEMO_ACCOUNT_EMAIL, DEMO_ACCOUNT_PASSWORD),
+
+      completePendingGoogleSignup: async ({ shopName, ownerName }) => {
+        const pendingGoogleSignup = get().pendingGoogleSignup;
+        if (!pendingGoogleSignup) {
+          return { success: false, error: 'Google 회원가입 세션을 찾을 수 없습니다.' };
+        }
+
+        const createdAccount = await dbCreateShopAccount(
+          pendingGoogleSignup.userId,
+          shopName,
+          ownerName,
+        );
+
+        if (!createdAccount.success) {
+          return { success: false, error: createdAccount.error ?? '샵 생성에 실패했습니다.' };
+        }
+
+        set({
+          isInitialized: true,
+          pendingGoogleSignup: null,
+          role: 'owner',
+          currentShopId: createdAccount.shop!.id,
+          currentShopOnboardingComplete: false,
+          activeDesignerId: createdAccount.owner!.id,
+          activeDesignerName: createdAccount.owner!.name,
+        });
+
+        return { success: true };
+      },
 
       signupShopAccount: async ({ shopName, ownerName, email, password }) => {
         if (!hasSupabaseEnv) {
@@ -212,6 +302,7 @@ export const useAuthStore = create<AuthStore>()(
 
         set({
           isInitialized: true,
+          pendingGoogleSignup: null,
           role: 'owner',
           currentShopId: createdAccount.shop!.id,
           currentShopOnboardingComplete: false,
@@ -238,6 +329,7 @@ export const useAuthStore = create<AuthStore>()(
 
         set({
           isInitialized: true,
+          pendingGoogleSignup: null,
           ...getLoggedOutState(),
         });
       },
