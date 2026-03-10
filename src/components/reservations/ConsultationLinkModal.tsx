@@ -45,8 +45,6 @@ export function ConsultationLinkModal({ isOpen, onClose, booking }: Props) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={"상담 링크 생성"}>
       <div className="p-5">
-        <p className="text-sm text-text-muted mb-3">동일 기기 데모용 — 서버에 저장되지 않습니다.</p>
-
         <label className="text-xs text-text-muted">생성된 링크</label>
         <div className="mt-2 mb-3 flex gap-2">
           <input

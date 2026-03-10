@@ -523,7 +523,7 @@ function CustomerDetailContent({ id }: { id: string }) {
                 <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
               </svg>
             </div>
-            <p className="text-sm font-bold text-text mt-0.5">{formatPrice(customer.averageSpend ?? 0)}</p>
+            <p className="text-sm font-bold text-text mt-0.5">{customer.averageSpend ? formatPrice(customer.averageSpend) : '–'}</p>
             <p className="text-xs text-text-muted">평균 단가</p>
           </div>
 
@@ -555,7 +555,7 @@ function CustomerDetailContent({ id }: { id: string }) {
             </svg>
             <span className="text-xs font-medium text-white opacity-80">총 이용금액</span>
           </div>
-          <span className="text-base font-bold text-white">{formatPrice(customer.totalSpend ?? 0)}</span>
+          <span className="text-base font-bold text-white">{customer.totalSpend ? formatPrice(customer.totalSpend) : '–'}</span>
         </div>
         </Card>
       </div>
@@ -872,7 +872,7 @@ function CustomerDetailContent({ id }: { id: string }) {
                       className="text-base font-bold"
                       style={{ color: 'var(--color-primary-dark)' }}
                     >
-                      {formatPrice(hist.price ?? 0)}
+                      {hist.price ? formatPrice(hist.price) : '–'}
                     </span>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-1.5">

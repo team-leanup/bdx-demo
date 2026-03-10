@@ -82,7 +82,7 @@ export default function HomePage() {
     }
   }, [searchParams]);
   const storeShopName = useShopStore((s) => s.shop?.name);
-  const shopName = shopSettings.shopName || (storeShopName ?? '네일숲');
+  const shopName = shopSettings.shopName || (storeShopName ?? '내 매장');
 
   const today = getTodayStr();
   const todayConsultations = records.filter(

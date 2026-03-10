@@ -87,7 +87,7 @@ function PaymentContent(): React.ReactElement {
       ...record.consultation,
       discount,
       // P-3: 예약금 자동 반영
-      deposit: record.consultation.deposit ?? (linkedReservation?.preConsultationData?.deposit ?? 0),
+      deposit: record.consultation.deposit ?? linkedReservation?.deposit ?? linkedReservation?.preConsultationData?.deposit ?? 0,
     };
     return calculatePrice(consultation);
   }, [record, discount, linkedReservation]);
@@ -133,15 +133,14 @@ function PaymentContent(): React.ReactElement {
     });
 
     pushToast('success', '결제가 완료되었어요');
-    setTimeout(() => router.push('/records'), 1200);
-    setCompleting(false);
+    setTimeout(() => { setCompleting(false); router.push('/records'); }, 1200);
   };
 
   if (!record || !breakdown) {
     return (
       <div className="flex flex-col items-center justify-center py-24 px-4 text-center">
         <p className="text-lg font-semibold text-text">상담 기록을 찾을 수 없습니다</p>
-        <p className="mt-1 text-sm text-text-muted">URL에 recordId 또는 bookingId를 확인해주세요</p>
+        <p className="mt-1 text-sm text-text-muted">기록 페이지에서 결제할 상담을 선택해주세요</p>
         <Button className="mt-4" onClick={() => router.back()}>뒤로 가기</Button>
       </div>
     );
@@ -177,7 +176,7 @@ function PaymentContent(): React.ReactElement {
             <p className="font-semibold text-text">{customer?.name ?? '알 수 없음'}</p>
             <p className="text-xs text-text-muted">{formatDateDot(record.createdAt)}</p>
           </div>
-          {linkedReservation?.preConsultationData?.deposit != null && linkedReservation.preConsultationData.deposit > 0 && (
+          {((linkedReservation?.deposit ?? linkedReservation?.preConsultationData?.deposit) ?? 0) > 0 && (
             <div className="ml-auto">
               <Badge variant="warning" size="sm">예약금 있음</Badge>
             </div>
@@ -235,7 +234,7 @@ function PaymentContent(): React.ReactElement {
                 onChange={(e) => setNewExtraLabel(e.target.value)}
               />
               <Input
-                placeholder="금액 (음수 가능)"
+                placeholder="금액"
                 value={newExtraAmount}
                 onChange={(e) => setNewExtraAmount(e.target.value)}
                 inputMode="numeric"

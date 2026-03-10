@@ -234,7 +234,11 @@ export default function DashboardPage() {
                 </div>
                 <div className="rounded-2xl border border-border bg-surface/80 px-4 py-3">
                   <p className="text-[11px] text-text-muted">원장님 체감 포인트</p>
-                  <p className="mt-1 text-sm font-semibold text-text">디자인/파츠 제안이 바로 추가 매출로 연결되고 있어요.</p>
+                  <p className="mt-1 text-sm font-semibold text-text">
+                    {upsellMetrics.upsellConsultations > 0
+                      ? '디자인/파츠 제안이 바로 추가 매출로 연결되고 있어요.'
+                      : '상담에서 디자인/파츠 옵션을 제안해보세요.'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -244,7 +248,7 @@ export default function DashboardPage() {
             <div className="flex h-full flex-col gap-4 p-4 md:p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-sm font-semibold text-text-secondary">글로벌 대시보드</h2>
+                  <h2 className="text-sm font-semibold text-text-secondary">외국인 예약 현황</h2>
                   <p className="mt-1 text-xs text-text-muted">오늘 외국어 예약과 언어별 상담 준비 상태</p>
                 </div>
                 <div className="rounded-2xl bg-primary/10 px-3 py-2 text-right">

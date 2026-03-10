@@ -8,6 +8,7 @@ import { formatPrice } from '@/lib/format';
 import { useCustomerStore } from '@/store/customer-store';
 import { normalizePhone } from '@/lib/phone';
 import { useAuthStore } from '@/store/auth-store';
+import { FlagIcon } from '@/components/ui/FlagIcon';
 import { cn } from '@/lib/cn';
 
 const now = new Date();
@@ -169,9 +170,12 @@ export default function CustomersPage() {
                       {customer.name.charAt(0)}
                     </div>
 
-                    {/* 이름 + VIP 배지 */}
+                    {/* 이름 + 국기 + VIP 배지 */}
                     <div className="flex flex-1 min-w-0 items-center gap-2">
                       <span className="text-sm font-semibold text-text">{customer.name}</span>
+                      {customer.preferredLanguage && customer.preferredLanguage !== 'ko' && (
+                        <FlagIcon language={customer.preferredLanguage} size="sm" />
+                      )}
                       {isVip && (
                         <span
                           className="flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"

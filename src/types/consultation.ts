@@ -142,6 +142,7 @@ export interface BookingRequest {
   customerId?: string;     // link to customer in customer-store
   preConsultationCompletedAt?: string;
   preConsultationData?: ConsultationType;
+  deposit?: number;        // 원장 직접 입력 예약금
 }
 
 export interface DailyChecklist {

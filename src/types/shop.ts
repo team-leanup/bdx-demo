@@ -56,6 +56,20 @@ export interface Designer {
   createdAt: string;
 }
 
+export interface ShopExtendedSettings {
+  addressDetail?: string;
+  baseOffSameShop?: number;
+  baseOffOtherShop?: number;
+  baseSolidPointPrice?: number;
+  baseFullArtPrice?: number;
+  baseMonthlyArtPrice?: number;
+  designerCount?: number;
+  selectedServices?: string[];
+  serviceStructure?: ServiceStructure;
+  surcharges?: SurchargeSettings;
+  timeSettings?: TimeSettings;
+}
+
 export interface Shop {
   id: string;
   ownerId: string;
@@ -68,6 +82,7 @@ export interface Shop {
   baseFootPrice: number;   // 페디큐어 기본가
   logoUrl?: string;
   onboardingCompletedAt?: string;
+  settings?: ShopExtendedSettings;
   createdAt: string;
   updatedAt: string;
 }
