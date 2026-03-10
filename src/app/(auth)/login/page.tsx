@@ -70,6 +70,17 @@ export default function LoginPage(): React.ReactElement {
     setError('');
   };
 
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f8f9fb]">
+        <div className="flex flex-col items-center gap-4">
+          <img src="/bdx-logo/bdx-symbol.svg" alt="BDX" className="h-16 animate-pulse" />
+          <p className="text-sm text-slate-400">잠시만 기다려 주세요...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f8f9fb] text-text">
       <div className="mx-auto flex min-h-screen w-full max-w-[1480px] flex-col">

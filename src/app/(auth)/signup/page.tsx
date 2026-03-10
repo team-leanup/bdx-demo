@@ -94,7 +94,7 @@ export default function SignupPage(): React.ReactElement {
   };
 
   const handleGoogleSignup = async (): Promise<void> => {
-    const result = await loginWithGoogle();
+    const result = await loginWithGoogle('signup');
 
     if (!result.success) {
       setError(result.error ?? 'Google 회원가입에 실패했습니다.');
@@ -103,6 +103,17 @@ export default function SignupPage(): React.ReactElement {
 
     setError('');
   };
+
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f8f9fb]">
+        <div className="flex flex-col items-center gap-4">
+          <img src="/bdx-logo/bdx-symbol.svg" alt="BDX" className="h-16 animate-pulse" />
+          <p className="text-sm text-slate-400">잠시만 기다려 주세요...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f9fb] text-text">

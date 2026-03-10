@@ -47,11 +47,11 @@ export default function IntroPage() {
     if (current < SLIDES.length - 1) {
       setCurrent((c) => c + 1);
     } else {
-      router.push('/login');
+      router.push('/signup');
     }
   };
 
-  const skip = () => router.push('/login');
+  const skip = () => router.push('/signup');
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;

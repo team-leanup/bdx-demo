@@ -56,7 +56,7 @@ interface AuthStore {
 
   initializeAuth: () => Promise<void>;
   loginWithPassword: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: (intent?: 'login' | 'signup') => Promise<{ success: boolean; error?: string }>;
   loginAsDemo: () => Promise<{ success: boolean; error?: string }>;
   completePendingGoogleSignup: (payload: { shopName: string; ownerName: string }) => Promise<{ success: boolean; error?: string }>;
   signupShopAccount: (payload: {
@@ -228,15 +228,16 @@ export const useAuthStore = create<AuthStore>()(
         return { success: true };
       },
 
-      loginWithGoogle: async () => {
+      loginWithGoogle: async (intent = 'login') => {
         if (!hasSupabaseEnv) {
           return { success: false, error: supabaseConfigErrorMessage };
         }
 
+        const nextPath = intent === 'signup' ? '/signup' : '/login';
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
+            redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
             scopes: 'email profile',
           },
         });
