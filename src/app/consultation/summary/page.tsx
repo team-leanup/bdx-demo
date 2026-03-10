@@ -30,6 +30,7 @@ export default function SummaryPage() {
   const currentShopId = useAuthStore((s) => s.currentShopId);
   const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
   const updateReservation = useReservationStore((s) => s.updateReservation);
+  const reservations = useReservationStore((s) => s.reservations);
   const restoreLocale = useLocaleStore((s) => s.restoreLocale);
   const [discountOpen, setDiscountOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -79,6 +80,9 @@ export default function SummaryPage() {
         preConsultationData: consultationSnapshot,
       });
     } else {
+      const bookingLanguage = bookingId
+        ? reservations.find((r) => r.id === bookingId)?.language
+        : undefined;
       const savedRecord: ConsultationRecord = {
         id: newId,
         shopId: currentShopId,
@@ -91,6 +95,7 @@ export default function SummaryPage() {
         createdAt: now,
         updatedAt: now,
         notes: customerMemo || undefined,
+        language: bookingLanguage,
       };
       sessionStorage.setItem(`bdx-saved-record-${newId}`, JSON.stringify(savedRecord));
 

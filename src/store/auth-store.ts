@@ -103,7 +103,11 @@ async function resolveAuthContext(userId: string): Promise<ResolvedAuthContext |
 
 function getLoggedOutState(): Pick<
   AuthStore,
-  'role' | 'currentShopId' | 'currentShopOnboardingComplete' | 'activeDesignerId' | 'activeDesignerName'
+  | 'role'
+  | 'currentShopId'
+  | 'currentShopOnboardingComplete'
+  | 'activeDesignerId'
+  | 'activeDesignerName'
 > {
   return {
     role: null,
@@ -128,6 +132,8 @@ function getGoogleOwnerName(user: { user_metadata?: Record<string, unknown> } | 
   return '';
 }
 
+let _initPromise: Promise<void> | null = null;
+
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
@@ -137,6 +143,8 @@ export const useAuthStore = create<AuthStore>()(
       passwords: {},
 
       initializeAuth: async () => {
+        if (_initPromise) return _initPromise;
+        _initPromise = (async () => {
         if (!hasSupabaseEnv) {
           set({ isInitialized: true, ...getLoggedOutState() });
           return;
@@ -186,6 +194,8 @@ export const useAuthStore = create<AuthStore>()(
           pendingGoogleSignup: null,
           ...context,
         });
+        })().finally(() => { _initPromise = null; });
+        return _initPromise;
       },
 
       loginWithPassword: async (email, password) => {
@@ -226,7 +236,7 @@ export const useAuthStore = create<AuthStore>()(
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: `${window.location.origin}/auth/callback?next=/login`,
+            redirectTo: `${window.location.origin}/auth/callback`,
             scopes: 'email profile',
           },
         });
@@ -241,6 +251,10 @@ export const useAuthStore = create<AuthStore>()(
       loginAsDemo: async () => get().loginWithPassword(DEMO_ACCOUNT_EMAIL, DEMO_ACCOUNT_PASSWORD),
 
       completePendingGoogleSignup: async ({ shopName, ownerName }) => {
+        if (!hasSupabaseEnv) {
+          return { success: false, error: supabaseConfigErrorMessage };
+        }
+
         const pendingGoogleSignup = get().pendingGoogleSignup;
         if (!pendingGoogleSignup) {
           return { success: false, error: 'Google 회원가입 세션을 찾을 수 없습니다.' };
@@ -291,7 +305,7 @@ export const useAuthStore = create<AuthStore>()(
         }
 
         if (!data.session) {
-          return { success: false, error: '이메일 인증 후 다시 로그인해 주세요.' };
+          return { success: false, error: '회원가입에 실패했습니다. 다시 시도해 주세요.' };
         }
 
         const createdAccount = await dbCreateShopAccount(data.user.id, shopName, ownerName);

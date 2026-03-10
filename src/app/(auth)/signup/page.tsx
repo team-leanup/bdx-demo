@@ -218,6 +218,7 @@ export default function SignupPage(): React.ReactElement {
               >
                 회원가입 후 시작하기
               </Button>
+
             </div>
 
             <div className="mt-8 flex items-center justify-center gap-2 text-sm text-slate-500">

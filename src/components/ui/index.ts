@@ -17,3 +17,6 @@ export { AddressInput } from './AddressInput';
 export { ProfileAvatar } from './ProfileAvatar';
 export { Skeleton, SkeletonText, SkeletonCard, SkeletonAvatar, SkeletonList, SkeletonTable } from './Skeleton';
 export { EmptyState, EmptySearchResult, EmptyList, ErrorState, OfflineState } from './EmptyState';
+export { SafetyTag } from './SafetyTag';
+export { FlagIcon } from './FlagIcon';
+export { TraitIcon } from './TraitIcon';

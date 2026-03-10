@@ -29,7 +29,10 @@ import {
   ViewModeToggle,
   ConsultationList,
   PeriodFilter,
+  ConsultationPreviewModal,
 } from '@/components/records';
+import { TAG_PRESETS } from '@/data/tag-presets';
+import type { ConsultationRecord } from '@/types/consultation';
 
 type MainTab = 'reservations' | 'consultations';
 type ViewMode = 'day' | 'month';
@@ -130,6 +133,8 @@ export default function RecordsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterPeriod>('all');
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [previewRecord, setPreviewRecord] = useState<ConsultationRecord | null>(null);
   const [reservationFilter, setReservationFilter] = useState<ReservationFilter>('all');
   const [selectedDate, setSelectedDate] = useState(getTodayStr());
   const [weekStartDate, setWeekStartDate] = useState(getMonday(getTodayStr()));
@@ -242,9 +247,18 @@ export default function RecordsPage() {
         (r.consultation.customerPhone ?? '').includes(q) ||
         DESIGN_SCOPE_LABEL[r.consultation.designScope]?.toLowerCase().includes(q);
       const matchPeriod = isInPeriod(r.createdAt, filter);
-      return matchSearch && matchPeriod;
+      let matchTag = true;
+      if (tagFilter) {
+        if (tagFilter === '외국인') {
+          matchTag = !!r.language && r.language !== 'ko';
+        } else {
+          const customerTags = getPinnedTags(r.customerId);
+          matchTag = customerTags.some((t) => t.value === tagFilter);
+        }
+      }
+      return matchSearch && matchPeriod && matchTag;
     });
-  }, [sorted, search, filter, role, activeDesignerId]);
+  }, [sorted, search, filter, tagFilter, role, activeDesignerId, getPinnedTags]);
 
   const handleEventClick = (ev: TimeGridEvent) => {
     if (ev.type === 'consultation') {
@@ -447,6 +461,43 @@ export default function RecordsPage() {
             />
           </div>
 
+          {/* R-5: 태그 필터 칩 */}
+          <div className="flex gap-2 overflow-x-auto px-4 md:px-0 pb-1 scrollbar-hide">
+            <button
+              onClick={() => setTagFilter(null)}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                tagFilter === null
+                  ? 'bg-primary text-white'
+                  : 'bg-surface border border-border text-text-secondary hover:bg-surface-alt'
+              }`}
+            >
+              전체
+            </button>
+            <button
+              onClick={() => setTagFilter(tagFilter === '외국인' ? null : '외국인')}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                tagFilter === '외국인'
+                  ? 'bg-primary text-white'
+                  : 'bg-surface border border-border text-text-secondary hover:bg-surface-alt'
+              }`}
+            >
+              🌏 외국인
+            </button>
+            {TAG_PRESETS.find((p) => p.category === 'etc')?.options.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setTagFilter(tagFilter === opt.value ? null : opt.value)}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  tagFilter === opt.value
+                    ? 'bg-primary text-white'
+                    : 'bg-surface border border-border text-text-secondary hover:bg-surface-alt'
+                }`}
+              >
+                {opt.icon} {opt.value}
+              </button>
+            ))}
+          </div>
+
           <PeriodFilter
             filter={filter}
             onFilterChange={setFilter}
@@ -456,8 +507,18 @@ export default function RecordsPage() {
           <ConsultationList
             records={listFiltered}
             onRecordClick={(id) => router.push(`/records/${id}`)}
+            onRecordPreview={(record) => setPreviewRecord(record)}
             emptyTitle={t('records.noResults')}
             emptyDescription={t('records.noResultsHint')}
+          />
+
+          {/* R-3: 미리보기 모달 */}
+          <ConsultationPreviewModal
+            record={previewRecord}
+            onClose={() => setPreviewRecord(null)}
+            onViewDetail={() => {
+              if (previewRecord) router.push(`/records/${previewRecord.id}`);
+            }}
           />
         </>
       )}

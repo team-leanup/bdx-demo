@@ -3,6 +3,7 @@
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Suspense } from 'react';
 import { motion } from 'framer-motion';
+import { ConsultationSummaryCard } from '@/components/consultation/ConsultationSummaryCard';
 
 function SaveCompleteContent() {
   const router = useRouter();
@@ -13,12 +14,12 @@ function SaveCompleteContent() {
 
   if (mode === 'preconsultation') {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 py-12">
+      <div className="min-h-screen bg-background flex flex-col items-center px-4 py-12">
         <motion.div
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-          className="mb-6 flex flex-col items-center gap-3"
+          className="mb-4 flex flex-col items-center gap-3"
         >
           <div
             className="flex h-20 w-20 items-center justify-center rounded-full"
@@ -32,6 +33,29 @@ function SaveCompleteContent() {
               예약 카드에 디자인 확정 상태로 표시됩니다.
             </p>
           </div>
+        </motion.div>
+
+        {/* 매장 도착 안내 */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.3 }}
+          className="w-full max-w-sm mb-4 flex items-start gap-3 p-4 rounded-2xl border border-primary/20 bg-primary/5"
+        >
+          <span className="text-lg flex-shrink-0">📱</span>
+          <p className="text-sm text-text-secondary">
+            <span className="font-bold text-text">매장 도착 후 이 화면을 보여주시면</span> 담당 디자이너가 바로 확인할 수 있어요.
+          </p>
+        </motion.div>
+
+        {/* 상담 요약 카드 */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.3 }}
+          className="w-full max-w-sm mb-4"
+        >
+          <ConsultationSummaryCard />
         </motion.div>
 
         <div className="w-full max-w-sm flex flex-col gap-3">

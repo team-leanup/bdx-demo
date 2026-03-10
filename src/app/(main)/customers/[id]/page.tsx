@@ -1,11 +1,11 @@
 'use client';
 
-import { use, useState, useRef, useCallback, Suspense, useEffect } from 'react';
+import { use, useState, useRef, useCallback, Suspense, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CustomerTagChip } from '@/components/customer/CustomerTagChip';
-import { Card, Badge, Button, ToastContainer } from '@/components/ui';
+import { Card, Badge, Button, ToastContainer, Modal, SafetyTag, FlagIcon } from '@/components/ui';
 import type { ToastData } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { formatPrice, formatRelativeDate, formatDateDot } from '@/lib/format';
@@ -22,8 +22,10 @@ import { PreferenceEditor } from '@/components/customer/PreferenceEditor';
 import { useCustomerStore } from '@/store/customer-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useAuthStore } from '@/store/auth-store';
+import { useReservationStore } from '@/store/reservation-store';
 import { resizePortfolioImage } from '@/lib/image-utils';
 import type { PortfolioPhotoKind } from '@/types/portfolio';
+import { getSafetyTagMeta } from '@/lib/tag-safety';
 import {
   IconCamera,
   IconCalendar,
@@ -133,10 +135,35 @@ function CustomerDetailContent({ id }: { id: string }) {
   const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
   const activeDesignerName = useAuthStore((s) => s.activeDesignerName);
   const getByCustomerId = usePortfolioStore((s) => s.getByCustomerId);
+  const reservations = useReservationStore((s) => s.reservations);
 
   const customerPhotos = getByCustomerId(id);
   const treatmentPhotos = customerPhotos.filter((p) => p.kind === 'treatment');
   const consultPhotos = customerPhotos.filter((p) => p.kind === 'reference');
+
+  // CU-2: 최근 3장 미니 갤러리
+  const recentTreatmentPhotos = treatmentPhotos.slice(0, 3);
+  const [photoPopupId, setPhotoPopupId] = useState<string | null>(null);
+
+  // CU-3: 태그 아이콘 맵
+  const tagIconMap = useMemo(() =>
+    TAG_PRESETS.flatMap((p) => p.options).reduce<Record<string, string | undefined>>(
+      (acc, opt) => (opt.icon ? { ...acc, [opt.value]: opt.icon } : acc),
+      {},
+    ),
+  [], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  // CU-4: 외국어 감지
+  const detectedLanguage = useMemo(() => {
+    if (customer?.preferredLanguage && customer.preferredLanguage !== 'ko') {
+      return customer.preferredLanguage;
+    }
+    const foreignBooking = reservations.find(
+      (r) => r.customerId === id && r.language && r.language !== 'ko',
+    );
+    return foreignBooking?.language ?? undefined;
+  }, [customer?.preferredLanguage, reservations, id]);
 
   const handleDismissToast = useCallback((toastId: string): void => {
     setToasts((current) => current.filter((toast) => toast.id !== toastId));
@@ -384,8 +411,12 @@ function CustomerDetailContent({ id }: { id: string }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between">
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-xl font-bold text-text">{customer.name}</h2>
+                  {/* CU-4: 외국어 고객 플래그 */}
+                  {detectedLanguage && (
+                    <FlagIcon language={detectedLanguage} size="sm" />
+                  )}
                   {/* VIP 토글 버튼 */}
                   <button
                     type="button"
@@ -405,6 +436,16 @@ function CustomerDetailContent({ id }: { id: string }) {
                   </button>
                 </div>
                 <p className="text-sm text-text-secondary">{customer.phone}</p>
+                {/* CU-1: Safety 태그 (high/medium 레벨만) */}
+                {pinnedTags.some((t) => ['high', 'medium'].includes(getSafetyTagMeta(t).level)) && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {pinnedTags
+                      .filter((t) => ['high', 'medium'].includes(getSafetyTagMeta(t).level))
+                      .map((tag) => (
+                        <SafetyTag key={tag.id} tag={tag} size="xs" />
+                      ))}
+                  </div>
+                )}
               </div>
             </div>
             <div className="mt-1 flex items-center gap-1.5">
@@ -518,6 +559,51 @@ function CustomerDetailContent({ id }: { id: string }) {
         </div>
         </Card>
       </div>
+
+      {/* CU-4: 외국어 고객 번역 이력 버튼 */}
+      {detectedLanguage && (
+        <div className="mx-4 -mt-2">
+          <button
+            onClick={() => router.push(`/records?customerId=${id}`)}
+            className="flex w-full items-center gap-2 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+          >
+            <FlagIcon language={detectedLanguage} size="sm" />
+            <span>번역된 상담 이력 보기</span>
+            <svg className="ml-auto h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* CU-2: 최근 시술 사진 미니 갤러리 */}
+      {recentTreatmentPhotos.length > 0 && (
+        <div className="mx-4 -mt-2">
+          <p className="mb-2 text-xs font-semibold text-text-secondary">최근 시술</p>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {recentTreatmentPhotos.map((photo) => (
+              <button
+                key={photo.id}
+                onClick={() => setPhotoPopupId(photo.id)}
+                className="relative flex-shrink-0 h-20 w-20 rounded-xl overflow-hidden bg-surface-alt shadow-sm hover:shadow-md transition-shadow"
+              >
+                <Image
+                  src={photo.imageDataUrl}
+                  alt="시술 사진"
+                  fill
+                  unoptimized
+                  className="object-cover"
+                />
+                {photo.takenAt && (
+                  <div className="absolute inset-x-0 bottom-0 bg-black/50 px-1.5 py-1">
+                    <p className="text-[9px] text-white text-center leading-none">{formatDateDot(photo.takenAt)}</p>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ─────────────────────────────── */}
       {/* 1.5 고정 특이사항 (Pinned Traits) */}
@@ -793,6 +879,23 @@ function CustomerDetailContent({ id }: { id: string }) {
                     <Badge variant="neutral" size="sm">{BODY_PART_LABEL[hist.bodyPart] ?? hist.bodyPart}</Badge>
                     <Badge variant="primary" size="sm">{hist.designScope}</Badge>
                   </div>
+                  {/* CU-5: 컬러 & 파츠 칩 */}
+                  {(hist.colorLabels?.length ?? 0) > 0 && (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {hist.colorLabels!.map((color, idx) => (
+                        <span key={idx} className="inline-flex px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
+                          {color}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {(hist.partsUsed?.length ?? 0) > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {hist.partsUsed!.map((part, idx) => (
+                        <Badge key={idx} variant="success" size="sm">{part}</Badge>
+                      ))}
+                    </div>
+                  )}
                   <p className="mt-1.5 text-xs text-text-secondary">담당: {hist.designerName}</p>
                 </div>
               </div>
@@ -909,7 +1012,12 @@ function CustomerDetailContent({ id }: { id: string }) {
                       )}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <CustomerTagChip tag={tag} size="sm" showPin={Boolean(tag.pinned)} />
+                        <CustomerTagChip
+                          tag={tag}
+                          size="sm"
+                          showPin={Boolean(tag.pinned)}
+                          icon={tagIconMap[tag.value]}
+                        />
                         {editingTags && (
                           <button
                             type="button"
@@ -1104,6 +1212,40 @@ function CustomerDetailContent({ id }: { id: string }) {
           </div>
         )}
       </Card>
+
+      {/* CU-2: 사진 팝업 모달 */}
+      {photoPopupId && (() => {
+        const photo = treatmentPhotos.find((p) => p.id === photoPopupId);
+        if (!photo) return null;
+        return (
+          <Modal isOpen={true} onClose={() => setPhotoPopupId(null)} title="시술 사진">
+            <div className="flex flex-col gap-4 p-4">
+              <div className="relative aspect-square w-full max-w-sm mx-auto rounded-2xl overflow-hidden bg-surface-alt">
+                <Image
+                  src={photo.imageDataUrl}
+                  alt="시술 사진"
+                  fill
+                  unoptimized
+                  className="object-cover"
+                />
+              </div>
+              {photo.takenAt && (
+                <p className="text-center text-sm text-text-secondary">{formatDateDot(photo.takenAt)}</p>
+              )}
+              {photo.note && (
+                <p className="text-sm text-text text-center">{photo.note}</p>
+              )}
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={() => router.push(`/portfolio/${photo.id}`)}
+              >
+                포트폴리오 상세 보기
+              </Button>
+            </div>
+          </Modal>
+        );
+      })()}
 
       {/* 구분선 */}
       <div className="mx-4 h-px" style={{ background: 'var(--color-border)' }} />

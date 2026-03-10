@@ -74,7 +74,7 @@ export function OffSelector({ className }: OffSelectorProps) {
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 md:gap-3">
+      <div className="grid grid-cols-3 gap-2 md:gap-3 mb-0">
         {OFF_TYPE_OPTIONS.map((opt) => {
           const isSelected = offType === opt.value;
           return (
@@ -150,6 +150,30 @@ export function OffSelector({ className }: OffSelectorProps) {
           );
         })}
       </div>
+
+      {offType === 'other_shop' && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-start gap-3 p-3.5 rounded-2xl bg-amber-50 border border-amber-200"
+        >
+          <span className="text-amber-500 flex-shrink-0 mt-0.5 text-base">⚠️</span>
+          <div>
+            <p className="text-sm font-bold text-amber-800">
+              {t('consultation.otherShopWarning')}
+              {locale !== 'ko' && (
+                <span className="ml-1 text-xs font-medium opacity-60">{tKo('consultation.otherShopWarning')}</span>
+              )}
+            </p>
+            <p className="text-xs text-amber-600 mt-0.5">
+              {t('consultation.otherShopWarningTime')}
+              {locale !== 'ko' && (
+                <span className="ml-1 opacity-60">{tKo('consultation.otherShopWarningTime')}</span>
+              )}
+            </p>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }

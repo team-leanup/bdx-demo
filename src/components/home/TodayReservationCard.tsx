@@ -1,16 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
 import { CustomerTagChip } from '@/components/customer/CustomerTagChip';
 import { ReservationReadinessBadge } from '@/components/reservations/ReservationReadinessBadge';
 import { Badge } from '@/components/ui';
+import { SafetyTag } from '@/components/ui/SafetyTag';
+import { FlagIcon } from '@/components/ui/FlagIcon';
 import { IconCalendar } from '@/components/icons';
 import { useConsultationStore } from '@/store/consultation-store';
 import { useCustomerStore } from '@/store/customer-store';
+import { usePortfolioStore } from '@/store/portfolio-store';
 import { PretreatmentAlertModal } from '@/components/alerts/PretreatmentAlertModal';
 import { LinkCustomerModal } from '@/components/reservations/LinkCustomerModal';
 import ConsultationLinkModal from '@/components/reservations/ConsultationLinkModal';
+import { getSafetyTagMeta } from '@/lib/tag-safety';
 import type { BookingChannel, BookingRequest } from '@/types/consultation';
 import type { CustomerTag } from '@/types/customer';
 
@@ -50,12 +55,14 @@ export function TodayReservationCard({
 }: TodayReservationCardProps): React.ReactElement {
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
   const getPrimaryTags = useCustomerStore((s) => s.getPrimaryTags);
+  const getByCustomerId = usePortfolioStore((s) => s.getByCustomerId);
   const setEntryPoint = useConsultationStore((s) => s.setEntryPoint);
 
   const [alertBooking, setAlertBooking] = useState<BookingRequest | null>(null);
   const [alertTags, setAlertTags] = useState<CustomerTag[]>([]);
   const [linkModalBooking, setLinkModalBooking] = useState<BookingRequest | null>(null);
   const [linkGenBooking, setLinkGenBooking] = useState<BookingRequest | null>(null);
+  const [previewBooking, setPreviewBooking] = useState<BookingRequest | null>(null);
 
   const handleStartClick = (booking: BookingRequest): void => {
     if (booking.customerId) {
@@ -120,7 +127,15 @@ export function TodayReservationCard({
           {reservations.map((booking, idx) => {
             const channelInfo = channelBadge[booking.channel];
             const isCompleted = booking.status === 'completed';
-            const primaryTags = booking.customerId ? getPrimaryTags(booking.customerId).slice(0, 3) : [];
+            const primaryTags = booking.customerId ? getPrimaryTags(booking.customerId).slice(0, 2) : [];
+            const pinnedTags = booking.customerId ? getPinnedTags(booking.customerId) : [];
+            const safetyTags = pinnedTags.filter((tag) => {
+              const level = getSafetyTagMeta(tag).level;
+              return level === 'high' || level === 'medium';
+            });
+            const recentPhoto = booking.customerId ? getByCustomerId(booking.customerId)[0] : undefined;
+            const isForeign = booking.language && booking.language !== 'ko';
+
             return (
               <motion.div
                 key={booking.id}
@@ -145,18 +160,43 @@ export function TodayReservationCard({
                     <span className="text-sm font-semibold text-text truncate">
                       {booking.customerName}
                     </span>
+                    {/* H-4: 국기 아이콘 */}
+                    {isForeign && (
+                      <FlagIcon language={booking.language!} size="sm" />
+                    )}
                     {booking.serviceLabel && (
                       <span className="px-2 py-0.5 rounded-md bg-primary/15 text-xs text-primary font-bold">
                         {booking.serviceLabel}
                       </span>
                     )}
-                    <ReservationReadinessBadge booking={booking} size="sm" compact />
+                    {/* H-3: 클릭 가능한 준비도 배지 */}
+                    {booking.preConsultationCompletedAt ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewBooking(booking);
+                        }}
+                        className="cursor-pointer"
+                      >
+                        <ReservationReadinessBadge booking={booking} size="sm" compact />
+                      </button>
+                    ) : (
+                      <ReservationReadinessBadge booking={booking} size="sm" compact />
+                    )}
                     <Badge variant={channelInfo.variant} size="sm">
                       {channelInfo.icon} {channelInfo.label}
                     </Badge>
                   </div>
-                  {primaryTags.length > 0 && (
-                    <div className="mt-1 flex flex-wrap gap-1">
+                  {/* H-1: 세이프티 태그 */}
+                  {safetyTags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {safetyTags.map((tag) => (
+                        <SafetyTag key={tag.id} tag={tag} size="xs" />
+                      ))}
+                    </div>
+                  )}
+                  {primaryTags.length > 0 && safetyTags.length === 0 && (
+                    <div className="mt-0.5 flex flex-wrap gap-1">
                       {primaryTags.map((tag) => (
                         <CustomerTagChip key={tag.id} tag={tag} size="sm" />
                       ))}
@@ -175,6 +215,25 @@ export function TodayReservationCard({
                   )}
                   {booking.requestNote && (
                     <p className="text-xs text-text-muted line-clamp-2 whitespace-pre-line">{booking.requestNote.replace(/\.\s*/g, '.\n')}</p>
+                  )}
+                </div>
+                {/* H-2: 썸네일 */}
+                <div className="shrink-0">
+                  {recentPhoto ? (
+                    <div className="h-8 w-8 rounded-full overflow-hidden border-2 border-border">
+                      <Image
+                        src={recentPhoto.imageDataUrl}
+                        alt=""
+                        width={32}
+                        height={32}
+                        className="h-full w-full object-cover"
+                        unoptimized
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-alt border border-border">
+                      <span className="text-[8px] font-bold text-text-muted">신규</span>
+                    </div>
                   )}
                 </div>
                 {isCompleted ? (
@@ -227,6 +286,80 @@ export function TodayReservationCard({
         onClose={() => setLinkGenBooking(null)}
         booking={linkGenBooking}
       />
+
+      {/* H-3: 사전상담 데이터 미리보기 모달 */}
+      <AnimatePresence>
+        {previewBooking && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-black/40"
+              onClick={() => setPreviewBooking(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 60 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 60 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-background px-5 pb-8 pt-5 md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-1/2 md:-translate-x-1/2 md:right-auto md:w-full md:max-w-md md:rounded-2xl"
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold text-text">사전 상담 내용</h3>
+                  <p className="text-xs text-text-muted">{previewBooking.customerName} · {previewBooking.reservationTime}</p>
+                </div>
+                <button
+                  onClick={() => setPreviewBooking(null)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-alt text-text-muted"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex flex-col gap-3">
+                {previewBooking.preConsultationData?.referenceImages && previewBooking.preConsultationData.referenceImages.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-text-secondary mb-2">참고 이미지</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {previewBooking.preConsultationData.referenceImages.map((url, i) => (
+                        <div key={i} className="h-20 w-20 rounded-xl overflow-hidden border border-border flex-shrink-0">
+                          <Image src={url} alt="" width={80} height={80} className="h-full w-full object-cover" unoptimized />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {previewBooking.referenceImageUrls && previewBooking.referenceImageUrls.length > 0 && !previewBooking.preConsultationData?.referenceImages?.length && (
+                  <div>
+                    <p className="text-xs font-semibold text-text-secondary mb-2">참고 이미지</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {previewBooking.referenceImageUrls.map((url, i) => (
+                        <div key={i} className="h-20 w-20 rounded-xl overflow-hidden border border-border flex-shrink-0">
+                          <Image src={url} alt="" width={80} height={80} className="h-full w-full object-cover" unoptimized />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {previewBooking.requestNote && (
+                  <div>
+                    <p className="text-xs font-semibold text-text-secondary mb-1">요청 메모</p>
+                    <div className="rounded-xl bg-surface-alt p-3">
+                      <p className="text-xs text-text-secondary whitespace-pre-line">{previewBooking.requestNote}</p>
+                    </div>
+                  </div>
+                )}
+                {!previewBooking.requestNote && !previewBooking.referenceImageUrls?.length && !previewBooking.preConsultationData?.referenceImages?.length && (
+                  <p className="text-sm text-text-muted text-center py-4">사전 상담 내용이 없습니다.</p>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

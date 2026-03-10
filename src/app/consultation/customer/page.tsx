@@ -10,6 +10,8 @@ import { ConsultationHeader } from '@/components/consultation/ConsultationHeader
 import { ConsultationFooter } from '@/components/consultation/ConsultationFooter';
 import { PriceSummaryBar } from '@/components/consultation/PriceSummaryBar';
 import { CustomerInfoForm } from '@/components/consultation/CustomerInfoForm';
+import { MoodTagSelector } from '@/components/consultation/MoodTagSelector';
+import { PortfolioBrowser } from '@/components/consultation/PortfolioBrowser';
 import type { Customer } from '@/types/customer';
 import { useLocaleStore } from '@/store/locale-store';
 import type { Locale } from '@/store/locale-store';
@@ -32,6 +34,8 @@ function CustomerPageInner() {
   const consultation = useConsultationStore((s) => s.consultation);
   const addReferenceImage = useConsultationStore((s) => s.addReferenceImage);
   const removeReferenceImage = useConsultationStore((s) => s.removeReferenceImage);
+  const moodTags = useConsultationStore((s) => s.consultation.moodTags) ?? [];
+  const toggleMoodTag = useConsultationStore((s) => s.toggleMoodTag);
   const setConsultationLocale = useLocaleStore((s) => s.setConsultationLocale);
   const t = useT();
   const tKo = useKo();
@@ -116,8 +120,14 @@ function CustomerPageInner() {
     } else {
       sessionStorage.removeItem('consultation_customer_memo');
     }
-    setStep(ConsultationStep.STEP1_BASIC);
-    router.push('/consultation/step1');
+    // C-6: customer_link 모드에서는 고객 정보가 마지막 → SUMMARY로
+    if (prefillEntry === 'customer_link') {
+      setStep(ConsultationStep.SUMMARY);
+      router.push('/consultation/summary');
+    } else {
+      setStep(ConsultationStep.STEP1_BASIC);
+      router.push('/consultation/step1');
+    }
   };
 
   const canProceed = name.trim().length > 0;
@@ -131,14 +141,18 @@ function CustomerPageInner() {
     handleNext();
   };
 
+  // C-6: step 번호는 entryPoint에 따라 다름
+  const stepNumber = prefillEntry === 'customer_link' ? 4 : 1;
+  const backHref = prefillEntry === 'customer_link' ? '/consultation/traits' : '/consultation';
+
   return (
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
       <ConsultationHeader
-        stepNumber={1}
+        stepNumber={stepNumber}
         totalSteps={5}
         title={t('consultation.customerInfo')}
         titleKo={tKo('consultation.customerInfo')}
-        backHref="/consultation"
+        backHref={backHref}
       />
       <PriceSummaryBar />
 
@@ -172,6 +186,91 @@ function CustomerPageInner() {
         className="flex-1 overflow-y-auto px-4 md:px-8 pt-5 pb-28 md:pb-6"
       >
         <div className="max-w-2xl md:max-w-3xl mx-auto flex flex-col gap-5">
+
+          {/* C-2: customer_link 모드 — 사진 업로드 최상단 */}
+          {prefillEntry === 'customer_link' && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-surface p-4 flex flex-col gap-4"
+            >
+              <div className="text-center">
+                <h2 className="text-xl font-black text-text">
+                  {t('consultation.photoUploadTitle')}
+                  {locale !== 'ko' && (
+                    <span className="block text-sm font-medium text-text-muted opacity-70 mt-0.5">{tKo('consultation.photoUploadTitle')}</span>
+                  )}
+                </h2>
+                <p className="text-xs text-text-muted mt-1">
+                  {t('consultation.photoUploadDesc')}
+                  {locale !== 'ko' && (
+                    <span className="block text-[10px] opacity-60">{tKo('consultation.photoUploadDesc')}</span>
+                  )}
+                </p>
+              </div>
+
+              {/* 업로드된 이미지 */}
+              {(consultation.referenceImages || []).length > 0 && (
+                <div className="flex gap-2 flex-wrap">
+                  {(consultation.referenceImages || []).map((url, i) => (
+                    <div key={i} className="relative w-24 h-24 rounded-xl overflow-hidden border border-border flex-shrink-0">
+                      <Image src={url} alt="" fill unoptimized className="object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeReferenceImage(url)}
+                        className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center"
+                      >
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* 업로드 버튼 */}
+              {(consultation.referenceImages || []).length < 5 && (
+                <label className="w-full rounded-xl border-2 border-dashed border-primary/30 bg-white/50 flex items-center justify-center gap-2 py-5 text-primary cursor-pointer hover:border-primary hover:bg-white/80 transition-colors">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                  </svg>
+                  <span className="text-sm font-bold">
+                    {t('consultation.referenceAdd')}
+                    {locale !== 'ko' && (
+                      <span className="ml-1 text-xs opacity-60">{tKo('consultation.referenceAdd')}</span>
+                    )}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                </label>
+              )}
+
+              {/* 무드 태그 */}
+              <MoodTagSelector
+                selected={moodTags}
+                onToggle={toggleMoodTag}
+              />
+
+              {/* 포트폴리오 브라우저 */}
+              <PortfolioBrowser
+                onSelect={(url) => {
+                  const current = consultation.referenceImages || [];
+                  if (!current.includes(url) && current.length < 5) {
+                    addReferenceImage(url);
+                  }
+                }}
+                selectedUrls={consultation.referenceImages || []}
+              />
+            </motion.div>
+          )}
+
           {/* Visual Step Header */}
           <motion.div
             initial={{ opacity: 0, y: -8 }}
@@ -213,8 +312,8 @@ function CustomerPageInner() {
             onExistingCustomerSelect={handleExistingCustomer}
           />
 
-          {/* 참고 이미지 업로드 */}
-          <div className="rounded-2xl border border-border bg-surface p-4">
+          {/* 참고 이미지 업로드 — staff 모드에서만 표시 (customer_link는 상단에 이미 있음) */}
+          {prefillEntry !== 'customer_link' && <div className="rounded-2xl border border-border bg-surface p-4">
             <p className="text-sm font-semibold text-text mb-3 flex items-center gap-2">
               <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -268,7 +367,7 @@ function CustomerPageInner() {
                 <span className="ml-1 opacity-60">{tKo('consultation.referenceHint')}</span>
               )}
             </p>
-          </div>
+          </div>}
         </div>
       </motion.main>
 

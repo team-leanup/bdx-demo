@@ -50,6 +50,8 @@ export interface TreatmentHistory {
   price: number;
   designerName: string;
   imageUrls?: string[];
+  colorLabels?: string[];
+  partsUsed?: string[];
 }
 
 export type VisitFrequency = 'weekly' | 'biweekly' | 'monthly' | 'irregular';
@@ -85,6 +87,7 @@ export interface Customer {
   regularSince?: string;
   visitFrequency?: VisitFrequency;
   membership?: Membership;
+  preferredLanguage?: 'ko' | 'en' | 'zh' | 'ja';
   createdAt: string;
   updatedAt: string;
 }

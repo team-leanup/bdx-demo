@@ -7,8 +7,8 @@ import { ConsultationStep } from '@/types/consultation';
 import { ConsultationHeader } from '@/components/consultation/ConsultationHeader';
 import { ConsultationFooter } from '@/components/consultation/ConsultationFooter';
 import { PriceSummaryBar } from '@/components/consultation/PriceSummaryBar';
+import { TraitIcon } from '@/components/ui/TraitIcon';
 import { TAG_PRESETS } from '@/data/tag-presets';
-import { cn } from '@/lib/cn';
 import { useT, useLocale, useKo } from '@/lib/i18n';
 
 export default function TraitsPage(): React.ReactElement {
@@ -16,6 +16,7 @@ export default function TraitsPage(): React.ReactElement {
   const setStep = useConsultationStore((s) => s.setStep);
   const selectedTraitValues = useConsultationStore((s) => s.consultation.selectedTraitValues) ?? [];
   const toggleTraitValue = useConsultationStore((s) => s.toggleTraitValue);
+  const entryPoint = useConsultationStore((s) => s.consultation.entryPoint);
   const t = useT();
   const tKo = useKo();
   const locale = useLocale();
@@ -23,15 +24,22 @@ export default function TraitsPage(): React.ReactElement {
   const etcPreset = TAG_PRESETS.find((p) => p.category === 'etc');
   const traitOptions = etcPreset?.options ?? [];
 
+  const isCustomerLink = entryPoint === 'customer_link';
+
   const handleNext = (): void => {
-    setStep(ConsultationStep.SUMMARY);
-    router.push('/consultation/summary');
+    if (isCustomerLink) {
+      setStep(ConsultationStep.CUSTOMER_INFO);
+      router.push('/consultation/customer');
+    } else {
+      setStep(ConsultationStep.SUMMARY);
+      router.push('/consultation/summary');
+    }
   };
 
   return (
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
       <ConsultationHeader
-        stepNumber={4}
+        stepNumber={isCustomerLink ? 3 : 4}
         totalSteps={5}
         title={t('consultation.traitsTitle')}
         titleKo={tKo('consultation.traitsTitle')}
@@ -116,41 +124,19 @@ export default function TraitsPage(): React.ReactElement {
               </span>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {traitOptions.map((trait) => {
-                const isSelected = selectedTraitValues.includes(trait);
+                const isSelected = selectedTraitValues.includes(trait.value);
                 return (
-                  <motion.button
-                    key={trait}
-                    type="button"
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => toggleTraitValue(trait)}
-                    className={cn(
-                      'relative px-4 py-2.5 rounded-full border-2 transition-all duration-200 text-sm font-bold',
-                      isSelected
-                        ? 'border-2 border-primary bg-white text-primary shadow-sm'
-                        : 'border-border bg-surface text-text-secondary hover:border-primary/30',
-                    )}
-                  >
-                    {trait}
-                    {isSelected && (
-                      <motion.span
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30 border-2 border-white"
-                      >
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                          <path
-                            d="M2 5l2 2 4-4"
-                            stroke="white"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </motion.span>
-                    )}
-                  </motion.button>
+                  <TraitIcon
+                    key={trait.value}
+                    value={trait.value}
+                    icon={trait.icon}
+                    size="md"
+                    selected={isSelected}
+                    onClick={() => toggleTraitValue(trait.value)}
+                    className="w-full justify-start"
+                  />
                 );
               })}
             </div>

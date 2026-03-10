@@ -18,7 +18,10 @@ import {
   TodayStatsCard,
   QuickActions,
   ReservationForm,
+  RevisitReminderCard,
 } from '@/components/home';
+import { QRGeneratorModal } from '@/components/home/QRGeneratorModal';
+import { ConsultationAlertBanner } from '@/components/home/ConsultationAlertBanner';
 import { Modal } from '@/components/ui';
 import { useT } from '@/lib/i18n';
 import { useAuthStore } from '@/store/auth-store';
@@ -54,6 +57,7 @@ export default function HomePage() {
   const t = useT();
   const [showTour, setShowTour] = useState(false);
   const [showReservationModal, setShowReservationModal] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
   const { shopSettings } = useAppStore();
   const { activeDesignerName, role } = useAuthStore();
   const restoreLocale = useLocaleStore((s) => s.restoreLocale);
@@ -98,6 +102,7 @@ export default function HomePage() {
       .filter((r) => r.reservationDate === todayStr)
       .sort((a, b) => a.reservationTime.localeCompare(b.reservationTime));
   }, [allReservations]);
+  const foreignCount = todayReservations.filter((r) => r.language && r.language !== 'ko').length;
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
 
   const handleAddReservation = (newBooking: BookingRequest) => {
@@ -181,6 +186,8 @@ export default function HomePage() {
         router.replace('/home', { scroll: false });
       }} />
 
+      <ConsultationAlertBanner />
+
       <TodayReservationCard
         reservations={todayReservations}
         channelBadge={CHANNEL_BADGE}
@@ -198,6 +205,7 @@ export default function HomePage() {
         consultationCount={todayConsultations.length}
         reservationCount={todayReservations.length}
         revenue={todayRevenue}
+        foreignCount={foreignCount}
         onViewDetail={() => router.push('/dashboard')}
         consultationLabel={t('home.stat_consultation')}
         reservationLabel={t('home.stat_reservation')}
@@ -224,11 +232,18 @@ export default function HomePage() {
       <HeroCTA
         onStartConsultation={() => router.push('/consultation')}
         onNewReservation={() => setShowReservationModal(true)}
+        onGenerateQR={() => setShowQRModal(true)}
         consultationLabel={t('home.cta_consultation')}
         consultationTitle={t('home.cta_newConsultation')}
         reservationLabel={t('home.cta_reservation')}
         reservationTitle={t('home.cta_newReservation')}
+        qrLabel={t('home.generateQR')}
         itemVariants={itemVariants}
+      />
+
+      <QRGeneratorModal
+        isOpen={showQRModal}
+        onClose={() => setShowQRModal(false)}
       />
 
       <RecentConsultationCard
@@ -237,6 +252,11 @@ export default function HomePage() {
         onRecordClick={(id) => router.push(`/records/${id}`)}
         sectionTitle={t('home.section_recentConsultation')}
         viewAllLabel={t('home.section_viewAllShort')}
+        itemVariants={itemVariants}
+      />
+
+      <RevisitReminderCard
+        shopName={shopName}
         itemVariants={itemVariants}
       />
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { Button, Input } from '@/components/ui';
 import { useCustomerStore } from '@/store/customer-store';
@@ -10,6 +10,9 @@ import { resizePortfolioImage } from '@/lib/image-utils';
 import { formatDateDot } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import type { PortfolioPhotoKind } from '@/types/portfolio';
+
+const PRESET_TAGS = ['봄', '웨딩', '자석젤', '키치', '내추럴', '글리터', '심플', '화려한스타일', '이달의아트', '프렌치', '그라데이션', '마그네틱'];
+const PRESET_COLORS = ['핑크', '누드', '베이지', '화이트', '블랙', '레드', '코랄', '브라운', '퍼플', '블루'];
 
 const DESIGN_SCOPE_LABEL: Record<string, string> = {
   solid_tone: '원컬러',
@@ -40,13 +43,16 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
   const [serviceType, setServiceType] = useState('');
   const [designType, setDesignType] = useState('');
   const [priceInput, setPriceInput] = useState('');
-  const [tagInput, setTagInput] = useState('');
-  const [colorInput, setColorInput] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [customTagInput, setCustomTagInput] = useState('');
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [customColorInput, setCustomColorInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [customerSearch, setCustomerSearch] = useState('');
 
   const records = getAllRecords();
+  const allPhotos = usePortfolioStore((s) => s.photos);
 
   const filteredCustomers = customers.filter((customer) =>
     customer.name.toLowerCase().includes(customerSearch.toLowerCase()),
@@ -58,14 +64,45 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
 
   const selectedRecord = customerRecords.find((record) => record.id === selectedRecordId);
 
-  const parseList = useCallback((value: string): string[] | undefined => {
-    const parsed = value
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean);
+  // PF-1: 이전 레시피 (동일 고객의 최근 포트폴리오)
+  const recentCustomerPhoto = useMemo(() => {
+    if (!selectedCustomerId) return undefined;
+    return allPhotos
+      .filter((p) => p.customerId === selectedCustomerId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+  }, [allPhotos, selectedCustomerId]);
 
-    return parsed.length > 0 ? parsed : undefined;
+  const handleCopyLastRecipe = useCallback((): void => {
+    if (!recentCustomerPhoto) return;
+    setSelectedTags(recentCustomerPhoto.tags ?? []);
+    setSelectedColors(recentCustomerPhoto.colorLabels ?? []);
+    if (recentCustomerPhoto.designType) setDesignType(recentCustomerPhoto.designType);
+    if (recentCustomerPhoto.serviceType && !selectedRecord) setServiceType(recentCustomerPhoto.serviceType);
+  }, [recentCustomerPhoto, selectedRecord]);
+
+  const toggleTag = useCallback((tag: string): void => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    );
   }, []);
+
+  const toggleColor = useCallback((color: string): void => {
+    setSelectedColors((prev) =>
+      prev.includes(color) ? prev.filter((c) => c !== color) : [...prev, color],
+    );
+  }, []);
+
+  const addCustomTag = useCallback((): void => {
+    const v = customTagInput.trim();
+    if (v && !selectedTags.includes(v)) setSelectedTags((prev) => [...prev, v]);
+    setCustomTagInput('');
+  }, [customTagInput, selectedTags]);
+
+  const addCustomColor = useCallback((): void => {
+    const v = customColorInput.trim();
+    if (v && !selectedColors.includes(v)) setSelectedColors((prev) => [...prev, v]);
+    setCustomColorInput('');
+  }, [customColorInput, selectedColors]);
 
   const resetForm = useCallback((): void => {
     if (previewUrl) {
@@ -82,8 +119,10 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
     setServiceType('');
     setDesignType('');
     setPriceInput('');
-    setTagInput('');
-    setColorInput('');
+    setSelectedTags([]);
+    setCustomTagInput('');
+    setSelectedColors([]);
+    setCustomColorInput('');
     setError(null);
     setCustomerSearch('');
 
@@ -134,8 +173,8 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
         serviceType: derivedServiceType,
         designType: designType.trim() || undefined,
         price: Number.isFinite(derivedPrice) ? derivedPrice : undefined,
-        tags: parseList(tagInput),
-        colorLabels: parseList(colorInput),
+        tags: selectedTags.length > 0 ? selectedTags : undefined,
+        colorLabels: selectedColors.length > 0 ? selectedColors : undefined,
       });
 
       if (!result.success) {
@@ -340,22 +379,113 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-text-secondary">태그</label>
-          <Input
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            placeholder="쉼표로 구분: 봄, 웨딩, 자석젤"
-          />
+      {/* PF-1: 이전 레시피 복사 버튼 */}
+      {recentCustomerPhoto && (
+        <button
+          type="button"
+          onClick={handleCopyLastRecipe}
+          className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+        >
+          <span>🔄</span>
+          <span>지난번이랑 똑같이 (이전 레시피 복사)</span>
+        </button>
+      )}
+
+      {/* PF-1: 태그 칩 UI */}
+      <div>
+        <label className="mb-2 block text-sm font-medium text-text-secondary">태그</label>
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {PRESET_TAGS.map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => toggleTag(tag)}
+              className={cn(
+                'rounded-full px-3 py-1 text-xs font-medium border transition-colors',
+                selectedTags.includes(tag)
+                  ? 'bg-primary text-white border-primary'
+                  : 'border-border text-text-secondary hover:border-primary/40 bg-surface',
+              )}
+            >
+              {tag}
+            </button>
+          ))}
+          {selectedTags.filter((t) => !PRESET_TAGS.includes(t)).map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => toggleTag(tag)}
+              className="rounded-full px-3 py-1 text-xs font-medium border bg-primary text-white border-primary"
+            >
+              {tag} ×
+            </button>
+          ))}
         </div>
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-text-secondary">컬러</label>
-          <Input
-            value={colorInput}
-            onChange={(e) => setColorInput(e.target.value)}
-            placeholder="쉼표로 구분: 핑크, 누드, 브라운"
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={customTagInput}
+            onChange={(e) => setCustomTagInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomTag(); } }}
+            placeholder="직접 입력 후 Enter"
+            className="flex-1 h-9 rounded-lg border border-border bg-surface px-3 text-sm text-text placeholder:text-text-muted"
           />
+          <button
+            type="button"
+            onClick={addCustomTag}
+            className="rounded-lg bg-surface-alt px-3 text-sm font-medium text-text-secondary hover:bg-border transition-colors"
+          >
+            추가
+          </button>
+        </div>
+      </div>
+
+      {/* PF-1: 컬러 칩 UI */}
+      <div>
+        <label className="mb-2 block text-sm font-medium text-text-secondary">컬러</label>
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {PRESET_COLORS.map((color) => (
+            <button
+              key={color}
+              type="button"
+              onClick={() => toggleColor(color)}
+              className={cn(
+                'rounded-full px-3 py-1 text-xs font-medium border transition-colors',
+                selectedColors.includes(color)
+                  ? 'bg-rose-500 text-white border-rose-500'
+                  : 'border-border text-text-secondary hover:border-rose-300 bg-surface',
+              )}
+            >
+              {color}
+            </button>
+          ))}
+          {selectedColors.filter((c) => !PRESET_COLORS.includes(c)).map((color) => (
+            <button
+              key={color}
+              type="button"
+              onClick={() => toggleColor(color)}
+              className="rounded-full px-3 py-1 text-xs font-medium border bg-rose-500 text-white border-rose-500"
+            >
+              {color} ×
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={customColorInput}
+            onChange={(e) => setCustomColorInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomColor(); } }}
+            placeholder="직접 입력 후 Enter"
+            className="flex-1 h-9 rounded-lg border border-border bg-surface px-3 text-sm text-text placeholder:text-text-muted"
+          />
+          <button
+            type="button"
+            onClick={addCustomColor}
+            className="rounded-lg bg-surface-alt px-3 text-sm font-medium text-text-secondary hover:bg-border transition-colors"
+          >
+            추가
+          </button>
         </div>
       </div>
 

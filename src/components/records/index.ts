@@ -4,3 +4,4 @@ export { ViewModeToggle } from './ViewModeToggle';
 export { ConsultationListItem } from './ConsultationListItem';
 export { ConsultationList } from './ConsultationList';
 export { PeriodFilter } from './PeriodFilter';
+export { ConsultationPreviewModal } from './ConsultationPreviewModal';
