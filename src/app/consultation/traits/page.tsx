@@ -16,7 +16,6 @@ export default function TraitsPage(): React.ReactElement {
   const setStep = useConsultationStore((s) => s.setStep);
   const selectedTraitValues = useConsultationStore((s) => s.consultation.selectedTraitValues) ?? [];
   const toggleTraitValue = useConsultationStore((s) => s.toggleTraitValue);
-  const entryPoint = useConsultationStore((s) => s.consultation.entryPoint);
   const t = useT();
   const tKo = useKo();
   const locale = useLocale();
@@ -24,22 +23,16 @@ export default function TraitsPage(): React.ReactElement {
   const etcPreset = TAG_PRESETS.find((p) => p.category === 'etc');
   const traitOptions = etcPreset?.options ?? [];
 
-  const isCustomerLink = entryPoint === 'customer_link';
-
   const handleNext = (): void => {
-    if (isCustomerLink) {
-      setStep(ConsultationStep.CUSTOMER_INFO);
-      router.push('/consultation/customer');
-    } else {
-      setStep(ConsultationStep.SUMMARY);
-      router.push('/consultation/summary');
-    }
+    // customer_link 모드에서도 traits 완료 후 summary로 이동
+    setStep(ConsultationStep.SUMMARY);
+    router.push('/consultation/summary');
   };
 
   return (
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
       <ConsultationHeader
-        stepNumber={isCustomerLink ? 3 : 4}
+        stepNumber={4}
         totalSteps={5}
         title={t('consultation.traitsTitle')}
         titleKo={tKo('consultation.traitsTitle')}

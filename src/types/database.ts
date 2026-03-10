@@ -7,6 +7,8 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.4"
   }
@@ -22,6 +24,8 @@ export type Database = {
           id: string
           language: string | null
           phone: string | null
+          pre_consultation_completed_at: string | null
+          pre_consultation_data: Json | null
           reference_image_urls: Json | null
           request_note: string | null
           reservation_date: string
@@ -39,6 +43,8 @@ export type Database = {
           id: string
           language?: string | null
           phone?: string | null
+          pre_consultation_completed_at?: string | null
+          pre_consultation_data?: Json | null
           reference_image_urls?: Json | null
           request_note?: string | null
           reservation_date: string
@@ -56,6 +62,8 @@ export type Database = {
           id?: string
           language?: string | null
           phone?: string | null
+          pre_consultation_completed_at?: string | null
+          pre_consultation_data?: Json | null
           reference_image_urls?: Json | null
           request_note?: string | null
           reservation_date?: string
@@ -64,7 +72,29 @@ export type Database = {
           shop_id?: string
           status?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "booking_requests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_requests_designer_id_fkey"
+            columns: ["designer_id"]
+            isOneToOne: false
+            referencedRelation: "designers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_requests_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       consultation_records: {
         Row: {
@@ -78,6 +108,7 @@ export type Database = {
           finalized_at: string | null
           id: string
           image_urls: Json | null
+          language: string | null
           notes: string | null
           pricing_adjustments: Json | null
           shop_id: string
@@ -95,6 +126,7 @@ export type Database = {
           finalized_at?: string | null
           id: string
           image_urls?: Json | null
+          language?: string | null
           notes?: string | null
           pricing_adjustments?: Json | null
           shop_id: string
@@ -112,13 +144,36 @@ export type Database = {
           finalized_at?: string | null
           id?: string
           image_urls?: Json | null
+          language?: string | null
           notes?: string | null
           pricing_adjustments?: Json | null
           shop_id?: string
           total_price?: number | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "consultation_records_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultation_records_designer_id_fkey"
+            columns: ["designer_id"]
+            isOneToOne: false
+            referencedRelation: "designers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultation_records_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customer_tags: {
         Row: {
@@ -154,7 +209,15 @@ export type Database = {
           sort_order?: number | null
           value?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customer_tags_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customers: {
         Row: {
@@ -170,6 +233,7 @@ export type Database = {
           name: string
           phone: string | null
           preference: Json | null
+          preferred_language: string | null
           profile_image_url: string | null
           regular_since: string | null
           shop_id: string
@@ -192,6 +256,7 @@ export type Database = {
           name: string
           phone?: string | null
           preference?: Json | null
+          preferred_language?: string | null
           profile_image_url?: string | null
           regular_since?: string | null
           shop_id: string
@@ -214,6 +279,7 @@ export type Database = {
           name?: string
           phone?: string | null
           preference?: Json | null
+          preferred_language?: string | null
           profile_image_url?: string | null
           regular_since?: string | null
           shop_id?: string
@@ -223,7 +289,22 @@ export type Database = {
           visit_count?: number | null
           visit_frequency?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customers_assigned_designer_id_fkey"
+            columns: ["assigned_designer_id"]
+            isOneToOne: false
+            referencedRelation: "designers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       designers: {
         Row: {
@@ -256,7 +337,15 @@ export type Database = {
           role?: string
           shop_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "designers_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       portfolio_photos: {
         Row: {
@@ -310,7 +399,29 @@ export type Database = {
           tags?: Json | null
           taken_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_photos_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portfolio_photos_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portfolio_photos_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shops: {
         Row: {
@@ -325,6 +436,7 @@ export type Database = {
           onboarding_completed_at: string | null
           owner_id: string | null
           phone: string | null
+          settings: Json | null
           theme_id: string | null
           updated_at: string | null
         }
@@ -340,6 +452,7 @@ export type Database = {
           onboarding_completed_at?: string | null
           owner_id?: string | null
           phone?: string | null
+          settings?: Json | null
           theme_id?: string | null
           updated_at?: string | null
         }
@@ -355,6 +468,7 @@ export type Database = {
           onboarding_completed_at?: string | null
           owner_id?: string | null
           phone?: string | null
+          settings?: Json | null
           theme_id?: string | null
           updated_at?: string | null
         }
@@ -388,14 +502,36 @@ export type Database = {
           id?: string
           note_text?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_small_talk_notes_record"
+            columns: ["consultation_record_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "small_talk_notes_created_by_designer_id_fkey"
+            columns: ["created_by_designer_id"]
+            isOneToOne: false
+            referencedRelation: "designers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "small_talk_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_my_shop_id: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never

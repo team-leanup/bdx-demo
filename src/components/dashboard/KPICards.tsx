@@ -2,148 +2,194 @@
 
 import { useState, useMemo } from 'react';
 import type { KPICard } from '@/lib/analytics';
+import {
+  computeKPICards,
+  computeDesignScopeBreakdown,
+  computeReturnRate,
+  computeCustomerAnalytics,
+} from '@/lib/analytics';
+import type { ConsultationRecord, BookingRequest } from '@/types/consultation';
+import type { Customer } from '@/types/customer';
 import { BentoCard } from '@/components/ui';
 import { useRecordsStore } from '@/store/records-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { useReservationStore } from '@/store/reservation-store';
-import { computeKPICards } from '@/lib/analytics';
 
-// KPI별 드릴다운 상세 데이터
-const KPI_DETAIL_MAP: Record<string, React.ReactNode> = {
-  '이달 상담 건수': (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-        <span className="text-sm text-text-secondary">완료된 상담</span>
-        <span className="font-bold text-text">127건</span>
-      </div>
-      <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-        <span className="text-sm text-text-secondary">하루 평균</span>
-        <span className="font-bold text-text">약 5.8건</span>
-      </div>
-      <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-        <span className="text-sm text-text-secondary">전월 대비</span>
-        <span className="font-bold text-success">+5% ▲</span>
-      </div>
-      <div className="flex items-center justify-between rounded-xl bg-primary/10 p-3">
-        <span className="text-sm font-semibold text-primary">이번 주 누계</span>
-        <span className="font-bold text-primary">14건</span>
-      </div>
-    </div>
-  ),
-  '인기 디자인': (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-        <span className="text-sm text-text-secondary">원컬러</span>
-        <span className="font-bold text-text">28% (35건)</span>
-      </div>
-      <div className="flex items-center justify-between rounded-xl bg-primary/10 p-3">
-        <span className="text-sm font-semibold text-primary">단색+포인트</span>
-        <span className="font-bold text-primary">33% (42건)</span>
-      </div>
-      <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-        <span className="text-sm text-text-secondary">풀아트</span>
-        <span className="font-bold text-text">25% (32건)</span>
-      </div>
-      <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-        <span className="text-sm text-text-secondary">이달의 아트</span>
-        <span className="font-bold text-text">14% (18건)</span>
-      </div>
-    </div>
-  ),
-  '평균 옵션 선택': (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-        <span className="text-sm text-text-secondary">상담당 평균</span>
-        <span className="font-bold text-text">3.2개</span>
-      </div>
-      <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-        <span className="text-sm text-text-secondary">최다 선택 조합</span>
-        <span className="font-bold text-text">부위+쉐입+파츠</span>
-      </div>
-      <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-        <span className="text-sm text-text-secondary">오프 포함 비율</span>
-        <span className="font-bold text-text">41%</span>
-      </div>
-      <div className="flex items-center justify-between rounded-xl bg-primary/10 p-3">
-        <span className="text-sm font-semibold text-primary">전월 대비</span>
-        <span className="font-bold text-success">+6% ▲</span>
-      </div>
-    </div>
-  ),
-  '재방문율': (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-        <span className="text-sm text-text-secondary">재방문 고객</span>
-        <span className="font-bold text-text">37명</span>
-      </div>
-      <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-        <span className="text-sm text-text-secondary">신규 고객</span>
-        <span className="font-bold text-text">8명</span>
-      </div>
-      <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-        <span className="text-sm text-text-secondary">평균 방문 주기</span>
-        <span className="font-bold text-text">28일</span>
-      </div>
-      <div className="flex items-center justify-between rounded-xl bg-primary/10 p-3">
-        <span className="text-sm font-semibold text-primary">재방문율</span>
-        <span className="font-bold text-primary">82.2%</span>
-      </div>
-    </div>
-  ),
-  '단골 고객': (
-    <div className="flex flex-col gap-2">
-      <p className="mb-1 text-xs text-text-muted">3회 이상 방문 고객 기준</p>
-      {[
-        { name: '이수진', visits: 12 },
-        { name: '윤서연', visits: 9 },
-        { name: '박지현', visits: 8 },
-        { name: '김미영', visits: 5 },
-        { name: '최은서', visits: 4 },
-        { name: '정다은', visits: 4 },
-        { name: '한지수', visits: 3 },
-        { name: '오수빈', visits: 3 },
-        { name: '강하은', visits: 3 },
-        { name: '임채원', visits: 3 },
-        { name: '서예린', visits: 3 },
-        { name: '유지아', visits: 3 },
-      ].map((customer, idx) => (
-        <div
-          key={customer.name}
-          className="flex items-center justify-between rounded-xl bg-surface-alt px-4 py-2.5"
-        >
-          <div className="flex items-center gap-2">
-            <span className="w-5 text-xs text-text-muted">{idx + 1}</span>
-            <span className="text-sm font-medium text-text">{customer.name}</span>
+function buildKPIDetail(
+  label: string,
+  records: ConsultationRecord[],
+  customers: Customer[],
+  reservations: BookingRequest[],
+): React.ReactNode {
+  switch (label) {
+    case '이달 상담 건수': {
+      const now = new Date();
+      const prefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const thisMonth = records.filter((r) => r.createdAt.startsWith(prefix));
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      const daysPassed = now.getDate();
+      const dailyAvg = daysPassed > 0 ? (thisMonth.length / daysPassed).toFixed(1) : '0';
+      return (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
+            <span className="text-sm text-text-secondary">완료된 상담</span>
+            <span className="font-bold text-text">{thisMonth.length}건</span>
           </div>
-          <span className="text-sm text-text-secondary">{customer.visits}회 방문</span>
-        </div>
-      ))}
-    </div>
-  ),
-  '오늘 예약': (
-    <div className="flex flex-col gap-2">
-      {[
-        { time: '10:00', name: '한소희', channel: '카카오톡' },
-        { time: '13:00', name: '이지은', channel: '네이버' },
-        { time: '15:30', name: '강민지', channel: '전화' },
-        { time: '17:00', name: '오지영', channel: '워크인' },
-      ].map((appt) => (
-        <div
-          key={appt.time}
-          className="flex items-center justify-between rounded-xl bg-surface-alt px-4 py-3"
-        >
-          <div className="flex items-center gap-3">
-            <span className="w-12 text-sm font-bold text-primary">{appt.time}</span>
-            <span className="text-sm font-medium text-text">{appt.name}</span>
+          <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
+            <span className="text-sm text-text-secondary">하루 평균</span>
+            <span className="font-bold text-text">약 {dailyAvg}건</span>
           </div>
-          <span className="rounded-full bg-border px-2 py-0.5 text-xs text-text-muted">
-            {appt.channel}
-          </span>
+          <div className="flex items-center justify-between rounded-xl bg-primary/10 p-3">
+            <span className="text-sm font-semibold text-primary">이번 달 일수</span>
+            <span className="font-bold text-primary">{daysPassed}/{daysInMonth}일</span>
+          </div>
         </div>
-      ))}
-    </div>
-  ),
-};
+      );
+    }
+    case '인기 디자인': {
+      const breakdown = computeDesignScopeBreakdown(records);
+      return (
+        <div className="flex flex-col gap-3">
+          {breakdown.map((item, idx) => (
+            <div
+              key={item.name}
+              className={`flex items-center justify-between rounded-xl p-3 ${idx === 0 ? 'bg-primary/10' : 'bg-surface-alt'}`}
+            >
+              <span className={`text-sm ${idx === 0 ? 'font-semibold text-primary' : 'text-text-secondary'}`}>
+                {item.name}
+              </span>
+              <span className={`font-bold ${idx === 0 ? 'text-primary' : 'text-text'}`}>
+                {item.percentage}% ({item.count}건)
+              </span>
+            </div>
+          ))}
+          {breakdown.length === 0 && (
+            <p className="text-center text-sm text-text-muted">데이터가 없습니다.</p>
+          )}
+        </div>
+      );
+    }
+    case '평균 옵션 선택': {
+      if (records.length === 0) return <p className="text-center text-sm text-text-muted">데이터가 없습니다.</p>;
+      const optCounts = records.map((r) => {
+        const c = r.consultation;
+        let opts = 0;
+        if (c.bodyPart) opts++;
+        if (c.offType && c.offType !== 'none') opts++;
+        if (c.extensionType && c.extensionType !== 'none') opts++;
+        if (c.nailShape) opts++;
+        if (c.designScope) opts++;
+        if (Array.isArray(c.expressions)) opts += c.expressions.length;
+        if (c.hasParts) opts++;
+        return opts;
+      });
+      const avg = (optCounts.reduce((s, v) => s + v, 0) / optCounts.length).toFixed(1);
+      const offCount = records.filter((r) => r.consultation.offType && r.consultation.offType !== 'none').length;
+      const offRate = Math.round((offCount / records.length) * 100);
+      return (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
+            <span className="text-sm text-text-secondary">상담당 평균</span>
+            <span className="font-bold text-text">{avg}개</span>
+          </div>
+          <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
+            <span className="text-sm text-text-secondary">오프 포함 비율</span>
+            <span className="font-bold text-text">{offRate}%</span>
+          </div>
+          <div className="flex items-center justify-between rounded-xl bg-primary/10 p-3">
+            <span className="text-sm font-semibold text-primary">총 상담</span>
+            <span className="font-bold text-primary">{records.length}건</span>
+          </div>
+        </div>
+      );
+    }
+    case '재방문율': {
+      const analytics = computeCustomerAnalytics(records, customers);
+      const returnRate = computeReturnRate(records, customers);
+      return (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
+            <span className="text-sm text-text-secondary">재방문 고객</span>
+            <span className="font-bold text-text">{analytics.returningCustomers}명</span>
+          </div>
+          <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
+            <span className="text-sm text-text-secondary">신규 고객</span>
+            <span className="font-bold text-text">{analytics.newCustomers}명</span>
+          </div>
+          <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
+            <span className="text-sm text-text-secondary">평균 방문 주기</span>
+            <span className="font-bold text-text">{analytics.averageVisitInterval}일</span>
+          </div>
+          <div className="flex items-center justify-between rounded-xl bg-primary/10 p-3">
+            <span className="text-sm font-semibold text-primary">재방문율</span>
+            <span className="font-bold text-primary">{returnRate}%</span>
+          </div>
+        </div>
+      );
+    }
+    case '단골 고객': {
+      const regulars = [...customers]
+        .filter((c) => c.visitCount >= 3)
+        .sort((a, b) => b.visitCount - a.visitCount)
+        .slice(0, 12);
+      return (
+        <div className="flex flex-col gap-2">
+          <p className="mb-1 text-xs text-text-muted">3회 이상 방문 고객 기준</p>
+          {regulars.map((customer, idx) => (
+            <div
+              key={customer.id}
+              className="flex items-center justify-between rounded-xl bg-surface-alt px-4 py-2.5"
+            >
+              <div className="flex items-center gap-2">
+                <span className="w-5 text-xs text-text-muted">{idx + 1}</span>
+                <span className="text-sm font-medium text-text">{customer.name}</span>
+              </div>
+              <span className="text-sm text-text-secondary">{customer.visitCount}회 방문</span>
+            </div>
+          ))}
+          {regulars.length === 0 && (
+            <p className="text-center text-sm text-text-muted">3회 이상 방문 고객이 없습니다.</p>
+          )}
+        </div>
+      );
+    }
+    case '오늘 예약': {
+      const today = new Date().toISOString().split('T')[0];
+      const todayRes = reservations
+        .filter((r) => r.reservationDate === today && r.status !== 'cancelled')
+        .sort((a, b) => a.reservationTime.localeCompare(b.reservationTime));
+      const channelLabel: Record<string, string> = {
+        kakao: '카카오톡',
+        naver: '네이버',
+        phone: '전화',
+        walk_in: '워크인',
+      };
+      return (
+        <div className="flex flex-col gap-2">
+          {todayRes.map((appt) => (
+            <div
+              key={appt.id}
+              className="flex items-center justify-between rounded-xl bg-surface-alt px-4 py-3"
+            >
+              <div className="flex items-center gap-3">
+                <span className="w-12 text-sm font-bold text-primary">{appt.reservationTime}</span>
+                <span className="text-sm font-medium text-text">{appt.customerName}</span>
+              </div>
+              <span className="rounded-full bg-border px-2 py-0.5 text-xs text-text-muted">
+                {channelLabel[appt.channel] ?? appt.channel}
+              </span>
+            </div>
+          ))}
+          {todayRes.length === 0 && (
+            <p className="text-center text-sm text-text-muted">오늘 예약이 없습니다.</p>
+          )}
+        </div>
+      );
+    }
+    default:
+      return null;
+  }
+}
 
 interface BottomSheetProps {
   kpi: KPICard;
@@ -151,7 +197,10 @@ interface BottomSheetProps {
 }
 
 function KPIBottomSheet({ kpi, onClose }: BottomSheetProps) {
-  const detail = KPI_DETAIL_MAP[kpi.label];
+  const records = useRecordsStore((s) => s.records);
+  const customers = useCustomerStore((s) => s.customers);
+  const reservations = useReservationStore((s) => s.reservations);
+  const detail = buildKPIDetail(kpi.label, records, customers, reservations);
 
   return (
     <>

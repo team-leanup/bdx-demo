@@ -650,10 +650,10 @@ function StorageManagementSection() {
           <Modal
             isOpen={confirmClearAll}
             onClose={() => setConfirmClearAll(false)}
-            title="전체 데모 데이터 초기화"
+            title="전체 데이터 초기화"
           >
             <div className="p-5">
-              <p className="text-sm text-text-secondary mb-4">모든 데모 데이터가 초기화됩니다. 앱이 처음 상태로 돌아갑니다. 계속하시겠습니까?</p>
+              <p className="text-sm text-text-secondary mb-4">모든 데이터가 초기화됩니다. 앱이 처음 상태로 돌아갑니다. 계속하시겠습니까?</p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setConfirmClearAll(false)}
@@ -665,7 +665,7 @@ function StorageManagementSection() {
                   onClick={() => { handleClearAll(); }}
                   className="flex-1 rounded-lg bg-error/10 border border-error/30 py-2 text-xs font-semibold text-error hover:bg-error/20 transition-colors"
                 >
-                  전체 데모 데이터 초기화
+                  전체 데이터 초기화
                 </button>
               </div>
             </div>
@@ -731,7 +731,7 @@ export default function SettingsPage() {
     const monthlyArt = parseInt(priceMonthlyArt, 10);
     if ([hand, foot, offSameShop, offOtherShop, solidPoint, fullArt, monthlyArt].some((v) => isNaN(v) || v < 0)) return;
     setSavedPrices({ hand, foot, offSameShop, offOtherShop, solidPoint, fullArt, monthlyArt });
-    setShopSettings({ baseHandPrice: hand, baseFootPrice: foot, baseOffSameShop: offSameShop, baseOffOtherShop: offOtherShop });
+    setShopSettings({ baseHandPrice: hand, baseFootPrice: foot, baseOffSameShop: offSameShop, baseOffOtherShop: offOtherShop, baseSolidPointPrice: solidPoint, baseFullArtPrice: fullArt, baseMonthlyArtPrice: monthlyArt });
     setEditingPrices(false);
   };
 
@@ -1084,7 +1084,7 @@ export default function SettingsPage() {
               <div className="flex flex-col gap-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-text-secondary">{t('settings.version')}</span>
-                  <span className="font-medium text-text">1.0.0 (Demo)</span>
+                  <span className="font-medium text-text">1.0.0</span>
                 </div>
 
                 {/* 사용 가이드 다시보기 */}

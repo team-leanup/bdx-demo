@@ -445,6 +445,7 @@ BDX를 "상담 시스템"에서 **"고객 관리 CRM + 시술 기록 시스템"*
 ### 히스토리
 | 날짜 | 내용 |
 |------|------|
+| 2026-03-10 | DB Full Package: 스키마 보완(`booking_requests.pre_consultation_data/completed_at`, `consultation_records.language`, `customers.preferred_language`, `shops.settings` JSONB), RLS 보안 강화(`get_my_shop_id()` 헬퍼 + shop 격리 정책 8개 테이블 전체 교체, anon INSERT 허용), Shop settings DB 동기화(`setShopSettings()` → fire-and-forget DB write, `syncShopSettingsFromShop()` → DB settings 복원), 코드 정리(`mock-dashboard.ts` 삭제, `KPICards.tsx` 하드코딩→실시간 계산, `database.ts` 타입 재생성) |
 | 2026-03-10 | `booking_requests`, `portfolio_photos`에 `shop_id`를 추가/백필하고, fetch/mutation/store hydration을 모두 현재 샵 기준으로 제한해 멀티샵 데이터 분리를 구현 |
 | 2026-03-09 | 인프라 항목으로 추가 |
 

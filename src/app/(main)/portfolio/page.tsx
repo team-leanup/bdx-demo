@@ -18,7 +18,7 @@ import type { ConsultationRecord } from '@/types/consultation';
 
 type FilterKind = 'all' | PortfolioPhotoKind;
 type DateFilter = 'all' | '30d' | '90d' | '1y';
-type PriceFilter = 'all' | 'under70000' | '70000to89999' | '90000plus';
+type PriceFilter = 'all' | 'under50000' | '50000to79999' | '80000to119999' | '120000plus';
 
 const KIND_LABEL: Record<PortfolioPhotoKind, string> = {
   reference: '레퍼런스',
@@ -167,9 +167,10 @@ export default function PortfolioPage(): React.ReactElement {
 
         if (priceFilter !== 'all') {
           if (price == null) return false;
-          if (priceFilter === 'under70000' && price >= 70000) return false;
-          if (priceFilter === '70000to89999' && (price < 70000 || price >= 90000)) return false;
-          if (priceFilter === '90000plus' && price < 90000) return false;
+          if (priceFilter === 'under50000' && price >= 50000) return false;
+          if (priceFilter === '50000to79999' && (price < 50000 || price >= 80000)) return false;
+          if (priceFilter === '80000to119999' && (price < 80000 || price >= 120000)) return false;
+          if (priceFilter === '120000plus' && price < 120000) return false;
         }
 
         // PF-2: 분위기 필터
@@ -213,9 +214,10 @@ export default function PortfolioPage(): React.ReactElement {
 
   const priceOptions: { key: PriceFilter; label: string }[] = [
     { key: 'all', label: '전체 가격' },
-    { key: 'under70000', label: '7만원 미만' },
-    { key: '70000to89999', label: '7-8.9만원' },
-    { key: '90000plus', label: '9만원 이상' },
+    { key: 'under50000', label: '5만원 미만' },
+    { key: '50000to79999', label: '5-8만원' },
+    { key: '80000to119999', label: '8-12만원' },
+    { key: '120000plus', label: '12만원 이상' },
   ];
 
   return (
@@ -376,12 +378,16 @@ export default function PortfolioPage(): React.ReactElement {
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
             </svg>
             <p className="text-base font-medium text-text-secondary">
-              {search ? '검색 결과가 없습니다' : '아직 포트폴리오가 없습니다'}
+              {search || filterKind !== 'all' || serviceFilter !== 'all' || dateFilter !== 'all' || priceFilter !== 'all' || moodFilter || globalBestFilter
+                ? '검색 결과가 없습니다'
+                : '아직 포트폴리오가 없습니다'}
             </p>
             <p className="mt-1 text-sm text-text-muted">
-              {search ? '다른 검색어를 시도해보세요' : '사진을 업로드하여 포트폴리오를 시작하세요'}
+              {search || filterKind !== 'all' || serviceFilter !== 'all' || dateFilter !== 'all' || priceFilter !== 'all' || moodFilter || globalBestFilter
+                ? '검색어나 필터를 변경해보세요'
+                : '사진을 업로드하여 포트폴리오를 시작하세요'}
             </p>
-            {!search && (
+            {!search && filterKind === 'all' && serviceFilter === 'all' && dateFilter === 'all' && priceFilter === 'all' && !moodFilter && !globalBestFilter && (
               <Button
                 variant="primary"
                 className="mt-4"
@@ -409,7 +415,7 @@ export default function PortfolioPage(): React.ReactElement {
                   />
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2.5 pt-6">
                     <p className="text-xs font-medium text-white truncate">
-                      {customer?.name ?? '알 수 없음'}
+                      {customer?.name ?? '레퍼런스'}
                     </p>
                     <p className="mt-0.5 text-[10px] text-white/75">{formatDateDot(effectiveDate)}</p>
                     <div className="flex items-center gap-1 mt-1 flex-wrap">

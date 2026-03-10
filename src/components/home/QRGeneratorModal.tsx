@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface QRGeneratorModalProps {
   isOpen: boolean;
@@ -14,7 +15,6 @@ const CONSULTATION_URL_PATH = '/consultation/customer?entry=customer-link';
 export function QRGeneratorModal({ isOpen, onClose, shopId }: QRGeneratorModalProps): React.ReactElement | null {
   const [copied, setCopied] = useState(false);
   const [origin, setOrigin] = useState('');
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -42,55 +42,6 @@ export function QRGeneratorModal({ isOpen, onClose, shopId }: QRGeneratorModalPr
       setTimeout(() => setCopied(false), 2000);
     }
   };
-
-  // Simple QR-like pattern drawn on canvas using the URL as seed
-  useEffect(() => {
-    if (!canvasRef.current || !isOpen) return;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const size = 160;
-    canvas.width = size;
-    canvas.height = size;
-    const cellSize = 8;
-    const cells = Math.floor(size / cellSize);
-
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, size, size);
-
-    // Generate a deterministic pattern based on URL
-    const seed = consultationUrl.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    const pseudoRandom = (n: number) => {
-      const x = Math.sin(seed + n) * 10000;
-      return x - Math.floor(x);
-    };
-
-    ctx.fillStyle = '#000000';
-    for (let y = 0; y < cells; y++) {
-      for (let x = 0; x < cells; x++) {
-        const n = y * cells + x;
-        // Corner squares (QR finder patterns)
-        const isTopLeft = x < 4 && y < 4;
-        const isTopRight = x >= cells - 4 && y < 4;
-        const isBottomLeft = x < 4 && y >= cells - 4;
-        if (isTopLeft || isTopRight || isBottomLeft) {
-          const isBorder = (isTopLeft && (x === 0 || x === 3 || y === 0 || y === 3))
-            || (isTopRight && (x === cells - 4 || x === cells - 1 || y === 0 || y === 3))
-            || (isBottomLeft && (x === 0 || x === 3 || y === cells - 4 || y === cells - 1));
-          if (isBorder) {
-            ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
-          } else {
-            ctx.fillRect(x * cellSize + 1, y * cellSize + 1, cellSize - 2, cellSize - 2);
-          }
-          continue;
-        }
-        if (pseudoRandom(n) > 0.5) {
-          ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
-        }
-      }
-    }
-  }, [isOpen, consultationUrl]);
 
   if (!isOpen) return null;
 
@@ -132,11 +83,20 @@ export function QRGeneratorModal({ isOpen, onClose, shopId }: QRGeneratorModalPr
               </button>
             </div>
 
-            {/* QR Canvas */}
+            {/* QR Code */}
             <div className="flex flex-col items-center gap-4 px-5 py-6">
-              <div className="w-44 h-44 rounded-2xl border-2 border-border bg-white flex items-center justify-center p-2 shadow-sm">
-                <canvas ref={canvasRef} className="w-40 h-40" style={{ imageRendering: 'pixelated' }} />
+              <div className="w-44 h-44 rounded-2xl border-2 border-border bg-white flex items-center justify-center p-3 shadow-sm">
+                <QRCodeSVG
+                  value={consultationUrl}
+                  size={152}
+                  level="M"
+                  includeMargin={false}
+                />
               </div>
+
+              <p className="text-xs text-text-muted text-center px-4">
+                스마트폰 카메라로 QR 코드를 스캔하세요
+              </p>
 
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-alt border border-border">
                 <svg className="w-3 h-3 text-primary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

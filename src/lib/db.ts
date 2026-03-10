@@ -3,7 +3,7 @@ import type { Database } from '@/types/database';
 import type { Customer, CustomerTag, SmallTalkNote, VisitFrequency, TagCategory, TagAccent } from '@/types/customer';
 import type { ConsultationRecord, ConsultationType, BookingRequest, BookingChannel, BookingStatus, DailyChecklist } from '@/types/consultation';
 import type { PortfolioPhoto } from '@/types/portfolio';
-import type { Shop, Designer, BusinessHours } from '@/types/shop';
+import type { Shop, Designer, BusinessHours, ShopExtendedSettings } from '@/types/shop';
 
 const PORTFOLIO_BUCKET = 'portfolio-images';
 
@@ -39,6 +39,7 @@ function toShop(row: Database['public']['Tables']['shops']['Row']): Shop {
     onboardingCompletedAt: row.onboarding_completed_at ?? undefined,
     createdAt: row.created_at ?? '',
     updatedAt: row.updated_at ?? '',
+    settings: (row.settings as unknown as ShopExtendedSettings) ?? undefined,
   };
 }
 
@@ -317,6 +318,7 @@ export async function fetchCustomers(shopId?: string | null): Promise<Customer[]
     membership: (row.membership as unknown as Customer['membership']) ?? undefined,
     createdAt: row.created_at ?? '',
     updatedAt: row.updated_at ?? '',
+    preferredLanguage: (row.preferred_language as Customer['preferredLanguage']) ?? undefined,
   }));
 }
 
@@ -346,6 +348,7 @@ export async function fetchConsultationRecords(shopId?: string | null): Promise<
     notes: row.notes ?? undefined,
     imageUrls: (row.image_urls as unknown as string[]) ?? [],
     checklist: (row.checklist as unknown as DailyChecklist) ?? undefined,
+    language: (row.language as ConsultationRecord['language']) ?? undefined,
   }));
 }
 
@@ -375,6 +378,8 @@ export async function fetchBookingRequests(shopId?: string | null): Promise<Book
     designerId: row.designer_id ?? undefined,
     serviceLabel: row.service_label ?? undefined,
     customerId: row.customer_id ?? undefined,
+    preConsultationData: (row.pre_consultation_data as unknown as BookingRequest['preConsultationData']) ?? undefined,
+    preConsultationCompletedAt: row.pre_consultation_completed_at ?? undefined,
   }));
 }
 
@@ -420,6 +425,7 @@ export async function dbUpsertCustomer(customer: Customer): Promise<void> {
     regular_since: customer.regularSince ?? null,
     visit_frequency: customer.visitFrequency ?? null,
     membership: (customer.membership as unknown as import('@/types/database').Json) ?? null,
+    preferred_language: customer.preferredLanguage ?? null,
     updated_at: new Date().toISOString(),
   });
   if (error) {
@@ -494,10 +500,24 @@ export async function dbUpsertShop(shop: Shop): Promise<void> {
     base_foot_price: shop.baseFootPrice,
     logo_url: shop.logoUrl ?? null,
     onboarding_completed_at: shop.onboardingCompletedAt ?? null,
+    settings: (shop.settings as unknown as import('@/types/database').Json) ?? null,
     updated_at: new Date().toISOString(),
   });
   if (error) {
     console.error('[db] dbUpsertShop error:', error);
+  }
+}
+
+export async function dbUpdateShopSettings(shopId: string, settings: ShopExtendedSettings): Promise<void> {
+  const { error } = await supabase
+    .from('shops')
+    .update({
+      settings: settings as unknown as import('@/types/database').Json,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', shopId);
+  if (error) {
+    console.error('[db] dbUpdateShopSettings error:', error);
   }
 }
 
@@ -520,6 +540,7 @@ export async function dbUpsertRecord(record: ConsultationRecord): Promise<void> 
     notes: record.notes ?? null,
     image_urls: (record.imageUrls as unknown as import('@/types/database').Json) ?? null,
     checklist: (record.checklist as unknown as import('@/types/database').Json) ?? null,
+    language: record.language ?? null,
   });
   if (error) {
     console.error('[db] dbUpsertRecord error:', error);
@@ -556,6 +577,8 @@ export async function dbUpsertReservation(reservation: BookingRequest): Promise<
     designer_id: reservation.designerId ?? null,
     service_label: reservation.serviceLabel ?? null,
     customer_id: reservation.customerId ?? null,
+    pre_consultation_data: (reservation.preConsultationData as unknown as import('@/types/database').Json) ?? null,
+    pre_consultation_completed_at: reservation.preConsultationCompletedAt ?? null,
   });
   if (error) {
     console.error('[db] dbUpsertReservation error:', error);

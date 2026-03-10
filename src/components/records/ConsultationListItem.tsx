@@ -73,7 +73,7 @@ export function ConsultationListItem({
           <span className="text-sm font-semibold text-text truncate">{c.customerName}</span>
           {/* R-4: 국기 아이콘 */}
           {isForeign && (
-            <FlagIcon language={record.language!} size="sm" />
+            <FlagIcon language={record.language!} size="sm" showLabel />
           )}
           <span className="text-xs text-text-muted shrink-0">· {getDesignerName(record.designerId)}</span>
           <span className="ml-auto shrink-0 text-right">

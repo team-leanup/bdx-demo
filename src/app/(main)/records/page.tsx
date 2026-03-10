@@ -7,7 +7,7 @@ import { CustomerTagChip } from '@/components/customer/CustomerTagChip';
 import { ReservationReadinessBadge } from '@/components/reservations/ReservationReadinessBadge';
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Card, Input } from '@/components/ui';
+import { Card, Input, Modal } from '@/components/ui';
 import { useRecordsStore } from '@/store/records-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useReservationStore } from '@/store/reservation-store';
@@ -15,6 +15,7 @@ import { useAppStore } from '@/store/app-store';
 import { useConsultationStore } from '@/store/consultation-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { useT } from '@/lib/i18n';
+import { formatPrice } from '@/lib/format';
 import { MonthCalendar } from '@/components/calendar/MonthCalendar';
 import { DayReservationList } from '@/components/calendar/DayReservationList';
 import { WeekCalendar } from '@/components/calendar/WeekCalendar';
@@ -107,7 +108,7 @@ function toTimeGridEvents(
     const endM = endTotal % 60;
     events.push({
       id: `con-${c.id}`,
-      title: c.consultation.customerName || 'Unknown',
+      title: c.consultation.customerName || '이름 없음',
       date,
       startTime: time,
       endTime: `${String(Math.min(endH, 23)).padStart(2, '0')}:${String(endM).padStart(2, '0')}`,
@@ -140,8 +141,9 @@ export default function RecordsPage() {
   const [weekStartDate, setWeekStartDate] = useState(getMonday(getTodayStr()));
   const [selectedEvent, setSelectedEvent] = useState<TimeGridEvent | null>(null);
 
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [editForm, setEditForm] = useState({ title: '', phone: '', startTime: '', requestNote: '', referenceImages: [] as string[], language: 'ko' as 'ko' | 'en' | 'zh' | 'ja' });
+  const [editForm, setEditForm] = useState({ title: '', phone: '', startTime: '', requestNote: '', referenceImages: [] as string[], language: 'ko' as 'ko' | 'en' | 'zh' | 'ja', deposit: '' as string });
   const editPhotoRef = useRef<HTMLInputElement>(null);
 
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
@@ -274,12 +276,14 @@ export default function RecordsPage() {
         requestNote: ev.requestNote ?? '',
         referenceImages: booking?.referenceImageUrls ?? [],
         language: (booking?.language ?? 'ko') as 'ko' | 'en' | 'zh' | 'ja',
+        deposit: String(booking?.deposit ?? ''),
       });
     }
   };
 
   const handleSaveReservation = () => {
     if (!selectedEvent) return;
+    const depositAmount = editForm.deposit ? parseInt(editForm.deposit, 10) : undefined;
     updateReservation(selectedEvent.originalId, {
       customerName: editForm.title,
       phone: editForm.phone,
@@ -287,6 +291,7 @@ export default function RecordsPage() {
       requestNote: editForm.requestNote,
       referenceImageUrls: editForm.referenceImages.length > 0 ? editForm.referenceImages : undefined,
       language: editForm.language,
+      deposit: !isNaN(depositAmount ?? NaN) && depositAmount ? depositAmount : undefined,
     });
     setSelectedEvent(null);
     setEditMode(false);
@@ -317,14 +322,18 @@ export default function RecordsPage() {
 
   const handleDeleteRecord = () => {
     if (!selectedEvent) return;
-    if (confirm('이 기록을 삭제하시겠습니까?')) {
-      if (selectedEvent.type === 'reservation') {
-        removeReservation(selectedEvent.originalId);
-      } else {
-        removeRecord(selectedEvent.originalId);
-      }
-      setSelectedEvent(null);
+    setConfirmDelete(true);
+  };
+
+  const executeDelete = () => {
+    if (!selectedEvent) return;
+    if (selectedEvent.type === 'reservation') {
+      removeReservation(selectedEvent.originalId);
+    } else {
+      removeRecord(selectedEvent.originalId);
     }
+    setConfirmDelete(false);
+    setSelectedEvent(null);
   };
 
   const handleEditModeEnter = () => {
@@ -338,6 +347,7 @@ export default function RecordsPage() {
       requestNote: selectedEvent.requestNote ?? '',
       referenceImages: booking?.referenceImageUrls ?? [],
       language: (booking?.language ?? 'ko') as 'ko' | 'en' | 'zh' | 'ja',
+      deposit: String(booking?.deposit ?? ''),
     });
   };
 
@@ -483,7 +493,7 @@ export default function RecordsPage() {
             >
               🌏 외국인
             </button>
-            {TAG_PRESETS.find((p) => p.category === 'etc')?.options.map((opt) => (
+            {TAG_PRESETS.filter((p) => ['design', 'shape', 'etc'].includes(p.category)).flatMap((p) => p.options).map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => setTagFilter(tagFilter === opt.value ? null : opt.value)}
@@ -522,6 +532,26 @@ export default function RecordsPage() {
           />
         </>
       )}
+
+      <Modal isOpen={confirmDelete} onClose={() => setConfirmDelete(false)} title="기록 삭제">
+        <div className="p-5">
+          <p className="text-sm text-text-secondary mb-4">이 기록을 삭제하시겠습니까? 삭제된 기록은 복구할 수 없습니다.</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setConfirmDelete(false)}
+              className="flex-1 rounded-lg border border-border py-2 text-xs font-semibold text-text-secondary hover:bg-surface-alt transition-colors"
+            >
+              취소
+            </button>
+            <button
+              onClick={executeDelete}
+              className="flex-1 rounded-lg bg-error/10 border border-error/30 py-2 text-xs font-semibold text-error hover:bg-error/20 transition-colors"
+            >
+              삭제
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       <AnimatePresence>
         {selectedEvent && (
@@ -606,6 +636,20 @@ export default function RecordsPage() {
                       </select>
                     </div>
                     <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-text-secondary">예약금</label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-text-muted">₩</span>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={editForm.deposit}
+                          onChange={(e) => setEditForm((f) => ({ ...f, deposit: e.target.value.replace(/[^0-9]/g, '') }))}
+                          className="flex-1 rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                          placeholder="예약금 입력 (선택)"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-semibold text-text-secondary">참고 이미지</label>
                       <div className="flex gap-2 flex-wrap">
                         {editForm.referenceImages.map((url, i) => (
@@ -685,7 +729,7 @@ export default function RecordsPage() {
                     {selectedEvent.channel && (
                       <div className="flex justify-between">
                         <span className="text-sm text-text-secondary">채널</span>
-                        <span className="text-sm font-medium text-text">{selectedEvent.channel}</span>
+                        <span className="text-sm font-medium text-text">{{ kakao: '카카오', naver: '네이버', phone: '전화', walk_in: '방문', instagram: '인스타그램' }[selectedEvent.channel] ?? selectedEvent.channel}</span>
                       </div>
                     )}
                     {selectedEvent.customerPhone && (
@@ -708,6 +752,18 @@ export default function RecordsPage() {
                         <p className="text-xs text-text-secondary">{selectedEvent.requestNote}</p>
                       </div>
                     )}
+                    {/* 예약금 표시 */}
+                    {(() => {
+                      const booking = allReservations.find((r) => r.id === selectedEvent.originalId);
+                      const depositAmount = booking?.deposit ?? booking?.preConsultationData?.deposit;
+                      if (!depositAmount || depositAmount <= 0) return null;
+                      return (
+                        <div className="flex justify-between">
+                          <span className="text-sm text-text-secondary">예약금</span>
+                          <span className="text-sm font-semibold text-primary">{formatPrice(depositAmount)}</span>
+                        </div>
+                      );
+                    })()}
                     {selectedEvent.customerId && (() => {
                       const pinnedTags = sortSafetyTags(getPinnedTags(selectedEvent.customerId!));
                       if (pinnedTags.length === 0) return null;

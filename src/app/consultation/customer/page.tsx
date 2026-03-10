@@ -120,14 +120,9 @@ function CustomerPageInner() {
     } else {
       sessionStorage.removeItem('consultation_customer_memo');
     }
-    // C-6: customer_link 모드에서는 고객 정보가 마지막 → SUMMARY로
-    if (prefillEntry === 'customer_link') {
-      setStep(ConsultationStep.SUMMARY);
-      router.push('/consultation/summary');
-    } else {
-      setStep(ConsultationStep.STEP1_BASIC);
-      router.push('/consultation/step1');
-    }
+    // C-6: customer_link 모드에서도 step1부터 시작 — 전체 플로우 진행
+    setStep(ConsultationStep.STEP1_BASIC);
+    router.push('/consultation/step1');
   };
 
   const canProceed = name.trim().length > 0;
@@ -141,9 +136,9 @@ function CustomerPageInner() {
     handleNext();
   };
 
-  // C-6: step 번호는 entryPoint에 따라 다름
-  const stepNumber = prefillEntry === 'customer_link' ? 4 : 1;
-  const backHref = prefillEntry === 'customer_link' ? '/consultation/traits' : '/consultation';
+  // C-6: customer_link 포함 모든 모드에서 customer가 첫 화면 → Step 1 고정
+  const stepNumber = 1;
+  const backHref = '/consultation';
 
   return (
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">

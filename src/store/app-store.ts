@@ -3,6 +3,8 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { ServiceStructure, SurchargeSettings, TimeSettings, BusinessHours, Shop } from '@/types/shop';
+import { dbUpdateShopSettings } from '@/lib/db';
+import { useAuthStore } from '@/store/auth-store';
 
 interface ShopSettings {
   shopName: string;
@@ -13,6 +15,9 @@ interface ShopSettings {
   baseFootPrice: number;
   baseOffSameShop: number;
   baseOffOtherShop: number;
+  baseSolidPointPrice: number;
+  baseFullArtPrice: number;
+  baseMonthlyArtPrice: number;
   designerCount: number;
   selectedServices: string[];
   businessHours: BusinessHours[];
@@ -30,6 +35,9 @@ const DEFAULT_SHOP_SETTINGS: ShopSettings = {
   baseFootPrice: 70000,
   baseOffSameShop: 5000,
   baseOffOtherShop: 10000,
+  baseSolidPointPrice: 3000,
+  baseFullArtPrice: 10000,
+  baseMonthlyArtPrice: 80000,
   designerCount: 1,
   selectedServices: [],
   businessHours: [
@@ -99,16 +107,36 @@ export const useAppStore = create<AppStore>()(
       setOnboardingComplete: (complete) =>
         set({ isOnboardingComplete: complete }),
 
-      setShopSettings: (settings) =>
+      setShopSettings: (settings) => {
         set((state) => ({
           shopSettings: { ...state.shopSettings, ...settings },
-        })),
+        }));
+        // Fire-and-forget DB sync
+        const shopId = useAuthStore.getState().currentShopId;
+        if (shopId) {
+          const updated = useAppStore.getState().shopSettings;
+          dbUpdateShopSettings(shopId, {
+            addressDetail: updated.shopAddressDetail,
+            baseOffSameShop: updated.baseOffSameShop,
+            baseOffOtherShop: updated.baseOffOtherShop,
+            baseSolidPointPrice: updated.baseSolidPointPrice,
+            baseFullArtPrice: updated.baseFullArtPrice,
+            baseMonthlyArtPrice: updated.baseMonthlyArtPrice,
+            designerCount: updated.designerCount,
+            selectedServices: updated.selectedServices,
+            serviceStructure: updated.serviceStructure,
+            surcharges: updated.surcharges,
+            timeSettings: updated.timeSettings,
+          }).catch(console.error);
+        }
+      },
 
       syncShopSettingsFromShop: (shop) => {
         if (!shop) {
           return;
         }
 
+        const s = shop.settings;
         set((state) => ({
           shopSettings: {
             ...state.shopSettings,
@@ -121,6 +149,26 @@ export const useAppStore = create<AppStore>()(
               shop.businessHours.length > 0
                 ? shop.businessHours
                 : state.shopSettings.businessHours,
+            // DB settings 동기화 (값이 있을 때만 덮어씀)
+            ...(s ? {
+              shopAddressDetail: s.addressDetail ?? state.shopSettings.shopAddressDetail,
+              baseOffSameShop: s.baseOffSameShop ?? state.shopSettings.baseOffSameShop,
+              baseOffOtherShop: s.baseOffOtherShop ?? state.shopSettings.baseOffOtherShop,
+              baseSolidPointPrice: s.baseSolidPointPrice ?? state.shopSettings.baseSolidPointPrice,
+              baseFullArtPrice: s.baseFullArtPrice ?? state.shopSettings.baseFullArtPrice,
+              baseMonthlyArtPrice: s.baseMonthlyArtPrice ?? state.shopSettings.baseMonthlyArtPrice,
+              designerCount: s.designerCount ?? state.shopSettings.designerCount,
+              selectedServices: s.selectedServices ?? state.shopSettings.selectedServices,
+              serviceStructure: s.serviceStructure
+                ? { ...state.shopSettings.serviceStructure, ...s.serviceStructure }
+                : state.shopSettings.serviceStructure,
+              surcharges: s.surcharges
+                ? { ...state.shopSettings.surcharges, ...s.surcharges }
+                : state.shopSettings.surcharges,
+              timeSettings: s.timeSettings
+                ? { ...state.shopSettings.timeSettings, ...s.timeSettings }
+                : state.shopSettings.timeSettings,
+            } : {}),
           },
         }));
       },

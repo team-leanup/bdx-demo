@@ -222,40 +222,28 @@
 
 > 핵심: 현재 **DB가 전혀 없고 모든 데이터가 localStorage**. 브라우저 초기화하면 데이터 전부 날아감
 
-### 14.1 ⬜ DB 서비스 선정 및 연결
-- **지금**: `package.json`에 DB 관련 패키지 없음 (Prisma, Drizzle, Supabase 등 전무). `.env` 파일도 없음. 모든 데이터가 `src/data/mock-*.ts` 하드코딩 → Zustand persist(localStorage)로 저장
-- **할 일**: DB 서비스 선정 (Supabase PostgreSQL 추천 — 인증+DB+스토리지 통합) → 연결 설정 → `.env.local`에 DB URL 추가
-- **대안**: PlanetScale(MySQL), Vercel Postgres, Neon 등
+### 14.1 🟢 DB 서비스 선정 및 연결
+- **완료**: Supabase PostgreSQL (Auth + DB + Storage 통합) 연결 완료. 8개 테이블에 실제 데이터 운영 중
 
-### 14.2 ⬜ DB 스키마 설계
-- **지금**: 타입 정의만 존재 (`src/types/` — customer.ts, consultation.ts, portfolio.ts, auth.ts, shop.ts, price.ts 등)
-- **할 일**: 기존 TypeScript 타입을 기반으로 DB 스키마 설계. ORM(Prisma 또는 Drizzle) 도입. 주요 테이블:
-  - `users` — 디자이너/원장 계정 (구글 OAuth 연동)
-  - `shops` — 매장 정보
-  - `customers` — 고객 정보 + 태그
-  - `consultations` — 상담 기록
-  - `reservations` — 예약
-  - `portfolio_photos` — 시술 사진
-  - `treatments` — 시술 기록 + 가격
+### 14.2 🟢 DB 스키마 설계 및 보완
+- **완료**: 8개 테이블(`shops`, `designers`, `customers`, `customer_tags`, `small_talk_notes`, `consultation_records`, `booking_requests`, `portfolio_photos`) 운영 중
+- **완료 추가**: 누락 컬럼 마이그레이션 — `booking_requests.pre_consultation_data/pre_consultation_completed_at`, `consultation_records.language`, `customers.preferred_language`, `shops.settings`(JSONB) 추가
+- **완료 추가**: RLS 보안 강화 — `USING(true)` 일괄 삭제 → `get_my_shop_id()` 헬퍼 함수 기반 shop 격리 정책으로 교체. anon INSERT(QR 예약)도 별도 정책 허용
 
 ### 14.3 ⬜ API 라우트 구현
-- **지금**: `src/app/api/` 라우트 없음. 모든 데이터 조작이 클라이언트 Zustand store에서 직접 처리
-- **할 일**: Next.js App Router API 라우트(`app/api/`) 생성. CRUD 엔드포인트:
-  - `/api/customers` — 고객 CRUD
-  - `/api/consultations` — 상담 CRUD
-  - `/api/reservations` — 예약 CRUD
-  - `/api/portfolio` — 포트폴리오 CRUD
-  - `/api/treatments` — 시술 기록 + 가격
+- **지금**: `src/app/api/` 라우트 없음. 모든 데이터 조작이 클라이언트 Zustand store에서 직접 Supabase SDK 호출
+- **할 일**: Next.js App Router API 라우트(`app/api/`) 생성. 서버 측 검증 추가
 
-### 14.4 ⬜ Zustand store → API 연동 전환
-- **지금**: 6개 Zustand store가 각각 독립적으로 localStorage에 persist. 예:
-  - `useCustomerStore` (`bdx-customers`) — mock 데이터 deepClone 후 localStorage
-  - `useRecordsStore` (`bdx-records`) — 추가분만 persist, 조회 시 mock과 merge
-  - `useReservationStore` (`bdx-reservations`) — 전체 persist
-- **완료 추가**: Supabase hydrate 대상인 `shop`, `customers`, `consultation_records`, `booking_requests`, `portfolio_photos`는 현재 로그인된 `currentShopId` 기준으로만 읽고 쓰도록 스토어/DB helper를 정리해 샵 간 데이터가 섞이지 않게 함
-- **할 일**: store의 데이터 소스를 localStorage → API fetch로 전환. SWR 또는 React Query 도입 검토. localStorage는 오프라인 캐시 용도로만 유지
+### 14.4 🟢 Zustand store → DB 연동 전환
+- **완료**: Supabase hydrate 대상인 `shop`, `customers`, `consultation_records`, `booking_requests`, `portfolio_photos`는 현재 로그인된 `currentShopId` 기준으로만 읽고 쓰도록 스토어/DB helper를 정리해 샵 간 데이터가 섞이지 않게 함
+- **완료 추가**: Shop settings(가격/서비스/시간 설정)를 `shops.settings` JSONB로 DB 동기화. `setShopSettings()` 호출 시 fire-and-forget DB write, `syncShopSettingsFromShop()` 시 DB에서 복원
 
-### 14.5 🟢 이미지 스토리지
+### 14.5 🟢 코드 정리
+- **완료**: `src/data/mock-dashboard.ts` 데드코드 삭제 (어디서도 import 안 됨)
+- **완료**: `KPICards.tsx` 하드코딩 드릴다운 → 실시간 store 데이터 기반 계산으로 교체
+- **완료**: `database.ts` Supabase 타입 재생성 (새 컬럼/함수/관계 반영)
+
+### 14.6 🟢 이미지 스토리지
 - **완료**: 포트폴리오 사진을 Supabase Storage `portfolio-images` 버킷에 업로드하고, 메타데이터는 `portfolio_photos` 테이블에서 관리하도록 전환함. 앱은 공개 URL 기반으로 이미지를 렌더링하고, 포트폴리오 스토어를 DB hydrate 흐름에 포함시킴
 - **완료 추가**: 기존 `bdx-portfolio` localStorage base64 사진은 첫 hydrate 시 Supabase로 순차 이관하고, 업로드/삭제/초기화 결과를 사용자 피드백으로 노출함
 
@@ -286,6 +274,6 @@
 | 대시보드 | 4 | 4 | 0 | 0 | 0 |
 | 트렌드 분석 | 2 | 0 | 0 | 0 | 2 |
 | **인증** | **4** | **0** | **0** | **2** | **2** |
-| **데이터베이스** | **5** | **1** | **0** | **0** | **4** |
+| **데이터베이스** | **6** | **5** | **0** | **0** | **1** |
 | 개발 도구 | 1 | 1 | 0 | 0 | 0 |
-| **합계** | **45** | **27** | **0** | **2** | **16** |
+| **합계** | **46** | **31** | **0** | **2** | **13** |
