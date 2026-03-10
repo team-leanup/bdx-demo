@@ -29,9 +29,5 @@
   "env": {
     "NEXT_TELEMETRY_DISABLED": "1",
     "FORCE_COLOR": "1"
-  },
-  "hooks": {
-    "PreCommit": [".claude/hooks/pre-commit.sh"],
-    "PostBuild": [".claude/hooks/post-build.sh"]
   }
 }
