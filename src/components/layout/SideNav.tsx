@@ -139,17 +139,17 @@ export function SideNav({ className }: SideNavProps) {
             <button
               type="button"
               onClick={() => setShowLangMenu((v) => !v)}
-              className="group flex w-full items-center justify-between rounded-xl border border-border bg-surface-alt/80 px-3 py-2.5 text-text-secondary transition-colors hover:border-primary/20 hover:bg-surface-alt"
+              className="group flex w-full items-center justify-between rounded-lg px-1 py-1.5 text-text-secondary transition-colors hover:text-text"
               aria-label="언어 변경"
             >
-              <span className="flex min-w-0 items-center gap-3">
-                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-background text-text-secondary ring-1 ring-border transition-colors group-hover:text-primary">
+              <span className="flex min-w-0 items-center gap-2.5">
+                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md text-text-muted transition-colors group-hover:text-text-secondary">
                   <svg
-                    className="w-4 h-4"
+                    className="h-3.5 w-3.5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
-                    strokeWidth={2}
+                    strokeWidth={1.8}
                   >
                     <path
                       strokeLinecap="round"
@@ -158,16 +158,13 @@ export function SideNav({ className }: SideNavProps) {
                     />
                   </svg>
                 </span>
-                <span className="min-w-0 text-left">
-                  <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted">Language</span>
-                  <span className="block truncate text-[13px] font-semibold text-text">
-                    {LOCALE_LABELS.find((l) => l.value === locale)?.label ?? locale}
-                  </span>
+                <span className="min-w-0 truncate text-[13px] font-medium text-text">
+                  {LOCALE_LABELS.find((l) => l.value === locale)?.label ?? locale}
                 </span>
               </span>
               <svg
                 className={cn(
-                  'h-4 w-4 flex-shrink-0 text-text-muted transition-transform duration-200',
+                  'h-3.5 w-3.5 flex-shrink-0 text-text-muted transition-transform duration-200',
                   showLangMenu && 'rotate-180',
                 )}
                 fill="none"
@@ -212,15 +209,15 @@ export function SideNav({ className }: SideNavProps) {
           <span className="font-bold text-sm tracking-tight text-primary truncate">{shopName}</span>
           <button
             type="button"
-            className="ml-auto w-8 h-8 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-alt transition-colors"
+            className="ml-auto flex h-6 w-6 items-center justify-center rounded-md text-text-muted/70 hover:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 transition-colors"
             aria-label="알림"
           >
             <svg
-              className="w-5 h-5"
+              className="h-3.5 w-3.5"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
-              strokeWidth={2}
+              strokeWidth={1.7}
             >
               <path
                 strokeLinecap="round"
