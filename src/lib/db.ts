@@ -6,6 +6,7 @@ import type { PortfolioPhoto } from '@/types/portfolio';
 import type { Shop, Designer, BusinessHours, ShopExtendedSettings } from '@/types/shop';
 
 const PORTFOLIO_BUCKET = 'portfolio-images';
+const DESIGNER_AVATAR_BUCKET = 'designer-profile-images';
 
 interface PortfolioMutationResult {
   success: boolean;
@@ -17,6 +18,17 @@ export interface ShopAccountMutationResult {
   success: boolean;
   shop?: Shop;
   owner?: Designer;
+  error?: string;
+}
+
+export interface DesignerMutationResult {
+  success: boolean;
+  designer?: Designer;
+  error?: string;
+}
+
+export interface DesignerDeleteResult {
+  success: boolean;
   error?: string;
 }
 
@@ -44,12 +56,17 @@ function toShop(row: Database['public']['Tables']['shops']['Row']): Shop {
 }
 
 function toDesigner(row: Database['public']['Tables']['designers']['Row']): Designer {
+  const profileImageValue = row.profile_image_url ?? undefined;
   return {
     id: row.id,
     shopId: row.shop_id,
     name: row.name,
     role: row.role as 'owner' | 'staff',
-    profileImageUrl: row.profile_image_url ?? undefined,
+    profileImageUrl: profileImageValue
+      ? (profileImageValue.startsWith('http')
+          ? profileImageValue
+          : supabase.storage.from(DESIGNER_AVATAR_BUCKET).getPublicUrl(profileImageValue).data.publicUrl)
+      : undefined,
     phone: row.phone ?? undefined,
     isActive: row.is_active ?? false,
     createdAt: row.created_at ?? '',
@@ -66,6 +83,11 @@ function getPortfolioFileExtension(mimeType: string): string {
   if (mimeType.includes('webp')) return 'webp';
   if (mimeType.includes('gif')) return 'gif';
   return 'jpg';
+}
+
+function getDesignerAvatarStoragePath(rawValue: string | null | undefined): string | null {
+  if (!rawValue) return null;
+  return rawValue.startsWith('http') ? null : rawValue;
 }
 
 function dataUrlToBlob(dataUrl: string): { blob: Blob; mimeType: string } {
@@ -230,6 +252,255 @@ export async function fetchDesigners(shopId?: string | null): Promise<Designer[]
     return [];
   }
   return data.map(toDesigner);
+}
+
+export async function dbCreateDesigner(
+  shopId: string,
+  payload: { name: string; phone?: string },
+): Promise<DesignerMutationResult> {
+  const trimmedName = payload.name.trim();
+  if (!trimmedName) {
+    return { success: false, error: '이름을 입력해 주세요.' };
+  }
+
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('designers')
+    .insert({
+      id: createId('designer'),
+      shop_id: shopId,
+      name: trimmedName,
+      role: 'staff',
+      profile_image_url: null,
+      phone: payload.phone?.trim() ? payload.phone.trim() : null,
+      is_active: true,
+      created_at: now,
+    })
+    .select('*')
+    .single();
+
+  if (error || !data) {
+    console.error('[db] dbCreateDesigner error:', error);
+    return { success: false, error: '선생님 추가에 실패했습니다.' };
+  }
+
+  return { success: true, designer: toDesigner(data) };
+}
+
+export async function dbUpdateDesigner(
+  shopId: string,
+  designerId: string,
+  updates: { name?: string; phone?: string; isActive?: boolean },
+): Promise<DesignerMutationResult> {
+  const payload: Database['public']['Tables']['designers']['Update'] = {};
+
+  if (typeof updates.name === 'string') {
+    const trimmedName = updates.name.trim();
+    if (!trimmedName) {
+      return { success: false, error: '이름을 입력해 주세요.' };
+    }
+    payload.name = trimmedName;
+  }
+
+  if (typeof updates.phone === 'string') {
+    payload.phone = updates.phone.trim() ? updates.phone.trim() : null;
+  }
+
+  if (typeof updates.isActive === 'boolean') {
+    payload.is_active = updates.isActive;
+  }
+
+  const { data, error } = await supabase
+    .from('designers')
+    .update(payload)
+    .eq('shop_id', shopId)
+    .eq('id', designerId)
+    .select('*')
+    .single();
+
+  if (error || !data) {
+    console.error('[db] dbUpdateDesigner error:', error);
+    return { success: false, error: '선생님 정보 수정에 실패했습니다.' };
+  }
+
+  return { success: true, designer: toDesigner(data) };
+}
+
+export async function dbDeleteDesigner(
+  shopId: string,
+  designerId: string,
+): Promise<DesignerDeleteResult> {
+  const { data: existing, error: existingError } = await supabase
+    .from('designers')
+    .select('role, profile_image_url')
+    .eq('shop_id', shopId)
+    .eq('id', designerId)
+    .maybeSingle();
+
+  if (existingError || !existing) {
+    console.error('[db] dbDeleteDesigner lookup error:', existingError);
+    return { success: false, error: '삭제할 선생님 정보를 찾을 수 없습니다.' };
+  }
+
+  if (existing.role === 'owner') {
+    return { success: false, error: '원장 프로필은 삭제할 수 없습니다.' };
+  }
+
+  const [customerRefs, reservationRefs, recordRefs, noteRefs] = await Promise.all([
+    supabase.from('customers').select('id', { count: 'exact', head: true }).eq('shop_id', shopId).eq('assigned_designer_id', designerId),
+    supabase.from('booking_requests').select('id', { count: 'exact', head: true }).eq('shop_id', shopId).eq('designer_id', designerId),
+    supabase.from('consultation_records').select('id', { count: 'exact', head: true }).eq('shop_id', shopId).eq('designer_id', designerId),
+    supabase.from('small_talk_notes').select('id', { count: 'exact', head: true }).eq('created_by_designer_id', designerId),
+  ]);
+
+  if (customerRefs.error || reservationRefs.error || recordRefs.error || noteRefs.error) {
+    console.error('[db] dbDeleteDesigner reference check error:', {
+      customerRefs: customerRefs.error,
+      reservationRefs: reservationRefs.error,
+      recordRefs: recordRefs.error,
+      noteRefs: noteRefs.error,
+    });
+    return { success: false, error: '디자이너 삭제 가능 여부를 확인하지 못했습니다.' };
+  }
+
+  const referenceCount =
+    (customerRefs.count ?? 0) +
+    (reservationRefs.count ?? 0) +
+    (recordRefs.count ?? 0) +
+    (noteRefs.count ?? 0);
+
+  if (referenceCount > 0) {
+    return {
+      success: false,
+      error: '고객, 예약, 상담 이력에 연결된 디자이너는 먼저 담당을 변경한 뒤 삭제해 주세요.',
+    };
+  }
+
+  const avatarPath = getDesignerAvatarStoragePath(existing.profile_image_url);
+  if (avatarPath) {
+    const { error: storageError } = await supabase.storage.from(DESIGNER_AVATAR_BUCKET).remove([avatarPath]);
+    if (storageError) {
+      console.error('[db] dbDeleteDesigner remove avatar error:', storageError);
+      return { success: false, error: '프로필 이미지 삭제에 실패했습니다.' };
+    }
+  }
+
+  const { error } = await supabase
+    .from('designers')
+    .delete()
+    .eq('shop_id', shopId)
+    .eq('id', designerId);
+
+  if (error) {
+    console.error('[db] dbDeleteDesigner error:', error);
+    return { success: false, error: '선생님 삭제에 실패했습니다.' };
+  }
+
+  return { success: true };
+}
+
+export async function dbUploadDesignerProfileImage(
+  shopId: string,
+  designerId: string,
+  imageDataUrl: string,
+): Promise<DesignerMutationResult> {
+  try {
+    const { data: existing, error: existingError } = await supabase
+      .from('designers')
+      .select('*')
+      .eq('shop_id', shopId)
+      .eq('id', designerId)
+      .single();
+
+    if (existingError || !existing) {
+      console.error('[db] dbUploadDesignerProfileImage fetch error:', existingError);
+      return { success: false, error: '디자이너 정보를 찾을 수 없습니다.' };
+    }
+
+    const { blob, mimeType } = dataUrlToBlob(imageDataUrl);
+    const extension = getPortfolioFileExtension(mimeType);
+    const imagePath = `${shopId}/${designerId}/avatar-${Date.now()}.${extension}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(DESIGNER_AVATAR_BUCKET)
+      .upload(imagePath, blob, {
+        contentType: mimeType,
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error('[db] dbUploadDesignerProfileImage upload error:', uploadError);
+      return { success: false, error: '프로필 이미지 업로드에 실패했습니다.' };
+    }
+
+    const { data, error } = await supabase
+      .from('designers')
+      .update({ profile_image_url: imagePath })
+      .eq('shop_id', shopId)
+      .eq('id', designerId)
+      .select('*')
+      .single();
+
+    if (error || !data) {
+      console.error('[db] dbUploadDesignerProfileImage update error:', error);
+      await supabase.storage.from(DESIGNER_AVATAR_BUCKET).remove([imagePath]);
+      return { success: false, error: '프로필 이미지 저장에 실패했습니다.' };
+    }
+
+    const oldPath = getDesignerAvatarStoragePath(existing.profile_image_url);
+    if (oldPath && oldPath !== imagePath) {
+      const { error: removeOldError } = await supabase.storage.from(DESIGNER_AVATAR_BUCKET).remove([oldPath]);
+      if (removeOldError) {
+        console.error('[db] dbUploadDesignerProfileImage remove old avatar error:', removeOldError);
+      }
+    }
+
+    return { success: true, designer: toDesigner(data) };
+  } catch (error) {
+    console.error('[db] dbUploadDesignerProfileImage unexpected error:', error);
+    return { success: false, error: '프로필 이미지 저장 중 오류가 발생했습니다.' };
+  }
+}
+
+export async function dbDeleteDesignerProfileImage(
+  shopId: string,
+  designerId: string,
+): Promise<DesignerMutationResult> {
+  const { data: existing, error: existingError } = await supabase
+    .from('designers')
+    .select('*')
+    .eq('shop_id', shopId)
+    .eq('id', designerId)
+    .single();
+
+  if (existingError || !existing) {
+    console.error('[db] dbDeleteDesignerProfileImage fetch error:', existingError);
+    return { success: false, error: '디자이너 정보를 찾을 수 없습니다.' };
+  }
+
+  const oldPath = getDesignerAvatarStoragePath(existing.profile_image_url);
+  if (oldPath) {
+    const { error: storageError } = await supabase.storage.from(DESIGNER_AVATAR_BUCKET).remove([oldPath]);
+    if (storageError) {
+      console.error('[db] dbDeleteDesignerProfileImage remove error:', storageError);
+      return { success: false, error: '프로필 이미지 삭제에 실패했습니다.' };
+    }
+  }
+
+  const { data, error } = await supabase
+    .from('designers')
+    .update({ profile_image_url: null })
+    .eq('shop_id', shopId)
+    .eq('id', designerId)
+    .select('*')
+    .single();
+
+  if (error || !data) {
+    console.error('[db] dbDeleteDesignerProfileImage update error:', error);
+    return { success: false, error: '프로필 이미지 삭제 상태를 저장하지 못했습니다.' };
+  }
+
+  return { success: true, designer: toDesigner(data) };
 }
 
 export async function fetchCustomers(shopId?: string | null): Promise<Customer[]> {

@@ -7,9 +7,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/cn';
 import { useT } from '@/lib/i18n';
 import { useLocaleStore } from '@/store/locale-store';
-import { useAuthStore } from '@/store/auth-store';
 import { useAppStore } from '@/store/app-store';
-import { RoleBadge } from '@/components/auth/RoleBadge';
 import { useShopStore } from '@/store/shop-store';
 import type { Locale } from '@/store/locale-store';
 
@@ -86,7 +84,6 @@ export function SideNav({ className }: SideNavProps) {
   const pathname = usePathname();
   const t = useT();
   const { locale, setLocale } = useLocaleStore();
-  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const { shopSettings } = useAppStore();
   const storeShopName = useShopStore((s) => s.shop?.name);
   const shopName = shopSettings.shopName || (storeShopName ?? '네일숲');
@@ -213,7 +210,6 @@ export function SideNav({ className }: SideNavProps) {
         </div>
         <div className="flex items-center gap-2 px-3 py-2 mt-2">
           <span className="font-bold text-sm tracking-tight text-primary truncate">{shopName}</span>
-          {isLoggedIn() && <RoleBadge />}
           <button
             type="button"
             className="ml-auto w-8 h-8 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-alt transition-colors"

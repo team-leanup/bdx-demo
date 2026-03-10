@@ -1,8 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { useDesignerStore } from '@/store/designer-store';
 import { cn } from '@/lib/cn';
+import { useShopStore } from '@/store/shop-store';
 
 const SIZES = {
   sm: 'w-9 h-9 text-xs',
@@ -23,7 +23,7 @@ export function ProfileAvatar({
   size = 'md',
   className,
 }: ProfileAvatarProps) {
-  const imageUrl = useDesignerStore((s) => s.profileImages[designerId]);
+  const imageUrl = useShopStore((s) => s.designers.find((designer) => designer.id === designerId)?.profileImageUrl);
 
   if (imageUrl) {
     return (

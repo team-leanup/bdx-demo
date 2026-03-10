@@ -9,7 +9,6 @@ import { IconShop, IconService, IconPalette, IconGear } from '@/components/icons
 import { useAppStore } from '@/store/app-store';
 import { useAuthStore } from '@/store/auth-store';
 import { usePartsStore } from '@/store/parts-store';
-import { useDesignerStore } from '@/store/designer-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { useRecordsStore } from '@/store/records-store';
@@ -256,17 +255,141 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 // ── 선생님 관리 섹션 ──
 function StaffSection() {
   const t = useT();
-  const { setProfileImage, removeProfileImage, profileImages } = useDesignerStore();
   const designers = useShopStore((s) => s.designers);
+  const createDesigner = useShopStore((s) => s.createDesigner);
+  const updateDesigner = useShopStore((s) => s.updateDesigner);
+  const deleteDesigner = useShopStore((s) => s.deleteDesigner);
+  const uploadDesignerProfileImage = useShopStore((s) => s.uploadDesignerProfileImage);
+  const deleteDesignerProfileImage = useShopStore((s) => s.deleteDesignerProfileImage);
+
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editIsActive, setEditIsActive] = useState(true);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
+  const [feedback, setFeedback] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
+
+  const resetAddForm = () => {
+    setNewName('');
+    setNewPhone('');
+    setShowAddForm(false);
+  };
+
+  const startEdit = (designer: { id: string; name: string; phone?: string; isActive: boolean }) => {
+    setEditingId(designer.id);
+    setEditName(designer.name);
+    setEditPhone(designer.phone ?? '');
+    setEditIsActive(designer.isActive);
+    setConfirmDeleteId(null);
+    setFeedback(null);
+  };
+
+  const handleAdd = async () => {
+    if (!newName.trim()) {
+      setFeedback({ tone: 'error', message: '이름을 입력해 주세요.' });
+      return;
+    }
+
+    setIsAdding(true);
+    const result = await createDesigner({ name: newName, phone: newPhone });
+    setIsAdding(false);
+
+    if (!result.success) {
+      setFeedback({ tone: 'error', message: result.error ?? '선생님 추가에 실패했습니다.' });
+      return;
+    }
+
+    resetAddForm();
+    setFeedback({ tone: 'success', message: '새 선생님 프로필을 추가했습니다.' });
+  };
+
+  const handleEditSave = async (designerId: string) => {
+    if (!editName.trim()) {
+      setFeedback({ tone: 'error', message: '이름을 입력해 주세요.' });
+      return;
+    }
+
+    setBusyId(designerId);
+    const result = await updateDesigner(designerId, {
+      name: editName,
+      phone: editPhone,
+      isActive: editIsActive,
+    });
+    setBusyId(null);
+
+    if (!result.success) {
+      setFeedback({ tone: 'error', message: result.error ?? '선생님 정보 수정에 실패했습니다.' });
+      return;
+    }
+
+    setEditingId(null);
+    setFeedback({ tone: 'success', message: '선생님 프로필을 수정했습니다.' });
+  };
+
+  const handleDelete = async (designer: { id: string; role: 'owner' | 'staff'; name: string }) => {
+    if (designer.role === 'owner') {
+      setFeedback({ tone: 'error', message: '원장 프로필은 삭제할 수 없습니다.' });
+      return;
+    }
+
+    if (confirmDeleteId !== designer.id) {
+      setConfirmDeleteId(designer.id);
+      setFeedback(null);
+      return;
+    }
+
+    setBusyId(designer.id);
+    const result = await deleteDesigner(designer.id);
+    setBusyId(null);
+    setConfirmDeleteId(null);
+
+    if (!result.success) {
+      setFeedback({ tone: 'error', message: result.error ?? '선생님 삭제에 실패했습니다.' });
+      return;
+    }
+
+    if (editingId === designer.id) {
+      setEditingId(null);
+    }
+    setFeedback({ tone: 'success', message: `${designer.name} 프로필을 삭제했습니다.` });
+  };
+
+  const handleDeleteProfileImage = async (designerId: string) => {
+    setBusyId(designerId);
+    const result = await deleteDesignerProfileImage(designerId);
+    setBusyId(null);
+
+    if (!result.success) {
+      setFeedback({ tone: 'error', message: result.error ?? '프로필 이미지 삭제에 실패했습니다.' });
+      return;
+    }
+
+    setFeedback({ tone: 'success', message: '프로필 이미지를 삭제했습니다.' });
+  };
 
   const handleFileChange = async (designerId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
       const base64 = await resizeImageToBase64(file);
-      setProfileImage(designerId, base64);
+      setBusyId(designerId);
+      const result = await uploadDesignerProfileImage(designerId, base64);
+      setBusyId(null);
+
+      if (!result.success) {
+        setFeedback({ tone: 'error', message: result.error ?? '프로필 이미지 업로드에 실패했습니다.' });
+        return;
+      }
+
+      setFeedback({ tone: 'success', message: '프로필 이미지를 업데이트했습니다.' });
     } catch {
-      // silently fail
+      setBusyId(null);
+      setFeedback({ tone: 'error', message: '프로필 이미지 업로드에 실패했습니다.' });
     }
     e.target.value = '';
   };
@@ -276,14 +399,136 @@ function StaffSection() {
       <Card className="mx-4 md:mx-0">
         <div className="mb-3 flex items-center justify-between">
           <span className="text-sm font-medium text-text">{t('settings.staff_registered')}</span>
-          <button className="rounded-lg border border-primary px-3 py-1 text-xs font-medium text-primary">
-            {t('settings.staff_add')}
+          <button
+            onClick={() => {
+              if (showAddForm) {
+                resetAddForm();
+              } else {
+                setShowAddForm(true);
+                setFeedback(null);
+              }
+            }}
+            className="rounded-lg border border-primary px-3 py-1 text-xs font-medium text-primary"
+          >
+            {showAddForm ? '취소' : t('settings.staff_add')}
           </button>
         </div>
+
+        {feedback && (
+          <div
+            className={cn(
+              'mb-3 rounded-xl border px-3 py-2 text-xs font-medium',
+              feedback.tone === 'success'
+                ? 'border-success/20 bg-success/10 text-success'
+                : 'border-error/20 bg-error/10 text-error',
+            )}
+          >
+            {feedback.message}
+          </div>
+        )}
+
+        {showAddForm && (
+          <div className="mb-3 flex flex-col gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
+            <div className="grid gap-2 md:grid-cols-2">
+              <Input
+                label="이름"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="선생님 이름"
+                className="h-10 rounded-lg px-3 text-sm"
+              />
+              <Input
+                label="연락처"
+                value={newPhone}
+                onChange={(e) => setNewPhone(e.target.value)}
+                placeholder="010-0000-0000"
+                className="h-10 rounded-lg px-3 text-sm"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex-1"
+                onClick={resetAddForm}
+                disabled={isAdding}
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button
+                size="sm"
+                className="flex-1"
+                onClick={() => void handleAdd()}
+                disabled={isAdding || !newName.trim()}
+              >
+                {isAdding ? '추가 중...' : '프로필 추가'}
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col gap-2">
           {designers.map((d) => {
-            const hasImage = !!profileImages[d.id];
+            const hasImage = Boolean(d.profileImageUrl);
             const inputId = `profile-upload-${d.id}`;
+            const isEditing = editingId === d.id;
+            const isConfirmingDelete = confirmDeleteId === d.id;
+            const isBusy = busyId === d.id;
+
+            if (isEditing) {
+              return (
+                <div
+                  key={d.id}
+                  className="flex flex-col gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3"
+                >
+                  <div className="grid gap-2 md:grid-cols-2">
+                    <Input
+                      label="이름"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="선생님 이름"
+                      className="h-10 rounded-lg px-3 text-sm"
+                    />
+                    <Input
+                      label="연락처"
+                      value={editPhone}
+                      onChange={(e) => setEditPhone(e.target.value)}
+                      placeholder="010-0000-0000"
+                      className="h-10 rounded-lg px-3 text-sm"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-lg border border-border/60 bg-surface px-3 py-2">
+                    <div>
+                      <p className="text-sm font-medium text-text">활성 상태</p>
+                      <p className="text-xs text-text-secondary">비활성화하면 선생님 선택 목록에서 숨길 수 있습니다.</p>
+                    </div>
+                    <Toggle checked={editIsActive} onChange={setEditIsActive} size="sm" disabled={isBusy} />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setEditingId(null)}
+                      disabled={isBusy}
+                    >
+                      {t('common.cancel')}
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => void handleEditSave(d.id)}
+                      disabled={isBusy || !editName.trim()}
+                    >
+                      {isBusy ? '저장 중...' : '프로필 저장'}
+                    </Button>
+                  </div>
+                </div>
+              );
+            }
+
             return (
               <div
                 key={d.id}
@@ -316,11 +561,23 @@ function StaffSection() {
 
                 {/* Photo actions — far right */}
                 <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <button
+                    onClick={() => startEdit(d)}
+                    className="flex h-7 w-7 items-center justify-center rounded-full border border-border text-text-muted hover:border-primary/40 hover:bg-primary/10 hover:text-primary transition-all"
+                    title="프로필 수정"
+                    disabled={isBusy}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z" />
+                    </svg>
+                  </button>
                   {hasImage && (
                     <button
-                      onClick={() => removeProfileImage(d.id)}
+                      onClick={() => void handleDeleteProfileImage(d.id)}
                       className="flex h-7 w-7 items-center justify-center rounded-full border border-border text-text-muted hover:border-error/40 hover:bg-error/10 hover:text-error transition-all"
                       title="사진 삭제"
+                      disabled={isBusy}
                     >
                       <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                         <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
@@ -329,7 +586,12 @@ function StaffSection() {
                   )}
                   <label
                     htmlFor={inputId}
-                    className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-border text-text-muted hover:border-primary/40 hover:bg-primary/10 hover:text-primary transition-all"
+                    className={cn(
+                      'flex h-7 w-7 items-center justify-center rounded-full border border-border text-text-muted transition-all',
+                      isBusy
+                        ? 'cursor-not-allowed opacity-40'
+                        : 'cursor-pointer hover:border-primary/40 hover:bg-primary/10 hover:text-primary',
+                    )}
                     title="사진 업로드"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -343,11 +605,47 @@ function StaffSection() {
                     accept="image/*"
                     className="hidden"
                     onChange={(e) => handleFileChange(d.id, e)}
+                    disabled={isBusy}
                   />
+                  {isConfirmingDelete ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="rounded-md border border-border px-2 py-1 text-[11px] font-semibold text-text-secondary hover:bg-surface transition-colors"
+                        disabled={isBusy}
+                      >
+                        취소
+                      </button>
+                      <button
+                        onClick={() => void handleDelete(d)}
+                        className="rounded-md border border-error/30 bg-error/10 px-2 py-1 text-[11px] font-semibold text-error hover:bg-error/20 transition-colors"
+                        disabled={isBusy}
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => void handleDelete(d)}
+                      className="flex h-7 w-7 items-center justify-center rounded-full border border-border text-text-muted hover:border-error/40 hover:bg-error/10 hover:text-error transition-all disabled:opacity-40"
+                      title={d.role === 'owner' ? '원장 프로필은 삭제할 수 없습니다' : '프로필 삭제'}
+                      disabled={isBusy || d.role === 'owner'}
+                    >
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                        <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               </div>
             );
           })}
+
+          {designers.length === 0 && !showAddForm && (
+            <p className="rounded-xl border border-dashed border-border px-3 py-6 text-center text-sm text-text-muted">
+              아직 등록된 선생님이 없습니다.
+            </p>
+          )}
         </div>
       </Card>
     </Section>
@@ -687,9 +985,8 @@ export default function SettingsPage() {
   const router = useRouter();
   const t = useT();
   const { shopSettings, setShopSettings } = useAppStore();
-  const { role, activeDesignerId, logout, setPassword, checkPassword } = useAuthStore();
+  const { role, logout } = useAuthStore();
   const shop = useShopStore((s) => s.shop);
-  const settingsDesigners = useShopStore((s) => s.designers);
 
   const [activeTab, setActiveTab] = useState<TabId>('shop');
 
@@ -746,14 +1043,6 @@ export default function SettingsPage() {
     setEditingPrices(false);
   };
 
-  // 비밀번호 변경
-  const [pwTargetId, setPwTargetId] = useState(activeDesignerId || (settingsDesigners[0]?.id ?? ''));
-  const [pwCurrent, setPwCurrent] = useState('');
-  const [pwNew, setPwNew] = useState('');
-  const [pwConfirm, setPwConfirm] = useState('');
-  const [pwError, setPwError] = useState('');
-  const [pwSuccess, setPwSuccess] = useState(false);
-
   const handleSaveShop = () => {
     setShopSettings({ shopName, shopPhone, shopAddress, shopAddressDetail });
     setEditingShop(false);
@@ -763,28 +1052,6 @@ export default function SettingsPage() {
     void logout().then(() => {
       router.push('/login');
     });
-  };
-
-  const handlePasswordChange = () => {
-    setPwError('');
-    setPwSuccess(false);
-    if (!pwCurrent || !pwNew || !pwConfirm) {
-      setPwError(t('settings.password_allRequired'));
-      return;
-    }
-    if (!checkPassword(pwTargetId, pwCurrent)) {
-      setPwError(t('settings.password_incorrect'));
-      return;
-    }
-    if (pwNew !== pwConfirm) {
-      setPwError(t('settings.password_mismatch'));
-      return;
-    }
-    setPassword(pwTargetId, pwNew);
-    setPwCurrent('');
-    setPwNew('');
-    setPwConfirm('');
-    setPwSuccess(true);
   };
 
   const TABS: { id: TabId; label: string }[] = TAB_IDS.map((id) => ({
@@ -1017,67 +1284,6 @@ export default function SettingsPage() {
             </Card>
           </Section>
 
-          {/* 비밀번호 변경 */}
-            <Section title={t('settings.password_title')}>
-              <Card className="mx-4 md:mx-0">
-                <div className="flex flex-col gap-3">
-                  {role === 'owner' ? (
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-text-secondary">{t('settings.password_selectStaff')}</label>
-                    <select
-                      value={pwTargetId}
-                      onChange={(e) => setPwTargetId(e.target.value)}
-                      className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text focus:outline-none focus:border-primary transition-colors"
-                    >
-                      {settingsDesigners.map((d) => (
-                        <option key={d.id} value={d.id}>
-                          {d.name} {d.role === 'owner' ? t('settings.staff_owner') : t('common.designerSuffix').trim() || t('common.roleStaff')}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  ) : (
-                  <p className="text-sm text-text-secondary">{settingsDesigners.find(d => d.id === activeDesignerId)?.name ?? ''} 비밀번호 변경</p>
-                  )}
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-text-secondary">{t('settings.password_current')}</label>
-                    <input
-                      type="password"
-                      value={pwCurrent}
-                      onChange={(e) => { setPwCurrent(e.target.value); setPwError(''); setPwSuccess(false); }}
-                      placeholder={t('settings.password_current')}
-                      className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-text-secondary">{t('settings.password_new')}</label>
-                    <input
-                      type="password"
-                      value={pwNew}
-                      onChange={(e) => { setPwNew(e.target.value); setPwError(''); setPwSuccess(false); }}
-                      placeholder={t('settings.password_new')}
-                      className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-text-secondary">{t('settings.password_confirm')}</label>
-                    <input
-                      type="password"
-                      value={pwConfirm}
-                      onChange={(e) => { setPwConfirm(e.target.value); setPwError(''); setPwSuccess(false); }}
-                      placeholder={t('settings.password_confirm')}
-                      className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors"
-                    />
-                  </div>
-                  {pwError && <p className="text-xs text-error font-medium">{pwError}</p>}
-                  {pwSuccess && <p className="text-xs text-success font-medium">{t('settings.password_success')}</p>}
-                  <Button size="sm" onClick={handlePasswordChange}>
-                    {t('settings.password_change')}
-                  </Button>
-                </div>
-              </Card>
-            </Section>
-
           {/* 앱 정보 */}
           <Section title={t('settings.app_title')}>
             <Card className="mx-4 md:mx-0">
@@ -1096,21 +1302,6 @@ export default function SettingsPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
                   </svg>
                   <span className="flex-1 text-sm font-medium text-text">사용 가이드 다시보기</span>
-                  <svg className="h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-
-                {/* 계정 전환 */}
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-3 rounded-xl border border-border px-3 py-3 text-left transition-colors hover:bg-surface-alt"
-                >
-                  {/* sync/refresh SVG */}
-                  <svg className="h-5 w-5 flex-shrink-0 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                  </svg>
-                  <span className="flex-1 text-sm font-medium text-text">{t('settings.app_switchAccount')}</span>
                   <svg className="h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
