@@ -24,14 +24,25 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return response;
   }
 
+  // Auth callback은 PKCE code verifier 쿠키를 보존해야 하므로 건너뜀
+  if (pathname.startsWith('/auth/callback')) {
+    return response;
+  }
+
+  // Public 경로는 세션 체크 불필요
+  if (isPublicRoute(pathname)) {
+    return response;
+  }
+
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        response = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, value, options }) => {
-          request.cookies.set(name, value);
           response.cookies.set(name, value, options);
         });
       },
@@ -39,10 +50,6 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   });
 
   const { data: { user } } = await supabase.auth.getUser();
-
-  if (isPublicRoute(pathname)) {
-    return response;
-  }
 
   if (!user) {
     const loginUrl = new URL('/login', request.url);
