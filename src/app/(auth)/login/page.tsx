@@ -148,6 +148,7 @@ export default function LoginPage(): React.ReactElement {
               >
                 샵 계정으로 로그인
               </Button>
+
             </div>
 
             <div className="mt-8 flex items-center justify-center gap-2 text-sm text-slate-500">

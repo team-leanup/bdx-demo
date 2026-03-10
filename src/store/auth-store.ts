@@ -103,7 +103,11 @@ async function resolveAuthContext(userId: string): Promise<ResolvedAuthContext |
 
 function getLoggedOutState(): Pick<
   AuthStore,
-  'role' | 'currentShopId' | 'currentShopOnboardingComplete' | 'activeDesignerId' | 'activeDesignerName'
+  | 'role'
+  | 'currentShopId'
+  | 'currentShopOnboardingComplete'
+  | 'activeDesignerId'
+  | 'activeDesignerName'
 > {
   return {
     role: null,
@@ -226,7 +230,7 @@ export const useAuthStore = create<AuthStore>()(
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: `${window.location.origin}/auth/callback?next=/login`,
+            redirectTo: `${window.location.origin}/auth/callback`,
             scopes: 'email profile',
           },
         });
@@ -291,7 +295,7 @@ export const useAuthStore = create<AuthStore>()(
         }
 
         if (!data.session) {
-          return { success: false, error: '이메일 인증 후 다시 로그인해 주세요.' };
+          return { success: false, error: '회원가입에 실패했습니다. 다시 시도해 주세요.' };
         }
 
         const createdAccount = await dbCreateShopAccount(data.user.id, shopName, ownerName);

@@ -21,8 +21,10 @@ export default function SupabaseProvider({ children }: { children: React.ReactNo
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
-      void initializeAuth();
+    } = supabase.auth.onAuthStateChange((event: string) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+        void initializeAuth();
+      }
     });
 
     return () => {
