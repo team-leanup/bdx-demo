@@ -1,65 +1,42 @@
 'use client';
 
-import { use, useState, useEffect, useRef } from 'react';
+import { use, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Card, Badge, Button } from '@/components/ui';
 import { formatPrice, formatDateDotWithTime } from '@/lib/format';
-import { BODY_PART_LABEL, DESIGN_SCOPE_LABEL, EXPRESSION_LABEL, OFF_TYPE_LABEL, getDesignerName } from '@/lib/labels';
+import { BODY_PART_LABEL, DESIGN_SCOPE_LABEL, EXPRESSION_LABEL, getDesignerName } from '@/lib/labels';
 import { useRecordsStore } from '@/store/records-store';
+import { usePortfolioStore } from '@/store/portfolio-store';
+import { useCustomerStore } from '@/store/customer-store';
+import { useConsultationStore } from '@/store/consultation-store';
 import { calculatePrice } from '@/lib/price-calculator';
 import { useT } from '@/lib/i18n';
+import { getSafetyTagMeta } from '@/lib/tag-safety';
+import { SafetyTag } from '@/components/ui/SafetyTag';
 import { DailyChecklist } from '@/components/consultation/DailyChecklist';
-import type { DailyChecklist as DailyChecklistType, ConsultationRecord } from '@/types/consultation';
+import { ChecklistSummaryRow } from '@/components/records/ChecklistSummaryRow';
+import type { DailyChecklist as DailyChecklistType } from '@/types/consultation';
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
-export default function RecordDetailPage({ params }: Props) {
+export default function RecordDetailPage({ params }: Props): React.ReactElement {
   const { id } = use(params);
   const router = useRouter();
   const t = useT();
-  const storeRecord = useRecordsStore((s) => s.getRecordById(id));
-  const [savedRecord, setSavedRecord] = useState<ConsultationRecord | undefined>(undefined);
-  const [loaded, setLoaded] = useState(!!storeRecord);
 
-  useEffect(() => {
-    if (!storeRecord) {
-      const saved = sessionStorage.getItem(`bdx-saved-record-${id}`);
-      if (saved) {
-        try { setSavedRecord(JSON.parse(saved)); } catch { /* ignore */ }
-      }
-      setLoaded(true);
-    }
-  }, [id, storeRecord]);
+  const record = useRecordsStore((s) => s.getRecordById(id));
+  const updateRecord = useRecordsStore((s) => s.updateRecord);
+  const portfolioPhotos = usePortfolioStore((s) => s.getByRecordId(id));
+  const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
+  const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
 
-  const record = storeRecord ?? savedRecord;
   const [checklistData, setChecklistData] = useState<DailyChecklistType | undefined>(record?.checklist);
   const [editingFinalPrice, setEditingFinalPrice] = useState(false);
   const [finalPriceValue, setFinalPriceValue] = useState(record?.finalPrice ?? 0);
-  const [savedFinalPrice, setSavedFinalPrice] = useState<number | null>(null);
-  const [savedFinalizedAt, setSavedFinalizedAt] = useState<string | null>(null);
   const priceInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const stored = sessionStorage.getItem(`bdx-final-price-${id}`);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored) as { finalPrice: number; finalizedAt: string };
-        setSavedFinalPrice(parsed.finalPrice);
-        setSavedFinalizedAt(parsed.finalizedAt);
-        setFinalPriceValue(parsed.finalPrice);
-      } catch { /* ignore */ }
-    }
-  }, [id]);
-
-  if (!loaded) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
 
   if (!record) {
     return (
@@ -75,18 +52,19 @@ export default function RecordDetailPage({ params }: Props) {
   const c = record.consultation;
   const breakdown = calculatePrice(c);
 
-  const displayFinalPrice = savedFinalPrice ?? record.finalPrice;
-  const displayFinalizedAt = savedFinalizedAt ?? record.finalizedAt;
+  const pinnedTags = getPinnedTags(record.customerId);
+  const safetyTags = pinnedTags.filter((tag) => {
+    const level = getSafetyTagMeta(tag).level;
+    return level === 'high' || level === 'medium';
+  });
+
+  const referenceImages = c.referenceImages ?? [];
+  const hasImages = referenceImages.length > 0 || portfolioPhotos.length > 0;
 
   const handleSaveFinalPrice = (): void => {
     const now = new Date().toISOString();
-    setSavedFinalPrice(finalPriceValue);
-    setSavedFinalizedAt(now);
     setEditingFinalPrice(false);
-    sessionStorage.setItem(
-      `bdx-final-price-${id}`,
-      JSON.stringify({ finalPrice: finalPriceValue, finalizedAt: now }),
-    );
+    updateRecord(id, { finalPrice: finalPriceValue, finalizedAt: now });
   };
 
   const handleStartEditing = (): void => {
@@ -94,8 +72,18 @@ export default function RecordDetailPage({ params }: Props) {
     setTimeout(() => priceInputRef.current?.focus(), 0);
   };
 
+  const handleStartSameConsultation = (): void => {
+    hydrateConsultation({
+      ...c,
+      customerId: record.customerId,
+      customerName: c.customerName,
+      customerPhone: c.customerPhone,
+    });
+    router.push('/consultation/customer');
+  };
+
   return (
-    <div className="flex flex-col gap-4 pb-6">
+    <div className="flex flex-col gap-4 pb-24">
       {/* 헤더 */}
       <div className="flex items-center gap-3 px-4 pt-4">
         <button
@@ -112,7 +100,67 @@ export default function RecordDetailPage({ params }: Props) {
         </div>
       </div>
 
-      {/* 고객 정보 */}
+      {/* 비주얼 서머리: 참고 이미지 + 시술 사진 */}
+      {hasImages && (
+        <div className="flex flex-col gap-3 px-4">
+          {referenceImages.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-semibold text-text-secondary">요청 참고 이미지</span>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {referenceImages.map((src, i) => (
+                  <div
+                    key={i}
+                    className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border border-border"
+                  >
+                    <Image
+                      src={src}
+                      alt={`참고 이미지 ${i + 1}`}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {portfolioPhotos.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-semibold text-text-secondary">시술 사진</span>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {portfolioPhotos.map((photo) => (
+                  <div
+                    key={photo.id}
+                    className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border border-border"
+                  >
+                    <Image
+                      src={photo.imageDataUrl}
+                      alt="시술 사진"
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 주의사항 카드 */}
+      {safetyTags.length > 0 && (
+        <div className="mx-4 rounded-2xl border border-red-200 bg-red-50/50 p-3">
+          <p className="mb-2 text-xs font-semibold text-red-700">⚠️ 주의사항</p>
+          <div className="flex flex-wrap gap-1.5">
+            {safetyTags.map((tag) => (
+              <SafetyTag key={tag.id} tag={tag} size="sm" />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 고객 정보 + 체크리스트 서머리 */}
       <Card className="mx-4">
         <h2 className="mb-3 text-sm font-semibold text-text-secondary">{t('recordDetail.sectionCustomer')}</h2>
         <div className="flex flex-col gap-2">
@@ -131,26 +179,19 @@ export default function RecordDetailPage({ params }: Props) {
             </span>
           </div>
         </div>
+        <div className="mt-3 border-t border-border pt-3">
+          <p className="mb-1.5 text-xs font-semibold text-text-secondary">시술 체크리스트</p>
+          <ChecklistSummaryRow checklist={checklistData} />
+        </div>
       </Card>
 
-      {/* 시술 내용 */}
+      {/* 시술 내용 (간소화) */}
       <Card className="mx-4">
         <h2 className="mb-3 text-sm font-semibold text-text-secondary">{t('recordDetail.sectionTreatment')}</h2>
         <div className="flex flex-col gap-2">
           <div className="flex justify-between">
             <span className="text-sm text-text-secondary">{t('recordDetail.fieldBodyPart')}</span>
             <Badge variant="neutral" size="sm">{BODY_PART_LABEL[c.bodyPart]}</Badge>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-text-secondary">{t('recordDetail.fieldOff')}</span>
-            <span className="text-sm font-medium text-text">{OFF_TYPE_LABEL[c.offType]}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-text-secondary">{t('recordDetail.fieldExtension')}</span>
-            <span className="text-sm font-medium text-text">
-              {c.extensionType === 'none' ? t('recordDetail.extensionNone') : c.extensionType === 'repair' ? t('recordDetail.extensionRepair') : t('recordDetail.extensionExtension')}
-              {c.extensionType === 'repair' && c.repairCount ? ` (${t('recordDetail.repairCountUnit').replace('{count}', String(c.repairCount))})` : ''}
-            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-sm text-text-secondary">{t('recordDetail.fieldShape')}</span>
@@ -189,7 +230,9 @@ export default function RecordDetailPage({ params }: Props) {
           {c.extraColorCount > 0 && (
             <div className="flex justify-between">
               <span className="text-sm text-text-secondary">{t('recordDetail.fieldExtraColor')}</span>
-              <span className="text-sm font-medium text-text">{t('recordDetail.extraColorUnit').replace('{count}', String(c.extraColorCount))}</span>
+              <span className="text-sm font-medium text-text">
+                {t('recordDetail.extraColorUnit').replace('{count}', String(c.extraColorCount))}
+              </span>
             </div>
           )}
         </div>
@@ -204,9 +247,9 @@ export default function RecordDetailPage({ params }: Props) {
       <Card className="mx-4">
         <h2 className="mb-3 text-sm font-semibold text-text-secondary">{t('recordDetail.sectionPrice')}</h2>
         <div className="flex flex-col gap-2">
-          {displayFinalizedAt ? (
+          {record.finalizedAt ? (
             <div className="mb-1 inline-flex w-fit items-center rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">
-              {`✓ 가격 확정됨 · ${formatDateDotWithTime(displayFinalizedAt)}`}
+              {`✓ 가격 확정됨 · ${formatDateDotWithTime(record.finalizedAt)}`}
             </div>
           ) : (
             <div className="mb-1 inline-flex w-fit items-center rounded-full bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700">
@@ -263,7 +306,7 @@ export default function RecordDetailPage({ params }: Props) {
                     type="button"
                     onClick={() => {
                       setEditingFinalPrice(false);
-                      setFinalPriceValue(displayFinalPrice);
+                      setFinalPriceValue(record.finalPrice);
                     }}
                     className="flex-1 rounded-xl border border-border bg-white py-2 text-sm font-semibold text-text-secondary"
                   >
@@ -282,7 +325,7 @@ export default function RecordDetailPage({ params }: Props) {
               <div className="flex items-center justify-between">
                 <span className="font-bold text-primary">{t('recordDetail.finalPayment')}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-xl font-bold text-primary">{formatPrice(displayFinalPrice)}</span>
+                  <span className="text-xl font-bold text-primary">{formatPrice(record.finalPrice)}</span>
                   <button
                     type="button"
                     onClick={handleStartEditing}
@@ -304,14 +347,7 @@ export default function RecordDetailPage({ params }: Props) {
           initialData={checklistData}
           onSave={(data) => {
             setChecklistData(data);
-            // Persist checklist to sessionStorage
-            const saved = sessionStorage.getItem(`bdx-saved-record-${id}`);
-            if (saved) {
-              try {
-                const parsed = JSON.parse(saved);
-                sessionStorage.setItem(`bdx-saved-record-${id}`, JSON.stringify({ ...parsed, checklist: data }));
-              } catch { /* ignore */ }
-            }
+            updateRecord(id, { checklist: data });
           }}
           onSaveToPreference={() => {
             router.push(`/customers/${record.customerId}?tab=preference&fromChecklist=true`);
@@ -319,15 +355,24 @@ export default function RecordDetailPage({ params }: Props) {
         />
       </div>
 
-      {/* 고객 기록으로 이동 */}
-      <div className="px-4">
-        <Button
-          variant="secondary"
-          fullWidth
-          onClick={() => router.push(`/customers/${record.customerId}`)}
-        >
-          {t('recordDetail.viewCustomer')}
-        </Button>
+      {/* 액션 바 (fixed bottom) */}
+      <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background px-4 py-3">
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => router.push(`/customers/${record.customerId}`)}
+            className="flex-1 rounded-2xl border border-border bg-surface py-3 text-sm font-semibold text-text-secondary"
+          >
+            고객 상세
+          </button>
+          <button
+            type="button"
+            onClick={handleStartSameConsultation}
+            className="flex-[2] rounded-2xl bg-primary py-3 text-sm font-bold text-white"
+          >
+            같은 시술로 상담 시작
+          </button>
+        </div>
       </div>
     </div>
   );
