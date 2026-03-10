@@ -28,6 +28,11 @@ export const metadata: Metadata = {
   title: 'BDX — Beauty Decision eXperience',
   description: '네일샵 현장 상담 & 고객 관리 플랫폼',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/bdx-logo/bdx-symbol.svg',
+    shortcut: '/bdx-logo/bdx-symbol.svg',
+    apple: '/bdx-logo/bdx-symbol.svg',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
