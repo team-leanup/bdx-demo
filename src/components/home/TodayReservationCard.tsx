@@ -9,9 +9,11 @@ import { Badge } from '@/components/ui';
 import { SafetyTag } from '@/components/ui/SafetyTag';
 import { FlagIcon } from '@/components/ui/FlagIcon';
 import { IconCalendar } from '@/components/icons';
+import { useRouter } from 'next/navigation';
 import { useConsultationStore } from '@/store/consultation-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
+import { useRecordsStore } from '@/store/records-store';
 import { PretreatmentAlertModal } from '@/components/alerts/PretreatmentAlertModal';
 import { LinkCustomerModal } from '@/components/reservations/LinkCustomerModal';
 import ConsultationLinkModal from '@/components/reservations/ConsultationLinkModal';
@@ -53,10 +55,12 @@ export function TodayReservationCard({
   startConsultationLabel,
   itemVariants,
 }: TodayReservationCardProps): React.ReactElement {
+  const router = useRouter();
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
   const getPrimaryTags = useCustomerStore((s) => s.getPrimaryTags);
   const getByCustomerId = usePortfolioStore((s) => s.getByCustomerId);
   const setEntryPoint = useConsultationStore((s) => s.setEntryPoint);
+  const getAllRecords = useRecordsStore((s) => s.getAllRecords);
 
   const [alertBooking, setAlertBooking] = useState<BookingRequest | null>(null);
   const [alertTags, setAlertTags] = useState<CustomerTag[]>([]);
@@ -92,6 +96,7 @@ export function TodayReservationCard({
   };
 
   return (
+    <>
     <motion.div variants={itemVariants} className="rounded-2xl bg-surface border border-border overflow-hidden">
       {/* 헤더 */}
       <div className="flex items-center justify-between px-4 pt-4 pb-3">
@@ -237,9 +242,28 @@ export function TodayReservationCard({
                   )}
                 </div>
                 {isCompleted ? (
-                  <span className="shrink-0 rounded-lg bg-surface-alt px-3 py-2 text-xs font-semibold text-text-muted">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const records = getAllRecords();
+                      // 1) bookingId 정확 매칭
+                      const byBooking = records.find((r) => r.consultation.bookingId === booking.id);
+                      if (byBooking) { router.push(`/records/${byBooking.id}`); return; }
+                      // 2) customerId + 예약 날짜 매칭
+                      if (booking.customerId) {
+                        const byCustomerDate = records.find((r) =>
+                          r.customerId === booking.customerId &&
+                          r.createdAt.startsWith(booking.reservationDate),
+                        );
+                        if (byCustomerDate) { router.push(`/records/${byCustomerDate.id}`); return; }
+                      }
+                      // 3) fallback: 기록 탭으로 이동
+                      router.push('/records');
+                    }}
+                    className="shrink-0 rounded-lg bg-surface-alt px-3 py-2 text-xs font-semibold text-text-muted cursor-pointer hover:bg-border active:scale-95 transition-all"
+                  >
                     상담 완료
-                  </span>
+                  </button>
                 ) : (
                   <div className="flex shrink-0 gap-1.5">
                     <button
@@ -286,80 +310,81 @@ export function TodayReservationCard({
         onClose={() => setLinkGenBooking(null)}
         booking={linkGenBooking}
       />
-
-      {/* H-3: 사전상담 데이터 미리보기 모달 */}
-      <AnimatePresence>
-        {previewBooking && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-black/40"
-              onClick={() => setPreviewBooking(null)}
-            />
-            <motion.div
-              initial={{ opacity: 0, y: 60 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 60 }}
-              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-background px-5 pb-8 pt-5 md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-1/2 md:-translate-x-1/2 md:right-auto md:w-full md:max-w-md md:rounded-2xl"
-            >
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <h3 className="text-base font-bold text-text">사전 상담 내용</h3>
-                  <p className="text-xs text-text-muted">{previewBooking.customerName} · {previewBooking.reservationTime}</p>
-                </div>
-                <button
-                  onClick={() => setPreviewBooking(null)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-alt text-text-muted"
-                >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <div className="flex flex-col gap-3">
-                {previewBooking.preConsultationData?.referenceImages && previewBooking.preConsultationData.referenceImages.length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold text-text-secondary mb-2">참고 이미지</p>
-                    <div className="flex gap-2 flex-wrap">
-                      {previewBooking.preConsultationData.referenceImages.map((url, i) => (
-                        <div key={i} className="h-20 w-20 rounded-xl overflow-hidden border border-border flex-shrink-0">
-                          <Image src={url} alt="" width={80} height={80} className="h-full w-full object-cover" unoptimized />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {previewBooking.referenceImageUrls && previewBooking.referenceImageUrls.length > 0 && !previewBooking.preConsultationData?.referenceImages?.length && (
-                  <div>
-                    <p className="text-xs font-semibold text-text-secondary mb-2">참고 이미지</p>
-                    <div className="flex gap-2 flex-wrap">
-                      {previewBooking.referenceImageUrls.map((url, i) => (
-                        <div key={i} className="h-20 w-20 rounded-xl overflow-hidden border border-border flex-shrink-0">
-                          <Image src={url} alt="" width={80} height={80} className="h-full w-full object-cover" unoptimized />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {previewBooking.requestNote && (
-                  <div>
-                    <p className="text-xs font-semibold text-text-secondary mb-1">요청 메모</p>
-                    <div className="rounded-xl bg-surface-alt p-3">
-                      <p className="text-xs text-text-secondary whitespace-pre-line">{previewBooking.requestNote}</p>
-                    </div>
-                  </div>
-                )}
-                {!previewBooking.requestNote && !previewBooking.referenceImageUrls?.length && !previewBooking.preConsultationData?.referenceImages?.length && (
-                  <p className="text-sm text-text-muted text-center py-4">사전 상담 내용이 없습니다.</p>
-                )}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </motion.div>
+
+    {/* H-3: 사전상담 데이터 미리보기 모달 — motion.div 바깥에 렌더링 (fixed 포지셔닝 보장) */}
+    <AnimatePresence>
+      {previewBooking && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 bg-black/40"
+            onClick={() => setPreviewBooking(null)}
+          />
+          <motion.div
+            initial={{ opacity: 0, y: 60 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 60 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-background px-5 pb-8 pt-5 md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-1/2 md:-translate-x-1/2 md:right-auto md:w-full md:max-w-md md:rounded-2xl"
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-bold text-text">사전 상담 내용</h3>
+                <p className="text-xs text-text-muted">{previewBooking.customerName} · {previewBooking.reservationTime}</p>
+              </div>
+              <button
+                onClick={() => setPreviewBooking(null)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-alt text-text-muted"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex flex-col gap-3">
+              {previewBooking.preConsultationData?.referenceImages && previewBooking.preConsultationData.referenceImages.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-text-secondary mb-2">참고 이미지</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {previewBooking.preConsultationData.referenceImages.map((url, i) => (
+                      <div key={i} className="h-20 w-20 rounded-xl overflow-hidden border border-border flex-shrink-0">
+                        <Image src={url} alt="" width={80} height={80} className="h-full w-full object-cover" unoptimized />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {previewBooking.referenceImageUrls && previewBooking.referenceImageUrls.length > 0 && !previewBooking.preConsultationData?.referenceImages?.length && (
+                <div>
+                  <p className="text-xs font-semibold text-text-secondary mb-2">참고 이미지</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {previewBooking.referenceImageUrls.map((url, i) => (
+                      <div key={i} className="h-20 w-20 rounded-xl overflow-hidden border border-border flex-shrink-0">
+                        <Image src={url} alt="" width={80} height={80} className="h-full w-full object-cover" unoptimized />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {previewBooking.requestNote && (
+                <div>
+                  <p className="text-xs font-semibold text-text-secondary mb-1">요청 메모</p>
+                  <div className="rounded-xl bg-surface-alt p-3">
+                    <p className="text-xs text-text-secondary whitespace-pre-line">{previewBooking.requestNote}</p>
+                  </div>
+                </div>
+              )}
+              {!previewBooking.requestNote && !previewBooking.referenceImageUrls?.length && !previewBooking.preConsultationData?.referenceImages?.length && (
+                <p className="text-sm text-text-muted text-center py-4">사전 상담 내용이 없습니다.</p>
+              )}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+    </>
   );
 }

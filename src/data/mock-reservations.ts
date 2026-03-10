@@ -1,3 +1,4 @@
+import { ConsultationStep } from '@/types/consultation';
 import type { BookingRequest } from '@/types/consultation';
 
 function getRelativeDate(daysFromToday: number): string {
@@ -31,6 +32,22 @@ export const MOCK_RESERVATIONS: BookingRequest[] = [
     language: 'en',
     serviceLabel: '아트',
     preConsultationCompletedAt: getRelativeDateTime(-1, 22, 10),
+    preConsultationData: {
+      bodyPart: 'hand',
+      offType: 'none',
+      extensionType: 'none',
+      nailShape: 'round',
+      designScope: 'full_art',
+      expressions: ['solid'],
+      hasParts: false,
+      partsSelections: [],
+      extraColorCount: 0,
+      currentStep: ConsultationStep.SUMMARY,
+      referenceImages: [
+        'https://picsum.photos/seed/nail-pink1/400/400',
+        'https://picsum.photos/seed/nail-flower2/400/400',
+      ],
+    },
   },
   {
     id: 'booking-002',
@@ -95,6 +112,23 @@ export const MOCK_RESERVATIONS: BookingRequest[] = [
     language: 'zh',
     serviceLabel: '자석젤',
     preConsultationCompletedAt: getRelativeDateTime(0, 8, 40),
+    preConsultationData: {
+      bodyPart: 'hand',
+      offType: 'same_shop',
+      extensionType: 'none',
+      nailShape: 'coffin',
+      designScope: 'full_art',
+      expressions: ['magnetic'],
+      hasParts: true,
+      partsSelections: [{ grade: 'S', quantity: 3 }],
+      extraColorCount: 1,
+      currentStep: ConsultationStep.SUMMARY,
+      referenceImages: [
+        'https://picsum.photos/seed/nail-magnetic1/400/400',
+        'https://picsum.photos/seed/nail-cubic2/400/400',
+        'https://picsum.photos/seed/nail-art3/400/400',
+      ],
+    },
   },
   {
     id: 'booking-006',
