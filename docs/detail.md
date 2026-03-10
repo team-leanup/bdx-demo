@@ -377,6 +377,8 @@ BDX를 "상담 시스템"에서 **"고객 관리 CRM + 시술 기록 시스템"*
 - `src/app/(auth)/login/page.tsx` — Supabase Auth 이메일/비밀번호 로그인 후, 현재 샵의 온보딩 완료 여부에 따라 `/home` 또는 `/onboarding`으로 이동
 - `src/app/(auth)/signup/page.tsx` — Supabase Auth 회원가입 후 빈 `shops` row와 owner `designers` row를 생성하고 즉시 로그인한 뒤 온보딩으로 연결
 - `src/store/auth-store.ts` — Supabase `getSession()`과 `onAuthStateChange()`로 세션을 복원하고, `owner_id = auth.user.id` 기준으로 `currentShopId`와 원장 프로필을 복구함. 디자이너 PIN 비밀번호만 로컬에 보조 저장
+- `src/app/auth/callback/route.ts` + `src/middleware.ts` — Supabase SSR 기반 Google OAuth code exchange와 세션 refresh를 처리함
+- `src/app/(auth)/signup/google/page.tsx` — Google 계정으로 로그인했지만 아직 샵이 연결되지 않은 경우, 이름/샵 이름을 입력받아 바로 샵 계정으로 전환함
 - `src/lib/demo-account.ts` — 고정 데모 계정 credential을 정의하고, auth CTA에서 해당 계정으로 즉시 로그인 가능
 - Supabase에는 `demo@bdx.kr` / `shop-demo` 데모 샵이 seeded 되어 있어 로그인 없이 체험하기로 바로 실제 예시 데이터 화면을 볼 수 있음
 - `src/lib/supabase.ts` — 공개 env가 누락된 배포에서는 placeholder 호출을 숨기지 않고, auth flow가 즉시 설정 오류 메시지를 보여주도록 guard 정보(`hasSupabaseEnv`)를 함께 제공
@@ -387,12 +389,16 @@ BDX를 "상담 시스템"에서 **"고객 관리 CRM + 시술 기록 시스템"*
 ### 기술 설계
 1. **Supabase Auth 이메일/비밀번호 로그인**
    - 클라이언트에서 `signUp`, `signInWithPassword`, `getSession`, `onAuthStateChange` 사용
-2. **샵 계정 ↔ 도메인 데이터 연결**
+2. **Google OAuth 로그인/회원가입**
+   - 클라이언트에서 `signInWithOAuth({ provider: 'google' })`
+   - `/auth/callback` route에서 `exchangeCodeForSession()` 수행
+   - middleware에서 `getUser()`로 세션 refresh
+3. **샵 계정 ↔ 도메인 데이터 연결**
    - 회원가입 시 auth user id를 `shops.owner_id` 와 owner `designers.id` 에 연결
-3. **샵 세션 복원**
+4. **샵 세션 복원**
    - 로그인/새로고침 시 `owner_id = auth.user.id` 로 샵을 조회하고 `currentShopId` 컨텍스트 복원
-4. **추가 예정**
-   - Google OAuth, 서버 검증 미들웨어, 비밀번호 재설정, 디자이너 개별 계정
+5. **추가 예정**
+   - Supabase Dashboard provider credentials 연결, 비밀번호 재설정, 디자이너 개별 계정
 
 ### 히스토리
 | 날짜 | 내용 |
@@ -406,6 +412,8 @@ BDX를 "상담 시스템"에서 **"고객 관리 CRM + 시술 기록 시스템"*
 | 2026-03-10 | `fetchShopByOwnerId()`를 `maybeSingle()` 기반으로 바꿔, 샵이 아직 연결되지 않은 세션의 초기화 과정에서 불필요한 콘솔 에러가 발생하지 않게 수정 |
 | 2026-03-10 | `로그인 없이 서비스 체험하기`가 Supabase 데모 계정으로 바로 로그인하도록 바꾸고, `shop-demo`에 샘플 고객/예약/기록/포트폴리오 데이터를 seeded 해 실제 서비스처럼 체험 가능하게 구성 |
 | 2026-03-10 | 배포 환경에 Supabase 공개 env가 누락됐을 때 auth 요청이 `placeholder.supabase.co`로 나가지 않도록 guard를 추가하고, 명시적인 배포 설정 오류 메시지를 반환하도록 수정 |
+| 2026-03-10 | Google OAuth 버튼, callback route, Supabase SSR middleware를 추가해 Google 로그인/회원가입 진입 경로를 구현 |
+| 2026-03-10 | Google 로그인 시 아직 샵이 없는 계정은 추가 입력 화면으로 보내 이름/샵 이름을 받은 뒤 즉시 샵 생성 + 온보딩을 진행하도록 통합 |
 
 ---
 

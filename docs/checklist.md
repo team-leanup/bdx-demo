@@ -202,9 +202,10 @@
 - **완료 추가**: 배포 환경에서 Supabase 공개 env가 빠졌을 때는 placeholder 네트워크 호출 대신 명시적인 설정 오류 메시지를 반환하도록 auth bootstrap을 보강함
 - **남은 일**: 이메일 인증 UX, 비밀번호 재설정, 에러 메시지 정교화, 서버 측 세션 검증 추가
 
-### 13.2 ⬜ 구글 OAuth Provider 연동
-- **지금**: 현재 auth 화면은 이메일/비밀번호 기반 Supabase Auth만 연결됨. Google OAuth는 아직 미연동
-- **할 일**: Google Cloud Console에서 OAuth 2.0 클라이언트 ID 발급 → NextAuth Google Provider 설정 → `.env.local`에 `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` 추가
+### 13.2 🔵 구글 OAuth Provider 연동
+- **지금**: `src/app/(auth)/login/page.tsx`, `src/app/(auth)/signup/page.tsx`, `src/store/auth-store.ts`에 Google OAuth 진입 버튼과 `signInWithOAuth` 흐름을 연결했고, `src/app/auth/callback/route.ts` + `src/middleware.ts`에서 Supabase SSR 기반 코드 교환/세션 복원을 처리함
+- **완료 추가**: Google 로그인에서 아직 샵이 없는 계정은 `src/app/(auth)/signup/google/page.tsx`로 보내 이름/샵 이름을 입력받은 뒤 바로 샵 생성 + 온보딩으로 이어지도록 통합함
+- **남은 일**: Supabase Dashboard의 Google provider에 Client ID/Secret 입력, Google Cloud Console에 `https://pzwmqorvrhdkckkdqemo.supabase.co/auth/v1/callback` 및 앱 callback URL 등록
 
 ### 13.3 ⬜ 미들웨어 인증 가드
 - **지금**: `src/middleware.ts`가 보안 헤더만 추가하고 **인증 여부를 전혀 검증하지 않음**. 로그인 안 해도 모든 페이지 접근 가능
