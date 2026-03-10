@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@supabase/ssr':
+        specifier: ^0.9.0
+        version: 0.9.0(@supabase/supabase-js@2.99.0)
       '@supabase/supabase-js':
         specifier: ^2.99.0
         version: 2.99.0
@@ -404,6 +407,11 @@ packages:
   '@supabase/realtime-js@2.99.0':
     resolution: {integrity: sha512-7nFTZhNeANR7FvEY6PfWLCfE8dHqcaJd9SuR7IPEZvBPG9K4uEHMivpjZx4NWRSU7Eji7ZbKy2LG+cJ48DhwHg==}
     engines: {node: '>=20.0.0'}
+
+  '@supabase/ssr@0.9.0':
+    resolution: {integrity: sha512-UFY6otYV3yqCgV+AyHj80vNkTvbf1Gas2LW4dpbQ4ap6p6v3eB2oaDfcI99jsuJzwVBCFU4BJI+oDYyhNk1z0Q==}
+    peerDependencies:
+      '@supabase/supabase-js': ^2.97.0
 
   '@supabase/storage-js@2.99.0':
     resolution: {integrity: sha512-mAEEbfsght5EEALejYrwAP9k8sFBGjfMZT8n4SyMXk2iYuWVeRMs1kA/uKg0uDMctWdZ0bL+L4jZzksUJpCjMA==}
@@ -858,6 +866,10 @@ packages:
 
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
+
+  cookie@1.1.1:
+    resolution: {integrity: sha512-ei8Aos7ja0weRpFzJnEA9UHJ/7XQmqglbRwnf2ATjcB9Wq874VKH9kfjjirM6UhU2/E5fFYadylyhFldcqSidQ==}
+    engines: {node: '>=18'}
 
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
@@ -2331,6 +2343,11 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  '@supabase/ssr@0.9.0(@supabase/supabase-js@2.99.0)':
+    dependencies:
+      '@supabase/supabase-js': 2.99.0
+      cookie: 1.1.1
+
   '@supabase/storage-js@2.99.0':
     dependencies:
       iceberg-js: 0.8.1
@@ -2777,6 +2794,8 @@ snapshots:
   color-name@1.1.4: {}
 
   concat-map@0.0.1: {}
+
+  cookie@1.1.1: {}
 
   cross-spawn@7.0.6:
     dependencies:
