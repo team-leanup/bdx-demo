@@ -164,6 +164,19 @@ export const useAuthStore = create<AuthStore>()(
 
         const userId = user?.id;
         if (!userId) {
+          // 데모 모드 쿠키가 있으면 데모 상태 복원 (새로고침 지원)
+          if (typeof document !== 'undefined' && document.cookie.includes('bdx-demo=true')) {
+            set({
+              isInitialized: true,
+              pendingGoogleSignup: null,
+              role: 'owner',
+              currentShopId: 'shop-demo',
+              currentShopOnboardingComplete: true,
+              activeDesignerId: '9a0ce791-7906-4476-811b-be48f7dee2c8',
+              activeDesignerName: '데모 원장',
+            });
+            return;
+          }
           set({ isInitialized: true, pendingGoogleSignup: null, ...getLoggedOutState() });
           return;
         }
