@@ -169,6 +169,7 @@ BDX를 "상담 시스템"에서 **"고객 관리 CRM + 시술 기록 시스템"*
 | 날짜 | 내용 |
 |------|------|
 | 2026-03-09 | 요구사항 정리 |
+| 2026-03-12 | staff용 상담 요약의 최종 결제 카드에서 raw i18n key `consultation.basePrice`가 그대로 보이던 문제를 수정하고, 실제 `breakdown.subtotal` 값에 맞춰 `summary.subtotal` 라벨을 사용하도록 정리 |
 
 ---
 
@@ -236,6 +237,7 @@ BDX를 "상담 시스템"에서 **"고객 관리 CRM + 시술 기록 시스템"*
 | 날짜 | 내용 |
 |------|------|
 | 2026-03-09 | 요구사항 정리 |
+| 2026-03-12 | 시술 확인서(`treatment-sheet`)에서 가격 확정 시 할인/예약금을 함께 적용하도록 보강. 정액 할인/할인율/예약금은 숫자 프리셋과 +/- 선택 UI로 조정하고, 확정 시 `consultation.discount`, `consultation.deposit`, `finalPrice`를 레코드에 함께 저장하도록 정리 |
 
 ---
 
@@ -270,6 +272,7 @@ BDX를 "상담 시스템"에서 **"고객 관리 CRM + 시술 기록 시스템"*
 | 2026-03-12 | customer-link는 미들웨어 rewrite 없이 `/consultation` 페이지 자체에서 고객 정보 화면을 직접 렌더링하도록 재조정. customer 단계 이동(`traits`/`summary` back)도 `/consultation`로 통일해 고객용 폼이 샵 전용 화면으로 전환되지 않게 분리 |
 | 2026-03-12 | 상담 단계 순서를 `고객 정보`를 Step 1로 앞당기도록 재정렬. staff 시작 버튼은 `/consultation/customer`부터 시작하고, customer 페이지 다음 단계를 `/consultation/step1`로 변경했으며 summary 뒤로가기는 staff=`traits`, customer-link=`/consultation`으로 분기 |
 | 2026-03-12 | customer-link도 Step 1(고객 정보) 다음에 `/consultation/step1`로 이어지도록 수정해, `다음` 버튼이 곧바로 summary로 점프하던 흐름을 제거하고 staff/customer-link 모두 `고객 정보 → 기본 조건 → 시술 유형 → 고객 성향 → 요약` 순서를 따르도록 정리 |
+| 2026-03-12 | 현장 상담 시작/저장 시 선택한 `designerId`를 연결된 예약에도 함께 저장하도록 보강해, `records` 탭 디자이너 데이 그리드에서 예약 카드가 선택한 디자이너 열에 표시되도록 정리 |
 
 ---
 
