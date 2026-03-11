@@ -1044,7 +1044,8 @@ export default function SettingsPage() {
   const router = useRouter();
   const t = useT();
   const { shopSettings, setShopSettings } = useAppStore();
-  const { role, logout } = useAuthStore();
+  const { role, logout, currentShopId } = useAuthStore();
+  const isDemoMode = currentShopId === 'demo-shop';
   const shop = useShopStore((s) => s.shop);
   const updateShop = useShopStore((s) => s.updateShop);
 
@@ -1410,21 +1411,47 @@ export default function SettingsPage() {
                   <span className="font-medium text-text">1.0.0</span>
                 </div>
 
-                <button
-                  onClick={() => router.push('/intro-demo')}
-                  className="flex items-center gap-3 rounded-xl border border-border px-3 py-3 text-left transition-colors hover:bg-surface-alt"
-                >
-                  <svg className="h-5 w-5 flex-shrink-0 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5" />
-                  </svg>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-text">데모 버전 보기</p>
-                    <p className="mt-0.5 text-xs text-text-muted">로그인 없이 전체 기능을 탐색할 수 있는 데모 안내 페이지</p>
-                  </div>
-                  <svg className="h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
+                {isDemoMode ? (
+                  <button
+                    onClick={async () => {
+                      await logout();
+                      router.push('/login');
+                    }}
+                    className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-3 py-3 text-left transition-colors hover:bg-primary/10"
+                  >
+                    <svg className="h-5 w-5 flex-shrink-0 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-primary">데모 모드 나가기</p>
+                      <p className="mt-0.5 text-xs text-text-muted">로그인 화면으로 돌아갑니다</p>
+                    </div>
+                    <svg className="h-4 w-4 text-primary/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                ) : (
+                  <button
+                    onClick={async () => {
+                      await logout();
+                      const { loginAsDemo } = useAuthStore.getState();
+                      await loginAsDemo();
+                      router.push('/home');
+                    }}
+                    className="flex items-center gap-3 rounded-xl border border-border px-3 py-3 text-left transition-colors hover:bg-surface-alt"
+                  >
+                    <svg className="h-5 w-5 flex-shrink-0 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5" />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-text">데모 모드로 전환</p>
+                      <p className="mt-0.5 text-xs text-text-muted">Mock 데이터로 전체 기능을 체험합니다</p>
+                    </div>
+                    <svg className="h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                )}
 
                 <div className="border-t border-border pt-3">
                   <Button
