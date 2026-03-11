@@ -30,6 +30,7 @@ function CustomerPageInner() {
   const setCustomerInfo = useConsultationStore((s) => s.setCustomerInfo);
   const setBookingId = useConsultationStore((s) => s.setBookingId);
   const setEntryPoint = useConsultationStore((s) => s.setEntryPoint);
+  const setSourceShopName = useConsultationStore((s) => s.setSourceShopName);
   const setStep = useConsultationStore((s) => s.setStep);
   const consultation = useConsultationStore((s) => s.consultation);
   const addReferenceImage = useConsultationStore((s) => s.addReferenceImage);
@@ -57,9 +58,12 @@ function CustomerPageInner() {
   const prefillNote = searchParams.get('note') ?? '';
   const prefillLang = searchParams.get('lang') as Locale | null;
   const prefillBookingId = searchParams.get('bookingId') ?? '';
+  const prefillShopName = searchParams.get('shopName') ?? '';
   const prefillEntry: 'staff' | 'customer_link' = searchParams.get('entry') === 'customer-link'
     ? 'customer_link'
     : 'staff';
+  const isCustomerLinkFlow = prefillEntry === 'customer_link';
+  const visibleShopName = prefillShopName || consultation.sourceShopName || '';
 
   const [name, setName] = useState(consultation.customerName ?? prefillName);
   const [phone, setPhone] = useState(consultation.customerPhone ?? prefillPhone);
@@ -73,6 +77,7 @@ function CustomerPageInner() {
     prefillNote,
       prefillLang,
       prefillBookingId,
+      prefillShopName,
       prefillEntry,
       customerName: consultation.customerName,
       customerPhone: consultation.customerPhone,
@@ -84,6 +89,7 @@ function CustomerPageInner() {
       prefillNote: note,
       prefillLang: lang,
       prefillBookingId: bookingId,
+      prefillShopName: shopName,
       prefillEntry: entryPoint,
       customerName,
       customerPhone,
@@ -103,8 +109,11 @@ function CustomerPageInner() {
     if (bookingId) {
       setBookingId(bookingId);
     }
+    if (shopName) {
+      setSourceShopName(shopName);
+    }
     setEntryPoint(entryPoint);
-  }, [setBookingId, setConsultationLocale, setEntryPoint]);
+  }, [setBookingId, setConsultationLocale, setEntryPoint, setSourceShopName]);
 
   const handleExistingCustomer = (customer: Customer) => {
     setName(customer.name);
@@ -139,6 +148,7 @@ function CustomerPageInner() {
   // C-6: customer_link 포함 모든 모드에서 customer가 첫 화면 → Step 1 고정
   const stepNumber = 1;
   const backHref = '/consultation';
+  const customerLinkEntryHref = `/consultation/customer?entry=customer-link${visibleShopName ? `&shopName=${encodeURIComponent(visibleShopName)}` : ''}`;
 
   return (
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
@@ -148,8 +158,17 @@ function CustomerPageInner() {
         title={t('consultation.customerInfo')}
         titleKo={tKo('consultation.customerInfo')}
         backHref={backHref}
+        onClose={() => router.push(isCustomerLinkFlow ? customerLinkEntryHref : '/home')}
       />
       <PriceSummaryBar />
+
+      {isCustomerLinkFlow && visibleShopName && (
+        <div className="mx-4 mt-3 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-primary">Consultation Link</p>
+          <p className="mt-1 text-sm font-bold text-text">{visibleShopName}</p>
+          <p className="mt-1 text-xs text-text-muted">이 상담 링크는 {visibleShopName}에서 보낸 링크예요.</p>
+        </div>
+      )}
 
       {/* 예약 연동 안내 배너 */}
       {prefillName && (
@@ -287,12 +306,14 @@ function CustomerPageInner() {
                 )}
               </p>
               <h2 className="text-lg font-bold text-text">{t('consultation.customerInfo')}</h2>
-              <p className="text-xs text-text-muted mt-0.5">
-                {t('consultation.searchExisting')}
-                {locale !== 'ko' && (
-                  <span className="ml-1 text-[9px] opacity-60">{tKo('consultation.searchExisting')}</span>
-                )}
-              </p>
+              {!isCustomerLinkFlow && (
+                <p className="text-xs text-text-muted mt-0.5">
+                  {t('consultation.searchExisting')}
+                  {locale !== 'ko' && (
+                    <span className="ml-1 text-[9px] opacity-60">{tKo('consultation.searchExisting')}</span>
+                  )}
+                </p>
+              )}
             </div>
           </motion.div>
 
@@ -305,6 +326,7 @@ function CustomerPageInner() {
             onPhoneChange={setPhone}
             onMemoChange={setMemo}
             onExistingCustomerSelect={handleExistingCustomer}
+            allowExistingCustomerSearch={!isCustomerLinkFlow}
           />
 
           {/* 참고 이미지 업로드 — staff 모드에서만 표시 (customer_link는 상단에 이미 있음) */}

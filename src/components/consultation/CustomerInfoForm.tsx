@@ -18,6 +18,7 @@ interface CustomerInfoFormProps {
   onPhoneChange: (v: string) => void;
   onMemoChange: (v: string) => void;
   onExistingCustomerSelect: (customer: Customer) => void;
+  allowExistingCustomerSearch?: boolean;
   className?: string;
 }
 
@@ -43,6 +44,7 @@ export function CustomerInfoForm({
   onPhoneChange,
   onMemoChange,
   onExistingCustomerSelect,
+  allowExistingCustomerSearch = true,
   className,
 }: CustomerInfoFormProps) {
   const t = useT();
@@ -77,30 +79,32 @@ export function CustomerInfoForm({
   return (
     <div className={cn('flex flex-col gap-5', className)}>
       {/* Toggle */}
-      <div className="flex bg-surface-alt rounded-xl p-1">
-        {(['new', 'existing'] as const).map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => setMode(m)}
-            className={cn(
-              'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200',
-              mode === m
-                ? 'bg-surface text-primary shadow-sm'
-                : 'text-text-muted hover:text-text',
-            )}
-          >
-            {m === 'new' ? t('customerForm.newCustomer') : t('customerForm.existingCustomer')}
-            {locale !== 'ko' && (
-              <span className="ml-1 text-[10px] opacity-60">
-                {m === 'new' ? tKo('customerForm.newCustomer') : tKo('customerForm.existingCustomer')}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
+      {allowExistingCustomerSearch && (
+        <div className="flex bg-surface-alt rounded-xl p-1">
+          {(['new', 'existing'] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              className={cn(
+                'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200',
+                mode === m
+                  ? 'bg-surface text-primary shadow-sm'
+                  : 'text-text-muted hover:text-text',
+              )}
+            >
+              {m === 'new' ? t('customerForm.newCustomer') : t('customerForm.existingCustomer')}
+              {locale !== 'ko' && (
+                <span className="ml-1 text-[10px] opacity-60">
+                  {m === 'new' ? tKo('customerForm.newCustomer') : tKo('customerForm.existingCustomer')}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
 
-      {mode === 'new' ? (
+      {!allowExistingCustomerSearch || mode === 'new' ? (
         <div className="flex flex-col gap-4">
           <div className="flex gap-3">
             <div className="flex-1">
