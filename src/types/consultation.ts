@@ -72,6 +72,7 @@ export interface ConsultationType {
   customerId?: string;
   customerName?: string;
   customerPhone?: string;
+  sourceShopId?: string;
   sourceShopName?: string;
 
   // STEP1: 기본 조건

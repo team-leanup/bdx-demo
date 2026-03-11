@@ -33,7 +33,7 @@ export function HeroCTA({
   const [linkCopied, setLinkCopied] = useState(false);
 
   const handleCopyLink = (): void => {
-    const url = `${window.location.origin}/consultation/customer?entry=customer-link`;
+    const url = `${window.location.origin}/consultation?entry=customer-link`;
     void navigator.clipboard.writeText(url).then(() => {
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);

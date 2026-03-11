@@ -16,7 +16,7 @@ import { useConsultationStore } from '@/store/consultation-store';
 import { ConsultationStep } from '@/types/consultation';
 import { useCustomerStore } from '@/store/customer-store';
 import { useT } from '@/lib/i18n';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, getKoreanWeekStart, getTodayInKorea, toKoreanDateString } from '@/lib/format';
 import { MonthCalendar } from '@/components/calendar/MonthCalendar';
 import { DayReservationList } from '@/components/calendar/DayReservationList';
 import { WeekCalendar } from '@/components/calendar/WeekCalendar';
@@ -48,32 +48,30 @@ type FilterPeriod = 'all' | 'today' | 'week' | 'month';
 type ReservationFilter = 'all' | 'mine';
 
 function isInPeriod(dateStr: string, period: FilterPeriod): boolean {
-  const now = new Date();
-  const d = new Date(dateStr);
+  const today = getTodayInKorea();
+  const todayDate = new Date(`${today}T12:00:00`);
+  const normalizedDate = toKoreanDateString(dateStr);
+  const d = new Date(`${normalizedDate}T12:00:00`);
   if (period === 'all') return true;
-  if (period === 'today') return d.toDateString() === now.toDateString();
+  if (period === 'today') return normalizedDate === today;
   if (period === 'week') {
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay());
+    const startOfWeek = new Date(todayDate);
+    startOfWeek.setDate(todayDate.getDate() - todayDate.getDay());
     startOfWeek.setHours(0, 0, 0, 0);
     return d >= startOfWeek;
   }
   if (period === 'month') {
-    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    return d.getFullYear() === todayDate.getFullYear() && d.getMonth() === todayDate.getMonth();
   }
   return true;
 }
 
 function getMonday(dateStr: string): string {
-  const d = new Date(dateStr);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  d.setDate(diff);
-  return d.toISOString().split('T')[0];
+  return getKoreanWeekStart(dateStr);
 }
 
 function getTodayStr(): string {
-  return new Date().toISOString().split('T')[0];
+  return getTodayInKorea();
 }
 
 function toTimeGridEvents(
@@ -328,11 +326,11 @@ export default function RecordsPage() {
         customerId: booking.customerId ?? booking.preConsultationData?.customerId,
         referenceImages: booking.preConsultationData?.referenceImages ?? booking.referenceImageUrls ?? [],
         entryPoint: 'staff',
-        currentStep: ConsultationStep.STEP1_BASIC,
+        currentStep: ConsultationStep.START,
       });
     }
     setSelectedEvent(null);
-    router.push('/consultation/step1');
+    router.push('/consultation');
   };
 
   const handleDeleteRecord = () => {

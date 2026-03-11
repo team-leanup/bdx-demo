@@ -12,8 +12,13 @@ function SaveCompleteContent() {
   const consultationId = searchParams.get('consultationId') ?? 'record-001';
   const customerId = searchParams.get('customerId') ?? '';
   const mode = searchParams.get('mode') ?? 'default';
+  const sourceShopId = useConsultationStore((s) => s.consultation.sourceShopId);
   const sourceShopName = useConsultationStore((s) => s.consultation.sourceShopName);
-  const customerLinkEntryHref = `/consultation/customer?entry=customer-link${sourceShopName ? `&shopName=${encodeURIComponent(sourceShopName)}` : ''}`;
+  const customerLinkParams = new URLSearchParams();
+  customerLinkParams.set('entry', 'customer-link');
+  if (sourceShopId) customerLinkParams.set('shopId', sourceShopId);
+  if (sourceShopName) customerLinkParams.set('shopName', sourceShopName);
+  const customerLinkEntryHref = `/consultation?${customerLinkParams.toString()}`;
 
   if (mode === 'preconsultation') {
     return (

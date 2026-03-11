@@ -1,3 +1,4 @@
+import { getNowInKoreaIso } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database';
 import type { Customer, CustomerTag, SmallTalkNote, VisitFrequency, TagCategory, TagAccent } from '@/types/customer';
@@ -198,7 +199,7 @@ export async function dbCreateShopAccount(
   shopName: string,
   ownerName: string,
 ): Promise<ShopAccountMutationResult> {
-  const now = new Date().toISOString();
+  const now = getNowInKoreaIso();
   const existingShop = await fetchShopByOwnerId(ownerUserId);
 
   if (existingShop) {
@@ -363,7 +364,7 @@ export async function dbCreateDesigner(
     return { success: false, error: '이름을 입력해 주세요.' };
   }
 
-  const now = new Date().toISOString();
+  const now = getNowInKoreaIso();
   const { data, error } = await supabase
     .from('designers')
     .insert({
@@ -796,7 +797,7 @@ export async function dbUpsertCustomer(customer: Customer): Promise<void> {
     visit_frequency: customer.visitFrequency ?? null,
     membership: (customer.membership as unknown as import('@/types/database').Json) ?? null,
     preferred_language: customer.preferredLanguage ?? null,
-    updated_at: new Date().toISOString(),
+    updated_at: getNowInKoreaIso(),
   });
   if (error) {
     console.error('[db] dbUpsertCustomer error:', error);
@@ -848,7 +849,7 @@ export async function dbInsertSmallTalkNote(note: SmallTalkNote): Promise<void> 
 export async function dbUpdateCustomerField(customerId: string, field: string, value: unknown): Promise<void> {
   const { error } = await supabase
     .from('customers')
-    .update({ [field]: value, updated_at: new Date().toISOString() })
+    .update({ [field]: value, updated_at: getNowInKoreaIso() })
     .eq('id', customerId);
   if (error) {
     console.error('[db] dbUpdateCustomerField error:', error);
@@ -871,7 +872,7 @@ export async function dbUpsertShop(shop: Shop): Promise<{ success: boolean; erro
     logo_url: shop.logoUrl ?? null,
     onboarding_completed_at: shop.onboardingCompletedAt ?? null,
     settings: (shop.settings as unknown as import('@/types/database').Json) ?? null,
-    updated_at: new Date().toISOString(),
+    updated_at: getNowInKoreaIso(),
   });
   if (error) {
     console.error('[db] dbUpsertShop error:', error);
@@ -886,7 +887,7 @@ export async function dbUpdateShopSettings(shopId: string, settings: ShopExtende
     .from('shops')
     .update({
       settings: settings as unknown as import('@/types/database').Json,
-      updated_at: new Date().toISOString(),
+      updated_at: getNowInKoreaIso(),
     })
     .eq('id', shopId);
   if (error) {
@@ -910,7 +911,7 @@ export async function dbUpsertRecord(record: ConsultationRecord): Promise<void> 
     estimated_minutes: record.estimatedMinutes,
     final_price: record.finalPrice,
     created_at: record.createdAt,
-    updated_at: new Date().toISOString(),
+    updated_at: getNowInKoreaIso(),
     finalized_at: record.finalizedAt ?? null,
     pricing_adjustments: (record.pricingAdjustments as unknown as import('@/types/database').Json) ?? null,
     notes: record.notes ?? null,

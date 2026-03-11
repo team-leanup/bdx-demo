@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/cn';
+import { addDaysInKorea, getKoreanWeekStart, getTodayInKorea, parseKoreanDateString } from '@/lib/format';
 import type { BookingRequest, BookingChannel } from '@/types/consultation';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -25,44 +26,34 @@ function toDateStr(year: number, month: number, day: number): string {
 }
 
 function getTodayStr(): string {
-  return new Date().toISOString().split('T')[0];
+  return getTodayInKorea();
 }
 
-function getWeekStart(dateStr: string): Date {
-  const d = new Date(dateStr);
-  const day = d.getDay(); // 0 = Sunday
-  const diff = d.getDate() - day;
-  const start = new Date(d);
-  start.setDate(diff);
-  start.setHours(0, 0, 0, 0);
-  return start;
+function getWeekStart(dateStr: string): string {
+  return getKoreanWeekStart(dateStr);
 }
 
-function formatWeekLabel(start: Date): string {
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-  const startLabel = `${start.getMonth() + 1}/${start.getDate()}`;
-  const endLabel = `${end.getMonth() + 1}/${end.getDate()}`;
-  return `${start.getFullYear()}년 ${startLabel} – ${endLabel}`;
+function formatWeekLabel(startDateStr: string): string {
+  const start = parseKoreanDateString(startDateStr);
+  const end = parseKoreanDateString(addDaysInKorea(startDateStr, 6));
+  const startLabel = `${start.getUTCMonth() + 1}/${start.getUTCDate()}`;
+  const endLabel = `${end.getUTCMonth() + 1}/${end.getUTCDate()}`;
+  return `${start.getUTCFullYear()}년 ${startLabel} – ${endLabel}`;
 }
 
 export function WeekCalendar({ selectedDate, onSelectDate, reservations }: WeekCalendarProps) {
   const today = getTodayStr();
-  const [weekStart, setWeekStart] = useState<Date>(() => getWeekStart(selectedDate || today));
+  const [weekStart, setWeekStart] = useState<string>(() => getWeekStart(selectedDate || today));
   const [direction, setDirection] = useState(0);
 
   const goToPrev = () => {
     setDirection(-1);
-    const prev = new Date(weekStart);
-    prev.setDate(prev.getDate() - 7);
-    setWeekStart(prev);
+    setWeekStart((current) => addDaysInKorea(current, -7));
   };
 
   const goToNext = () => {
     setDirection(1);
-    const next = new Date(weekStart);
-    next.setDate(next.getDate() + 7);
-    setWeekStart(next);
+    setWeekStart((current) => addDaysInKorea(current, 7));
   };
 
   const goToThisWeek = () => {
@@ -73,12 +64,12 @@ export function WeekCalendar({ selectedDate, onSelectDate, reservations }: WeekC
 
   // Build 7-day array from weekStart
   const days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekStart);
-    d.setDate(weekStart.getDate() + i);
+    const dateStr = addDaysInKorea(weekStart, i);
+    const d = parseKoreanDateString(dateStr);
     return {
-      dateStr: toDateStr(d.getFullYear(), d.getMonth() + 1, d.getDate()),
+      dateStr,
       dayOfWeek: i,
-      date: d.getDate(),
+      date: d.getUTCDate(),
     };
   });
 
@@ -89,7 +80,7 @@ export function WeekCalendar({ selectedDate, onSelectDate, reservations }: WeekC
     return acc;
   }, {});
 
-  const weekKey = weekStart.toISOString().split('T')[0];
+  const weekKey = weekStart;
 
   return (
     <div className="flex flex-col gap-3">

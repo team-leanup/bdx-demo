@@ -5,6 +5,7 @@ import { Input } from '@/components/ui';
 import { useCustomerStore } from '@/store/customer-store';
 import { useRecordsStore } from '@/store/records-store';
 import { cn } from '@/lib/cn';
+import { getRelativeDayDiffInKorea } from '@/lib/format';
 import { useT, useKo, useLocale } from '@/lib/i18n';
 import type { Customer } from '@/types/customer';
 import type { ConsultationRecord } from '@/types/consultation';
@@ -23,10 +24,7 @@ interface CustomerInfoFormProps {
 }
 
 function getRelativeDate(dateStr: string, t: (key: string) => string): string {
-  const now = new Date();
-  const date = new Date(dateStr);
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffDays = getRelativeDayDiffInKorea(dateStr);
   if (diffDays === 0) return t('customerForm.today');
   if (diffDays === 1) return t('customerForm.yesterday');
   if (diffDays < 7) return t('customerForm.daysAgo').replace('{count}', String(diffDays));

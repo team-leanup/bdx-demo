@@ -16,6 +16,7 @@ import { ConsultationStep } from '@/types/consultation';
 import type { CustomerTag } from '@/types/customer';
 import type { Locale } from '@/store/locale-store';
 import { cn } from '@/lib/cn';
+import { KOREA_TIME_ZONE, parseKoreanDateString } from '@/lib/format';
 import { useT } from '@/lib/i18n';
 import { useLocaleStore } from '@/store/locale-store';
 import { useShopStore } from '@/store/shop-store';
@@ -214,8 +215,13 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
 
   const localeMap: Record<string, string> = { ko: 'ko-KR', en: 'en-US', zh: 'zh-CN', ja: 'ja-JP' };
   const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString(localeMap[locale] || 'ko-KR', { month: 'long', day: 'numeric', weekday: 'short' });
+    const d = parseKoreanDateString(dateStr);
+    return new Intl.DateTimeFormat(localeMap[locale] || 'ko-KR', {
+      timeZone: KOREA_TIME_ZONE,
+      month: 'long',
+      day: 'numeric',
+      weekday: 'short',
+    }).format(d);
   };
 
   const navigateToConsultation = (booking: BookingRequest): void => {
@@ -235,9 +241,9 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
       customerId: booking.customerId ?? booking.preConsultationData?.customerId,
       referenceImages: booking.preConsultationData?.referenceImages ?? booking.referenceImageUrls ?? [],
       entryPoint: 'staff',
-      currentStep: ConsultationStep.STEP1_BASIC,
+      currentStep: ConsultationStep.START,
     });
-    router.push('/consultation/step1');
+    router.push('/consultation');
   };
 
   const handleStartConsultation = (booking: BookingRequest): void => {

@@ -11,7 +11,7 @@ import { CustomerAnalytics } from '@/components/dashboard/CustomerAnalytics';
 import { DesignerPerformance } from '@/components/dashboard/DesignerPerformance';
 import { WeeklySummary } from '@/components/dashboard/WeeklySummary';
 import { HourlyBookings } from '@/components/dashboard/HourlyBookings';
-import { formatDateDot, formatPrice } from '@/lib/format';
+import { formatDateDot, formatNowInKorea, formatPrice } from '@/lib/format';
 import { DESIGN_SCOPE_LABEL } from '@/lib/labels';
 import { useAuthStore } from '@/store/auth-store';
 import { useRecordsStore } from '@/store/records-store';
@@ -25,7 +25,7 @@ import {
 } from '@/lib/analytics';
 
 export default function DashboardPage() {
-  const today = new Date().toLocaleDateString('ko-KR', {
+  const today = formatNowInKorea('ko-KR', {
     year: 'numeric',
     month: 'long',
   });

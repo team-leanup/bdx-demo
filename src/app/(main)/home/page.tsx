@@ -30,15 +30,17 @@ import { useAuthStore } from '@/store/auth-store';
 import { useLocaleStore } from '@/store/locale-store';
 import type { PreConsultationNotification } from '@/lib/preconsult-notifications';
 import {
+  formatNowInKorea,
+  getCurrentHourInKorea,
+  getTodayInKorea,
+  toKoreanDateString,
+} from '@/lib/format';
+import {
   IconUsers,
   IconCalendar,
   IconChart,
   IconGear,
 } from '@/components/icons';
-
-function getTodayStr(): string {
-  return new Date().toISOString().split('T')[0];
-}
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -95,9 +97,9 @@ export default function HomePage() {
   const storeShopName = useShopStore((s) => s.shop?.name);
   const shopName = shopSettings.shopName || (storeShopName ?? '내 매장');
 
-  const today = getTodayStr();
+  const today = getTodayInKorea();
   const todayConsultations = records.filter(
-    (r) => r.createdAt.startsWith(today),
+    (r) => toKoreanDateString(r.createdAt) === today,
   );
   const todayRevenue = todayConsultations.reduce((sum, r) => sum + r.finalPrice, 0);
 
@@ -108,7 +110,7 @@ export default function HomePage() {
   const allReservations = useReservationStore((s) => s.reservations);
   const addReservation = useReservationStore((s) => s.addReservation);
   const todayReservations = useMemo(() => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getTodayInKorea();
     return allReservations
       .filter((r) => r.reservationDate === todayStr)
       .sort((a, b) => a.reservationTime.localeCompare(b.reservationTime));
@@ -173,22 +175,22 @@ export default function HomePage() {
       customerId: booking.customerId ?? booking.preConsultationData?.customerId,
       referenceImages: booking.preConsultationData?.referenceImages ?? booking.referenceImageUrls ?? [],
       entryPoint: 'staff',
-      currentStep: ConsultationStep.STEP1_BASIC,
+      currentStep: ConsultationStep.START,
     });
-    router.push('/consultation/step1');
+    router.push('/consultation');
   };
 
   const [todayDateStr, setTodayDateStr] = useState('');
   const [greeting, setGreeting] = useState('');
 
   useEffect(() => {
-    setTodayDateStr(new Date().toLocaleDateString('ko-KR', {
+    setTodayDateStr(formatNowInKorea('ko-KR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
       weekday: 'long',
     }));
-    const hour = new Date().getHours();
+    const hour = getCurrentHourInKorea();
     setGreeting(hour < 12
       ? t('home.greeting_morning')
       : hour < 18

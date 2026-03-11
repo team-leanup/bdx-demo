@@ -10,7 +10,7 @@ import { useRecordsStore } from '@/store/records-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { calculatePrice } from '@/lib/price-calculator';
-import { formatPrice, formatDateDot } from '@/lib/format';
+import { formatPrice, formatDateDot, getNowInKoreaIso } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import type { DiscountConfig } from '@/types/consultation';
 
@@ -124,7 +124,7 @@ function PaymentContent(): React.ReactElement {
 
     updateRecord(record.id, {
       finalPrice: grandTotal,
-      finalizedAt: new Date().toISOString(),
+      finalizedAt: getNowInKoreaIso(),
       pricingAdjustments: {
         basePrice: breakdown.basePrice,
         extras: extraItems,

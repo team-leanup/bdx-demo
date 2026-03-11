@@ -5,7 +5,7 @@ import { motion, useAnimationControls } from 'framer-motion';
 import { CustomerTagChip } from '@/components/customer/CustomerTagChip';
 import { ReservationReadinessBadge } from '@/components/reservations/ReservationReadinessBadge';
 import { cn } from '@/lib/cn';
-import { formatDayLabelKo } from '@/lib/format';
+import { formatDayLabelKo, getCurrentTimeInKorea, getTodayInKorea } from '@/lib/format';
 import { useCustomerStore } from '@/store/customer-store';
 import {
   canMoveReservation,
@@ -255,7 +255,7 @@ export function DesignerDayGridCalendar({
   onEventClick,
   onEventMove,
 }: DesignerDayGridCalendarProps) {
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState(getCurrentTimeInKorea());
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -265,17 +265,16 @@ export function DesignerDayGridCalendar({
   const gridHeight = HOURS.length * HOUR_HEIGHT;
 
   useEffect(() => {
-    const interval = setInterval(() => setCurrentTime(new Date()), 60000);
+    const interval = setInterval(() => setCurrentTime(getCurrentTimeInKorea()), 60000);
     return () => clearInterval(interval);
   }, []);
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getTodayInKorea();
   const isToday = date === todayStr;
 
   const currentTimeTop = useMemo(() => {
     if (!isToday) return null;
-    const h = currentTime.getHours();
-    const m = currentTime.getMinutes();
+    const { hour: h, minute: m } = currentTime;
     if (h < START_HOUR || h > END_HOUR) return null;
     return ((h * 60 + m) - START_HOUR * 60) / 60 * HOUR_HEIGHT;
   }, [currentTime, START_HOUR, END_HOUR, isToday]);

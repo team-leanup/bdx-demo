@@ -11,6 +11,7 @@ import { cn } from '@/lib/cn';
 import { InstagramHashtags } from './InstagramHashtags';
 import type { PortfolioPhoto } from '@/types/portfolio';
 import type { Customer } from '@/types/customer';
+import { ConsultationStep } from '@/types/consultation';
 import type { ConsultationRecord } from '@/types/consultation';
 
 interface PortfolioOverlayProps {
@@ -201,23 +202,15 @@ export function PortfolioOverlay({
                 size="sm"
                 className="flex-1"
                 onClick={() => {
-                  const designParams = new URLSearchParams();
-                  if (photo.tags && photo.tags.length > 0) {
-                    designParams.set('tags', photo.tags.join(','));
-                  }
-                  if (photo.colorLabels && photo.colorLabels.length > 0) {
-                    designParams.set('colorLabels', photo.colorLabels.join(','));
-                  }
-                  if (serviceType) {
-                    designParams.set('serviceType', serviceType);
-                  }
-                  const designQuery = designParams.toString();
-                  if (customer) {
-                    const base = `/consultation/customer?name=${encodeURIComponent(customer.name)}&phone=${encodeURIComponent(customer.phone)}&customerId=${customer.id}`;
-                    router.push(designQuery ? `${base}&${designQuery}` : base);
-                  } else {
-                    router.push(designQuery ? `/consultation/customer?${designQuery}` : '/consultation/customer');
-                  }
+                  hydrateConsultation({
+                    customerId: customer?.id,
+                    customerName: customer?.name,
+                    customerPhone: customer?.phone,
+                    referenceImages: photo.imageDataUrl ? [photo.imageDataUrl] : [],
+                    entryPoint: 'staff',
+                    currentStep: ConsultationStep.START,
+                  });
+                  router.push('/consultation');
                   onClose();
                 }}
               >

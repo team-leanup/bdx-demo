@@ -14,6 +14,7 @@ import {
   dbDeleteDesignerProfileImage,
 } from '@/lib/db';
 import { useAuthStore } from '@/store/auth-store';
+import { getNowInKoreaIso } from '@/lib/format';
 
 interface ShopStore {
   shop: Shop | null;
@@ -59,7 +60,7 @@ export const useShopStore = create<ShopStore>()(
           return { success: false, error: '현재 샵 정보를 찾을 수 없습니다.' };
         }
 
-        const updated = { ...current, ...updates, updatedAt: new Date().toISOString() };
+      const updated = { ...current, ...updates, updatedAt: getNowInKoreaIso() };
         set({ shop: updated });
         const result = await dbUpsertShop(updated);
 

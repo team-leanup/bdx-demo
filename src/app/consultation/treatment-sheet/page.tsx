@@ -7,7 +7,7 @@ import { useConsultationStore } from '@/store/consultation-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useRecordsStore } from '@/store/records-store';
 import { HandIllustration } from '@/components/canvas/HandIllustration';
-import { formatPrice, formatPriceNumber } from '@/lib/format';
+import { formatNowInKorea, formatPrice, formatPriceNumber, getNowInKoreaIso } from '@/lib/format';
 import { calculatePrice } from '@/lib/price-calculator';
 import { estimateTime } from '@/lib/time-calculator';
 import { useShopStore } from '@/store/shop-store';
@@ -96,7 +96,7 @@ export default function TreatmentSheetPage() {
   const priceBreakdown = calculatePrice(consultation);
   const totalPrice = priceBreakdown.subtotal;
   const estimatedMinutes = estimateTime(consultation);
-  const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+  const today = formatNowInKorea('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 
   const [basePrice, setBasePrice] = useState<number>(totalPrice);
   const [extras, setExtras] = useState<PricingExtra[]>([]);
@@ -149,7 +149,7 @@ export default function TreatmentSheetPage() {
         customerId: customer.id,
         consultationRecordId: undefined,
         noteText: smallTalkText.trim(),
-        createdAt: new Date().toISOString(),
+        createdAt: getNowInKoreaIso(),
         createdByDesignerId: activeDesignerId ?? designer?.id ?? 'unknown',
         createdByDesignerName: activeDesignerName ?? designer?.name ?? '디자이너',
       };
@@ -197,7 +197,7 @@ export default function TreatmentSheetPage() {
     await new Promise((r) => setTimeout(r, 300));
 
     updateRecord(consultationId, {
-      finalizedAt: new Date().toISOString(),
+      finalizedAt: getNowInKoreaIso(),
       pricingAdjustments: {
         basePrice,
         extras: validExtras.map(({ label, amount }) => ({ label: label.trim(), amount })),

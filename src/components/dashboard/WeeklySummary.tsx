@@ -10,6 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { addDaysInKorea, getKoreanWeekStart, getTodayInKorea, parseKoreanDateString } from '@/lib/format';
 import { useRecordsStore } from '@/store/records-store';
 import { computeDailyConsultations } from '@/lib/analytics';
 
@@ -33,22 +34,16 @@ export function WeeklySummary() {
   const records = useRecordsStore((s) => s.records);
 
   const THIS_WEEK_DATA = useMemo(() => {
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    const mondayStr = monday.toISOString().slice(0, 10);
-    const sundayStr = sunday.toISOString().slice(0, 10);
+    const mondayStr = getKoreanWeekStart(getTodayInKorea());
+    const sundayStr = addDaysInKorea(mondayStr, 6);
 
     const daily = computeDailyConsultations(records, 14);
     return daily
       .filter((d) => d.date >= mondayStr && d.date <= sundayStr)
       .map((d) => {
-        const date = new Date(d.date + 'T00:00:00');
+        const date = parseKoreanDateString(d.date);
         const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-        return { label: dayNames[date.getDay()], consultations: d.consultations };
+        return { label: dayNames[date.getUTCDay()], consultations: d.consultations };
       });
   }, [records]);
 

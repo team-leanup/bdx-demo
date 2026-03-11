@@ -1,4 +1,5 @@
 import type { BookingRequest } from '@/types/consultation';
+import { getNowInKoreaIso } from '@/lib/format';
 
 const STORAGE_KEY = 'bdx-preconsult-read-v2';
 export const PRECONSULT_NOTIFICATIONS_UPDATED = 'bdx-preconsult-notifications-updated';
@@ -93,7 +94,7 @@ export function markPreConsultationNotificationRead(
   notification: Pick<PreConsultationNotification, 'key'>,
 ): void {
   const state = readState();
-  state[notification.key] = new Date().toISOString();
+  state[notification.key] = getNowInKoreaIso();
   writeState(state);
 }
 

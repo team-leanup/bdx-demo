@@ -113,6 +113,7 @@ function CustomerPageInner() {
   const setCustomerInfo = useConsultationStore((s) => s.setCustomerInfo);
   const setBookingId = useConsultationStore((s) => s.setBookingId);
   const setEntryPoint = useConsultationStore((s) => s.setEntryPoint);
+  const setSourceShopId = useConsultationStore((s) => s.setSourceShopId);
   const setSourceShopName = useConsultationStore((s) => s.setSourceShopName);
   const setStep = useConsultationStore((s) => s.setStep);
   const consultation = useConsultationStore((s) => s.consultation);
@@ -140,9 +141,11 @@ function CustomerPageInner() {
   const prefillPhone = searchParams.get('phone') ?? '';
   const prefillNote = searchParams.get('note') ?? '';
   const prefillLang = searchParams.get('lang') as Locale | null;
-  const prefillBookingId = searchParams.get('bookingId') ?? '';
-  const prefillShopName = searchParams.get('shopName') ?? '';
-  const prefillEntry: 'staff' | 'customer_link' = searchParams.get('entry') === 'customer-link'
+  const prefillBookingId = searchParams.get('bookingId') ?? consultation.bookingId ?? '';
+  const prefillShopId = searchParams.get('shopId') ?? consultation.sourceShopId ?? '';
+  const prefillShopName = searchParams.get('shopName') ?? consultation.sourceShopName ?? '';
+  const prefillEntry: 'staff' | 'customer_link' = (searchParams.get('entry') === 'customer-link'
+    || consultation.entryPoint === 'customer_link')
     ? 'customer_link'
     : 'staff';
   const isCustomerLinkFlow = prefillEntry === 'customer_link';
@@ -160,6 +163,7 @@ function CustomerPageInner() {
     prefillNote,
       prefillLang,
       prefillBookingId,
+      prefillShopId,
       prefillShopName,
       prefillEntry,
       customerName: consultation.customerName,
@@ -172,6 +176,7 @@ function CustomerPageInner() {
       prefillNote: note,
       prefillLang: lang,
       prefillBookingId: bookingId,
+      prefillShopId: shopId,
       prefillShopName: shopName,
       prefillEntry: entryPoint,
       customerName,
@@ -201,11 +206,14 @@ function CustomerPageInner() {
     if (bookingId) {
       setBookingId(bookingId);
     }
+    if (shopId) {
+      setSourceShopId(shopId);
+    }
     if (shopName) {
       setSourceShopName(shopName);
     }
     setEntryPoint(entryPoint);
-  }, [setBookingId, setConsultationLocale, setCustomerInfo, setEntryPoint, setSourceShopName]);
+  }, [setBookingId, setConsultationLocale, setCustomerInfo, setEntryPoint, setSourceShopId, setSourceShopName]);
 
   useEffect(() => {
     if (!isCustomerLinkFlow) {
@@ -290,7 +298,11 @@ function CustomerPageInner() {
 
   const stepNumber = 4;
   const backHref = '/consultation/traits';
-  const customerLinkEntryHref = `/consultation/customer?entry=customer-link${visibleShopName ? `&shopName=${encodeURIComponent(visibleShopName)}` : ''}`;
+  const customerLinkParams = new URLSearchParams();
+  customerLinkParams.set('entry', 'customer-link');
+  if (prefillShopId) customerLinkParams.set('shopId', prefillShopId);
+  if (visibleShopName) customerLinkParams.set('shopName', visibleShopName);
+  const customerLinkEntryHref = `/consultation?${customerLinkParams.toString()}`;
 
   if (showEntrySplash) {
     return (

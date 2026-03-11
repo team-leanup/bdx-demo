@@ -25,7 +25,7 @@ export function ConsultationLinkModal({ isOpen, onClose, booking, shopName }: Pr
     params.set("bookingId", booking.id);
     params.set("entry", "customer-link");
     if (shopName) params.set("shopName", shopName);
-    return `${window.location.origin}/consultation/customer?${params.toString()}`;
+    return `${window.location.origin}/consultation?${params.toString()}`;
   }, [booking, shopName]);
 
   const handleCopy = async () => {

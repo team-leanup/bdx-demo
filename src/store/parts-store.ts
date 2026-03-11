@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { DesignScope, ExpressionType } from '@/types/consultation';
+import { getNowInKoreaIso } from '@/lib/format';
 
 export interface CustomPartItem {
   id: string;
@@ -152,7 +153,7 @@ export const usePartsStore = create<PartsStore>()(
             {
               ...preset,
               id: `dp-${Date.now()}`,
-              createdAt: new Date().toISOString(),
+            createdAt: getNowInKoreaIso(),
             },
           ],
         })),

@@ -531,6 +531,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      complete_preconsultation_for_booking: {
+        Args: {
+          completed_at: string
+          linked_customer_id?: string | null
+          payload: Json
+          target_booking_id: string
+        }
+        Returns: undefined
+      }
       get_my_shop_id: { Args: never; Returns: string }
     }
     Enums: {

@@ -3,7 +3,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/cn';
 import { DESIGN_SCOPE_LABEL, BODY_PART_LABEL, EXPRESSION_LABEL } from '@/lib/labels';
-import { formatPrice } from '@/lib/format';
+import {
+  addDaysInKorea,
+  formatPrice,
+  getCurrentTimeInKorea,
+  getKoreanWeekStart,
+  getTodayInKorea,
+  parseKoreanDateString,
+} from '@/lib/format';
 
 export interface TimeGridEvent {
   id: string;
@@ -71,23 +78,17 @@ function getEventColor(ev: TimeGridEvent): string {
 }
 
 function getMonday(dateStr: string): string {
-  const d = new Date(dateStr);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  d.setDate(diff);
-  return d.toISOString().split('T')[0];
+  return getKoreanWeekStart(dateStr);
 }
 
 function addDays(dateStr: string, days: number): string {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
+  return addDaysInKorea(dateStr, days);
 }
 
 function formatShortDate(dateStr: string): { day: number; weekday: string } {
-  const d = new Date(dateStr);
+  const d = parseKoreanDateString(dateStr);
   const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-  return { day: d.getDate(), weekday: weekdays[d.getDay()] };
+  return { day: d.getUTCDate(), weekday: weekdays[d.getUTCDay()] };
 }
 
 function timeToMinutes(time: string): number {
@@ -96,14 +97,14 @@ function timeToMinutes(time: string): number {
 }
 
 export function TimeGridCalendar({ events, weekStartDate, onEventClick, onWeekChange, startHour: propStartHour, endHour: propEndHour }: TimeGridCalendarProps) {
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState(getCurrentTimeInKorea());
 
   const START_HOUR = propStartHour ?? 10;
   const END_HOUR = propEndHour ?? 20;
   const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i);
 
   useEffect(() => {
-    const interval = setInterval(() => setCurrentTime(new Date()), 60000);
+    const interval = setInterval(() => setCurrentTime(getCurrentTimeInKorea()), 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -112,12 +113,11 @@ export function TimeGridCalendar({ events, weekStartDate, onEventClick, onWeekCh
     [weekStartDate],
   );
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getTodayInKorea();
   const isCurrentWeek = weekDates.includes(todayStr);
 
   const currentTimeTop = useMemo(() => {
-    const h = currentTime.getHours();
-    const m = currentTime.getMinutes();
+    const { hour: h, minute: m } = currentTime;
     if (h < START_HOUR || h > END_HOUR) return null;
     return (h - START_HOUR) * HOUR_HEIGHT + (m / 60) * HOUR_HEIGHT;
   }, [currentTime, START_HOUR, END_HOUR]);
@@ -132,12 +132,12 @@ export function TimeGridCalendar({ events, weekStartDate, onEventClick, onWeekCh
   }, [events, weekDates]);
 
   const weekLabel = useMemo(() => {
-    const start = new Date(weekDates[0]);
-    const end = new Date(weekDates[6]);
-    const sm = start.getMonth() + 1;
-    const sd = start.getDate();
-    const em = end.getMonth() + 1;
-    const ed = end.getDate();
+    const start = parseKoreanDateString(weekDates[0]);
+    const end = parseKoreanDateString(weekDates[6]);
+    const sm = start.getUTCMonth() + 1;
+    const sd = start.getUTCDate();
+    const em = end.getUTCMonth() + 1;
+    const ed = end.getUTCDate();
     return sm === em ? `${sm}/${sd} – ${ed}` : `${sm}/${sd} – ${em}/${ed}`;
   }, [weekDates]);
 

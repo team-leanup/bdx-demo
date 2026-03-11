@@ -10,7 +10,7 @@ import { SafetyTag } from '@/components/ui/SafetyTag';
 import { FlagIcon } from '@/components/ui/FlagIcon';
 import type { ToastData } from '@/components/ui';
 import { cn } from '@/lib/cn';
-import { formatPrice, formatRelativeDate, formatDateDot } from '@/lib/format';
+import { formatPrice, formatRelativeDate, formatDateDot, getNowInKoreaIso } from '@/lib/format';
 import {
   CUSTOMER_TAG_ACCENTS,
   getCustomerTagDotClasses,
@@ -295,7 +295,7 @@ function CustomerDetailContent({ id }: { id: string }) {
         category: 'etc',
         value: nextValue,
         isCustom: true,
-        createdAt: new Date().toISOString(),
+        createdAt: getNowInKoreaIso(),
       },
     ]);
     setNewTagValue('');
@@ -645,7 +645,7 @@ function CustomerDetailContent({ id }: { id: string }) {
                 cuticleSensitivity: (updated.cuticle as 'normal' | 'sensitive') || undefined,
                 nailCondition: updated.nailCondition,
                 memo: updated.memo,
-                updatedAt: new Date().toISOString(),
+                updatedAt: getNowInKoreaIso(),
               },
             });
           }}
@@ -1169,7 +1169,7 @@ function CustomerDetailContent({ id }: { id: string }) {
                     id: `stn-${Date.now()}`,
                     customerId: customer.id,
                     noteText: newSmallTalk.trim(),
-                    createdAt: new Date().toISOString(),
+                    createdAt: getNowInKoreaIso(),
                     createdByDesignerId: activeDesignerId ?? 'designer-session',
                     createdByDesignerName: activeDesignerName ?? '나',
                   }, ...prev]);
@@ -1267,9 +1267,9 @@ function CustomerDetailContent({ id }: { id: string }) {
               customerName: customer.name,
               customerPhone: customer.phone,
               entryPoint: 'staff',
-              currentStep: ConsultationStep.STEP1_BASIC,
+              currentStep: ConsultationStep.START,
             });
-            router.push('/consultation/step1');
+            router.push('/consultation');
           }}
         >
           이 고객으로 새 상담 시작

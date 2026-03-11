@@ -2,6 +2,7 @@ import type { ConsultationRecord } from '@/types/consultation';
 import type { BookingRequest } from '@/types/consultation';
 import type { Customer } from '@/types/customer';
 import type { Designer } from '@/types/shop';
+import { getTodayInKorea, toKoreanDateString } from '@/lib/format';
 import { calculatePrice } from '@/lib/price-calculator';
 import { getReservationReadiness } from '@/lib/reservation-readiness';
 
@@ -97,7 +98,7 @@ export interface HourlyDistribution {
 
 // Helper: get YYYY-MM-DD string
 function toDateStr(date: Date): string {
-  return date.toISOString().split('T')[0];
+  return toKoreanDateString(date);
 }
 
 function toLocalDate(value: string): Date {
@@ -161,7 +162,7 @@ export function computeMonthlyConsultations(
   month: number,
 ): number {
   const prefix = `${year}-${String(month).padStart(2, '0')}`;
-  return records.filter((r) => r.createdAt.startsWith(prefix)).length;
+  return records.filter((r) => toKoreanDateString(r.createdAt).startsWith(prefix)).length;
 }
 
 // Find the most common designScope value across records, return the label
@@ -195,7 +196,7 @@ export function computeRegularCount(customers: Customer[]): number {
 
 // Count reservations where reservationDate === today
 export function computeTodayBookings(reservations: BookingRequest[]): number {
-  const today = toDateStr(new Date());
+  const today = getTodayInKorea();
   return reservations.filter((r) => r.reservationDate === today).length;
 }
 
@@ -217,7 +218,7 @@ export function computeDailyConsultations(
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const dateStr = toDateStr(d);
-    const dayRecords = records.filter((r) => r.createdAt.startsWith(dateStr));
+      const dayRecords = records.filter((r) => toKoreanDateString(r.createdAt) === dateStr);
 
     // Find top design scope for this day
     const scopeCounts: Record<string, number> = {};
@@ -401,7 +402,7 @@ const FOREIGN_LANGUAGE_META: Record<NonNullable<BookingRequest['language']>, { l
 export function computeForeignReservationSummary(
   reservations: BookingRequest[],
 ): ForeignReservationSummary {
-  const today = toDateStr(new Date());
+  const today = getTodayInKorea();
   const todayReservations = reservations.filter(
     (reservation) => reservation.status !== 'cancelled' && reservation.reservationDate === today,
   );
@@ -440,7 +441,7 @@ export function computeGoldenTimeTargets(
   reservations: BookingRequest[],
   averageCycleDays = 28,
 ): GoldenTimeTarget[] {
-  const today = new Date();
+  const today = new Date(`${getTodayInKorea()}T12:00:00`);
   const weekStart = startOfWeek(today);
   const weekEnd = endOfWeek(today);
   const reservedCustomerIds = new Set(
