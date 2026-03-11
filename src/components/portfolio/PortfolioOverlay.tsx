@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui';
+import { useConsultationStore } from '@/store/consultation-store';
 import { formatPrice, formatDateDot } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { InstagramHashtags } from './InstagramHashtags';
@@ -37,6 +38,7 @@ export function PortfolioOverlay({
   onClose,
 }: PortfolioOverlayProps): React.ReactElement {
   const router = useRouter();
+  const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const [currentId, setCurrentId] = useState(initialPhotoId);
   const [showHashtags, setShowHashtags] = useState(false);
 
@@ -148,8 +150,8 @@ export function PortfolioOverlay({
               </div>
               {photo.colorLabels && photo.colorLabels.length > 0 && (
                 <div className="mt-1.5 flex flex-wrap gap-1">
-                  {photo.colorLabels.map((c, i) => (
-                    <span key={i} className="rounded-full bg-rose-500/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+                  {photo.colorLabels.map((c) => (
+                    <span key={c} className="rounded-full bg-rose-500/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
                       {c}
                     </span>
                   ))}
@@ -194,13 +196,11 @@ export function PortfolioOverlay({
                 size="sm"
                 className="flex-1"
                 onClick={() => {
-                  if (customer) {
-                    router.push(
-                      `/consultation/customer?name=${encodeURIComponent(customer.name)}&phone=${encodeURIComponent(customer.phone)}&customerId=${customer.id}`,
-                    );
-                  } else {
-                    router.push('/consultation/customer');
-                  }
+                  hydrateConsultation({
+                    referenceImages: [photo.imageDataUrl],
+                    entryPoint: 'staff',
+                  });
+                  router.push('/consultation/customer');
                   onClose();
                 }}
               >
@@ -211,7 +211,7 @@ export function PortfolioOverlay({
             {/* 인디케이터 */}
             {photoIds.length > 1 && (
               <div className="flex justify-center gap-1 pb-3 pt-1">
-                {photoIds.map((pid, i) => (
+                {photoIds.map((pid) => (
                   <button
                     key={pid}
                     onClick={() => setCurrentId(pid)}
