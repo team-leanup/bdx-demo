@@ -559,45 +559,24 @@ function StaffSection() {
                   <p className="text-xs text-text-secondary">{d.phone}</p>
                 </div>
 
-                {/* Photo actions — far right */}
-                <div className="flex items-center gap-1.5 flex-shrink-0">
+                <div className="flex flex-wrap items-center justify-end gap-1.5 flex-shrink-0">
                   <button
                     onClick={() => startEdit(d)}
-                    className="flex h-7 w-7 items-center justify-center rounded-full border border-border text-text-muted hover:border-primary/40 hover:bg-primary/10 hover:text-primary transition-all"
-                    title="프로필 수정"
+                    className="rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-semibold text-text-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary transition-all"
                     disabled={isBusy}
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 20h9" />
-                      <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z" />
-                    </svg>
+                    프로필 수정
                   </button>
-                  {hasImage && (
-                    <button
-                      onClick={() => void handleDeleteProfileImage(d.id)}
-                      className="flex h-7 w-7 items-center justify-center rounded-full border border-border text-text-muted hover:border-error/40 hover:bg-error/10 hover:text-error transition-all"
-                      title="사진 삭제"
-                      disabled={isBusy}
-                    >
-                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                        <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                      </svg>
-                    </button>
-                  )}
                   <label
                     htmlFor={inputId}
                     className={cn(
-                      'flex h-7 w-7 items-center justify-center rounded-full border border-border text-text-muted transition-all',
+                      'rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-semibold text-text-secondary transition-all',
                       isBusy
                         ? 'cursor-not-allowed opacity-40'
                         : 'cursor-pointer hover:border-primary/40 hover:bg-primary/10 hover:text-primary',
                     )}
-                    title="사진 업로드"
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                      <circle cx="12" cy="13" r="4" />
-                    </svg>
+                    {hasImage ? '사진 변경' : '사진 업로드'}
                   </label>
                   <input
                     id={inputId}
@@ -607,6 +586,15 @@ function StaffSection() {
                     onChange={(e) => handleFileChange(d.id, e)}
                     disabled={isBusy}
                   />
+                  {hasImage && (
+                    <button
+                      onClick={() => void handleDeleteProfileImage(d.id)}
+                      className="rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-semibold text-text-secondary hover:border-error/40 hover:bg-error/10 hover:text-error transition-all"
+                      disabled={isBusy}
+                    >
+                      사진 삭제
+                    </button>
+                  )}
                   {isConfirmingDelete ? (
                     <div className="flex items-center gap-1">
                       <button
@@ -627,13 +615,10 @@ function StaffSection() {
                   ) : (
                     <button
                       onClick={() => void handleDelete(d)}
-                      className="flex h-7 w-7 items-center justify-center rounded-full border border-border text-text-muted hover:border-error/40 hover:bg-error/10 hover:text-error transition-all disabled:opacity-40"
-                      title={d.role === 'owner' ? '원장 프로필은 삭제할 수 없습니다' : '프로필 삭제'}
+                      className="rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-semibold text-text-secondary hover:border-error/40 hover:bg-error/10 hover:text-error transition-all disabled:opacity-40"
                       disabled={isBusy || d.role === 'owner'}
                     >
-                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                        <path d="M1.5 1.5l7 7M8.5 1.5l-7 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                      </svg>
+                      프로필 삭제
                     </button>
                   )}
                 </div>
@@ -987,6 +972,7 @@ export default function SettingsPage() {
   const { shopSettings, setShopSettings } = useAppStore();
   const { role, logout } = useAuthStore();
   const shop = useShopStore((s) => s.shop);
+  const updateShop = useShopStore((s) => s.updateShop);
 
   const [activeTab, setActiveTab] = useState<TabId>('shop');
 
@@ -994,6 +980,8 @@ export default function SettingsPage() {
 
   // 매장 정보 편집
   const [editingShop, setEditingShop] = useState(false);
+  const [isSavingShop, setIsSavingShop] = useState(false);
+  const [shopFeedback, setShopFeedback] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
   const [shopName, setShopName] = useState(shopSettings.shopName || shop?.name || '');
   const [shopPhone, setShopPhone] = useState(shopSettings.shopPhone || shop?.phone || '');
   const [shopAddress, setShopAddress] = useState(shopSettings.shopAddress || shop?.address || '');
@@ -1043,9 +1031,41 @@ export default function SettingsPage() {
     setEditingPrices(false);
   };
 
-  const handleSaveShop = () => {
-    setShopSettings({ shopName, shopPhone, shopAddress, shopAddressDetail });
+  const handleSaveShop = async () => {
+    if (!shopName.trim()) {
+      setShopFeedback({ tone: 'error', message: '매장명을 입력해 주세요.' });
+      return;
+    }
+
+    setIsSavingShop(true);
+    setShopFeedback(null);
+
+    const [shopResult, settingsResult] = await Promise.all([
+      updateShop({
+        name: shopName.trim(),
+        phone: shopPhone.trim() || undefined,
+        address: shopAddress.trim() || undefined,
+      }),
+      setShopSettings({
+        shopName: shopName.trim(),
+        shopPhone: shopPhone.trim(),
+        shopAddress: shopAddress.trim(),
+        shopAddressDetail: shopAddressDetail.trim(),
+      }),
+    ]);
+
+    setIsSavingShop(false);
+
+    if (!shopResult.success || !settingsResult.success) {
+      setShopFeedback({
+        tone: 'error',
+        message: shopResult.error ?? settingsResult.error ?? '운영 정보 저장에 실패했습니다. 다시 시도해 주세요.',
+      });
+      return;
+    }
+
     setEditingShop(false);
+    setShopFeedback({ tone: 'success', message: '운영 정보가 저장되었습니다.' });
   };
 
   const handleLogout = () => {
@@ -1075,6 +1095,19 @@ export default function SettingsPage() {
           {/* 매장 정보 */}
           <Section title={t('settings.shop_title')}>
             <Card className="mx-4 md:mx-0">
+              {shopFeedback && (
+                <div
+                  className={cn(
+                    'mb-3 rounded-xl border px-3 py-2 text-xs font-medium',
+                    shopFeedback.tone === 'success'
+                      ? 'border-success/20 bg-success/10 text-success'
+                      : 'border-error/20 bg-error/10 text-error',
+                  )}
+                >
+                  {shopFeedback.message}
+                </div>
+              )}
+
               {!editingShop ? (
                 <>
                   <div className="flex items-start justify-between">
@@ -1083,7 +1116,10 @@ export default function SettingsPage() {
                       <p className="mt-0.5 text-sm text-text-secondary">{shopPhone}</p>
                     </div>
                     <button
-                      onClick={() => setEditingShop(true)}
+                      onClick={() => {
+                        setShopFeedback(null);
+                        setEditingShop(true);
+                      }}
                       className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary"
                     >
                       {t('settings.shop_edit')}
@@ -1130,12 +1166,19 @@ export default function SettingsPage() {
                       variant="ghost"
                       size="sm"
                       className="flex-1"
-                      onClick={() => setEditingShop(false)}
+                      onClick={() => {
+                        setShopName(shopSettings.shopName || shop?.name || '');
+                        setShopPhone(shopSettings.shopPhone || shop?.phone || '');
+                        setShopAddress(shopSettings.shopAddress || shop?.address || '');
+                        setShopAddressDetail(shopSettings.shopAddressDetail || '');
+                        setEditingShop(false);
+                      }}
+                      disabled={isSavingShop}
                     >
                       {t('common.cancel')}
                     </Button>
-                    <Button size="sm" className="flex-1" onClick={handleSaveShop}>
-                      {t('common.save')}
+                    <Button size="sm" className="flex-1" onClick={() => void handleSaveShop()} disabled={isSavingShop}>
+                      {isSavingShop ? '저장 중...' : '운영 정보 저장'}
                     </Button>
                   </div>
                 </div>
@@ -1293,7 +1336,6 @@ export default function SettingsPage() {
                   <span className="font-medium text-text">1.0.0</span>
                 </div>
 
-                {/* 사용 가이드 다시보기 */}
                 <button
                   onClick={() => router.push('/home?tour=true')}
                   className="flex items-center gap-3 rounded-xl border border-border px-3 py-3 text-left transition-colors hover:bg-surface-alt"
@@ -1301,7 +1343,10 @@ export default function SettingsPage() {
                   <svg className="h-5 w-5 flex-shrink-0 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
                   </svg>
-                  <span className="flex-1 text-sm font-medium text-text">사용 가이드 다시보기</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-text">데모 가이드 다시 보기</p>
+                    <p className="mt-0.5 text-xs text-text-muted">홈 화면에서 기능 안내를 다시 보여줍니다.</p>
+                  </div>
                   <svg className="h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                   </svg>

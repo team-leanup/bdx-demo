@@ -93,42 +93,49 @@ interface AppStore {
   shopSettings: ShopSettings;
 
   setOnboardingComplete: (complete: boolean) => void;
-  setShopSettings: (settings: Partial<ShopSettings>) => void;
+  setShopSettings: (settings: Partial<ShopSettings>) => Promise<{ success: boolean; error?: string }>;
   syncShopSettingsFromShop: (shop: Shop | null) => void;
   resetApp: () => void;
 }
 
 export const useAppStore = create<AppStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       isOnboardingComplete: false,
       shopSettings: { ...DEFAULT_SHOP_SETTINGS },
 
       setOnboardingComplete: (complete) =>
         set({ isOnboardingComplete: complete }),
 
-      setShopSettings: (settings) => {
-        set((state) => ({
-          shopSettings: { ...state.shopSettings, ...settings },
-        }));
-        // Fire-and-forget DB sync
+      setShopSettings: async (settings) => {
+        const previous = get().shopSettings;
+        const next = { ...previous, ...settings };
+
+        set({ shopSettings: next });
+
         const shopId = useAuthStore.getState().currentShopId;
         if (shopId) {
-          const updated = useAppStore.getState().shopSettings;
-          dbUpdateShopSettings(shopId, {
-            addressDetail: updated.shopAddressDetail,
-            baseOffSameShop: updated.baseOffSameShop,
-            baseOffOtherShop: updated.baseOffOtherShop,
-            baseSolidPointPrice: updated.baseSolidPointPrice,
-            baseFullArtPrice: updated.baseFullArtPrice,
-            baseMonthlyArtPrice: updated.baseMonthlyArtPrice,
-            designerCount: updated.designerCount,
-            selectedServices: updated.selectedServices,
-            serviceStructure: updated.serviceStructure,
-            surcharges: updated.surcharges,
-            timeSettings: updated.timeSettings,
-          }).catch(console.error);
+          const result = await dbUpdateShopSettings(shopId, {
+            addressDetail: next.shopAddressDetail,
+            baseOffSameShop: next.baseOffSameShop,
+            baseOffOtherShop: next.baseOffOtherShop,
+            baseSolidPointPrice: next.baseSolidPointPrice,
+            baseFullArtPrice: next.baseFullArtPrice,
+            baseMonthlyArtPrice: next.baseMonthlyArtPrice,
+            designerCount: next.designerCount,
+            selectedServices: next.selectedServices,
+            serviceStructure: next.serviceStructure,
+            surcharges: next.surcharges,
+            timeSettings: next.timeSettings,
+          });
+
+          if (!result.success) {
+            set({ shopSettings: previous });
+            return { success: false, error: result.error };
+          }
         }
+
+        return { success: true };
       },
 
       syncShopSettingsFromShop: (shop) => {

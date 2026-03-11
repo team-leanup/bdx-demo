@@ -798,7 +798,7 @@ export async function dbUpdateCustomerField(customerId: string, field: string, v
 
 // ─── Shop Mutations ──────────────────────────────────────────────────────────
 
-export async function dbUpsertShop(shop: Shop): Promise<void> {
+export async function dbUpsertShop(shop: Shop): Promise<{ success: boolean; error?: string }> {
   const { error } = await supabase.from('shops').upsert({
     id: shop.id,
     owner_id: shop.ownerId,
@@ -816,10 +816,13 @@ export async function dbUpsertShop(shop: Shop): Promise<void> {
   });
   if (error) {
     console.error('[db] dbUpsertShop error:', error);
+    return { success: false, error: error.message };
   }
+
+  return { success: true };
 }
 
-export async function dbUpdateShopSettings(shopId: string, settings: ShopExtendedSettings): Promise<void> {
+export async function dbUpdateShopSettings(shopId: string, settings: ShopExtendedSettings): Promise<{ success: boolean; error?: string }> {
   const { error } = await supabase
     .from('shops')
     .update({
@@ -829,7 +832,10 @@ export async function dbUpdateShopSettings(shopId: string, settings: ShopExtende
     .eq('id', shopId);
   if (error) {
     console.error('[db] dbUpdateShopSettings error:', error);
+    return { success: false, error: error.message };
   }
+
+  return { success: true };
 }
 
 // ─── Record Mutations ─────────────────────────────────────────────────────────

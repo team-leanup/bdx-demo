@@ -21,7 +21,7 @@ interface ShopStore {
   _dbReady: boolean;
 
   hydrateFromDB: () => Promise<void>;
-  updateShop: (updates: Partial<Shop>) => void;
+  updateShop: (updates: Partial<Shop>) => Promise<{ success: boolean; error?: string }>;
   createDesigner: (payload: { name: string; phone?: string }) => Promise<{ success: boolean; error?: string }>;
   updateDesigner: (designerId: string, updates: { name?: string; phone?: string; isActive?: boolean }) => Promise<{ success: boolean; error?: string }>;
   deleteDesigner: (designerId: string) => Promise<{ success: boolean; error?: string }>;
@@ -53,12 +53,22 @@ export const useShopStore = create<ShopStore>()(
         set({ shop, designers, _dbReady: true });
       },
 
-      updateShop: (updates) => {
+      updateShop: async (updates) => {
         const current = get().shop;
-        if (!current) return;
+        if (!current) {
+          return { success: false, error: '현재 샵 정보를 찾을 수 없습니다.' };
+        }
+
         const updated = { ...current, ...updates, updatedAt: new Date().toISOString() };
         set({ shop: updated });
-        dbUpsertShop(updated).catch(console.error);
+        const result = await dbUpsertShop(updated);
+
+        if (!result.success) {
+          set({ shop: current });
+          return { success: false, error: result.error };
+        }
+
+        return { success: true };
       },
 
       createDesigner: async (payload) => {
