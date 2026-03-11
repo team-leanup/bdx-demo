@@ -93,11 +93,6 @@ export const useCustomerStore = create<CustomerStore>()(
 
       hydrateFromDB: async () => {
         const currentShopId = useAuthStore.getState().currentShopId;
-        if (currentShopId === 'demo-shop') {
-          const { MOCK_CUSTOMERS } = await import('@/data/mock-customers');
-          set({ customers: MOCK_CUSTOMERS.map(normalizeCustomer), _dbReady: true });
-          return;
-        }
         const dbCustomers = await fetchCustomers(currentShopId);
         set({ customers: dbCustomers.map(normalizeCustomer), _dbReady: true });
       },

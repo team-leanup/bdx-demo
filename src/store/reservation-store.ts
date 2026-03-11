@@ -34,11 +34,6 @@ export const useReservationStore = create<ReservationStore>()(
 
       hydrateFromDB: async () => {
         const currentShopId = useAuthStore.getState().currentShopId;
-        if (currentShopId === 'demo-shop') {
-          const { MOCK_RESERVATIONS } = await import('@/data/mock-reservations');
-          set({ reservations: MOCK_RESERVATIONS, _dbReady: true });
-          return;
-        }
         const dbReservations = await fetchBookingRequests(currentShopId);
         set({ reservations: dbReservations, _dbReady: true });
       },

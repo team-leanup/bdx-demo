@@ -31,11 +31,6 @@ export const useRecordsStore = create<RecordsStore>()(
 
       hydrateFromDB: async () => {
         const currentShopId = useAuthStore.getState().currentShopId;
-        if (currentShopId === 'demo-shop') {
-          const { MOCK_CONSULTATIONS } = await import('@/data/mock-consultations');
-          set({ records: MOCK_CONSULTATIONS, _dbReady: true });
-          return;
-        }
         const dbRecords = await fetchConsultationRecords(currentShopId);
         set({ records: dbRecords, _dbReady: true });
       },

@@ -1066,7 +1066,7 @@ export default function SettingsPage() {
   const t = useT();
   const { shopSettings, setShopSettings } = useAppStore();
   const { role, logout, currentShopId } = useAuthStore();
-  const isDemoMode = currentShopId === 'demo-shop';
+  const isDemoMode = currentShopId === 'shop-demo';
   const shop = useShopStore((s) => s.shop);
   const updateShop = useShopStore((s) => s.updateShop);
 

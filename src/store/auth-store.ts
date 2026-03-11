@@ -269,9 +269,9 @@ export const useAuthStore = create<AuthStore>()(
           isInitialized: true,
           pendingGoogleSignup: null,
           role: 'owner',
-          currentShopId: 'demo-shop',
+          currentShopId: 'shop-demo',
           currentShopOnboardingComplete: true,
-          activeDesignerId: 'demo-designer',
+          activeDesignerId: '9a0ce791-7906-4476-811b-be48f7dee2c8',
           activeDesignerName: '데모 원장',
         });
 
