@@ -565,7 +565,7 @@ export default function TreatmentSheetPage() {
         {isPriceFinalized && (
           <button
             type="button"
-            onClick={() => {}}
+            onClick={() => router.push(`/payment?recordId=${consultationId}`)}
             className="w-full py-3.5 rounded-xl font-bold text-sm text-white transition-all active:scale-[0.98] flex items-center justify-center gap-2"
             style={{ background: 'var(--color-success, #16a34a)' }}
           >
