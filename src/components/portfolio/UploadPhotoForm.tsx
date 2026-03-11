@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { Button, Input } from '@/components/ui';
 import { useCustomerStore } from '@/store/customer-store';
@@ -63,6 +63,18 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
     : [];
 
   const selectedRecord = customerRecords.find((record) => record.id === selectedRecordId);
+
+  // 고객 선택 시 가장 최근 상담 기록 자동 매칭
+  useEffect(() => {
+    if (!selectedCustomerId) {
+      setSelectedRecordId('');
+      return;
+    }
+    const sorted = records
+      .filter((r) => r.customerId === selectedCustomerId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    setSelectedRecordId(sorted[0]?.id ?? '');
+  }, [selectedCustomerId, records]);
 
   // PF-1: 이전 레시피 (동일 고객의 최근 포트폴리오)
   const recentCustomerPhoto = useMemo(() => {
@@ -267,7 +279,6 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
                   onClick={() => {
                     setSelectedCustomerId(customer.id);
                     setCustomerSearch(customer.name);
-                    setSelectedRecordId('');
                   }}
                   className={cn(
                     'flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors',

@@ -98,6 +98,19 @@ export const TAG_PRESETS: TagPreset[] = [
     ],
   },
   {
+    category: 'communication',
+    categoryLabel: '고객 성향',
+    icon: '💬',
+    options: [
+      { value: '대화선호', icon: '💬' },
+      { value: '조용히', icon: '🤫' },
+      { value: '빠른시술원함', icon: '⚡' },
+      { value: '화려한아트선호', icon: '💎' },
+      { value: '핸드폰집중', icon: '📱' },
+      { value: '친근한편', icon: '😊' },
+    ],
+  },
+  {
     category: 'etc',
     categoryLabel: '특이사항',
     icon: '📝',
@@ -112,6 +125,7 @@ export const TAG_PRESETS: TagPreset[] = [
       { value: '리페어자주함', icon: '🔄' },
       { value: '오른손잡이', icon: '👉' },
       { value: '왼손잡이', icon: '👈' },
+      { value: '피가잘남', icon: '🩸' },
     ],
   },
 ];

@@ -11,6 +11,7 @@ export const DEFAULT_TAG_ACCENT_BY_CATEGORY: Record<TagCategory, TagAccent> = {
   expression: 'amber',
   parts: 'emerald',
   color: 'rose',
+  communication: 'sky',
   etc: 'amber',
 };
 
