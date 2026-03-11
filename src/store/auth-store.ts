@@ -327,11 +327,31 @@ export const useAuthStore = create<AuthStore>()(
           return { success: false, error: error?.message ?? '회원가입에 실패했습니다.' };
         }
 
+        let userId = data.user.id;
+
         if (!data.session) {
-          return { success: false, error: '회원가입에 실패했습니다. 다시 시도해 주세요.' };
+          // User already exists (Supabase returns no session for duplicate signups).
+          // Try logging in to establish a session and complete shop creation.
+          const loginResult = await supabase.auth.signInWithPassword({
+            email: normalizedEmail,
+            password,
+          });
+
+          if (loginResult.error || !loginResult.data.session) {
+            return { success: false, error: '이미 등록된 이메일입니다. 로그인을 이용해 주세요.' };
+          }
+
+          userId = loginResult.data.user.id;
+        } else {
+          // Explicitly set session so auth.uid() is available for subsequent RPC calls.
+          // @supabase/ssr cookie-based storage may not apply immediately after signUp.
+          await supabase.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+          });
         }
 
-        const createdAccount = await dbCreateShopAccount(data.user.id, shopName, ownerName);
+        const createdAccount = await dbCreateShopAccount(userId, shopName, ownerName);
         if (!createdAccount.success) {
           await supabase.auth.signOut();
           return { success: false, error: createdAccount.error ?? '샵 생성에 실패했습니다.' };

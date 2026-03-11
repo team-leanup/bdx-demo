@@ -138,7 +138,7 @@ export async function dbCreateShopAccount(
   shopName: string,
   ownerName: string,
 ): Promise<ShopAccountMutationResult> {
-  const now = new Date().toISOString();
+  // Check for existing account first
   const existingShop = await fetchShopByOwnerId(ownerUserId);
 
   if (existingShop) {
@@ -151,77 +151,31 @@ export async function dbCreateShopAccount(
         owner: existingOwner,
       };
     }
-
-    const { data: recoveredOwnerData, error: recoveredOwnerError } = await supabase
-      .from('designers')
-      .insert({
-        id: ownerUserId,
-        shop_id: existingShop.id,
-        name: ownerName,
-        role: 'owner',
-        profile_image_url: null,
-        phone: null,
-        is_active: true,
-        created_at: now,
-      })
-      .select('*')
-      .single();
-
-    if (recoveredOwnerError || !recoveredOwnerData) {
-      console.error('[db] dbCreateShopAccount recover owner insert error:', recoveredOwnerError);
-      return { success: false, error: '기존 샵 계정을 복구하지 못했습니다' };
-    }
-
-    return {
-      success: true,
-      shop: existingShop,
-      owner: toDesigner(recoveredOwnerData),
-    };
   }
 
+  // Use SECURITY DEFINER RPC to bypass RLS chicken-and-egg problem
   const shopId = createId('shop');
 
-  const { error: shopInsertError } = await supabase.from('shops').insert({
-    id: shopId,
-    owner_id: ownerUserId,
-    name: shopName,
-    phone: null,
-    address: null,
-    theme_id: 'rose-pink',
-    business_hours: [],
-    base_hand_price: 60000,
-    base_foot_price: 70000,
-    logo_url: null,
-    onboarding_completed_at: null,
-    created_at: now,
-    updated_at: now,
+  const { data: rpcResult, error: rpcError } = await supabase.rpc('create_shop_account', {
+    p_shop_id: shopId,
+    p_shop_name: shopName,
+    p_owner_name: ownerName,
+    p_user_id: ownerUserId,
   });
 
-  if (shopInsertError) {
-    console.error('[db] dbCreateShopAccount shop insert error:', shopInsertError);
-    return { success: false, error: '샵 생성에 실패했습니다' };
+  if (rpcError) {
+    console.error('[db] dbCreateShopAccount rpc error:', rpcError);
+    return { success: false, error: rpcError.message };
   }
 
-  const { data: ownerData, error: ownerInsertError } = await supabase
-    .from('designers')
-    .insert({
-      id: ownerUserId,
-      shop_id: shopId,
-      name: ownerName,
-      role: 'owner',
-      profile_image_url: null,
-      phone: null,
-      is_active: true,
-      created_at: now,
-    })
-    .select('*')
-    .single();
+  const result = rpcResult as { success: boolean; error?: string; shop_id?: string; owner_id?: string; shop_name?: string; owner_name?: string };
 
-  if (ownerInsertError || !ownerData) {
-    console.error('[db] dbCreateShopAccount owner insert error:', ownerInsertError);
-    await supabase.from('shops').delete().eq('id', shopId);
-    return { success: false, error: '기본 원장 프로필 생성에 실패했습니다' };
+  if (!result.success) {
+    console.error('[db] dbCreateShopAccount rpc failed:', result.error);
+    return { success: false, error: result.error ?? '샵 생성에 실패했습니다' };
   }
+
+  const now = new Date().toISOString();
 
   return {
     success: true,
@@ -240,7 +194,16 @@ export async function dbCreateShopAccount(
       createdAt: now,
       updatedAt: now,
     },
-    owner: toDesigner(ownerData),
+    owner: {
+      id: ownerUserId,
+      shopId: shopId,
+      name: ownerName,
+      role: 'owner',
+      profileImageUrl: undefined,
+      phone: undefined,
+      isActive: true,
+      createdAt: now,
+    },
   };
 }
 

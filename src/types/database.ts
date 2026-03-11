@@ -531,6 +531,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_shop_account: {
+        Args: { p_shop_id: string; p_shop_name: string; p_owner_name: string; p_user_id?: string }
+        Returns: Json
+      }
       get_my_shop_id: { Args: never; Returns: string }
     }
     Enums: {
