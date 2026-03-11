@@ -24,14 +24,11 @@ function SaveCompleteContent() {
           transition={{ type: 'spring', stiffness: 260, damping: 20 }}
           className="mb-4 flex flex-col items-center gap-3"
         >
-          <div
-            className="flex h-20 w-20 items-center justify-center rounded-full"
-            style={{ background: 'color-mix(in srgb, var(--color-primary) 15%, var(--color-surface))' }}
-          >
-            <svg className="h-10 w-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} style={{ color: 'var(--color-primary)' }}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
+          <img
+            src="/bdx-logo/bdx-symbol-flower.svg"
+            alt="BDX"
+            className="h-20 w-20"
+          />
           <div className="text-center">
             <h1 className="text-2xl font-bold text-text">사전 상담이 저장됐어요</h1>
             <p className="mt-1.5 text-sm text-text-secondary">

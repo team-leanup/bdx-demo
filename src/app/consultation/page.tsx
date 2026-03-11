@@ -227,16 +227,11 @@ export default function ConsultationStartPage() {
         <div className="flex flex-col">
           {/* Visual hero header */}
           <div className="text-center py-2 mb-5">
-            <div className="w-24 h-24 bg-surface-alt border border-border rounded-[28px] flex items-center justify-center mx-auto mb-4 shadow-sm">
-              <Image
-                src="/bdx-logo/bdx-logo-vertical-pink.svg"
-                alt="BDX — Beauty Decision eXperience"
-                width={64}
-                height={64}
-                className="h-14 w-auto"
-                priority
-              />
-            </div>
+            <img
+              src="/bdx-logo/bdx-symbol-flower.svg"
+              alt="BDX"
+              className="w-20 h-20 mx-auto mb-4"
+            />
             <h2 className="text-2xl md:text-3xl font-bold text-text mb-1">{t('home.newConsultation')}</h2>
             <p className="text-sm md:text-base text-text-muted">{t('consultation.selectDesigner')}</p>
           </div>
