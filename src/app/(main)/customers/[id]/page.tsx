@@ -25,8 +25,10 @@ import { useCustomerStore } from '@/store/customer-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useReservationStore } from '@/store/reservation-store';
+import { useConsultationStore } from '@/store/consultation-store';
 import { resizePortfolioImage } from '@/lib/image-utils';
 import type { PortfolioPhotoKind } from '@/types/portfolio';
+import { ConsultationStep } from '@/types/consultation';
 import { getSafetyTagMeta } from '@/lib/tag-safety';
 import {
   IconCamera,
@@ -107,6 +109,7 @@ function movePinnedTag(tags: CustomerTag[], draggedId: string, targetId: string)
 
 function CustomerDetailContent({ id }: { id: string }) {
   const router = useRouter();
+  const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const searchParams = useSearchParams();
   const fromChecklist = searchParams.get('fromChecklist') === 'true';
   const customer = useCustomerStore((s) => s.getById(id));
@@ -1257,9 +1260,17 @@ function CustomerDetailContent({ id }: { id: string }) {
         <Button
           variant="primary"
           fullWidth
-          onClick={() => router.push(
-            `/consultation/customer?name=${encodeURIComponent(customer.name)}&phone=${encodeURIComponent(customer.phone)}&customerId=${customer.id}`
-          )}
+          onClick={() => {
+            sessionStorage.removeItem('consultation_customer_memo');
+            hydrateConsultation({
+              customerId: customer.id,
+              customerName: customer.name,
+              customerPhone: customer.phone,
+              entryPoint: 'staff',
+              currentStep: ConsultationStep.STEP1_BASIC,
+            });
+            router.push('/consultation/step1');
+          }}
         >
           이 고객으로 새 상담 시작
         </Button>

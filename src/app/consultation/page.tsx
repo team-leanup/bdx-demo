@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useConsultationStore } from '@/store/consultation-store';
 import { useAuthStore } from '@/store/auth-store';
@@ -131,19 +132,17 @@ export default function ConsultationStartPage() {
 
   useEffect(() => {
     if (
-      consultation.currentStep !== ConsultationStep.START &&
-      consultation.currentStep !== ConsultationStep.CUSTOMER_INFO &&
-      consultation.customerName
+      consultation.currentStep !== ConsultationStep.START
     ) {
       setShowResumeDialog(true);
     }
-  }, [consultation.currentStep, consultation.customerName]);
+  }, [consultation.currentStep]);
 
   const STEP_FLOW = [
-    { icon: <StepFlowIcon type="customer" />, label: t('consultation.customerInfo'), koLabel: tKo('consultation.customerInfo') },
     { icon: <StepFlowIcon type="basic" />, label: t('consultation.step1Title'), koLabel: tKo('consultation.step1Title') },
     { icon: <StepFlowIcon type="treatment" />, label: t('consultation.treatmentType.title'), koLabel: tKo('consultation.treatmentType.title') },
     { icon: <StepFlowIcon type="traits" />, label: t('consultation.traitsTitle'), koLabel: tKo('consultation.traitsTitle') },
+    { icon: <StepFlowIcon type="customer" />, label: t('consultation.customerInfo'), koLabel: tKo('consultation.customerInfo') },
     { icon: <StepFlowIcon type="summary" />, label: t('consultation.summaryTitle'), koLabel: tKo('consultation.summaryTitle') },
   ];
 
@@ -152,8 +151,8 @@ export default function ConsultationStartPage() {
     if (selectedDesignerId) {
       setDesignerId(selectedDesignerId);
     }
-    setStep(ConsultationStep.CUSTOMER_INFO);
-    router.push('/consultation/customer');
+    setStep(ConsultationStep.STEP1_BASIC);
+    router.push('/consultation/step1');
   };
 
   return (
@@ -172,6 +171,7 @@ export default function ConsultationStartPage() {
               <Button variant="primary" fullWidth onClick={() => {
                 setShowResumeDialog(false);
                 const stepRoutes: Record<string, string> = {
+                  [ConsultationStep.CUSTOMER_INFO]: '/consultation/customer',
                   [ConsultationStep.STEP1_BASIC]: '/consultation/step1',
                   [ConsultationStep.STEP2_DESIGN]: '/consultation/step2',
                   [ConsultationStep.STEP3_OPTIONS]: '/consultation/step3',
@@ -179,7 +179,7 @@ export default function ConsultationStartPage() {
                   [ConsultationStep.CANVAS]: '/consultation/canvas',
                   [ConsultationStep.SUMMARY]: '/consultation/summary',
                 };
-                const route = stepRoutes[consultation.currentStep] || '/consultation/customer';
+                const route = stepRoutes[consultation.currentStep] || '/consultation/step1';
                 router.push(route);
               }}>
                 {tKo('consultation.resumeBtn')}
@@ -227,13 +227,15 @@ export default function ConsultationStartPage() {
         <div className="flex flex-col">
           {/* Visual hero header */}
           <div className="text-center py-2 mb-5">
-            <div className="w-20 h-20 bg-surface-alt border border-border rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
-              <svg width="42" height="42" viewBox="0 0 56 56" fill="none" className="text-primary">
-                <rect x="19" y="28" width="18" height="22" rx="4" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2.5" />
-                <rect x="22" y="20" width="12" height="10" rx="3" fill="currentColor" fillOpacity="0.3" stroke="currentColor" strokeWidth="2" />
-                <rect x="25" y="14" width="6" height="8" rx="2" fill="currentColor" fillOpacity="0.5" stroke="currentColor" strokeWidth="2" />
-                <path d="M22 38 Q28 34 34 38" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" opacity="0.5" />
-              </svg>
+            <div className="w-24 h-24 bg-surface-alt border border-border rounded-[28px] flex items-center justify-center mx-auto mb-4 shadow-sm">
+              <Image
+                src="/bdx-logo/bdx-logo-vertical-pink.svg"
+                alt="BDX — Beauty Decision eXperience"
+                width={64}
+                height={64}
+                className="h-14 w-auto"
+                priority
+              />
             </div>
             <h2 className="text-2xl md:text-3xl font-bold text-text mb-1">{t('home.newConsultation')}</h2>
             <p className="text-sm md:text-base text-text-muted">{t('consultation.selectDesigner')}</p>

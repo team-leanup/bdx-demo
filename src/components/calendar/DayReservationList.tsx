@@ -12,6 +12,7 @@ import { LinkCustomerModal } from '@/components/reservations/LinkCustomerModal';
 import { ConsultationLinkModal } from '@/components/reservations/ConsultationLinkModal';
 import { ReservationReadinessBadge } from '@/components/reservations/ReservationReadinessBadge';
 import type { BookingChannel, BookingStatus, BookingRequest } from '@/types/consultation';
+import { ConsultationStep } from '@/types/consultation';
 import type { CustomerTag } from '@/types/customer';
 import type { Locale } from '@/store/locale-store';
 import { cn } from '@/lib/cn';
@@ -200,6 +201,7 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
   const router = useRouter();
   const t = useT();
   const locale = useLocaleStore((s) => s.locale);
+  const setConsultationLocale = useLocaleStore((s) => s.setConsultationLocale);
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
   const getDesignerNameFromStore = useShopStore((s) => s.getDesignerName);
   const shopName = useShopStore((s) => s.shop?.name) ?? '내 매장';
@@ -217,6 +219,14 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
   };
 
   const navigateToConsultation = (booking: BookingRequest): void => {
+    if (booking.requestNote) {
+      sessionStorage.setItem('consultation_customer_memo', booking.requestNote);
+    } else {
+      sessionStorage.removeItem('consultation_customer_memo');
+    }
+    if (booking.language && ['ko', 'en', 'zh', 'ja'].includes(booking.language)) {
+      setConsultationLocale(booking.language);
+    }
     hydrateConsultation({
       ...booking.preConsultationData,
       bookingId: booking.id,
@@ -225,14 +235,9 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
       customerId: booking.customerId ?? booking.preConsultationData?.customerId,
       referenceImages: booking.preConsultationData?.referenceImages ?? booking.referenceImageUrls ?? [],
       entryPoint: 'staff',
+      currentStep: ConsultationStep.STEP1_BASIC,
     });
-    const params = new URLSearchParams();
-    params.set('bookingId', booking.id);
-    if (booking.customerName) params.set('name', booking.customerName);
-    if (booking.phone) params.set('phone', booking.phone);
-    if (booking.requestNote) params.set('note', booking.requestNote);
-    if (booking.language) params.set('lang', booking.language);
-    router.push(`/consultation/customer?${params.toString()}`);
+    router.push('/consultation/step1');
   };
 
   const handleStartConsultation = (booking: BookingRequest): void => {

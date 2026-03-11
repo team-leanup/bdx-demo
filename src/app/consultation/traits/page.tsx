@@ -26,15 +26,14 @@ export default function TraitsPage(): React.ReactElement {
   const traitOptions = etcPreset?.options ?? [];
 
   const handleNext = (): void => {
-    // customer_link 모드에서도 traits 완료 후 summary로 이동
-    setStep(ConsultationStep.SUMMARY);
-    router.push('/consultation/summary');
+    setStep(ConsultationStep.CUSTOMER_INFO);
+    router.push('/consultation/customer');
   };
 
   return (
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
       <ConsultationHeader
-        stepNumber={4}
+        stepNumber={3}
         totalSteps={5}
         title={t('consultation.traitsTitle')}
         titleKo={tKo('consultation.traitsTitle')}
