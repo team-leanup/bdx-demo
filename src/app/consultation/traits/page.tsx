@@ -20,6 +20,8 @@ export default function TraitsPage(): React.ReactElement {
   const tKo = useKo();
   const locale = useLocale();
 
+  const commPreset = TAG_PRESETS.find((p) => p.category === 'communication');
+  const commOptions = commPreset?.options ?? [];
   const etcPreset = TAG_PRESETS.find((p) => p.category === 'etc');
   const traitOptions = etcPreset?.options ?? [];
 
@@ -93,6 +95,47 @@ export default function TraitsPage(): React.ReactElement {
               </span>
             </div>
           )}
+
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2.5 px-1">
+              <div className="w-7 h-7 rounded-xl bg-surface-alt border border-border flex items-center justify-center flex-shrink-0">
+                <span className="text-base">{commPreset?.icon ?? '💬'}</span>
+              </div>
+              <p className="text-sm font-extrabold text-text-secondary tracking-tight">
+                {t('consultation.traitsCategoryComm')}
+                {locale !== 'ko' && (
+                  <span className="ml-2 text-xs font-medium text-text-muted opacity-60">
+                    {tKo('consultation.traitsCategoryComm')}
+                  </span>
+                )}
+              </p>
+              <span className="ml-auto text-[10px] font-black text-text-muted bg-surface-alt px-3 py-1 rounded-full border border-border uppercase tracking-widest text-center">
+                {t('selector.multiSelect')}
+                {locale !== 'ko' && (
+                  <span className="block text-[8px] opacity-60 normal-case tracking-normal mt-0.5">
+                    {tKo('selector.multiSelect')}
+                  </span>
+                )}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              {commOptions.map((trait) => {
+                const isSelected = selectedTraitValues.includes(trait.value);
+                return (
+                  <TraitIcon
+                    key={trait.value}
+                    value={trait.value}
+                    icon={trait.icon}
+                    size="md"
+                    selected={isSelected}
+                    onClick={() => toggleTraitValue(trait.value)}
+                    className="w-full justify-start"
+                  />
+                );
+              })}
+            </div>
+          </div>
 
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2.5 px-1">

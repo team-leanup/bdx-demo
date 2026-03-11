@@ -125,6 +125,7 @@ export const TAG_PRESETS: TagPreset[] = [
       { value: '리페어자주함', icon: '🔄' },
       { value: '오른손잡이', icon: '👉' },
       { value: '왼손잡이', icon: '👈' },
+      { value: '피가잘남', icon: '🩸' },
     ],
   },
 ];

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { IconSparkle, IconCalendar } from '@/components/icons';
 
@@ -29,6 +30,15 @@ export function HeroCTA({
   qrLabel,
   itemVariants,
 }: HeroCTAProps): React.ReactElement {
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const handleCopyLink = (): void => {
+    const url = `${window.location.origin}/consultation/customer?entry=customer-link`;
+    void navigator.clipboard.writeText(url).then(() => {
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    });
+  };
   return (
     <motion.div data-tour-id="tour-new-consultation" variants={itemVariants} className="flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-3">
@@ -59,21 +69,42 @@ export function HeroCTA({
         </motion.button>
       </div>
 
-      {/* QR 생성 버튼 */}
-      {onGenerateQR && (
+      {/* QR 생성 + 링크 발송 버튼 */}
+      <div className="flex gap-2">
+        {onGenerateQR && (
+          <motion.button
+            onClick={onGenerateQR}
+            className="flex items-center justify-center gap-2.5 flex-1 rounded-2xl border border-dashed border-border bg-surface-alt px-4 py-3 text-text-secondary hover:bg-surface hover:border-primary/40 hover:text-primary active:scale-[0.98] transition-all"
+            whileTap={{ scale: 0.98, transition: { duration: 0.1 } }}
+          >
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 18.75h.75v.75h-.75v-.75zM18 13.5h.75v.75H18v-.75zM18 18.75h.75v.75H18v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
+            </svg>
+            <span className="text-sm font-semibold">{qrLabel ?? 'QR 생성'}</span>
+            <span className="text-xs text-text-muted ml-auto">사전 상담 링크</span>
+          </motion.button>
+        )}
+
         <motion.button
-          onClick={onGenerateQR}
-          className="flex items-center justify-center gap-2.5 w-full rounded-2xl border border-dashed border-border bg-surface-alt px-4 py-3 text-text-secondary hover:bg-surface hover:border-primary/40 hover:text-primary active:scale-[0.98] transition-all"
+          onClick={handleCopyLink}
+          className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-surface-alt px-4 py-3 text-text-secondary hover:bg-surface hover:border-primary/40 hover:text-primary active:scale-[0.98] transition-all"
           whileTap={{ scale: 0.98, transition: { duration: 0.1 } }}
         >
-          <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 18.75h.75v.75h-.75v-.75zM18 13.5h.75v.75H18v-.75zM18 18.75h.75v.75H18v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
-          </svg>
-          <span className="text-sm font-semibold">{qrLabel ?? 'QR 생성'}</span>
-          <span className="text-xs text-text-muted ml-auto">사전 상담 링크</span>
+          {linkCopied ? (
+            <svg className="w-4 h-4 flex-shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+            </svg>
+          )}
+          <span className="text-sm font-semibold whitespace-nowrap">
+            {linkCopied ? '복사됨!' : '링크 발송'}
+          </span>
         </motion.button>
-      )}
+      </div>
     </motion.div>
   );
 }
