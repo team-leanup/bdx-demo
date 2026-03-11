@@ -98,10 +98,6 @@ export const usePortfolioStore = create<PortfolioStore>()(
           return;
         }
 
-        if (currentShopId === 'demo-shop') {
-          set({ photos: [], _dbReady: true, migrationNotice: null });
-          return;
-        }
 
         const hydrationVersion = ++portfolioHydrationVersion;
         const legacyPhotos = readLegacyPortfolioPhotos();
