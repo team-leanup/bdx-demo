@@ -35,6 +35,11 @@ import {
 import { TAG_PRESETS } from '@/data/tag-presets';
 import type { ConsultationRecord } from '@/types/consultation';
 
+const READINESS_LEGEND = [
+  { color: 'bg-amber-400', label: '상담 필요' },
+  { color: 'bg-emerald-500', label: '상담 완료' },
+] as const;
+
 type MainTab = 'reservations' | 'consultations';
 type ViewMode = 'day' | 'month';
 type FilterPeriod = 'all' | 'today' | 'week' | 'month';
@@ -140,6 +145,7 @@ export default function RecordsPage() {
   const [selectedDate, setSelectedDate] = useState(getTodayStr());
   const [weekStartDate, setWeekStartDate] = useState(getMonday(getTodayStr()));
   const [selectedEvent, setSelectedEvent] = useState<TimeGridEvent | null>(null);
+  const [customerFilterId, setCustomerFilterId] = useState<string | null>(null);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -148,6 +154,7 @@ export default function RecordsPage() {
 
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
+  const getCustomerById = useCustomerStore((s) => s.getById);
 
   const designers = useShopStore((s) => s.designers);
   const role = useAuthStore((s) => s.role);
@@ -242,6 +249,7 @@ export default function RecordsPage() {
   const listFiltered = useMemo(() => {
     return sorted.filter((r) => {
       if (role === 'staff' && activeDesignerId && r.designerId !== activeDesignerId) return false;
+      if (customerFilterId && r.customerId !== customerFilterId) return false;
       const q = search.toLowerCase();
       const matchSearch =
         !q ||
@@ -260,7 +268,7 @@ export default function RecordsPage() {
       }
       return matchSearch && matchPeriod && matchTag;
     });
-  }, [sorted, search, filter, tagFilter, role, activeDesignerId, getPinnedTags]);
+  }, [sorted, search, filter, tagFilter, role, activeDesignerId, getPinnedTags, customerFilterId]);
 
   const handleEventClick = (ev: TimeGridEvent) => {
     if (ev.type === 'consultation') {
@@ -385,6 +393,37 @@ export default function RecordsPage() {
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    const nextCustomerId = searchParams.get('customerId');
+    setCustomerFilterId(nextCustomerId);
+
+    if (!nextCustomerId) return;
+
+    const customer = getCustomerById(nextCustomerId);
+    setMainTab('consultations');
+    setSearch(customer?.name ?? nextCustomerId);
+  }, [searchParams, getCustomerById]);
+
+  useEffect(() => {
+    const bookingId = searchParams.get('bookingId');
+    if (!bookingId) return;
+
+    const targetEvent = timeGridEvents.find(
+      (event) => event.type === 'reservation' && event.originalId === bookingId,
+    );
+    if (!targetEvent) return;
+
+    setMainTab('reservations');
+    setViewMode('day');
+    setSelectedDate(targetEvent.date);
+    setSelectedEvent(targetEvent);
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('bookingId');
+    const nextQuery = params.toString();
+    router.replace(nextQuery ? `/records?${nextQuery}` : '/records', { scroll: false });
+  }, [searchParams, timeGridEvents, router]);
+
   return (
     <div className="flex flex-col gap-4 pb-6">
       <FeatureDiscovery
@@ -415,6 +454,18 @@ export default function RecordsPage() {
             reservationFilter={reservationFilter}
             onReservationFilterChange={setReservationFilter}
           />
+
+          <div className="px-4 md:px-0">
+            <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3 text-xs text-text-secondary">
+              <span className="font-semibold text-text">날짜 상태 범례</span>
+              {READINESS_LEGEND.map((item) => (
+                <span key={item.label} className="inline-flex items-center gap-1.5">
+                  <span className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
+                  <span>{item.label}</span>
+                </span>
+              ))}
+            </div>
+          </div>
 
           {viewMode === 'day' && (
             <div className="flex flex-col gap-4 px-4 md:px-0">
@@ -469,7 +520,35 @@ export default function RecordsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            <p className="mt-2 text-xs text-text-muted">이름 / 전화번호 / 서비스명으로 검색할 수 있어요.</p>
           </div>
+
+          {customerFilterId && (
+            <div className="px-4 md:px-0">
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
+                <div>
+                  <p className="text-xs font-semibold text-primary">고객 기준 필터 적용됨</p>
+                  <p className="mt-1 text-sm text-text">
+                    {getCustomerById(customerFilterId)?.name ?? customerFilterId} 상담 기록만 보고 있어요.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomerFilterId(null);
+                    setSearch('');
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.delete('customerId');
+                    const nextQuery = params.toString();
+                    router.replace(nextQuery ? `/records?${nextQuery}` : '/records', { scroll: false });
+                  }}
+                  className="rounded-xl border border-primary/20 bg-surface px-3 py-2 text-xs font-semibold text-primary"
+                >
+                  필터 해제
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* R-5: 태그 필터 칩 */}
           <div className="flex gap-2 overflow-x-auto px-4 md:px-0 pb-1 scrollbar-hide">
@@ -572,7 +651,7 @@ export default function RecordsPage() {
             >
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-base font-bold text-text">
-                  {editMode ? '예약 수정' : (selectedEvent.type === 'reservation' ? '예약 상세' : '상담 상세')}
+                  {editMode ? '예약 수정' : (selectedEvent.type === 'reservation' ? '예약 상세' : '기록 상세')}
                 </h3>
                 <button
                   onClick={() => { setSelectedEvent(null); setEditMode(false); }}
@@ -798,7 +877,7 @@ export default function RecordsPage() {
                         onClick={() => router.push(`/customers/${selectedEvent.customerId}`)}
                         className="mt-2 w-full rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
                       >
-                        고객 상세 보기
+                        고객 상세로 이동
                       </button>
                     )}
                     <div className="mt-3 flex gap-2">

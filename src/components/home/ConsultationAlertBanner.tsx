@@ -4,60 +4,50 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useReservationStore } from '@/store/reservation-store';
-
-const SEEN_KEY = 'bdx-preconsult-seen';
-
-function getSeenIds(): Set<string> {
-  if (typeof window === 'undefined') return new Set();
-  try {
-    const raw = localStorage.getItem(SEEN_KEY);
-    if (!raw) return new Set();
-    return new Set(JSON.parse(raw) as string[]);
-  } catch {
-    return new Set();
-  }
-}
-
-function markAsSeen(id: string): void {
-  const seen = getSeenIds();
-  seen.add(id);
-  try {
-    localStorage.setItem(SEEN_KEY, JSON.stringify([...seen]));
-  } catch {
-    // ignore
-  }
-}
+import {
+  getPreConsultationNotifications,
+  isPreConsultationNotificationRead,
+  markPreConsultationNotificationRead,
+  PRECONSULT_NOTIFICATIONS_UPDATED,
+} from '@/lib/preconsult-notifications';
 
 export function ConsultationAlertBanner(): React.ReactElement | null {
   const router = useRouter();
   const reservations = useReservationStore((s) => s.reservations);
   const [dismissed, setDismissed] = useState(false);
-  const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
+  const [readVersion, setReadVersion] = useState(0);
 
   useEffect(() => {
-    setSeenIds(getSeenIds());
+    const sync = (): void => {
+      setReadVersion((current) => current + 1);
+      setDismissed(false);
+    };
+
+    window.addEventListener(PRECONSULT_NOTIFICATIONS_UPDATED, sync);
+    window.addEventListener('storage', sync);
+
+    return () => {
+      window.removeEventListener(PRECONSULT_NOTIFICATIONS_UPDATED, sync);
+      window.removeEventListener('storage', sync);
+    };
   }, []);
 
-  // Find first reservation with preConsultationCompletedAt but not yet seen
-  const pending = reservations.find(
-    (r) =>
-      r.preConsultationCompletedAt &&
-      r.status !== 'completed' &&
-      r.status !== 'cancelled' &&
-      !seenIds.has(r.id),
-  );
+  const pending =
+    readVersion < 0
+      ? undefined
+      : getPreConsultationNotifications(reservations).find(
+          (notification) => !isPreConsultationNotificationRead(notification),
+        );
 
   if (!pending || dismissed) return null;
 
   const handleView = () => {
-    markAsSeen(pending.id);
-    setSeenIds(getSeenIds());
-    router.push(`/records?bookingId=${pending.id}`);
+    markPreConsultationNotificationRead(pending);
+    router.push(`/records?bookingId=${pending.bookingId}`);
   };
 
   const handleDismiss = () => {
-    markAsSeen(pending.id);
-    setSeenIds(getSeenIds());
+    markPreConsultationNotificationRead(pending);
     setDismissed(true);
   };
 

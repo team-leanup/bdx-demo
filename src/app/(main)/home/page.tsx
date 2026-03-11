@@ -22,10 +22,12 @@ import {
 } from '@/components/home';
 import { QRGeneratorModal } from '@/components/home/QRGeneratorModal';
 import { ConsultationAlertBanner } from '@/components/home/ConsultationAlertBanner';
+import { PreConsultationNotificationCenter } from '@/components/home/PreConsultationNotificationCenter';
 import { Modal } from '@/components/ui';
 import { useT } from '@/lib/i18n';
 import { useAuthStore } from '@/store/auth-store';
 import { useLocaleStore } from '@/store/locale-store';
+import type { PreConsultationNotification } from '@/lib/preconsult-notifications';
 import {
   IconUsers,
   IconCalendar,
@@ -58,8 +60,9 @@ export default function HomePage() {
   const [showTour, setShowTour] = useState(false);
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
+  const [showNotificationCenter, setShowNotificationCenter] = useState(false);
   const { shopSettings } = useAppStore();
-  const { activeDesignerName, role } = useAuthStore();
+  const { activeDesignerName, role, currentShopId } = useAuthStore();
   const restoreLocale = useLocaleStore((s) => s.restoreLocale);
   const getAllRecords = useRecordsStore((s) => s.getAllRecords);
   const records = useMemo(() => getAllRecords(), [getAllRecords]);
@@ -79,6 +82,12 @@ export default function HomePage() {
     if (searchParams.get('tour') === 'true') {
       const timer = setTimeout(() => setShowTour(true), 600);
       return () => clearTimeout(timer);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (searchParams.get('notifications') === 'preconsult') {
+      setShowNotificationCenter(true);
     }
   }, [searchParams]);
   const storeShopName = useShopStore((s) => s.shop?.name);
@@ -118,6 +127,30 @@ export default function HomePage() {
       serviceLabel: newBooking.serviceLabel,
       customerId: newBooking.customerId,
     });
+  };
+
+  const clearHomeQuery = (key: string): void => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete(key);
+    const nextQuery = params.toString();
+    router.replace(nextQuery ? `/home?${nextQuery}` : '/home', { scroll: false });
+  };
+
+  const handleCloseNotificationCenter = (): void => {
+    setShowNotificationCenter(false);
+    if (searchParams.get('notifications') === 'preconsult') {
+      clearHomeQuery('notifications');
+    }
+  };
+
+  const handleSelectNotification = (
+    notification: PreConsultationNotification,
+  ): void => {
+    setShowNotificationCenter(false);
+    if (searchParams.get('notifications') === 'preconsult') {
+      clearHomeQuery('notifications');
+    }
+    router.push(`/records?bookingId=${notification.bookingId}`);
   };
 
   const handleStartConsultation = (booking: BookingRequest) => {
@@ -188,8 +221,16 @@ export default function HomePage() {
 
       <ConsultationAlertBanner />
 
+      <PreConsultationNotificationCenter
+        isOpen={showNotificationCenter}
+        onClose={handleCloseNotificationCenter}
+        reservations={allReservations}
+        onSelectNotification={handleSelectNotification}
+      />
+
       <TodayReservationCard
         reservations={todayReservations}
+        shopName={shopName}
         channelBadge={CHANNEL_BADGE}
         onViewAll={() => router.push('/records')}
         onStartConsultation={handleStartConsultation}
@@ -244,6 +285,8 @@ export default function HomePage() {
       <QRGeneratorModal
         isOpen={showQRModal}
         onClose={() => setShowQRModal(false)}
+        shopId={currentShopId ?? undefined}
+        shopName={shopName}
       />
 
       <RecentConsultationCard
