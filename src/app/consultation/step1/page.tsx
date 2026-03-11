@@ -28,11 +28,11 @@ export default function Step1Page() {
   return (
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
       <ConsultationHeader
-        stepNumber={2}
+        stepNumber={1}
         totalSteps={5}
         title={t('consultation.step1Title')}
         titleKo={tKo('consultation.step1Title')}
-        backHref="/consultation/customer"
+        backHref="/consultation"
       />
       <PriceSummaryBar />
 

@@ -22,16 +22,19 @@ import type { ConsultationRecord, BookingStatus } from '@/types/consultation';
 import type { CustomerTag, TagCategory } from '@/types/customer';
 import { useCustomerStore } from '@/store/customer-store';
 import { useShopStore } from '@/store/shop-store';
-import { dbUpsertCustomer } from '@/lib/db';
+import { dbCompletePreconsultationBooking, dbUpsertCustomer } from '@/lib/db';
+import { ConsultationStep } from '@/types/consultation';
 
 export default function SummaryPage() {
   const router = useRouter();
   const consultation = useConsultationStore((s) => s.consultation);
   const bookingId = useConsultationStore((s) => s.consultation.bookingId);
   const entryPoint = useConsultationStore((s) => s.consultation.entryPoint);
+  const setStep = useConsultationStore((s) => s.setStep);
   const currentShopId = useAuthStore((s) => s.currentShopId);
   const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
   const updateReservation = useReservationStore((s) => s.updateReservation);
+  const updateReservationAfterPreconsult = useReservationStore((s) => s.updateReservation);
   const reservations = useReservationStore((s) => s.reservations);
   const restoreLocale = useLocaleStore((s) => s.restoreLocale);
   const [discountOpen, setDiscountOpen] = useState(false);
@@ -68,47 +71,68 @@ export default function SummaryPage() {
     }
 
     const designerId = consultation.designerId || activeDesignerId;
-    let customerId = consultation.customerId;
+    const createdCustomer = consultation.customerId
+      ? null
+      : createCustomer({
+          name: consultation.customerName ?? '새 고객',
+          phone: consultation.customerPhone ?? '',
+          assignedDesignerId: designerId,
+          assignedDesignerName: getDesignerName(designerId),
+          shopId: currentShopId,
+        });
+    const customerId = consultation.customerId || createdCustomer?.id;
+
     if (!customerId) {
-      const newCustomer = createCustomer({
-        name: consultation.customerName ?? '새 고객',
-        phone: consultation.customerPhone ?? '',
-        assignedDesignerId: designerId,
-        assignedDesignerName: getDesignerName(designerId),
-        shopId: currentShopId,
-      });
-      customerId = newCustomer.id;
+      setSaving(false);
+      return;
+    }
+
+    if (createdCustomer) {
       // Wait for customer to be saved to DB before saving record (FK constraint)
-      await dbUpsertCustomer(newCustomer);
+      await dbUpsertCustomer(createdCustomer);
     }
     const newId = `record-${Date.now()}`;
     const minutes = estimateTime(consultation);
     const now = new Date().toISOString();
-    const consultationSnapshot = { ...consultation };
+    const consultationSnapshot = JSON.parse(JSON.stringify({ ...consultation })) as typeof consultation;
+    const bookingLanguage = bookingId
+      ? reservations.find((r) => r.id === bookingId)?.language
+      : undefined;
+    const savedRecord: ConsultationRecord = {
+      id: newId,
+      shopId: currentShopId,
+      designerId,
+      customerId,
+      consultation: consultationSnapshot,
+      totalPrice: breakdown.subtotal,
+      estimatedMinutes: minutes,
+      finalPrice: adjustedFinalPrice,
+      createdAt: now,
+      updatedAt: now,
+      notes: customerMemo || undefined,
+      language: bookingLanguage,
+    };
 
     if (isCustomerLinkFlow && bookingId) {
-      updateReservation(bookingId, {
+      addRecord(savedRecord);
+      const preconsultationResult = await dbCompletePreconsultationBooking(
+        bookingId,
+        consultationSnapshot,
+        now,
+        customerId,
+      );
+
+      if (!preconsultationResult.success) {
+        setSaving(false);
+        return;
+      }
+
+      updateReservationAfterPreconsult(bookingId, {
         preConsultationCompletedAt: now,
         preConsultationData: consultationSnapshot,
+        customerId,
       });
     } else {
-      const bookingLanguage = bookingId
-        ? reservations.find((r) => r.id === bookingId)?.language
-        : undefined;
-      const savedRecord: ConsultationRecord = {
-        id: newId,
-        shopId: currentShopId,
-        designerId,
-        customerId,
-        consultation: consultationSnapshot,
-        totalPrice: breakdown.subtotal,
-        estimatedMinutes: minutes,
-        finalPrice: adjustedFinalPrice,
-        createdAt: now,
-        updatedAt: now,
-        notes: customerMemo || undefined,
-        language: bookingLanguage,
-      };
       sessionStorage.setItem(`bdx-saved-record-${newId}`, JSON.stringify(savedRecord));
 
       addRecord(savedRecord);
@@ -200,7 +224,10 @@ export default function SummaryPage() {
         totalSteps={5}
         title={t('consultation.summaryTitle')}
         titleKo={tKo('consultation.summaryTitle')}
-        backHref="/consultation/traits"
+        onBack={() => {
+          setStep(ConsultationStep.CUSTOMER_INFO);
+          router.push('/consultation/customer');
+        }}
         onClose={() => router.push(isCustomerLinkFlow ? customerLinkEntryHref : '/home')}
       />
 

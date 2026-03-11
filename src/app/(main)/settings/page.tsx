@@ -640,14 +640,38 @@ function StaffSection() {
 // 운영 정보 섹션 (매장 탭 내부)
 function OperatingHoursSection() {
   const t = useT();
+  const { shopSettings, setShopSettings } = useAppStore();
+  const storedHours = shopSettings.businessHours;
   const DAY_LABELS = DAY_LABEL_KEYS.map((k) => t(`settings.${k}`));
   const [bulkMode, setBulkMode] = useState(true);
-  const [bulkOpen, setBulkOpen] = useState('10:00');
-  const [bulkClose, setBulkClose] = useState('20:00');
-  const [bulkClosedDays, setBulkClosedDays] = useState<boolean[]>(
-    DAY_LABEL_KEYS.map((_, i) => i === 6),
+  const [bulkOpen, setBulkOpen] = useState(() => {
+    const openDay = storedHours.find((h) => h.isOpen);
+    return openDay?.openTime ?? '10:00';
+  });
+  const [bulkClose, setBulkClose] = useState(() => {
+    const openDay = storedHours.find((h) => h.isOpen);
+    return openDay?.closeTime ?? '20:00';
+  });
+  const [bulkClosedDays, setBulkClosedDays] = useState<boolean[]>(() =>
+    DAY_LABEL_KEYS.map((_, uiIdx) => {
+      const dow = (uiIdx + 1) % 7;
+      const h = storedHours.find((bh) => bh.dayOfWeek === dow);
+      return h ? !h.isOpen : false;
+    }),
   );
-  const [daySchedules, setDaySchedules] = useState<DaySchedule[]>(DEFAULT_DAY_SCHEDULES);
+  const [daySchedules, setDaySchedules] = useState<DaySchedule[]>(() =>
+    DAY_LABEL_KEYS.map((_, uiIdx) => {
+      const dow = (uiIdx + 1) % 7;
+      const h = storedHours.find((bh) => bh.dayOfWeek === dow);
+      return {
+        isOpen: h?.isOpen ?? (uiIdx !== 6),
+        openTime: h?.openTime ?? '10:00',
+        closeTime: h?.closeTime ?? '20:00',
+      };
+    }),
+  );
+  const [isSaving, setIsSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
 
   const toggleBulkClosedDay = (index: number) => {
     setBulkClosedDays((prev) => {
@@ -661,6 +685,39 @@ function OperatingHoursSection() {
     setDaySchedules((prev) =>
       prev.map((s, i) => (i === index ? { ...s, ...patch } : s)),
     );
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setFeedback(null);
+
+    const businessHours = DAY_LABEL_KEYS.map((_, uiIdx) => {
+      const dow = (uiIdx + 1) % 7;
+      if (bulkMode) {
+        const isClosed = bulkClosedDays[uiIdx];
+        return {
+          dayOfWeek: dow,
+          isOpen: !isClosed,
+          ...(!isClosed ? { openTime: bulkOpen, closeTime: bulkClose } : {}),
+        };
+      }
+      const s = daySchedules[uiIdx];
+      return {
+        dayOfWeek: dow,
+        isOpen: s.isOpen,
+        ...(s.isOpen ? { openTime: s.openTime, closeTime: s.closeTime } : {}),
+      };
+    });
+
+    const result = await setShopSettings({ businessHours });
+    setIsSaving(false);
+
+    if (!result.success) {
+      setFeedback({ tone: 'error', message: result.error ?? '운영 정보 저장에 실패했습니다.' });
+      return;
+    }
+
+    setFeedback({ tone: 'success', message: '운영 정보가 저장되었습니다.' });
   };
 
   return (
@@ -775,9 +832,26 @@ function OperatingHoursSection() {
           </div>
         )}
 
+        {feedback && (
+          <div
+            className={cn(
+              'mt-3 rounded-xl border px-3 py-2 text-xs font-medium',
+              feedback.tone === 'success'
+                ? 'border-success/20 bg-success/10 text-success'
+                : 'border-error/20 bg-error/10 text-error',
+            )}
+          >
+            {feedback.message}
+          </div>
+        )}
+
         <div className="mt-4 flex justify-end">
-          <button className="rounded-lg border border-primary px-4 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors">
-            {t('settings.hours_save')}
+          <button
+            onClick={() => void handleSave()}
+            disabled={isSaving}
+            className="rounded-lg border border-primary px-4 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors disabled:opacity-40"
+          >
+            {isSaving ? '저장 중...' : t('settings.hours_save')}
           </button>
         </div>
       </Card>

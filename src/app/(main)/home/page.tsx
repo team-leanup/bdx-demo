@@ -9,6 +9,7 @@ import { useRecordsStore } from '@/store/records-store';
 import { useAppStore } from '@/store/app-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { useConsultationStore } from '@/store/consultation-store';
+import { ConsultationStep } from '@/types/consultation';
 import type { BookingChannel, BookingRequest } from '@/types/consultation';
 import {
   GreetingHeader,
@@ -64,6 +65,7 @@ export default function HomePage() {
   const { shopSettings } = useAppStore();
   const { activeDesignerName, role, currentShopId } = useAuthStore();
   const restoreLocale = useLocaleStore((s) => s.restoreLocale);
+  const setConsultationLocale = useLocaleStore((s) => s.setConsultationLocale);
   const getAllRecords = useRecordsStore((s) => s.getAllRecords);
   const records = useMemo(() => getAllRecords(), [getAllRecords]);
 
@@ -155,6 +157,14 @@ export default function HomePage() {
 
   const handleStartConsultation = (booking: BookingRequest) => {
     if (booking.status === 'completed') return;
+    if (booking.requestNote) {
+      sessionStorage.setItem('consultation_customer_memo', booking.requestNote);
+    } else {
+      sessionStorage.removeItem('consultation_customer_memo');
+    }
+    if (booking.language && ['ko', 'en', 'zh', 'ja'].includes(booking.language)) {
+      setConsultationLocale(booking.language);
+    }
     hydrateConsultation({
       ...booking.preConsultationData,
       bookingId: booking.id,
@@ -163,14 +173,9 @@ export default function HomePage() {
       customerId: booking.customerId ?? booking.preConsultationData?.customerId,
       referenceImages: booking.preConsultationData?.referenceImages ?? booking.referenceImageUrls ?? [],
       entryPoint: 'staff',
+      currentStep: ConsultationStep.STEP1_BASIC,
     });
-    const params = new URLSearchParams();
-    params.set('bookingId', booking.id);
-    if (booking.customerName) params.set('name', booking.customerName);
-    if (booking.phone) params.set('phone', booking.phone);
-    if (booking.requestNote) params.set('note', booking.requestNote);
-    if (booking.language) params.set('lang', booking.language);
-    router.push(`/consultation/customer?${params.toString()}`);
+    router.push('/consultation/step1');
   };
 
   const [todayDateStr, setTodayDateStr] = useState('');

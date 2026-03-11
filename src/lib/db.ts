@@ -32,6 +32,15 @@ export interface DesignerDeleteResult {
   error?: string;
 }
 
+interface DbErrorSnapshot {
+  message?: string;
+  code?: string;
+  details?: string;
+  hint?: string;
+  name?: string;
+  raw?: unknown;
+}
+
 function createId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -109,6 +118,57 @@ function dataUrlToBlob(dataUrl: string): { blob: Blob; mimeType: string } {
     blob: new Blob([bytes], { type: mimeType }),
     mimeType,
   };
+}
+
+function toDbErrorSnapshot(error: unknown): DbErrorSnapshot {
+  if (!error || typeof error !== 'object') {
+    return { raw: error };
+  }
+
+  const candidate = error as {
+    message?: unknown;
+    code?: unknown;
+    details?: unknown;
+    hint?: unknown;
+    name?: unknown;
+  };
+
+  return {
+    message: typeof candidate.message === 'string' ? candidate.message : undefined,
+    code: typeof candidate.code === 'string' ? candidate.code : undefined,
+    details: typeof candidate.details === 'string' ? candidate.details : undefined,
+    hint: typeof candidate.hint === 'string' ? candidate.hint : undefined,
+    name: typeof candidate.name === 'string' ? candidate.name : undefined,
+    raw: error,
+  };
+}
+
+async function resolveReservationForeignKey(
+  table: 'designers' | 'customers',
+  id: string | undefined,
+  shopId: string,
+): Promise<string | null> {
+  if (!id) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from(table)
+    .select('id')
+    .eq('id', id)
+    .eq('shop_id', shopId)
+    .maybeSingle();
+
+  if (error) {
+    console.error(`[db] resolveReservationForeignKey(${table}) error:`, {
+      ...toDbErrorSnapshot(error),
+      shopId,
+      id,
+    });
+    return null;
+  }
+
+  return data?.id ?? null;
 }
 
 function toPortfolioPhoto(row: Database['public']['Tables']['portfolio_photos']['Row']): PortfolioPhoto {
@@ -384,7 +444,6 @@ export async function dbDeleteDesigner(
     const { error: storageError } = await supabase.storage.from(DESIGNER_AVATAR_BUCKET).remove([avatarPath]);
     if (storageError) {
       console.error('[db] dbDeleteDesigner remove avatar error:', storageError);
-      return { success: false, error: '프로필 이미지 삭제에 실패했습니다.' };
     }
   }
 
@@ -841,6 +900,27 @@ export async function dbDeleteRecord(id: string, shopId?: string): Promise<void>
 // ─── Reservation Mutations ────────────────────────────────────────────────────
 
 export async function dbUpsertReservation(reservation: BookingRequest): Promise<void> {
+  const [designerId, customerId] = await Promise.all([
+    resolveReservationForeignKey('designers', reservation.designerId, reservation.shopId),
+    resolveReservationForeignKey('customers', reservation.customerId, reservation.shopId),
+  ]);
+
+  if (reservation.designerId && !designerId) {
+    console.warn('[db] dbUpsertReservation dropped invalid designer_id:', {
+      reservationId: reservation.id,
+      shopId: reservation.shopId,
+      designerId: reservation.designerId,
+    });
+  }
+
+  if (reservation.customerId && !customerId) {
+    console.warn('[db] dbUpsertReservation dropped invalid customer_id:', {
+      reservationId: reservation.id,
+      shopId: reservation.shopId,
+      customerId: reservation.customerId,
+    });
+  }
+
   const { error } = await supabase.from('booking_requests').upsert({
     id: reservation.id,
     shop_id: reservation.shopId,
@@ -854,15 +934,40 @@ export async function dbUpsertReservation(reservation: BookingRequest): Promise<
     status: reservation.status,
     created_at: reservation.createdAt,
     language: reservation.language ?? null,
-    designer_id: reservation.designerId ?? null,
+    designer_id: designerId,
     service_label: reservation.serviceLabel ?? null,
-    customer_id: reservation.customerId ?? null,
+    customer_id: customerId,
     pre_consultation_data: (reservation.preConsultationData as unknown as import('@/types/database').Json) ?? null,
     pre_consultation_completed_at: reservation.preConsultationCompletedAt ?? null,
   });
   if (error) {
-    console.error('[db] dbUpsertReservation error:', error);
+    console.error('[db] dbUpsertReservation error:', {
+      ...toDbErrorSnapshot(error),
+      reservationId: reservation.id,
+      shopId: reservation.shopId,
+    });
   }
+}
+
+export async function dbCompletePreconsultationBooking(
+  bookingId: string,
+  payload: ConsultationType,
+  completedAt: string,
+  customerId?: string,
+): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase.rpc('complete_preconsultation_for_booking', {
+    target_booking_id: bookingId,
+    payload: payload as unknown as import('@/types/database').Json,
+    completed_at: completedAt,
+    linked_customer_id: customerId ?? null,
+  });
+
+  if (error) {
+    console.error('[db] dbCompletePreconsultationBooking error:', error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
 }
 
 export async function dbDeleteReservation(id: string, shopId?: string): Promise<void> {

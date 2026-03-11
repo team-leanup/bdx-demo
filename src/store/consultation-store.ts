@@ -81,17 +81,15 @@ interface ConsultationStore {
   reset: () => void;
 }
 
-// Staff 모드: 고객 정보 먼저
 const STEP_ORDER: ConsultationStep[] = [
   ConsultationStep.START,
-  ConsultationStep.CUSTOMER_INFO,
   ConsultationStep.STEP1_BASIC,
   ConsultationStep.STEP2_DESIGN,
   ConsultationStep.TRAITS,
+  ConsultationStep.CUSTOMER_INFO,
   ConsultationStep.SUMMARY,
 ];
 
-// Customer Link 모드: 개인정보 마지막
 const CUSTOMER_LINK_STEP_ORDER: ConsultationStep[] = [
   ConsultationStep.START,
   ConsultationStep.STEP1_BASIC,

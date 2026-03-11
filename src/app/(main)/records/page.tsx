@@ -13,6 +13,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { useAppStore } from '@/store/app-store';
 import { useConsultationStore } from '@/store/consultation-store';
+import { ConsultationStep } from '@/types/consultation';
 import { useCustomerStore } from '@/store/customer-store';
 import { useT } from '@/lib/i18n';
 import { formatPrice } from '@/lib/format';
@@ -24,6 +25,7 @@ import { getSafetyTagMeta, sortSafetyTags } from '@/lib/tag-safety';
 import type { TimeGridEvent } from '@/components/calendar/TimeGridCalendar';
 import { DESIGN_SCOPE_LABEL } from '@/lib/labels';
 import { useShopStore } from '@/store/shop-store';
+import { useLocaleStore } from '@/store/locale-store';
 import {
   MainTabBar,
   StatsCards,
@@ -153,6 +155,7 @@ export default function RecordsPage() {
   const editPhotoRef = useRef<HTMLInputElement>(null);
 
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
+  const setConsultationLocale = useLocaleStore((s) => s.setConsultationLocale);
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
   const getCustomerById = useCustomerStore((s) => s.getById);
 
@@ -309,6 +312,14 @@ export default function RecordsPage() {
     if (!selectedEvent) return;
     const booking = allReservations.find((reservation) => reservation.id === selectedEvent.originalId);
     if (booking) {
+      if (booking.requestNote) {
+        sessionStorage.setItem('consultation_customer_memo', booking.requestNote);
+      } else {
+        sessionStorage.removeItem('consultation_customer_memo');
+      }
+      if (booking.language && ['ko', 'en', 'zh', 'ja'].includes(booking.language)) {
+        setConsultationLocale(booking.language);
+      }
       hydrateConsultation({
         ...booking.preConsultationData,
         bookingId: booking.id,
@@ -317,15 +328,11 @@ export default function RecordsPage() {
         customerId: booking.customerId ?? booking.preConsultationData?.customerId,
         referenceImages: booking.preConsultationData?.referenceImages ?? booking.referenceImageUrls ?? [],
         entryPoint: 'staff',
+        currentStep: ConsultationStep.STEP1_BASIC,
       });
     }
-    const params = new URLSearchParams();
-    if (selectedEvent.title) params.set('name', selectedEvent.title);
-    if (selectedEvent.customerPhone) params.set('phone', selectedEvent.customerPhone);
-    if (selectedEvent.requestNote) params.set('note', selectedEvent.requestNote);
-    if (selectedEvent.language) params.set('lang', selectedEvent.language);
     setSelectedEvent(null);
-    router.push(`/consultation/customer?${params.toString()}`);
+    router.push('/consultation/step1');
   };
 
   const handleDeleteRecord = () => {

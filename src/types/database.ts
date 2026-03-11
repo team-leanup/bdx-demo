@@ -535,6 +535,15 @@ export type Database = {
         Args: { p_shop_id: string; p_shop_name: string; p_owner_name: string; p_user_id?: string }
         Returns: Json
       }
+      complete_preconsultation_for_booking: {
+        Args: {
+          target_booking_id: string
+          payload: Json
+          completed_at: string
+          linked_customer_id: string | null
+        }
+        Returns: undefined
+      }
       get_my_shop_id: { Args: never; Returns: string }
     }
     Enums: {
