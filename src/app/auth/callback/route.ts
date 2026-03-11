@@ -2,12 +2,15 @@ import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { hasSupabaseEnv } from '@/lib/supabase';
 
-function getSafeNextPath(next: string | null): string {
-  if (!next || !next.startsWith('/')) {
-    return '/login';
-  }
+const ALLOWED_NEXT = ['/login', '/signup', '/home', '/onboarding'];
 
-  return next;
+function getSafeNextPath(next: string | null): string {
+  if (!next) return '/login';
+  const clean = next.replace(/^\/+/, '/');
+  if (ALLOWED_NEXT.some((p) => clean === p || clean.startsWith(p + '/'))) {
+    return clean;
+  }
+  return '/login';
 }
 
 export async function GET(request: Request): Promise<NextResponse> {

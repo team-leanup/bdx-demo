@@ -18,6 +18,7 @@ export default function LoginPage(): React.ReactElement {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!isInitialized) {
@@ -39,25 +40,29 @@ export default function LoginPage(): React.ReactElement {
   const isReady = email.trim().length > 0 && password.trim().length > 0;
 
   const handleLogin = async (): Promise<void> => {
-    const result = await loginWithPassword(email, password);
-    if (!result.success) {
-      setError(result.error ?? '로그인에 실패했습니다.');
-      return;
+    setIsLoading(true);
+    try {
+      const result = await loginWithPassword(email, password);
+      if (!result.success) {
+        setError(result.error ?? '로그인에 실패했습니다.');
+      }
+      // useEffect handles redirect on isLoggedIn change
+    } finally {
+      setIsLoading(false);
     }
-
-    setError('');
-    router.push(useAuthStore.getState().currentShopOnboardingComplete ? '/home' : '/onboarding');
   };
 
   const handleDemoLogin = async (): Promise<void> => {
-    const result = await loginAsDemo();
-    if (!result.success) {
-      setError(result.error ?? '데모 로그인에 실패했습니다.');
-      return;
+    setIsLoading(true);
+    try {
+      const result = await loginAsDemo();
+      if (!result.success) {
+        setError(result.error ?? '데모 로그인에 실패했습니다.');
+      }
+      // useEffect handles redirect on isLoggedIn change
+    } finally {
+      setIsLoading(false);
     }
-
-    setError('');
-    router.push(useAuthStore.getState().currentShopOnboardingComplete ? '/home' : '/onboarding');
   };
 
   const handleGoogleLogin = async (): Promise<void> => {
@@ -104,6 +109,7 @@ export default function LoginPage(): React.ReactElement {
                 onClick={() => {
                   void handleGoogleLogin();
                 }}
+                disabled={isLoading}
                 className="flex h-[52px] w-full items-center justify-center gap-3 rounded-[14px] border border-[#d7dce3] bg-white px-4 text-[15px] font-semibold text-slate-800 transition-colors duration-200 hover:border-[#c6ccd5] hover:bg-slate-50 active:scale-[0.995]"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -154,7 +160,7 @@ export default function LoginPage(): React.ReactElement {
                 size="lg"
                 fullWidth
                 onClick={handleLogin}
-                disabled={!isReady}
+                disabled={!isReady || isLoading}
                 className="mt-2 h-[52px] md:h-[52px] rounded-[14px] bg-primary text-[15px] md:text-[15px] font-semibold text-white shadow-none hover:bg-primary-dark"
               >
                 샵 계정으로 로그인
@@ -177,7 +183,8 @@ export default function LoginPage(): React.ReactElement {
                 onClick={() => {
                   void handleDemoLogin();
                 }}
-                className="text-sm font-medium text-slate-500 underline underline-offset-4 transition-colors hover:text-primary"
+                disabled={isLoading}
+                className="text-sm font-medium text-slate-500 underline underline-offset-4 transition-colors hover:text-primary disabled:opacity-50"
               >
                 로그인 없이 서비스 체험하기
               </button>

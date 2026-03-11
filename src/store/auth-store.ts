@@ -133,6 +133,7 @@ function getGoogleOwnerName(user: { user_metadata?: Record<string, unknown> } | 
 }
 
 let _initPromise: Promise<void> | null = null;
+let _initDone = false;
 
 export const useAuthStore = create<AuthStore>()(
   persist(
@@ -143,6 +144,7 @@ export const useAuthStore = create<AuthStore>()(
       passwords: {},
 
       initializeAuth: async () => {
+        if (_initDone) return;
         if (_initPromise) return _initPromise;
         _initPromise = (async () => {
         if (!hasSupabaseEnv) {
@@ -151,9 +153,9 @@ export const useAuthStore = create<AuthStore>()(
         }
 
         const {
-          data: { session },
+          data: { user },
           error,
-        } = await supabase.auth.getSession();
+        } = await supabase.auth.getUser();
 
         if (error) {
           console.error('[auth] getSession error:', error);
@@ -161,7 +163,7 @@ export const useAuthStore = create<AuthStore>()(
           return;
         }
 
-        const userId = session?.user?.id;
+        const userId = user?.id;
         if (!userId) {
           set({ isInitialized: true, pendingGoogleSignup: null, ...getLoggedOutState() });
           return;
@@ -169,13 +171,16 @@ export const useAuthStore = create<AuthStore>()(
 
         let context = await resolveAuthContext(userId);
         if (!context) {
-          if (session.user.app_metadata.provider === 'google') {
+          const providers = user.app_metadata?.providers as string[] | undefined;
+          const isGoogleUser = providers?.includes('google') ||
+            user.app_metadata?.provider === 'google';
+          if (isGoogleUser) {
             set({
               isInitialized: true,
               pendingGoogleSignup: {
                 userId,
-                email: session.user.email ?? '',
-                ownerName: getGoogleOwnerName(session.user),
+                email: user.email ?? '',
+                ownerName: getGoogleOwnerName(user),
               },
               ...getLoggedOutState(),
             });
@@ -194,8 +199,13 @@ export const useAuthStore = create<AuthStore>()(
           pendingGoogleSignup: null,
           ...context,
         });
-        })().finally(() => { _initPromise = null; });
-        return _initPromise;
+        })();
+        try {
+          await _initPromise;
+        } finally {
+          _initDone = true;
+          _initPromise = null;
+        }
       },
 
       loginWithPassword: async (email, password) => {
@@ -327,34 +337,24 @@ export const useAuthStore = create<AuthStore>()(
           return { success: false, error: error?.message ?? '회원가입에 실패했습니다.' };
         }
 
-        let userId = data.user.id;
-
         if (!data.session) {
-          // User already exists (Supabase returns no session for duplicate signups).
-          // Try logging in to establish a session and complete shop creation.
-          const loginResult = await supabase.auth.signInWithPassword({
-            email: normalizedEmail,
-            password,
-          });
-
-          if (loginResult.error || !loginResult.data.session) {
-            return { success: false, error: '이미 등록된 이메일입니다. 로그인을 이용해 주세요.' };
-          }
-
-          userId = loginResult.data.user.id;
-        } else {
-          // Explicitly set session so auth.uid() is available for subsequent RPC calls.
-          // @supabase/ssr cookie-based storage may not apply immediately after signUp.
-          await supabase.auth.setSession({
-            access_token: data.session.access_token,
-            refresh_token: data.session.refresh_token,
-          });
+          return { success: false, error: '이미 등록된 이메일입니다. 로그인을 이용해 주세요.' };
         }
+
+        // Explicitly set session so auth.uid() is available for subsequent RPC calls.
+        // @supabase/ssr cookie-based storage may not apply immediately after signUp.
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+
+        const userId = data.user.id;
 
         const createdAccount = await dbCreateShopAccount(userId, shopName, ownerName);
         if (!createdAccount.success) {
+          console.error('[auth] Shop creation failed for user:', userId, createdAccount.error);
           await supabase.auth.signOut();
-          return { success: false, error: createdAccount.error ?? '샵 생성에 실패했습니다.' };
+          return { success: false, error: createdAccount.error ?? '샵 생성에 실패했습니다. 다시 시도해 주세요.' };
         }
 
         set({

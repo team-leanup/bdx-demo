@@ -24,6 +24,7 @@ export default function SignupPage(): React.ReactElement {
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!isInitialized) {
@@ -46,8 +47,8 @@ export default function SignupPage(): React.ReactElement {
     shopName.trim().length > 0 &&
     ownerName.trim().length > 0 &&
     email.trim().length > 0 &&
-    password.trim().length > 0 &&
-    passwordConfirm.trim().length > 0;
+    password.length >= 6 &&
+    password === passwordConfirm;
 
   const handleSignup = async (): Promise<void> => {
     if (!shopName.trim()) {
@@ -65,32 +66,39 @@ export default function SignupPage(): React.ReactElement {
       return;
     }
 
-    const result = await signupShopAccount({
-      shopName: shopName.trim(),
-      ownerName: ownerName.trim(),
-      email,
-      password,
-    });
+    setIsLoading(true);
+    try {
+      const result = await signupShopAccount({
+        shopName: shopName.trim(),
+        ownerName: ownerName.trim(),
+        email,
+        password,
+      });
 
-    if (!result.success) {
-      setError(result.error ?? '회원가입에 실패했습니다.');
-      return;
+      if (!result.success) {
+        setError(result.error ?? '회원가입에 실패했습니다.');
+        return;
+      }
+
+      resetApp();
+      setShopSettings({ shopName: shopName.trim() });
+      // useEffect handles redirect
+    } finally {
+      setIsLoading(false);
     }
-
-    resetApp();
-    setShopSettings({ shopName: shopName.trim() });
-    router.push('/onboarding');
   };
 
   const handleDemoLogin = async (): Promise<void> => {
-    const result = await loginAsDemo();
-    if (!result.success) {
-      setError(result.error ?? '데모 로그인에 실패했습니다.');
-      return;
+    setIsLoading(true);
+    try {
+      const result = await loginAsDemo();
+      if (!result.success) {
+        setError(result.error ?? '데모 로그인에 실패했습니다.');
+      }
+      // useEffect handles redirect
+    } finally {
+      setIsLoading(false);
     }
-
-    setError('');
-    router.push(useAuthStore.getState().currentShopOnboardingComplete ? '/home' : '/onboarding');
   };
 
   const handleGoogleSignup = async (): Promise<void> => {
@@ -138,6 +146,7 @@ export default function SignupPage(): React.ReactElement {
                 onClick={() => {
                   void handleGoogleSignup();
                 }}
+                disabled={isLoading}
                 className="flex h-[52px] w-full items-center justify-center gap-3 rounded-[14px] border border-[#d7dce3] bg-white px-4 text-[15px] font-semibold text-slate-800 transition-colors duration-200 hover:border-[#c6ccd5] hover:bg-slate-50 active:scale-[0.995]"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -216,6 +225,9 @@ export default function SignupPage(): React.ReactElement {
                   }}
                   className="h-[52px] rounded-[14px] border-[#d7dce3] bg-white px-4 text-[15px] placeholder:text-slate-400 hover:border-[#c6ccd5] focus-visible:ring-primary/20"
                 />
+                {password.length > 0 && password.length < 6 && (
+                  <p className="text-xs text-text-muted">비밀번호는 6자 이상이어야 합니다.</p>
+                )}
               </div>
 
               {error && <p className="text-sm font-medium text-error">{error}</p>}
@@ -224,7 +236,7 @@ export default function SignupPage(): React.ReactElement {
                 size="lg"
                 fullWidth
                 onClick={handleSignup}
-                disabled={!isReady}
+                disabled={!isReady || isLoading}
                 className="mt-2 h-[52px] md:h-[52px] rounded-[14px] bg-primary text-[15px] md:text-[15px] font-semibold text-white shadow-none hover:bg-primary-dark"
               >
                 회원가입 후 시작하기
@@ -247,7 +259,8 @@ export default function SignupPage(): React.ReactElement {
                 onClick={() => {
                   void handleDemoLogin();
                 }}
-                className="text-sm font-medium text-slate-500 underline underline-offset-4 transition-colors hover:text-primary"
+                disabled={isLoading}
+                className="text-sm font-medium text-slate-500 underline underline-offset-4 transition-colors hover:text-primary disabled:opacity-50"
               >
                 로그인 없이 서비스 체험하기
               </button>

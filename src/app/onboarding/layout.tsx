@@ -3,6 +3,7 @@
 import { useRef, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 
 const STEPS = [
   { path: '/onboarding', label: '시작' },
@@ -44,6 +45,7 @@ export default function OnboardingLayout({
   };
 
   return (
+    <AuthGuard>
     <div className="h-dvh bg-background flex flex-col">
       {/* Header */}
       {showProgress && (
@@ -113,5 +115,6 @@ export default function OnboardingLayout({
         </div>
       </div>
     </div>
+    </AuthGuard>
   );
 }

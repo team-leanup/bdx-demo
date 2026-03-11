@@ -19,6 +19,7 @@ export default function GoogleSignupPage(): React.ReactElement {
   const [shopName, setShopName] = useState('');
   const [ownerName, setOwnerName] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!isInitialized) {
@@ -53,20 +54,36 @@ export default function GoogleSignupPage(): React.ReactElement {
       return;
     }
 
-    const result = await completePendingGoogleSignup({
-      shopName: shopName.trim(),
-      ownerName: ownerName.trim(),
-    });
+    setIsLoading(true);
+    try {
+      const result = await completePendingGoogleSignup({
+        shopName: shopName.trim(),
+        ownerName: ownerName.trim(),
+      });
 
-    if (!result.success) {
-      setError(result.error ?? 'Google 회원가입을 완료하지 못했습니다.');
-      return;
+      if (!result.success) {
+        setError(result.error ?? 'Google 회원가입을 완료하지 못했습니다.');
+        return;
+      }
+
+      resetApp();
+      setShopSettings({ shopName: shopName.trim() });
+      // useEffect handles redirect
+    } finally {
+      setIsLoading(false);
     }
-
-    resetApp();
-    setShopSettings({ shopName: shopName.trim() });
-    router.push('/onboarding');
   };
+
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f8f9fb]">
+        <div className="flex flex-col items-center gap-4">
+          <img src="/bdx-logo/bdx-symbol-v9.svg" alt="BDX" className="h-16 animate-pulse" />
+          <p className="text-sm text-slate-400">잠시만 기다려 주세요...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f9fb] text-text">
@@ -128,7 +145,7 @@ export default function GoogleSignupPage(): React.ReactElement {
                 size="lg"
                 fullWidth
                 onClick={handleComplete}
-                disabled={!isReady}
+                disabled={!isReady || isLoading}
                 className="mt-2 h-[52px] md:h-[52px] rounded-[14px] bg-primary text-[15px] md:text-[15px] font-semibold text-white shadow-none hover:bg-primary-dark"
               >
                 Google 회원가입 완료

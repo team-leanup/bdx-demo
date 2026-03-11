@@ -22,7 +22,10 @@ export default function SupabaseProvider({ children }: { children: React.ReactNo
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event: string) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+      if (event === 'SIGNED_OUT') {
+        void initializeAuth();
+      }
+      if (event === 'SIGNED_IN' && !useAuthStore.getState().currentShopId) {
         void initializeAuth();
       }
     });
