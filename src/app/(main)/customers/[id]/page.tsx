@@ -115,6 +115,7 @@ function CustomerDetailContent({ id }: { id: string }) {
   const customer = useCustomerStore((s) => s.getById(id));
   const updateCustomer = useCustomerStore((s) => s.updateCustomer);
   const updateTagsInStore = useCustomerStore((s) => s.updateTags);
+  const appendSmallTalkNote = useCustomerStore((s) => s.appendSmallTalkNote);
   const designers = useShopStore((s) => s.designers);
 
   const [isVip, setIsVip] = useState(() => useCustomerStore.getState().getById(id)?.isRegular ?? false);
@@ -440,16 +441,6 @@ function CustomerDetailContent({ id }: { id: string }) {
                   </button>
                 </div>
                 <p className="text-sm text-text-secondary">{customer.phone}</p>
-                {/* CU-1: Safety 태그 (high/medium 레벨만) */}
-                {pinnedTags.some((t) => ['high', 'medium'].includes(getSafetyTagMeta(t).level)) && (
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {pinnedTags
-                      .filter((t) => ['high', 'medium'].includes(getSafetyTagMeta(t).level))
-                      .map((tag) => (
-                        <SafetyTag key={tag.id} tag={tag} size="xs" />
-                      ))}
-                  </div>
-                )}
               </div>
             </div>
             <div className="mt-1 flex items-center gap-1.5">
@@ -618,294 +609,15 @@ function CustomerDetailContent({ id }: { id: string }) {
           <p className="text-sm text-text-muted">특이사항 없음</p>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {pinnedTags.map((tag) => (
-              <CustomerTagChip key={tag.id} tag={tag} size="md" showPin />
-            ))}
+            {pinnedTags.map((tag) => {
+              const safety = getSafetyTagMeta(tag);
+              if (safety.level === 'high' || safety.level === 'medium') {
+                return <SafetyTag key={tag.id} tag={tag} size="sm" />;
+              }
+              return <CustomerTagChip key={tag.id} tag={tag} size="md" showPin />;
+            })}
           </div>
         )}
-      </Card>
-
-      {/* ─────────────────────────────── */}
-      {/* 2. 선호도 프로필 */}
-      {/* ─────────────────────────────── */}
-      <div className="mx-4 shadow-md rounded-2xl">
-        <PreferenceEditor
-          customerId={id}
-          preference={prefData}
-          initialEditing={fromChecklist}
-          onSave={(updated) => {
-            setPrefData(updated);
-            updateCustomer(id, {
-              preference: {
-                customerId: id,
-                ...(customer?.preference ?? {}),
-                preferredShape: updated.shape,
-                preferredLength: updated.length,
-                preferredThickness: updated.thickness,
-                cuticleSensitivity: (updated.cuticle as 'normal' | 'sensitive') || undefined,
-                nailCondition: updated.nailCondition,
-                memo: updated.memo,
-                updatedAt: new Date().toISOString(),
-              },
-            });
-          }}
-        />
-      </div>
-
-      {/* ─────────────────────────────── */}
-      {/* 3. 이미지 갤러리 (real upload) */}
-      {/* ─────────────────────────────── */}
-      <Card className="mx-4 shadow-md rounded-2xl">
-        {/* 섹션 헤더 + 업로드 버튼 */}
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-text-secondary">이미지 갤러리</h2>
-          <button
-            className="flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors hover:border-primary hover:text-primary"
-            style={{ borderStyle: 'dashed', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
-            onClick={() => {
-              if (galleryTab === 'treatment') treatmentFileRef.current?.click();
-              else consultFileRef.current?.click();
-            }}
-          >
-            <IconCamera className="h-3.5 w-3.5" />
-            <span>사진 추가</span>
-          </button>
-          {/* hidden file inputs */}
-          <input
-            ref={treatmentFileRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={(e) => handleFileChange(e, 'treatment')}
-          />
-          <input
-            ref={consultFileRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={(e) => handleFileChange(e, 'reference')}
-          />
-        </div>
-
-        {/* 탭 */}
-        <div className="mb-4 flex gap-1 rounded-xl bg-surface-alt p-1">
-          <button
-            onClick={() => setGalleryTab('treatment')}
-            className={cn(
-              'flex-1 rounded-lg py-1.5 text-xs font-semibold transition-all',
-              galleryTab === 'treatment'
-                ? 'bg-surface text-text shadow-sm'
-                : 'text-text-muted',
-            )}
-          >
-            시술 기록
-          </button>
-          <button
-            onClick={() => setGalleryTab('reference')}
-            className={cn(
-              'flex-1 rounded-lg py-1.5 text-xs font-semibold transition-all',
-              galleryTab === 'reference'
-                ? 'bg-surface text-text shadow-sm'
-                : 'text-text-muted',
-            )}
-          >
-            상담 기록
-          </button>
-        </div>
-
-        {uploadError && (
-          <div className="mb-3 rounded-xl bg-error/10 border border-error/20 px-3 py-2">
-            <p className="text-xs font-medium text-error">{uploadError}</p>
-          </div>
-        )}
-
-        {galleryTab === 'treatment' && (
-          <div className="flex flex-col gap-5">
-            {treatmentPhotos.length > 0 ? (
-              <div>
-                <div className="mb-2 flex items-center gap-2">
-                  <p className="text-xs font-medium text-text-muted">시술 사진</p>
-                  <span
-                    className="rounded-full px-2 py-0.5 text-xs font-medium"
-                    style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary-dark)' }}
-                  >
-                    {treatmentPhotos.length}장
-                  </span>
-                </div>
-                <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
-                  {treatmentPhotos.map((photo) => (
-                    <div key={photo.id} className="relative aspect-square group">
-                      <Image
-                        src={photo.imageDataUrl}
-                        alt="시술 사진"
-                        fill
-                        unoptimized
-                        className="rounded-xl object-cover shadow-sm"
-                      />
-                      <button
-                        onClick={() => handleRemovePhoto(photo.id)}
-                        className="absolute -top-1 -right-1 hidden group-hover:flex h-5 w-5 items-center justify-center rounded-full bg-error text-white text-xs shadow-md"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    onClick={() => treatmentFileRef.current?.click()}
-                    className="aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-1 transition-colors hover:border-primary hover:bg-primary/5"
-                    style={{ borderColor: 'var(--color-border)' }}
-                  >
-                    <IconCamera className="h-4 w-4 text-text-muted" />
-                    <span className="text-[9px] text-text-muted leading-tight">추가</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button
-                onClick={() => treatmentFileRef.current?.click()}
-                className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed py-10 transition-colors hover:border-primary hover:bg-primary/5"
-                style={{ borderColor: 'var(--color-border)' }}
-              >
-                <span className="text-3xl">📷</span>
-                <p className="text-sm font-medium text-text-muted">사진을 추가해보세요</p>
-              </button>
-            )}
-          </div>
-        )}
-
-        {galleryTab === 'reference' && (
-          <div className="flex flex-col gap-5">
-            {consultPhotos.length > 0 ? (
-              <div>
-                <div className="mb-2 flex items-center gap-2">
-                  <p className="text-xs font-medium text-text-muted">상담 사진</p>
-                  <span
-                    className="rounded-full px-2 py-0.5 text-xs font-medium"
-                    style={{ background: 'color-mix(in srgb, var(--color-accent) 15%, var(--color-surface))', color: 'var(--color-accent)' }}
-                  >
-                    {consultPhotos.length}장
-                  </span>
-                </div>
-                <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
-                  {consultPhotos.map((photo) => (
-                    <div key={photo.id} className="relative aspect-square group">
-                      <Image
-                        src={photo.imageDataUrl}
-                        alt="상담 사진"
-                        fill
-                        unoptimized
-                        className="rounded-xl object-cover shadow-sm"
-                      />
-                      <button
-                        onClick={() => handleRemovePhoto(photo.id)}
-                        className="absolute -top-1 -right-1 hidden group-hover:flex h-5 w-5 items-center justify-center rounded-full bg-error text-white text-xs shadow-md"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    onClick={() => consultFileRef.current?.click()}
-                    className="aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-1 transition-colors hover:border-accent hover:bg-accent/5"
-                    style={{ borderColor: 'var(--color-border)' }}
-                  >
-                    <IconCamera className="h-4 w-4 text-text-muted" />
-                    <span className="text-[9px] text-text-muted leading-tight">추가</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button
-                onClick={() => consultFileRef.current?.click()}
-                className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed py-10 transition-colors hover:border-accent hover:bg-accent/5"
-                style={{ borderColor: 'var(--color-border)' }}
-              >
-                <span className="text-3xl">📷</span>
-                <p className="text-sm font-medium text-text-muted">사진을 추가해보세요</p>
-              </button>
-            )}
-          </div>
-        )}
-      </Card>
-
-      {/* ─────────────────────────────── */}
-      {/* 4. 시술 이력 타임라인 */}
-      {/* ─────────────────────────────── */}
-      <Card className="mx-4 shadow-md rounded-2xl">
-        <h2 className="mb-4 text-sm font-semibold text-text-secondary">시술 이력</h2>
-        <div className="relative flex flex-col gap-0">
-          {customer.treatmentHistory.map((hist, idx) => {
-            const scopeIcon = DESIGN_SCOPE_ICON[hist.designScope] ?? '●';
-            return (
-              <div key={`${hist.recordId}-${idx}`} className="relative flex gap-3 pb-5 last:pb-0">
-                {/* 타임라인 라인 */}
-                {idx < customer.treatmentHistory.length - 1 && (
-                  <div
-                    className="absolute left-3 top-6 h-full w-0.5"
-                    style={{ background: 'var(--color-border)' }}
-                  />
-                )}
-
-                {/* 도트 — design type icon */}
-                <div
-                  className="relative z-10 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold border-2"
-                  style={{
-                    borderColor: 'var(--color-primary)',
-                    background: 'var(--color-primary-light)',
-                    color: 'var(--color-primary-dark)',
-                  }}
-                >
-                  {scopeIcon}
-                </div>
-
-                {/* 내용 */}
-                <div
-                  className="flex-1 min-w-0 rounded-2xl border p-3"
-                  style={{
-                    background: 'var(--color-surface-alt)',
-                    borderColor: 'var(--color-border)',
-                  }}
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-medium text-text-muted">
-                      {formatDateDot(hist.date)}
-                    </p>
-                    <span
-                      className="text-base font-bold"
-                      style={{ color: 'var(--color-primary-dark)' }}
-                    >
-                      {hist.price ? formatPrice(hist.price) : '–'}
-                    </span>
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    <Badge variant="neutral" size="sm">{BODY_PART_LABEL[hist.bodyPart] ?? hist.bodyPart}</Badge>
-                    <Badge variant="primary" size="sm">{hist.designScope}</Badge>
-                  </div>
-                  {/* CU-5: 컬러 & 파츠 칩 */}
-                  {(hist.colorLabels?.length ?? 0) > 0 && (
-                    <div className="mt-1.5 flex flex-wrap gap-1">
-                      {hist.colorLabels!.map((color, idx) => (
-                        <span key={idx} className="inline-flex px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
-                          {color}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {(hist.partsUsed?.length ?? 0) > 0 && (
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {hist.partsUsed!.map((part, idx) => (
-                        <Badge key={idx} variant="success" size="sm">{part}</Badge>
-                      ))}
-                    </div>
-                  )}
-                  <p className="mt-1.5 text-xs text-text-secondary">담당: {hist.designerName}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
       </Card>
 
       {/* ─────────────────────────────── */}
@@ -1141,6 +853,215 @@ function CustomerDetailContent({ id }: { id: string }) {
       </Card>
 
       {/* ─────────────────────────────── */}
+      {/* 2. 선호도 프로필 */}
+      {/* ─────────────────────────────── */}
+      <div className="mx-4 shadow-md rounded-2xl">
+        <PreferenceEditor
+          customerId={id}
+          preference={prefData}
+          initialEditing={fromChecklist}
+          onSave={(updated) => {
+            setPrefData(updated);
+            updateCustomer(id, {
+              preference: {
+                customerId: id,
+                ...(customer?.preference ?? {}),
+                preferredShape: updated.shape,
+                preferredLength: updated.length,
+                preferredThickness: updated.thickness,
+                cuticleSensitivity: (updated.cuticle as 'normal' | 'sensitive') || undefined,
+                nailCondition: updated.nailCondition,
+                memo: updated.memo,
+                updatedAt: new Date().toISOString(),
+              },
+            });
+          }}
+        />
+      </div>
+
+      {/* ─────────────────────────────── */}
+      {/* 3. 이미지 갤러리 (real upload) */}
+      {/* ─────────────────────────────── */}
+      <Card className="mx-4 shadow-md rounded-2xl">
+        {/* 섹션 헤더 + 업로드 버튼 */}
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-text-secondary">시술 기록</h2>
+          <button
+            className="flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors hover:border-primary hover:text-primary"
+            style={{ borderStyle: 'dashed', borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
+            onClick={() => treatmentFileRef.current?.click()}
+          >
+            <IconCamera className="h-3.5 w-3.5" />
+            <span>사진 추가</span>
+          </button>
+          {/* hidden file inputs */}
+          <input
+            ref={treatmentFileRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => handleFileChange(e, 'treatment')}
+          />
+          <input
+            ref={consultFileRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => handleFileChange(e, 'reference')}
+          />
+        </div>
+
+        {uploadError && (
+          <div className="mb-3 rounded-xl bg-error/10 border border-error/20 px-3 py-2">
+            <p className="text-xs font-medium text-error">{uploadError}</p>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-5">
+          {treatmentPhotos.length > 0 ? (
+            <div>
+              <div className="mb-2 flex items-center gap-2">
+                <p className="text-xs font-medium text-text-muted">시술 사진</p>
+                <span
+                  className="rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary-dark)' }}
+                >
+                  {treatmentPhotos.length}장
+                </span>
+              </div>
+              <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
+                {treatmentPhotos.map((photo) => (
+                  <div key={photo.id} className="relative aspect-square group">
+                    <Image
+                      src={photo.imageDataUrl}
+                      alt="시술 사진"
+                      fill
+                      unoptimized
+                      className="rounded-xl object-cover shadow-sm"
+                    />
+                    <button
+                      onClick={() => handleRemovePhoto(photo.id)}
+                      className="absolute -top-1 -right-1 hidden group-hover:flex h-5 w-5 items-center justify-center rounded-full bg-error text-white text-xs shadow-md"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={() => treatmentFileRef.current?.click()}
+                  className="aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-1 transition-colors hover:border-primary hover:bg-primary/5"
+                  style={{ borderColor: 'var(--color-border)' }}
+                >
+                  <IconCamera className="h-4 w-4 text-text-muted" />
+                  <span className="text-[9px] text-text-muted leading-tight">추가</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => treatmentFileRef.current?.click()}
+              className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed py-10 transition-colors hover:border-primary hover:bg-primary/5"
+              style={{ borderColor: 'var(--color-border)' }}
+            >
+              <span className="text-3xl">📷</span>
+              <p className="text-sm font-medium text-text-muted">사진을 추가해보세요</p>
+            </button>
+          )}
+        </div>
+
+        {/* 상담 기록 보기 링크 */}
+        <button
+          onClick={() => router.push(`/records?customerId=${id}`)}
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-border py-2.5 text-xs font-medium text-text-secondary hover:border-primary hover:text-primary transition-colors"
+        >
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+          </svg>
+          상담 기록 보기
+        </button>
+      </Card>
+
+      {/* ─────────────────────────────── */}
+      {/* 4. 시술 이력 타임라인 */}
+      {/* ─────────────────────────────── */}
+      <Card className="mx-4 shadow-md rounded-2xl">
+        <h2 className="mb-4 text-sm font-semibold text-text-secondary">시술 이력</h2>
+        <div className="relative flex flex-col gap-0">
+          {customer.treatmentHistory.map((hist, idx) => {
+            const scopeIcon = DESIGN_SCOPE_ICON[hist.designScope] ?? '●';
+            return (
+              <div key={`${hist.recordId}-${idx}`} className="relative flex gap-3 pb-5 last:pb-0">
+                {/* 타임라인 라인 */}
+                {idx < customer.treatmentHistory.length - 1 && (
+                  <div
+                    className="absolute left-3 top-6 h-full w-0.5"
+                    style={{ background: 'var(--color-border)' }}
+                  />
+                )}
+
+                {/* 도트 — design type icon */}
+                <div
+                  className="relative z-10 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold border-2"
+                  style={{
+                    borderColor: 'var(--color-primary)',
+                    background: 'var(--color-primary-light)',
+                    color: 'var(--color-primary-dark)',
+                  }}
+                >
+                  {scopeIcon}
+                </div>
+
+                {/* 내용 */}
+                <div
+                  className="flex-1 min-w-0 rounded-2xl border p-3"
+                  style={{
+                    background: 'var(--color-surface-alt)',
+                    borderColor: 'var(--color-border)',
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-medium text-text-muted">
+                      {formatDateDot(hist.date)}
+                    </p>
+                    <span
+                      className="text-base font-bold"
+                      style={{ color: 'var(--color-primary-dark)' }}
+                    >
+                      {hist.price ? formatPrice(hist.price) : '–'}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <Badge variant="neutral" size="sm">{BODY_PART_LABEL[hist.bodyPart] ?? hist.bodyPart}</Badge>
+                    <Badge variant="primary" size="sm">{hist.designScope}</Badge>
+                  </div>
+                  {/* CU-5: 컬러 & 파츠 칩 */}
+                  {(hist.colorLabels?.length ?? 0) > 0 && (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {hist.colorLabels!.map((color, idx) => (
+                        <span key={idx} className="inline-flex px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
+                          {color}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {(hist.partsUsed?.length ?? 0) > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {hist.partsUsed!.map((part, idx) => (
+                        <Badge key={idx} variant="success" size="sm">{part}</Badge>
+                      ))}
+                    </div>
+                  )}
+                  <p className="mt-1.5 text-xs text-text-secondary">담당: {hist.designerName}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
+      {/* ─────────────────────────────── */}
       {/* 6. 스몰토크 기록 */}
       {/* ─────────────────────────────── */}
       <Card className="mx-4 shadow-md rounded-2xl">
@@ -1165,14 +1086,16 @@ function CustomerDetailContent({ id }: { id: string }) {
             <button
               onClick={() => {
                 if (newSmallTalk.trim()) {
-                  setLocalSmallTalkNotes((prev) => [{
+                  const newNote = {
                     id: `stn-${Date.now()}`,
                     customerId: customer.id,
                     noteText: newSmallTalk.trim(),
                     createdAt: new Date().toISOString(),
                     createdByDesignerId: activeDesignerId ?? 'designer-session',
                     createdByDesignerName: activeDesignerName ?? '나',
-                  }, ...prev]);
+                  };
+                  setLocalSmallTalkNotes((prev) => [newNote, ...prev]);
+                  appendSmallTalkNote(customer.id, newNote);
                   setNewSmallTalk('');
                   setShowSmallTalkInput(false);
                 }

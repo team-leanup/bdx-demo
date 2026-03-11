@@ -62,7 +62,7 @@ export default function CustomersPage() {
       return (
         c.name.toLowerCase().includes(q) ||
         c.id.toLowerCase().includes(q) ||
-        (normalizePhone(c.phone || '') || '').includes(normalizedQ) ||
+        (normalizedQ.length > 0 && (normalizePhone(c.phone || '') || '').includes(normalizedQ)) ||
         (c.assignedDesignerName ?? '').toLowerCase().includes(q) ||
         (c.tags ?? []).some((tag) => tag.value.toLowerCase().includes(q))
       );

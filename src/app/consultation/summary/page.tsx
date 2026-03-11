@@ -162,6 +162,31 @@ export default function SummaryPage() {
       }
     }
 
+    // 고객 데이터 연동: 방문횟수, 매출, 시술이력 갱신
+    const { getById: getCustById, updateCustomer: updateCust } = useCustomerStore.getState();
+    const existingCustomer = getCustById(customerId);
+    if (existingCustomer) {
+      const newVisitCount = existingCustomer.visitCount + 1;
+      const newTotalSpend = existingCustomer.totalSpend + adjustedFinalPrice;
+      updateCust(customerId, {
+        visitCount: newVisitCount,
+        lastVisitDate: now.split('T')[0],
+        totalSpend: newTotalSpend,
+        averageSpend: Math.round(newTotalSpend / newVisitCount),
+        treatmentHistory: [
+          ...(existingCustomer.treatmentHistory ?? []),
+          {
+            recordId: newId,
+            date: now.split('T')[0],
+            bodyPart: consultation.bodyPart,
+            designScope: consultation.designScope,
+            price: adjustedFinalPrice,
+            designerName: getDesignerName(designerId),
+          },
+        ],
+      });
+    }
+
     // 스몰토크 메모 → customer store smallTalkNotes에 자동 push
     if (customerMemo) {
       const customerName = consultation.customerName;
