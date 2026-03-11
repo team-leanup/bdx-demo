@@ -194,12 +194,22 @@ export function PortfolioOverlay({
                 size="sm"
                 className="flex-1"
                 onClick={() => {
+                  const designParams = new URLSearchParams();
+                  if (photo.tags && photo.tags.length > 0) {
+                    designParams.set('tags', photo.tags.join(','));
+                  }
+                  if (photo.colorLabels && photo.colorLabels.length > 0) {
+                    designParams.set('colorLabels', photo.colorLabels.join(','));
+                  }
+                  if (serviceType) {
+                    designParams.set('serviceType', serviceType);
+                  }
+                  const designQuery = designParams.toString();
                   if (customer) {
-                    router.push(
-                      `/consultation/customer?name=${encodeURIComponent(customer.name)}&phone=${encodeURIComponent(customer.phone)}&customerId=${customer.id}`,
-                    );
+                    const base = `/consultation/customer?name=${encodeURIComponent(customer.name)}&phone=${encodeURIComponent(customer.phone)}&customerId=${customer.id}`;
+                    router.push(designQuery ? `${base}&${designQuery}` : base);
                   } else {
-                    router.push('/consultation/customer');
+                    router.push(designQuery ? `/consultation/customer?${designQuery}` : '/consultation/customer');
                   }
                   onClose();
                 }}
