@@ -339,7 +339,14 @@ function CustomerPageInner(): React.ReactElement {
         <div className="mx-4 mt-3 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-primary">Consultation Link</p>
           <p className="mt-1 text-sm font-bold text-text">{visibleShopName}</p>
-          <p className="mt-1 text-xs text-text-muted">이 상담 링크는 {visibleShopName}에서 보낸 링크예요.</p>
+          <p className="mt-1 text-xs text-text-muted">
+            {t('consultation.sourceShopLinkDesc').replace('{shopName}', visibleShopName)}
+            {locale !== 'ko' && (
+              <span className="block text-[10px] opacity-60 mt-0.5">
+                {tKo('consultation.sourceShopLinkDesc').replace('{shopName}', visibleShopName)}
+              </span>
+            )}
+          </p>
         </div>
       )}
 

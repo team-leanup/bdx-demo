@@ -175,13 +175,9 @@ export default function TraitsPage(): React.ReactElement {
           </div>
 
           <p className="text-center text-xs text-text-muted">
-            {locale === 'ko' ? (
-              '선택하지 않아도 다음 단계로 진행할 수 있습니다'
-            ) : (
-              <>
-                <span>{locale === 'en' ? 'You can proceed without selecting any' : locale === 'zh' ? '不选择也可以继续' : '選択しなくても次に進めます'}</span>
-                <span className="block opacity-60 mt-0.5">선택하지 않아도 다음 단계로 진행할 수 있습니다</span>
-              </>
+            {t('consultation.traits.skipHint')}
+            {locale !== 'ko' && (
+              <span className="block opacity-60 mt-0.5">{tKo('consultation.traits.skipHint')}</span>
             )}
           </p>
         </div>

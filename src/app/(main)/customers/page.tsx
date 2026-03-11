@@ -11,10 +11,6 @@ import { useAuthStore } from '@/store/auth-store';
 import { FlagIcon } from '@/components/ui/FlagIcon';
 import { cn } from '@/lib/cn';
 
-const now = new Date();
-const thisMonth = now.getMonth();
-const thisYear = now.getFullYear();
-
 // stats will be derived from store inside component (hooks cannot be used at module scope)
 
 type FilterTab = 'all' | 'vip' | 'regular';
@@ -30,6 +26,11 @@ export default function CustomersPage() {
   const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
   const customers = useCustomerStore((s) => s.customers);
 
+  const { thisMonth, thisYear } = useMemo(() => {
+    const now = new Date();
+    return { thisMonth: now.getMonth(), thisYear: now.getFullYear() };
+  }, []);
+
   // derive stats from store
   const newThisMonth = useMemo(() => {
     return customers.filter((c) => {
@@ -37,7 +38,7 @@ export default function CustomersPage() {
       const d = new Date(c.createdAt);
       return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
     }).length;
-  }, [customers]);
+  }, [customers, thisMonth, thisYear]);
 
   const avgSpend = useMemo(() => {
     if (customers.length === 0) return 0;
@@ -56,8 +57,8 @@ export default function CustomersPage() {
       if (role === 'staff' && activeDesignerId && c.assignedDesignerId !== activeDesignerId) {
         return false;
       }
-      if (filterTab === 'vip' && !c.isRegular) return false;
-      if (filterTab === 'regular' && c.isRegular) return false;
+      if (filterTab === 'vip' && !(c.isRegular || (c.visitCount ?? 0) >= 5)) return false;
+      if (filterTab === 'regular' && (c.isRegular || (c.visitCount ?? 0) >= 5)) return false;
       if (!q && !normalizedQ) return true;
       return (
         c.name.toLowerCase().includes(q) ||

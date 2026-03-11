@@ -246,6 +246,10 @@ export const usePortfolioStore = create<PortfolioStore>()(
               removeItem: () => {},
             },
       ),
+      partialize: (state) => ({
+        ...state,
+        photos: state.photos.map((p) => ({ ...p, imageDataUrl: '' })),
+      }),
     },
   ),
 );

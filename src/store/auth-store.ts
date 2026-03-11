@@ -146,6 +146,21 @@ export const useAuthStore = create<AuthStore>()(
         if (_initDone) return;
         if (_initPromise) return _initPromise;
         _initPromise = (async () => {
+        // 데모 모드 쿠키 체크: Supabase 호출 전 최우선 확인
+        // (getUser() 에러 경로에서도 데모 상태가 초기화되는 race condition 방지)
+        if (typeof document !== 'undefined' && document.cookie.includes('bdx-demo=true')) {
+          set({
+            isInitialized: true,
+            pendingGoogleSignup: null,
+            role: 'owner',
+            currentShopId: 'shop-demo',
+            currentShopOnboardingComplete: true,
+            activeDesignerId: '9a0ce791-7906-4476-811b-be48f7dee2c8',
+            activeDesignerName: '데모 원장',
+          });
+          return;
+        }
+
         if (!hasSupabaseEnv) {
           set({ isInitialized: true, ...getLoggedOutState() });
           return;
@@ -164,19 +179,6 @@ export const useAuthStore = create<AuthStore>()(
 
         const userId = user?.id;
         if (!userId) {
-          // 데모 모드 쿠키가 있으면 데모 상태 복원 (새로고침 지원)
-          if (typeof document !== 'undefined' && document.cookie.includes('bdx-demo=true')) {
-            set({
-              isInitialized: true,
-              pendingGoogleSignup: null,
-              role: 'owner',
-              currentShopId: 'shop-demo',
-              currentShopOnboardingComplete: true,
-              activeDesignerId: '9a0ce791-7906-4476-811b-be48f7dee2c8',
-              activeDesignerName: '데모 원장',
-            });
-            return;
-          }
           set({ isInitialized: true, pendingGoogleSignup: null, ...getLoggedOutState() });
           return;
         }

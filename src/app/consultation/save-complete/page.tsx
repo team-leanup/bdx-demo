@@ -6,6 +6,7 @@ import { Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { ConsultationSummaryCard } from '@/components/consultation/ConsultationSummaryCard';
 import { useConsultationStore } from '@/store/consultation-store';
+import { useT, useKo, useLocale } from '@/lib/i18n';
 
 function SaveCompleteContent() {
   const router = useRouter();
@@ -15,6 +16,9 @@ function SaveCompleteContent() {
   const mode = searchParams.get('mode') ?? 'default';
   const sourceShopId = useConsultationStore((s) => s.consultation.sourceShopId);
   const sourceShopName = useConsultationStore((s) => s.consultation.sourceShopName);
+  const t = useT();
+  const tKo = useKo();
+  const locale = useLocale();
   const customerLinkParams = new URLSearchParams();
   customerLinkParams.set('entry', 'customer-link');
   if (sourceShopId) customerLinkParams.set('shopId', sourceShopId);
@@ -32,10 +36,16 @@ function SaveCompleteContent() {
         >
           <Image src="/bdx-logo/bdx-symbol.svg" alt="BDX" width={80} height={80} className="h-20 w-20" />
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-text">사전 상담이 저장됐어요</h1>
+            <h1 className="text-2xl font-bold text-text">{t('consultation.saveComplete.title')}</h1>
+            {locale !== 'ko' && (
+              <p className="text-xs text-text-muted opacity-60">{tKo('consultation.saveComplete.title')}</p>
+            )}
             <p className="mt-1.5 text-sm text-text-secondary">
-              예약 카드에 디자인 확정 상태로 표시됩니다.
+              {t('consultation.saveComplete.designConfirmed')}
             </p>
+            {locale !== 'ko' && (
+              <p className="text-xs text-text-muted opacity-60">{tKo('consultation.saveComplete.designConfirmed')}</p>
+            )}
           </div>
         </motion.div>
 
@@ -48,7 +58,14 @@ function SaveCompleteContent() {
           >
             <p className="text-[11px] font-semibold uppercase tracking-wide text-primary">Consultation Link</p>
             <p className="mt-1 text-sm font-bold text-text">{sourceShopName}</p>
-            <p className="mt-1 text-xs text-text-muted">{sourceShopName}에 전달된 사전 상담으로 저장됐어요.</p>
+            <p className="mt-1 text-xs text-text-muted">
+              {t('consultation.saveComplete.shopLinkSaved').replace('{shopName}', sourceShopName ?? '')}
+              {locale !== 'ko' && (
+                <span className="block opacity-60 mt-0.5 text-[10px]">
+                  {tKo('consultation.saveComplete.shopLinkSaved').replace('{shopName}', sourceShopName ?? '')}
+                </span>
+              )}
+            </p>
           </motion.div>
         )}
 
@@ -65,7 +82,12 @@ function SaveCompleteContent() {
             </svg>
           </div>
           <p className="text-sm text-text-secondary">
-            <span className="font-bold text-text">매장 도착 후 이 화면을 보여주시면</span><br />담당 디자이너가 바로 확인할 수 있어요.
+            {t('consultation.saveComplete.showAtArrival')}
+            {locale !== 'ko' && (
+              <span className="block text-xs text-text-muted opacity-60 mt-0.5">
+                {tKo('consultation.saveComplete.showAtArrival')}
+              </span>
+            )}
           </p>
         </motion.div>
 
@@ -84,8 +106,14 @@ function SaveCompleteContent() {
             onClick={() => router.push(customerLinkEntryHref)}
             className="w-full rounded-2xl bg-primary px-5 py-4 text-left text-white transition-all active:scale-[0.98]"
           >
-            <p className="text-base font-bold">새 상담 다시 작성하기</p>
-            <p className="mt-1 text-sm opacity-85">필요하면 정보를 수정해서 다시 제출할 수 있어요</p>
+            <p className="text-base font-bold">{t('consultation.saveComplete.newConsultation')}</p>
+            {locale !== 'ko' && (
+              <p className="text-xs opacity-60">{tKo('consultation.saveComplete.newConsultation')}</p>
+            )}
+            <p className="mt-1 text-sm opacity-85">{t('consultation.saveComplete.newConsultationDesc')}</p>
+            {locale !== 'ko' && (
+              <p className="text-xs opacity-60">{tKo('consultation.saveComplete.newConsultationDesc')}</p>
+            )}
           </button>
         </div>
       </div>

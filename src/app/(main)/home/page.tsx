@@ -281,7 +281,7 @@ export default function HomePage() {
       <HeroCTA
         onStartConsultation={() => router.push('/consultation')}
         onNewReservation={() => setShowReservationModal(true)}
-        onGenerateQR={() => setShowQRModal(true)}
+        onGenerateQR={currentShopId ? () => setShowQRModal(true) : undefined}
         consultationLabel={t('home.cta_consultation')}
         consultationTitle={t('home.cta_newConsultation')}
         reservationLabel={t('home.cta_reservation')}

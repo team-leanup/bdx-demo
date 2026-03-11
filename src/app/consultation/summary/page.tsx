@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useConsultationStore } from '@/store/consultation-store';
 import { ConsultationHeader } from '@/components/consultation/ConsultationHeader';
 import { ConsultationSummaryCard } from '@/components/consultation/ConsultationSummaryCard';
 import { DiscountModal } from '@/components/consultation/DiscountModal';
-import { Button } from '@/components/ui';
+import { Button, ToastContainer } from '@/components/ui';
+import type { ToastData } from '@/components/ui';
 import { useT, useLocale, useKo } from '@/lib/i18n';
 import { useLocaleStore } from '@/store/locale-store';
 import { calculatePrice } from '@/lib/price-calculator';
@@ -53,8 +54,15 @@ export default function SummaryPage() {
   const t = useT();
   const tKo = useKo();
   const locale = useLocale();
-  const customerLinkBackLabel = locale === 'ko' ? '이전으로' : 'Back';
-  const customerLinkSubmitLabel = locale === 'ko' ? '상담 제출' : 'Submit';
+  const [toasts, setToasts] = useState<ToastData[]>([]);
+  const handleDismissToast = useCallback((toastId: string): void => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== toastId));
+  }, []);
+  const pushToast = useCallback((type: ToastData['type'], message: string): void => {
+    setToasts((prev) => [...prev, { id: `toast-${Date.now()}`, type, message }]);
+  }, []);
+  const customerLinkBackLabel = t('consultation.customerLinkBack');
+  const customerLinkSubmitLabel = t('consultation.customerLinkSubmit');
   const customerLinkParams = new URLSearchParams();
   customerLinkParams.set('entry', 'customer-link');
   if (consultation.sourceShopId) customerLinkParams.set('shopId', consultation.sourceShopId);
@@ -68,8 +76,10 @@ export default function SummaryPage() {
 
   const handleSave = async () => {
     setSaving(true);
+    try {
     await new Promise((r) => setTimeout(r, 600));
     if (!currentShopId || !activeDesignerId) {
+      pushToast('error', '매장 또는 담당 선생님 정보가 없어요');
       setSaving(false);
       return;
     }
@@ -87,13 +97,17 @@ export default function SummaryPage() {
     const customerId = consultation.customerId || createdCustomer?.id;
 
     if (!customerId) {
+      pushToast('error', '고객 정보를 확인해주세요');
       setSaving(false);
       return;
     }
 
     if (createdCustomer) {
       // Wait for customer to be saved to DB before saving record (FK constraint)
-      await dbUpsertCustomer(createdCustomer);
+      await dbUpsertCustomer(createdCustomer).catch((err) => {
+        console.error(err);
+        pushToast('warning', '고객 데이터 저장에 실패했어요');
+      });
     }
     const newId = `record-${Date.now()}`;
     const minutes = estimateTime(consultation);
@@ -127,6 +141,7 @@ export default function SummaryPage() {
       );
 
       if (!preconsultationResult.success) {
+        pushToast('error', '상담 저장에 실패했어요. 다시 시도해주세요');
         setSaving(false);
         return;
       }
@@ -249,10 +264,16 @@ export default function SummaryPage() {
     }
 
     router.push(`/consultation/treatment-sheet?consultationId=${newId}&customerId=${customerId}`);
+    } catch (err) {
+      console.error(err);
+      pushToast('error', '저장 중 오류가 발생했어요. 다시 시도해주세요');
+      setSaving(false);
+    }
   };
 
   return (
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
+      <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
       <ConsultationHeader
         stepNumber={5}
         totalSteps={5}
@@ -276,7 +297,14 @@ export default function SummaryPage() {
             <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-primary">Consultation Link</p>
               <p className="mt-1 text-sm font-bold text-text">{consultation.sourceShopName}</p>
-              <p className="mt-1 text-xs text-text-muted">{consultation.sourceShopName}에서 보낸 상담 링크를 확인하고 있어요.</p>
+              <p className="mt-1 text-xs text-text-muted">
+                {t('consultation.sourceShopLinkDesc').replace('{shopName}', consultation.sourceShopName ?? '')}
+                {locale !== 'ko' && (
+                  <span className="block text-[10px] opacity-60 mt-0.5">
+                    {tKo('consultation.sourceShopLinkDesc').replace('{shopName}', consultation.sourceShopName ?? '')}
+                  </span>
+                )}
+              </p>
             </div>
           )}
 
@@ -388,7 +416,7 @@ export default function SummaryPage() {
             {isCustomerLinkFlow ? customerLinkBackLabel : t('consultation.modifyConsultation')}
             {locale !== 'ko' && (
               <span className="ml-1 text-[10px] opacity-60">
-                {isCustomerLinkFlow ? '이전으로' : tKo('consultation.modifyConsultation')}
+                {isCustomerLinkFlow ? tKo('consultation.customerLinkBack') : tKo('consultation.modifyConsultation')}
               </span>
             )}
           </Button>
@@ -433,7 +461,7 @@ export default function SummaryPage() {
           ) : (
             <>
               {isCustomerLinkFlow ? customerLinkSubmitLabel : t('consultation.saveAndComplete')}
-              {locale !== 'ko' && <span className="ml-1 text-sm opacity-70">{isCustomerLinkFlow ? '상담 제출' : tKo('consultation.saveAndComplete')}</span>}
+              {locale !== 'ko' && <span className="ml-1 text-sm opacity-70">{isCustomerLinkFlow ? tKo('consultation.customerLinkSubmit') : tKo('consultation.saveAndComplete')}</span>}
             </>
           )}
         </button>

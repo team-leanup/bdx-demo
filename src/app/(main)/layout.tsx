@@ -1,17 +1,30 @@
 'use client';
 
-import { useLayoutEffect } from 'react';
+import { useLayoutEffect, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { useLocaleStore } from '@/store/locale-store';
+import { useAuthStore } from '@/store/auth-store';
 import type { ReactNode } from 'react';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const setLocale = useLocaleStore((s) => s.setLocale);
+  const isInitialized = useAuthStore((s) => s.isInitialized);
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const currentShopOnboardingComplete = useAuthStore((s) => s.currentShopOnboardingComplete);
 
   useLayoutEffect(() => {
     setLocale('ko');
   }, [setLocale]);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+    if (isLoggedIn() && !currentShopOnboardingComplete) {
+      router.replace('/onboarding');
+    }
+  }, [isInitialized, isLoggedIn, currentShopOnboardingComplete, router]);
 
   return (
     <AuthGuard>

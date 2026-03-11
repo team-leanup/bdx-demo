@@ -1031,7 +1031,7 @@ function StorageManagementSection() {
             title="전체 데이터 초기화"
           >
             <div className="p-5">
-              <p className="text-sm text-text-secondary mb-4">모든 데이터가 초기화됩니다. 앱이 처음 상태로 돌아갑니다. 계속하시겠습니까?</p>
+              <p className="text-sm text-text-secondary mb-4">로컬 캐시 데이터(예약, 고객, 기록)가 초기화됩니다. 서버에 저장된 데이터는 앱 재시작 시 복원될 수 있습니다. 계속하시겠습니까?</p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setConfirmClearAll(false)}
@@ -1089,17 +1089,17 @@ export default function SettingsPage() {
   const [priceFoot, setPriceFoot] = useState(String(shopSettings.baseFootPrice || DEFAULT_BASE_PRICES.foot));
   const [priceOffSame, setPriceOffSame] = useState(String(shopSettings.baseOffSameShop || DEFAULT_BASE_PRICES.offSameShop));
   const [priceOffOther, setPriceOffOther] = useState(String(shopSettings.baseOffOtherShop || DEFAULT_BASE_PRICES.offOtherShop));
-  const [priceSolidPoint, setPriceSolidPoint] = useState(String(DEFAULT_BASE_PRICES.solidPoint));
-  const [priceFullArt, setPriceFullArt] = useState(String(DEFAULT_BASE_PRICES.fullArt));
-  const [priceMonthlyArt, setPriceMonthlyArt] = useState(String(DEFAULT_BASE_PRICES.monthlyArt));
+  const [priceSolidPoint, setPriceSolidPoint] = useState(String(shopSettings.baseSolidPointPrice ?? DEFAULT_BASE_PRICES.solidPoint));
+  const [priceFullArt, setPriceFullArt] = useState(String(shopSettings.baseFullArtPrice ?? DEFAULT_BASE_PRICES.fullArt));
+  const [priceMonthlyArt, setPriceMonthlyArt] = useState(String(shopSettings.baseMonthlyArtPrice ?? DEFAULT_BASE_PRICES.monthlyArt));
   const [savedPrices, setSavedPrices] = useState({
     hand: shopSettings.baseHandPrice || DEFAULT_BASE_PRICES.hand,
     foot: shopSettings.baseFootPrice || DEFAULT_BASE_PRICES.foot,
     offSameShop: shopSettings.baseOffSameShop || DEFAULT_BASE_PRICES.offSameShop,
     offOtherShop: shopSettings.baseOffOtherShop || DEFAULT_BASE_PRICES.offOtherShop,
-    solidPoint: DEFAULT_BASE_PRICES.solidPoint,
-    fullArt: DEFAULT_BASE_PRICES.fullArt,
-    monthlyArt: DEFAULT_BASE_PRICES.monthlyArt,
+    solidPoint: shopSettings.baseSolidPointPrice ?? DEFAULT_BASE_PRICES.solidPoint,
+    fullArt: shopSettings.baseFullArtPrice ?? DEFAULT_BASE_PRICES.fullArt,
+    monthlyArt: shopSettings.baseMonthlyArtPrice ?? DEFAULT_BASE_PRICES.monthlyArt,
   });
 
   const handleSavePrices = () => {
