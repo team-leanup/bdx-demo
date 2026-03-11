@@ -3,7 +3,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { hasSupabaseEnv, supabase, supabaseConfigErrorMessage } from '@/lib/supabase';
-import { DEMO_ACCOUNT_EMAIL, DEMO_ACCOUNT_PASSWORD } from '@/lib/demo-account';
 import {
   dbCreateShopAccount,
   fetchDesignerById,
@@ -260,29 +259,14 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       loginAsDemo: async () => {
-        // 1) Supabase 연결 가능 + 데모 패스워드 있으면 정상 로그인 시도
-        if (DEMO_ACCOUNT_PASSWORD) {
-          try {
-            const result = await get().loginWithPassword(DEMO_ACCOUNT_EMAIL, DEMO_ACCOUNT_PASSWORD);
-            if (result.success) {
-              return result;
-            }
-          } catch {
-            // Supabase 실패 시 로컬 폴백으로 진행
-          }
-        }
-
-        // 2) 로컬 데모 모드로 폴백
-        const demoShopId = 'demo-shop';
-        const demoDesignerId = 'demo-designer';
-
+        // 항상 로컬 데모 모드로 즉시 진입 (Supabase 호출 없음)
         set({
           isInitialized: true,
           pendingGoogleSignup: null,
           role: 'owner',
-          currentShopId: demoShopId,
+          currentShopId: 'demo-shop',
           currentShopOnboardingComplete: true,
-          activeDesignerId: demoDesignerId,
+          activeDesignerId: 'demo-designer',
           activeDesignerName: '데모 원장',
         });
 
