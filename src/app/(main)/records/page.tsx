@@ -612,26 +612,6 @@ export default function RecordsPage() {
         </>
       )}
 
-      <Modal isOpen={confirmDelete} onClose={() => setConfirmDelete(false)} title="기록 삭제">
-        <div className="p-5">
-          <p className="text-sm text-text-secondary mb-4">이 기록을 삭제하시겠습니까? 삭제된 기록은 복구할 수 없습니다.</p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setConfirmDelete(false)}
-              className="flex-1 rounded-lg border border-border py-2 text-xs font-semibold text-text-secondary hover:bg-surface-alt transition-colors"
-            >
-              취소
-            </button>
-            <button
-              onClick={executeDelete}
-              className="flex-1 rounded-lg bg-error/10 border border-error/30 py-2 text-xs font-semibold text-error hover:bg-error/20 transition-colors"
-            >
-              삭제
-            </button>
-          </div>
-        </div>
-      </Modal>
-
       <AnimatePresence>
         {selectedEvent && (
           <>
@@ -919,6 +899,26 @@ export default function RecordsPage() {
           </>
         )}
       </AnimatePresence>
+
+      <Modal isOpen={confirmDelete} onClose={() => setConfirmDelete(false)} title="기록 삭제">
+        <div className="p-5">
+          <p className="text-sm text-text-secondary mb-4">이 기록을 삭제하시겠습니까? 삭제된 기록은 복구할 수 없습니다.</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setConfirmDelete(false)}
+              className="flex-1 rounded-lg border border-border py-2 text-xs font-semibold text-text-secondary hover:bg-surface-alt transition-colors"
+            >
+              취소
+            </button>
+            <button
+              onClick={executeDelete}
+              className="flex-1 rounded-lg bg-error/10 border border-error/30 py-2 text-xs font-semibold text-error hover:bg-error/20 transition-colors"
+            >
+              삭제
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
