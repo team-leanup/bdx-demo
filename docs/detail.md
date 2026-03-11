@@ -273,6 +273,7 @@ BDX를 "상담 시스템"에서 **"고객 관리 CRM + 시술 기록 시스템"*
 | 2026-03-12 | 상담 단계 순서를 `고객 정보`를 Step 1로 앞당기도록 재정렬. staff 시작 버튼은 `/consultation/customer`부터 시작하고, customer 페이지 다음 단계를 `/consultation/step1`로 변경했으며 summary 뒤로가기는 staff=`traits`, customer-link=`/consultation`으로 분기 |
 | 2026-03-12 | customer-link도 Step 1(고객 정보) 다음에 `/consultation/step1`로 이어지도록 수정해, `다음` 버튼이 곧바로 summary로 점프하던 흐름을 제거하고 staff/customer-link 모두 `고객 정보 → 기본 조건 → 시술 유형 → 고객 성향 → 요약` 순서를 따르도록 정리 |
 | 2026-03-12 | 현장 상담 시작/저장 시 선택한 `designerId`를 연결된 예약에도 함께 저장하도록 보강해, `records` 탭 디자이너 데이 그리드에서 예약 카드가 선택한 디자이너 열에 표시되도록 정리 |
+| 2026-03-12 | 홈 `새 예약 등록` 모달의 submit 경로에서도 `designerId`를 누락하지 않도록 수정해, 예약 생성 직후부터 `records` 디자이너 데이 그리드가 선택한 담당 선생님 열에 바로 표시되게 정리 |
 
 ---
 
