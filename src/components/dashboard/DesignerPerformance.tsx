@@ -8,7 +8,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Cell,
   ResponsiveContainer,
 } from 'recharts';
 import { useRecordsStore } from '@/store/records-store';
@@ -53,11 +52,6 @@ export function DesignerPerformance() {
     () => computeDesignerStats(records, designers, reservations),
     [records, designers, reservations],
   );
-
-  const consultationChartData = designerStats.map((d) => ({
-    name: d.designerName,
-    상담수: d.consultations,
-  }));
 
   const rateChartData = designerStats.map((d) => ({
     name: d.designerName,
@@ -105,43 +99,6 @@ export function DesignerPerformance() {
               </div>
             );
           })}
-        </div>
-      </div>
-
-      {/* 상담수 바 차트 */}
-      <div>
-        <p className="mb-3 text-xs font-medium text-text-secondary">선생님별 상담 건수</p>
-        <div className="h-[130px] md:h-44">
-          <ResponsiveContainer width="100%" height="100%">
-           <BarChart
-             data={consultationChartData}
-             layout="vertical"
-             margin={{ top: 0, right: 8, left: 8, bottom: 0 }}
-           >
-             <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" horizontal={false} />
-             <XAxis
-               type="number"
-               tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
-               axisLine={false}
-               tickLine={false}
-               tickFormatter={(v) => `${v}건`}
-             />
-             <YAxis
-               type="category"
-               dataKey="name"
-               tick={{ fontSize: 11, fill: 'var(--color-text)' }}
-               axisLine={false}
-               tickLine={false}
-               width={36}
-             />
-             <Tooltip content={<CustomTooltip />} />
-             <Bar dataKey="상담수" radius={[0, 6, 6, 0]}>
-               {consultationChartData.map((_, i) => (
-                 <Cell key={i} fill={DESIGNER_COLORS[i % DESIGNER_COLORS.length]} />
-               ))}
-             </Bar>
-           </BarChart>
-          </ResponsiveContainer>
         </div>
       </div>
 

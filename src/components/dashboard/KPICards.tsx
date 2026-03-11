@@ -266,6 +266,13 @@ const KPI_SYMBOL: Record<string, string> = {
   '오늘 예약': 'cal',
 };
 
+const VISIBLE_KPI_LABELS = new Set([
+  '이달 상담 건수',
+  '인기 디자인',
+  '재방문율',
+  '오늘 예약',
+]);
+
 export function KPICards() {
   const [selectedKPI, setSelectedKPI] = useState<KPICard | null>(null);
   const records = useRecordsStore((s) => s.records);
@@ -275,10 +282,14 @@ export function KPICards() {
     () => computeKPICards(records, customers, reservations),
     [records, customers, reservations],
   );
+  const visibleKpiCards = useMemo(
+    () => kpiCards.filter((kpi) => VISIBLE_KPI_LABELS.has(kpi.label)),
+    [kpiCards],
+  );
 
   return (
     <>
-      {kpiCards.map((kpi) => (
+      {visibleKpiCards.map((kpi) => (
         <BentoCard
           key={kpi.label}
           span="1x1"

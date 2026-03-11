@@ -94,13 +94,12 @@ export function CustomerAnalytics() {
         </div>
       </div>
 
-      {/* VIP 고객 */}
       <div>
-        <p className="mb-3 text-xs font-medium text-text-secondary">VIP 고객 TOP 5</p>
+        <p className="mb-3 text-xs font-medium text-text-secondary">단골 고객 TOP 5</p>
         <div className="flex flex-col gap-2">
           {analytics.vipCustomers.map((vip, idx) => (
             <div
-              key={vip.name}
+              key={vip.id}
               className="flex items-center gap-3 rounded-xl bg-surface-alt p-3 md:p-4"
             >
               <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
