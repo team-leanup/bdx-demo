@@ -17,12 +17,15 @@ import { ExpressionSelector } from '@/components/consultation/ExpressionSelector
 import { PartsSelector } from '@/components/consultation/PartsSelector';
 import { ColorSelector } from '@/components/consultation/ColorSelector';
 import { DiscountModal } from '@/components/consultation/DiscountModal';
-import { calculatePrice } from '@/lib/price-calculator';
+import { calculatePrice, buildServicePricingFromShopSettings } from '@/lib/price-calculator';
+import { useAppStore } from '@/store/app-store';
 import { formatPrice } from '@/lib/format';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useT, useLocale, useKo } from '@/lib/i18n';
+import { useConsultationGuard } from '@/lib/use-consultation-guard';
 
 export default function ProPage() {
+  useConsultationGuard();
   const router = useRouter();
   const consultation = useConsultationStore((s) => s.consultation);
   const setStep = useConsultationStore((s) => s.setStep);
@@ -30,8 +33,10 @@ export default function ProPage() {
   const t = useT();
   const tKo = useKo();
   const locale = useLocale();
+  const shopSettings = useAppStore((s) => s.shopSettings);
+  const pricing = useMemo(() => buildServicePricingFromShopSettings(shopSettings), [shopSettings]);
 
-  const breakdown = calculatePrice(consultation);
+  const breakdown = calculatePrice(consultation, pricing);
 
   const handleNext = () => {
     setStep(ConsultationStep.CANVAS);

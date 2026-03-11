@@ -1,7 +1,9 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useConsultationStore } from '@/store/consultation-store';
-import { calculatePrice } from '@/lib/price-calculator';
+import { useAppStore } from '@/store/app-store';
+import { calculatePrice, buildServicePricingFromShopSettings } from '@/lib/price-calculator';
 import { estimateTime } from '@/lib/time-calculator';
 import { formatPrice, formatMinutes } from '@/lib/format';
 import { cn } from '@/lib/cn';
@@ -16,7 +18,9 @@ export function PriceSummaryBar({ className, showEstimated = true }: PriceSummar
   const t = useT();
   const locale = useLocale();
   const consultation = useConsultationStore((s) => s.consultation);
-  const breakdown = calculatePrice(consultation);
+  const shopSettings = useAppStore((s) => s.shopSettings);
+  const pricing = useMemo(() => buildServicePricingFromShopSettings(shopSettings), [shopSettings]);
+  const breakdown = calculatePrice(consultation, pricing);
   const minutes = estimateTime(consultation);
 
   if (!showEstimated) {

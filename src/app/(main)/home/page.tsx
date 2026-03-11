@@ -109,6 +109,23 @@ export default function HomePage() {
 
   const allReservations = useReservationStore((s) => s.reservations);
   const addReservation = useReservationStore((s) => s.addReservation);
+  const hydrateFromDB = useReservationStore((s) => s.hydrateFromDB);
+
+  useEffect(() => {
+    const poll = (): void => {
+      if (document.visibilityState === 'visible') {
+        hydrateFromDB().catch(console.error);
+      }
+    };
+
+    const interval = setInterval(poll, 30000);
+    document.addEventListener('visibilitychange', poll);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', poll);
+    };
+  }, [hydrateFromDB]);
   const todayReservations = useMemo(() => {
     const todayStr = getTodayInKorea();
     return allReservations
@@ -282,6 +299,8 @@ export default function HomePage() {
         onStartConsultation={() => router.push('/consultation')}
         onNewReservation={() => setShowReservationModal(true)}
         onGenerateQR={currentShopId ? () => setShowQRModal(true) : undefined}
+        shopId={currentShopId ?? undefined}
+        shopName={shopName}
         consultationLabel={t('home.cta_consultation')}
         consultationTitle={t('home.cta_newConsultation')}
         reservationLabel={t('home.cta_reservation')}

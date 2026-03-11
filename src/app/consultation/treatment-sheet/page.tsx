@@ -8,11 +8,13 @@ import { useAuthStore } from '@/store/auth-store';
 import { useRecordsStore } from '@/store/records-store';
 import { HandIllustration } from '@/components/canvas/HandIllustration';
 import { formatNowInKorea, formatPrice, formatPriceNumber, getNowInKoreaIso } from '@/lib/format';
-import { calculatePrice } from '@/lib/price-calculator';
+import { calculatePrice, buildServicePricingFromShopSettings } from '@/lib/price-calculator';
+import { useAppStore } from '@/store/app-store';
 import { estimateTime } from '@/lib/time-calculator';
 import { useShopStore } from '@/store/shop-store';
 import { useCustomerStore } from '@/store/customer-store';
 import type { FingerPosition, FingerSelection } from '@/types/canvas';
+import { useConsultationGuard } from '@/lib/use-consultation-guard';
 import type { DiscountConfig, NailShape } from '@/types/consultation';
 
 const SHAPE_LABELS: Record<string, string> = {
@@ -179,6 +181,7 @@ function StepValueControl({
 }
 
 export default function TreatmentSheetPage() {
+  useConsultationGuard();
   const router = useRouter();
   const searchParams = useSearchParams();
   const consultationId = searchParams.get('consultationId');
@@ -201,7 +204,9 @@ export default function TreatmentSheetPage() {
 
   const designers = useShopStore((s) => s.designers);
   const designer = designers.find(d => d.id === (consultationData.designerId || activeDesignerId));
-  const consultationBreakdown = calculatePrice(consultationData);
+  const shopSettings = useAppStore((s) => s.shopSettings);
+  const shopPricing = useMemo(() => buildServicePricingFromShopSettings(shopSettings), [shopSettings]);
+  const consultationBreakdown = calculatePrice(consultationData, shopPricing);
   const estimatedMinutes = estimateTime(consultationData);
   const today = formatNowInKorea('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -231,7 +236,7 @@ export default function TreatmentSheetPage() {
 
   useEffect(() => {
     const nextConsultation = record?.consultation ?? consultation;
-    const nextBreakdown = calculatePrice(nextConsultation);
+    const nextBreakdown = calculatePrice(nextConsultation, shopPricing);
 
     setChecklist((prev) => ({
       ...prev,

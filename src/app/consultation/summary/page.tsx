@@ -11,7 +11,8 @@ import { Button, ToastContainer } from '@/components/ui';
 import type { ToastData } from '@/components/ui';
 import { useT, useLocale, useKo } from '@/lib/i18n';
 import { useLocaleStore } from '@/store/locale-store';
-import { calculatePrice } from '@/lib/price-calculator';
+import { calculatePrice, buildServicePricingFromShopSettings } from '@/lib/price-calculator';
+import { useAppStore } from '@/store/app-store';
 import { estimateTime } from '@/lib/time-calculator';
 import { formatPrice, getNowInKoreaIso } from '@/lib/format';
 import { DESIGN_SCOPE_LABEL, EXPRESSION_LABEL } from '@/lib/labels';
@@ -25,8 +26,10 @@ import { useCustomerStore } from '@/store/customer-store';
 import { useShopStore } from '@/store/shop-store';
 import { dbCompletePreconsultationBooking, dbUpsertCustomer } from '@/lib/db';
 import { ConsultationStep } from '@/types/consultation';
+import { useConsultationGuard } from '@/lib/use-consultation-guard';
 
 export default function SummaryPage() {
+  useConsultationGuard();
   const router = useRouter();
   const consultation = useConsultationStore((s) => s.consultation);
   const bookingId = useConsultationStore((s) => s.consultation.bookingId);
@@ -45,7 +48,9 @@ export default function SummaryPage() {
   const [additionalChargeInput, setAdditionalChargeInput] = useState('');
   const isCustomerLinkFlow = entryPoint === 'customer_link';
 
-  const breakdown = useMemo(() => calculatePrice(consultation), [consultation]);
+  const shopSettings = useAppStore((s) => s.shopSettings);
+  const shopPricing = useMemo(() => buildServicePricingFromShopSettings(shopSettings), [shopSettings]);
+  const breakdown = useMemo(() => calculatePrice(consultation, shopPricing), [consultation, shopPricing]);
   const adjustedFinalPrice = breakdown.finalPrice + additionalCharge;
   const addRecord = useRecordsStore((s) => s.addRecord);
   const addPhoto = usePortfolioStore((s) => s.addPhoto);
@@ -132,7 +137,7 @@ export default function SummaryPage() {
     };
 
     if (isCustomerLinkFlow && bookingId) {
-      addRecord(savedRecord);
+      await addRecord(savedRecord);
       const preconsultationResult = await dbCompletePreconsultationBooking(
         bookingId,
         consultationSnapshot,
@@ -154,7 +159,7 @@ export default function SummaryPage() {
     } else {
       sessionStorage.setItem(`bdx-saved-record-${newId}`, JSON.stringify(savedRecord));
 
-      addRecord(savedRecord);
+      await addRecord(savedRecord);
 
       if (bookingId) {
         updateReservation(bookingId, {

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useConsultationStore } from '@/store/consultation-store';
-import { calculatePrice } from '@/lib/price-calculator';
+import { useAppStore } from '@/store/app-store';
+import { calculatePrice, buildServicePricingFromShopSettings } from '@/lib/price-calculator';
 import { formatPrice } from '@/lib/format';
 import { Modal, Button, Input } from '@/components/ui';
 import { cn } from '@/lib/cn';
@@ -31,7 +32,10 @@ export function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
     String(consultation.deposit ?? ''),
   );
 
-  const breakdown = calculatePrice(consultation);
+  const shopSettings = useAppStore((s) => s.shopSettings);
+  const pricing = useMemo(() => buildServicePricingFromShopSettings(shopSettings), [shopSettings]);
+
+  const breakdown = calculatePrice(consultation, pricing);
   const subtotal = breakdown.subtotal;
 
   const previewDiscount = (() => {

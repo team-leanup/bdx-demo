@@ -16,7 +16,7 @@ interface RecordsStore {
   _dbReady: boolean;
 
   hydrateFromDB: () => Promise<void>;
-  addRecord: (record: ConsultationRecord) => void;
+  addRecord: (record: ConsultationRecord) => Promise<void>;
   updateRecord: (id: string, patch: Partial<ConsultationRecord>) => void;
   removeRecord: (id: string) => void;
   getRecordById: (id: string) => ConsultationRecord | undefined;
@@ -39,7 +39,10 @@ export const useRecordsStore = create<RecordsStore>()(
         set((state) => ({
           records: [record, ...state.records],
         }));
-        dbUpsertRecord(record).catch(console.error);
+        return dbUpsertRecord(record).catch((err: unknown) => {
+          console.error(err);
+          throw err;
+        });
       },
 
       updateRecord: (id, patch) => {

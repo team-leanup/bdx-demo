@@ -11,8 +11,10 @@ import { PriceSummaryBar } from '@/components/consultation/PriceSummaryBar';
 import { PartsSelector } from '@/components/consultation/PartsSelector';
 import { ColorSelector } from '@/components/consultation/ColorSelector';
 import { useT, useLocale, useKo } from '@/lib/i18n';
+import { useConsultationGuard } from '@/lib/use-consultation-guard';
 
 export default function Step3Page() {
+  useConsultationGuard();
   const router = useRouter();
   const setStep = useConsultationStore((s) => s.setStep);
   const t = useT();

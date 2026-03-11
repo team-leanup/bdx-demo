@@ -26,6 +26,43 @@ export const DEFAULT_PARTS_PRICING: PartsPricing = {
   gradeB: 1000,
 };
 
+/**
+ * Build ServicePricing from shop settings (app-store).
+ * Falls back to DEFAULT_SERVICE_PRICING for fields not in shop settings.
+ */
+export function buildServicePricingFromShopSettings(settings: {
+  baseHandPrice: number;
+  baseFootPrice: number;
+  baseOffSameShop: number;
+  baseOffOtherShop: number;
+  baseMonthlyArtPrice: number;
+  surcharges: {
+    repairPer: number;
+    gradation: number;
+    french: number;
+    magnet: number;
+    pointArt: number;
+    fullArt: number;
+  };
+}): ServicePricing {
+  return {
+    handBase: settings.baseHandPrice,
+    footBase: settings.baseFootPrice,
+    offSameShop: settings.baseOffSameShop,
+    offOtherShop: settings.baseOffOtherShop,
+    repairPerNail: settings.surcharges.repairPer,
+    extensionBase: DEFAULT_SERVICE_PRICING.extensionBase,
+    solidTone: 0,
+    solidPoint: settings.surcharges.pointArt,
+    fullArt: settings.surcharges.fullArt,
+    monthlyArt: settings.baseMonthlyArtPrice,
+    gradient: settings.surcharges.gradation,
+    french: settings.surcharges.french,
+    magnetic: settings.surcharges.magnet,
+    extraColorPerUnit: DEFAULT_SERVICE_PRICING.extraColorPerUnit,
+  };
+}
+
 export function calculatePrice(
   consultation: ConsultationType,
   pricing: ServicePricing = DEFAULT_SERVICE_PRICING,

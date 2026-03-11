@@ -23,6 +23,7 @@ export function NotificationBellButton({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const reservations = useReservationStore((s) => s.reservations);
+  const hydrateFromDB = useReservationStore((s) => s.hydrateFromDB);
   const notifications = useMemo(
     () => getPreConsultationNotifications(reservations),
     [reservations],
@@ -43,6 +44,22 @@ export function NotificationBellButton({
       window.removeEventListener('storage', sync);
     };
   }, [notifications]);
+
+  useEffect(() => {
+    const poll = (): void => {
+      if (document.visibilityState === 'visible') {
+        hydrateFromDB().catch(console.error);
+      }
+    };
+
+    const interval = setInterval(poll, 30000);
+    document.addEventListener('visibilitychange', poll);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', poll);
+    };
+  }, [hydrateFromDB]);
 
   const handleClick = (): void => {
     const params = new URLSearchParams(pathname === '/home' ? searchParams.toString() : '');

@@ -10,6 +10,7 @@ import { ConsultationFooter } from '@/components/consultation/ConsultationFooter
 import { PriceSummaryBar } from '@/components/consultation/PriceSummaryBar';
 import { useT, useLocale, useKo } from '@/lib/i18n';
 import { cn } from '@/lib/cn';
+import { useConsultationGuard } from '@/lib/use-consultation-guard';
 
 type TreatmentType = 'oneColor' | 'gradient' | 'magneticGel' | 'art';
 
@@ -53,6 +54,7 @@ const TREATMENT_OPTIONS: TreatmentOption[] = [
 ];
 
 export default function Step2Page() {
+  useConsultationGuard();
   const router = useRouter();
   const setStep = useConsultationStore((s) => s.setStep);
   const setDesignScope = useConsultationStore((s) => s.setDesignScope);

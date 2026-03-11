@@ -1,7 +1,9 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useConsultationStore } from '@/store/consultation-store';
-import { calculatePrice } from '@/lib/price-calculator';
+import { useAppStore } from '@/store/app-store';
+import { calculatePrice, buildServicePricingFromShopSettings } from '@/lib/price-calculator';
 import { formatPrice } from '@/lib/format';
 import { Button } from '@/components/ui';
 import { cn } from '@/lib/cn';
@@ -28,7 +30,9 @@ export function ConsultationFooter({
   const tKo = useKo();
   const locale = useLocale();
   const consultation = useConsultationStore((s) => s.consultation);
-  const breakdown = calculatePrice(consultation);
+  const shopSettings = useAppStore((s) => s.shopSettings);
+  const pricing = useMemo(() => buildServicePricingFromShopSettings(shopSettings), [shopSettings]);
+  const breakdown = calculatePrice(consultation, pricing);
   const label = nextLabel ?? t('common.next');
   const shouldShowEstimated = showEstimated !== false;
 

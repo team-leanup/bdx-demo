@@ -8,6 +8,8 @@ interface HeroCTAProps {
   onStartConsultation: () => void;
   onNewReservation: () => void;
   onGenerateQR?: () => void;
+  shopId?: string;
+  shopName?: string;
   consultationLabel: string;
   consultationTitle: string;
   reservationLabel: string;
@@ -23,6 +25,8 @@ export function HeroCTA({
   onStartConsultation,
   onNewReservation,
   onGenerateQR,
+  shopId,
+  shopName,
   consultationLabel,
   consultationTitle,
   reservationLabel,
@@ -33,7 +37,8 @@ export function HeroCTA({
   const [linkCopied, setLinkCopied] = useState(false);
 
   const handleCopyLink = (): void => {
-    const url = `${window.location.origin}/consultation?entry=customer-link`;
+    const base = `${window.location.origin}/consultation?entry=customer-link`;
+    const url = `${base}${shopId ? `&shopId=${shopId}` : ''}${shopName ? `&shopName=${encodeURIComponent(shopName)}` : ''}`;
     void navigator.clipboard.writeText(url).then(() => {
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);

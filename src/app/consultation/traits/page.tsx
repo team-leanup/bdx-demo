@@ -10,8 +10,10 @@ import { PriceSummaryBar } from '@/components/consultation/PriceSummaryBar';
 import { TraitIcon } from '@/components/ui/TraitIcon';
 import { TAG_PRESETS } from '@/data/tag-presets';
 import { useT, useLocale, useKo } from '@/lib/i18n';
+import { useConsultationGuard } from '@/lib/use-consultation-guard';
 
 export default function TraitsPage(): React.ReactElement {
+  useConsultationGuard();
   const router = useRouter();
   const setStep = useConsultationStore((s) => s.setStep);
   const selectedTraitValues = useConsultationStore((s) => s.consultation.selectedTraitValues) ?? [];

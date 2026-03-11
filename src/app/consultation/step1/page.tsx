@@ -12,8 +12,10 @@ import { OffSelector } from '@/components/consultation/OffSelector';
 import { ExtensionSelector } from '@/components/consultation/ExtensionSelector';
 import { ShapeSelector } from '@/components/consultation/ShapeSelector';
 import { useT, useLocale, useKo } from '@/lib/i18n';
+import { useConsultationGuard } from '@/lib/use-consultation-guard';
 
 export default function Step1Page() {
+  useConsultationGuard();
   const router = useRouter();
   const setStep = useConsultationStore((s) => s.setStep);
   const t = useT();

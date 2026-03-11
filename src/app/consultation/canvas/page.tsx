@@ -9,10 +9,12 @@ import type { CanvasSelections } from '@/components/canvas/FingerCanvas';
 import type { FingerPosition } from '@/types/canvas';
 import type { FingerArtSelection, FingerPartSelection } from '@/types/consultation';
 import { useT, useKo } from '@/lib/i18n';
+import { useConsultationGuard } from '@/lib/use-consultation-guard';
 
 const FINGER_ORDER: FingerPosition[] = ['thumb', 'index', 'middle', 'ring', 'pinky'];
 
 export default function CanvasPage() {
+  useConsultationGuard();
   const router = useRouter();
   const consultation = useConsultationStore((s) => s.consultation);
   const setStep = useConsultationStore((s) => s.setStep);

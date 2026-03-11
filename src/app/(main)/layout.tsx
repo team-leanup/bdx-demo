@@ -11,13 +11,14 @@ import type { ReactNode } from 'react';
 export default function MainLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const setLocale = useLocaleStore((s) => s.setLocale);
+  const locale = useLocaleStore((s) => s.locale);
   const isInitialized = useAuthStore((s) => s.isInitialized);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const currentShopOnboardingComplete = useAuthStore((s) => s.currentShopOnboardingComplete);
 
   useLayoutEffect(() => {
     setLocale('ko');
-  }, [setLocale]);
+  }, [setLocale, locale]);
 
   useEffect(() => {
     if (!isInitialized) return;
