@@ -275,7 +275,7 @@ export const useAuthStore = create<AuthStore>()(
           pendingGoogleSignup: null,
           role: 'owner',
           currentShopId: demoShopId,
-          currentShopOnboardingComplete: false,
+          currentShopOnboardingComplete: true,
           activeDesignerId: demoDesignerId,
           activeDesignerName: '데모 원장',
         });

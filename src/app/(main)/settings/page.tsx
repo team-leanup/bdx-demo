@@ -1411,15 +1411,15 @@ export default function SettingsPage() {
                 </div>
 
                 <button
-                  onClick={() => router.push('/home?tour=true')}
+                  onClick={() => router.push('/intro-demo')}
                   className="flex items-center gap-3 rounded-xl border border-border px-3 py-3 text-left transition-colors hover:bg-surface-alt"
                 >
                   <svg className="h-5 w-5 flex-shrink-0 text-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5" />
                   </svg>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-text">데모 가이드 다시 보기</p>
-                    <p className="mt-0.5 text-xs text-text-muted">홈 화면에서 기능 안내를 다시 보여줍니다.</p>
+                    <p className="text-sm font-medium text-text">데모 버전 보기</p>
+                    <p className="mt-0.5 text-xs text-text-muted">로그인 없이 전체 기능을 탐색할 수 있는 데모 안내 페이지</p>
                   </div>
                   <svg className="h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />

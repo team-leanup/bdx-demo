@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 const N = {
@@ -393,6 +394,7 @@ function TOCSidebar({
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function IntroDemoPage() {
+  const router = useRouter();
   const [activeId, setActiveId] = useState('overview');
   const [isTocOpen, setIsTocOpen] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -512,9 +514,26 @@ export default function IntroDemoPage() {
         >
           ☰
         </button>
-        <span style={{ marginLeft: '12px', fontSize: '15px', fontWeight: 600, color: N.text }}>
+        <span style={{ marginLeft: '12px', fontSize: '15px', fontWeight: 600, color: N.text, flex: 1 }}>
           BDX 데모 안내
         </span>
+        <button
+          onClick={() => router.push('/home')}
+          style={{
+            padding: '6px 12px',
+            background: N.accentLight,
+            border: `1px solid ${N.accent}`,
+            borderRadius: '6px',
+            cursor: 'pointer',
+            color: N.accent,
+            fontSize: '13px',
+            fontWeight: 600,
+            lineHeight: 1,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          ← 앱으로 돌아가기
+        </button>
       </div>
 
       {/* Main layout */}
@@ -540,6 +559,25 @@ export default function IntroDemoPage() {
           className="hidden lg:block"
         >
           <TOCSidebar activeId={activeId} onNavigate={navigateTo} />
+          <div style={{ padding: '16px 12px', borderTop: `1px solid ${N.border}`, marginTop: '12px' }}>
+            <button
+              onClick={() => router.push('/home')}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: N.accentLight,
+                border: `1px solid ${N.accent}`,
+                borderRadius: '6px',
+                cursor: 'pointer',
+                color: N.accent,
+                fontSize: '13px',
+                fontWeight: 600,
+                textAlign: 'center',
+              }}
+            >
+              ← 앱으로 돌아가기
+            </button>
+          </div>
         </aside>
 
         {/* Content */}
