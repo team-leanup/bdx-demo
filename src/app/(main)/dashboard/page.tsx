@@ -1,9 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { BentoGrid, BentoCard, Button, Modal, ToastContainer } from '@/components/ui';
+import { BentoGrid, BentoCard, Button, ToastContainer } from '@/components/ui';
 import type { ToastData } from '@/components/ui';
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
 import { KPICards } from '@/components/dashboard/KPICards';
@@ -18,35 +16,15 @@ import { DESIGN_SCOPE_LABEL } from '@/lib/labels';
 import { useAuthStore } from '@/store/auth-store';
 import { useRecordsStore } from '@/store/records-store';
 import { useCustomerStore } from '@/store/customer-store';
-import { usePortfolioStore } from '@/store/portfolio-store';
 import { useReservationStore } from '@/store/reservation-store';
 import {
   computeRegularVisitRate,
-  computePeakHours,
   computeUpsellMetrics,
   computeForeignReservationSummary,
   computeGoldenTimeTargets,
 } from '@/lib/analytics';
-import type { ConsultationRecord } from '@/types/consultation';
-
-interface PopularTreatmentPhotoBase {
-  photoId: string;
-  name: string;
-  imageDataUrl: string;
-  customerName: string;
-  effectiveDate: string;
-  colorLabels: string[];
-  price: number | undefined;
-  note: string | undefined;
-}
-
-interface PopularTreatmentThumbnail extends PopularTreatmentPhotoBase {
-  rank: number;
-  count: number;
-}
 
 export default function DashboardPage() {
-  const router = useRouter();
   const today = new Date().toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'long',
@@ -56,14 +34,10 @@ export default function DashboardPage() {
   const activeDesignerName = useAuthStore((s) => s.activeDesignerName);
   const records = useRecordsStore((s) => s.records);
   const customers = useCustomerStore((s) => s.customers);
-  const getCustomerById = useCustomerStore((s) => s.getById);
-  const photos = usePortfolioStore((s) => s.photos);
   const reservations = useReservationStore((s) => s.reservations);
-  const [selectedTreatment, setSelectedTreatment] = useState<PopularTreatmentThumbnail | null>(null);
   const [toasts, setToasts] = useState<ToastData[]>([]);
 
   const regularVisitRate = useMemo(() => computeRegularVisitRate(customers), [customers]);
-  const peakHours = useMemo(() => computePeakHours(reservations), [reservations]);
   const upsellMetrics = useMemo(() => computeUpsellMetrics(records), [records]);
   const foreignReservationSummary = useMemo(
     () => computeForeignReservationSummary(reservations),
@@ -73,73 +47,6 @@ export default function DashboardPage() {
     () => computeGoldenTimeTargets(customers, reservations),
     [customers, reservations],
   );
-  const recordMap = useMemo<Map<string, ConsultationRecord>>(
-    () => new Map(records.map((record) => [record.id, record])),
-    [records],
-  );
-
-  const popularTreatmentThumbnails = useMemo(() => {
-    const treatmentPhotos: PopularTreatmentPhotoBase[] = [];
-
-    photos
-      .filter((photo) => photo.kind === 'treatment')
-      .forEach((photo) => {
-        const linkedRecord = photo.recordId ? recordMap.get(photo.recordId) : undefined;
-        const serviceType = photo.serviceType
-          ?? (linkedRecord
-            ? DESIGN_SCOPE_LABEL[linkedRecord.consultation.designScope] ?? linkedRecord.consultation.designScope
-            : undefined);
-
-        if (!serviceType) {
-          return;
-        }
-
-        const effectiveDate = photo.takenAt ?? linkedRecord?.createdAt ?? photo.createdAt;
-
-        treatmentPhotos.push({
-          photoId: photo.id,
-          name: serviceType,
-          imageDataUrl: photo.imageDataUrl,
-          customerName: getCustomerById(photo.customerId)?.name ?? '알 수 없는 고객',
-          effectiveDate,
-          colorLabels: photo.colorLabels ?? [],
-          price: photo.price ?? linkedRecord?.finalPrice,
-          note: photo.note,
-        });
-      });
-
-    const grouped = new Map<string, PopularTreatmentPhotoBase[]>();
-    treatmentPhotos.forEach((photo) => {
-      const bucket = grouped.get(photo.name) ?? [];
-      bucket.push(photo);
-      grouped.set(photo.name, bucket);
-    });
-
-    return Array.from(grouped.entries())
-      .map(([name, items]) => {
-        const representative = [...items].sort(
-          (a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime(),
-        )[0];
-
-        return {
-          ...representative,
-          rank: 0,
-          count: items.length,
-        };
-      })
-      .sort((a, b) => {
-        if (b.count !== a.count) {
-          return b.count - a.count;
-        }
-
-        return new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime();
-      })
-      .slice(0, 3)
-      .map((item, index) => ({
-        ...item,
-        rank: index + 1,
-      }));
-  }, [photos, recordMap, getCustomerById]);
 
   const handleDismissToast = (id: string) => {
     setToasts((current) => current.filter((toast) => toast.id !== id));
@@ -222,25 +129,57 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-3">
-                <div className="rounded-2xl border border-border bg-surface/80 px-4 py-3">
-                  <p className="text-[11px] text-text-muted">상담당 평균 추가 매출</p>
-                  <p className="mt-1 text-lg font-bold text-text">{formatPrice(upsellMetrics.averageUpsellRevenue)}</p>
-                </div>
-                <div className="rounded-2xl border border-border bg-surface/80 px-4 py-3">
-                  <p className="text-[11px] text-text-muted">가장 크게 견인한 옵션</p>
-                  <p className="mt-1 text-lg font-bold text-text">{upsellMetrics.topCategoryLabel}</p>
-                  <p className="text-[11px] text-text-muted">{formatPrice(upsellMetrics.topCategoryRevenue)}</p>
-                </div>
-                <div className="rounded-2xl border border-border bg-surface/80 px-4 py-3">
-                  <p className="text-[11px] text-text-muted">원장님 체감 포인트</p>
-                  <p className="mt-1 text-sm font-semibold text-text">
-                    {upsellMetrics.upsellConsultations > 0
-                      ? '디자인/파츠 제안이 바로 추가 매출로 연결되고 있어요.'
-                      : '상담에서 디자인/파츠 옵션을 제안해보세요.'}
-                  </p>
+              <div className="rounded-2xl border border-border bg-surface/80 px-4 py-3">
+                <p className="text-[11px] font-semibold text-text-muted">업셀링 포인트</p>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  <div>
+                    <p className="text-[11px] text-text-muted">파츠 추가</p>
+                    <p className="mt-1 text-lg font-bold text-text">총 {upsellMetrics.partsUpsellCount}개</p>
+                    <p className="text-[11px] text-text-muted">{upsellMetrics.partsUpsellConsultations}건의 상담에서 선택</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-text-muted">컬러 추가</p>
+                    <p className="mt-1 text-lg font-bold text-text">총 {upsellMetrics.colorUpsellCount}색</p>
+                    <p className="text-[11px] text-text-muted">{upsellMetrics.colorUpsellConsultations}건의 상담에서 선택</p>
+                  </div>
                 </div>
               </div>
+
+            </div>
+          </BentoCard>
+
+          {/* KPI Row: 4 × 1×1 BentoCards (returned as Fragment children) */}
+          <KPICards />
+
+          {/* 이번 주 요약: 4×1 */}
+          <BentoCard span="4x1">
+            <div className="p-4 md:p-5">
+              <h2 className="text-sm font-semibold text-text-secondary mb-3">이번 주 요약</h2>
+              <WeeklySummary />
+            </div>
+          </BentoCard>
+
+          {/* 상담 추이: 4×1 */}
+          <BentoCard span="4x1">
+            <div className="p-4 md:p-5">
+              <h2 className="text-sm font-semibold text-text-secondary mb-3">상담 추이</h2>
+              <RevenueChart />
+            </div>
+          </BentoCard>
+
+          {/* 디자이너별 상담 현황: 4×1 */}
+          <BentoCard span="4x1">
+            <div className="p-4 md:p-5">
+              <h2 className="text-sm font-semibold text-text-secondary mb-3">디자이너별 상담 현황</h2>
+              <DesignerPerformance />
+            </div>
+          </BentoCard>
+
+          {/* 시간대별 예약: 4×1 */}
+          <BentoCard span="4x1">
+            <div className="p-4 md:p-5">
+              <h2 className="text-sm font-semibold text-text-secondary mb-3">시간대별 예약</h2>
+              <HourlyBookings />
             </div>
           </BentoCard>
 
@@ -333,136 +272,6 @@ export default function DashboardPage() {
             </div>
           </BentoCard>
 
-          {/* KPI Row: 4 × 1×1 BentoCards (returned as Fragment children) */}
-          <KPICards />
-
-          {/* 이번 주 요약: 4×1 */}
-          <BentoCard span="4x1">
-            <div className="p-4 md:p-5">
-              <h2 className="text-sm font-semibold text-text-secondary mb-3">이번 주 요약</h2>
-              <WeeklySummary />
-            </div>
-          </BentoCard>
-
-          {/* 상담 추이: 4×1 */}
-          <BentoCard span="4x1">
-            <div className="p-4 md:p-5">
-              <h2 className="text-sm font-semibold text-text-secondary mb-3">상담 추이</h2>
-              <RevenueChart />
-            </div>
-          </BentoCard>
-
-          {/* 디자이너별 상담 현황: 4×1 */}
-          <BentoCard span="4x1">
-            <div className="p-4 md:p-5">
-              <h2 className="text-sm font-semibold text-text-secondary mb-3">디자이너별 상담 현황</h2>
-              <DesignerPerformance />
-            </div>
-          </BentoCard>
-
-          {/* 시간대별 예약: 4×1 */}
-          <BentoCard span="4x1">
-            <div className="p-4 md:p-5">
-              <h2 className="text-sm font-semibold text-text-secondary mb-3">시간대별 예약</h2>
-              <HourlyBookings />
-            </div>
-          </BentoCard>
-
-          {/* 인기 시술 Top 3: 2×1 */}
-          <BentoCard span="2x1" variant="accent">
-            <div className="p-4 md:p-5 h-full flex flex-col">
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <h2 className="text-sm font-semibold text-text-secondary">인기 시술 Top 3</h2>
-                <span className="text-[10px] font-medium text-text-muted">포트폴리오 기준</span>
-              </div>
-
-              {popularTreatmentThumbnails.length === 0 ? (
-                <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-surface/60 px-4 py-6 text-center">
-                  <p className="text-sm font-medium text-text-secondary">시술 사진이 아직 없습니다</p>
-                  <p className="mt-1 text-xs text-text-muted">포트폴리오에 시술 사진을 등록하면 인기 시술 썸네일이 자동으로 표시됩니다.</p>
-                  <Button size="sm" className="mt-4" onClick={() => router.push('/portfolio')}>
-                    포트폴리오 보기
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2.5 flex-1">
-                  {popularTreatmentThumbnails.map((treatment) => (
-                    <button
-                      key={treatment.photoId}
-                      type="button"
-                      onClick={() => setSelectedTreatment(treatment)}
-                      className="flex items-center gap-3 rounded-2xl border border-border bg-surface/80 p-2.5 text-left transition-colors hover:bg-surface"
-                    >
-                      <div
-                        className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
-                        style={{ background: 'var(--color-primary)' }}
-                      >
-                        {treatment.rank}
-                      </div>
-                      <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-surface-alt">
-                        <Image
-                          src={treatment.imageDataUrl}
-                          alt={treatment.name}
-                          fill
-                          unoptimized
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-text">{treatment.name}</p>
-                        <p className="mt-0.5 truncate text-[11px] text-text-muted">{treatment.colorLabels[0] ?? '컬러번호 미등록'}</p>
-                      </div>
-                      <span className="text-xs font-semibold text-primary">{treatment.count}장</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </BentoCard>
-
-          {/* 단골 방문율: 1×1 */}
-          <BentoCard span="1x1" variant="accent">
-            <div className="p-4 h-full flex flex-col justify-between">
-              <span className="text-xs font-semibold text-text-secondary">단골 방문율</span>
-              <div className="flex flex-col gap-1">
-                <span
-                  className="text-3xl font-extrabold text-primary leading-none"
-                  style={{ fontVariantNumeric: 'tabular-nums' }}
-                >
-                  {regularVisitRate}%
-                </span>
-                <div className="h-2 w-full rounded-full bg-surface-alt overflow-hidden">
-                  <div
-                    className="h-full rounded-full"
-                    style={{ width: `${regularVisitRate}%`, background: 'var(--color-primary)' }}
-                  />
-                </div>
-              </div>
-              <span className="text-[10px] text-text-muted">이번 달 기준</span>
-            </div>
-          </BentoCard>
-
-          {/* 피크타임: 1×1 */}
-          <BentoCard span="1x1" variant="accent">
-            <div className="p-4 h-full flex flex-col gap-2">
-              <span className="text-xs font-semibold text-text-secondary">피크타임</span>
-              <div className="flex flex-col gap-1.5 flex-1">
-                {peakHours.map((h, i) => (
-                  <div key={h.time} className="flex items-center gap-2">
-                    <div
-                      className="h-1.5 rounded-full flex-1"
-                      style={{
-                        background: 'var(--color-primary)',
-                        opacity: 1 - i * 0.25,
-                      }}
-                    />
-                    <span className="text-[10px] text-text-secondary flex-shrink-0">{h.time.split('~')[0]}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </BentoCard>
-
           {/* 인기 서비스: 2×1 */}
           <BentoCard span="2x1">
             <div className="p-4 md:p-5">
@@ -482,72 +291,6 @@ export default function DashboardPage() {
       </div>
 
       <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
-
-      <Modal
-        isOpen={selectedTreatment !== null}
-        onClose={() => setSelectedTreatment(null)}
-        title={selectedTreatment?.name ?? '인기 시술'}
-      >
-        {selectedTreatment && (
-          <div className="flex flex-col gap-4 p-5">
-            <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-surface-alt">
-              <Image
-                src={selectedTreatment.imageDataUrl}
-                alt={selectedTreatment.name}
-                fill
-                unoptimized
-                className="object-cover"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 rounded-2xl bg-surface-alt p-4 text-sm">
-              <div>
-                <p className="text-[10px] font-medium text-text-muted">시술명</p>
-                <p className="mt-0.5 font-semibold text-text">{selectedTreatment.name}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-medium text-text-muted">대표 가격</p>
-                <p className="mt-0.5 font-semibold text-text">
-                  {selectedTreatment.price != null ? formatPrice(selectedTreatment.price) : '미등록'}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] font-medium text-text-muted">고객</p>
-                <p className="mt-0.5 font-semibold text-text">{selectedTreatment.customerName}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-medium text-text-muted">촬영일</p>
-                <p className="mt-0.5 font-semibold text-text">{formatDateDot(selectedTreatment.effectiveDate)}</p>
-              </div>
-            </div>
-
-            <div>
-              <p className="mb-2 text-xs font-medium text-text-muted">컬러번호</p>
-              {selectedTreatment.colorLabels.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {selectedTreatment.colorLabels.map((color, index) => (
-                    <span
-                      key={`${color}-${index}`}
-                      className="rounded-full border border-border bg-surface-alt px-3 py-1 text-xs font-semibold text-text"
-                    >
-                      {color}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-text-muted">등록된 컬러번호가 없습니다</p>
-              )}
-            </div>
-
-            {selectedTreatment.note && (
-              <div className="rounded-2xl border border-border bg-surface px-4 py-3">
-                <p className="mb-1 text-xs font-medium text-text-muted">메모</p>
-                <p className="text-sm leading-relaxed text-text-secondary">{selectedTreatment.note}</p>
-              </div>
-            )}
-          </div>
-        )}
-      </Modal>
     </div>
   );
 }

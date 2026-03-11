@@ -46,9 +46,10 @@ export interface UpsellMetrics {
   totalUpsellRevenue: number;
   upsellConsultations: number;
   upsellRate: number;
-  averageUpsellRevenue: number;
-  topCategoryLabel: string;
-  topCategoryRevenue: number;
+  partsUpsellCount: number;
+  partsUpsellConsultations: number;
+  colorUpsellCount: number;
+  colorUpsellConsultations: number;
 }
 
 export interface ForeignLanguageStatus {
@@ -85,7 +86,7 @@ export interface CustomerAnalytics {
   newPercentage: number;
   returningPercentage: number;
   averageVisitInterval: number;
-  vipCustomers: { name: string; totalSpend: number; visitCount: number }[];
+  vipCustomers: { id: string; name: string; totalSpend: number; visitCount: number }[];
 }
 
 export interface HourlyDistribution {
@@ -179,7 +180,7 @@ export function computeTopDesignScope(records: ConsultationRecord[]): string {
 
 // Return rate = (customers with visitCount >= 2) / total * 100
 export function computeReturnRate(
-  records: ConsultationRecord[],
+  _records: ConsultationRecord[],
   customers: Customer[],
 ): number {
   if (customers.length === 0) return 0;
@@ -337,16 +338,12 @@ export function computeDesignerStats(
 }
 
 export function computeUpsellMetrics(records: ConsultationRecord[]): UpsellMetrics {
-  const categoryTotals = {
-    design: 0,
-    expression: 0,
-    parts: 0,
-    color: 0,
-    manual: 0,
-  };
-
   let totalUpsellRevenue = 0;
   let upsellConsultations = 0;
+  let partsUpsellCount = 0;
+  let partsUpsellConsultations = 0;
+  let colorUpsellCount = 0;
+  let colorUpsellConsultations = 0;
 
   records.forEach((record) => {
     const breakdown = calculatePrice(record.consultation);
@@ -362,36 +359,35 @@ export function computeUpsellMetrics(records: ConsultationRecord[]): UpsellMetri
       + breakdown.colorSurcharge
       + manualExtras;
 
-    categoryTotals.design += breakdown.designSurcharge;
-    categoryTotals.expression += breakdown.expressionSurcharge;
-    categoryTotals.parts += breakdown.partsSurcharge;
-    categoryTotals.color += breakdown.colorSurcharge;
-    categoryTotals.manual += manualExtras;
-
     totalUpsellRevenue += consultationUpsell;
 
     if (consultationUpsell > 0) {
       upsellConsultations += 1;
     }
-  });
 
-  const topCategory = Object.entries({
-    '아트/디자인': categoryTotals.design,
-    '표현 기법': categoryTotals.expression,
-    파츠: categoryTotals.parts,
-    '추가 컬러': categoryTotals.color,
-    '현장 추가금': categoryTotals.manual,
-  }).sort((a, b) => b[1] - a[1])[0] ?? ['-', 0];
+    const totalPartsInRecord = record.consultation.partsSelections.reduce(
+      (sum, selection) => sum + selection.quantity,
+      0,
+    );
+    if (record.consultation.hasParts && totalPartsInRecord > 0) {
+      partsUpsellCount += totalPartsInRecord;
+      partsUpsellConsultations += 1;
+    }
+
+    if (record.consultation.extraColorCount > 0) {
+      colorUpsellCount += record.consultation.extraColorCount;
+      colorUpsellConsultations += 1;
+    }
+  });
 
   return {
     totalUpsellRevenue,
     upsellConsultations,
     upsellRate: records.length > 0 ? roundToSingleDecimal((upsellConsultations / records.length) * 100) : 0,
-    averageUpsellRevenue: upsellConsultations > 0
-      ? Math.round(totalUpsellRevenue / upsellConsultations)
-      : 0,
-    topCategoryLabel: topCategory[0],
-    topCategoryRevenue: topCategory[1],
+    partsUpsellCount,
+    partsUpsellConsultations,
+    colorUpsellCount,
+    colorUpsellConsultations,
   };
 }
 
@@ -488,7 +484,7 @@ export function computeGoldenTimeTargets(
 
 // Compute customer analytics
 export function computeCustomerAnalytics(
-  records: ConsultationRecord[],
+  _records: ConsultationRecord[],
   customers: Customer[],
 ): CustomerAnalytics {
   const newCustomers = customers.filter((c) => c.visitCount <= 1).length;
@@ -520,6 +516,7 @@ export function computeCustomerAnalytics(
     .sort((a, b) => b.totalSpend - a.totalSpend)
     .slice(0, 5)
     .map((c) => ({
+      id: c.id,
       name: c.name,
       totalSpend: c.totalSpend,
       visitCount: c.visitCount,
