@@ -93,11 +93,15 @@ export const useCustomerStore = create<CustomerStore>()(
       hydrateFromDB: async () => {
         const currentShopId = useAuthStore.getState().currentShopId;
         const dbCustomers = await fetchCustomers(currentShopId);
-        // Always merge mock data for demo — mock provides pinned tags, foreign customers, etc.
-        const { MOCK_CUSTOMERS } = await import('@/data/mock-customers');
-        const dbIds = new Set(dbCustomers.map((c) => c.id));
-        const mockOnly = MOCK_CUSTOMERS.filter((c) => !dbIds.has(c.id));
-        set({ customers: [...dbCustomers, ...mockOnly].map(normalizeCustomer), _dbReady: true });
+        const isDemo = currentShopId === 'demo-shop';
+        if (isDemo) {
+          const { MOCK_CUSTOMERS } = await import('@/data/mock-customers');
+          const dbIds = new Set(dbCustomers.map((c) => c.id));
+          const mockOnly = MOCK_CUSTOMERS.filter((c) => !dbIds.has(c.id));
+          set({ customers: [...dbCustomers, ...mockOnly].map(normalizeCustomer), _dbReady: true });
+        } else {
+          set({ customers: dbCustomers.map(normalizeCustomer), _dbReady: true });
+        }
       },
 
       getById: (id) => get().customers.find((c) => c.id === id),

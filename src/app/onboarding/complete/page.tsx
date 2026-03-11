@@ -52,9 +52,9 @@ export default function CompletePage() {
     timeSettings,
   } = shopSettings;
 
-  const handleTour = () => {
+  const handleTour = async () => {
     const onboardingCompletedAt = new Date().toISOString();
-    updateShop({
+    await updateShop({
       name: shopName || '우리 샵',
       phone: shopSettings.shopPhone || undefined,
       address: shopSettings.shopAddress || undefined,
@@ -68,9 +68,9 @@ export default function CompletePage() {
     router.push('/home?tour=true');
   };
 
-  const handleHome = () => {
+  const handleHome = async () => {
     const onboardingCompletedAt = new Date().toISOString();
-    updateShop({
+    await updateShop({
       name: shopName || '우리 샵',
       phone: shopSettings.shopPhone || undefined,
       address: shopSettings.shopAddress || undefined,

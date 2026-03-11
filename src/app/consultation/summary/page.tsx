@@ -21,6 +21,8 @@ import { useAuthStore } from '@/store/auth-store';
 import type { ConsultationRecord, BookingStatus } from '@/types/consultation';
 import type { CustomerTag, TagCategory } from '@/types/customer';
 import { useCustomerStore } from '@/store/customer-store';
+import { useShopStore } from '@/store/shop-store';
+import { dbUpsertCustomer } from '@/lib/db';
 
 export default function SummaryPage() {
   const router = useRouter();
@@ -44,6 +46,7 @@ export default function SummaryPage() {
   const addRecord = useRecordsStore((s) => s.addRecord);
   const addPhoto = usePortfolioStore((s) => s.addPhoto);
   const createCustomer = useCustomerStore((s) => s.createCustomer);
+  const getDesignerName = useShopStore((s) => s.getDesignerName);
   const t = useT();
   const tKo = useKo();
   const locale = useLocale();
@@ -65,13 +68,19 @@ export default function SummaryPage() {
     }
 
     const designerId = consultation.designerId || activeDesignerId;
-    const customerId = consultation.customerId || createCustomer({
-      name: consultation.customerName ?? '새 고객',
-      phone: consultation.customerPhone ?? '',
-      assignedDesignerId: designerId,
-      assignedDesignerName: '원장',
-      shopId: currentShopId,
-    }).id;
+    let customerId = consultation.customerId;
+    if (!customerId) {
+      const newCustomer = createCustomer({
+        name: consultation.customerName ?? '새 고객',
+        phone: consultation.customerPhone ?? '',
+        assignedDesignerId: designerId,
+        assignedDesignerName: getDesignerName(designerId),
+        shopId: currentShopId,
+      });
+      customerId = newCustomer.id;
+      // Wait for customer to be saved to DB before saving record (FK constraint)
+      await dbUpsertCustomer(newCustomer);
+    }
     const newId = `record-${Date.now()}`;
     const minutes = estimateTime(consultation);
     const now = new Date().toISOString();
