@@ -30,8 +30,12 @@ export const useRecordsStore = create<RecordsStore>()(
 
       hydrateFromDB: async () => {
         const currentShopId = useAuthStore.getState().currentShopId;
-        const records = await fetchConsultationRecords(currentShopId);
-        set({ records, _dbReady: true });
+        const dbRecords = await fetchConsultationRecords(currentShopId);
+        // Always merge mock data for demo — mock provides rich fields (language, referenceImages, etc.)
+        const { MOCK_CONSULTATIONS } = await import('@/data/mock-consultations');
+        const dbIds = new Set(dbRecords.map((r) => r.id));
+        const mockOnly = MOCK_CONSULTATIONS.filter((r) => !dbIds.has(r.id));
+        set({ records: [...dbRecords, ...mockOnly], _dbReady: true });
       },
 
       addRecord: (record) => {
