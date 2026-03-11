@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input, BentoGrid, BentoCard } from '@/components/ui';
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
@@ -19,10 +19,13 @@ const thisYear = now.getFullYear();
 
 type FilterTab = 'all' | 'vip' | 'regular';
 
+const PAGE_SIZE = 10;
+
 export default function CustomersPage() {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [filterTab, setFilterTab] = useState<FilterTab>('all');
+  const [currentPage, setCurrentPage] = useState(1);
   const role = useAuthStore((s) => s.role);
   const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
   const customers = useCustomerStore((s) => s.customers);
@@ -42,7 +45,7 @@ export default function CustomersPage() {
     return Math.round(sum / customers.length);
   }, [customers]);
 
-  const vipCount = useMemo(() => {
+  const regularCount = useMemo(() => {
     return customers.filter((c) => c.isRegular || (c.visitCount ?? 0) >= 5).length;
   }, [customers]);
 
@@ -58,15 +61,33 @@ export default function CustomersPage() {
       if (!q && !normalizedQ) return true;
       return (
         c.name.toLowerCase().includes(q) ||
+        c.id.toLowerCase().includes(q) ||
         (normalizePhone(c.phone || '') || '').includes(normalizedQ) ||
-        (c.assignedDesignerName ?? '').toLowerCase().includes(q)
+        (c.assignedDesignerName ?? '').toLowerCase().includes(q) ||
+        (c.tags ?? []).some((tag) => tag.value.toLowerCase().includes(q))
       );
     });
   }, [search, role, activeDesignerId, filterTab, customers]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filterTab, role, activeDesignerId, customers.length]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginatedCustomers = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, currentPage]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   const FILTER_TABS: { key: FilterTab; label: string }[] = [
     { key: 'all', label: '전체' },
-    { key: 'vip', label: 'VIP' },
+    { key: 'vip', label: '단골' },
     { key: 'regular', label: '일반' },
   ];
 
@@ -112,9 +133,9 @@ export default function CustomersPage() {
         <BentoCard span="1x1" variant="accent">
           <div className="p-4 flex flex-col items-center justify-center h-full">
             <span className="text-2xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
-              {vipCount}
+              {regularCount}
             </span>
-            <span className="text-xs text-text-secondary mt-1">VIP 고객</span>
+            <span className="text-xs text-text-secondary mt-1">단골 고객</span>
           </div>
         </BentoCard>
       </BentoGrid>
@@ -122,7 +143,7 @@ export default function CustomersPage() {
       {/* 검색 + 필터 탭 */}
       <div className="px-4 md:px-0 flex flex-col gap-3">
         <Input
-          placeholder="이름, 전화번호로 검색"
+          placeholder="이름, 전화번호, 담당자, 고객 ID로 검색"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -157,7 +178,7 @@ export default function CustomersPage() {
         ) : (
           <div className="rounded-xl border border-border overflow-hidden">
             <div className="flex flex-col divide-y divide-border bg-surface">
-              {filtered.map((customer) => {
+              {paginatedCustomers.map((customer) => {
                 const isVip = customer.isRegular || customer.visitCount >= 5;
                 return (
                   <button
@@ -170,7 +191,6 @@ export default function CustomersPage() {
                       {customer.name.charAt(0)}
                     </div>
 
-                    {/* 이름 + 국기 + VIP 배지 */}
                     <div className="flex flex-1 min-w-0 items-center gap-2">
                       <span className="text-sm font-semibold text-text">{customer.name}</span>
                       {customer.preferredLanguage && customer.preferredLanguage !== 'ko' && (
@@ -181,7 +201,7 @@ export default function CustomersPage() {
                           className="flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
                           style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary-dark)' }}
                         >
-                          VIP
+                          단골
                         </span>
                       )}
                     </div>
@@ -205,6 +225,35 @@ export default function CustomersPage() {
                   </button>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {filtered.length > 0 && totalPages > 1 && (
+          <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
+            <div className="text-xs text-text-secondary">
+              총 {filtered.length}명 중 {(currentPage - 1) * PAGE_SIZE + 1}-{Math.min(currentPage * PAGE_SIZE, filtered.length)}명
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                disabled={currentPage === 1}
+                className="rounded-xl border border-border px-3 py-1.5 text-xs font-semibold text-text-secondary disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                이전
+              </button>
+              <span className="min-w-16 text-center text-xs font-semibold text-text">
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                disabled={currentPage === totalPages}
+                className="rounded-xl border border-border px-3 py-1.5 text-xs font-semibold text-text-secondary disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                다음
+              </button>
             </div>
           </div>
         )}
