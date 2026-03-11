@@ -5,6 +5,7 @@ export type TagCategory =
   | 'expression'   // 표현 기법 선호
   | 'parts'        // 파츠 선호
   | 'color'        // 컬러 선호
+  | 'communication' // 커뮤니케이션 성향
   | 'etc';         // 특이사항
 
 export type TagAccent = 'rose' | 'amber' | 'emerald' | 'sky' | 'slate';

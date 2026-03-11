@@ -21,6 +21,7 @@ export const MOCK_CUSTOMERS: Customer[] = [
       { id: 't004', customerId: 'customer-001', category: 'expression', value: '그라데이션', isCustom: false, createdAt: '2025-11-20T10:00:00.000Z' },
       { id: 't005', customerId: 'customer-001', category: 'design', value: '화려한스타일', isCustom: false, createdAt: '2025-12-20T10:00:00.000Z' },
       { id: 't006', customerId: 'customer-001', category: 'length', value: '긴네일', isCustom: false, createdAt: '2025-12-20T10:00:00.000Z' },
+      { id: 'tc001', customerId: 'customer-001', category: 'communication', value: '대화선호', isCustom: false, createdAt: '2025-12-20T10:00:00.000Z' },
     ],
     smallTalkNotes: [
       {
@@ -62,11 +63,11 @@ export const MOCK_CUSTOMERS: Customer[] = [
       updatedAt: '2026-02-20T14:00:00.000Z',
     },
     treatmentHistory: [
-      { recordId: 'record-001', date: '2026-02-20', bodyPart: '핸드', designScope: '풀아트', price: 85000, designerName: '소율' },
-      { recordId: 'record-006', date: '2026-01-15', bodyPart: '페디큐어', designScope: '원컬러', price: 60000, designerName: '소율' },
-      { recordId: 'record-005', date: '2025-12-20', bodyPart: '핸드', designScope: '단색+포인트', price: 65000, designerName: '도윤' },
-      { recordId: 'record-010', date: '2025-11-20', bodyPart: '핸드', designScope: '풀아트', price: 90000, designerName: '소율' },
-      { recordId: 'record-008', date: '2025-10-15', bodyPart: '핸드', designScope: '단색+포인트', price: 60000, designerName: '소율' },
+      { recordId: 'record-001', date: '2026-02-20', bodyPart: '핸드', designScope: '풀아트', price: 85000, designerName: '소율', colorLabels: ['코랄핑크', '골드'], partsUsed: ['S등급 스톤 x3', '글리터'], imageUrls: ['/images/nails/001-1.jpg'] },
+      { recordId: 'record-006', date: '2026-01-15', bodyPart: '페디큐어', designScope: '원컬러', price: 60000, designerName: '소율', colorLabels: ['로즈레드'], imageUrls: ['/images/nails/001-2.jpg'] },
+      { recordId: 'record-005', date: '2025-12-20', bodyPart: '핸드', designScope: '단색+포인트', price: 65000, designerName: '도윤', colorLabels: ['누드베이지', '코랄핑크'], imageUrls: ['/images/nails/001-3.jpg'] },
+      { recordId: 'record-010', date: '2025-11-20', bodyPart: '핸드', designScope: '풀아트', price: 90000, designerName: '소율', colorLabels: ['버건디', '골드'], partsUsed: ['참 x2', 'S등급 스톤 x4'], imageUrls: ['/images/nails/001-4.jpg'] },
+      { recordId: 'record-008', date: '2025-10-15', bodyPart: '핸드', designScope: '단색+포인트', price: 60000, designerName: '소율', colorLabels: ['밀크화이트', '라벤더'], imageUrls: ['/images/nails/001-5.jpg'] },
     ],
     profileImageUrl: undefined,
     isRegular: true,
@@ -93,6 +94,7 @@ export const MOCK_CUSTOMERS: Customer[] = [
       { id: 't012', customerId: 'customer-002', category: 'design', value: '심플', isCustom: false, createdAt: '2025-06-15T10:00:00.000Z' },
       { id: 't013', customerId: 'customer-002', category: 'color', value: '차분한컬러', isCustom: false, createdAt: '2025-06-15T10:00:00.000Z' },
       { id: 't014', customerId: 'customer-002', category: 'etc', value: '직장인손톱관리', isCustom: true, createdAt: '2025-07-20T10:00:00.000Z' },
+      { id: 'tc002', customerId: 'customer-002', category: 'communication', value: '조용히', isCustom: false, createdAt: '2025-07-20T10:00:00.000Z' },
     ],
     smallTalkNotes: [
       {
@@ -122,8 +124,8 @@ export const MOCK_CUSTOMERS: Customer[] = [
       updatedAt: '2026-02-25T11:00:00.000Z',
     },
     treatmentHistory: [
-      { recordId: 'record-002', date: '2026-02-25', bodyPart: '핸드', designScope: '원컬러', price: 60000, designerName: '소율' },
-      { recordId: 'record-007', date: '2026-01-30', bodyPart: '핸드', designScope: '원컬러', price: 55000, designerName: '소율' },
+      { recordId: 'record-002', date: '2026-02-25', bodyPart: '핸드', designScope: '원컬러', price: 60000, designerName: '소율', colorLabels: ['로즈우드'], imageUrls: ['/images/nails/002-1.jpg'] },
+      { recordId: 'record-007', date: '2026-01-30', bodyPart: '핸드', designScope: '원컬러', price: 55000, designerName: '소율', colorLabels: ['베이지핑크'], imageUrls: ['/images/nails/002-2.jpg'] },
     ],
     profileImageUrl: undefined,
     isRegular: true,
@@ -148,6 +150,7 @@ export const MOCK_CUSTOMERS: Customer[] = [
     phone: '010-9012-3456',
     assignedDesignerId: 'designer-002',
     assignedDesignerName: '도윤',
+    preferredLanguage: 'en',
     firstVisitDate: '2025-08-05',
     lastVisitDate: '2026-02-18',
     visitCount: 2,
@@ -190,8 +193,8 @@ export const MOCK_CUSTOMERS: Customer[] = [
       updatedAt: '2026-02-18T15:30:00.000Z',
     },
     treatmentHistory: [
-      { recordId: 'record-003', date: '2026-02-18', bodyPart: '핸드', designScope: '이달의 아트', price: 95000, designerName: '도윤' },
-      { recordId: 'record-009', date: '2026-01-20', bodyPart: '핸드', designScope: '풀아트', price: 100000, designerName: '도윤' },
+      { recordId: 'record-003', date: '2026-02-18', bodyPart: '핸드', designScope: '이달의 아트', price: 95000, designerName: '도윤', colorLabels: ['산호색', '아이보리'], partsUsed: ['S등급 스톤 x5', '체인'], imageUrls: ['/images/nails/003-1.jpg'] },
+      { recordId: 'record-009', date: '2026-01-20', bodyPart: '핸드', designScope: '풀아트', price: 100000, designerName: '도윤', colorLabels: ['핫핑크', '네온그린'], partsUsed: ['글리터', '스톤 x3'], imageUrls: ['/images/nails/003-2.jpg'] },
     ],
     profileImageUrl: undefined,
     isRegular: true,
@@ -218,6 +221,7 @@ export const MOCK_CUSTOMERS: Customer[] = [
       { id: 't032', customerId: 'customer-004', category: 'expression', value: '프렌치선호', isCustom: false, createdAt: '2025-12-05T10:00:00.000Z' },
       { id: 't033', customerId: 'customer-004', category: 'color', value: '누드톤', isCustom: false, createdAt: '2025-11-01T10:00:00.000Z' },
       { id: 't034', customerId: 'customer-004', category: 'etc', value: '큐티클민감', isCustom: false, createdAt: '2025-11-01T10:00:00.000Z' },
+      { id: 'tc004', customerId: 'customer-004', category: 'communication', value: '빠른시술원함', isCustom: false, createdAt: '2025-12-05T10:00:00.000Z' },
     ],
     smallTalkNotes: [
       {
@@ -240,8 +244,8 @@ export const MOCK_CUSTOMERS: Customer[] = [
       updatedAt: '2026-02-22T12:00:00.000Z',
     },
     treatmentHistory: [
-      { recordId: 'record-004', date: '2026-02-22', bodyPart: '핸드', designScope: '단색+포인트', price: 65000, designerName: '하린' },
-      { recordId: 'record-011', date: '2026-01-25', bodyPart: '핸드', designScope: '단색+포인트', price: 70000, designerName: '하린' },
+      { recordId: 'record-004', date: '2026-02-22', bodyPart: '핸드', designScope: '단색+포인트', price: 65000, designerName: '하린', colorLabels: ['누드베이지', '화이트'], imageUrls: ['/images/nails/004-1.jpg'] },
+      { recordId: 'record-011', date: '2026-01-25', bodyPart: '핸드', designScope: '단색+포인트', price: 70000, designerName: '하린', colorLabels: ['밀크핑크', '프렌치화이트'], imageUrls: ['/images/nails/004-2.jpg'] },
     ],
     profileImageUrl: undefined,
     isRegular: true,
@@ -288,8 +292,8 @@ export const MOCK_CUSTOMERS: Customer[] = [
       updatedAt: '2026-02-24T13:00:00.000Z',
     },
     treatmentHistory: [
-      { recordId: 'record-012', date: '2026-02-24', bodyPart: '핸드', designScope: '단색+포인트', price: 75000, designerName: '소율' },
-      { recordId: 'record-013', date: '2026-01-10', bodyPart: '핸드', designScope: '원컬러', price: 75000, designerName: '소율' },
+      { recordId: 'record-012', date: '2026-02-24', bodyPart: '핸드', designScope: '단색+포인트', price: 75000, designerName: '소율', colorLabels: ['웜베이지', '크림'], imageUrls: ['/images/nails/005-1.jpg'] },
+      { recordId: 'record-013', date: '2026-01-10', bodyPart: '핸드', designScope: '원컬러', price: 75000, designerName: '소율', colorLabels: ['밀크베이지'], imageUrls: ['/images/nails/005-2.jpg'] },
     ],
     profileImageUrl: undefined,
     createdAt: '2026-01-10T10:00:00.000Z',
@@ -335,7 +339,7 @@ export const MOCK_CUSTOMERS: Customer[] = [
       updatedAt: '2026-02-15T16:00:00.000Z',
     },
     treatmentHistory: [
-      { recordId: 'record-014', date: '2026-02-15', bodyPart: '핸드', designScope: '풀아트', price: 85000, designerName: '도윤' },
+      { recordId: 'record-014', date: '2026-02-15', bodyPart: '핸드', designScope: '풀아트', price: 85000, designerName: '도윤', colorLabels: ['파스텔라벤더', '파스텔민트'], imageUrls: ['/images/nails/006-1.jpg'] },
     ],
     profileImageUrl: undefined,
     createdAt: '2025-06-20T10:00:00.000Z',
@@ -358,6 +362,7 @@ export const MOCK_CUSTOMERS: Customer[] = [
       { id: 't061', customerId: 'customer-007', category: 'shape', value: '아몬드', isCustom: false, createdAt: '2025-09-12T10:00:00.000Z' },
       { id: 't062', customerId: 'customer-007', category: 'color', value: '레드계열', isCustom: false, createdAt: '2025-10-10T10:00:00.000Z' },
       { id: 't063', customerId: 'customer-007', category: 'expression', value: '그라데이션', isCustom: false, createdAt: '2025-09-12T10:00:00.000Z' },
+      { id: 'tc007', customerId: 'customer-007', category: 'communication', value: '대화선호', isCustom: false, createdAt: '2025-10-10T10:00:00.000Z' },
     ],
     smallTalkNotes: [
       {
@@ -380,8 +385,8 @@ export const MOCK_CUSTOMERS: Customer[] = [
       updatedAt: '2026-02-28T14:00:00.000Z',
     },
     treatmentHistory: [
-      { recordId: 'record-015', date: '2026-02-28', bodyPart: '핸드', designScope: '풀아트', price: 90000, designerName: '소율' },
-      { recordId: 'record-016', date: '2026-01-28', bodyPart: '핸드', designScope: '풀아트', price: 85000, designerName: '소율' },
+      { recordId: 'record-015', date: '2026-02-28', bodyPart: '핸드', designScope: '풀아트', price: 90000, designerName: '소율', colorLabels: ['체리레드', '골드'], imageUrls: ['/images/nails/007-1.jpg'] },
+      { recordId: 'record-016', date: '2026-01-28', bodyPart: '핸드', designScope: '풀아트', price: 85000, designerName: '소율', colorLabels: ['와인레드', '블랙'], imageUrls: ['/images/nails/007-2.jpg'] },
     ],
     profileImageUrl: undefined,
     isRegular: true,
@@ -427,8 +432,8 @@ export const MOCK_CUSTOMERS: Customer[] = [
       updatedAt: '2026-02-26T10:00:00.000Z',
     },
     treatmentHistory: [
-      { recordId: 'record-017', date: '2026-02-26', bodyPart: '핸드', designScope: '원컬러', price: 55000, designerName: '하린' },
-      { recordId: 'record-018', date: '2026-01-05', bodyPart: '핸드', designScope: '원컬러', price: 55000, designerName: '하린' },
+      { recordId: 'record-017', date: '2026-02-26', bodyPart: '핸드', designScope: '원컬러', price: 55000, designerName: '하린', colorLabels: ['소프트핑크'], imageUrls: ['/images/nails/008-1.jpg'] },
+      { recordId: 'record-018', date: '2026-01-05', bodyPart: '핸드', designScope: '원컬러', price: 55000, designerName: '하린', colorLabels: ['누드베이지'], imageUrls: ['/images/nails/008-2.jpg'] },
     ],
     profileImageUrl: undefined,
     createdAt: '2026-01-05T10:00:00.000Z',
@@ -452,6 +457,7 @@ export const MOCK_CUSTOMERS: Customer[] = [
       { id: 't082', customerId: 'customer-009', category: 'parts', value: '스톤선호', isCustom: false, createdAt: '2025-08-20T10:00:00.000Z' },
       { id: 't083', customerId: 'customer-009', category: 'length', value: '긴네일', isCustom: false, createdAt: '2025-07-15T10:00:00.000Z' },
       { id: 't084', customerId: 'customer-009', category: 'color', value: '다크계열', isCustom: false, createdAt: '2025-10-05T10:00:00.000Z' },
+      { id: 'tc009', customerId: 'customer-009', category: 'communication', value: '화려한아트선호', isCustom: false, createdAt: '2025-10-05T10:00:00.000Z' },
     ],
     smallTalkNotes: [
       {
@@ -474,8 +480,8 @@ export const MOCK_CUSTOMERS: Customer[] = [
       updatedAt: '2026-02-19T15:00:00.000Z',
     },
     treatmentHistory: [
-      { recordId: 'record-019', date: '2026-02-19', bodyPart: '핸드', designScope: '이달의 아트', price: 120000, designerName: '도윤' },
-      { recordId: 'record-020', date: '2026-01-18', bodyPart: '핸드', designScope: '풀아트', price: 110000, designerName: '도윤' },
+      { recordId: 'record-019', date: '2026-02-19', bodyPart: '핸드', designScope: '이달의 아트', price: 120000, designerName: '도윤', colorLabels: ['블랙', '다크네이비'], partsUsed: ['S등급 스톤 x6', '체인', '참'], imageUrls: ['/images/nails/009-1.jpg'] },
+      { recordId: 'record-020', date: '2026-01-18', bodyPart: '핸드', designScope: '풀아트', price: 110000, designerName: '도윤', colorLabels: ['다크보르도', '골드'], partsUsed: ['S등급 스톤 x4', '글리터'], imageUrls: ['/images/nails/009-2.jpg'] },
     ],
     profileImageUrl: undefined,
     isRegular: true,
