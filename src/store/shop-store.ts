@@ -47,6 +47,17 @@ export const useShopStore = create<ShopStore>()(
           return;
         }
 
+        const isDemo = currentShopId === 'demo-shop';
+        if (isDemo) {
+          const { MOCK_SHOP, MOCK_DESIGNERS } = await import('@/data/mock-shop');
+          set({
+            shop: { ...MOCK_SHOP, id: 'demo-shop', ownerId: 'demo-designer' },
+            designers: MOCK_DESIGNERS.map((d) => ({ ...d, shopId: 'demo-shop' })),
+            _dbReady: true,
+          });
+          return;
+        }
+
         const [shop, designers] = await Promise.all([
           fetchShop(currentShopId),
           fetchDesigners(currentShopId),
