@@ -363,7 +363,7 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
             onClick={() => router.push(`/customers/${record.customerId}`)}
             className="flex-1 rounded-2xl border border-border bg-surface py-3 text-sm font-semibold text-text-secondary"
           >
-            고객 상세
+            고객 상세로 이동
           </button>
           <button
             type="button"

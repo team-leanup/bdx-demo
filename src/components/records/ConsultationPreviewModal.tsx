@@ -135,7 +135,7 @@ export function ConsultationPreviewModal({
                 onClick={() => { onClose(); onViewDetail(); }}
                 className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
               >
-                상세 기록 보기
+                기록 상세보기
               </button>
             </div>
           </motion.div>

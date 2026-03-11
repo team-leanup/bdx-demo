@@ -125,7 +125,7 @@ export function ConsultationListItem({
           }}
           className="shrink-0 mt-1 rounded-lg border border-border bg-surface-alt px-2.5 py-1.5 text-[10px] font-semibold text-text-secondary hover:bg-border active:scale-95 transition-all"
         >
-          미리보기
+          기록 미리보기
         </button>
       )}
     </div>
