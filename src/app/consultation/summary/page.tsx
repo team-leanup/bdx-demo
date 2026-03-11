@@ -142,7 +142,12 @@ export default function SummaryPage() {
       addRecord(savedRecord);
 
       if (bookingId) {
-        updateReservation(bookingId, { status: 'completed' as BookingStatus });
+        updateReservation(bookingId, {
+          status: 'completed' as BookingStatus,
+          designerId,
+          preConsultationData: consultationSnapshot,
+          customerId,
+        });
       }
 
       if (customerId && consultation.referenceImages?.length) {
@@ -295,8 +300,8 @@ export default function SummaryPage() {
 
             <div className="flex justify-between items-center">
               <span className="text-sm text-text-muted">
-                {t('consultation.basePrice')}
-                {locale !== 'ko' && <span className="ml-1 text-[10px] opacity-60">{tKo('consultation.basePrice')}</span>}
+                {t('summary.subtotal')}
+                {locale !== 'ko' && <span className="ml-1 text-[10px] opacity-60">{tKo('summary.subtotal')}</span>}
               </span>
               <span className="text-sm font-medium text-text">{formatPrice(breakdown.subtotal)}</span>
             </div>

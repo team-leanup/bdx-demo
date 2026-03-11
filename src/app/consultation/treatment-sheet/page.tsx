@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useConsultationStore } from '@/store/consultation-store';
@@ -13,7 +13,7 @@ import { estimateTime } from '@/lib/time-calculator';
 import { useShopStore } from '@/store/shop-store';
 import { useCustomerStore } from '@/store/customer-store';
 import type { FingerPosition, FingerSelection } from '@/types/canvas';
-import type { NailShape } from '@/types/consultation';
+import type { DiscountConfig, NailShape } from '@/types/consultation';
 
 const SHAPE_LABELS: Record<string, string> = {
   round: '라운드', oval: '오벌', square: '스퀘어', squoval: '스퀘오벌',
@@ -41,6 +41,18 @@ interface DailyChecklistState {
   cuticleSensitivity: CuticleType | null;
   memo: string;
 }
+
+function hydratePricingExtras(extras?: { label: string; amount: number }[]): PricingExtra[] {
+  return (extras ?? []).map((extra, index) => ({
+    id: `saved-extra-${index}-${extra.label}`,
+    label: extra.label,
+    amount: extra.amount,
+  }));
+}
+
+const FIXED_DISCOUNT_PRESETS = [3000, 5000, 10000, 20000] as const;
+const PERCENT_DISCOUNT_PRESETS = [5, 10, 15, 20] as const;
+const DEPOSIT_PRESETS = [0, 10000, 20000, 30000, 50000] as const;
 
 function SegmentControl<T extends string>({
   options,
@@ -73,18 +85,114 @@ function SegmentControl<T extends string>({
   );
 }
 
+function NumberPresetPicker({
+  label,
+  values,
+  selectedValue,
+  onSelect,
+  formatter,
+}: {
+  label: string;
+  values: readonly number[];
+  selectedValue: number;
+  onSelect: (value: number) => void;
+  formatter: (value: number) => string;
+}): React.ReactElement {
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-sm font-semibold text-text-secondary">{label}</span>
+      <div className="flex flex-wrap gap-2">
+        {values.map((value) => {
+          const isSelected = selectedValue === value;
+
+          return (
+            <button
+              key={`${label}-${value}`}
+              type="button"
+              onClick={() => onSelect(value)}
+              className={`rounded-xl border px-3 py-2 text-sm font-semibold transition-all active:scale-[0.97] ${
+                isSelected
+                  ? 'border-primary bg-primary text-white'
+                  : 'border-border bg-background text-text-secondary hover:border-primary/40'
+              }`}
+            >
+              {formatter(value)}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function StepValueControl({
+  label,
+  value,
+  step,
+  min = 0,
+  max,
+  onChange,
+  formatter,
+}: {
+  label: string;
+  value: number;
+  step: number;
+  min?: number;
+  max?: number;
+  onChange: (value: number) => void;
+  formatter: (value: number) => string;
+}): React.ReactElement {
+  const canDecrease = value > min;
+  const canIncrease = max === undefined || value < max;
+
+  const updateValue = (nextValue: number): void => {
+    const clamped = Math.max(min, Math.min(max ?? nextValue, nextValue));
+    onChange(clamped);
+  };
+
+  return (
+    <div className="flex items-center justify-between rounded-2xl border border-border bg-background px-3 py-3">
+      <div className="flex flex-col gap-1">
+        <span className="text-xs font-semibold text-text-muted">{label}</span>
+        <span className="text-base font-bold text-text">{formatter(value)}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => updateValue(value - step)}
+          disabled={!canDecrease}
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-lg font-bold text-text transition-colors disabled:opacity-40"
+        >
+          -
+        </button>
+        <button
+          type="button"
+          onClick={() => updateValue(value + step)}
+          disabled={!canIncrease}
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-lg font-bold text-text transition-colors disabled:opacity-40"
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function TreatmentSheetPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const consultationId = searchParams.get('consultationId');
   const { consultation, reset } = useConsultationStore();
   const { activeDesignerId, activeDesignerName } = useAuthStore();
+  const getRecordById = useRecordsStore((s) => s.getRecordById);
   const updateRecord = useRecordsStore((s) => s.updateRecord);
+  const record = consultationId ? getRecordById(consultationId) : undefined;
+  const consultationData = record?.consultation ?? consultation;
   const [smallTalkText, setSmallTalkText] = useState('');
   const [isSaved, setIsSaved] = useState(false);
   const [isFinalSaving, setIsFinalSaving] = useState(false);
   const [checklist, setChecklist] = useState<DailyChecklistState>({
-    shape: (consultation.nailShape ?? null) as NailShape | null,
+    shape: (consultationData.nailShape ?? null) as NailShape | null,
     length: null,
     thickness: null,
     cuticleSensitivity: null,
@@ -92,19 +200,50 @@ export default function TreatmentSheetPage() {
   });
 
   const designers = useShopStore((s) => s.designers);
-  const designer = designers.find(d => d.id === (consultation.designerId || activeDesignerId));
-  const priceBreakdown = calculatePrice(consultation);
-  const totalPrice = priceBreakdown.subtotal;
-  const estimatedMinutes = estimateTime(consultation);
+  const designer = designers.find(d => d.id === (consultationData.designerId || activeDesignerId));
+  const consultationBreakdown = calculatePrice(consultationData);
+  const estimatedMinutes = estimateTime(consultationData);
   const today = formatNowInKorea('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 
-  const [basePrice, setBasePrice] = useState<number>(totalPrice);
-  const [extras, setExtras] = useState<PricingExtra[]>([]);
-  const [isPriceFinalized, setIsPriceFinalized] = useState(false);
+  const [basePrice, setBasePrice] = useState<number>(record?.pricingAdjustments?.basePrice ?? consultationBreakdown.subtotal);
+  const [extras, setExtras] = useState<PricingExtra[]>(hydratePricingExtras(record?.pricingAdjustments?.extras));
+  const [discountType, setDiscountType] = useState<'fixed' | 'percent'>(consultationData.discount?.type ?? 'fixed');
+  const [discountValue, setDiscountValue] = useState<number>(consultationData.discount?.value ?? 0);
+  const [depositAmount, setDepositAmount] = useState<number>(consultationData.deposit ?? 0);
+  const [isPriceFinalized, setIsPriceFinalized] = useState(Boolean(record?.finalizedAt));
   const [isFinalizing, setIsFinalizing] = useState(false);
 
   const extrasSum = extras.reduce((sum, e) => sum + e.amount, 0);
-  const calculatedFinalPrice = basePrice + extrasSum;
+  const pricingSubtotal = basePrice + extrasSum;
+  const appliedDiscount = useMemo<DiscountConfig | undefined>(() => {
+    if (discountValue <= 0) {
+      return undefined;
+    }
+
+    return { type: discountType, value: discountValue };
+  }, [discountType, discountValue]);
+  const discountAmount = appliedDiscount
+    ? appliedDiscount.type === 'percent'
+      ? Math.round(pricingSubtotal * (appliedDiscount.value / 100))
+      : appliedDiscount.value
+    : 0;
+  const calculatedFinalPrice = Math.max(0, pricingSubtotal - discountAmount - depositAmount);
+
+  useEffect(() => {
+    const nextConsultation = record?.consultation ?? consultation;
+    const nextBreakdown = calculatePrice(nextConsultation);
+
+    setChecklist((prev) => ({
+      ...prev,
+      shape: (nextConsultation.nailShape ?? null) as NailShape | null,
+    }));
+    setBasePrice(record?.pricingAdjustments?.basePrice ?? nextBreakdown.subtotal);
+    setExtras(hydratePricingExtras(record?.pricingAdjustments?.extras));
+    setDiscountType(nextConsultation.discount?.type ?? 'fixed');
+    setDiscountValue(nextConsultation.discount?.value ?? 0);
+    setDepositAmount(nextConsultation.deposit ?? 0);
+    setIsPriceFinalized(Boolean(record?.finalizedAt));
+  }, [consultation, record]);
 
   // Build canvas selections for read-only display from canvasData
   const buildSelections = (handSide: 'left_hand' | 'right_hand'): Partial<Record<FingerPosition, FingerSelection>> => {
@@ -142,7 +281,7 @@ export default function TreatmentSheetPage() {
     if (!smallTalkText.trim()) return;
 
     const { customers, appendSmallTalkNote } = useCustomerStore.getState();
-    const customer = customers.find(c => c.name === consultation.customerName);
+    const customer = customers.find(c => c.name === consultationData.customerName);
     if (customer) {
       const newNote = {
         id: `stn-${Date.now()}`,
@@ -192,16 +331,23 @@ export default function TreatmentSheetPage() {
 
     setIsFinalizing(true);
 
-    const validExtras = extras.filter(e => e.label.trim() && e.amount !== 0);
+      const validExtras = extras.filter(e => e.label.trim() && e.amount > 0);
+      const updatedConsultation = {
+        ...consultationData,
+        discount: appliedDiscount,
+        deposit: depositAmount,
+      };
 
-    await new Promise((r) => setTimeout(r, 300));
+      await new Promise((r) => setTimeout(r, 300));
 
-    updateRecord(consultationId, {
-      finalizedAt: getNowInKoreaIso(),
-      pricingAdjustments: {
-        basePrice,
-        extras: validExtras.map(({ label, amount }) => ({ label: label.trim(), amount })),
+      updateRecord(consultationId, {
+        consultation: updatedConsultation,
         finalPrice: calculatedFinalPrice,
+        finalizedAt: getNowInKoreaIso(),
+        pricingAdjustments: {
+          basePrice,
+          extras: validExtras.map(({ label, amount }) => ({ label: label.trim(), amount })),
+          finalPrice: calculatedFinalPrice,
       },
     });
 
@@ -209,8 +355,8 @@ export default function TreatmentSheetPage() {
     setIsFinalizing(false);
   };
 
-  const hasCanvas = consultation.canvasData && consultation.canvasData.length > 0;
-  const hasReferenceImages = consultation.referenceImages && consultation.referenceImages.length > 0;
+  const hasCanvas = consultationData.canvasData && consultationData.canvasData.length > 0;
+  const hasReferenceImages = consultationData.referenceImages && consultationData.referenceImages.length > 0;
 
   return (
     <div className="h-dvh bg-background flex flex-col overflow-hidden">
@@ -218,7 +364,7 @@ export default function TreatmentSheetPage() {
       <div className="px-4 pt-6 pb-4 border-b border-border">
         <h1 className="text-xl font-bold text-text">시술 확인서</h1>
         <div className="flex items-center gap-2 mt-1 flex-wrap">
-          <span className="text-sm text-text-secondary">{consultation.customerName || '고객'}</span>
+          <span className="text-sm text-text-secondary">{consultationData.customerName || '고객'}</span>
           <span className="text-text-muted">·</span>
           <span className="text-sm text-text-muted">{today}</span>
           {designer && (
@@ -235,30 +381,30 @@ export default function TreatmentSheetPage() {
         <div className="rounded-2xl border border-border bg-surface p-4">
           <h3 className="text-sm font-bold text-text mb-3">체크리스트</h3>
           <div className="grid grid-cols-2 gap-3">
-            {consultation.nailShape && (
+            {consultationData.nailShape && (
               <div className="flex flex-col gap-0.5">
                 <span className="text-[11px] text-text-muted">쉐입</span>
-                <span className="text-sm font-semibold text-text">{SHAPE_LABELS[consultation.nailShape] || consultation.nailShape}</span>
+                <span className="text-sm font-semibold text-text">{SHAPE_LABELS[consultationData.nailShape] || consultationData.nailShape}</span>
               </div>
             )}
             <div className="flex flex-col gap-0.5">
               <span className="text-[11px] text-text-muted">신체 부위</span>
-              <span className="text-sm font-semibold text-text">{consultation.bodyPart === 'hand' ? '핸드' : '페디큐어'}</span>
+              <span className="text-sm font-semibold text-text">{consultationData.bodyPart === 'hand' ? '핸드' : '페디큐어'}</span>
             </div>
             <div className="flex flex-col gap-0.5">
               <span className="text-[11px] text-text-muted">디자인</span>
               <span className="text-sm font-semibold text-text">
-                {consultation.designScope === 'solid_tone' ? '원컬러'
-                  : consultation.designScope === 'solid_point' ? '단색+포인트'
-                  : consultation.designScope === 'full_art' ? '풀아트'
+                {consultationData.designScope === 'solid_tone' ? '원컬러'
+                  : consultationData.designScope === 'solid_point' ? '단색+포인트'
+                  : consultationData.designScope === 'full_art' ? '풀아트'
                   : '이달의 아트'}
               </span>
             </div>
-            {consultation.offType !== 'none' && (
+            {consultationData.offType !== 'none' && (
               <div className="flex flex-col gap-0.5">
                 <span className="text-[11px] text-text-muted">오프</span>
                 <span className="text-sm font-semibold text-text">
-                  {consultation.offType === 'same_shop' ? '자샵오프' : '타샵오프'}
+                  {consultationData.offType === 'same_shop' ? '자샵오프' : '타샵오프'}
                 </span>
               </div>
             )}
@@ -321,7 +467,7 @@ export default function TreatmentSheetPage() {
           <div className="rounded-2xl border border-border bg-surface p-4">
             <h3 className="text-sm font-bold text-text mb-3">참고 이미지</h3>
             <div className="grid grid-cols-2 gap-3">
-              {consultation.referenceImages!.map((url, i) => (
+              {consultationData.referenceImages!.map((url, i) => (
                 <div key={i} className="relative rounded-xl overflow-hidden border border-border aspect-square">
                   <Image src={url} alt="" fill unoptimized className="object-contain" />
                 </div>
@@ -360,30 +506,36 @@ export default function TreatmentSheetPage() {
           <h3 className="text-sm font-bold text-text mb-3">시술 내역</h3>
           <div className="flex flex-col gap-2">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-text-secondary">총 금액</span>
-              <span className="text-lg font-bold text-primary">{formatPrice(totalPrice)}</span>
+              <span className="text-sm text-text-secondary">기본 금액</span>
+              <span className="text-lg font-bold text-primary">{formatPrice(basePrice)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-text-secondary">예상 소요 시간</span>
               <span className="text-sm font-semibold text-text">{estimatedMinutes}분</span>
             </div>
-            {consultation.discount && (
+            {extrasSum > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-text-secondary">추가 항목</span>
+                <span className="text-sm font-semibold text-primary">+{formatPrice(extrasSum)}</span>
+              </div>
+            )}
+            {appliedDiscount && (
               <div className="flex justify-between items-center">
                 <span className="text-sm text-text-secondary">할인</span>
-                <span className="text-sm font-semibold" style={{ color: 'var(--color-error, #ef4444)' }}>
-                  -{consultation.discount.type === 'percent' ? `${consultation.discount.value}%` : formatPrice(consultation.discount.value)}
+                <span className="text-sm font-semibold text-error">
+                  -{appliedDiscount.type === 'percent' ? `${appliedDiscount.value}%` : formatPrice(appliedDiscount.value)}
                 </span>
               </div>
             )}
-            {consultation.deposit && consultation.deposit > 0 && (
+            {depositAmount > 0 && (
               <div className="flex justify-between items-center">
                 <span className="text-sm text-text-secondary">예약금</span>
-                <span className="text-sm font-semibold text-text-secondary">-{formatPrice(consultation.deposit)}</span>
+                <span className="text-sm font-semibold text-text-secondary">-{formatPrice(depositAmount)}</span>
               </div>
             )}
             <div className="mt-2 pt-2 border-t border-border flex justify-between items-center">
               <span className="text-sm font-bold text-text">최종 결제</span>
-              <span className="text-lg font-bold text-text">{formatPrice(priceBreakdown.finalPrice)}</span>
+              <span className="text-lg font-bold text-text">{formatPrice(calculatedFinalPrice)}</span>
             </div>
           </div>
         </div>
@@ -417,9 +569,9 @@ export default function TreatmentSheetPage() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-text-secondary">추가 항목</span>
+             <div className="flex flex-col gap-2">
+               <div className="flex items-center justify-between">
+                 <span className="text-sm font-semibold text-text-secondary">추가 항목</span>
                 {!isPriceFinalized && (
                   <button
                     type="button"
@@ -435,7 +587,7 @@ export default function TreatmentSheetPage() {
               </div>
 
               {extras.length === 0 && !isPriceFinalized && (
-                <p className="text-xs text-text-muted py-2">추가 비용이나 할인을 입력하세요 (할인은 음수로 입력)</p>
+                <p className="text-xs text-text-muted py-2">추가 비용이 있으면 항목으로 더해주세요</p>
               )}
 
               {extras.map((extra) => (
@@ -453,7 +605,8 @@ export default function TreatmentSheetPage() {
                     <input
                       type="number"
                       value={extra.amount}
-                      onChange={(e) => handleUpdateExtra(extra.id, 'amount', Number(e.target.value))}
+                      min={0}
+                      onChange={(e) => handleUpdateExtra(extra.id, 'amount', Math.max(0, Number(e.target.value)))}
                       placeholder="0"
                       disabled={isPriceFinalized}
                       className="w-full rounded-xl border border-border bg-background pl-6 pr-2 py-2 text-sm text-text text-right font-medium placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 disabled:bg-surface-alt"
@@ -474,6 +627,81 @@ export default function TreatmentSheetPage() {
               ))}
             </div>
 
+            <div className="rounded-2xl border border-border bg-surface-alt/60 p-4 flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold text-text">할인/예약금 적용</span>
+                {(appliedDiscount || depositAmount > 0) && !isPriceFinalized && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDiscountType('fixed');
+                      setDiscountValue(0);
+                      setDepositAmount(0);
+                    }}
+                    className="text-xs font-semibold text-text-muted hover:text-text"
+                  >
+                    초기화
+                  </button>
+                )}
+              </div>
+
+              <div className="flex gap-1 rounded-xl bg-background p-1">
+                {(['fixed', 'percent'] as const).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    disabled={isPriceFinalized}
+                    onClick={() => {
+                      setDiscountType(type);
+                      setDiscountValue(0);
+                    }}
+                    className={`flex-1 rounded-lg py-2 text-xs font-semibold transition-all ${
+                      discountType === type
+                        ? 'bg-surface text-primary shadow-sm'
+                        : 'text-text-muted'
+                    }`}
+                  >
+                    {type === 'fixed' ? '정액 할인' : '할인율'}
+                  </button>
+                ))}
+              </div>
+
+              <NumberPresetPicker
+                label={discountType === 'fixed' ? '할인 금액 선택' : '할인율 선택'}
+                values={discountType === 'fixed' ? FIXED_DISCOUNT_PRESETS : PERCENT_DISCOUNT_PRESETS}
+                selectedValue={discountValue}
+                onSelect={setDiscountValue}
+                formatter={(value) => discountType === 'fixed' ? formatPrice(value) : `${value}%`}
+              />
+
+              <StepValueControl
+                label={discountType === 'fixed' ? '세부 할인 조정' : '세부 할인율 조정'}
+                value={discountValue}
+                step={discountType === 'fixed' ? 1000 : 1}
+                min={0}
+                max={discountType === 'fixed' ? undefined : 100}
+                onChange={setDiscountValue}
+                formatter={(value) => discountType === 'fixed' ? formatPrice(value) : `${value}%`}
+              />
+
+              <NumberPresetPicker
+                label="예약금 선택"
+                values={DEPOSIT_PRESETS}
+                selectedValue={depositAmount}
+                onSelect={setDepositAmount}
+                formatter={(value) => value === 0 ? '없음' : formatPrice(value)}
+              />
+
+              <StepValueControl
+                label="예약금 세부 조정"
+                value={depositAmount}
+                step={5000}
+                min={0}
+                onChange={setDepositAmount}
+                formatter={(value) => value === 0 ? '없음' : formatPrice(value)}
+              />
+            </div>
+
             <div className="mt-2 pt-3 border-t border-border">
               <div className="flex justify-between items-center mb-3">
                 <span className="text-sm font-bold text-text">확정 금액</span>
@@ -492,6 +720,12 @@ export default function TreatmentSheetPage() {
                     <span className={extrasSum > 0 ? 'text-primary' : 'text-error'}>
                       {extrasSum > 0 ? ` + ${formatPriceNumber(extrasSum)}` : ` - ${formatPriceNumber(Math.abs(extrasSum))}`}원
                     </span>
+                  )}
+                  {discountAmount > 0 && (
+                    <span className="text-error"> - 할인 {formatPriceNumber(discountAmount)}원</span>
+                  )}
+                  {depositAmount > 0 && (
+                    <span className="text-text-secondary"> - 예약금 {formatPriceNumber(depositAmount)}원</span>
                   )}
                 </div>
               )}

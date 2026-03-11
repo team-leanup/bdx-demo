@@ -14,6 +14,7 @@ import { useLocaleStore } from '@/store/locale-store';
 import type { Locale } from '@/store/locale-store';
 import { useT, useKo } from '@/lib/i18n';
 import CustomerPage from '@/app/consultation/customer/page';
+import { useReservationStore } from '@/store/reservation-store';
 
 const LANGUAGE_OPTIONS: { value: Locale; flag: string; label: string }[] = [
   { value: 'ko', flag: '🇰🇷', label: '한국어' },
@@ -212,6 +213,7 @@ export default function ConsultationStartPage() {
   const setSourceShopId = useConsultationStore((s) => s.setSourceShopId);
   const setSourceShopName = useConsultationStore((s) => s.setSourceShopName);
   const reset = useConsultationStore((s) => s.reset);
+  const updateReservation = useReservationStore((s) => s.updateReservation);
   const designers = useShopStore((s) => s.designers);
   const authDesignerId = useAuthStore((s) => s.activeDesignerId);
   const [selectedDesignerId, setSelectedDesignerId] = useState<string>(authDesignerId || '');
@@ -373,11 +375,22 @@ export default function ConsultationStartPage() {
   ];
 
   const handleStart = () => {
-    hydrateConsultation({
+    const nextDesignerId = selectedDesignerId || consultation.designerId;
+    const nextConsultation = {
       ...consultation,
-      designerId: selectedDesignerId || consultation.designerId,
+      designerId: nextDesignerId,
       currentStep: ConsultationStep.CUSTOMER_INFO,
-    });
+    };
+
+    hydrateConsultation(nextConsultation);
+
+    if (consultation.bookingId && nextDesignerId) {
+      updateReservation(consultation.bookingId, {
+        designerId: nextDesignerId,
+        preConsultationData: nextConsultation,
+      });
+    }
+
     router.push('/consultation/customer');
   };
 
