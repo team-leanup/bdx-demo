@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { Button, Input } from '@/components/ui';
 import { useCustomerStore } from '@/store/customer-store';
+import { useAuthStore } from '@/store/auth-store';
 import { useRecordsStore } from '@/store/records-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { resizePortfolioImage } from '@/lib/image-utils';
@@ -30,6 +31,8 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const customers = useCustomerStore((s) => s.customers);
+  const createCustomer = useCustomerStore((s) => s.createCustomer);
+  const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
   const getAllRecords = useRecordsStore((s) => s.getAllRecords);
   const addPhoto = usePortfolioStore((s) => s.addPhoto);
 
@@ -37,7 +40,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [selectedRecordId, setSelectedRecordId] = useState<string>('');
-  const [selectedKind, setSelectedKind] = useState<PortfolioPhotoKind>('treatment');
+  const [selectedKind, setSelectedKind] = useState<PortfolioPhotoKind>('reference');
   const [note, setNote] = useState('');
   const [takenAt, setTakenAt] = useState(() => new Date().toISOString().slice(0, 10));
   const [serviceType, setServiceType] = useState('');
@@ -125,7 +128,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
     setPreviewUrl(null);
     setSelectedCustomerId('');
     setSelectedRecordId('');
-    setSelectedKind('treatment');
+    setSelectedKind('reference');
     setNote('');
     setTakenAt(new Date().toISOString().slice(0, 10));
     setServiceType('');
@@ -160,9 +163,15 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
   );
 
   const handleUpload = async (): Promise<void> => {
-    if (!selectedFile || !selectedCustomerId) {
-      setError('고객을 선택해주세요');
+    if (!selectedFile) {
+      setError('사진을 선택해주세요');
       return;
+    }
+
+    let effectiveCustomerId = selectedCustomerId;
+    if (!effectiveCustomerId) {
+      const placeholder = createCustomer({ name: '미지정' });
+      effectiveCustomerId = placeholder.id;
     }
 
     setIsProcessing(true);
@@ -176,7 +185,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
       const derivedPrice = selectedRecord?.finalPrice ?? (priceInput ? Number(priceInput) : undefined);
 
       const result = await addPhoto({
-        customerId: selectedCustomerId,
+        customerId: effectiveCustomerId,
         recordId: selectedRecordId || undefined,
         kind: selectedKind,
         imageDataUrl: dataUrl,
@@ -209,8 +218,8 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
   }, [onCancel, resetForm]);
 
   const kindOptions: { key: PortfolioPhotoKind; label: string }[] = [
-    { key: 'treatment', label: '시술' },
     { key: 'reference', label: '레퍼런스' },
+    { key: 'treatment', label: '시술' },
   ];
 
   return (
@@ -259,7 +268,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
 
       <div>
         <label className="mb-1.5 block text-sm font-medium text-text-secondary">
-          고객 선택 <span className="text-error">*</span>
+          고객 선택
         </label>
         <Input
           placeholder="고객 이름 검색"
@@ -268,31 +277,47 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
           className="mb-2"
         />
         {(customerSearch || selectedCustomerId) && (
-          <div className="max-h-40 overflow-y-auto rounded-xl border border-border bg-surface">
-            {filteredCustomers.length === 0 ? (
+          <div className="max-h-48 overflow-y-auto rounded-xl border border-border bg-surface">
+            {filteredCustomers.slice(0, 10).map((customer) => (
+              <button
+                key={customer.id}
+                type="button"
+                onClick={() => {
+                  setSelectedCustomerId(customer.id);
+                  setCustomerSearch(customer.name);
+                }}
+                className={cn(
+                  'flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors',
+                  selectedCustomerId === customer.id
+                    ? 'bg-primary/10 font-medium text-primary'
+                    : 'text-text hover:bg-surface-alt',
+                )}
+              >
+                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
+                  {customer.name.charAt(0)}
+                </span>
+                {customer.name}
+              </button>
+            ))}
+            {customerSearch.trim() && !filteredCustomers.some((c) => c.name === customerSearch.trim()) && (
+              <button
+                type="button"
+                onClick={() => {
+                  const newCustomer = createCustomer({
+                    name: customerSearch.trim(),
+                    assignedDesignerId: activeDesignerId ?? undefined,
+                  });
+                  setSelectedCustomerId(newCustomer.id);
+                  setCustomerSearch(newCustomer.name);
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-primary border-t border-border hover:bg-primary/5 transition-colors"
+              >
+                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">+</span>
+                &apos;{customerSearch.trim()}&apos; 직접 추가하기
+              </button>
+            )}
+            {filteredCustomers.length === 0 && !customerSearch.trim() && (
               <p className="p-3 text-center text-sm text-text-muted">검색 결과가 없습니다</p>
-            ) : (
-              filteredCustomers.slice(0, 10).map((customer) => (
-                <button
-                  key={customer.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedCustomerId(customer.id);
-                    setCustomerSearch(customer.name);
-                  }}
-                  className={cn(
-                    'flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors',
-                    selectedCustomerId === customer.id
-                      ? 'bg-primary/10 font-medium text-primary'
-                      : 'text-text hover:bg-surface-alt',
-                  )}
-                >
-                  <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
-                    {customer.name.charAt(0)}
-                  </span>
-                  {customer.name}
-                </button>
-              ))
             )}
           </div>
         )}
@@ -514,7 +539,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
           variant="primary"
           onClick={handleUpload}
           loading={isProcessing}
-          disabled={!selectedFile || !selectedCustomerId}
+          disabled={!selectedFile}
           className="h-14 w-full text-base shadow-sm sm:h-11 sm:flex-1 sm:text-base"
         >
           업로드

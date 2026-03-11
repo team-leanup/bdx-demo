@@ -34,9 +34,10 @@ export function InstagramHashtags({
     if (tags) tags.forEach((t) => parts.push(toHashtag(t)));
     if (colorLabels) colorLabels.forEach((c) => parts.push(toHashtag(c)));
     if (price != null) {
-      if (price < 70000) parts.push('#7만원이하네일');
-      else if (price < 90000) parts.push('#8만원대네일');
-      else parts.push('#9만원이상네일');
+      if (price < 50000) parts.push('#5만원이하네일');
+      else if (price < 80000) parts.push('#가성비네일');
+      else if (price < 120000) parts.push('#프리미엄네일');
+      else parts.push('#럭셔리네일');
     }
     parts.push('#BDX', '#네일샵', '#젤네일추천');
     // 중복 제거

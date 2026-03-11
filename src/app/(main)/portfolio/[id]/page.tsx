@@ -72,7 +72,7 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
 
   const NAIL_FALLBACKS = ['/images/mock/nail/nail-1.jpg', '/images/mock/nail/nail-2.jpg', '/images/mock/nail/nail-3.jpg'];
   const photoIndex = photos.findIndex((p) => p.id === id);
-  const imgSrc = photo?.imageDataUrl?.startsWith('data:image/') ? photo.imageDataUrl : NAIL_FALLBACKS[(photoIndex >= 0 ? photoIndex : 0) % NAIL_FALLBACKS.length];
+  const imgSrc = photo?.imageDataUrl ? photo.imageDataUrl : NAIL_FALLBACKS[(photoIndex >= 0 ? photoIndex : 0) % NAIL_FALLBACKS.length];
 
   const handleDismissToast = (id: string): void => {
     setToasts((current) => current.filter((toast) => toast.id !== id));
@@ -162,7 +162,7 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
                 {customer?.name.charAt(0) ?? '?'}
               </div>
               <div>
-                <p className="font-semibold text-text">{customer?.name ?? '알 수 없는 고객'}</p>
+                <p className="font-semibold text-text">{customer?.name ?? '미지정'}</p>
                 <p className="text-xs text-text-muted">{formatDateDot(effectiveDate ?? photo.createdAt)}</p>
               </div>
             </div>

@@ -193,8 +193,8 @@ export default function PortfolioPage(): React.ReactElement {
 
   const FILTER_TABS: { key: FilterKind; label: string }[] = [
     { key: 'all', label: '전체' },
-    { key: 'reference', label: '레퍼런스' },
     { key: 'treatment', label: '시술' },
+    { key: 'reference', label: '레퍼런스' },
   ];
 
   const serviceOptions = useMemo(() => {
@@ -204,6 +204,20 @@ export default function PortfolioPage(): React.ReactElement {
     });
     return ['all', ...Array.from(values)];
   }, [photoCards]);
+
+  // 등록된 포트폴리오의 태그 기반으로 동적 해시태그 생성
+  const dynamicMoodTags = useMemo(() => {
+    const tagCounts = new Map<string, number>();
+    photos.forEach((photo) => {
+      (photo.tags ?? []).forEach((tag) => {
+        tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+      });
+    });
+    return Array.from(tagCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([tag]) => `#${tag}`);
+  }, [photos]);
 
   const dateOptions: { key: DateFilter; label: string }[] = [
     { key: 'all', label: '전체 기간' },
@@ -286,7 +300,7 @@ export default function PortfolioPage(): React.ReactElement {
         />
         {/* PF-2: 분위기 필터 + 글로벌 베스트 */}
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {['#심플', '#화려', '#웨딩', '#키치', '#글리터', '#내추럴'].map((mood) => (
+          {dynamicMoodTags.map((mood) => (
             <button
               key={mood}
               onClick={() => setMoodFilter(moodFilter === mood ? null : mood)}
@@ -406,7 +420,7 @@ export default function PortfolioPage(): React.ReactElement {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {filteredPhotos.map(({ photo, customer, serviceType, price, effectiveDate }, idx) => {
               const NAIL_FALLBACKS = ['/images/mock/nail/nail-1.jpg', '/images/mock/nail/nail-2.jpg', '/images/mock/nail/nail-3.jpg'];
-              const imgSrc = photo.imageDataUrl?.startsWith('data:image/') ? photo.imageDataUrl : NAIL_FALLBACKS[idx % NAIL_FALLBACKS.length];
+              const imgSrc = photo.imageDataUrl ? photo.imageDataUrl : NAIL_FALLBACKS[idx % NAIL_FALLBACKS.length];
               return (
                 <button
                   key={photo.id}
@@ -425,7 +439,7 @@ export default function PortfolioPage(): React.ReactElement {
                   <div className="p-2.5 space-y-1.5">
                     <div className="flex items-center justify-between gap-1">
                       <p className="text-xs font-semibold text-foreground truncate">
-                        {customer?.name ?? '레퍼런스'}
+                        {customer?.name ?? '미지정'}
                       </p>
                       <p className="text-[10px] text-muted-foreground shrink-0">{formatDateDot(effectiveDate)}</p>
                     </div>
