@@ -139,6 +139,46 @@ export async function dbCreateShopAccount(
   ownerName: string,
 ): Promise<ShopAccountMutationResult> {
   const now = new Date().toISOString();
+  const existingShop = await fetchShopByOwnerId(ownerUserId);
+
+  if (existingShop) {
+    const existingOwner = await fetchDesignerById(ownerUserId);
+
+    if (existingOwner && existingOwner.shopId === existingShop.id) {
+      return {
+        success: true,
+        shop: existingShop,
+        owner: existingOwner,
+      };
+    }
+
+    const { data: recoveredOwnerData, error: recoveredOwnerError } = await supabase
+      .from('designers')
+      .insert({
+        id: ownerUserId,
+        shop_id: existingShop.id,
+        name: ownerName,
+        role: 'owner',
+        profile_image_url: null,
+        phone: null,
+        is_active: true,
+        created_at: now,
+      })
+      .select('*')
+      .single();
+
+    if (recoveredOwnerError || !recoveredOwnerData) {
+      console.error('[db] dbCreateShopAccount recover owner insert error:', recoveredOwnerError);
+      return { success: false, error: '기존 샵 계정을 복구하지 못했습니다' };
+    }
+
+    return {
+      success: true,
+      shop: existingShop,
+      owner: toDesigner(recoveredOwnerData),
+    };
+  }
+
   const shopId = createId('shop');
 
   const { error: shopInsertError } = await supabase.from('shops').insert({
