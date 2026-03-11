@@ -128,6 +128,7 @@ export default function HomePage() {
       requestNote: newBooking.requestNote,
       referenceImageUrls: newBooking.referenceImageUrls,
       language: newBooking.language,
+      designerId: newBooking.designerId,
       serviceLabel: newBooking.serviceLabel,
       customerId: newBooking.customerId,
     });
