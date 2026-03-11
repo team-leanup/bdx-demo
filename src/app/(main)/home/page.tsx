@@ -65,10 +65,10 @@ export default function HomePage() {
   const records = useMemo(() => getAllRecords(), [getAllRecords]);
 
   const CHANNEL_BADGE: Record<BookingChannel, { label: string; icon: string; variant: 'primary' | 'neutral' | 'success' | 'warning' }> = {
-    kakao: { label: t('home.channel_kakao'), icon: '💬', variant: 'warning' },
-    naver: { label: t('home.channel_naver'), icon: '🟢', variant: 'success' },
+    kakao: { label: t('home.channel_kakao'), icon: '💬', variant: 'neutral' },
+    naver: { label: t('home.channel_naver'), icon: '🟢', variant: 'neutral' },
     phone: { label: t('home.channel_phone'), icon: '📞', variant: 'neutral' },
-    walk_in: { label: t('home.channel_walk_in'), icon: '🚶', variant: 'primary' },
+    walk_in: { label: t('home.channel_walk_in'), icon: '🚶', variant: 'neutral' },
   };
 
   useEffect(() => {

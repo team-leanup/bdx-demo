@@ -835,7 +835,7 @@ function CustomerDetailContent({ id }: { id: string }) {
           {customer.treatmentHistory.map((hist, idx) => {
             const scopeIcon = DESIGN_SCOPE_ICON[hist.designScope] ?? '●';
             return (
-              <div key={hist.recordId} className="relative flex gap-3 pb-5 last:pb-0">
+              <div key={`${hist.recordId}-${idx}`} className="relative flex gap-3 pb-5 last:pb-0">
                 {/* 타임라인 라인 */}
                 {idx < customer.treatmentHistory.length - 1 && (
                   <div
@@ -1143,8 +1143,7 @@ function CustomerDetailContent({ id }: { id: string }) {
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-text-secondary">고객 메모</h2>
           <button
-            className="rounded-xl border px-3 py-1 text-xs font-medium transition-colors hover:bg-primary hover:text-white"
-            style={{ borderColor: 'var(--color-primary)', color: 'var(--color-primary)' }}
+            className="rounded-xl bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/20 active:scale-95"
             onClick={() => setShowSmallTalkInput((prev) => !prev)}
           >
             {showSmallTalkInput ? '취소' : '+ 추가'}
@@ -1156,7 +1155,7 @@ function CustomerDetailContent({ id }: { id: string }) {
               value={newSmallTalk}
               onChange={(e) => setNewSmallTalk(e.target.value)}
               placeholder="고객과의 대화 내용을 기록하세요..."
-              className="w-full rounded-xl border border-border bg-surface p-3 text-sm text-text placeholder:text-text-muted resize-none"
+              className="w-full rounded-xl border border-border bg-surface p-3 text-sm text-text placeholder:text-text-muted resize-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 outline-none transition-colors"
               rows={3}
             />
             <button
@@ -1174,16 +1173,23 @@ function CustomerDetailContent({ id }: { id: string }) {
                   setShowSmallTalkInput(false);
                 }
               }}
-              className="self-end rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-white"
+              className="self-end rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-white active:scale-95 transition-transform"
             >
               저장
             </button>
           </div>
         )}
         {localSmallTalkNotes.length === 0 ? (
-          <p className="text-sm text-text-muted">기록이 없습니다</p>
+          <div className="flex flex-col items-center justify-center py-8 gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-alt">
+              <svg className="h-5 w-5 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+              </svg>
+            </div>
+            <p className="text-sm text-text-muted">메모를 추가해보세요</p>
+          </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2.5">
             {[...localSmallTalkNotes]
               .sort(
                 (a, b) =>
@@ -1192,20 +1198,15 @@ function CustomerDetailContent({ id }: { id: string }) {
               .map((note) => (
                 <div
                   key={note.id}
-                  className="relative rounded-2xl p-4"
+                  className="rounded-2xl bg-surface-alt p-4"
                   style={{
-                    background: 'var(--color-surface-alt)',
-                    borderLeft: '3px solid var(--color-primary)',
+                    borderLeft: '4px solid var(--color-primary)',
                   }}
                 >
-                  {/* 말풍선 꼬리 */}
-                  <div
-                    className="absolute -left-[7px] top-4 h-3 w-3 rotate-45"
-                    style={{ background: 'var(--color-surface-alt)' }}
-                  />
-                  <p className="mb-1.5 text-xs font-medium text-text-muted">
-                    {formatDateDot(note.createdAt)} · {note.createdByDesignerName}
-                  </p>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-text-secondary">{note.createdByDesignerName}</span>
+                    <span className="text-[11px] text-text-muted">{formatDateDot(note.createdAt)}</span>
+                  </div>
                   <p className="text-sm text-text leading-relaxed">{note.noteText}</p>
                 </div>
               ))}

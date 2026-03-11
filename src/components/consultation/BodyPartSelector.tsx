@@ -69,7 +69,7 @@ export function BodyPartSelector({ className }: BodyPartSelectorProps) {
               )}
             >
               {/* Intuitive Hand/Foot SVG */}
-              <span className={cn('transition-all duration-300 transform', isSelected ? 'text-primary scale-110' : 'text-text-muted/30')}>
+              <span className={cn('transition-all duration-300 transform', isSelected ? 'text-primary scale-110' : 'opacity-50')}>
                 {ICONS[opt.value]}
               </span>
               {/* Labels */}

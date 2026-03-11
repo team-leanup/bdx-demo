@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { IconSparkle, IconCalendar } from '@/components/icons';
+import { IconScissors, IconCalendar } from '@/components/icons';
 
 interface HeroCTAProps {
   onStartConsultation: () => void;
@@ -39,7 +39,7 @@ export function HeroCTA({
           whileTap={{ scale: 0.97, transition: { duration: 0.1 } }}
         >
           <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
-            <IconSparkle className="h-5 w-5 text-white" />
+            <IconScissors className="h-5 w-5 text-white" />
           </div>
           <p className="text-xs font-medium text-white/70">{consultationLabel}</p>
           <h2 className="mt-0.5 text-base font-bold text-white">{consultationTitle}</h2>

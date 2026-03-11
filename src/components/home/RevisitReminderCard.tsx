@@ -41,7 +41,7 @@ export function RevisitReminderCard({
       {/* 헤더 */}
       <div className="flex items-center gap-2 px-4 pt-4 pb-3">
         <span className="text-sm font-bold text-text">재방문 알림</span>
-        <span className="flex h-5 min-w-5 items-center justify-center rounded-md bg-amber-100 px-1.5 text-[10px] font-bold text-amber-700">
+        <span className="flex h-5 min-w-5 items-center justify-center rounded-md bg-primary px-1.5 text-[10px] font-bold text-white">
           {overdueCustomers.length}
         </span>
         <span className="text-xs text-text-muted">· 4주 이상 미방문 단골</span>
@@ -56,8 +56,8 @@ export function RevisitReminderCard({
             transition={{ delay: idx * 0.06, duration: 0.3 }}
             className="flex items-center gap-3 px-4 py-3 border-t border-border"
           >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-50 border border-amber-100">
-              <span className="text-sm font-bold text-amber-700">{customer.name.slice(0, 1)}</span>
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 border border-primary/20">
+              <span className="text-sm font-bold text-primary">{customer.name.slice(0, 1)}</span>
             </div>
             <div className="flex flex-1 flex-col min-w-0">
               <span className="text-sm font-semibold text-text">{customer.name}</span>
@@ -65,7 +65,7 @@ export function RevisitReminderCard({
             </div>
             <button
               onClick={() => copyMessage(customer.name)}
-              className="shrink-0 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-text-secondary hover:bg-surface-alt active:scale-95 transition-all"
+              className="shrink-0 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white active:scale-95 transition-transform"
             >
               메시지 복사
             </button>

@@ -9,6 +9,16 @@ import { Badge } from '@/components/ui';
 import { SafetyTag } from '@/components/ui/SafetyTag';
 import { FlagIcon } from '@/components/ui/FlagIcon';
 import { IconCalendar } from '@/components/icons';
+import { cn } from '@/lib/cn';
+
+function ChannelEmojiBadge({ variant, icon, label }: { variant: string; icon: string; label: string }) {
+  return (
+    <Badge variant={variant as 'primary' | 'neutral' | 'success' | 'warning'} size="sm">
+      <span className="text-[10px] leading-none">{icon}</span>
+      {label}
+    </Badge>
+  );
+}
 import { useRouter } from 'next/navigation';
 import { useConsultationStore } from '@/store/consultation-store';
 import { useCustomerStore } from '@/store/customer-store';
@@ -170,7 +180,7 @@ export function TodayReservationCard({
                       <FlagIcon language={booking.language!} size="sm" />
                     )}
                     {booking.serviceLabel && (
-                      <span className="px-2 py-0.5 rounded-md bg-primary/15 text-xs text-primary font-bold">
+                      <span className="px-2 py-0.5 rounded-full bg-primary/10 text-[11px] text-primary font-semibold">
                         {booking.serviceLabel}
                       </span>
                     )}
@@ -188,9 +198,7 @@ export function TodayReservationCard({
                     ) : (
                       <ReservationReadinessBadge booking={booking} size="sm" compact />
                     )}
-                    <Badge variant={channelInfo.variant} size="sm">
-                      {channelInfo.icon} {channelInfo.label}
-                    </Badge>
+                    <ChannelEmojiBadge variant={channelInfo.variant} icon={channelInfo.icon} label={channelInfo.label} />
                   </div>
                   {/* H-1: 세이프티 태그 */}
                   {safetyTags.length > 0 && (

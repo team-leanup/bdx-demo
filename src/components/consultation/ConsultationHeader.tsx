@@ -77,7 +77,7 @@ export function ConsultationHeader({
         <span className="text-xs font-semibold text-text-secondary tracking-wider uppercase">
           STEP {stepNumber}/{totalSteps}
         </span>
-        <span className="text-sm font-bold text-text">{title}</span>
+        <span className="text-base font-bold text-text">{title}</span>
         {locale !== 'ko' && titleKo && (
           <span className="text-[10px] text-text-muted opacity-60">{titleKo}</span>
         )}

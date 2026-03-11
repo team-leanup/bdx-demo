@@ -361,7 +361,7 @@ export default function TreatmentSheetPage() {
           <div className="flex flex-col gap-2">
             <div className="flex justify-between items-center">
               <span className="text-sm text-text-secondary">총 금액</span>
-              <span className="text-lg font-extrabold text-primary">{formatPrice(totalPrice)}</span>
+              <span className="text-lg font-bold text-primary">{formatPrice(totalPrice)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-text-secondary">예상 소요 시간</span>
@@ -383,7 +383,7 @@ export default function TreatmentSheetPage() {
             )}
             <div className="mt-2 pt-2 border-t border-border flex justify-between items-center">
               <span className="text-sm font-bold text-text">최종 결제</span>
-              <span className="text-lg font-extrabold text-text">{formatPrice(priceBreakdown.finalPrice)}</span>
+              <span className="text-lg font-bold text-text">{formatPrice(priceBreakdown.finalPrice)}</span>
             </div>
           </div>
         </div>
@@ -478,7 +478,7 @@ export default function TreatmentSheetPage() {
               <div className="flex justify-between items-center mb-3">
                 <span className="text-sm font-bold text-text">확정 금액</span>
                 <span
-                  className="text-xl font-extrabold"
+                  className="text-xl font-bold"
                   style={{ color: calculatedFinalPrice >= 0 ? 'var(--color-primary)' : 'var(--color-error, #ef4444)' }}
                 >
                   {formatPrice(calculatedFinalPrice)}

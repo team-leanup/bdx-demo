@@ -18,10 +18,14 @@ import { computeDesignerStats } from '@/lib/analytics';
 import { formatPrice } from '@/lib/format';
 
 // 테마 색상 CSS 변수 사용 (hardcoded 색상 제거)
+// 디자이너별 고유 색상 — primary 계열 농도를 넓게 분산하여 겹치지 않도록
 const DESIGNER_COLORS = [
-  'var(--color-primary)',
-  'var(--color-success)',
-  'var(--color-warning)',
+  'var(--color-primary)',                                          // 100%
+  'color-mix(in srgb, var(--color-primary) 70%, white)',           // 70%
+  'color-mix(in srgb, var(--color-primary) 45%, white)',           // 45%
+  'color-mix(in srgb, var(--color-primary) 75%, #6B21A8)',         // 보라 쉬프트
+  'color-mix(in srgb, var(--color-primary) 70%, #F97316)',         // 코럴 쉬프트
+  'color-mix(in srgb, var(--color-primary) 25%, white)',           // 25%
 ];
 
 interface TooltipProps {
@@ -166,7 +170,7 @@ export function DesignerPerformance() {
               />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="예약 배정률" radius={[6, 6, 0, 0]} fill="var(--color-primary)" />
-              <Bar dataKey="상담 완료율" radius={[6, 6, 0, 0]} fill="var(--color-success)" />
+              <Bar dataKey="상담 완료율" radius={[6, 6, 0, 0]} fill="color-mix(in srgb, var(--color-primary) 50%, white)" />
             </BarChart>
           </ResponsiveContainer>
         </div>

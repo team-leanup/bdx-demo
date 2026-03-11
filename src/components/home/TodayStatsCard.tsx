@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { formatPrice } from '@/lib/format';
-import { IconScissors, IconCalendar, IconWon } from '@/components/icons';
+import { IconScissors, IconCalendar, IconWon, IconGlobe } from '@/components/icons';
 
 interface TodayStatsCardProps {
   consultationCount: number;
@@ -69,8 +69,8 @@ export function TodayStatsCard({
         </div>
         {/* 외국인 예약 */}
         <div className="flex flex-col items-center gap-1 py-4">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50">
-            <span className="text-base">🌏</span>
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
+            <IconGlobe className="h-3.5 w-3.5 text-primary" />
           </div>
           <span className="text-base md:text-lg font-bold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
             {foreignCount}
@@ -85,7 +85,7 @@ export function TodayStatsCard({
           onClick={onViewDetail}
           className="text-xs font-semibold text-primary active:opacity-60"
         >
-          {viewDetailLabel} →
+          {viewDetailLabel}
         </button>
       </div>
     </motion.div>

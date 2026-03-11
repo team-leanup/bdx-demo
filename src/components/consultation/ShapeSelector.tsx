@@ -154,7 +154,9 @@ export function ShapeSelector({ className }: ShapeSelectorProps) {
               )}
             >
               {/* Shape icon — primary visual */}
-              {SHAPE_ICONS[shape](isSelected)}
+              <span className={cn('transition-all duration-300 transform inline-block', isSelected ? 'scale-110' : 'opacity-50')}>
+                {SHAPE_ICONS[shape](isSelected)}
+              </span>
               {/* Label */}
               <div className="flex flex-col items-center gap-0.5">
                 <span className="text-[11px] font-bold leading-tight text-center">

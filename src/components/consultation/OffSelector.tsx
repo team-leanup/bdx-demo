@@ -91,7 +91,7 @@ export function OffSelector({ className }: OffSelectorProps) {
               )}
             >
               {/* Context-Aware Iconic Visual */}
-              <span className={cn('relative transition-all duration-300 transform', isSelected ? 'scale-110' : 'opacity-60 grayscale-[0.5]')}>
+              <span className={cn('relative transition-all duration-300 transform', isSelected ? 'scale-110' : 'opacity-50')}>
                 {OFF_ICONS[opt.value]()}
                 {OFF_BADGE_CONFIG[opt.value] && (() => {
                   const badge = OFF_BADGE_CONFIG[opt.value]!;

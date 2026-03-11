@@ -59,7 +59,7 @@ export default function ProPage() {
           {/* Pro mode badge */}
           <div className="flex items-center gap-2 px-3 py-2 bg-surface-alt rounded-xl border border-border mb-2">
             <span className="text-sm font-semibold text-text">
-              <span className="text-lg font-black">{t('pro.title')}</span>
+              <span className="text-[15px] font-bold text-text">{t('pro.title')}</span>
               {locale !== 'ko' && (
                 <span className="text-xs text-text-muted opacity-60 font-bold ml-1">{tKo('pro.title')}</span>
               )}
@@ -70,7 +70,7 @@ export default function ProPage() {
           {/* 기본 조건 */}
           <Accordion title={
             <span className="flex items-center gap-2">
-              <span className="text-lg font-black">{t('consultation.basicConditions')}</span>
+              <span className="text-[15px] font-bold text-text">{t('consultation.basicConditions')}</span>
               {locale !== 'ko' && (
                 <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('consultation.basicConditions')}</span>
               )}
@@ -87,7 +87,7 @@ export default function ProPage() {
           {/* 시술 범위 */}
           <Accordion title={
             <span className="flex items-center gap-2">
-              <span className="text-lg font-black">{t('consultation.designScope')}</span>
+              <span className="text-[15px] font-bold text-text">{t('consultation.designScope')}</span>
               {locale !== 'ko' && (
                 <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('consultation.designScope')}</span>
               )}
@@ -101,7 +101,7 @@ export default function ProPage() {
           {/* 표현 기법 */}
           <Accordion title={
             <span className="flex items-center gap-2">
-              <span className="text-lg font-black">{t('consultation.expressionTitle')}</span>
+              <span className="text-[15px] font-bold text-text">{t('consultation.expressionTitle')}</span>
               {locale !== 'ko' && (
                 <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('consultation.expressionTitle')}</span>
               )}
@@ -115,7 +115,7 @@ export default function ProPage() {
           {/* 파츠 & 컬러 */}
           <Accordion title={
             <span className="flex items-center gap-2">
-              <span className="text-lg font-black">{t('consultation.addParts')}</span>
+              <span className="text-[15px] font-bold text-text">{t('consultation.addParts')}</span>
               {locale !== 'ko' && (
                 <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('consultation.addParts')}</span>
               )}
@@ -130,7 +130,7 @@ export default function ProPage() {
           {/* 할인 & 예약금 */}
           <Accordion title={
             <span className="flex items-center gap-2">
-              <span className="text-lg font-black">{t('consultation.discountApply')}</span>
+              <span className="text-[15px] font-bold text-text">{t('consultation.discountApply')}</span>
               {locale !== 'ko' && (
                 <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('consultation.discountApply')}</span>
               )}

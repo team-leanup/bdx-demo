@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Card, Badge, Button } from '@/components/ui';
 import { formatPrice, formatDateDotWithTime } from '@/lib/format';
 import { BODY_PART_LABEL, DESIGN_SCOPE_LABEL, EXPRESSION_LABEL, getDesignerName } from '@/lib/labels';
+import { useShallow } from 'zustand/react/shallow';
 import { useRecordsStore } from '@/store/records-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useCustomerStore } from '@/store/customer-store';
@@ -27,9 +28,9 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
   const router = useRouter();
   const t = useT();
 
-  const record = useRecordsStore((s) => s.getRecordById(id));
+  const record = useRecordsStore(useShallow((s) => s.records.find((r) => r.id === id)));
   const updateRecord = useRecordsStore((s) => s.updateRecord);
-  const portfolioPhotos = usePortfolioStore((s) => s.getByRecordId(id));
+  const portfolioPhotos = usePortfolioStore(useShallow((s) => s.photos.filter((p) => p.recordId === id)));
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
 

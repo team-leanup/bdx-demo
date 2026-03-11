@@ -300,9 +300,9 @@ export default function DashboardPage() {
                   <h2 className="text-sm font-semibold text-text-secondary">재방문 골든타임 알림</h2>
                   <p className="mt-1 text-xs text-text-muted">평균 주기 28일 기준 이번 주 리마인더 대상</p>
                 </div>
-                <div className="rounded-2xl bg-amber-100 px-3 py-2 text-right text-amber-800">
-                  <p className="text-[10px]">이번 주 대상</p>
-                  <p className="text-2xl font-extrabold">{goldenTimeTargets.length}명</p>
+                <div className="rounded-2xl bg-primary/10 px-3 py-2 text-right">
+                  <p className="text-[10px] text-primary">이번 주 대상</p>
+                  <p className="text-2xl font-extrabold text-primary">{goldenTimeTargets.length}명</p>
                 </div>
               </div>
 
