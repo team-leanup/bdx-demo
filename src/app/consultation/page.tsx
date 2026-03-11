@@ -13,6 +13,7 @@ import { cn } from '@/lib/cn';
 import { useLocaleStore } from '@/store/locale-store';
 import type { Locale } from '@/store/locale-store';
 import { useT, useKo } from '@/lib/i18n';
+import CustomerPage from '@/app/consultation/customer/page';
 
 const LANGUAGE_OPTIONS: { value: Locale; flag: string; label: string }[] = [
   { value: 'ko', flag: '🇰🇷', label: '한국어' },
@@ -207,6 +208,7 @@ export default function ConsultationStartPage() {
   const setCustomerInfo = useConsultationStore((s) => s.setCustomerInfo);
   const setBookingId = useConsultationStore((s) => s.setBookingId);
   const setEntryPoint = useConsultationStore((s) => s.setEntryPoint);
+  const setStep = useConsultationStore((s) => s.setStep);
   const setSourceShopId = useConsultationStore((s) => s.setSourceShopId);
   const setSourceShopName = useConsultationStore((s) => s.setSourceShopName);
   const reset = useConsultationStore((s) => s.reset);
@@ -308,11 +310,31 @@ export default function ConsultationStartPage() {
     }
 
     if (consultation.currentStep === ConsultationStep.START) {
-      hydrateConsultation({
-        ...consultation,
-        currentStep: ConsultationStep.STEP1_BASIC,
-      });
-      router.replace('/consultation/step1');
+      const customerLinkParams = new URLSearchParams(searchParams.toString());
+      customerLinkParams.set('entry', 'customer-link');
+      if (!customerLinkParams.get('bookingId') && consultation.bookingId) {
+        customerLinkParams.set('bookingId', consultation.bookingId);
+      }
+      if (!customerLinkParams.get('shopId') && consultation.sourceShopId) {
+        customerLinkParams.set('shopId', consultation.sourceShopId);
+      }
+      if (!customerLinkParams.get('shopName') && consultation.sourceShopName) {
+        customerLinkParams.set('shopName', consultation.sourceShopName);
+      }
+      if (!customerLinkParams.get('name') && consultation.customerName) {
+        customerLinkParams.set('name', consultation.customerName);
+      }
+      if (!customerLinkParams.get('phone') && consultation.customerPhone) {
+        customerLinkParams.set('phone', consultation.customerPhone);
+      }
+
+      setEntryPoint('customer_link');
+      setStep(ConsultationStep.CUSTOMER_INFO);
+      router.replace(`/consultation?${customerLinkParams.toString()}`);
+      return;
+    }
+
+    if (consultation.currentStep === ConsultationStep.CUSTOMER_INFO) {
       return;
     }
 
@@ -321,7 +343,6 @@ export default function ConsultationStartPage() {
       [ConsultationStep.STEP2_DESIGN]: '/consultation/step2',
       [ConsultationStep.STEP3_OPTIONS]: '/consultation/step3',
       [ConsultationStep.TRAITS]: '/consultation/traits',
-      [ConsultationStep.CUSTOMER_INFO]: '/consultation/customer',
       [ConsultationStep.CANVAS]: '/consultation/canvas',
       [ConsultationStep.SUMMARY]: '/consultation/summary',
     };
@@ -330,10 +351,10 @@ export default function ConsultationStartPage() {
     if (targetRoute) {
       router.replace(targetRoute);
     }
-  }, [consultation, hydrateConsultation, isCustomerLinkFlow, router, showEntrySplash]);
+  }, [consultation, isCustomerLinkFlow, router, searchParams, setEntryPoint, setStep, showEntrySplash]);
 
   useEffect(() => {
-    if (isCustomerLinkFlow && showEntrySplash) {
+    if (isCustomerLinkFlow) {
       return;
     }
     if (
@@ -344,10 +365,10 @@ export default function ConsultationStartPage() {
   }, [consultation.currentStep, isCustomerLinkFlow, showEntrySplash]);
 
   const STEP_FLOW = [
+    { icon: <StepFlowIcon type="customer" />, label: t('consultation.customerInfo'), koLabel: tKo('consultation.customerInfo') },
     { icon: <StepFlowIcon type="basic" />, label: t('consultation.step1Title'), koLabel: tKo('consultation.step1Title') },
     { icon: <StepFlowIcon type="treatment" />, label: t('consultation.treatmentType.title'), koLabel: tKo('consultation.treatmentType.title') },
     { icon: <StepFlowIcon type="traits" />, label: t('consultation.traitsTitle'), koLabel: tKo('consultation.traitsTitle') },
-    { icon: <StepFlowIcon type="customer" />, label: t('consultation.customerInfo'), koLabel: tKo('consultation.customerInfo') },
     { icon: <StepFlowIcon type="summary" />, label: t('consultation.summaryTitle'), koLabel: tKo('consultation.summaryTitle') },
   ];
 
@@ -355,10 +376,31 @@ export default function ConsultationStartPage() {
     hydrateConsultation({
       ...consultation,
       designerId: selectedDesignerId || consultation.designerId,
-      currentStep: ConsultationStep.STEP1_BASIC,
+      currentStep: ConsultationStep.CUSTOMER_INFO,
     });
-    router.push('/consultation/step1');
+    router.push('/consultation/customer');
   };
+
+  if (isCustomerLinkFlow) {
+    if (showEntrySplash) {
+      return (
+        <CustomerLinkSplash
+          shopName={visibleShopName}
+          title={t('consultation.linkSplashTitle')}
+          titleKo={tKo('consultation.linkSplashTitle')}
+          description={t('consultation.linkSplashDesc')}
+          descriptionKo={tKo('consultation.linkSplashDesc')}
+        />
+      );
+    }
+
+    if (consultation.currentStep === ConsultationStep.CUSTOMER_INFO
+      || consultation.currentStep === ConsultationStep.START) {
+      return <CustomerPage />;
+    }
+
+    return <div className="h-dvh bg-background" />;
+  }
 
   return (
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
@@ -384,7 +426,7 @@ export default function ConsultationStartPage() {
                   [ConsultationStep.CANVAS]: '/consultation/canvas',
                   [ConsultationStep.SUMMARY]: '/consultation/summary',
                 };
-                const route = stepRoutes[consultation.currentStep] || '/consultation/step1';
+                const route = stepRoutes[consultation.currentStep] || '/consultation/customer';
                 router.push(route);
               }}>
                 {tKo('consultation.resumeBtn')}
@@ -398,16 +440,6 @@ export default function ConsultationStartPage() {
             </div>
           </div>
         </div>
-      )}
-
-      {showEntrySplash && isCustomerLinkFlow && (
-        <CustomerLinkSplash
-          shopName={visibleShopName}
-          title={t('consultation.linkSplashTitle')}
-          titleKo={tKo('consultation.linkSplashTitle')}
-          description={t('consultation.linkSplashDesc')}
-          descriptionKo={tKo('consultation.linkSplashDesc')}
-        />
       )}
 
       {/* Header */}

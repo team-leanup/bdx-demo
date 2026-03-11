@@ -254,8 +254,8 @@ export default function SummaryPage() {
         title={t('consultation.summaryTitle')}
         titleKo={tKo('consultation.summaryTitle')}
         onBack={() => {
-          setStep(ConsultationStep.CUSTOMER_INFO);
-          router.push('/consultation/customer');
+          setStep(ConsultationStep.TRAITS);
+          router.push('/consultation/traits');
         }}
         onClose={() => router.push(isCustomerLinkFlow ? customerLinkEntryHref : '/home')}
       />

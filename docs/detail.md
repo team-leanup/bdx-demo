@@ -265,6 +265,11 @@ BDX를 "상담 시스템"에서 **"고객 관리 CRM + 시술 기록 시스템"*
 | 2026-03-12 | 고객 상담 링크(`entry=customer-link`) 진입 시 `src/app/consultation/customer/page.tsx` 에서 2.5초 브랜드 스플래시를 먼저 보여준 뒤 상담 폼으로 전환되도록 보강. 샵명이 있으면 함께 노출하고, 같은 세션에서는 반복 진입 시 스플래시를 다시 띄우지 않도록 `sessionStorage` 키로 제어 |
 | 2026-03-12 | 고객 상담 링크/QR 생성 URL을 `/consultation` 루트로 통일하고, 레거시 `/consultation/customer?entry=customer-link...` 접근도 query params를 유지한 채 루트 첫 화면으로 리다이렉트하도록 수정. 루트 페이지가 링크 prefills를 직접 hydrate하고 스플래시도 같은 query 기준으로 유지 |
 | 2026-03-12 | `/consultation` 게이트웨이에서 customer-link/staff 플로우를 분리. customer-link는 스플래시 이후 store의 `entryPoint` 기준으로 step 라우팅하고, staff 전용 디자이너 선택 UI는 customer-link 모드에서 렌더링하지 않도록 수정 |
+| 2026-03-12 | customer-link 루트 진입의 시작 단계를 `/consultation/customer`로 조정해 고객용 상담 폼으로 시작되게 수정. `/consultation/step1`으로 오동작하던 경로를 제거하고, 레거시 `/consultation/customer?entry=customer-link...` 접근은 query 유지 후 루트로 재정렬 |
+| 2026-03-12 | customer-link 진입은 URL을 `/consultation`으로 유지하면서 고객용 화면을 표시하도록 미들웨어 rewrite(`/consultation` → 내부 `/consultation/customer`)를 적용. 주소창은 루트 경로를 유지하고 customer-link 파라미터도 보존 |
+| 2026-03-12 | customer-link는 미들웨어 rewrite 없이 `/consultation` 페이지 자체에서 고객 정보 화면을 직접 렌더링하도록 재조정. customer 단계 이동(`traits`/`summary` back)도 `/consultation`로 통일해 고객용 폼이 샵 전용 화면으로 전환되지 않게 분리 |
+| 2026-03-12 | 상담 단계 순서를 `고객 정보`를 Step 1로 앞당기도록 재정렬. staff 시작 버튼은 `/consultation/customer`부터 시작하고, customer 페이지 다음 단계를 `/consultation/step1`로 변경했으며 summary 뒤로가기는 staff=`traits`, customer-link=`/consultation`으로 분기 |
+| 2026-03-12 | customer-link도 Step 1(고객 정보) 다음에 `/consultation/step1`로 이어지도록 수정해, `다음` 버튼이 곧바로 summary로 점프하던 흐름을 제거하고 staff/customer-link 모두 `고객 정보 → 기본 조건 → 시술 유형 → 고객 성향 → 요약` 순서를 따르도록 정리 |
 
 ---
 

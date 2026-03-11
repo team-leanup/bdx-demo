@@ -26,14 +26,14 @@ export default function TraitsPage(): React.ReactElement {
   const traitOptions = etcPreset?.options ?? [];
 
   const handleNext = (): void => {
-    setStep(ConsultationStep.CUSTOMER_INFO);
-    router.push('/consultation/customer');
+    setStep(ConsultationStep.SUMMARY);
+    router.push('/consultation/summary');
   };
 
   return (
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
       <ConsultationHeader
-        stepNumber={3}
+        stepNumber={4}
         totalSteps={5}
         title={t('consultation.traitsTitle')}
         titleKo={tKo('consultation.traitsTitle')}

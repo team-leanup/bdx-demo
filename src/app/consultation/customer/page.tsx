@@ -107,7 +107,7 @@ function CustomerLinkSplash({
   );
 }
 
-function CustomerPageInner() {
+function CustomerPageInner(): React.ReactElement {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setCustomerInfo = useConsultationStore((s) => s.setCustomerInfo);
@@ -156,6 +156,15 @@ function CustomerPageInner() {
   const [phone, setPhone] = useState(consultation.customerPhone ?? prefillPhone);
   const [memo, setMemo] = useState(prefillNote);
   const [showEntrySplash, setShowEntrySplash] = useState(isCustomerLinkFlow);
+
+  useEffect(() => {
+    if (!isCustomerLinkFlow || consultation.currentStep !== ConsultationStep.START) {
+      return;
+    }
+
+    const query = searchParams.toString();
+    router.replace(query ? `/consultation?${query}` : '/consultation');
+  }, [consultation.currentStep, isCustomerLinkFlow, router, searchParams]);
 
   const initialRef = useRef({
     prefillName,
@@ -247,8 +256,6 @@ function CustomerPageInner() {
     }
 
     if (currentStep === ConsultationStep.START) {
-      setStep(ConsultationStep.STEP1_BASIC);
-      router.replace('/consultation/step1');
       return;
     }
 
@@ -281,8 +288,8 @@ function CustomerPageInner() {
     } else {
       sessionStorage.removeItem('consultation_customer_memo');
     }
-    setStep(ConsultationStep.SUMMARY);
-    router.push('/consultation/summary');
+    setStep(ConsultationStep.STEP1_BASIC);
+    router.push('/consultation/step1');
   };
 
   const canProceed = name.trim().length > 0;
@@ -296,8 +303,8 @@ function CustomerPageInner() {
     handleNext();
   };
 
-  const stepNumber = 4;
-  const backHref = '/consultation/traits';
+  const stepNumber = 1;
+  const backHref = '/consultation';
   const customerLinkParams = new URLSearchParams();
   customerLinkParams.set('entry', 'customer-link');
   if (prefillShopId) customerLinkParams.set('shopId', prefillShopId);

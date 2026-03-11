@@ -87,7 +87,7 @@ export default function Step2Page() {
   return (
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
       <ConsultationHeader
-        stepNumber={2}
+        stepNumber={3}
         totalSteps={5}
         title={t('consultation.treatmentType.title')}
         titleKo={tKo('consultation.treatmentType.title')}
