@@ -158,6 +158,11 @@
 - **완료 추가**: `entry=customer-link` 로 진입한 고객 상담 링크는 이제 `src/app/consultation/customer/page.tsx` 에서 2.5초 브랜드 스플래시를 먼저 보여준 뒤 상담 화면으로 전환됨. 같은 링크 세션에서는 스플래시를 반복 노출하지 않아 뒤로가기/재진입 시 흐름이 끊기지 않음
 - **완료 추가**: 고객 상담 링크/QR 기본 진입 경로를 `/consultation` 루트로 통일하고, 기존 `/consultation/customer?entry=customer-link...` 링크로 들어와도 query string을 유지한 채 루트 첫 화면(디자이너 선택)으로 보내도록 정리함
 - **완료 추가**: 고객 링크 흐름은 `/consultation`에서 스플래시 후 customer-link 전용 플로우로 즉시 라우팅하고, 매장(staff) 전용 디자이너 선택 화면은 `entry=customer-link`일 때 노출되지 않도록 분리함
+- **완료 추가**: customer-link 루트 진입 시 시작 단계를 고객용 상담 페이지(`/consultation/customer`)로 고정해, `/consultation/step1`(현장용 기본조건 화면)으로 잘못 들어가던 문제를 수정함
+- **완료 추가**: customer-link의 URL은 `/consultation`으로 유지하되, 미들웨어 rewrite로 고객용 페이지를 렌더링하도록 변경해 브라우저 주소가 `/consultation/customer`로 바뀌지 않게 정리함
+- **완료 추가**: customer-link에서는 `/consultation` 루트 자체가 고객 정보 화면을 직접 렌더링하도록 조정하고, traits/summary에서 고객 정보 단계로 돌아갈 때도 `/consultation` 경로를 사용해 고객/현장 플로우를 명확히 분리함
+- **완료 추가**: 상담 순서를 `고객 정보 → 기본 조건 → 시술 유형 → 고객 성향 → 최종 확인`으로 재정렬해 고객 정보를 Step 1로 당기고, staff 플로우에서 고객 정보 다음 단계가 `/consultation/step1`로 이어지도록 조정함
+- **완료 추가**: customer-link도 고객 정보 Step 1 이후 바로 요약으로 건너뛰지 않고 `/consultation/step1 → /consultation/step2 → /consultation/traits → /consultation/summary` 순서로 이어지도록 수정해, `다음` 클릭 시 Step 5로 점프하던 오동작을 제거함
 
 ### 8.2 🟢 매장 태블릿 모드
 - **완료**: 매장 태블릿 모드 구현됨
