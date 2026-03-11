@@ -108,7 +108,7 @@ export default function SignupPage(): React.ReactElement {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f8f9fb]">
         <div className="flex flex-col items-center gap-4">
-          <img src="/bdx-logo/bdx-symbol.svg" alt="BDX" className="h-16 animate-pulse" />
+          <img src="/bdx-logo/bdx-symbol-v9.svg" alt="BDX" className="h-16 animate-pulse" />
           <p className="text-sm text-slate-400">잠시만 기다려 주세요...</p>
         </div>
       </div>
@@ -126,7 +126,7 @@ export default function SignupPage(): React.ReactElement {
             className="w-full max-w-[360px]"
           >
             <div className="mb-10 flex flex-col items-center text-center">
-              <img src="/bdx-logo/bdx-symbol.svg" alt="BDX" className="h-20" />
+              <img src="/bdx-logo/bdx-symbol-v9.svg" alt="BDX" className="h-20 w-20 mx-auto block" />
               <div className="mt-6 space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary/70">Create Shop Account</p>
                 <h1 className="text-[26px] font-bold tracking-tight text-slate-900">새 샵 회원가입</h1>

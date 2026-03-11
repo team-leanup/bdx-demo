@@ -249,7 +249,29 @@ export const useAuthStore = create<AuthStore>()(
         return { success: true };
       },
 
-      loginAsDemo: async () => get().loginWithPassword(DEMO_ACCOUNT_EMAIL, DEMO_ACCOUNT_PASSWORD),
+      loginAsDemo: async () => {
+        // 1) Supabase 연결 가능하면 정상 로그인 시도
+        const result = await get().loginWithPassword(DEMO_ACCOUNT_EMAIL, DEMO_ACCOUNT_PASSWORD);
+        if (result.success) {
+          return result;
+        }
+
+        // 2) 실패 시 로컬 데모 모드로 폴백
+        const demoShopId = 'demo-shop';
+        const demoDesignerId = 'demo-designer';
+
+        set({
+          isInitialized: true,
+          pendingGoogleSignup: null,
+          role: 'owner',
+          currentShopId: demoShopId,
+          currentShopOnboardingComplete: false,
+          activeDesignerId: demoDesignerId,
+          activeDesignerName: '데모 원장',
+        });
+
+        return { success: true };
+      },
 
       completePendingGoogleSignup: async ({ shopName, ownerName }) => {
         if (!hasSupabaseEnv) {

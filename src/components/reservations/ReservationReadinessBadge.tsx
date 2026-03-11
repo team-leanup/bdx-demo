@@ -10,7 +10,7 @@ interface ReservationReadinessBadgeProps {
 }
 
 const SIZE_CLASSES: Record<NonNullable<ReservationReadinessBadgeProps['size']>, string> = {
-  sm: 'px-2 py-0.5 text-[10px]',
+  sm: 'px-2 py-0.5 text-[11px]',
   xs: 'px-1.5 py-0.5 text-[9px]',
 };
 
@@ -25,14 +25,14 @@ export function ReservationReadinessBadge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-full border font-semibold',
+        'inline-flex items-center gap-1 rounded-full font-semibold',
         SIZE_CLASSES[size],
         readiness.className,
         className,
       )}
       title={readiness.label}
     >
-      <span>{readiness.icon}</span>
+      <span className={cn('inline-block h-2 w-2 rounded-full', readiness.dotColor)} />
       <span>{compact ? readiness.shortLabel : readiness.label}</span>
     </span>
   );

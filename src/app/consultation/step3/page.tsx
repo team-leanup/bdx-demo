@@ -81,7 +81,7 @@ export default function Step3Page() {
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-border" />
             <span className="text-xs text-text-muted font-medium flex flex-col items-center">
-              <span className="text-lg font-black">{t('step3.colorTitle')}</span>
+              <span className="text-[15px] font-bold text-text">{t('step3.colorTitle')}</span>
               {locale !== 'ko' && (
                 <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('step3.colorTitle')}</span>
               )}

@@ -210,7 +210,7 @@ function CustomerPageInner() {
               className="rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-surface p-4 flex flex-col gap-4"
             >
               <div className="text-center">
-                <h2 className="text-xl font-black text-text">
+                <h2 className="text-xl font-bold text-text">
                   {t('consultation.photoUploadTitle')}
                   {locale !== 'ko' && (
                     <span className="block text-sm font-medium text-text-muted opacity-70 mt-0.5">{tKo('consultation.photoUploadTitle')}</span>
@@ -335,7 +335,7 @@ function CustomerPageInner() {
               <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <span className="text-lg font-black">{t('consultation.referenceTitle')}</span>
+              <span className="text-[15px] font-bold text-text">{t('consultation.referenceTitle')}</span>
               {locale !== 'ko' && (
                 <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('consultation.referenceTitle')}</span>
               )}
@@ -364,7 +364,7 @@ function CustomerPageInner() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
                 <span className="text-sm font-medium">
-                  <span className="text-lg font-black">{t('consultation.referenceAdd')}</span>
+                  <span className="text-[15px] font-bold text-text">{t('consultation.referenceAdd')}</span>
                   {locale !== 'ko' && (
                     <span className="text-xs text-text-muted opacity-60 font-bold ml-1">{tKo('consultation.referenceAdd')}</span>
                   )}

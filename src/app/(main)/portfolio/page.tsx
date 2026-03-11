@@ -41,7 +41,7 @@ export default function PortfolioPage(): React.ReactElement {
   const getById = useCustomerStore((s) => s.getById);
   const getAllRecords = useRecordsStore((s) => s.getAllRecords);
   const [toasts, setToasts] = useState<ToastData[]>([]);
-  
+
   const [search, setSearch] = useState('');
   const [filterKind, setFilterKind] = useState<FilterKind>('all');
   const [serviceFilter, setServiceFilter] = useState('all');
@@ -303,13 +303,18 @@ export default function PortfolioPage(): React.ReactElement {
           <button
             onClick={() => setGlobalBestFilter((v) => !v)}
             className={cn(
-              'flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors border',
+              'flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors border inline-flex items-center gap-1',
               globalBestFilter
-                ? 'bg-amber-500 text-white border-amber-500'
-                : 'border-border text-text-secondary hover:border-amber-400 hover:text-amber-600 bg-surface',
+                ? 'bg-primary text-white border-primary'
+                : 'border-border text-text-secondary hover:border-primary/40 hover:text-primary bg-surface',
             )}
           >
-            🌍 글로벌 베스트
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.6 9h16.8M3.6 15h16.8" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3a15.3 15.3 0 014 9 15.3 15.3 0 01-4 9 15.3 15.3 0 01-4-9 15.3 15.3 0 014-9z" />
+            </svg>
+            글로벌 베스트
           </button>
         </div>
         <div className="flex gap-0.5 p-1 rounded-full bg-surface-alt border border-border self-start">
@@ -328,11 +333,11 @@ export default function PortfolioPage(): React.ReactElement {
             </button>
             ))}
           </div>
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_auto_auto] md:items-center md:gap-3">
           <select
             value={serviceFilter}
             onChange={(e) => setServiceFilter(e.target.value)}
-            className="h-11 rounded-xl border border-border bg-surface px-4 text-sm text-text"
+            className="h-9 md:h-10 w-full rounded-xl border border-border bg-surface px-4 pr-8 text-xs md:text-sm text-text appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22%236b7280%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M5.23%207.21a.75.75%200%20011.06.02L10%2011.168l3.71-3.938a.75.75%200%20111.08%201.04l-4.25%204.5a.75.75%200%2001-1.08%200l-4.25-4.5a.75.75%200%2001.02-1.06z%22%20clip-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[right_8px_center] bg-no-repeat"
           >
             {serviceOptions.map((option) => (
               <option key={option} value={option}>
@@ -340,13 +345,13 @@ export default function PortfolioPage(): React.ReactElement {
               </option>
             ))}
           </select>
-          <div className="flex flex-wrap gap-1 rounded-2xl border border-border bg-surface p-1">
+          <div className="flex flex-wrap items-center justify-center gap-0.5 rounded-xl md:rounded-2xl border border-border bg-surface p-0.5 md:p-1">
             {dateOptions.map(({ key, label }) => (
               <button
                 key={key}
                 onClick={() => setDateFilter(key)}
                 className={cn(
-                  'rounded-full px-3 py-1.5 text-xs font-semibold transition-colors',
+                  'rounded-full px-2.5 py-1 text-[11px] md:px-3 md:py-1.5 md:text-xs font-semibold transition-colors',
                   dateFilter === key ? 'bg-primary text-white' : 'text-text-secondary hover:bg-surface-alt',
                 )}
               >
@@ -354,13 +359,13 @@ export default function PortfolioPage(): React.ReactElement {
               </button>
             ))}
           </div>
-          <div className="flex flex-wrap gap-1 rounded-2xl border border-border bg-surface p-1">
+          <div className="flex flex-wrap items-center justify-center gap-0.5 rounded-xl md:rounded-2xl border border-border bg-surface p-0.5 md:p-1">
             {priceOptions.map(({ key, label }) => (
               <button
                 key={key}
                 onClick={() => setPriceFilter(key)}
                 className={cn(
-                  'rounded-full px-3 py-1.5 text-xs font-semibold transition-colors',
+                  'rounded-full px-2.5 py-1 text-[11px] md:px-3 md:py-1.5 md:text-xs font-semibold transition-colors',
                   priceFilter === key ? 'bg-primary text-white' : 'text-text-secondary hover:bg-surface-alt',
                 )}
               >
@@ -399,50 +404,58 @@ export default function PortfolioPage(): React.ReactElement {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {filteredPhotos.map(({ photo, customer, serviceType, price, effectiveDate }) => {
+            {filteredPhotos.map(({ photo, customer, serviceType, price, effectiveDate }, idx) => {
+              const NAIL_FALLBACKS = ['/images/mock/nail/nail-1.jpg', '/images/mock/nail/nail-2.jpg', '/images/mock/nail/nail-3.jpg'];
+              const imgSrc = photo.imageDataUrl?.startsWith('data:image/') ? photo.imageDataUrl : NAIL_FALLBACKS[idx % NAIL_FALLBACKS.length];
               return (
                 <button
                   key={photo.id}
                   onClick={() => setOverlayPhotoId(photo.id)}
-                  className="group relative aspect-square rounded-xl overflow-hidden bg-surface-alt shadow-sm hover:shadow-md transition-shadow"
+                  className="group rounded-xl overflow-hidden bg-surface-alt shadow-sm hover:shadow-md transition-shadow"
                 >
-                  <Image
-                    src={photo.imageDataUrl}
-                    alt={customer?.name ?? '포트폴리오'}
-                    fill
-                    unoptimized
-                    className="object-cover transition-transform group-hover:scale-105"
-                  />
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2.5 pt-6">
-                    <p className="text-xs font-medium text-white truncate">
-                      {customer?.name ?? '레퍼런스'}
-                    </p>
-                    <p className="mt-0.5 text-[10px] text-white/75">{formatDateDot(effectiveDate)}</p>
-                    <div className="flex items-center gap-1 mt-1 flex-wrap">
+                  <div className="relative aspect-square overflow-hidden">
+                    <Image
+                      src={imgSrc}
+                      alt={customer?.name ?? '포트폴리오'}
+                      fill
+                      unoptimized
+                      className="object-cover transition-transform group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="p-2.5 space-y-1.5">
+                    <div className="flex items-center justify-between gap-1">
+                      <p className="text-xs font-semibold text-foreground truncate">
+                        {customer?.name ?? '레퍼런스'}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground shrink-0">{formatDateDot(effectiveDate)}</p>
+                    </div>
+                    <div className="flex items-center gap-1 h-5">
                       <span
                         className={cn(
-                          'px-2 py-0.5 rounded text-[10px] font-medium',
+                          'px-2 py-0.5 rounded border text-[10px] font-medium',
                           photo.kind === 'reference'
-                            ? 'bg-white/20 text-white'
-                            : 'bg-primary/80 text-white'
+                            ? 'border-border bg-muted text-muted-foreground'
+                            : 'border-primary/30 bg-primary/10 text-primary'
                         )}
-                        >
-                          {KIND_LABEL[photo.kind]}
-                        </span>
+                      >
+                        {KIND_LABEL[photo.kind]}
+                      </span>
                       {serviceType && (
-                        <span className="px-2 py-0.5 rounded bg-white/30 text-[10px] font-medium text-white">
+                        <span className="px-2 py-0.5 rounded border border-border bg-muted text-[10px] font-medium text-muted-foreground">
                           {serviceType}
                         </span>
                       )}
                       {photo.designType && (
-                        <span className="px-2 py-0.5 rounded bg-black/20 text-[10px] font-medium text-white">
+                        <span className="px-2 py-0.5 rounded border border-border bg-muted text-[10px] font-medium text-muted-foreground">
                           {photo.designType}
                         </span>
                       )}
                     </div>
-                    {price != null && (
-                      <p className="mt-1 text-[10px] font-semibold text-white/90">{formatPrice(price)}</p>
-                    )}
+                    <div className="h-4 flex items-center">
+                      {price != null && (
+                        <p className="text-[11px] font-semibold text-foreground">{formatPrice(price)}</p>
+                      )}
+                    </div>
                   </div>
                 </button>
               );

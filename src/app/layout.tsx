@@ -33,6 +33,18 @@ export const metadata: Metadata = {
     shortcut: '/bdx-logo/bdx-symbol.svg',
     apple: '/bdx-logo/bdx-symbol.svg',
   },
+  openGraph: {
+    title: 'BDX — Beauty Decision eXperience',
+    description: '네일샵 현장 상담 & 고객 관리 플랫폼',
+    images: [{ url: '/bdx-og-image.png', width: 1200, height: 630 }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'BDX — Beauty Decision eXperience',
+    description: '네일샵 현장 상담 & 고객 관리 플랫폼',
+    images: ['/bdx-og-image.png'],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -58,7 +70,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
       </head>
-      <body className="min-h-screen bg-background text-text font-pretendard">
+      <body suppressHydrationWarning className="min-h-screen bg-background text-text font-pretendard">
         <ThemeProvider>
           <SupabaseProvider>{children}</SupabaseProvider>
         </ThemeProvider>

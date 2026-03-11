@@ -90,7 +90,7 @@ export function ExtensionSelector({ className }: ExtensionSelectorProps) {
               )}
             >
               {/* Icon */}
-              <span className={cn('transition-transform duration-300', isSelected ? 'scale-110' : 'opacity-60')}>
+              <span className={cn('transition-transform duration-300', isSelected ? 'scale-110' : 'opacity-50')}>
                 {EXT_ICONS[opt.value](isSelected)}
               </span>
 

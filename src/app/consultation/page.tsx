@@ -63,7 +63,50 @@ function FemaleSilhouette({ className }: { className?: string }) {
   );
 }
 
-const STEP_FLOW_ICONS = ['👤', '✋', '💅', '🏷️', '📋'];
+function StepFlowIcon({ type }: { type: 'customer' | 'basic' | 'treatment' | 'traits' | 'summary' }) {
+  const size = 'w-5 h-5 md:w-6 md:h-6';
+  switch (type) {
+    case 'customer':
+      return (
+        <svg className={size} viewBox="0 0 56 56" fill="none">
+          <circle cx="28" cy="18" r="9" fill="currentColor" fillOpacity="0.25" stroke="currentColor" strokeWidth="2.5" />
+          <path d="M10 46C10 36 18 30 28 30C38 30 46 36 46 46" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
+      );
+    case 'basic':
+      return (
+        <svg className={size} viewBox="0 0 56 56" fill="none">
+          <rect x="14" y="8" width="28" height="38" rx="4" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2.5" />
+          <path d="M22 26l4 4 8-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M22 38h12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
+      );
+    case 'treatment':
+      return (
+        <svg className={size} viewBox="0 0 56 56" fill="none">
+          <path d="M20 12h16a4 4 0 014 4v12a12 12 0 01-24 0V16a4 4 0 014-4z" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2.5" />
+          <path d="M28 40v8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M22 48h12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
+      );
+    case 'traits':
+      return (
+        <svg className={size} viewBox="0 0 56 56" fill="none">
+          <path d="M32 10L46 24l-22 22H10V32L32 10z" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" />
+          <circle cx="20" cy="36" r="3" fill="currentColor" fillOpacity="0.4" />
+          <circle cx="28" cy="28" r="3" fill="currentColor" fillOpacity="0.4" />
+          <circle cx="36" cy="20" r="3" fill="currentColor" fillOpacity="0.4" />
+        </svg>
+      );
+    case 'summary':
+      return (
+        <svg className={size} viewBox="0 0 56 56" fill="none">
+          <rect x="10" y="10" width="36" height="36" rx="4" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2.5" />
+          <path d="M20 22h16M20 30h16M20 38h10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
+      );
+  }
+}
 
 function getOptionalLabel(locale: Locale): string {
   if (locale === 'en') return '(Optional)';
@@ -97,11 +140,11 @@ export default function ConsultationStartPage() {
   }, [consultation.currentStep, consultation.customerName]);
 
   const STEP_FLOW = [
-    { icon: STEP_FLOW_ICONS[0], label: t('consultation.customerInfo'), koLabel: tKo('consultation.customerInfo') },
-    { icon: STEP_FLOW_ICONS[1], label: t('consultation.step1Title'), koLabel: tKo('consultation.step1Title') },
-    { icon: STEP_FLOW_ICONS[2], label: t('consultation.treatmentType.title'), koLabel: tKo('consultation.treatmentType.title') },
-    { icon: STEP_FLOW_ICONS[3], label: t('consultation.traitsTitle'), koLabel: tKo('consultation.traitsTitle') },
-    { icon: STEP_FLOW_ICONS[4], label: t('consultation.summaryTitle'), koLabel: tKo('consultation.summaryTitle') },
+    { icon: <StepFlowIcon type="customer" />, label: t('consultation.customerInfo'), koLabel: tKo('consultation.customerInfo') },
+    { icon: <StepFlowIcon type="basic" />, label: t('consultation.step1Title'), koLabel: tKo('consultation.step1Title') },
+    { icon: <StepFlowIcon type="treatment" />, label: t('consultation.treatmentType.title'), koLabel: tKo('consultation.treatmentType.title') },
+    { icon: <StepFlowIcon type="traits" />, label: t('consultation.traitsTitle'), koLabel: tKo('consultation.traitsTitle') },
+    { icon: <StepFlowIcon type="summary" />, label: t('consultation.summaryTitle'), koLabel: tKo('consultation.summaryTitle') },
   ];
 
   const handleStart = () => {
@@ -201,7 +244,7 @@ export default function ConsultationStartPage() {
             {STEP_FLOW.map((step, i) => (
               <div key={step.label} className="flex items-center">
                 <div className="flex flex-col items-center gap-1.5">
-                  <div className="w-9 h-9 md:w-12 md:h-12 rounded-xl bg-surface border border-border flex items-center justify-center text-base md:text-xl shadow-sm">
+                  <div className="w-9 h-9 md:w-12 md:h-12 rounded-xl bg-surface border border-border flex items-center justify-center text-primary shadow-sm">
                     {step.icon}
                   </div>
                   <span className="text-[9px] md:text-xs text-text-muted font-medium leading-tight text-center whitespace-nowrap">
@@ -337,7 +380,7 @@ export default function ConsultationStartPage() {
                     className={cn(
                       'flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200',
                       isLangSelected
-                        ? 'border-2 border-primary bg-white text-primary shadow-sm'
+                        ? 'border-2 border-primary bg-primary/10 text-primary shadow-sm'
                         : 'border border-border bg-white text-text-secondary hover:border-gray-300',
                     )}
                   >

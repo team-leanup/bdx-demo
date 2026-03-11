@@ -23,14 +23,14 @@ export function Badge({
   };
 
   const sizes = {
-    sm: 'px-2 py-0.5 text-xs',
+    sm: 'px-2 py-0.5 text-[11px]',
     md: 'px-2.5 py-1 text-xs',
   };
 
   return (
     <span
       className={cn(
-        'inline-flex items-center font-medium rounded-md',
+        'inline-flex items-center gap-1 font-semibold rounded-full',
         variants[variant],
         sizes[size],
         className,

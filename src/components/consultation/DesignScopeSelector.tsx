@@ -97,14 +97,14 @@ export function DesignScopeSelector({ className }: DesignScopeSelectorProps) {
               whileTap={{ scale: 0.95 }}
               onClick={() => setDesignScope(opt.value)}
               className={cn(
-                'relative flex flex-col items-center justify-center gap-5 py-7 px-4 md:py-10 md:px-6 rounded-2xl border-2 transition-all duration-300 text-left',
+                'relative flex flex-col items-center justify-center gap-5 py-7 px-4 md:py-10 md:px-6 rounded-2xl transition-all duration-300 text-left',
                 isSelected
-                  ? 'border-primary bg-white shadow-sm'
-                  : 'border-border bg-white text-text-muted hover:border-gray-300',
+                  ? 'border-2 border-primary bg-white shadow-sm'
+                  : 'border border-border bg-white text-text-muted hover:border-gray-300',
               )}
             >
               {/* Context-Aware Iconic Visual */}
-              <span className={cn('transition-all duration-300 transform', isSelected ? 'text-primary scale-110' : 'text-text-muted/40')}>
+              <span className={cn('transition-all duration-300 transform', isSelected ? 'text-primary scale-110' : 'opacity-50')}>
                 {DESIGN_ICONS[opt.value]?.(isSelected)}
               </span>
 

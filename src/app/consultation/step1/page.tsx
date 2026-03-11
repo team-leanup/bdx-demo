@@ -50,6 +50,13 @@ export default function Step1Page() {
             transition={{ duration: 0.3 }}
             className="flex items-center gap-4 p-4 rounded-2xl bg-surface-alt border border-border"
           >
+            <div className="w-16 h-16 rounded-2xl bg-surface-alt border border-border flex items-center justify-center flex-shrink-0">
+              <svg width="36" height="36" viewBox="0 0 56 56" fill="none" className="text-primary">
+                <rect x="14" y="8" width="28" height="38" rx="4" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2.5" />
+                <path d="M22 26l4 4 8-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M22 38h12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+              </svg>
+            </div>
             <div>
               <p className="text-[11px] font-bold text-primary uppercase tracking-widest mb-0.5">
                 {t('consultation.step1Title')}
@@ -72,7 +79,7 @@ export default function Step1Page() {
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-border" />
             <span className="text-xs text-text-muted font-medium flex flex-col items-center">
-              <span className="text-lg font-black">{t('step1.removalExtension')}</span>
+              <span className="text-[15px] font-bold text-text">{t('step1.removalExtension')}</span>
               {locale !== 'ko' && (
                 <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('step1.removalExtension')}</span>
               )}
@@ -85,7 +92,7 @@ export default function Step1Page() {
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-border" />
             <span className="text-xs text-text-muted font-medium flex flex-col items-center">
-              <span className="text-lg font-black">{t('step1.extensionRepair')}</span>
+              <span className="text-[15px] font-bold text-text">{t('step1.extensionRepair')}</span>
               {locale !== 'ko' && (
                 <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('step1.extensionRepair')}</span>
               )}
@@ -98,7 +105,7 @@ export default function Step1Page() {
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-border" />
             <span className="text-xs text-text-muted font-medium flex flex-col items-center">
-              <span className="text-lg font-black">{t('step1.nailShape')}</span>
+              <span className="text-[15px] font-bold text-text">{t('step1.nailShape')}</span>
               {locale !== 'ko' && (
                 <span className="text-xs text-text-muted opacity-60 font-bold">{tKo('step1.nailShape')}</span>
               )}

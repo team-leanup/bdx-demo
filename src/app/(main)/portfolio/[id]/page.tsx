@@ -70,6 +70,10 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
   const effectiveDate = photo ? (photo.takenAt ?? photo.createdAt) : undefined;
   const effectivePrice = photo?.price ?? linkedRecord?.finalPrice;
 
+  const NAIL_FALLBACKS = ['/images/mock/nail/nail-1.jpg', '/images/mock/nail/nail-2.jpg', '/images/mock/nail/nail-3.jpg'];
+  const photoIndex = photos.findIndex((p) => p.id === id);
+  const imgSrc = photo?.imageDataUrl?.startsWith('data:image/') ? photo.imageDataUrl : NAIL_FALLBACKS[(photoIndex >= 0 ? photoIndex : 0) % NAIL_FALLBACKS.length];
+
   const handleDismissToast = (id: string): void => {
     setToasts((current) => current.filter((toast) => toast.id !== id));
   };
@@ -138,7 +142,7 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
       <div className="mx-4">
         <div className="relative aspect-square w-full max-w-lg mx-auto rounded-2xl overflow-hidden bg-surface-alt shadow-lg">
           <Image
-            src={photo.imageDataUrl}
+            src={imgSrc}
             alt={customer?.name ?? '포트폴리오 사진'}
             fill
             unoptimized

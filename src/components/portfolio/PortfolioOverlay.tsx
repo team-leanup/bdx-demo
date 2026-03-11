@@ -60,6 +60,9 @@ export function PortfolioOverlay({
     if (currentIndex < photoIds.length - 1) setCurrentId(photoIds[currentIndex + 1]);
   }, [currentIndex, photoIds]);
 
+  const NAIL_FALLBACKS = ['/images/mock/nail/nail-1.jpg', '/images/mock/nail/nail-2.jpg', '/images/mock/nail/nail-3.jpg'];
+  const imgSrc = photo?.imageDataUrl?.startsWith('data:image/') ? photo.imageDataUrl : NAIL_FALLBACKS[currentIndex % NAIL_FALLBACKS.length];
+
   if (!photo) return <></>;
 
   return (
@@ -84,7 +87,7 @@ export function PortfolioOverlay({
           {/* 사진 */}
           <div className="relative aspect-square w-full bg-black">
             <Image
-              src={photo.imageDataUrl}
+              src={imgSrc}
               alt={customer?.name ?? '포트폴리오'}
               fill
               unoptimized
@@ -125,43 +128,45 @@ export function PortfolioOverlay({
               </button>
             )}
 
-            {/* 하단 정보 오버레이 */}
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 pt-10">
-              <p className="text-base font-bold text-white truncate">{customer?.name ?? '알 수 없음'}</p>
-              {effectiveDate && (
-                <p className="text-xs text-white/70 mt-0.5">{formatDateDot(effectiveDate)}</p>
-              )}
+          </div>
+
+          {/* 정보 + 액션 */}
+          <div className="bg-surface flex flex-col gap-0">
+            {/* 고객 정보 */}
+            <div className="px-4 pt-3 pb-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-bold text-foreground truncate">{customer?.name ?? '알 수 없음'}</p>
+                {effectiveDate && (
+                  <p className="text-xs text-muted-foreground shrink-0">{formatDateDot(effectiveDate)}</p>
+                )}
+              </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {effectivePrice != null && (
-                  <span className="rounded-full bg-white/20 px-2.5 py-1 text-xs font-bold text-white backdrop-blur-sm">
+                  <span className="rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-bold text-foreground">
                     {formatPrice(effectivePrice)}
                   </span>
                 )}
                 {estimatedMinutes != null && (
-                  <span className="rounded-full bg-white/20 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
+                  <span className="rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
                     {estimatedMinutes}분
                   </span>
                 )}
                 {serviceType && (
-                  <span className="rounded-full bg-primary/70 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
+                  <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
                     {serviceType}
                   </span>
                 )}
               </div>
               {photo.colorLabels && photo.colorLabels.length > 0 && (
                 <div className="mt-1.5 flex flex-wrap gap-1">
-                  {photo.colorLabels.map((c) => (
-                    <span key={c} className="rounded-full bg-rose-500/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+                  {photo.colorLabels.map((c, i) => (
+                    <span key={i} className="rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-600">
                       {c}
                     </span>
                   ))}
                 </div>
               )}
             </div>
-          </div>
-
-          {/* 하단 액션 바 */}
-          <div className="bg-surface flex flex-col gap-0">
             {/* 인스타 해시태그 토글 */}
             {showHashtags && (
               <div className="border-t border-border">

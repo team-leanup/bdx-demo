@@ -178,10 +178,10 @@ export function ExpressionSelector({ className }: ExpressionSelectorProps) {
               whileTap={{ scale: 0.96 }}
               onClick={() => toggleExpression(opt.value as ExpressionType)}
               className={cn(
-                'relative flex flex-col items-center gap-4 py-8 px-4 rounded-2xl border-2 transition-all duration-300',
+                'relative flex flex-col items-center gap-4 py-8 px-4 rounded-2xl transition-all duration-300',
                 isSelected
-                  ? 'border-primary bg-white shadow-sm'
-                  : 'border-border bg-white text-text-muted hover:border-gray-300',
+                  ? 'border-2 border-primary bg-white shadow-sm'
+                  : 'border border-border bg-white text-text-muted hover:border-gray-300',
               )}
             >
               {/* PRO badge */}
@@ -192,7 +192,7 @@ export function ExpressionSelector({ className }: ExpressionSelectorProps) {
               )}
 
               {/* Large Zoomed Icon */}
-              <span className={cn('transition-all duration-300 transform', isSelected ? 'scale-110' : 'opacity-50 grayscale-[0.5]')}>
+              <span className={cn('transition-all duration-300 transform', isSelected ? 'scale-110' : 'opacity-50')}>
                 {EXPRESSION_ICONS[opt.value]?.(isSelected)}
               </span>
 

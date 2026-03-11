@@ -186,7 +186,7 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
           </svg>
         </div>
         <div>
-          <p className="text-[11px] font-bold text-primary uppercase tracking-widest">Final Review</p>
+          <p className="text-[11px] font-bold text-primary uppercase tracking-widest">Consultation Summary</p>
           <h2 className="text-base font-bold text-text">
             {t('summary.finalReview')}
             {locale !== 'ko' && (
@@ -196,7 +196,7 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
         </div>
       </div>
 
-      <div className="flex items-center gap-4 bg-white border border-border rounded-2xl px-4 py-3">
+      <div className="flex items-center gap-4 bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3">
         <div className="flex items-center gap-1.5">
           <svg className="w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -257,7 +257,7 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
       </Accordion>
 
       {/* 2. 디자인 */}
-      <div className="bg-white rounded-2xl border border-border p-4">
+      <div className="bg-surface rounded-2xl border border-border p-4">
         <SectionHeader
           icon={
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -271,7 +271,7 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
       </div>
 
       {/* 3. 시술 조건 */}
-      <div className="bg-white rounded-2xl border border-border p-4">
+      <div className="bg-surface rounded-2xl border border-border p-4">
         <SectionHeader
           icon={
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -299,7 +299,7 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
       </div>
 
       {/* 4. 추가 옵션 */}
-      <div className="bg-white rounded-2xl border border-border p-4">
+      <div className="bg-surface rounded-2xl border border-border p-4">
         <SectionHeader
           icon={
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -346,7 +346,7 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
 
       {/* 5. 고객 정보 */}
       {(consultation.customerName || consultation.customerId) && (
-        <div className="bg-white rounded-2xl border border-border p-4">
+        <div className="bg-surface rounded-2xl border border-border p-4">
           <SectionHeader
             icon={
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>

@@ -56,14 +56,11 @@ export default function TraitsPage(): React.ReactElement {
             className="flex items-center gap-4 p-4 rounded-2xl bg-surface-alt border border-border"
           >
             <div className="w-16 h-16 rounded-2xl bg-surface-alt border border-border flex items-center justify-center flex-shrink-0">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" className="text-primary">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
-                />
+              <svg width="36" height="36" viewBox="0 0 56 56" fill="none" className="text-primary">
+                <path d="M32 10L46 24l-22 22H10V32L32 10z" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" />
+                <circle cx="20" cy="36" r="3" fill="currentColor" fillOpacity="0.4" />
+                <circle cx="28" cy="28" r="3" fill="currentColor" fillOpacity="0.4" />
+                <circle cx="36" cy="20" r="3" fill="currentColor" fillOpacity="0.4" />
               </svg>
             </div>
             <div>
@@ -142,7 +139,7 @@ export default function TraitsPage(): React.ReactElement {
               <div className="w-7 h-7 rounded-xl bg-surface-alt border border-border flex items-center justify-center flex-shrink-0">
                 <span className="text-base">{etcPreset?.icon ?? '📝'}</span>
               </div>
-              <p className="text-sm font-extrabold text-text-secondary tracking-tight">
+              <p className="text-sm font-bold text-text-secondary tracking-tight">
                 {t('consultation.traitsCategoryEtc')}
                 {locale !== 'ko' && (
                   <span className="ml-2 text-xs font-medium text-text-muted opacity-60">
@@ -150,7 +147,7 @@ export default function TraitsPage(): React.ReactElement {
                   </span>
                 )}
               </p>
-              <span className="ml-auto text-[10px] font-black text-text-muted bg-surface-alt px-3 py-1 rounded-full border border-border uppercase tracking-widest text-center">
+              <span className="ml-auto text-[10px] font-bold text-text-muted bg-surface-alt px-3 py-1 rounded-full border border-border uppercase tracking-widest text-center">
                 {t('selector.multiSelect')}
                 {locale !== 'ko' && (
                   <span className="block text-[8px] opacity-60 normal-case tracking-normal mt-0.5">

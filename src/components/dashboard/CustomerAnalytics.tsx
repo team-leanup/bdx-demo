@@ -54,7 +54,7 @@ export function CustomerAnalytics() {
                 paddingAngle={3}
               >
                 <Cell fill="var(--color-primary)" />
-                <Cell fill="var(--color-border)" />
+                <Cell fill="color-mix(in srgb, var(--color-primary) 25%, white)" />
               </Pie>
               <Tooltip content={<CustomTooltip />} />
             </PieChart>
@@ -75,7 +75,7 @@ export function CustomerAnalytics() {
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <div className="h-2.5 w-2.5 rounded-full bg-border" />
+                <div className="h-2.5 w-2.5 rounded-full bg-primary/25" />
                 <span className="text-xs text-text">신규</span>
               </div>
               <p className="mt-0.5 text-lg font-bold text-text">

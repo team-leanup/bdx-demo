@@ -26,9 +26,11 @@ function SaveCompleteContent() {
         >
           <div
             className="flex h-20 w-20 items-center justify-center rounded-full"
-            style={{ background: 'color-mix(in srgb, var(--color-success) 15%, var(--color-surface))' }}
+            style={{ background: 'color-mix(in srgb, var(--color-primary) 15%, var(--color-surface))' }}
           >
-            <span className="text-4xl">🟢</span>
+            <svg className="h-10 w-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} style={{ color: 'var(--color-primary)' }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
           <div className="text-center">
             <h1 className="text-2xl font-bold text-text">사전 상담이 저장됐어요</h1>
@@ -58,9 +60,13 @@ function SaveCompleteContent() {
           transition={{ delay: 0.2, duration: 0.3 }}
           className="w-full max-w-sm mb-4 flex items-start gap-3 p-4 rounded-2xl border border-primary/20 bg-primary/5"
         >
-          <span className="text-lg flex-shrink-0">📱</span>
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-primary/15">
+            <svg className="h-5 w-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016A3.001 3.001 0 0021 9.349M3.75 21H6m0 0h2.25m0-11.177v-.958c0-.568.422-1.048.987-1.106a48.554 48.554 0 019.526 0 1.114 1.114 0 01.987 1.106v.958" />
+            </svg>
+          </div>
           <p className="text-sm text-text-secondary">
-            <span className="font-bold text-text">매장 도착 후 이 화면을 보여주시면</span> 담당 디자이너가 바로 확인할 수 있어요.
+            <span className="font-bold text-text">매장 도착 후 이 화면을 보여주시면</span><br />담당 디자이너가 바로 확인할 수 있어요.
           </p>
         </motion.div>
 
@@ -77,7 +83,7 @@ function SaveCompleteContent() {
         <div className="w-full max-w-sm flex flex-col gap-3">
           <button
             onClick={() => router.push(customerLinkEntryHref)}
-            className="w-full rounded-2xl bg-text px-5 py-4 text-left text-white transition-all active:scale-[0.98]"
+            className="w-full rounded-2xl bg-primary px-5 py-4 text-left text-white transition-all active:scale-[0.98]"
           >
             <p className="text-base font-bold">새 상담 다시 작성하기</p>
             <p className="mt-1 text-sm opacity-85">필요하면 정보를 수정해서 다시 제출할 수 있어요</p>
@@ -132,9 +138,9 @@ function SaveCompleteContent() {
       >
         <div
           className="flex h-20 w-20 items-center justify-center rounded-full"
-          style={{ background: 'color-mix(in srgb, var(--color-success) 15%, var(--color-surface))' }}
+          style={{ background: 'color-mix(in srgb, var(--color-primary) 15%, var(--color-surface))' }}
         >
-          <svg className="h-10 w-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} style={{ color: 'var(--color-success)' }}>
+          <svg className="h-10 w-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} style={{ color: 'var(--color-primary)' }}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>

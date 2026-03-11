@@ -4,7 +4,7 @@ export type ReservationReadinessState = 'ready' | 'onsite_required';
 
 interface ReservationReadinessMeta {
   state: ReservationReadinessState;
-  icon: string;
+  dotColor: string;
   label: string;
   shortLabel: string;
   className: string;
@@ -13,17 +13,17 @@ interface ReservationReadinessMeta {
 const RESERVATION_READINESS_META: Record<ReservationReadinessState, ReservationReadinessMeta> = {
   ready: {
     state: 'ready',
-    icon: '🟢',
+    dotColor: 'bg-emerald-500',
     label: '디자인 확정',
     shortLabel: '확정',
-    className: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    className: 'bg-surface-alt text-text-secondary',
   },
   onsite_required: {
     state: 'onsite_required',
-    icon: '🟡',
+    dotColor: 'bg-amber-400',
     label: '현장 상담 필요',
     shortLabel: '현장상담',
-    className: 'bg-amber-100 text-amber-700 border-amber-200',
+    className: 'bg-surface-alt text-text-secondary',
   },
 };
 
