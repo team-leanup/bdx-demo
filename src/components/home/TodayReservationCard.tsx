@@ -29,6 +29,7 @@ interface ChannelBadgeInfo {
 
 interface TodayReservationCardProps {
   reservations: BookingRequest[];
+  shopName: string;
   channelBadge: Record<BookingChannel, ChannelBadgeInfo>;
   onViewAll: () => void;
   onStartConsultation: (booking: BookingRequest) => void;
@@ -45,6 +46,7 @@ interface TodayReservationCardProps {
 
 export function TodayReservationCard({
   reservations,
+  shopName,
   channelBadge,
   onViewAll,
   onStartConsultation,
@@ -309,6 +311,7 @@ export function TodayReservationCard({
         isOpen={linkGenBooking !== null}
         onClose={() => setLinkGenBooking(null)}
         booking={linkGenBooking}
+        shopName={shopName}
       />
     </motion.div>
 

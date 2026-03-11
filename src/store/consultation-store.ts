@@ -69,6 +69,7 @@ interface ConsultationStore {
   // 연결된 예약 ID
   setBookingId: (id: string) => void;
   setEntryPoint: (entryPoint: NonNullable<ConsultationType['entryPoint']>) => void;
+  setSourceShopName: (shopName: string | undefined) => void;
   hydrateConsultation: (draft: Partial<ConsultationType>) => void;
 
   // 단계 이동
@@ -230,6 +231,9 @@ export const useConsultationStore = create<ConsultationStore>()(
 
       setEntryPoint: (entryPoint) =>
         set((s) => ({ consultation: { ...s.consultation, entryPoint } })),
+
+      setSourceShopName: (shopName) =>
+        set((s) => ({ consultation: { ...s.consultation, sourceShopName: shopName } })),
 
       hydrateConsultation: (draft) =>
         set({

@@ -202,6 +202,7 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
   const locale = useLocaleStore((s) => s.locale);
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
   const getDesignerNameFromStore = useShopStore((s) => s.getDesignerName);
+  const shopName = useShopStore((s) => s.shop?.name) ?? '내 매장';
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const [showForm, setShowForm] = useState(false);
   const [alertBooking, setAlertBooking] = useState<BookingRequest | null>(null);
@@ -429,6 +430,7 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
         isOpen={linkGenBooking !== null}
         onClose={() => setLinkGenBooking(null)}
         booking={linkGenBooking}
+        shopName={shopName}
       />
     </div>
   );

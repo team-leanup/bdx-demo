@@ -8,9 +8,10 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   booking: BookingRequest | null;
+  shopName?: string;
 }
 
-export function ConsultationLinkModal({ isOpen, onClose, booking }: Props) {
+export function ConsultationLinkModal({ isOpen, onClose, booking, shopName }: Props) {
   const [copied, setCopied] = useState(false);
 
   const url = useMemo(() => {
@@ -23,8 +24,9 @@ export function ConsultationLinkModal({ isOpen, onClose, booking }: Props) {
     params.set("lang", booking.language ?? "ko");
     params.set("bookingId", booking.id);
     params.set("entry", "customer-link");
+    if (shopName) params.set("shopName", shopName);
     return `${window.location.origin}/consultation/customer?${params.toString()}`;
-  }, [booking]);
+  }, [booking, shopName]);
 
   const handleCopy = async () => {
     if (!url) return;

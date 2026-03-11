@@ -8,11 +8,12 @@ interface QRGeneratorModalProps {
   isOpen: boolean;
   onClose: () => void;
   shopId?: string;
+  shopName?: string;
 }
 
 const CONSULTATION_URL_PATH = '/consultation/customer?entry=customer-link';
 
-export function QRGeneratorModal({ isOpen, onClose, shopId }: QRGeneratorModalProps): React.ReactElement | null {
+export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGeneratorModalProps): React.ReactElement | null {
   const [copied, setCopied] = useState(false);
   const [origin, setOrigin] = useState('');
 
@@ -23,7 +24,7 @@ export function QRGeneratorModal({ isOpen, onClose, shopId }: QRGeneratorModalPr
   }, []);
 
   const consultationUrl = origin
-    ? `${origin}${CONSULTATION_URL_PATH}${shopId ? `&shopId=${shopId}` : ''}`
+    ? `${origin}${CONSULTATION_URL_PATH}${shopId ? `&shopId=${shopId}` : ''}${shopName ? `&shopName=${encodeURIComponent(shopName)}` : ''}`
     : CONSULTATION_URL_PATH;
 
   const handleCopy = async () => {
