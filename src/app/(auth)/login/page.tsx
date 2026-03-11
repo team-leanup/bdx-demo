@@ -10,7 +10,8 @@ export default function LoginPage(): React.ReactElement {
   const router = useRouter();
   const isInitialized = useAuthStore((s) => s.isInitialized);
   const currentShopOnboardingComplete = useAuthStore((s) => s.currentShopOnboardingComplete);
-  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const role = useAuthStore((s) => s.role);
+  const currentShopId = useAuthStore((s) => s.currentShopId);
   const pendingGoogleSignup = useAuthStore((s) => s.pendingGoogleSignup);
   const loginWithPassword = useAuthStore((s) => s.loginWithPassword);
   const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle);
@@ -30,12 +31,12 @@ export default function LoginPage(): React.ReactElement {
       return;
     }
 
-    if (!isLoggedIn()) {
+    if (!role || !currentShopId) {
       return;
     }
 
     router.replace(currentShopOnboardingComplete ? '/home' : '/onboarding');
-  }, [currentShopOnboardingComplete, isInitialized, isLoggedIn, pendingGoogleSignup, router]);
+  }, [currentShopOnboardingComplete, isInitialized, role, currentShopId, pendingGoogleSignup, router]);
 
   const isReady = email.trim().length > 0 && password.trim().length > 0;
 

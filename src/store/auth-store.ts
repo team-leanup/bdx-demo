@@ -260,13 +260,19 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       loginAsDemo: async () => {
-        // 1) Supabase 연결 가능하면 정상 로그인 시도
-        const result = await get().loginWithPassword(DEMO_ACCOUNT_EMAIL, DEMO_ACCOUNT_PASSWORD);
-        if (result.success) {
-          return result;
+        // 1) Supabase 연결 가능 + 데모 패스워드 있으면 정상 로그인 시도
+        if (DEMO_ACCOUNT_PASSWORD) {
+          try {
+            const result = await get().loginWithPassword(DEMO_ACCOUNT_EMAIL, DEMO_ACCOUNT_PASSWORD);
+            if (result.success) {
+              return result;
+            }
+          } catch {
+            // Supabase 실패 시 로컬 폴백으로 진행
+          }
         }
 
-        // 2) 실패 시 로컬 데모 모드로 폴백
+        // 2) 로컬 데모 모드로 폴백
         const demoShopId = 'demo-shop';
         const demoDesignerId = 'demo-designer';
 
