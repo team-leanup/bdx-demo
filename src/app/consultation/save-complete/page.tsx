@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { ConsultationSummaryCard } from '@/components/consultation/ConsultationSummaryCard';
+import { useConsultationStore } from '@/store/consultation-store';
 
 function SaveCompleteContent() {
   const router = useRouter();
@@ -11,6 +12,8 @@ function SaveCompleteContent() {
   const consultationId = searchParams.get('consultationId') ?? 'record-001';
   const customerId = searchParams.get('customerId') ?? '';
   const mode = searchParams.get('mode') ?? 'default';
+  const sourceShopName = useConsultationStore((s) => s.consultation.sourceShopName);
+  const customerLinkEntryHref = `/consultation/customer?entry=customer-link${sourceShopName ? `&shopName=${encodeURIComponent(sourceShopName)}` : ''}`;
 
   if (mode === 'preconsultation') {
     return (
@@ -34,6 +37,19 @@ function SaveCompleteContent() {
             </p>
           </div>
         </motion.div>
+
+        {sourceShopName && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, duration: 0.3 }}
+            className="w-full max-w-sm mb-4 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3"
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-primary">Consultation Link</p>
+            <p className="mt-1 text-sm font-bold text-text">{sourceShopName}</p>
+            <p className="mt-1 text-xs text-text-muted">{sourceShopName}에 전달된 사전 상담으로 저장됐어요.</p>
+          </motion.div>
+        )}
 
         {/* 매장 도착 안내 */}
         <motion.div
@@ -59,21 +75,12 @@ function SaveCompleteContent() {
         </motion.div>
 
         <div className="w-full max-w-sm flex flex-col gap-3">
-          {customerId && (
-            <button
-              onClick={() => router.push(`/customers/${customerId}`)}
-              className="w-full rounded-2xl border border-border bg-surface px-5 py-4 text-left transition-all active:scale-[0.98]"
-            >
-              <p className="text-base font-bold text-text">고객 상세 보기</p>
-              <p className="mt-1 text-sm text-text-secondary">저장된 선호와 특이사항을 확인할 수 있어요</p>
-            </button>
-          )}
           <button
-            onClick={() => router.push('/home')}
+            onClick={() => router.push(customerLinkEntryHref)}
             className="w-full rounded-2xl bg-text px-5 py-4 text-left text-white transition-all active:scale-[0.98]"
           >
-            <p className="text-base font-bold">홈으로 돌아가기</p>
-            <p className="mt-1 text-sm opacity-85">예약 준비 상태를 바로 확인할 수 있어요</p>
+            <p className="text-base font-bold">새 상담 다시 작성하기</p>
+            <p className="mt-1 text-sm opacity-85">필요하면 정보를 수정해서 다시 제출할 수 있어요</p>
           </button>
         </div>
       </div>

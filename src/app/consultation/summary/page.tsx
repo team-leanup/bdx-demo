@@ -37,6 +37,7 @@ export default function SummaryPage() {
   const [customerMemo, setCustomerMemo] = useState('');
   const [additionalCharge, setAdditionalCharge] = useState(0);
   const [additionalChargeInput, setAdditionalChargeInput] = useState('');
+  const isCustomerLinkFlow = entryPoint === 'customer_link';
 
   const breakdown = useMemo(() => calculatePrice(consultation), [consultation]);
   const adjustedFinalPrice = breakdown.finalPrice + additionalCharge;
@@ -46,6 +47,9 @@ export default function SummaryPage() {
   const t = useT();
   const tKo = useKo();
   const locale = useLocale();
+  const customerLinkBackLabel = locale === 'ko' ? '이전으로' : 'Back';
+  const customerLinkSubmitLabel = locale === 'ko' ? '상담 제출' : 'Submit';
+  const customerLinkEntryHref = `/consultation/customer?entry=customer-link${consultation.sourceShopName ? `&shopName=${encodeURIComponent(consultation.sourceShopName)}` : ''}`;
 
   useEffect(() => {
     const memo = sessionStorage.getItem('consultation_customer_memo') ?? '';
@@ -71,7 +75,6 @@ export default function SummaryPage() {
     const newId = `record-${Date.now()}`;
     const minutes = estimateTime(consultation);
     const now = new Date().toISOString();
-    const isCustomerLinkFlow = entryPoint === 'customer_link';
     const consultationSnapshot = { ...consultation };
 
     if (isCustomerLinkFlow && bookingId) {
@@ -189,7 +192,7 @@ export default function SummaryPage() {
         title={t('consultation.summaryTitle')}
         titleKo={tKo('consultation.summaryTitle')}
         backHref="/consultation/traits"
-        onClose={() => router.push('/home')}
+        onClose={() => router.push(isCustomerLinkFlow ? customerLinkEntryHref : '/home')}
       />
 
       <motion.main
@@ -199,9 +202,18 @@ export default function SummaryPage() {
         className="flex-1 overflow-y-auto px-4 md:px-8 pt-5 pb-40 md:pb-6"
       >
         <div className="max-w-2xl md:max-w-3xl mx-auto flex flex-col gap-4">
+          {isCustomerLinkFlow && consultation.sourceShopName && (
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-primary">Consultation Link</p>
+              <p className="mt-1 text-sm font-bold text-text">{consultation.sourceShopName}</p>
+              <p className="mt-1 text-xs text-text-muted">{consultation.sourceShopName}에서 보낸 상담 링크를 확인하고 있어요.</p>
+            </div>
+          )}
+
           <ConsultationSummaryCard />
 
-          <div className="rounded-2xl border border-border bg-white p-4 flex flex-col gap-3">
+          {!isCustomerLinkFlow && (
+            <div className="rounded-2xl border border-border bg-white p-4 flex flex-col gap-3">
             <div className="flex items-center gap-2 pb-2 border-b border-border">
               <div className="w-7 h-7 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <svg className="w-3.5 h-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -264,7 +276,8 @@ export default function SummaryPage() {
               </span>
               <span className="text-lg font-bold text-primary">{formatPrice(adjustedFinalPrice)}</span>
             </div>
-          </div>
+            </div>
+          )}
           {customerMemo && (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 flex flex-col gap-2">
               <div className="flex items-center gap-2">
@@ -294,33 +307,37 @@ export default function SummaryPage() {
       <footer className="fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur-sm border-t border-border px-4 pt-3 pb-5 flex flex-col gap-2.5 safe-bottom md:static md:flex-shrink-0 md:px-8">
         <div className="flex gap-2">
           <Button
-            variant="secondary"
-            size="md"
-            onClick={() => setDiscountOpen(true)}
-            className="flex-1 gap-1.5"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0c1.1.128 1.907 1.077 1.907 2.185z" />
-            </svg>
-            {t('consultation.discountApply')}
-            {locale !== 'ko' && (
-              <span className="ml-1 text-[10px] opacity-60">{tKo('consultation.discountApply')}</span>
-            )}
-          </Button>
-          <Button
             variant="ghost"
             size="md"
             onClick={() => router.back()}
-            className="flex-1 gap-1.5"
+            className={isCustomerLinkFlow ? 'w-full gap-1.5' : 'flex-1 gap-1.5'}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
             </svg>
-            {t('consultation.modifyConsultation')}
+            {isCustomerLinkFlow ? customerLinkBackLabel : t('consultation.modifyConsultation')}
             {locale !== 'ko' && (
-              <span className="ml-1 text-[10px] opacity-60">{tKo('consultation.modifyConsultation')}</span>
+              <span className="ml-1 text-[10px] opacity-60">
+                {isCustomerLinkFlow ? '이전으로' : tKo('consultation.modifyConsultation')}
+              </span>
             )}
           </Button>
+          {!isCustomerLinkFlow && (
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => setDiscountOpen(true)}
+              className="flex-1 gap-1.5"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0c1.1.128 1.907 1.077 1.907 2.185z" />
+              </svg>
+              {t('consultation.discountApply')}
+              {locale !== 'ko' && (
+                <span className="ml-1 text-[10px] opacity-60">{tKo('consultation.discountApply')}</span>
+              )}
+            </Button>
+          )}
         </div>
         <button
           type="button"
@@ -345,14 +362,14 @@ export default function SummaryPage() {
             </>
           ) : (
             <>
-              {t('consultation.saveAndComplete')}
-              {locale !== 'ko' && <span className="ml-1 text-sm opacity-70">{tKo('consultation.saveAndComplete')}</span>}
+              {isCustomerLinkFlow ? customerLinkSubmitLabel : t('consultation.saveAndComplete')}
+              {locale !== 'ko' && <span className="ml-1 text-sm opacity-70">{isCustomerLinkFlow ? '상담 제출' : tKo('consultation.saveAndComplete')}</span>}
             </>
           )}
         </button>
       </footer>
 
-      <DiscountModal isOpen={discountOpen} onClose={() => setDiscountOpen(false)} />
+      {!isCustomerLinkFlow && <DiscountModal isOpen={discountOpen} onClose={() => setDiscountOpen(false)} />}
     </div>
   );
 }
