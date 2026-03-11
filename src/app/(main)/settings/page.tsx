@@ -345,6 +345,27 @@ function StaffSection() {
 
     setBusyId(designer.id);
     const result = await deleteDesigner(designer.id);
+
+    if (!result.success && result.error?.includes('먼저 담당을 변경한 뒤 삭제')) {
+      const deactivateResult = await updateDesigner(designer.id, { isActive: false });
+      setBusyId(null);
+      setConfirmDeleteId(null);
+
+      if (!deactivateResult.success) {
+        setFeedback({ tone: 'error', message: deactivateResult.error ?? result.error });
+        return;
+      }
+
+      if (editingId === designer.id) {
+        setEditingId(null);
+      }
+      setFeedback({
+        tone: 'success',
+        message: `${designer.name} 프로필은 연결된 이력이 있어 삭제 대신 비활성화했습니다.`,
+      });
+      return;
+    }
+
     setBusyId(null);
     setConfirmDeleteId(null);
 

@@ -260,6 +260,11 @@ export const useAuthStore = create<AuthStore>()(
 
       loginAsDemo: async () => {
         // 항상 로컬 데모 모드로 즉시 진입 (Supabase 호출 없음)
+        // middleware가 데모 세션을 인식하도록 쿠키 설정
+        if (typeof document !== 'undefined') {
+          document.cookie = 'bdx-demo=true;path=/;max-age=86400';
+        }
+
         set({
           isInitialized: true,
           pendingGoogleSignup: null,
@@ -361,6 +366,11 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       logout: async () => {
+        // 데모 쿠키 제거
+        if (typeof document !== 'undefined') {
+          document.cookie = 'bdx-demo=;path=/;max-age=0';
+        }
+
         if (!hasSupabaseEnv) {
           set({
             isInitialized: true,

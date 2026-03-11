@@ -4,7 +4,7 @@ import { use, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Card, Badge, Button } from '@/components/ui';
-import { formatPrice, formatDateDotWithTime } from '@/lib/format';
+import { formatPrice, formatDateDotWithTime, getNowInKoreaIso } from '@/lib/format';
 import { BODY_PART_LABEL, DESIGN_SCOPE_LABEL, EXPRESSION_LABEL, getDesignerName } from '@/lib/labels';
 import { useShallow } from 'zustand/react/shallow';
 import { useRecordsStore } from '@/store/records-store';
@@ -18,6 +18,7 @@ import { SafetyTag } from '@/components/ui/SafetyTag';
 import { DailyChecklist } from '@/components/consultation/DailyChecklist';
 import { ChecklistSummaryRow } from '@/components/records/ChecklistSummaryRow';
 import type { DailyChecklist as DailyChecklistType } from '@/types/consultation';
+import { ConsultationStep } from '@/types/consultation';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -63,7 +64,7 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
   const hasImages = referenceImages.length > 0 || portfolioPhotos.length > 0;
 
   const handleSaveFinalPrice = (): void => {
-    const now = new Date().toISOString();
+    const now = getNowInKoreaIso();
     setEditingFinalPrice(false);
     updateRecord(id, { finalPrice: finalPriceValue, finalizedAt: now });
   };
@@ -79,8 +80,9 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
       customerId: record.customerId,
       customerName: c.customerName,
       customerPhone: c.customerPhone,
+      currentStep: ConsultationStep.START,
     });
-    router.push('/consultation/customer');
+    router.push('/consultation');
   };
 
   return (

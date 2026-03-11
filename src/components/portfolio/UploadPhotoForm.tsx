@@ -8,7 +8,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { useRecordsStore } from '@/store/records-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { resizePortfolioImage } from '@/lib/image-utils';
-import { formatDateDot } from '@/lib/format';
+import { formatDateDot, getTodayInKorea } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import type { PortfolioPhotoKind } from '@/types/portfolio';
 
@@ -42,7 +42,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
   const [selectedRecordId, setSelectedRecordId] = useState<string>('');
   const [selectedKind, setSelectedKind] = useState<PortfolioPhotoKind>('reference');
   const [note, setNote] = useState('');
-  const [takenAt, setTakenAt] = useState(() => new Date().toISOString().slice(0, 10));
+  const [takenAt, setTakenAt] = useState(() => getTodayInKorea());
   const [serviceType, setServiceType] = useState('');
   const [designType, setDesignType] = useState('');
   const [priceInput, setPriceInput] = useState('');
@@ -130,7 +130,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
     setSelectedRecordId('');
     setSelectedKind('reference');
     setNote('');
-    setTakenAt(new Date().toISOString().slice(0, 10));
+    setTakenAt(getTodayInKorea());
     setServiceType('');
     setDesignType('');
     setPriceInput('');

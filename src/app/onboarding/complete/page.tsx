@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { useAppStore } from '@/store/app-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useShopStore } from '@/store/shop-store';
-import { formatPrice, formatMinutes } from '@/lib/format';
+import { formatPrice, formatMinutes, getNowInKoreaIso } from '@/lib/format';
 
 const SERVICE_LABELS: Record<string, string> = {
   gel: '젤네일',
@@ -53,7 +53,7 @@ export default function CompletePage() {
   } = shopSettings;
 
   const handleTour = async () => {
-    const onboardingCompletedAt = new Date().toISOString();
+    const onboardingCompletedAt = getNowInKoreaIso();
     await updateShop({
       name: shopName || '우리 샵',
       phone: shopSettings.shopPhone || undefined,
@@ -69,7 +69,7 @@ export default function CompletePage() {
   };
 
   const handleHome = async () => {
-    const onboardingCompletedAt = new Date().toISOString();
+    const onboardingCompletedAt = getNowInKoreaIso();
     await updateShop({
       name: shopName || '우리 샵',
       phone: shopSettings.shopPhone || undefined,

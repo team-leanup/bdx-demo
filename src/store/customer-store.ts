@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Customer, CustomerTag, SmallTalkNote, TagAccent } from '@/types/customer';
 import { useAuthStore } from '@/store/auth-store';
+import { getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
 import {
   fetchCustomers,
   dbUpsertCustomer,
@@ -112,8 +113,8 @@ export const useCustomerStore = create<CustomerStore>()(
       },
 
       createCustomer: (input) => {
-        const nowIso = new Date().toISOString();
-        const today = nowIso.split('T')[0];
+        const nowIso = getNowInKoreaIso();
+        const today = getTodayInKorea();
         const id = input.id ?? `customer-${Date.now()}`;
         const activeShopId = input.shopId ?? useAuthStore.getState().currentShopId;
 
@@ -157,7 +158,7 @@ export const useCustomerStore = create<CustomerStore>()(
       updateCustomer: (id, updates) => {
         set((state) => ({
           customers: state.customers.map((c) =>
-            c.id === id ? { ...c, ...updates, updatedAt: new Date().toISOString() } : c,
+            c.id === id ? { ...c, ...updates, updatedAt: getNowInKoreaIso() } : c,
           ),
         }));
         const updated = get().customers.find((c) => c.id === id);
@@ -169,10 +170,10 @@ export const useCustomerStore = create<CustomerStore>()(
       updateTags: (customerId, nextTags) => {
         set((state) => ({
           customers: state.customers.map((c) =>
-            c.id === customerId
-              ? { ...c, tags: deepClone(nextTags), updatedAt: new Date().toISOString() }
-              : c,
-          ),
+              c.id === customerId
+                ? { ...c, tags: deepClone(nextTags), updatedAt: getNowInKoreaIso() }
+                : c,
+            ),
         }));
         dbUpsertCustomerTags(customerId, nextTags).catch(console.error);
       },
@@ -185,7 +186,7 @@ export const useCustomerStore = create<CustomerStore>()(
             const tags = c.tags ?? [];
             const pinned = tags.filter((t) => pinnedSet.has(t.value));
             const rest = tags.filter((t) => !pinnedSet.has(t.value));
-            return { ...c, tags: [...pinned, ...rest], updatedAt: new Date().toISOString() };
+            return { ...c, tags: [...pinned, ...rest], updatedAt: getNowInKoreaIso() };
           }),
         })),
 
@@ -194,7 +195,7 @@ export const useCustomerStore = create<CustomerStore>()(
           customers: state.customers.map((c) => {
             if (c.id !== customerId) return c;
             const nextNotes = [...(c.smallTalkNotes ?? []), note];
-            return { ...c, smallTalkNotes: nextNotes, updatedAt: new Date().toISOString() };
+            return { ...c, smallTalkNotes: nextNotes, updatedAt: getNowInKoreaIso() };
           }),
         }));
         dbInsertSmallTalkNote(note).catch(console.error);
@@ -214,7 +215,7 @@ export const useCustomerStore = create<CustomerStore>()(
                 accent: t.accent,
               };
             });
-            return { ...c, tags, updatedAt: new Date().toISOString() };
+            return { ...c, tags, updatedAt: getNowInKoreaIso() };
           }),
         }));
         const updated = get().customers.find((c) => c.id === customerId);
@@ -230,7 +231,7 @@ export const useCustomerStore = create<CustomerStore>()(
             const tags = (c.tags ?? []).map((t) =>
               t.id === tagId ? { ...t, accent } : t,
             );
-            return { ...c, tags, updatedAt: new Date().toISOString() };
+            return { ...c, tags, updatedAt: getNowInKoreaIso() };
           }),
         }));
         const updated = get().customers.find((c) => c.id === customerId);
@@ -249,7 +250,7 @@ export const useCustomerStore = create<CustomerStore>()(
               const newOrder = orderMap.get(t.id);
               return newOrder !== undefined ? { ...t, sortOrder: newOrder } : t;
             });
-            return { ...c, tags, updatedAt: new Date().toISOString() };
+            return { ...c, tags, updatedAt: getNowInKoreaIso() };
           }),
         }));
         const updated = get().customers.find((c) => c.id === customerId);

@@ -34,6 +34,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return response;
   }
 
+  // 데모 모드 (Supabase 세션 없이 로컬 상태로 동작)
+  if (request.cookies.get('bdx-demo')?.value === 'true') {
+    return response;
+  }
+
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {

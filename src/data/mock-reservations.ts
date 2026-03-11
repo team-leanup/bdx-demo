@@ -1,16 +1,14 @@
 import { ConsultationStep } from '@/types/consultation';
 import type { BookingRequest } from '@/types/consultation';
+import { addDaysInKorea, createKoreanDate, getTodayInKorea } from '@/lib/format';
 
 function getRelativeDate(daysFromToday: number): string {
-  const date = new Date();
-  date.setDate(date.getDate() + daysFromToday);
-  return date.toISOString().split('T')[0];
+  return addDaysInKorea(getTodayInKorea(), daysFromToday);
 }
 
 function getRelativeDateTime(daysFromToday: number, hour: number, minute: number): string {
-  const date = new Date();
-  date.setDate(date.getDate() + daysFromToday);
-  date.setHours(hour, minute, 0, 0);
+  const [year, month, day] = addDaysInKorea(getTodayInKorea(), daysFromToday).split('-').map(Number);
+  const date = createKoreanDate(year, month, day, hour, minute);
   return date.toISOString();
 }
 
@@ -204,7 +202,7 @@ export const MOCK_RESERVATIONS: BookingRequest[] = [
 ];
 
 export function getTodayReservations(): BookingRequest[] {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayInKorea();
   return MOCK_RESERVATIONS
     .filter((r) => r.reservationDate === today)
     .sort((a, b) => a.reservationTime.localeCompare(b.reservationTime));

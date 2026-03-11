@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/cn';
+import { createKoreanDate, getTodayInKorea, parseKoreanDateString } from '@/lib/format';
 import { useT } from '@/lib/i18n';
 import type { BookingRequest } from '@/types/consultation';
 
@@ -19,7 +20,7 @@ function toDateStr(year: number, month: number, day: number): string {
 }
 
 function getTodayStr(): string {
-  return new Date().toISOString().split('T')[0];
+  return getTodayInKorea();
 }
 
 export function MonthCalendar({ selectedDate, onSelectDate, reservations }: MonthCalendarProps) {
@@ -27,12 +28,12 @@ export function MonthCalendar({ selectedDate, onSelectDate, reservations }: Mont
   const today = getTodayStr();
   const DAY_LABELS = [t('day.sun'), t('day.mon'), t('day.tue'), t('day.wed'), t('day.thu'), t('day.fri'), t('day.sat')];
   const [year, setYear] = useState(() => {
-    const d = selectedDate ? new Date(selectedDate) : new Date();
-    return d.getFullYear();
+    const d = parseKoreanDateString(selectedDate || today);
+    return d.getUTCFullYear();
   });
   const [month, setMonth] = useState(() => {
-    const d = selectedDate ? new Date(selectedDate) : new Date();
-    return d.getMonth() + 1;
+    const d = parseKoreanDateString(selectedDate || today);
+    return d.getUTCMonth() + 1;
   });
   const [direction, setDirection] = useState(0);
 
@@ -57,8 +58,8 @@ export function MonthCalendar({ selectedDate, onSelectDate, reservations }: Mont
   };
 
   // Build calendar grid
-  const firstDay = new Date(year, month - 1, 1).getDay();
-  const daysInMonth = new Date(year, month, 0).getDate();
+  const firstDay = createKoreanDate(year, month, 1, 12).getUTCDay();
+  const daysInMonth = createKoreanDate(year, month + 1, 0, 12).getUTCDate();
 
   const cells: (number | null)[] = [
     ...Array(firstDay).fill(null),

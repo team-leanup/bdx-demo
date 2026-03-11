@@ -8,6 +8,7 @@ import {
   dbUpsertReservation,
   dbDeleteReservation,
 } from '@/lib/db';
+import { getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
 
 interface ReservationStore {
   reservations: BookingRequest[];
@@ -16,6 +17,7 @@ interface ReservationStore {
   hydrateFromDB: () => Promise<void>;
   addReservation: (reservation: Omit<BookingRequest, 'id' | 'createdAt' | 'status' | 'shopId'>) => void;
   updateReservation: (id: string, updates: Partial<BookingRequest>) => void;
+  updateReservationLocally: (id: string, updates: Partial<BookingRequest>) => void;
   removeReservation: (id: string) => void;
   getByDate: (date: string) => BookingRequest[];
   getByMonth: (year: number, month: number) => BookingRequest[];
@@ -56,7 +58,7 @@ export const useReservationStore = create<ReservationStore>()(
           id: `booking-${Date.now()}`,
           shopId: currentShopId,
           status: 'pending' as const,
-          createdAt: new Date().toISOString(),
+          createdAt: getNowInKoreaIso(),
         };
         set((state) => ({
           reservations: [...state.reservations, newEntry],
@@ -74,6 +76,14 @@ export const useReservationStore = create<ReservationStore>()(
         if (updated) {
           dbUpsertReservation(updated).catch(console.error);
         }
+      },
+
+      updateReservationLocally: (id, updates) => {
+        set((state) => ({
+          reservations: state.reservations.map((r) =>
+            r.id === id ? { ...r, ...updates } : r,
+          ),
+        }));
       },
 
       removeReservation: (id) => {
@@ -101,7 +111,7 @@ export const useReservationStore = create<ReservationStore>()(
       },
 
       getToday: () => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getTodayInKorea();
         return get().reservations
           .filter((r) => r.reservationDate === today)
           .sort((a, b) => a.reservationTime.localeCompare(b.reservationTime));

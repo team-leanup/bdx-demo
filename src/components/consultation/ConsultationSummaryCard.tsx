@@ -111,6 +111,7 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
   const breakdown = calculatePrice(consultation);
   const minutes = estimateTime(consultation);
   const getDesignerById = useShopStore((s) => s.getDesignerById);
+  const isCustomerLinkFlow = consultation.entryPoint === 'customer_link';
 
   const designer = getDesignerById(consultation.designerId ?? '');
 
@@ -174,6 +175,15 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
     </>
   );
 
+  const estimatedPriceLabel: ReactNode = (
+    <>
+      {locale === 'ko' ? '예상 금액' : 'Estimated Price'}
+      {locale !== 'ko' && (
+        <span className="ml-1 text-[10px] opacity-60">예상 금액</span>
+      )}
+    </>
+  );
+
   return (
     <div className={cn('flex flex-col gap-4', className)}>
       {/* Visual header */}
@@ -218,8 +228,12 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
         )}
       </div>
 
-      {/* 1. 가격 상세 */}
-      <Accordion title={biLabel('summary.priceDetail')}>
+      <Accordion title={isCustomerLinkFlow ? estimatedPriceLabel : biLabel('summary.priceDetail')}>
+        {isCustomerLinkFlow && (
+          <p className="mb-3 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2 text-xs leading-relaxed text-text-secondary">
+            최종 금액은 현장에서 시술 이후에 최종적으로 결정됩니다.
+          </p>
+        )}
         <div className="flex flex-col">
           <PriceRow
             label={biLabel(consultation.bodyPart === 'hand' ? 'summary.handBase' : 'summary.footBase')}

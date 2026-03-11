@@ -11,7 +11,7 @@ interface QRGeneratorModalProps {
   shopName?: string;
 }
 
-const CONSULTATION_URL_PATH = '/consultation/customer?entry=customer-link';
+const CONSULTATION_URL_PATH = '/consultation?entry=customer-link';
 
 export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGeneratorModalProps): React.ReactElement | null {
   const [copied, setCopied] = useState(false);

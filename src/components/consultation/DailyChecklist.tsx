@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { cn } from '@/lib/cn';
+import { getNowInKoreaIso } from '@/lib/format';
 import { useT, useLocale } from '@/lib/i18n';
 import type { DailyChecklist as DailyChecklistType, NailShape } from '@/types/consultation';
 
@@ -120,7 +121,7 @@ export function DailyChecklist({
       thickness,
       cuticleSensitivity,
       memo,
-      savedAt: new Date().toISOString(),
+      savedAt: getNowInKoreaIso(),
     };
     onSave?.(data);
     setSavedState('saved');
@@ -134,7 +135,7 @@ export function DailyChecklist({
       thickness,
       cuticleSensitivity,
       memo,
-      savedAt: new Date().toISOString(),
+      savedAt: getNowInKoreaIso(),
     };
     onSaveToPreference?.(data);
   };

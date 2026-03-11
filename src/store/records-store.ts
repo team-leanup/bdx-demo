@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { ConsultationRecord } from '@/types/consultation';
 import { useAuthStore } from '@/store/auth-store';
+import { getNowInKoreaIso } from '@/lib/format';
 import {
   fetchConsultationRecords,
   dbUpsertRecord,
@@ -51,7 +52,7 @@ export const useRecordsStore = create<RecordsStore>()(
 
       updateRecord: (id, patch) => {
         set((state) => {
-          const now = new Date().toISOString();
+          const now = getNowInKoreaIso();
           const existing = state.records.find((r) => r.id === id);
           if (!existing) return state;
           const updated: ConsultationRecord = { ...existing, ...patch, updatedAt: now };

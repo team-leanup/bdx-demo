@@ -1,9 +1,10 @@
 import type { ConsultationRecord } from '@/types/consultation';
 import { ConsultationStep } from '@/types/consultation';
+import { addDaysInKorea, createKoreanDate, getTodayInKorea } from '@/lib/format';
 
 function getRelativeDate(daysAgo: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - daysAgo);
+  const [year, month, day] = addDaysInKorea(getTodayInKorea(), -daysAgo).split('-').map(Number);
+  const d = createKoreanDate(year, month, day, 12);
   return d.toISOString();
 }
 

@@ -14,6 +14,7 @@ import { BentoCard } from '@/components/ui';
 import { useRecordsStore } from '@/store/records-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { useReservationStore } from '@/store/reservation-store';
+import { getTodayInKorea, parseKoreanDateString, toKoreanDateString } from '@/lib/format';
 
 function buildKPIDetail(
   label: string,
@@ -23,11 +24,12 @@ function buildKPIDetail(
 ): React.ReactNode {
   switch (label) {
     case '이달 상담 건수': {
-      const now = new Date();
-      const prefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      const thisMonth = records.filter((r) => r.createdAt.startsWith(prefix));
-      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-      const daysPassed = now.getDate();
+      const today = getTodayInKorea();
+      const now = parseKoreanDateString(today);
+      const prefix = today.slice(0, 7);
+      const thisMonth = records.filter((r) => toKoreanDateString(r.createdAt).startsWith(prefix));
+      const daysInMonth = new Date(now.getUTCFullYear(), now.getUTCMonth() + 1, 0).getDate();
+      const daysPassed = now.getUTCDate();
       const dailyAvg = daysPassed > 0 ? (thisMonth.length / daysPassed).toFixed(1) : '0';
       return (
         <div className="flex flex-col gap-3">
@@ -154,7 +156,7 @@ function buildKPIDetail(
       );
     }
     case '오늘 예약': {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getTodayInKorea();
       const todayRes = reservations
         .filter((r) => r.reservationDate === today && r.status !== 'cancelled')
         .sort((a, b) => a.reservationTime.localeCompare(b.reservationTime));

@@ -1,3 +1,135 @@
+export const KOREA_TIME_ZONE = 'Asia/Seoul';
+
+function isDateOnlyString(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+export function createKoreanDate(
+  year: number,
+  month: number,
+  day: number,
+  hour = 0,
+  minute = 0,
+  second = 0,
+): Date {
+  return new Date(Date.UTC(year, month - 1, day, hour - 9, minute, second));
+}
+
+export function parseKoreanDateString(dateStr: string): Date {
+  if (!isDateOnlyString(dateStr)) {
+    return new Date(dateStr);
+  }
+
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return createKoreanDate(year, month, day, 12);
+}
+
+function toKoreanDateValue(value: string | Date): Date {
+  return typeof value === 'string' ? parseKoreanDateString(value) : value;
+}
+
+function getKoreanDateParts(value: string | Date): Record<string, string> {
+  const date = toKoreanDateValue(value);
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: KOREA_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  });
+
+  return formatter.formatToParts(date).reduce<Record<string, string>>((parts, part) => {
+    if (part.type !== 'literal') {
+      parts[part.type] = part.value;
+    }
+    return parts;
+  }, {});
+}
+
+export function toKoreanDateString(value: string | Date): string {
+  const parts = getKoreanDateParts(value);
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+export function getTodayInKorea(): string {
+  return toKoreanDateString(new Date());
+}
+
+export function formatNowInKorea(
+  locale: string,
+  options: Intl.DateTimeFormatOptions,
+): string {
+  return new Intl.DateTimeFormat(locale, {
+    timeZone: KOREA_TIME_ZONE,
+    ...options,
+  }).format(new Date());
+}
+
+export function getCurrentHourInKorea(): number {
+  return Number(getKoreanDateParts(new Date()).hour);
+}
+
+export function getCurrentTimeInKorea(): { hour: number; minute: number } {
+  const parts = getKoreanDateParts(new Date());
+  return {
+    hour: Number(parts.hour),
+    minute: Number(parts.minute),
+  };
+}
+
+export function getNowInKoreaIso(): string {
+  const parts = getKoreanDateParts(new Date());
+  return createKoreanDate(
+    Number(parts.year),
+    Number(parts.month),
+    Number(parts.day),
+    Number(parts.hour),
+    Number(parts.minute),
+    Number(parts.second),
+  ).toISOString();
+}
+
+export function addDaysInKorea(dateStr: string, days: number): string {
+  const date = parseKoreanDateString(dateStr);
+  date.setUTCDate(date.getUTCDate() + days);
+  return toKoreanDateString(date);
+}
+
+export function getKoreanWeekStart(dateStr: string): string {
+  const weekday = getKoreanDateWeekday(dateStr);
+  const diff = weekday === 0 ? -6 : 1 - weekday;
+  return addDaysInKorea(dateStr, diff);
+}
+
+function getKoreanDateWeekday(value: string | Date): number {
+  const weekday = new Intl.DateTimeFormat('en-US', {
+    timeZone: KOREA_TIME_ZONE,
+    weekday: 'short',
+  }).format(toKoreanDateValue(value));
+
+  const weekdayMap: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+
+  return weekdayMap[weekday] ?? 0;
+}
+
+export function getRelativeDayDiffInKorea(dateStr: string): number {
+  const today = parseKoreanDateString(getTodayInKorea());
+  const date = parseKoreanDateString(toKoreanDateString(dateStr));
+  const diffMs = today.getTime() - date.getTime();
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+}
+
 /**
  * 가격을 한국 원화 형식으로 포맷팅
  * @example formatPrice(85000) → "₩85,000"
@@ -19,12 +151,13 @@ export function formatPriceNumber(amount: number): string {
  * @example formatDate("2026-02-20") → "2026년 2월 20일"
  */
 export function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('ko-KR', {
+  const date = toKoreanDateValue(dateStr);
+  return new Intl.DateTimeFormat('ko-KR', {
+    timeZone: KOREA_TIME_ZONE,
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-  });
+  }).format(date);
 }
 
 /**
@@ -32,11 +165,12 @@ export function formatDate(dateStr: string): string {
  * @example formatDateShort("2026-02-20") → "2/20"
  */
 export function formatDateShort(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('ko-KR', {
+  const date = toKoreanDateValue(dateStr);
+  return new Intl.DateTimeFormat('ko-KR', {
+    timeZone: KOREA_TIME_ZONE,
     month: 'numeric',
     day: 'numeric',
-  });
+  }).format(date);
 }
 
 /**
@@ -48,8 +182,7 @@ export function formatDateDot(dateStr: string): string {
     const [year, month, day] = dateStr.split('-');
     return `${year}.${month}.${day.slice(0, 2)}`;
   }
-  const d = new Date(dateStr);
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+  return toKoreanDateString(dateStr).replace(/-/g, '.');
 }
 
 /**
@@ -57,9 +190,11 @@ export function formatDateDot(dateStr: string): string {
  * @example formatDateDotWithDay("2026-02-20") → "2026.02.20 (금)"
  */
 export function formatDateDotWithDay(dateStr: string): string {
-  const d = new Date(dateStr);
+  const d = parseKoreanDateString(toKoreanDateString(dateStr));
   const DAY = ['일', '월', '화', '수', '목', '금', '토'];
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} (${DAY[d.getDay()]})`;
+  const dateOnly = toKoreanDateString(dateStr);
+  const [year, month, day] = dateOnly.split('-');
+  return `${year}.${month}.${day} (${DAY[getKoreanDateWeekday(d)]})`;
 }
 
 /**
@@ -67,8 +202,8 @@ export function formatDateDotWithDay(dateStr: string): string {
  * @example formatDateDotWithTime("2026-02-20T14:30:00") → "2026.02.20 14:30"
  */
 export function formatDateDotWithTime(dateStr: string): string {
-  const d = new Date(dateStr);
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  const parts = getKoreanDateParts(dateStr);
+  return `${parts.year}.${parts.month}.${parts.day} ${parts.hour}:${parts.minute}`;
 }
 
 /**
@@ -91,12 +226,13 @@ export function formatTime(timeStr: string): string {
  * @example formatDayLabelKo("2026-03-02") → "3월 2일 (월요일)"
  */
 export function formatDayLabelKo(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00');
+  const d = parseKoreanDateString(dateStr);
   if (isNaN(d.getTime())) return dateStr;
   const WEEKDAYS = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
-  const month = d.getMonth() + 1;
-  const day = d.getDate();
-  const weekday = WEEKDAYS[d.getDay()];
+  const parts = getKoreanDateParts(d);
+  const month = Number(parts.month);
+  const day = Number(parts.day);
+  const weekday = WEEKDAYS[getKoreanDateWeekday(d)];
   return `${month}월 ${day}일 (${weekday})`;
 }
 
@@ -143,10 +279,7 @@ export function formatMinutes(minutes: number, locale?: string): string {
  * @example formatRelativeDate("2026-02-20") → "6일 전"
  */
 export function formatRelativeDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffDays = getRelativeDayDiffInKorea(dateStr);
 
   if (diffDays === 0) return '오늘';
   if (diffDays === 1) return '어제';

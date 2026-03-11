@@ -10,6 +10,7 @@ import {
   dbDeletePortfolioPhoto,
   dbDeleteAllPortfolioPhotos,
 } from '@/lib/db';
+import { getNowInKoreaIso } from '@/lib/format';
 
 const PORTFOLIO_STORAGE_KEY = 'bdx-portfolio';
 let portfolioHydrationVersion = 0;
@@ -172,7 +173,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
           ...input,
           id: generateId(),
           shopId: currentShopId,
-          createdAt: new Date().toISOString(),
+          createdAt: getNowInKoreaIso(),
         };
 
         const result = await dbInsertPortfolioPhoto(newPhoto);

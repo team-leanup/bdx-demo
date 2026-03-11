@@ -8,6 +8,7 @@ import { useCustomerStore } from '@/store/customer-store';
 import { useShopStore } from '@/store/shop-store';
 import type { BookingChannel, BookingRequest } from '@/types/consultation';
 import type { Locale } from '@/store/locale-store';
+import { getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
 
 function generateTimeSlots(start = '10:00', end = '20:00'): string[] {
   const slots: string[] = [];
@@ -44,7 +45,7 @@ interface ReservationFormProps {
 }
 
 export function ReservationForm({ onSubmit, onCancel }: ReservationFormProps) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayInKorea();
   const currentShopId = useAuthStore((s) => s.currentShopId);
   const customers = useCustomerStore((s) => s.customers);
   const designers = useShopStore((s) => s.designers);
@@ -122,7 +123,7 @@ export function ReservationForm({ onSubmit, onCancel }: ReservationFormProps) {
       requestNote: formNote.trim() || undefined,
       referenceImageUrls: formImages,
       status: 'confirmed',
-      createdAt: new Date().toISOString(),
+      createdAt: getNowInKoreaIso(),
       language: formLanguage,
       designerId: formDesignerId || undefined,
       serviceLabel: serviceLabel || undefined,

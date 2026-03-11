@@ -12,7 +12,7 @@ import { useT, useLocale, useKo } from '@/lib/i18n';
 import { useLocaleStore } from '@/store/locale-store';
 import { calculatePrice } from '@/lib/price-calculator';
 import { estimateTime } from '@/lib/time-calculator';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, getNowInKoreaIso } from '@/lib/format';
 import { DESIGN_SCOPE_LABEL, EXPRESSION_LABEL } from '@/lib/labels';
 import { useRecordsStore } from '@/store/records-store';
 import { useReservationStore } from '@/store/reservation-store';
@@ -55,7 +55,11 @@ export default function SummaryPage() {
   const locale = useLocale();
   const customerLinkBackLabel = locale === 'ko' ? '이전으로' : 'Back';
   const customerLinkSubmitLabel = locale === 'ko' ? '상담 제출' : 'Submit';
-  const customerLinkEntryHref = `/consultation/customer?entry=customer-link${consultation.sourceShopName ? `&shopName=${encodeURIComponent(consultation.sourceShopName)}` : ''}`;
+  const customerLinkParams = new URLSearchParams();
+  customerLinkParams.set('entry', 'customer-link');
+  if (consultation.sourceShopId) customerLinkParams.set('shopId', consultation.sourceShopId);
+  if (consultation.sourceShopName) customerLinkParams.set('shopName', consultation.sourceShopName);
+  const customerLinkEntryHref = `/consultation?${customerLinkParams.toString()}`;
 
   useEffect(() => {
     const memo = sessionStorage.getItem('consultation_customer_memo') ?? '';
@@ -93,7 +97,7 @@ export default function SummaryPage() {
     }
     const newId = `record-${Date.now()}`;
     const minutes = estimateTime(consultation);
-    const now = new Date().toISOString();
+    const now = getNowInKoreaIso();
     const consultationSnapshot = JSON.parse(JSON.stringify({ ...consultation })) as typeof consultation;
     const bookingLanguage = bookingId
       ? reservations.find((r) => r.id === bookingId)?.language
