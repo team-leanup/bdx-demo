@@ -70,9 +70,18 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
   const effectiveDate = photo ? (photo.takenAt ?? photo.createdAt) : undefined;
   const effectivePrice = photo?.price ?? linkedRecord?.finalPrice;
 
-  const NAIL_FALLBACKS = ['/images/mock/nail/nail-1.jpg', '/images/mock/nail/nail-2.jpg', '/images/mock/nail/nail-3.jpg'];
+  const NAIL_FALLBACKS = [
+    '/images/mock/nail/nail-1.jpg',
+    '/images/mock/nail/nail-2.jpg',
+    '/images/mock/nail/nail-3.jpg',
+    '/images/mock/nail/nail-4.jpg',
+    '/images/mock/nail/nail-5.jpg',
+    '/images/mock/nail/nail-6.jpg',
+    '/images/mock/nail/nail-7.jpg',
+    '/images/mock/nail/nail-8.jpg',
+  ];
   const photoIndex = photos.findIndex((p) => p.id === id);
-  const imgSrc = photo?.imageDataUrl ? photo.imageDataUrl : NAIL_FALLBACKS[(photoIndex >= 0 ? photoIndex : 0) % NAIL_FALLBACKS.length];
+  const imgSrc = NAIL_FALLBACKS[(photoIndex >= 0 ? photoIndex : 0) % NAIL_FALLBACKS.length];
 
   const handleDismissToast = (id: string): void => {
     setToasts((current) => current.filter((toast) => toast.id !== id));

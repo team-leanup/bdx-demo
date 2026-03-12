@@ -22,6 +22,7 @@ import { DayReservationList } from '@/components/calendar/DayReservationList';
 import { WeekCalendar } from '@/components/calendar/WeekCalendar';
 import { DesignerDayGridCalendar } from '@/components/calendar/DesignerDayGridCalendar';
 import { getSafetyTagMeta, sortSafetyTags } from '@/lib/tag-safety';
+import { cn } from '@/lib/cn';
 import type { TimeGridEvent } from '@/components/calendar/TimeGridCalendar';
 import { DESIGN_SCOPE_LABEL } from '@/lib/labels';
 import { useShopStore } from '@/store/shop-store';
@@ -831,30 +832,85 @@ export default function RecordsPage() {
                     {selectedEvent.customerId && (() => {
                       const pinnedTags = sortSafetyTags(getPinnedTags(selectedEvent.customerId!));
                       if (pinnedTags.length === 0) return null;
+                      const dangerTags = pinnedTags.filter((tag) => {
+                        const level = getSafetyTagMeta(tag).level;
+                        return level === 'high' || level === 'medium';
+                      });
+                      const infoTags = pinnedTags.filter((tag) => {
+                        const level = getSafetyTagMeta(tag).level;
+                        return level === 'reference' || level === 'preferred';
+                      });
                       return (
-                        <div className="mt-2 rounded-xl border border-red-200 bg-red-50 p-3">
-                          <p className="text-[10px] font-bold text-red-700 mb-1.5">주의 / 특이사항</p>
-                          <div className="flex flex-col gap-2">
-                            {pinnedTags.map((tag) => {
-                              const safety = getSafetyTagMeta(tag);
-
-                              return (
-                                <div key={tag.id} className="rounded-xl border border-white/60 bg-white/60 px-3 py-2">
-                                  <div className="flex items-start gap-2">
-                                    <span className="text-sm leading-none">{safety.icon}</span>
-                                    <div className="min-w-0 flex-1">
-                                      <div className="flex items-center gap-1.5 flex-wrap">
-                                        <CustomerTagChip tag={tag} size="sm" />
-                                        <span className="text-[10px] font-semibold text-red-700">{safety.label}</span>
+                        <>
+                          {dangerTags.length > 0 && (
+                            <div className="mt-2 rounded-xl border border-red-200 bg-red-50 p-3">
+                              <div className="flex items-center gap-1 mb-1.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 text-red-600 flex-shrink-0">
+                                  <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                                </svg>
+                                <span className="text-[10px] font-bold text-red-700">주의사항</span>
+                                <span className="ml-auto text-[9px] bg-red-200 text-red-700 rounded-full px-1.5 py-0.5 font-semibold">{dangerTags.length}</span>
+                              </div>
+                              <div className="flex flex-col gap-2">
+                                {dangerTags.map((tag) => {
+                                  const meta = getSafetyTagMeta(tag);
+                                  return (
+                                    <div key={tag.id} className="rounded-xl border border-white/60 bg-white/60 px-3 py-2 flex">
+                                      <div className={cn("w-1 rounded-full flex-shrink-0 mr-2.5", {
+                                        'bg-red-400': meta.level === 'high',
+                                        'bg-orange-400': meta.level === 'medium',
+                                      })} />
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          <CustomerTagChip tag={tag} size="sm" />
+                                          <span className={cn("text-[10px] font-semibold", {
+                                            'text-red-700': meta.level === 'high',
+                                            'text-orange-700': meta.level === 'medium',
+                                          })}>{meta.label}</span>
+                                        </div>
+                                        <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">{meta.description}</p>
                                       </div>
-                                      <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">{safety.description}</p>
                                     </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                          {infoTags.length > 0 && (
+                            <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                              <div className="flex items-center gap-1 mb-1.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 text-amber-600 flex-shrink-0">
+                                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+                                </svg>
+                                <span className="text-[10px] font-bold text-amber-700">참고사항</span>
+                                <span className="ml-auto text-[9px] bg-amber-200 text-amber-700 rounded-full px-1.5 py-0.5 font-semibold">{infoTags.length}</span>
+                              </div>
+                              <div className="flex flex-col gap-2">
+                                {infoTags.map((tag) => {
+                                  const meta = getSafetyTagMeta(tag);
+                                  return (
+                                    <div key={tag.id} className="rounded-xl border border-white/60 bg-white/60 px-3 py-2 flex">
+                                      <div className={cn("w-1 rounded-full flex-shrink-0 mr-2.5", {
+                                        'bg-amber-400': meta.level === 'reference',
+                                        'bg-emerald-400': meta.level === 'preferred',
+                                      })} />
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          <CustomerTagChip tag={tag} size="sm" />
+                                          <span className={cn("text-[10px] font-semibold", {
+                                            'text-amber-700': meta.level === 'reference',
+                                            'text-emerald-700': meta.level === 'preferred',
+                                          })}>{meta.label}</span>
+                                        </div>
+                                        <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">{meta.description}</p>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </>
                       );
                     })()}
                     {selectedEvent.customerId && (

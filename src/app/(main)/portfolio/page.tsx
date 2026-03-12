@@ -417,10 +417,19 @@ export default function PortfolioPage(): React.ReactElement {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {filteredPhotos.map(({ photo, customer, serviceType, price, effectiveDate }, idx) => {
-              const NAIL_FALLBACKS = ['/images/mock/nail/nail-1.jpg', '/images/mock/nail/nail-2.jpg', '/images/mock/nail/nail-3.jpg'];
-              const imgSrc = photo.imageDataUrl ? photo.imageDataUrl : NAIL_FALLBACKS[idx % NAIL_FALLBACKS.length];
+              const NAIL_FALLBACKS = [
+                '/images/mock/nail/nail-1.jpg',
+                '/images/mock/nail/nail-2.jpg',
+                '/images/mock/nail/nail-3.jpg',
+                '/images/mock/nail/nail-4.jpg',
+                '/images/mock/nail/nail-5.jpg',
+                '/images/mock/nail/nail-6.jpg',
+                '/images/mock/nail/nail-7.jpg',
+                '/images/mock/nail/nail-8.jpg',
+              ];
+              const imgSrc = NAIL_FALLBACKS[idx % NAIL_FALLBACKS.length];
               return (
                 <button
                   key={photo.id}

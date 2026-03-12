@@ -61,8 +61,17 @@ export function PortfolioOverlay({
     if (currentIndex < photoIds.length - 1) setCurrentId(photoIds[currentIndex + 1]);
   }, [currentIndex, photoIds]);
 
-  const NAIL_FALLBACKS = ['/images/mock/nail/nail-1.jpg', '/images/mock/nail/nail-2.jpg', '/images/mock/nail/nail-3.jpg'];
-  const imgSrc = photo?.imageDataUrl ? photo.imageDataUrl : NAIL_FALLBACKS[currentIndex % NAIL_FALLBACKS.length];
+  const NAIL_FALLBACKS = [
+    '/images/mock/nail/nail-1.jpg',
+    '/images/mock/nail/nail-2.jpg',
+    '/images/mock/nail/nail-3.jpg',
+    '/images/mock/nail/nail-4.jpg',
+    '/images/mock/nail/nail-5.jpg',
+    '/images/mock/nail/nail-6.jpg',
+    '/images/mock/nail/nail-7.jpg',
+    '/images/mock/nail/nail-8.jpg',
+  ];
+  const imgSrc = NAIL_FALLBACKS[currentIndex % NAIL_FALLBACKS.length];
 
   if (!photo) return <></>;
 

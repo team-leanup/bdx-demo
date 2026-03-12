@@ -224,7 +224,7 @@ export async function dbCreateShopAccount(
   });
 
   if (rpcError) {
-    console.error('[db] dbCreateShopAccount rpc error:', rpcError);
+    console.error('[db] dbCreateShopAccount rpc error:', toDbErrorSnapshot(rpcError));
     return { success: false, error: rpcError.message };
   }
 
@@ -270,7 +270,7 @@ export async function dbCreateShopAccount(
 export async function fetchShopByOwnerId(ownerId: string): Promise<Shop | null> {
   const { data, error } = await supabase.from('shops').select('*').eq('owner_id', ownerId).maybeSingle();
   if (error) {
-    console.error('[db] fetchShopByOwnerId error:', error);
+    console.error('[db] fetchShopByOwnerId error:', toDbErrorSnapshot(error));
     return null;
   }
 
@@ -284,7 +284,7 @@ export async function fetchShopByOwnerId(ownerId: string): Promise<Shop | null> 
 export async function fetchDesignerById(designerId: string): Promise<Designer | null> {
   const { data, error } = await supabase.from('designers').select('*').eq('id', designerId).single();
   if (error || !data) {
-    console.error('[db] fetchDesignerById error:', error);
+    console.error('[db] fetchDesignerById error:', toDbErrorSnapshot(error));
     return null;
   }
 
@@ -298,7 +298,7 @@ export async function fetchShop(shopId?: string | null): Promise<Shop | null> {
 
   const { data, error } = await supabase.from('shops').select('*').eq('id', shopId).single();
   if (error || !data) {
-    console.error('[db] fetchShop error:', error);
+    console.error('[db] fetchShop error:', toDbErrorSnapshot(error));
     return null;
   }
   return toShop(data);
@@ -311,7 +311,7 @@ export async function fetchDesigners(shopId?: string | null): Promise<Designer[]
 
   const { data, error } = await supabase.from('designers').select('*').eq('shop_id', shopId);
   if (error || !data) {
-    console.error('[db] fetchDesigners error:', error);
+    console.error('[db] fetchDesigners error:', toDbErrorSnapshot(error));
     return [];
   }
   return data.map(toDesigner);
@@ -343,7 +343,7 @@ export async function dbCreateDesigner(
     .single();
 
   if (error || !data) {
-    console.error('[db] dbCreateDesigner error:', error);
+    console.error('[db] dbCreateDesigner error:', toDbErrorSnapshot(error));
     return { success: false, error: '선생님 추가에 실패했습니다.' };
   }
 
@@ -382,7 +382,7 @@ export async function dbUpdateDesigner(
     .single();
 
   if (error || !data) {
-    console.error('[db] dbUpdateDesigner error:', error);
+    console.error('[db] dbUpdateDesigner error:', toDbErrorSnapshot(error));
     return { success: false, error: '선생님 정보 수정에 실패했습니다.' };
   }
 
@@ -401,7 +401,7 @@ export async function dbDeleteDesigner(
     .maybeSingle();
 
   if (existingError || !existing) {
-    console.error('[db] dbDeleteDesigner lookup error:', existingError);
+    console.error('[db] dbDeleteDesigner lookup error:', toDbErrorSnapshot(existingError));
     return { success: false, error: '삭제할 선생님 정보를 찾을 수 없습니다.' };
   }
 
@@ -443,7 +443,7 @@ export async function dbDeleteDesigner(
   if (avatarPath) {
     const { error: storageError } = await supabase.storage.from(DESIGNER_AVATAR_BUCKET).remove([avatarPath]);
     if (storageError) {
-      console.error('[db] dbDeleteDesigner remove avatar error:', storageError);
+      console.error('[db] dbDeleteDesigner remove avatar error:', toDbErrorSnapshot(storageError));
     }
   }
 
@@ -454,7 +454,7 @@ export async function dbDeleteDesigner(
     .eq('id', designerId);
 
   if (error) {
-    console.error('[db] dbDeleteDesigner error:', error);
+    console.error('[db] dbDeleteDesigner error:', toDbErrorSnapshot(error));
     return { success: false, error: '선생님 삭제에 실패했습니다.' };
   }
 
@@ -475,7 +475,7 @@ export async function dbUploadDesignerProfileImage(
       .single();
 
     if (existingError || !existing) {
-      console.error('[db] dbUploadDesignerProfileImage fetch error:', existingError);
+      console.error('[db] dbUploadDesignerProfileImage fetch error:', toDbErrorSnapshot(existingError));
       return { success: false, error: '디자이너 정보를 찾을 수 없습니다.' };
     }
 
@@ -491,7 +491,7 @@ export async function dbUploadDesignerProfileImage(
       });
 
     if (uploadError) {
-      console.error('[db] dbUploadDesignerProfileImage upload error:', uploadError);
+      console.error('[db] dbUploadDesignerProfileImage upload error:', toDbErrorSnapshot(uploadError));
       return { success: false, error: '프로필 이미지 업로드에 실패했습니다.' };
     }
 
@@ -504,7 +504,7 @@ export async function dbUploadDesignerProfileImage(
       .single();
 
     if (error || !data) {
-      console.error('[db] dbUploadDesignerProfileImage update error:', error);
+      console.error('[db] dbUploadDesignerProfileImage update error:', toDbErrorSnapshot(error));
       await supabase.storage.from(DESIGNER_AVATAR_BUCKET).remove([imagePath]);
       return { success: false, error: '프로필 이미지 저장에 실패했습니다.' };
     }
@@ -513,13 +513,13 @@ export async function dbUploadDesignerProfileImage(
     if (oldPath && oldPath !== imagePath) {
       const { error: removeOldError } = await supabase.storage.from(DESIGNER_AVATAR_BUCKET).remove([oldPath]);
       if (removeOldError) {
-        console.error('[db] dbUploadDesignerProfileImage remove old avatar error:', removeOldError);
+        console.error('[db] dbUploadDesignerProfileImage remove old avatar error:', toDbErrorSnapshot(removeOldError));
       }
     }
 
     return { success: true, designer: toDesigner(data) };
   } catch (error) {
-    console.error('[db] dbUploadDesignerProfileImage unexpected error:', error);
+    console.error('[db] dbUploadDesignerProfileImage unexpected error:', toDbErrorSnapshot(error));
     return { success: false, error: '프로필 이미지 저장 중 오류가 발생했습니다.' };
   }
 }
@@ -536,7 +536,7 @@ export async function dbDeleteDesignerProfileImage(
     .single();
 
   if (existingError || !existing) {
-    console.error('[db] dbDeleteDesignerProfileImage fetch error:', existingError);
+    console.error('[db] dbDeleteDesignerProfileImage fetch error:', toDbErrorSnapshot(existingError));
     return { success: false, error: '디자이너 정보를 찾을 수 없습니다.' };
   }
 
@@ -544,7 +544,7 @@ export async function dbDeleteDesignerProfileImage(
   if (oldPath) {
     const { error: storageError } = await supabase.storage.from(DESIGNER_AVATAR_BUCKET).remove([oldPath]);
     if (storageError) {
-      console.error('[db] dbDeleteDesignerProfileImage remove error:', storageError);
+      console.error('[db] dbDeleteDesignerProfileImage remove error:', toDbErrorSnapshot(storageError));
       return { success: false, error: '프로필 이미지 삭제에 실패했습니다.' };
     }
   }
@@ -558,7 +558,7 @@ export async function dbDeleteDesignerProfileImage(
     .single();
 
   if (error || !data) {
-    console.error('[db] dbDeleteDesignerProfileImage update error:', error);
+    console.error('[db] dbDeleteDesignerProfileImage update error:', toDbErrorSnapshot(error));
     return { success: false, error: '프로필 이미지 삭제 상태를 저장하지 못했습니다.' };
   }
 
@@ -573,7 +573,7 @@ export async function fetchCustomers(shopId?: string | null): Promise<Customer[]
   const customersRes = await supabase.from('customers').select('*').eq('shop_id', shopId);
 
   if (customersRes.error) {
-    console.error('[db] fetchCustomers customers error:', customersRes.error);
+    console.error('[db] fetchCustomers customers error:', toDbErrorSnapshot(customersRes.error));
     return [];
   }
 
@@ -588,10 +588,10 @@ export async function fetchCustomers(shopId?: string | null): Promise<Customer[]
   ]);
 
   if (tagsRes.error) {
-    console.error('[db] fetchCustomers tags error:', tagsRes.error);
+    console.error('[db] fetchCustomers tags error:', toDbErrorSnapshot(tagsRes.error));
   }
   if (notesRes.error) {
-    console.error('[db] fetchCustomers notes error:', notesRes.error);
+    console.error('[db] fetchCustomers notes error:', toDbErrorSnapshot(notesRes.error));
   }
 
   const tagsByCustomer = new Map<string, CustomerTag[]>();
@@ -662,7 +662,7 @@ export async function fetchConsultationRecords(shopId?: string | null): Promise<
 
   const { data, error } = await supabase.from('consultation_records').select('*').eq('shop_id', shopId);
   if (error || !data) {
-    console.error('[db] fetchConsultationRecords error:', error);
+    console.error('[db] fetchConsultationRecords error:', toDbErrorSnapshot(error));
     return [];
   }
   return data.map((row) => ({
@@ -692,7 +692,7 @@ export async function fetchBookingRequests(shopId?: string | null): Promise<Book
 
   const { data, error } = await supabase.from('booking_requests').select('*').eq('shop_id', shopId);
   if (error || !data) {
-    console.error('[db] fetchBookingRequests error:', error);
+    console.error('[db] fetchBookingRequests error:', toDbErrorSnapshot(error));
     return [];
   }
   return data.map((row) => ({
@@ -729,7 +729,7 @@ export async function fetchPortfolioPhotos(shopId?: string | null): Promise<Port
     .order('created_at', { ascending: false });
 
   if (error || !data) {
-    console.error('[db] fetchPortfolioPhotos error:', error);
+    console.error('[db] fetchPortfolioPhotos error:', toDbErrorSnapshot(error));
     return [];
   }
 
@@ -762,7 +762,7 @@ export async function dbUpsertCustomer(customer: Customer): Promise<void> {
     updated_at: getNowInKoreaIso(),
   });
   if (error) {
-    console.error('[db] dbUpsertCustomer error:', error);
+    console.error('[db] dbUpsertCustomer error:', toDbErrorSnapshot(error));
   }
 }
 
@@ -772,7 +772,7 @@ export async function dbUpsertCustomerTags(customerId: string, tags: CustomerTag
     .delete()
     .eq('customer_id', customerId);
   if (deleteError) {
-    console.error('[db] dbUpsertCustomerTags delete error:', deleteError);
+    console.error('[db] dbUpsertCustomerTags delete error:', toDbErrorSnapshot(deleteError));
     return;
   }
   if (tags.length === 0) return;
@@ -789,7 +789,7 @@ export async function dbUpsertCustomerTags(customerId: string, tags: CustomerTag
   }));
   const { error: insertError } = await supabase.from('customer_tags').insert(rows);
   if (insertError) {
-    console.error('[db] dbUpsertCustomerTags insert error:', insertError);
+    console.error('[db] dbUpsertCustomerTags insert error:', toDbErrorSnapshot(insertError));
   }
 }
 
@@ -804,7 +804,7 @@ export async function dbInsertSmallTalkNote(note: SmallTalkNote): Promise<void> 
     created_by_designer_name: note.createdByDesignerName,
   });
   if (error) {
-    console.error('[db] dbInsertSmallTalkNote error:', error);
+    console.error('[db] dbInsertSmallTalkNote error:', toDbErrorSnapshot(error));
   }
 }
 
@@ -814,7 +814,7 @@ export async function dbUpdateCustomerField(customerId: string, field: string, v
     .update({ [field]: value, updated_at: getNowInKoreaIso() })
     .eq('id', customerId);
   if (error) {
-    console.error('[db] dbUpdateCustomerField error:', error);
+    console.error('[db] dbUpdateCustomerField error:', toDbErrorSnapshot(error));
   }
 }
 
@@ -837,7 +837,7 @@ export async function dbUpsertShop(shop: Shop): Promise<{ success: boolean; erro
     updated_at: getNowInKoreaIso(),
   });
   if (error) {
-    console.error('[db] dbUpsertShop error:', error);
+    console.error('[db] dbUpsertShop error:', toDbErrorSnapshot(error));
     return { success: false, error: error.message };
   }
 
@@ -853,7 +853,7 @@ export async function dbUpdateShopSettings(shopId: string, settings: ShopExtende
     })
     .eq('id', shopId);
   if (error) {
-    console.error('[db] dbUpdateShopSettings error:', error);
+    console.error('[db] dbUpdateShopSettings error:', toDbErrorSnapshot(error));
     return { success: false, error: error.message };
   }
 
@@ -882,7 +882,7 @@ export async function dbUpsertRecord(record: ConsultationRecord): Promise<void> 
     language: record.language ?? null,
   });
   if (error) {
-    console.error('[db] dbUpsertRecord error:', error);
+    console.error('[db] dbUpsertRecord error:', toDbErrorSnapshot(error));
   }
 }
 
@@ -893,7 +893,7 @@ export async function dbDeleteRecord(id: string, shopId?: string): Promise<void>
   }
   const { error } = await query;
   if (error) {
-    console.error('[db] dbDeleteRecord error:', error);
+    console.error('[db] dbDeleteRecord error:', toDbErrorSnapshot(error));
   }
 }
 
@@ -963,7 +963,7 @@ export async function dbCompletePreconsultationBooking(
   });
 
   if (error) {
-    console.error('[db] dbCompletePreconsultationBooking error:', error);
+    console.error('[db] dbCompletePreconsultationBooking error:', toDbErrorSnapshot(error));
     return { success: false, error: error.message };
   }
 
@@ -977,7 +977,7 @@ export async function dbDeleteReservation(id: string, shopId?: string): Promise<
   }
   const { error } = await query;
   if (error) {
-    console.error('[db] dbDeleteReservation error:', error);
+    console.error('[db] dbDeleteReservation error:', toDbErrorSnapshot(error));
   }
 }
 
@@ -998,7 +998,7 @@ export async function dbInsertPortfolioPhoto(photo: PortfolioPhoto): Promise<Por
         });
 
       if (uploadError) {
-        console.error('[db] dbInsertPortfolioPhoto upload error:', uploadError);
+        console.error('[db] dbInsertPortfolioPhoto upload error:', toDbErrorSnapshot(uploadError));
         return { success: false, error: '이미지 업로드에 실패했습니다' };
       }
     }
@@ -1026,7 +1026,7 @@ export async function dbInsertPortfolioPhoto(photo: PortfolioPhoto): Promise<Por
       .single();
 
     if (error || !data) {
-      console.error('[db] dbInsertPortfolioPhoto upsert error:', error);
+      console.error('[db] dbInsertPortfolioPhoto upsert error:', toDbErrorSnapshot(error));
 
       return { success: false, error: '포트폴리오 저장에 실패했습니다' };
     }
@@ -1036,7 +1036,7 @@ export async function dbInsertPortfolioPhoto(photo: PortfolioPhoto): Promise<Por
       photo: toPortfolioPhoto(data),
     };
   } catch (error) {
-    console.error('[db] dbInsertPortfolioPhoto unexpected error:', error);
+    console.error('[db] dbInsertPortfolioPhoto unexpected error:', toDbErrorSnapshot(error));
     return { success: false, error: '포트폴리오 저장 중 오류가 발생했습니다' };
   }
 }
@@ -1044,14 +1044,14 @@ export async function dbInsertPortfolioPhoto(photo: PortfolioPhoto): Promise<Por
 export async function dbDeletePortfolioPhoto(photo: PortfolioPhoto): Promise<{ success: boolean; error?: string }> {
   const { error } = await supabase.from('portfolio_photos').delete().eq('id', photo.id).eq('shop_id', photo.shopId);
   if (error) {
-    console.error('[db] dbDeletePortfolioPhoto delete row error:', error);
+    console.error('[db] dbDeletePortfolioPhoto delete row error:', toDbErrorSnapshot(error));
     return { success: false, error: '포트폴리오 삭제에 실패했습니다' };
   }
 
   if (photo.imagePath) {
     const { error: storageError } = await supabase.storage.from(PORTFOLIO_BUCKET).remove([photo.imagePath]);
     if (storageError) {
-      console.error('[db] dbDeletePortfolioPhoto remove file error:', storageError);
+      console.error('[db] dbDeletePortfolioPhoto remove file error:', toDbErrorSnapshot(storageError));
       return { success: false, error: '이미지 파일 삭제에 실패했습니다' };
     }
   }
@@ -1067,7 +1067,7 @@ export async function dbDeleteAllPortfolioPhotos(photos: PortfolioPhoto[]): Prom
   const ids = photos.map((photo) => photo.id);
   const { error } = await supabase.from('portfolio_photos').delete().eq('shop_id', photos[0].shopId).in('id', ids);
   if (error) {
-    console.error('[db] dbDeleteAllPortfolioPhotos delete rows error:', error);
+    console.error('[db] dbDeleteAllPortfolioPhotos delete rows error:', toDbErrorSnapshot(error));
     return { success: false, error: '포트폴리오 초기화에 실패했습니다' };
   }
 
@@ -1078,7 +1078,7 @@ export async function dbDeleteAllPortfolioPhotos(photos: PortfolioPhoto[]): Prom
   if (paths.length > 0) {
     const { error: storageError } = await supabase.storage.from(PORTFOLIO_BUCKET).remove(paths);
     if (storageError) {
-      console.error('[db] dbDeleteAllPortfolioPhotos remove files error:', storageError);
+      console.error('[db] dbDeleteAllPortfolioPhotos remove files error:', toDbErrorSnapshot(storageError));
       return { success: false, error: '이미지 파일 초기화에 실패했습니다' };
     }
   }

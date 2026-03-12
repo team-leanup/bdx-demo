@@ -614,7 +614,7 @@ function CustomerDetailContent({ id }: { id: string }) {
               if (safety.level === 'high' || safety.level === 'medium') {
                 return <SafetyTag key={tag.id} tag={tag} size="sm" />;
               }
-              return <CustomerTagChip key={tag.id} tag={tag} size="md" showPin />;
+              return <CustomerTagChip key={tag.id} tag={tag} size="sm" showPin />;
             })}
           </div>
         )}

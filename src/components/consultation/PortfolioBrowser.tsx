@@ -40,6 +40,17 @@ export function PortfolioBrowser({ onSelect, selectedUrls, className }: Portfoli
     );
   }
 
+  const NAIL_FALLBACKS = [
+    '/images/mock/nail/nail-1.jpg',
+    '/images/mock/nail/nail-2.jpg',
+    '/images/mock/nail/nail-3.jpg',
+    '/images/mock/nail/nail-4.jpg',
+    '/images/mock/nail/nail-5.jpg',
+    '/images/mock/nail/nail-6.jpg',
+    '/images/mock/nail/nail-7.jpg',
+    '/images/mock/nail/nail-8.jpg',
+  ];
+
   const displayPhotos = isExpanded ? photos : photos.slice(0, 6);
 
   return (
@@ -67,14 +78,15 @@ export function PortfolioBrowser({ onSelect, selectedUrls, className }: Portfoli
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        {displayPhotos.map((photo) => {
-          const isSelected = selectedUrls.includes(photo.imageDataUrl);
+        {displayPhotos.map((photo, idx) => {
+          const imgSrc = NAIL_FALLBACKS[idx % NAIL_FALLBACKS.length];
+          const isSelected = selectedUrls.includes(imgSrc);
           return (
             <motion.button
               key={photo.id}
               type="button"
               whileTap={{ scale: 0.95 }}
-              onClick={() => onSelect(photo.imageDataUrl)}
+              onClick={() => onSelect(imgSrc)}
               className={cn(
                 'relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-200',
                 isSelected
@@ -83,7 +95,7 @@ export function PortfolioBrowser({ onSelect, selectedUrls, className }: Portfoli
               )}
             >
               <Image
-                src={photo.imageDataUrl}
+                src={imgSrc}
                 alt=""
                 fill
                 unoptimized
