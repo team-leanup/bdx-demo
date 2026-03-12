@@ -921,23 +921,42 @@ export default function RecordsPage() {
                         고객 상세로 이동
                       </button>
                     )}
-                    {/* 시술 확인서 보기 — 상담 완료된 예약만 */}
+                    {/* 시술 확인서 보기 */}
                     {(() => {
+                      const booking = allReservations.find((r) => r.id === selectedEvent.originalId);
                       const matchedRecord = allConsultations.find(
                         (r) => r.consultation?.bookingId === selectedEvent.originalId
                           || (r.customerId === selectedEvent.customerId
                             && selectedEvent.date === r.createdAt?.slice(0, 10)),
                       );
-                      if (!matchedRecord) return null;
+                      if (!matchedRecord && !booking?.preConsultationData) return null;
+                      const handleClick = () => {
+                        if (matchedRecord) {
+                          router.push(`/consultation/treatment-sheet?consultationId=${matchedRecord.id}&customerId=${matchedRecord.customerId}`);
+                        } else if (booking?.preConsultationData) {
+                          // 사전 상담 데이터로 상담 시작 → 시술 확인서로 이동
+                          hydrateConsultation({
+                            ...booking.preConsultationData,
+                            bookingId: booking.id,
+                            customerName: booking.customerName,
+                            customerPhone: booking.phone,
+                            customerId: booking.customerId ?? booking.preConsultationData.customerId,
+                            referenceImages: booking.preConsultationData.referenceImages ?? booking.referenceImageUrls ?? [],
+                            entryPoint: 'staff',
+                            currentStep: ConsultationStep.SUMMARY,
+                          });
+                          router.push('/consultation/summary');
+                        }
+                      };
                       return (
                         <button
-                          onClick={() => router.push(`/consultation/treatment-sheet?consultationId=${matchedRecord.id}&customerId=${matchedRecord.customerId}`)}
+                          onClick={handleClick}
                           className="mt-2 w-full rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors flex items-center justify-center gap-1.5"
                         >
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
                           </svg>
-                          시술 확인서 보기
+                          {matchedRecord ? '시술 확인서 보기' : '사전 상담 내역 보기'}
                         </button>
                       );
                     })()}
