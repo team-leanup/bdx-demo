@@ -1,6 +1,7 @@
 import { cn } from '@/lib/cn';
 import { getCustomerTagChipClasses } from '@/lib/customer-tags';
 import type { CustomerTag } from '@/types/customer';
+import { TagIconSvg } from '@/components/ui/TagIconSvg';
 
 interface CustomerTagChipProps {
   tag: Pick<CustomerTag, 'accent' | 'category' | 'value'>;
@@ -33,7 +34,7 @@ export function CustomerTagChip({
       )}
     >
       {showPin && <span className="text-[10px]">📌</span>}
-      {icon && <span className={size === 'xs' ? 'text-[9px]' : 'text-[11px]'}>{icon}</span>}
+      {icon && <TagIconSvg icon={icon} className={size === 'xs' ? 'w-3 h-3' : 'w-3.5 h-3.5'} />}
       <span>{tag.value}</span>
     </span>
   );

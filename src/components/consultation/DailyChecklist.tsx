@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { cn } from '@/lib/cn';
 import { getNowInKoreaIso } from '@/lib/format';
 import { useT, useLocale } from '@/lib/i18n';
+import { TagIconSvg } from '@/components/ui/TagIconSvg';
 import type { DailyChecklist as DailyChecklistType, NailShape } from '@/types/consultation';
 
 interface DailyChecklistProps {
@@ -50,7 +51,7 @@ function ChecklistSection({ title, icon, children }: { title: string; icon: stri
   return (
     <div className="rounded-xl border border-border bg-surface-alt p-4">
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-lg">{icon}</span>
+        <TagIconSvg icon={icon} className="w-4.5 h-4.5 text-text-secondary" />
         <h4 className="text-sm font-bold text-text">{title}</h4>
       </div>
       {children}
@@ -58,7 +59,7 @@ function ChecklistSection({ title, icon, children }: { title: string; icon: stri
   );
 }
 
-const SHAPE_ICONS: Record<NailShape, string> = {
+const SHAPE_ICON_EMOJI: Record<NailShape, string> = {
   round: '⭕',
   oval: '🥚',
   square: '⬜',
@@ -152,7 +153,7 @@ export function DailyChecklist({
               key={opt.value}
               selected={shape === opt.value}
               onClick={() => setShape(shape === opt.value ? null : opt.value)}
-              icon={<span className="text-base">{SHAPE_ICONS[opt.value]}</span>}
+              icon={<TagIconSvg icon={SHAPE_ICON_EMOJI[opt.value]} className="w-4 h-4" />}
             >
               <span className="flex flex-col items-start leading-tight">
                 <span>{t(opt.i18nKey)}</span>

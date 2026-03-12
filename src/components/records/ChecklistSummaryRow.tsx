@@ -1,4 +1,7 @@
+'use client';
+
 import React from 'react';
+import { TagIconSvg } from '@/components/ui/TagIconSvg';
 import type { DailyChecklist, NailShape } from '@/types/consultation';
 
 interface ChecklistSummaryRowProps {
@@ -79,7 +82,7 @@ export function ChecklistSummaryRow({ checklist }: ChecklistSummaryRowProps): Re
           key={pill.label}
           className="flex items-center gap-1 rounded-full bg-surface-alt px-2.5 py-1 text-xs text-text-secondary"
         >
-          <span>{pill.icon}</span>
+          <TagIconSvg icon={pill.icon} className="w-3 h-3" />
           <span>{pill.label}</span>
         </span>
       ))}

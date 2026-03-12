@@ -36,6 +36,7 @@ import {
   ConsultationPreviewModal,
 } from '@/components/records';
 import { TAG_PRESETS } from '@/data/tag-presets';
+import { TagIconSvg } from '@/components/ui/TagIconSvg';
 import type { ConsultationRecord } from '@/types/consultation';
 
 const READINESS_LEGEND = [
@@ -566,7 +567,7 @@ export default function RecordsPage() {
                   : 'bg-surface border border-border text-text-secondary hover:bg-surface-alt'
               }`}
             >
-              🌏 외국인
+              <TagIconSvg icon="🌏" className="w-3.5 h-3.5" /> 외국인
             </button>
             {TAG_PRESETS.filter((p) => ['design', 'shape', 'etc'].includes(p.category)).flatMap((p) => p.options).map((opt) => (
               <button
@@ -578,7 +579,7 @@ export default function RecordsPage() {
                     : 'bg-surface border border-border text-text-secondary hover:bg-surface-alt'
                 }`}
               >
-                {opt.icon} {opt.value}
+                {opt.icon && <TagIconSvg icon={opt.icon} className="w-3.5 h-3.5" />} {opt.value}
               </button>
             ))}
           </div>
