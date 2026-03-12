@@ -15,12 +15,6 @@ const SIZE_CLASSES: Record<NonNullable<SafetyTagProps['size']>, string> = {
   md: 'px-3 py-1 text-xs gap-1.5',
 };
 
-const DOT_SIZE_CLASSES: Record<NonNullable<SafetyTagProps['size']>, string> = {
-  xs: 'w-1 h-1',
-  sm: 'w-1.5 h-1.5',
-  md: 'w-2 h-2',
-};
-
 export function SafetyTag({
   tag,
   size = 'sm',
@@ -38,12 +32,6 @@ export function SafetyTag({
         className,
       )}
     >
-      <span className={cn('rounded-full flex-shrink-0', DOT_SIZE_CLASSES[size], {
-        'bg-red-500': meta.level === 'high',
-        'bg-orange-500': meta.level === 'medium',
-        'bg-amber-500': meta.level === 'reference',
-        'bg-emerald-500': meta.level === 'preferred',
-      })} />
       <span>{tag.value}</span>
       {showLevel && (
         <span className="opacity-70">{meta.label}</span>

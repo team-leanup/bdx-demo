@@ -32,7 +32,6 @@ export function ReservationReadinessBadge({
       )}
       title={readiness.label}
     >
-      <span className={cn('inline-block h-2 w-2 rounded-full', readiness.dotColor)} />
       <span>{compact ? readiness.shortLabel : readiness.label}</span>
     </span>
   );

@@ -11,10 +11,9 @@ import { FlagIcon } from '@/components/ui/FlagIcon';
 import { IconCalendar } from '@/components/icons';
 import { cn } from '@/lib/cn';
 
-function ChannelEmojiBadge({ variant, icon, label }: { variant: string; icon: string; label: string }) {
+function ChannelEmojiBadge({ variant, label }: { variant: string; icon: string; label: string }) {
   return (
     <Badge variant={variant as 'primary' | 'neutral' | 'success' | 'warning'} size="sm">
-      <span className="text-[10px] leading-none">{icon}</span>
       {label}
     </Badge>
   );
