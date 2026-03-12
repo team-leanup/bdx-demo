@@ -98,6 +98,10 @@ export const usePortfolioStore = create<PortfolioStore>()(
           return;
         }
 
+        if (currentShopId === 'shop-demo') {
+          set({ _dbReady: true });
+          return;
+        }
 
         const hydrationVersion = ++portfolioHydrationVersion;
         const legacyPhotos = readLegacyPortfolioPhotos();
@@ -177,6 +181,11 @@ export const usePortfolioStore = create<PortfolioStore>()(
           createdAt: getNowInKoreaIso(),
         };
 
+        if (currentShopId === 'shop-demo') {
+          set((state) => ({ photos: [newPhoto, ...state.photos] }));
+          return { success: true };
+        }
+
         const result = await dbInsertPortfolioPhoto(newPhoto);
         if (!result.success || !result.photo) {
           return { success: false, error: result.error };
@@ -190,6 +199,13 @@ export const usePortfolioStore = create<PortfolioStore>()(
         const target = get().photos.find((photo) => photo.id === id);
         if (!target) {
           return { success: false, error: '삭제할 사진을 찾을 수 없습니다' };
+        }
+
+        const currentShopId = useAuthStore.getState().currentShopId;
+
+        if (currentShopId === 'shop-demo') {
+          set((state) => ({ photos: state.photos.filter((photo) => photo.id !== id) }));
+          return { success: true };
         }
 
         const previousPhotos = get().photos;
@@ -221,6 +237,13 @@ export const usePortfolioStore = create<PortfolioStore>()(
       getByKind: (kind) => get().photos.filter((p) => p.kind === kind),
 
       clearAll: async () => {
+        const currentShopId = useAuthStore.getState().currentShopId;
+
+        if (currentShopId === 'shop-demo') {
+          set({ photos: [] });
+          return { success: true };
+        }
+
         portfolioHydrationVersion += 1;
         const currentPhotos = get().photos;
         set({ photos: [] });
@@ -248,7 +271,10 @@ export const usePortfolioStore = create<PortfolioStore>()(
       ),
       partialize: (state) => ({
         ...state,
-        photos: state.photos.map((p) => ({ ...p, imageDataUrl: '' })),
+        photos: state.photos.map((p) => ({
+          ...p,
+          imageDataUrl: p.imagePath ? '' : p.imageDataUrl,
+        })),
       }),
     },
   ),

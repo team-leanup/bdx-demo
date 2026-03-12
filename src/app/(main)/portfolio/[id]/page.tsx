@@ -81,7 +81,7 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
     '/images/mock/nail/nail-8.jpg',
   ];
   const photoIndex = photos.findIndex((p) => p.id === id);
-  const imgSrc = NAIL_FALLBACKS[(photoIndex >= 0 ? photoIndex : 0) % NAIL_FALLBACKS.length];
+  const imgSrc = photo?.imageDataUrl || NAIL_FALLBACKS[(photoIndex >= 0 ? photoIndex : 0) % NAIL_FALLBACKS.length];
 
   const handleDismissToast = (id: string): void => {
     setToasts((current) => current.filter((toast) => toast.id !== id));

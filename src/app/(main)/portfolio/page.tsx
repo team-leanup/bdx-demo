@@ -36,6 +36,7 @@ export default function PortfolioPage(): React.ReactElement {
   const router = useRouter();
   const searchParams = useSearchParams();
   const photos = usePortfolioStore((s) => s.photos);
+  const hydrateFromDB = usePortfolioStore((s) => s.hydrateFromDB);
   const migrationNotice = usePortfolioStore((s) => s.migrationNotice);
   const clearMigrationNotice = usePortfolioStore((s) => s.clearMigrationNotice);
   const getById = useCustomerStore((s) => s.getById);
@@ -52,6 +53,10 @@ export default function PortfolioPage(): React.ReactElement {
   const [overlayPhotoId, setOverlayPhotoId] = useState<string | null>(null);
   const records = getAllRecords();
   const reservations = useReservationStore((s) => s.reservations);
+
+  useEffect(() => {
+    hydrateFromDB();
+  }, [hydrateFromDB]);
 
   useEffect(() => {
     const actionToast = searchParams.get('toast');
@@ -429,7 +434,7 @@ export default function PortfolioPage(): React.ReactElement {
                 '/images/mock/nail/nail-7.jpg',
                 '/images/mock/nail/nail-8.jpg',
               ];
-              const imgSrc = NAIL_FALLBACKS[idx % NAIL_FALLBACKS.length];
+              const imgSrc = photo.imageDataUrl || NAIL_FALLBACKS[idx % NAIL_FALLBACKS.length];
               return (
                 <button
                   key={photo.id}

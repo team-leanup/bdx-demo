@@ -71,7 +71,7 @@ export function PortfolioOverlay({
     '/images/mock/nail/nail-7.jpg',
     '/images/mock/nail/nail-8.jpg',
   ];
-  const imgSrc = NAIL_FALLBACKS[currentIndex % NAIL_FALLBACKS.length];
+  const imgSrc = photo?.imageDataUrl || NAIL_FALLBACKS[currentIndex % NAIL_FALLBACKS.length];
 
   if (!photo) return <></>;
 
