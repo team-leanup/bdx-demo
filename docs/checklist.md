@@ -384,6 +384,39 @@
 
 ---
 
+## 19. 모바일 + 태블릿 반응형 최적화 — 2026-03-12
+
+> 핵심: iPad mini(768px)에서 SideNav가 콘텐츠를 압축하는 근본 문제 해결 + 스크린샷 확인된 버그 8건 + 코드 분석 기반 25건 수정
+
+### 19.1 🟢 SideNav/BottomTabBar breakpoint `md:` → `lg:` (1024px)
+- **완료**: AppShell, StatusBar, BottomTabBar, SideNav의 모든 `md:` breakpoint를 `lg:`로 변경. iPad mini(768px)에서 SideNav 대신 BottomTabBar 표시. globals.css에 `mb-safe`, `pb-safe`, `safe-area-inset` 유틸리티 추가, `overscroll-behavior-y: none` 적용, deprecated `WebkitOverflowScrolling` 제거
+
+### 19.2 🟢 모달 태블릿 SideNav 가려짐 수정
+- **완료**: Modal.tsx의 `md:` → `lg:` 변경, `lg:` 이상에서 SideNav 오프셋 반영 (`lg:left-[calc(100px+50%)]`), `max-h-[90vh]` → `max-h-[90dvh]` 키보드 대응, `pb-safe` 추가
+
+### 19.3 🟢 설정 선생님 목록 레이아웃 수정
+- **완료**: 카드 레이아웃을 `flex-row` → `flex-col`로 변경. 상단: 아바타+이름+뱃지, 하단: 액션 버튼 flex-wrap
+
+### 19.4 🟢 대시보드 "문구 복사" 버튼 잘림 수정
+- **완료**: 텍스트 div에 `min-w-0 flex-1`, 버튼에 `shrink-0` 추가
+
+### 19.5 🟢 포트폴리오 업로드 2열 필드 겹침 수정
+- **완료**: `sm:grid-cols-2` → `lg:grid-cols-2`
+
+### 19.6 🟢 할인 모달 키보드 대응 + 프리셋 칩 UI
+- **완료**: 적용/초기화 버튼 `sticky bottom-0`, 할인 비율 프리셋 [5%/10%/15%/20%/직접입력], 예약금 프리셋 [₩10,000/₩20,000/₩30,000/직접입력]
+
+### 19.7 🟢 메시지 복사 버튼 피드백 UX
+- **완료**: 클릭 시 "복사 완료!" 텍스트 + `bg-green-600` 색상 변경 (2초 후 복원)
+
+### 19.8 🟢 Major 반응형 수정 11건
+- **완료**: ConsultationLocaleButton safe-area, StatusBar 드롭다운 위치, ConsultationHeader truncate, ConsultationFooter 버튼 min-w, CustomerInfoForm 세로 스택, Calendar min-w 반응형, ColorPicker label overflow, PartsSelector truncate, customers/[id] nested scroll 제거, TodayStatsCard 가독성, BottomTabBar truncate
+
+### 19.9 🟢 Minor 터치/UX 수정 8건
+- **완료**: 터치타겟 44px 보장 (4파일), OffSelector 배지 overflow, BodyPartSelector 패딩 최적화, ShapeSelector grid `lg:`, HandIllustration annotation truncate, records 태그 fade 힌트, customer 썸네일 통일, QuickActions label 가독성
+
+---
+
 ## 진행 요약
 
 | 영역 | 항목수 | 🟢 | 🟡 | 🔵 | ⬜ |
@@ -405,4 +438,5 @@
  | 설정/운영 UX | 2 | 2 | 0 | 0 | 0 |
  | 개발 도구 | 1 | 1 | 0 | 0 | 0 |
 | **QA 검증** | **5** | **2** | **0** | **0** | **1** |
-| **합계** | **66** | **49** | **0** | **2** | **13** |
+| **반응형 최적화** | **9** | **9** | **0** | **0** | **0** |
+| **합계** | **75** | **58** | **0** | **2** | **13** |

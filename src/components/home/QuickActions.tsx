@@ -34,7 +34,7 @@ export function QuickActions({
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-alt">
             <Icon className="h-5 w-5 text-text-secondary" />
           </div>
-          <span className="text-[10px] font-medium text-text-secondary leading-none">{label}</span>
+          <span className="text-xs font-medium text-text-secondary leading-none">{label}</span>
         </button>
       ))}
     </motion.div>

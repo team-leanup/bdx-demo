@@ -165,7 +165,7 @@ export function TimeGridCalendar({ events, weekStartDate, onEventClick, onWeekCh
 
       {/* Grid */}
       <div className="overflow-x-auto rounded-xl border border-border bg-surface">
-        <div className="min-w-[500px]">
+        <div className="min-w-[500px] lg:min-w-0">
           {/* Day headers */}
           <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-border bg-surface">
             <div className="p-2" />

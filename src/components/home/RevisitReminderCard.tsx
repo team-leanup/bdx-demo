@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useCustomerStore } from '@/store/customer-store';
 import { formatRelativeDate } from '@/lib/format';
@@ -29,11 +29,16 @@ export function RevisitReminderCard({
       .slice(0, 5);
   }, [customers]);
 
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
   if (overdueCustomers.length === 0) return null;
 
-  const copyMessage = (customerName: string): void => {
+  const copyMessage = (customerId: string, customerName: string): void => {
     const msg = `안녕하세요, ${customerName}님! ${shopName}입니다. 마지막 방문 이후 한 달이 지났네요. 예약을 도와드릴까요?`;
-    navigator.clipboard.writeText(msg).catch(() => {});
+    navigator.clipboard.writeText(msg).then(() => {
+      setCopiedId(customerId);
+      setTimeout(() => setCopiedId(null), 2000);
+    }).catch(() => {});
   };
 
   return (
@@ -64,10 +69,10 @@ export function RevisitReminderCard({
               <span className="text-xs text-text-muted">마지막 방문 {formatRelativeDate(customer.lastVisitDate)}</span>
             </div>
             <button
-              onClick={() => copyMessage(customer.name)}
-              className="shrink-0 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white active:scale-95 transition-transform"
+              onClick={() => copyMessage(customer.id, customer.name)}
+              className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold text-white active:scale-95 transition-all ${copiedId === customer.id ? 'bg-green-600' : 'bg-primary'}`}
             >
-              메시지 복사
+              {copiedId === customer.id ? '복사 완료!' : '메시지 복사'}
             </button>
           </motion.div>
         ))}

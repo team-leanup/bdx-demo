@@ -99,7 +99,7 @@ export default function Step3Page() {
                 setStep(ConsultationStep.CANVAS);
                 router.push('/consultation/canvas');
               }}
-              className="px-4 py-2 text-sm font-medium text-text-secondary bg-surface-alt rounded-xl hover:bg-surface-alt/80 transition-colors"
+              className="min-h-[44px] px-4 py-2 text-sm font-medium text-text-secondary bg-surface-alt rounded-xl hover:bg-surface-alt/80 transition-colors"
             >
               캔버스 (선택)
               {locale !== 'ko' && (

@@ -45,7 +45,7 @@ export function TodayStatsCard({
           <span className="text-base md:text-lg font-bold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
             {consultationCount}
           </span>
-          <span className="text-[9px] text-text-muted text-center leading-tight">{consultationLabel}</span>
+          <span className="text-[10px] text-text-muted text-center leading-tight">{consultationLabel}</span>
         </div>
         {/* 예약 */}
         <div className="flex flex-col items-center gap-1 py-4">
@@ -55,17 +55,17 @@ export function TodayStatsCard({
           <span className="text-base md:text-lg font-bold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
             {reservationCount}
           </span>
-          <span className="text-[9px] text-text-muted text-center leading-tight">{reservationLabel}</span>
+          <span className="text-[10px] text-text-muted text-center leading-tight">{reservationLabel}</span>
         </div>
         {/* 오늘 매출 */}
         <div className="flex flex-col items-center gap-1 py-4">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
             <IconWon className="h-3.5 w-3.5 text-primary" />
           </div>
-          <span className="text-sm font-bold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
+          <span className="text-sm font-bold text-text truncate w-full text-center" style={{ fontVariantNumeric: 'tabular-nums' }}>
             {formatPrice(revenue)}
           </span>
-          <span className="text-[9px] text-text-muted text-center leading-tight">{revenueLabel}</span>
+          <span className="text-[10px] text-text-muted text-center leading-tight">{revenueLabel}</span>
         </div>
         {/* 외국인 예약 */}
         <div className="flex flex-col items-center gap-1 py-4">
@@ -75,7 +75,7 @@ export function TodayStatsCard({
           <span className="text-base md:text-lg font-bold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
             {foreignCount}
           </span>
-          <span className="text-[9px] text-text-muted text-center leading-tight">외국인</span>
+          <span className="text-[10px] text-text-muted text-center leading-tight">외국인</span>
         </div>
       </div>
       {/* 매출 상세 바 */}

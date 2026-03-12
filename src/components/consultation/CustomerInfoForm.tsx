@@ -120,7 +120,7 @@ export function CustomerInfoForm({
               </button>
             </div>
           )}
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
               <Input
                 label={<>{t('customerForm.nameLabel')}{locale !== 'ko' && <span className="ml-1 text-[10px] text-text-muted opacity-60">{tKo('customerForm.nameLabel')}</span>}</>}

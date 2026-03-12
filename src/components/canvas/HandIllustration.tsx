@@ -125,17 +125,17 @@ function AnnotationCard({ fingerName, fingerNameKo, selection, locale, t }: {
       </div>
       {/* Art type (note) */}
       {selection?.note && (
-        <p className="text-sm font-extrabold text-primary leading-snug break-words">
+        <p className="text-sm font-extrabold text-primary leading-snug break-words min-w-0 truncate">
           {TREATMENT_TYPE_I18N[selection.note] ? t(TREATMENT_TYPE_I18N[selection.note]) : selection.note}
         </p>
       )}
       {/* Color memo (colorCode text) */}
       {selection?.colorCode && !hexColor && (
-        <p className="text-[10px] text-text-secondary leading-snug">{selection.colorCode}</p>
+        <p className="text-[10px] text-text-secondary leading-snug min-w-0 truncate">{selection.colorCode}</p>
       )}
       {/* Treatment memo */}
       {selection?.memo && (
-        <p className="text-xs text-text-muted mt-0.5 leading-snug break-words">{selection.memo}</p>
+        <p className="text-xs text-text-muted mt-0.5 leading-snug break-words min-w-0 truncate">{selection.memo}</p>
       )}
       {/* Parts summary */}
       {totalParts > 0 && (

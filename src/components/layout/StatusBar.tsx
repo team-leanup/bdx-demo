@@ -30,9 +30,9 @@ export function StatusBar({ shopName: shopNameProp }: StatusBarProps) {
   const [showLangMenu, setShowLangMenu] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-30 bg-surface border-b border-border safe-top md:hidden">
-      <div className="flex items-center justify-between px-4 h-14 max-w-2xl mx-auto md:max-w-none md:px-8">
-        <div className="flex items-center gap-2 md:hidden">
+    <header className="fixed top-0 left-0 right-0 z-30 bg-surface border-b border-border safe-top lg:hidden">
+      <div className="flex items-center justify-between px-4 h-14 max-w-2xl mx-auto lg:max-w-none lg:px-8">
+        <div className="flex items-center gap-2 lg:hidden">
           <span className="font-bold text-base tracking-tight text-primary">{shopName}</span>
           {isLoggedIn() && <RoleBadge />}
         </div>
@@ -71,7 +71,7 @@ export function StatusBar({ shopName: shopNameProp }: StatusBarProps) {
                 className="fixed inset-0 z-40"
                 onClick={() => setShowLangMenu(false)}
               />
-              <div className="absolute right-8 top-9 z-50 bg-surface border border-border rounded-xl shadow-lg p-2 flex flex-col gap-1 min-w-[110px]">
+              <div className="absolute right-0 top-full mt-1 z-50 bg-surface border border-border rounded-xl shadow-lg p-2 flex flex-col gap-1 min-w-[110px]">
                 {LOCALE_LABELS.map((opt) => (
                   <button
                     key={opt.value}

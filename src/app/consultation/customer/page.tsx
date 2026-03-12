@@ -465,7 +465,7 @@ function CustomerPageInner(): React.ReactElement {
             {(consultation.referenceImages || []).length > 0 && (
               <div className="flex gap-2 flex-wrap mb-3">
                 {(consultation.referenceImages || []).map((url, i) => (
-                  <div key={i} className="relative w-28 h-28 rounded-xl overflow-hidden border border-border flex-shrink-0">
+                  <div key={i} className="relative w-24 h-24 rounded-xl overflow-hidden border border-border flex-shrink-0">
                     <Image src={url} alt="" fill unoptimized className="object-cover" />
                     <button
                       type="button"

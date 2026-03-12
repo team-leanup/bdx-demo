@@ -240,7 +240,7 @@ export default function CustomersPage() {
                 type="button"
                 onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                 disabled={currentPage === 1}
-                className="rounded-xl border border-border px-3 py-1.5 text-xs font-semibold text-text-secondary disabled:cursor-not-allowed disabled:opacity-40"
+                className="min-h-[44px] min-w-[44px] rounded-xl border border-border px-3 py-1.5 text-xs font-semibold text-text-secondary disabled:cursor-not-allowed disabled:opacity-40"
               >
                 이전
               </button>
@@ -251,7 +251,7 @@ export default function CustomersPage() {
                 type="button"
                 onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
                 disabled={currentPage === totalPages}
-                className="rounded-xl border border-border px-3 py-1.5 text-xs font-semibold text-text-secondary disabled:cursor-not-allowed disabled:opacity-40"
+                className="min-h-[44px] min-w-[44px] rounded-xl border border-border px-3 py-1.5 text-xs font-semibold text-text-secondary disabled:cursor-not-allowed disabled:opacity-40"
               >
                 다음
               </button>

@@ -68,7 +68,7 @@ export function BottomTabBar() {
   const t = useT();
 
   return (
-    <nav data-tour-id="tour-nav" className="fixed bottom-0 left-0 right-0 z-30 bg-surface border-t border-border safe-bottom md:hidden">
+    <nav data-tour-id="tour-nav" className="fixed bottom-0 left-0 right-0 z-30 bg-surface border-t border-border safe-bottom lg:hidden">
       <div className="flex items-stretch max-w-3xl mx-auto h-16">
         {TAB_DEFS.map((tab) => {
           const active = pathname.startsWith(tab.href);
@@ -81,12 +81,12 @@ export function BottomTabBar() {
                 active ? 'text-primary' : 'text-text-muted hover:text-text-secondary',
               )}
             >
-              <span className="[&>svg]:w-5 [&>svg]:h-5 md:[&>svg]:w-6 md:[&>svg]:h-6">
+              <span className="[&>svg]:w-5 [&>svg]:h-5 lg:[&>svg]:w-6 lg:[&>svg]:h-6">
                 {tab.icon()}
               </span>
               <span
                 className={cn(
-                  'text-[10px] md:text-xs font-medium leading-none',
+                  'text-[10px] lg:text-xs font-medium leading-none truncate max-w-[50px]',
                   active ? 'text-primary' : 'text-text-muted',
                 )}
               >

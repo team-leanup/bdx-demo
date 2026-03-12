@@ -185,7 +185,7 @@ export function PartsSelector({ className }: PartsSelectorProps) {
                       <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1" className="text-primary" fillOpacity="0" />
                     </svg>
                   </div>
-                  <span className="flex-1 text-sm font-semibold text-text">
+                  <span className="flex-1 min-w-0 truncate text-sm font-semibold text-text">
                     {(() => {
                       const key = entry.customPartId ? PARTS_I18N_MAP[entry.customPartId] : undefined;
                       if (key) {

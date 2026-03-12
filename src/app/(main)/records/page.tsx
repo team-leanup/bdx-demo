@@ -548,6 +548,7 @@ export default function RecordsPage() {
           )}
 
           {/* R-5: 태그 필터 칩 */}
+          <div className="relative after:absolute after:right-0 after:top-0 after:bottom-0 after:w-8 after:bg-gradient-to-l after:from-background after:to-transparent after:pointer-events-none">
           <div className="flex gap-2 overflow-x-auto px-4 md:px-0 pb-1 scrollbar-hide">
             <button
               onClick={() => setTagFilter(null)}
@@ -582,6 +583,7 @@ export default function RecordsPage() {
                 {opt.icon && <TagIconSvg icon={opt.icon} className="w-3.5 h-3.5" />} {opt.value}
               </button>
             ))}
+          </div>
           </div>
 
           <PeriodFilter

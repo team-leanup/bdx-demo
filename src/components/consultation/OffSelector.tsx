@@ -84,32 +84,32 @@ export function OffSelector({ className }: OffSelectorProps) {
               whileTap={{ scale: 0.95 }}
               onClick={() => setOffType(opt.value)}
               className={cn(
-                'relative flex flex-col items-center justify-center gap-4 py-8 px-2 rounded-2xl transition-all duration-300 text-left',
+                'relative flex flex-col items-center justify-center gap-4 py-8 px-2 pb-8 rounded-2xl transition-all duration-300 text-left',
                 isSelected
                   ? 'border-2 border-primary bg-white shadow-sm'
                   : 'border border-border bg-white hover:border-gray-300',
               )}
             >
               {/* Context-Aware Iconic Visual */}
-              <span className={cn('relative transition-all duration-300 transform', isSelected ? 'scale-110' : 'opacity-50')}>
+              <span className={cn('transition-all duration-300 transform', isSelected ? 'scale-110' : 'opacity-50')}>
                 {OFF_ICONS[opt.value]()}
-                {OFF_BADGE_CONFIG[opt.value] && (() => {
-                  const badge = OFF_BADGE_CONFIG[opt.value]!;
-                  const isPrimary = badge.colorType === 'primary';
-                  return (
-                    <span
-                      className={cn(
-                        'absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1 px-2.5 py-0.5 rounded-full text-[9px] font-black border-[1.5px] leading-tight text-center whitespace-nowrap',
-                        isPrimary
-                          ? isSelected ? 'bg-primary-dark text-white border-primary' : 'bg-surface text-primary border-primary'
-                          : isSelected ? 'bg-text text-white border-text' : 'bg-surface text-text border-text',
-                      )}
-                    >
-                      {t(badge.key)}
-                    </span>
-                  );
-                })()}
               </span>
+              {OFF_BADGE_CONFIG[opt.value] && (() => {
+                const badge = OFF_BADGE_CONFIG[opt.value]!;
+                const isPrimary = badge.colorType === 'primary';
+                return (
+                  <span
+                    className={cn(
+                      'absolute bottom-2 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[9px] font-black border-[1.5px] leading-tight text-center whitespace-nowrap',
+                      isPrimary
+                        ? isSelected ? 'bg-primary-dark text-white border-primary' : 'bg-surface text-primary border-primary'
+                        : isSelected ? 'bg-text text-white border-text' : 'bg-surface text-text border-text',
+                    )}
+                  >
+                    {t(badge.key)}
+                  </span>
+                );
+              })()}
 
               {/* Labels */}
               <div className="flex flex-col items-center gap-1.5 w-full">

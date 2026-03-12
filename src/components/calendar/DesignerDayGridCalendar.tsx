@@ -309,7 +309,7 @@ export function DesignerDayGridCalendar({
       <div className="text-lg font-bold text-text">{formatDayLabelKo(date)}</div>
 
       <div className="overflow-x-auto rounded-xl border border-border bg-surface">
-        <div className="min-w-[500px]">
+        <div className="min-w-[500px] lg:min-w-0">
           <div
             className="grid border-b border-border bg-surface"
             style={{ gridTemplateColumns: `${AXIS_WIDTH}px repeat(${colCount}, 1fr)` }}

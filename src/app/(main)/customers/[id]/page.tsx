@@ -371,7 +371,7 @@ function CustomerDetailContent({ id }: { id: string }) {
 
 
   return (
-    <div className="flex flex-col gap-6 pb-8 overflow-y-auto md:px-6">
+    <div className="flex flex-col gap-6 pb-8 md:px-6">
       <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
       {/* 헤더 */}
       <div className="flex items-center gap-3 px-4 pt-4">

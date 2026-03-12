@@ -65,7 +65,7 @@ export function ConsultationFooter({
         disabled={disabled}
         loading={loading}
         className={cn(
-          shouldShowEstimated ? 'flex-1 max-w-48 md:max-w-xs' : 'w-full max-w-48 md:max-w-xs',
+          shouldShowEstimated ? 'flex-1 min-w-[120px] md:max-w-xs' : 'w-full min-w-[120px] md:max-w-xs',
         )}
       >
         {label}

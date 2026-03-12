@@ -182,11 +182,11 @@ export function ColorPicker({
                 )}
               >
                 <span className="block">{type.icon(isSelected)}</span>
-                <span className="text-[10px] font-bold leading-tight text-center whitespace-nowrap">
+                <span className="text-[10px] font-bold leading-tight text-center line-clamp-2">
                   {t(TREATMENT_TYPE_KEYS[type.value])}
                 </span>
                 {locale !== 'ko' && (
-                  <span className="text-[8px] leading-tight text-center opacity-50 whitespace-nowrap">
+                  <span className="text-[8px] leading-tight text-center opacity-50 line-clamp-2">
                     {ko(TREATMENT_TYPE_KEYS[type.value])}
                   </span>
                 )}

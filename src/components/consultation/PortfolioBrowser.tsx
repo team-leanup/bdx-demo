@@ -127,7 +127,7 @@ export function PortfolioBrowser({ onSelect, selectedUrls, className }: Portfoli
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-xs font-bold text-primary hover:underline transition-colors"
+          className="text-xs font-bold text-primary hover:underline transition-colors min-h-[44px] px-3"
         >
           {isExpanded ? '접기' : `+ ${photos.length - 6}개 더 보기`}
         </button>

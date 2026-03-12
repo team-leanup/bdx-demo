@@ -553,34 +553,36 @@ function StaffSection() {
             return (
               <div
                 key={d.id}
-                className="flex items-center gap-3 rounded-xl bg-surface-alt p-3"
+                className="flex flex-col gap-2 rounded-xl bg-surface-alt p-3"
               >
-                <div className="flex-shrink-0">
-                  <ProfileAvatar designerId={d.id} name={d.name} size="sm" />
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-text">{d.name}</span>
-                    {d.role === 'owner' && (
-                      <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-medium text-primary">
-                        {t('settings.staff_owner')}
-                      </span>
-                    )}
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                        d.isActive
-                          ? 'bg-success/15 text-success'
-                          : 'bg-error/15 text-error'
-                      }`}
-                    >
-                      {d.isActive ? t('settings.staff_active') : t('settings.staff_inactive')}
-                    </span>
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0">
+                    <ProfileAvatar designerId={d.id} name={d.name} size="sm" />
                   </div>
-                  <p className="text-xs text-text-secondary">{d.phone}</p>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold text-text truncate min-w-0">{d.name}</span>
+                      {d.role === 'owner' && (
+                        <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-medium text-primary">
+                          {t('settings.staff_owner')}
+                        </span>
+                      )}
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                          d.isActive
+                            ? 'bg-success/15 text-success'
+                            : 'bg-error/15 text-error'
+                        }`}
+                      >
+                        {d.isActive ? t('settings.staff_active') : t('settings.staff_inactive')}
+                      </span>
+                    </div>
+                    <p className="text-xs text-text-secondary">{d.phone}</p>
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-end gap-1.5 flex-shrink-0">
+                <div className="flex flex-wrap items-center gap-1.5 pl-11">
                   <button
                     onClick={() => startEdit(d)}
                     className="rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-semibold text-text-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary transition-all"

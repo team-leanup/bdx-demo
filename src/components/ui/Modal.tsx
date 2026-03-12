@@ -34,8 +34,8 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
             transition={{ type: 'spring', damping: 30, stiffness: 350 }}
             className={cn(
               'fixed bottom-0 left-0 right-0 z-50 bg-surface rounded-t-2xl',
-              'max-h-[90vh] flex flex-col',
-              'md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-1/2 md:-translate-x-1/2 md:right-auto md:w-full md:max-w-lg md:rounded-2xl',
+              'max-h-[90dvh] flex flex-col pb-safe',
+              'lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 lg:left-[calc(100px+50%)] lg:-translate-x-1/2 lg:right-auto lg:w-full lg:max-w-lg lg:rounded-2xl lg:pb-0',
               className,
             )}
           >

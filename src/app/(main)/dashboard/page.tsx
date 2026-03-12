@@ -254,14 +254,14 @@ export default function DashboardPage() {
                   {goldenTimeTargets.map((target) => (
                     <div key={target.customerId} className="rounded-2xl border border-border bg-surface-alt px-4 py-3">
                       <div className="flex items-start justify-between gap-3">
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="text-sm font-semibold text-text">{target.customerName}</p>
                           <p className="mt-0.5 text-[11px] text-text-muted">
                             {target.assignedDesignerName} · {target.recentServiceLabel} · 마지막 방문 후 {target.daysSinceLastVisit}일
                           </p>
                           <p className="mt-1 text-[11px] text-text-muted">권장 연락일 {formatDateDot(target.expectedReservationDate)}</p>
                         </div>
-                        <Button size="sm" variant="secondary" onClick={() => handleCopyReminder(target.reminderMessage)}>
+                        <Button size="sm" variant="secondary" className="shrink-0" onClick={() => handleCopyReminder(target.reminderMessage)}>
                           문구 복사
                         </Button>
                       </div>

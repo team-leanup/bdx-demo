@@ -159,7 +159,7 @@ export function TodayReservationCard({
         </div>
         <button
           onClick={onViewAll}
-          className="text-xs font-semibold text-primary active:opacity-60"
+          className="min-h-[44px] px-2 text-xs font-semibold text-primary active:opacity-60"
         >
           {viewAllLabel}
         </button>
