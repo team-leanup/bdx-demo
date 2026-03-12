@@ -216,7 +216,7 @@ export default function SummaryPage() {
     restoreLocale();
 
     if (isCustomerLinkFlow) {
-      router.push(`/consultation/save-complete?mode=preconsultation&customerId=${customerId}`);
+      router.push('/home');
       return;
     }
 

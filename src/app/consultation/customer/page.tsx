@@ -156,6 +156,15 @@ function CustomerPageInner(): React.ReactElement {
   const [phone, setPhone] = useState(consultation.customerPhone ?? prefillPhone);
   const [memo, setMemo] = useState(prefillNote);
   const [showEntrySplash, setShowEntrySplash] = useState(isCustomerLinkFlow);
+  const [selectedExistingCustomerId, setSelectedExistingCustomerId] = useState<string | undefined>(consultation.customerId);
+  const [selectedExistingSnapshot, setSelectedExistingSnapshot] = useState<{ name: string; phone: string } | null>(
+    consultation.customerId
+      ? {
+          name: consultation.customerName ?? prefillName,
+          phone: consultation.customerPhone ?? prefillPhone,
+        }
+      : null,
+  );
 
   useEffect(() => {
     if (!isCustomerLinkFlow || consultation.currentStep !== ConsultationStep.START) {
@@ -277,11 +286,26 @@ function CustomerPageInner(): React.ReactElement {
   const handleExistingCustomer = (customer: Customer) => {
     setName(customer.name);
     setPhone(customer.phone);
+    setSelectedExistingCustomerId(customer.id);
+    setSelectedExistingSnapshot({ name: customer.name, phone: customer.phone });
     setCustomerInfo(customer.name, customer.phone, customer.id);
   };
 
   const handleNext = () => {
-    setCustomerInfo(name, phone);
+    const trimmedName = name.trim();
+    const trimmedPhone = phone.trim();
+    const preserveCustomerId = Boolean(
+      selectedExistingCustomerId
+      && selectedExistingSnapshot
+      && selectedExistingSnapshot.name === trimmedName
+      && selectedExistingSnapshot.phone === trimmedPhone,
+    );
+
+    setCustomerInfo(
+      trimmedName,
+      trimmedPhone,
+      preserveCustomerId ? selectedExistingCustomerId : undefined,
+    );
     // Persist memo to sessionStorage so summary page can append it to customer notes
     if (memo.trim()) {
       sessionStorage.setItem('consultation_customer_memo', memo.trim());
