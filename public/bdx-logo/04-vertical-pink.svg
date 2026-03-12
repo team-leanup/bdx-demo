@@ -1,0 +1,41 @@
+<svg viewBox="0 0 220 280" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g0" gradientUnits="userSpaceOnUse" x1="50" y1="100" x2="150" y2="100">
+      <stop offset="0%" stop-color="#FF0066"/><stop offset="20%" stop-color="#FF1A75"/>
+      <stop offset="45%" stop-color="#FF4D99"/><stop offset="50%" stop-color="#FF66AA"/>
+      <stop offset="55%" stop-color="#FF4D99"/><stop offset="80%" stop-color="#FF1A75"/>
+      <stop offset="100%" stop-color="#FF0066"/>
+    </linearGradient>
+    <linearGradient id="g45" gradientUnits="userSpaceOnUse" x1="50" y1="50" x2="150" y2="150">
+      <stop offset="0%" stop-color="#FF0066"/><stop offset="20%" stop-color="#FF1A75"/>
+      <stop offset="45%" stop-color="#FF4D99"/><stop offset="50%" stop-color="#FF66AA"/>
+      <stop offset="55%" stop-color="#FF4D99"/><stop offset="80%" stop-color="#FF1A75"/>
+      <stop offset="100%" stop-color="#FF0066"/>
+    </linearGradient>
+    <linearGradient id="g90" gradientUnits="userSpaceOnUse" x1="100" y1="50" x2="100" y2="150">
+      <stop offset="0%" stop-color="#FF0066"/><stop offset="20%" stop-color="#FF1A75"/>
+      <stop offset="45%" stop-color="#FF4D99"/><stop offset="50%" stop-color="#FF66AA"/>
+      <stop offset="55%" stop-color="#FF4D99"/><stop offset="80%" stop-color="#FF1A75"/>
+      <stop offset="100%" stop-color="#FF0066"/>
+    </linearGradient>
+    <linearGradient id="g135" gradientUnits="userSpaceOnUse" x1="150" y1="50" x2="50" y2="150">
+      <stop offset="0%" stop-color="#FF0066"/><stop offset="20%" stop-color="#FF1A75"/>
+      <stop offset="45%" stop-color="#FF4D99"/><stop offset="50%" stop-color="#FF66AA"/>
+      <stop offset="55%" stop-color="#FF4D99"/><stop offset="80%" stop-color="#FF1A75"/>
+      <stop offset="100%" stop-color="#FF0066"/>
+    </linearGradient>
+  </defs>
+  <svg x="40" y="0" width="140" height="140" viewBox="0 0 200 200">
+    <circle cx="100" cy="100" r="86" fill="none" stroke="#FF69B4" stroke-width="2.5" stroke-opacity="0.4"/>
+    <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" fill="url(#g0)" fill-opacity="0.2"/>
+    <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" transform="rotate(45, 100, 100)" fill="url(#g45)" fill-opacity="0.2"/>
+    <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" transform="rotate(90, 100, 100)" fill="url(#g90)" fill-opacity="0.2"/>
+    <path d="M 100,14 C 136,48 136,152 100,186 C 64,152 64,48 100,14 Z" transform="rotate(135, 100, 100)" fill="url(#g135)" fill-opacity="0.2"/>
+  </svg>
+  <text x="10" y="188" font-family="'116angmuburi', sans-serif"
+        font-size="32" fill="#FF0066"
+        textLength="200" lengthAdjust="spacing">BDX</text>
+  <text x="10" y="208" font-family="'116angmuburi', sans-serif"
+        font-size="11" fill="#FF69B4" letter-spacing="2.2"
+        textLength="200" lengthAdjust="spacing" stroke="#FF69B4" stroke-width="0.2">BEAUTY DECISION EXPERIENCE</text>
+</svg>
