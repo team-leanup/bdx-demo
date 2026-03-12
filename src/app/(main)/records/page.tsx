@@ -46,7 +46,6 @@ const READINESS_LEGEND = [
 type MainTab = 'reservations' | 'consultations';
 type ViewMode = 'day' | 'month';
 type FilterPeriod = 'all' | 'today' | 'week' | 'month';
-type ReservationFilter = 'all' | 'mine';
 
 function isInPeriod(dateStr: string, period: FilterPeriod): boolean {
   const today = getTodayInKorea();
@@ -142,7 +141,7 @@ export default function RecordsPage() {
   const [filter, setFilter] = useState<FilterPeriod>('all');
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [previewRecord, setPreviewRecord] = useState<ConsultationRecord | null>(null);
-  const [reservationFilter, setReservationFilter] = useState<ReservationFilter>('all');
+
   const [selectedDate, setSelectedDate] = useState(getTodayStr());
   const [weekStartDate, setWeekStartDate] = useState(getMonday(getTodayStr()));
   const [selectedEvent, setSelectedEvent] = useState<TimeGridEvent | null>(null);
@@ -187,19 +186,12 @@ export default function RecordsPage() {
     [designers],
   );
 
-  const filteredReservations = useMemo(() => {
-    if (reservationFilter === 'mine' && activeDesignerId) {
-      return allReservations.filter((r) => r.designerId === activeDesignerId);
-    }
-    return allReservations;
-  }, [allReservations, reservationFilter, activeDesignerId]);
-
   const dayReservations = useMemo(
     () =>
-      filteredReservations
+      allReservations
         .filter((r) => r.reservationDate === selectedDate)
         .sort((a, b) => a.reservationTime.localeCompare(b.reservationTime)),
-    [filteredReservations, selectedDate],
+    [allReservations, selectedDate],
   );
 
   const weekStats = useMemo(() => {
@@ -212,13 +204,13 @@ export default function RecordsPage() {
     weekEnd.setDate(weekStart.getDate() + 6);
     weekEnd.setHours(23, 59, 59, 999);
 
-    const thisWeek = filteredReservations.filter((r) => {
+    const thisWeek = allReservations.filter((r) => {
       const d = new Date(r.reservationDate);
       return d >= weekStart && d <= weekEnd;
     });
 
     const now = new Date();
-    const todayRemaining = filteredReservations.filter((r) => {
+    const todayRemaining = allReservations.filter((r) => {
       if (r.reservationDate !== today) return false;
       if (r.status === 'completed' || r.status === 'cancelled') return false;
       const [h, m] = r.reservationTime.split(':').map(Number);
@@ -228,7 +220,7 @@ export default function RecordsPage() {
     });
 
     return { weekCount: thisWeek.length, todayRemainingCount: todayRemaining.length };
-  }, [filteredReservations]);
+  }, [allReservations]);
 
   const todayConsultations = useMemo(() => {
     const today = getTodayStr();
@@ -236,8 +228,8 @@ export default function RecordsPage() {
   }, [allConsultations]);
 
   const timeGridEvents = useMemo(
-    () => toTimeGridEvents(filteredReservations, []),
-    [filteredReservations],
+    () => toTimeGridEvents(allReservations, []),
+    [allReservations],
   );
 
   const sorted = useMemo(
@@ -457,8 +449,6 @@ export default function RecordsPage() {
           <ViewModeToggle
             viewMode={viewMode}
             onViewModeChange={setViewMode}
-            reservationFilter={reservationFilter}
-            onReservationFilterChange={setReservationFilter}
           />
 
           <div className="px-4 md:px-0">
@@ -479,7 +469,7 @@ export default function RecordsPage() {
                 <WeekCalendar
                   selectedDate={selectedDate}
                   onSelectDate={setSelectedDate}
-                  reservations={filteredReservations}
+                  reservations={allReservations}
                 />
               </Card>
               <DesignerDayGridCalendar
@@ -502,7 +492,7 @@ export default function RecordsPage() {
                 <MonthCalendar
                   selectedDate={selectedDate}
                   onSelectDate={setSelectedDate}
-                  reservations={filteredReservations}
+                  reservations={allReservations}
                 />
               </Card>
               <DayReservationList date={selectedDate} reservations={dayReservations} />
@@ -856,17 +846,11 @@ export default function RecordsPage() {
                                   const meta = getSafetyTagMeta(tag);
                                   return (
                                     <div key={tag.id} className="rounded-xl border border-white/60 bg-white/60 px-3 py-2 flex">
-                                      <div className={cn("w-1 rounded-full flex-shrink-0 mr-2.5", {
-                                        'bg-red-400': meta.level === 'high',
-                                        'bg-orange-400': meta.level === 'medium',
-                                      })} />
+                                      <div className="w-1 rounded-full flex-shrink-0 mr-2.5 bg-red-400" />
                                       <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-1.5 flex-wrap">
-                                          <CustomerTagChip tag={tag} size="sm" />
-                                          <span className={cn("text-[10px] font-semibold", {
-                                            'text-red-700': meta.level === 'high',
-                                            'text-orange-700': meta.level === 'medium',
-                                          })}>{meta.label}</span>
+                                          <CustomerTagChip tag={tag} size="sm" className="!bg-red-100 !text-red-700 !border-red-200" />
+                                          <span className="text-[10px] font-semibold text-red-700">{meta.label}</span>
                                         </div>
                                         <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">{meta.description}</p>
                                       </div>
@@ -913,15 +897,7 @@ export default function RecordsPage() {
                         </>
                       );
                     })()}
-                    {selectedEvent.customerId && (
-                      <button
-                        onClick={() => router.push(`/customers/${selectedEvent.customerId}`)}
-                        className="mt-2 w-full rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
-                      >
-                        고객 상세로 이동
-                      </button>
-                    )}
-                    {/* 시술 확인서 보기 */}
+                    {/* 고객 상세 + 시술 확인서 버튼 (가로 배치) */}
                     {(() => {
                       const booking = allReservations.find((r) => r.id === selectedEvent.originalId);
                       const matchedRecord = allConsultations.find(
@@ -929,12 +905,11 @@ export default function RecordsPage() {
                           || (r.customerId === selectedEvent.customerId
                             && selectedEvent.date === r.createdAt?.slice(0, 10)),
                       );
-                      if (!matchedRecord && !booking?.preConsultationData) return null;
-                      const handleClick = () => {
+                      const hasSheet = !!matchedRecord || !!booking?.preConsultationData;
+                      const handleSheetClick = () => {
                         if (matchedRecord) {
                           router.push(`/consultation/treatment-sheet?consultationId=${matchedRecord.id}&customerId=${matchedRecord.customerId}`);
                         } else if (booking?.preConsultationData) {
-                          // 사전 상담 데이터로 상담 시작 → 시술 확인서로 이동
                           hydrateConsultation({
                             ...booking.preConsultationData,
                             bookingId: booking.id,
@@ -949,15 +924,30 @@ export default function RecordsPage() {
                         }
                       };
                       return (
-                        <button
-                          onClick={handleClick}
-                          className="mt-2 w-full rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors flex items-center justify-center gap-1.5"
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
-                          </svg>
-                          {matchedRecord ? '시술 확인서 보기' : '사전 상담 내역 보기'}
-                        </button>
+                        <div className="mt-2 flex gap-2">
+                          {selectedEvent.customerId && (
+                            <button
+                              onClick={() => router.push(`/customers/${selectedEvent.customerId}`)}
+                              className={cn(
+                                "rounded-xl border border-border bg-surface-alt px-4 py-2.5 text-xs font-semibold text-text-secondary hover:bg-surface-alt/80 transition-colors",
+                                hasSheet ? 'flex-1' : 'w-full',
+                              )}
+                            >
+                              고객 상세로 이동
+                            </button>
+                          )}
+                          {hasSheet && (
+                            <button
+                              onClick={handleSheetClick}
+                              className="flex-1 rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-bold text-white hover:bg-amber-600 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
+                              </svg>
+                              {matchedRecord ? '시술 확인서 보기' : '사전 상담 내역 보기'}
+                            </button>
+                          )}
+                        </div>
                       );
                     })()}
                     <div className="mt-3 flex gap-2">

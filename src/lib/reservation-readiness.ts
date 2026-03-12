@@ -16,7 +16,7 @@ const RESERVATION_READINESS_META: Record<ReservationReadinessState, ReservationR
     dotColor: 'bg-emerald-500',
     label: '디자인 확정',
     shortLabel: '확정',
-    className: 'bg-surface-alt text-text-secondary',
+    className: 'bg-emerald-100 text-emerald-700',
   },
   onsite_required: {
     state: 'onsite_required',
