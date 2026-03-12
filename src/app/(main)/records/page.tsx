@@ -16,7 +16,7 @@ import { useConsultationStore } from '@/store/consultation-store';
 import { ConsultationStep } from '@/types/consultation';
 import { useCustomerStore } from '@/store/customer-store';
 import { useT } from '@/lib/i18n';
-import { formatPrice, getKoreanWeekStart, getTodayInKorea, toKoreanDateString } from '@/lib/format';
+import { formatPrice, getKoreanWeekStart, getTodayInKorea, toKoreanDateString, toKoreanTimeString } from '@/lib/format';
 import { MonthCalendar } from '@/components/calendar/MonthCalendar';
 import { DayReservationList } from '@/components/calendar/DayReservationList';
 import { WeekCalendar } from '@/components/calendar/WeekCalendar';
@@ -105,7 +105,7 @@ function toTimeGridEvents(
 
   for (const c of consultations) {
     const date = c.createdAt.split('T')[0];
-    const time = c.createdAt.split('T')[1]?.substring(0, 5) || '10:00';
+    const time = toKoreanTimeString(c.createdAt);
     const [h, m] = time.split(':').map(Number);
     const durationMin = c.estimatedMinutes || 60;
     const endTotal = h * 60 + m + durationMin;

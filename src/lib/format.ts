@@ -80,6 +80,11 @@ export function getCurrentTimeInKorea(): { hour: number; minute: number } {
   };
 }
 
+export function toKoreanTimeString(isoString: string): string {
+  const parts = getKoreanDateParts(isoString);
+  return `${parts.hour}:${parts.minute}`;
+}
+
 export function getNowInKoreaIso(): string {
   const parts = getKoreanDateParts(new Date());
   return createKoreanDate(

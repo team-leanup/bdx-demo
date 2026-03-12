@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, toKoreanTimeString } from '@/lib/format';
 import { DESIGN_SCOPE_LABEL, BODY_PART_LABEL, EXPRESSION_LABEL, getDesignerName } from '@/lib/labels';
 import { SafetyTag } from '@/components/ui/SafetyTag';
 import { FlagIcon } from '@/components/ui/FlagIcon';
@@ -22,7 +22,7 @@ export function ConsultationListItem({
   onPreview,
 }: ConsultationListItemProps): React.ReactElement {
   const c = record.consultation;
-  const timeStr = record.createdAt.split('T')[1]?.substring(0, 5) ?? '';
+  const timeStr = toKoreanTimeString(record.createdAt);
 
   const getByRecordId = usePortfolioStore((s) => s.getByRecordId);
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
