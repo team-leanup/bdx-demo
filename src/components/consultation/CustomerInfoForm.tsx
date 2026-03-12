@@ -65,6 +65,7 @@ export function CustomerInfoForm({
   const [mode, setMode] = useState<'new' | 'existing'>('new');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [filledFromExisting, setFilledFromExisting] = useState<string | null>(null);
 
   const filtered = searchQuery.trim()
     ? customers.filter(
@@ -104,6 +105,21 @@ export function CustomerInfoForm({
 
       {!allowExistingCustomerSearch || mode === 'new' ? (
         <div className="flex flex-col gap-4">
+          {filledFromExisting && (
+            <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-3.5 py-2.5 animate-in fade-in slide-in-from-top-2 duration-300">
+              <svg className="h-4 w-4 flex-shrink-0 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+              <p className="text-xs text-green-700">
+                <span className="font-semibold">{filledFromExisting}</span>님의 정보가 입력되었습니다
+              </p>
+              <button type="button" onClick={() => setFilledFromExisting(null)} className="ml-auto text-green-400 hover:text-green-600">
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
           <div className="flex gap-3">
             <div className="flex-1">
               <Input
@@ -160,8 +176,15 @@ export function CustomerInfoForm({
                     onClick={() => {
                       setSelectedCustomer(customer);
                       onExistingCustomerSelect(customer);
+                      setFilledFromExisting(customer.name);
+                      setMode('new');
                     }}
-                    className="flex items-center gap-3 p-3 rounded-xl border border-border bg-white hover:border-primary transition-all duration-150 text-left"
+                    className={cn(
+                      'flex items-center gap-3 p-3 rounded-xl border bg-white hover:border-primary transition-all duration-150 text-left',
+                      selectedCustomer?.id === customer.id
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border',
+                    )}
                   >
                     <div className="w-10 h-10 rounded-full bg-surface-alt flex items-center justify-center flex-shrink-0">
                       <span className="text-sm font-bold text-primary">

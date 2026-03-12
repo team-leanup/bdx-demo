@@ -131,6 +131,33 @@ export function getRelativeDayDiffInKorea(dateStr: string): number {
 }
 
 /**
+ * 언어별 통화 환율 (KRW 기준, 근사값)
+ */
+const CURRENCY_CONFIG: Record<string, { symbol: string; rate: number; code: string; locale: string }> = {
+  ko: { symbol: '₩', rate: 1, code: 'KRW', locale: 'ko-KR' },
+  en: { symbol: '$', rate: 0.00072, code: 'USD', locale: 'en-US' },
+  zh: { symbol: '¥', rate: 0.0052, code: 'CNY', locale: 'zh-CN' },
+  ja: { symbol: '¥', rate: 0.11, code: 'JPY', locale: 'ja-JP' },
+};
+
+/**
+ * 원화 금액을 해당 locale 통화로 변환하여 포맷팅
+ * @example formatLocaleCurrency(85000, 'zh') → "¥442"
+ */
+export function formatLocaleCurrency(amountKRW: number, locale: string): string {
+  const config = CURRENCY_CONFIG[locale] ?? CURRENCY_CONFIG.ko;
+  if (locale === 'ko') {
+    return `₩${amountKRW.toLocaleString('ko-KR')}`;
+  }
+  const converted = amountKRW * config.rate;
+  // JPY는 소수점 없이, 나머지는 소수점 2자리 (단, 0이면 생략)
+  const formatted = locale === 'ja'
+    ? `${config.symbol}${Math.round(converted).toLocaleString(config.locale)}`
+    : `${config.symbol}${converted.toLocaleString(config.locale, { minimumFractionDigits: converted % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 })}`;
+  return formatted;
+}
+
+/**
  * 가격을 한국 원화 형식으로 포맷팅
  * @example formatPrice(85000) → "₩85,000"
  */

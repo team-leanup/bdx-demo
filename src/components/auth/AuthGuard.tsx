@@ -27,9 +27,17 @@ export function AuthGuard({ children, requiredRole, fallbackPath = '/home' }: Au
     }
   }, [mounted, isInitialized, isLoggedIn, role, requiredRole, fallbackPath, router]);
 
-  if (!mounted || !isInitialized) return null;
-  if (!isLoggedIn()) return null;
-  if (requiredRole && role !== requiredRole) return null;
+  if (!mounted || !isInitialized || !isLoggedIn() || (requiredRole && role !== requiredRole)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <img
+          src="/bdx-logo/bdx-symbol.svg"
+          alt="BDX"
+          className="h-16 w-16 animate-pulse"
+        />
+      </div>
+    );
+  }
 
   return <>{children}</>;
 }

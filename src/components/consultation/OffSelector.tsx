@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useConsultationStore } from '@/store/consultation-store';
 import { OFF_TYPE_OPTIONS } from '@/data/service-options';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, formatLocaleCurrency } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { useT, useLocale, useKo } from '@/lib/i18n';
 
@@ -124,7 +124,8 @@ export function OffSelector({ className }: OffSelectorProps) {
                 )}
                 {opt.price !== undefined && opt.price > 0 && (
                   <span className={cn('text-[11px] font-black mt-1 px-3 py-1 rounded-full', isSelected ? 'bg-gray-100 text-primary' : 'bg-surface-alt text-text-muted')}>
-                    +{formatPrice(opt.price)}
+                    +{locale !== 'ko' ? formatLocaleCurrency(opt.price, locale) : formatPrice(opt.price)}
+                    {locale !== 'ko' && <span className="text-[9px] opacity-50 ml-0.5">{formatPrice(opt.price)}</span>}
                   </span>
                 )}
                 {opt.price === 0 && (

@@ -392,7 +392,12 @@ export default function ConsultationStartPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
           </svg>
         </button>
-        <h1 className="text-base md:text-lg font-bold text-text">{t('home.newConsultation')}</h1>
+        <h1 className="text-base md:text-lg font-bold text-text">
+              {t('home.newConsultation')}
+              {locale !== 'ko' && (
+                <span className="ml-1 text-xs text-text-muted opacity-60 font-medium">{tKo('home.newConsultation')}</span>
+              )}
+            </h1>
         <div className="w-9" />
       </header>
 
@@ -417,8 +422,18 @@ export default function ConsultationStartPage() {
                 priority
               />
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold text-text mb-1">{t('home.newConsultation')}</h2>
-            <p className="text-sm md:text-base text-text-muted">{t('consultation.selectDesigner')}</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-text mb-1">
+              {t('home.newConsultation')}
+              {locale !== 'ko' && (
+                <span className="block text-sm md:text-base text-text-muted opacity-60 font-medium mt-0.5">{tKo('home.newConsultation')}</span>
+              )}
+            </h2>
+            <p className="text-sm md:text-base text-text-muted">
+              {t('consultation.selectDesigner')}
+              {locale !== 'ko' && (
+                <span className="ml-1 text-xs opacity-60">{tKo('consultation.selectDesigner')}</span>
+              )}
+            </p>
           </div>
 
           {/* Step flow visual */}

@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/cn';
+import { useT, useKo, useLocale } from '@/lib/i18n';
 
 interface TraitIconProps {
   value: string;
@@ -42,13 +43,21 @@ export function TraitIcon({
   onClick,
   className,
 }: TraitIconProps): React.ReactElement {
+  const t = useT();
+  const tKo = useKo();
+  const locale = useLocale();
   const resolvedIcon = icon ?? TRAIT_ICON_MAP[value];
   const sizeClasses = SIZE_CLASSES[size];
 
   const content = (
     <>
       {resolvedIcon && <span className={sizeClasses.icon}>{resolvedIcon}</span>}
-      <span className={cn('font-medium', sizeClasses.text)}>{value}</span>
+      <span className={cn('font-medium', sizeClasses.text)}>
+        {locale !== 'ko' ? t(`trait.${value}`) : value}
+      </span>
+      {locale !== 'ko' && (
+        <span className={cn('font-medium opacity-50', sizeClasses.text === 'text-xs' ? 'text-[9px]' : 'text-[10px]')}>{tKo(`trait.${value}`)}</span>
+      )}
     </>
   );
 

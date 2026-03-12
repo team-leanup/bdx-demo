@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useConsultationStore } from '@/store/consultation-store';
 import { DESIGN_SCOPE_OPTIONS } from '@/data/service-options';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, formatLocaleCurrency } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { useT, useLocale, useKo } from '@/lib/i18n';
 
@@ -146,7 +146,12 @@ export function DesignScopeSelector({ className }: DesignScopeSelectorProps) {
                   ? 'bg-surface-alt border border-primary text-primary'
                   : 'bg-surface-alt text-text-muted',
               )}>
-                {opt.price === 0 ? t('selector.includedFree') : `+${formatPrice(opt.price!)}`}
+                {opt.price === 0 ? t('selector.includedFree') : (
+                  <>
+                    +{locale !== 'ko' ? formatLocaleCurrency(opt.price!, locale) : formatPrice(opt.price!)}
+                    {locale !== 'ko' && <span className="text-[9px] opacity-50 ml-0.5">{formatPrice(opt.price!)}</span>}
+                  </>
+                )}
               </div>
 
               {/* Selected checkmark */}

@@ -5,7 +5,7 @@ import { useConsultationStore } from '@/store/consultation-store';
 import { useAppStore } from '@/store/app-store';
 import { calculatePrice, buildServicePricingFromShopSettings } from '@/lib/price-calculator';
 import { estimateTime } from '@/lib/time-calculator';
-import { formatPrice, formatMinutes } from '@/lib/format';
+import { formatPrice, formatMinutes, formatLocaleCurrency } from '@/lib/format';
 import { useShopStore } from '@/store/shop-store';
 import { PARTS_GRADE_OPTIONS } from '@/data/service-options';
 import { Accordion } from '@/components/ui/Accordion';
@@ -65,12 +65,14 @@ function PriceRow({
   percentage,
   isDiscount,
   isFinal,
+  locale,
 }: {
   label: ReactNode;
   value: number;
   percentage?: number;
   isDiscount?: boolean;
   isFinal?: boolean;
+  locale: string;
 }) {
   return (
     <div
@@ -89,7 +91,10 @@ function PriceRow({
             isFinal ? 'text-xl font-bold text-primary' : isDiscount ? 'text-sm text-error' : 'text-sm text-text',
           )}
         >
-          {isDiscount ? '-' : ''}{formatPrice(value)}
+          {isDiscount ? '-' : ''}{locale !== 'ko' ? formatLocaleCurrency(value, locale) : formatPrice(value)}
+          {locale !== 'ko' && (
+            <span className="text-xs opacity-60 ml-1">{isDiscount ? '-' : ''}{formatPrice(value)}</span>
+          )}
         </span>
       </div>
       {percentage !== undefined && percentage > 0 && !isDiscount && !isFinal && (
@@ -242,33 +247,34 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
             label={biLabel(consultation.bodyPart === 'hand' ? 'summary.handBase' : 'summary.footBase')}
             value={breakdown.basePrice}
             percentage={pct(breakdown.basePrice)}
+            locale={locale}
           />
           {breakdown.offSurcharge > 0 && (
-            <PriceRow label={biLabel('summary.offLabel')} value={breakdown.offSurcharge} percentage={pct(breakdown.offSurcharge)} />
+            <PriceRow label={biLabel('summary.offLabel')} value={breakdown.offSurcharge} percentage={pct(breakdown.offSurcharge)} locale={locale} />
           )}
           {breakdown.extensionSurcharge > 0 && (
-            <PriceRow label={biLabel('summary.extensionLabel')} value={breakdown.extensionSurcharge} percentage={pct(breakdown.extensionSurcharge)} />
+            <PriceRow label={biLabel('summary.extensionLabel')} value={breakdown.extensionSurcharge} percentage={pct(breakdown.extensionSurcharge)} locale={locale} />
           )}
           {breakdown.designSurcharge > 0 && (
-            <PriceRow label={biLabel('summary.designLabel')} value={breakdown.designSurcharge} percentage={pct(breakdown.designSurcharge)} />
+            <PriceRow label={biLabel('summary.designLabel')} value={breakdown.designSurcharge} percentage={pct(breakdown.designSurcharge)} locale={locale} />
           )}
           {breakdown.expressionSurcharge > 0 && (
-            <PriceRow label={biLabel('summary.expressionLabel')} value={breakdown.expressionSurcharge} percentage={pct(breakdown.expressionSurcharge)} />
+            <PriceRow label={biLabel('summary.expressionLabel')} value={breakdown.expressionSurcharge} percentage={pct(breakdown.expressionSurcharge)} locale={locale} />
           )}
           {breakdown.partsSurcharge > 0 && (
-            <PriceRow label={biLabel('summary.partsLabel')} value={breakdown.partsSurcharge} percentage={pct(breakdown.partsSurcharge)} />
+            <PriceRow label={biLabel('summary.partsLabel')} value={breakdown.partsSurcharge} percentage={pct(breakdown.partsSurcharge)} locale={locale} />
           )}
           {breakdown.colorSurcharge > 0 && (
-            <PriceRow label={biLabel('summary.colorLabel')} value={breakdown.colorSurcharge} percentage={pct(breakdown.colorSurcharge)} />
+            <PriceRow label={biLabel('summary.colorLabel')} value={breakdown.colorSurcharge} percentage={pct(breakdown.colorSurcharge)} locale={locale} />
           )}
           <div className="border-t border-border pt-2 mt-1">
-            <PriceRow label={biLabel('summary.subtotal')} value={breakdown.subtotal} />
+            <PriceRow label={biLabel('summary.subtotal')} value={breakdown.subtotal} locale={locale} />
           </div>
           {breakdown.discountAmount > 0 && (
-            <PriceRow label={biLabel('summary.discountLabel')} value={breakdown.discountAmount} isDiscount />
+            <PriceRow label={biLabel('summary.discountLabel')} value={breakdown.discountAmount} isDiscount locale={locale} />
           )}
           {breakdown.depositAmount > 0 && (
-            <PriceRow label={biLabel('summary.depositLabel')} value={breakdown.depositAmount} isDiscount />
+            <PriceRow label={biLabel('summary.depositLabel')} value={breakdown.depositAmount} isDiscount locale={locale} />
           )}
         </div>
       </Accordion>

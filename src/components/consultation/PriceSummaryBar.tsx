@@ -5,7 +5,7 @@ import { useConsultationStore } from '@/store/consultation-store';
 import { useAppStore } from '@/store/app-store';
 import { calculatePrice, buildServicePricingFromShopSettings } from '@/lib/price-calculator';
 import { estimateTime } from '@/lib/time-calculator';
-import { formatPrice, formatMinutes } from '@/lib/format';
+import { formatPrice, formatLocaleCurrency, formatMinutes } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { useT, useLocale } from '@/lib/i18n';
 
@@ -37,7 +37,12 @@ export function PriceSummaryBar({ className, showEstimated = true }: PriceSummar
       {showEstimated && (
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-text-muted">{t('consultation.estimatedAmount')}</span>
-          <span className="text-sm font-bold text-text">{formatPrice(breakdown.subtotal)}</span>
+          <span className="text-sm font-bold text-text">
+            {locale !== 'ko' ? formatLocaleCurrency(breakdown.subtotal, locale) : formatPrice(breakdown.subtotal)}
+          </span>
+          {locale !== 'ko' && (
+            <span className="text-[10px] text-text-muted opacity-60">{formatPrice(breakdown.subtotal)}</span>
+          )}
         </div>
       )}
       <div className="w-px h-4 bg-border" />

@@ -9,6 +9,15 @@
   src: url('/fonts/PretendardVariable.woff2') format('woff2');
 }
 
+/* 116angmuburi (앵무부리) — BDX 로고 서체 */
+@font-face {
+  font-family: '116angmuburi';
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/116angmuburi.woff') format('woff');
+}
+
 /* ============================================================
    Tailwind v4 Theme Config
    ============================================================ */
@@ -376,7 +385,7 @@ body {
   padding-top: env(safe-area-inset-top);
 }
 .safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
 }
 
 /* Scrollbar styling */

@@ -14,7 +14,7 @@ import { useLocaleStore } from '@/store/locale-store';
 import { calculatePrice, buildServicePricingFromShopSettings } from '@/lib/price-calculator';
 import { useAppStore } from '@/store/app-store';
 import { estimateTime } from '@/lib/time-calculator';
-import { formatPrice, getNowInKoreaIso } from '@/lib/format';
+import { formatPrice, formatLocaleCurrency, getNowInKoreaIso } from '@/lib/format';
 import { DESIGN_SCOPE_LABEL, EXPRESSION_LABEL } from '@/lib/labels';
 import { useRecordsStore } from '@/store/records-store';
 import { useReservationStore } from '@/store/reservation-store';
@@ -336,7 +336,10 @@ export default function SummaryPage() {
                 {t('summary.subtotal')}
                 {locale !== 'ko' && <span className="ml-1 text-[10px] opacity-60">{tKo('summary.subtotal')}</span>}
               </span>
-              <span className="text-sm font-medium text-text">{formatPrice(breakdown.subtotal)}</span>
+              <span className="text-sm font-medium text-text">
+                {locale !== 'ko' ? formatLocaleCurrency(breakdown.subtotal, locale) : formatPrice(breakdown.subtotal)}
+                {locale !== 'ko' && <span className="text-xs opacity-60 ml-1">{formatPrice(breakdown.subtotal)}</span>}
+              </span>
             </div>
 
             {breakdown.discountAmount > 0 && (
@@ -345,7 +348,10 @@ export default function SummaryPage() {
                   {t('summary.discountLabel')}
                   {locale !== 'ko' && <span className="ml-1 text-[10px] opacity-60">{tKo('summary.discountLabel')}</span>}
                 </span>
-                <span className="text-sm font-medium text-error">-{formatPrice(breakdown.discountAmount)}</span>
+                <span className="text-sm font-medium text-error">
+                  -{locale !== 'ko' ? formatLocaleCurrency(breakdown.discountAmount, locale) : formatPrice(breakdown.discountAmount)}
+                  {locale !== 'ko' && <span className="text-xs opacity-60 ml-1">-{formatPrice(breakdown.discountAmount)}</span>}
+                </span>
               </div>
             )}
 
@@ -377,7 +383,10 @@ export default function SummaryPage() {
                 {t('summary.totalAmount')}
                 {locale !== 'ko' && <span className="ml-1 text-[10px] font-medium text-text-muted opacity-60">{tKo('summary.totalAmount')}</span>}
               </span>
-              <span className="text-lg font-bold text-primary">{formatPrice(adjustedFinalPrice)}</span>
+              <span className="text-lg font-bold text-primary">
+                {locale !== 'ko' ? formatLocaleCurrency(adjustedFinalPrice, locale) : formatPrice(adjustedFinalPrice)}
+                {locale !== 'ko' && <span className="text-xs opacity-60 ml-1">{formatPrice(adjustedFinalPrice)}</span>}
+              </span>
             </div>
             </div>
           )}

@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { useConsultationStore } from '@/store/consultation-store';
 import { useAppStore } from '@/store/app-store';
 import { calculatePrice, buildServicePricingFromShopSettings } from '@/lib/price-calculator';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, formatLocaleCurrency } from '@/lib/format';
 import { Modal, Button, Input } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { useT, useLocale, useKo } from '@/lib/i18n';
@@ -104,7 +104,10 @@ export function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
 
         {/* Discount value */}
         <Input
-          label={discountType === 'fixed' ? t('discountModal.discountAmount') : t('discountModal.discountPercent')}
+          label={<>
+            {discountType === 'fixed' ? t('discountModal.discountAmount') : t('discountModal.discountPercent')}
+            {locale !== 'ko' && <span className="ml-1 text-[10px] text-text-muted opacity-60">{discountType === 'fixed' ? tKo('discountModal.discountAmount') : tKo('discountModal.discountPercent')}</span>}
+          </>}
           type="number"
           placeholder={discountType === 'fixed' ? t('discountModal.placeholderAmount') : t('discountModal.placeholderPercent')}
           value={discountValue}
@@ -115,7 +118,10 @@ export function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
 
         {/* Deposit */}
         <Input
-          label={t('discountModal.depositAmount')}
+          label={<>
+            {t('discountModal.depositAmount')}
+            {locale !== 'ko' && <span className="ml-1 text-[10px] text-text-muted opacity-60">{tKo('discountModal.depositAmount')}</span>}
+          </>}
           type="number"
           placeholder={t('discountModal.depositPlaceholder')}
           value={depositValue}
@@ -134,7 +140,10 @@ export function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
               {t('discountModal.subtotal')}
               {locale !== 'ko' && <span className="ml-1 text-[10px] opacity-60">{tKo('discountModal.subtotal')}</span>}
             </span>
-            <span className="text-text">{formatPrice(subtotal)}</span>
+            <span className="text-text">
+              {locale !== 'ko' ? formatLocaleCurrency(subtotal, locale) : formatPrice(subtotal)}
+              {locale !== 'ko' && <span className="text-xs opacity-60 ml-1">{formatPrice(subtotal)}</span>}
+            </span>
           </div>
           {previewDiscount > 0 && (
             <div className="flex justify-between text-sm">
@@ -142,7 +151,10 @@ export function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
                 {t('discountModal.discount')}{discountType === 'percent' ? ` (${discountValue}%)` : ''}
                 {locale !== 'ko' && <span className="ml-1 text-[10px] opacity-60">{tKo('discountModal.discount')}</span>}
               </span>
-              <span className="text-error">-{formatPrice(previewDiscount)}</span>
+              <span className="text-error">
+                -{locale !== 'ko' ? formatLocaleCurrency(previewDiscount, locale) : formatPrice(previewDiscount)}
+                {locale !== 'ko' && <span className="text-xs opacity-60 ml-1">-{formatPrice(previewDiscount)}</span>}
+              </span>
             </div>
           )}
           {previewDeposit > 0 && (
@@ -151,7 +163,10 @@ export function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
                 {t('discountModal.deposit')}
                 {locale !== 'ko' && <span className="ml-1 text-[10px] opacity-60">{tKo('discountModal.deposit')}</span>}
               </span>
-              <span className="text-warning">-{formatPrice(previewDeposit)}</span>
+              <span className="text-warning">
+                -{locale !== 'ko' ? formatLocaleCurrency(previewDeposit, locale) : formatPrice(previewDeposit)}
+                {locale !== 'ko' && <span className="text-xs opacity-60 ml-1">-{formatPrice(previewDeposit)}</span>}
+              </span>
             </div>
           )}
           <div className="border-t border-border pt-2 flex justify-between">
@@ -159,7 +174,10 @@ export function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
               {t('discountModal.finalPayment')}
               {locale !== 'ko' && <span className="ml-1 text-xs font-medium text-text-muted opacity-60">{tKo('discountModal.finalPayment')}</span>}
             </span>
-            <span className="font-bold text-primary">{formatPrice(previewFinal)}</span>
+            <span className="font-bold text-primary">
+              {locale !== 'ko' ? formatLocaleCurrency(previewFinal, locale) : formatPrice(previewFinal)}
+              {locale !== 'ko' && <span className="text-xs opacity-60 ml-1">{formatPrice(previewFinal)}</span>}
+            </span>
           </div>
         </div>
 

@@ -228,9 +228,6 @@ export function PartsPalette({
           <div className="flex flex-col items-start">
             <div className="flex items-center gap-2">
               <p className="text-xs font-bold text-text-muted uppercase tracking-wider">{t('selector.gradePartsSystem')}</p>
-              <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-500 text-white rounded-md uppercase tracking-wider">
-                PRO
-              </span>
             </div>
             {locale !== 'ko' && (
               <span className="text-[9px] text-text-muted opacity-60">{ko('selector.gradePartsSystem')}</span>

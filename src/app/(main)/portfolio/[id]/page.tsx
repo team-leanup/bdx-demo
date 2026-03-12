@@ -224,7 +224,9 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
                   <p className="text-[10px] font-medium text-text-muted mb-1">컬러</p>
                   <div className="flex flex-wrap gap-1.5">
                     {photo.colorLabels.map((color, idx) => (
-                      <Badge key={`${color}-${idx}`} variant="warning" size="sm">{color}</Badge>
+                      <span key={`${color}-${idx}`} className="rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-600">
+                        {color}
+                      </span>
                     ))}
                   </div>
                 </div>

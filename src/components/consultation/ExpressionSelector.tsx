@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useConsultationStore } from '@/store/consultation-store';
 import { EXPRESSION_OPTIONS } from '@/data/service-options';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, formatLocaleCurrency } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { useT, useLocale, useKo } from '@/lib/i18n';
 import type { ExpressionType } from '@/types/consultation';
@@ -220,7 +220,12 @@ export function ExpressionSelector({ className }: ExpressionSelectorProps) {
                       <span className="block text-[8px] opacity-60 font-bold">{tKo('selector.includedFree')}</span>
                     )}
                   </>
-                ) : opt.price !== undefined ? `+${formatPrice(opt.price)}` : ''}
+                ) : opt.price !== undefined ? (
+                  <>
+                    +{locale !== 'ko' ? formatLocaleCurrency(opt.price, locale) : formatPrice(opt.price)}
+                    {locale !== 'ko' && <span className="text-[9px] opacity-50 ml-0.5">{formatPrice(opt.price)}</span>}
+                  </>
+                ) : ''}
               </span>
 
               {/* Selected checkmark */}

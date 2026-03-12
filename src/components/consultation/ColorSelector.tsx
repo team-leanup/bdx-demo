@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useConsultationStore } from '@/store/consultation-store';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, formatLocaleCurrency } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { useT, useLocale, useKo } from '@/lib/i18n';
 
@@ -56,7 +56,7 @@ export function ColorSelector({ className }: ColorSelectorProps) {
               )}
             </p>
             <p className="text-xs text-text-muted mt-0.5">
-              {t('selector.baseIncluded').replace('{price}', formatPrice(EXTRA_COLOR_PRICE))}
+              {t('selector.baseIncluded').replace('{price}', locale !== 'ko' ? formatLocaleCurrency(EXTRA_COLOR_PRICE, locale) : formatPrice(EXTRA_COLOR_PRICE))}
             </p>
             {locale !== 'ko' && (
               <p className="text-[10px] text-text-muted opacity-60">
@@ -71,7 +71,8 @@ export function ColorSelector({ className }: ColorSelectorProps) {
               animate={{ scale: 1, opacity: 1 }}
               className="text-base font-bold text-primary bg-surface-alt border border-primary px-3 py-1 rounded-full"
             >
-              +{formatPrice(extraColorCount * EXTRA_COLOR_PRICE)}
+              +{locale !== 'ko' ? formatLocaleCurrency(extraColorCount * EXTRA_COLOR_PRICE, locale) : formatPrice(extraColorCount * EXTRA_COLOR_PRICE)}
+              {locale !== 'ko' && <span className="text-[9px] opacity-50 ml-0.5">{formatPrice(extraColorCount * EXTRA_COLOR_PRICE)}</span>}
             </motion.span>
           )}
         </div>

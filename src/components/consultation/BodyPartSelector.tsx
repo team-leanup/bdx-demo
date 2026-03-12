@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useConsultationStore } from '@/store/consultation-store';
 import { BODY_PART_OPTIONS } from '@/data/service-options';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, formatLocaleCurrency } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { useT, useLocale, useKo } from '@/lib/i18n';
 
@@ -82,7 +82,8 @@ export function BodyPartSelector({ className }: BodyPartSelectorProps) {
                 )}
                 {opt.price && (
                   <span className={cn('text-sm font-black mt-3 px-5 py-2 rounded-full', isSelected ? 'bg-gray-100 text-primary' : 'bg-surface-alt text-text-muted')}>
-                    {formatPrice(opt.price)}~
+                    {locale !== 'ko' ? formatLocaleCurrency(opt.price, locale) : formatPrice(opt.price)}~
+                    {locale !== 'ko' && <span className="text-[9px] opacity-50 ml-0.5">{formatPrice(opt.price)}</span>}
                   </span>
                 )}
               </div>
