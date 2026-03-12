@@ -9,8 +9,6 @@ import { Badge } from '@/components/ui';
 import { SafetyTag } from '@/components/ui/SafetyTag';
 import { FlagIcon } from '@/components/ui/FlagIcon';
 import { IconCalendar } from '@/components/icons';
-import { cn } from '@/lib/cn';
-
 function ChannelEmojiBadge({ variant, label }: { variant: string; icon: string; label: string }) {
   return (
     <Badge variant={variant as 'primary' | 'neutral' | 'success' | 'warning'} size="sm">
@@ -51,6 +49,38 @@ interface TodayReservationCardProps {
     hidden: { opacity: number; y: number };
     visible: { opacity: number; y: number; transition: { duration: number; ease: number[] } };
   };
+}
+
+interface BookingThumbnailItem {
+  src: string;
+  label: '요청' | '이전';
+}
+
+function getBookingThumbnailItems(
+  booking: BookingRequest,
+  portfolioImageUrls: string[],
+): BookingThumbnailItem[] {
+  const items: BookingThumbnailItem[] = [];
+  const seen = new Set<string>();
+  const requestImageUrls = booking.preConsultationData?.referenceImages?.length
+    ? booking.preConsultationData.referenceImages
+    : (booking.referenceImageUrls ?? []);
+
+  for (const src of requestImageUrls) {
+    if (!src || seen.has(src)) continue;
+    seen.add(src);
+    items.push({ src, label: '요청' });
+    if (items.length >= 2) break;
+  }
+
+  for (const src of portfolioImageUrls) {
+    if (!src || seen.has(src)) continue;
+    seen.add(src);
+    items.push({ src, label: '이전' });
+    if (items.length >= 3) break;
+  }
+
+  return items;
 }
 
 export function TodayReservationCard({
@@ -149,7 +179,12 @@ export function TodayReservationCard({
               const level = getSafetyTagMeta(tag).level;
               return level === 'high' || level === 'medium';
             });
-            const recentPhoto = booking.customerId ? getByCustomerId(booking.customerId)[0] : undefined;
+            const customerPhotos = booking.customerId ? getByCustomerId(booking.customerId) : [];
+            const recentPhoto = customerPhotos[0];
+            const thumbnailItems = getBookingThumbnailItems(
+              booking,
+              customerPhotos.map((photo) => photo.imageDataUrl),
+            );
             const isForeign = booking.language && booking.language !== 'ko';
 
             return (
@@ -232,7 +267,29 @@ export function TodayReservationCard({
                   )}
                 </div>
                 {/* H-2: 썸네일 */}
-                <div className="shrink-0">
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {thumbnailItems.length > 0 && (
+                    <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+                      {thumbnailItems.map((item, thumbIdx) => (
+                        <div
+                          key={`${item.label}-${thumbIdx}-${item.src}`}
+                          className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-alt"
+                        >
+                          <Image
+                            src={item.src}
+                            alt=""
+                            width={48}
+                            height={48}
+                            className="h-full w-full object-cover"
+                            unoptimized
+                          />
+                          <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 py-0.5 text-[8px] font-semibold leading-none text-white">
+                            {item.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   {recentPhoto ? (
                     <div className="h-8 w-8 rounded-full overflow-hidden border-2 border-border">
                       <Image
