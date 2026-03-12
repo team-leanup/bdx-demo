@@ -44,6 +44,27 @@ interface ReservationFormProps {
   onCancel?: () => void;
 }
 
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+        return;
+      }
+
+      reject(new Error('Failed to read image as data URL'));
+    };
+
+    reader.onerror = () => {
+      reject(reader.error ?? new Error('Failed to read image file'));
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
 export function ReservationForm({ onSubmit, onCancel }: ReservationFormProps) {
   const today = getTodayInKorea();
   const currentShopId = useAuthStore((s) => s.currentShopId);
@@ -94,14 +115,25 @@ export function ReservationForm({ onSubmit, onCancel }: ReservationFormProps) {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    const newImages = [...formImages];
-    for (let i = 0; i < files.length && newImages.length < 3; i++) {
-      newImages.push(URL.createObjectURL(files[i]));
+
+    const remainingSlots = Math.max(0, 3 - formImages.length);
+    const selectedFiles = Array.from(files).slice(0, remainingSlots);
+
+    if (selectedFiles.length === 0) {
+      e.target.value = '';
+      return;
     }
-    setFormImages(newImages);
+
+    try {
+      const uploadedImages = await Promise.all(selectedFiles.map((file) => readFileAsDataUrl(file)));
+      setFormImages((prev) => [...prev, ...uploadedImages]);
+    } catch (error) {
+      console.error('[ReservationForm] image upload error:', error);
+    }
+
     e.target.value = '';
   };
 

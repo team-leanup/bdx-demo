@@ -56,6 +56,14 @@ interface BookingThumbnailItem {
   label: '요청' | '이전';
 }
 
+function isRenderableImageSrc(src: string | undefined): src is string {
+  if (!src) {
+    return false;
+  }
+
+  return !src.startsWith('blob:');
+}
+
 function getBookingThumbnailItems(
   booking: BookingRequest,
   portfolioImageUrls: string[],
@@ -67,14 +75,14 @@ function getBookingThumbnailItems(
     : (booking.referenceImageUrls ?? []);
 
   for (const src of requestImageUrls) {
-    if (!src || seen.has(src)) continue;
+    if (!isRenderableImageSrc(src) || seen.has(src)) continue;
     seen.add(src);
     items.push({ src, label: '요청' });
     if (items.length >= 2) break;
   }
 
   for (const src of portfolioImageUrls) {
-    if (!src || seen.has(src)) continue;
+    if (!isRenderableImageSrc(src) || seen.has(src)) continue;
     seen.add(src);
     items.push({ src, label: '이전' });
     if (items.length >= 3) break;
@@ -180,7 +188,7 @@ export function TodayReservationCard({
               return level === 'high' || level === 'medium';
             });
             const customerPhotos = booking.customerId ? getByCustomerId(booking.customerId) : [];
-            const recentPhoto = customerPhotos[0];
+            const recentPhoto = customerPhotos.find((photo) => isRenderableImageSrc(photo.imageDataUrl));
             const thumbnailItems = getBookingThumbnailItems(
               booking,
               customerPhotos.map((photo) => photo.imageDataUrl),
