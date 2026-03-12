@@ -31,7 +31,7 @@ interface DesignerDayGridCalendarProps {
   activeDesignerId: string | null;
 }
 
-const HOUR_HEIGHT = 64;
+const HOUR_HEIGHT = 84;
 const AXIS_WIDTH = 60;
 
 const DESIGNER_COLORS: Record<string, { bg: string; border: string; text: string }> = {
@@ -72,7 +72,7 @@ interface DraggableEventProps {
   top: number;
   height: number;
   color: { bg: string; border: string; text: string };
-  pinnedTags: CustomerTag[];
+  customerTags: CustomerTag[];
   gridRef: React.RefObject<HTMLDivElement | null>;
   columns: { id: string; name: string }[];
   events: TimeGridEvent[];
@@ -89,7 +89,7 @@ function DraggableEvent({
   top,
   height,
   color,
-  pinnedTags,
+  customerTags,
   gridRef,
   columns,
   events,
@@ -103,8 +103,10 @@ function DraggableEvent({
   const controls = useAnimationControls();
   const [isDragging, setIsDragging] = useState(false);
 
-  const displayTags = pinnedTags.slice(0, 2);
-  const extraTagCount = pinnedTags.length - 2;
+  const displayTags = customerTags.slice(0, 2);
+  const extraTagCount = customerTags.length - 2;
+  const showMetaRow = height >= 64;
+  const showTags = height >= 80 && displayTags.length > 0;
 
   const isCancelledOrCompleted = ev.status === 'cancelled' || ev.status === 'completed';
   const canDrag = role !== null && !isCancelledOrCompleted;
@@ -204,39 +206,39 @@ function DraggableEvent({
       )}
       style={{ top, height }}
     >
-      <div className="text-[10px] opacity-70 truncate">
+      <div className="text-[10px] font-semibold opacity-70 truncate">
         {ev.startTime}–{ev.endTime}
       </div>
-      <div className="text-[11px] font-bold truncate">{ev.title}</div>
-      {ev.serviceLabel && (
-        <span className="inline-block text-[9px] bg-white/40 rounded px-1 truncate">
-          {ev.serviceLabel}
-        </span>
-      )}
-      {ev.type === 'reservation' && (
-        <div className="mt-0.5">
-          <ReservationReadinessBadge
-            booking={{ preConsultationCompletedAt: ev.preConsultationCompletedAt }}
-            size="xs"
-            compact
-          />
+      <div className="text-[11px] font-bold leading-tight truncate">{ev.title}</div>
+      {showMetaRow && (
+        <div className="mt-1 flex items-center gap-1 flex-wrap">
+          {ev.serviceLabel && (
+            <span className="inline-flex items-center rounded-full bg-white/55 px-1.5 py-0.5 text-[9px] font-semibold text-text">
+              {ev.serviceLabel}
+            </span>
+          )}
+          {ev.type === 'reservation' && (
+            <ReservationReadinessBadge
+              booking={{ preConsultationCompletedAt: ev.preConsultationCompletedAt }}
+              size="xs"
+              compact
+            />
+          )}
+          {ev.channel && CHANNEL_EMOJI[ev.channel] && (
+            <span className="text-[10px]">{CHANNEL_EMOJI[ev.channel]}</span>
+          )}
+          {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
+            <span className="text-[10px]">{LANGUAGE_FLAG[ev.language]}</span>
+          )}
         </div>
       )}
-      <div className="flex items-center gap-1 flex-wrap mt-0.5">
-        {ev.channel && CHANNEL_EMOJI[ev.channel] && (
-          <span className="text-[10px]">{CHANNEL_EMOJI[ev.channel]}</span>
-        )}
-        {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
-          <span className="text-[10px]">{LANGUAGE_FLAG[ev.language]}</span>
-        )}
-      </div>
-        {displayTags.length > 0 && (
-          <div className="flex items-center gap-1 flex-wrap mt-1">
-            {displayTags.map((tag) => (
-              <CustomerTagChip key={tag.id} tag={tag} size="xs" />
-            ))}
-            {extraTagCount > 0 && (
-              <span className="text-[9px] text-text-muted">+{extraTagCount}</span>
+      {showTags && (
+        <div className="mt-1 flex items-center gap-1 flex-wrap">
+          {displayTags.map((tag) => (
+            <CustomerTagChip key={tag.id} tag={tag} size="xs" />
+          ))}
+          {extraTagCount > 0 && (
+            <span className="text-[9px] text-text-muted">+{extraTagCount}</span>
           )}
         </div>
       )}
@@ -256,7 +258,7 @@ export function DesignerDayGridCalendar({
   onEventMove,
 }: DesignerDayGridCalendarProps) {
   const [currentTime, setCurrentTime] = useState(getCurrentTimeInKorea());
-  const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
+  const getPrimaryTags = useCustomerStore((s) => s.getPrimaryTags);
   const gridRef = useRef<HTMLDivElement>(null);
 
   const START_HOUR = propStartHour ?? 10;
@@ -359,7 +361,7 @@ export function DesignerDayGridCalendar({
                     const height = rawHeight;
 
                     const color = getEventColor(ev.designerId);
-                    const pinnedTags = ev.customerId ? getPinnedTags(ev.customerId) : [];
+                    const customerTags = ev.customerId ? getPrimaryTags(ev.customerId) : [];
 
                     return (
                       <DraggableEvent
@@ -368,7 +370,7 @@ export function DesignerDayGridCalendar({
                         top={top}
                         height={height}
                         color={color}
-                        pinnedTags={pinnedTags}
+                         customerTags={customerTags}
                         gridRef={gridRef}
                         columns={columns}
                         events={events}

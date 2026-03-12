@@ -222,7 +222,7 @@ export function TodayReservationCard({
                         e.stopPropagation();
                         setLinkModalBooking(booking);
                       }}
-                      className="text-[10px] text-warning font-medium hover:underline"
+                      className="self-start text-left text-[10px] text-warning font-medium hover:underline"
                     >
                       고객 연결 필요
                     </button>
