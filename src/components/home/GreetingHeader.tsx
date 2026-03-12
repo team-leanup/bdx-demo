@@ -24,7 +24,7 @@ export function GreetingHeader({
 }: GreetingHeaderProps): React.ReactElement {
   return (
     <motion.div variants={itemVariants} className="flex items-start justify-between">
-      <div>
+      <div className="min-w-0 flex-1">
         <p className="text-xs font-medium text-text-secondary">{shopName}</p>
         <h1 className="mt-0.5 text-xl font-extrabold tracking-tight text-text">
           {activeDesignerName ? `${activeDesignerName}님, ` : ''}{greeting} <span className="text-primary">✦</span>

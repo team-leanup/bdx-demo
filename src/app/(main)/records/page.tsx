@@ -787,7 +787,7 @@ export default function RecordsPage() {
                     {selectedEvent.channel && (
                       <div className="flex justify-between">
                         <span className="text-sm text-text-secondary">채널</span>
-                        <span className="text-sm font-medium text-text">{{ kakao: '카카오', naver: '네이버', phone: '전화', walk_in: '방문', instagram: '인스타그램' }[selectedEvent.channel] ?? selectedEvent.channel}</span>
+                        <span className="truncate max-w-[180px] text-sm font-medium text-text">{{ kakao: '카카오', naver: '네이버', phone: '전화', walk_in: '방문', instagram: '인스타그램' }[selectedEvent.channel] ?? selectedEvent.channel}</span>
                       </div>
                     )}
                     {selectedEvent.customerPhone && (

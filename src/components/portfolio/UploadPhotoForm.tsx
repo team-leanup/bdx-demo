@@ -296,7 +296,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
                 <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
                   {customer.name.charAt(0)}
                 </span>
-                {customer.name}
+                <span className="truncate min-w-0 flex-1">{customer.name}</span>
               </button>
             ))}
             {customerSearch.trim() && !filteredCustomers.some((c) => c.name === customerSearch.trim()) && (

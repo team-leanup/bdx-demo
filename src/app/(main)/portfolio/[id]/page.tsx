@@ -170,8 +170,8 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
               >
                 {customer?.name.charAt(0) ?? '?'}
               </div>
-              <div>
-                <p className="font-semibold text-text">{customer?.name ?? '미지정'}</p>
+              <div className="min-w-0">
+                <p className="font-semibold text-text truncate">{customer?.name ?? '미지정'}</p>
                 <p className="text-xs text-text-muted">{formatDateDot(effectiveDate ?? photo.createdAt)}</p>
               </div>
             </div>
@@ -280,7 +280,7 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
                 {linkedRecord.consultation.expressions && linkedRecord.consultation.expressions.length > 0 && linkedRecord.consultation.expressions[0] !== 'solid' && (
                   <div>
                     <p className="text-[10px] font-medium text-text-muted mb-0.5">표현 기법</p>
-                    <p className="font-medium text-text">
+                    <p className="font-medium text-text truncate">
                       {linkedRecord.consultation.expressions.map(e => EXPRESSION_LABEL[e] ?? e).join(', ')}
                     </p>
                   </div>

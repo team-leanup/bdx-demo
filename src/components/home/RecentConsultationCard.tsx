@@ -60,7 +60,7 @@ export function RecentConsultationCard({
             {/* 이름 + 배지 */}
             <div className="flex flex-1 flex-col gap-1 min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-sm font-semibold text-text">
+                <span className="truncate text-sm font-semibold text-text">
                   {record.consultation.customerName ?? ''}
                 </span>
                 <Badge variant="neutral" size="sm">

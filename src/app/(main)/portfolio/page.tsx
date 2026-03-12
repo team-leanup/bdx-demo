@@ -457,10 +457,10 @@ export default function PortfolioPage(): React.ReactElement {
                       </p>
                       <p className="text-[10px] text-muted-foreground shrink-0">{formatDateDot(effectiveDate)}</p>
                     </div>
-                    <div className="flex items-center gap-1 h-5">
+                    <div className="flex flex-wrap items-center gap-1">
                       <span
                         className={cn(
-                          'px-2 py-0.5 rounded border text-[10px] font-medium',
+                          'max-w-[80px] truncate px-2 py-0.5 rounded border text-[10px] font-medium',
                           photo.kind === 'reference'
                             ? 'border-border bg-muted text-muted-foreground'
                             : 'border-primary/30 bg-primary/10 text-primary'
@@ -469,19 +469,19 @@ export default function PortfolioPage(): React.ReactElement {
                         {KIND_LABEL[photo.kind]}
                       </span>
                       {serviceType && (
-                        <span className="px-2 py-0.5 rounded border border-border bg-muted text-[10px] font-medium text-muted-foreground">
+                        <span className="max-w-[80px] truncate px-2 py-0.5 rounded border border-border bg-muted text-[10px] font-medium text-muted-foreground">
                           {serviceType}
                         </span>
                       )}
                       {photo.designType && (
-                        <span className="px-2 py-0.5 rounded border border-border bg-muted text-[10px] font-medium text-muted-foreground">
+                        <span className="max-w-[80px] truncate px-2 py-0.5 rounded border border-border bg-muted text-[10px] font-medium text-muted-foreground">
                           {photo.designType}
                         </span>
                       )}
                     </div>
                     <div className="h-4 flex items-center">
                       {price != null && (
-                        <p className="text-[11px] font-semibold text-foreground">{formatPrice(price)}</p>
+                        <p className="text-[11px] font-semibold text-foreground truncate">{formatPrice(price)}</p>
                       )}
                     </div>
                   </div>

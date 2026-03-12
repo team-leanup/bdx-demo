@@ -115,7 +115,7 @@ export default function DashboardPage() {
               <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-text-secondary">업셀링 리포트</p>
-                  <div className="mt-2 flex items-end gap-2">
+                  <div className="mt-2 flex flex-wrap items-end gap-2">
                     <span className="text-3xl font-extrabold leading-none text-primary md:text-4xl">
                       {formatPrice(upsellMetrics.totalUpsellRevenue)}
                     </span>
@@ -255,7 +255,7 @@ export default function DashboardPage() {
                     <div key={target.customerId} className="rounded-2xl border border-border bg-surface-alt px-4 py-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-text">{target.customerName}</p>
+                          <p className="truncate text-sm font-semibold text-text">{target.customerName}</p>
                           <p className="mt-0.5 text-[11px] text-text-muted">
                             {target.assignedDesignerName} · {target.recentServiceLabel} · 마지막 방문 후 {target.daysSinceLastVisit}일
                           </p>

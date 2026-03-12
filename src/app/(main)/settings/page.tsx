@@ -1236,7 +1236,7 @@ export default function SettingsPage() {
                   <div className="mt-3 flex flex-col gap-2 text-sm">
                     <div className="flex gap-2">
                       <span className="flex-shrink-0 text-text-muted">{t('settings.shop_address')}</span>
-                      <span className="text-text">
+                      <span className="break-words min-w-0 flex-1 text-text">
                         {shopAddress}
                         {shopAddressDetail && ` ${shopAddressDetail}`}
                       </span>

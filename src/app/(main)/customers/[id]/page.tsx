@@ -418,7 +418,7 @@ function CustomerDetailContent({ id }: { id: string }) {
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-xl font-bold text-text">{customer.name}</h2>
+                  <h2 className="max-w-[200px] truncate text-xl font-bold text-text">{customer.name}</h2>
                   {/* CU-4: 외국어 고객 플래그 */}
                   {detectedLanguage && (
                     <FlagIcon language={detectedLanguage} size="sm" />
@@ -444,7 +444,7 @@ function CustomerDetailContent({ id }: { id: string }) {
               </div>
             </div>
             <div className="mt-1 flex items-center gap-1.5">
-              <p className="text-sm text-text-secondary">
+              <p className="truncate text-sm text-text-secondary">
                 담당: {assignedDesigner}
               </p>
               <button
@@ -1026,7 +1026,7 @@ function CustomerDetailContent({ id }: { id: string }) {
                       {formatDateDot(hist.date)}
                     </p>
                     <span
-                      className="text-base font-bold"
+                      className="shrink-0 text-base font-bold"
                       style={{ color: 'var(--color-primary-dark)' }}
                     >
                       {hist.price ? formatPrice(hist.price) : '–'}

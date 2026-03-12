@@ -224,7 +224,7 @@ export function TodayReservationCard({
                       <FlagIcon language={booking.language!} size="sm" />
                     )}
                     {booking.serviceLabel && (
-                      <span className="px-2 py-0.5 rounded-full bg-primary/10 text-[11px] text-primary font-semibold">
+                      <span className="max-w-[100px] truncate px-2 py-0.5 rounded-full bg-primary/10 text-[11px] text-primary font-semibold">
                         {booking.serviceLabel}
                       </span>
                     )}
@@ -277,7 +277,7 @@ export function TodayReservationCard({
                 {/* H-2: 썸네일 */}
                 <div className="flex shrink-0 items-center gap-1.5">
                   {thumbnailItems.length > 0 && (
-                    <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+                    <div className="flex gap-1.5 overflow-x-auto pb-0.5 max-w-[96px]">
                       {thumbnailItems.map((item, thumbIdx) => (
                         <div
                           key={`${item.label}-${thumbIdx}-${item.src}`}

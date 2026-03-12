@@ -193,7 +193,7 @@ export default function CustomersPage() {
                     </div>
 
                     <div className="flex flex-1 min-w-0 items-center gap-2">
-                      <span className="text-sm font-semibold text-text">{customer.name}</span>
+                      <span className="truncate text-sm font-semibold text-text">{customer.name}</span>
                       {customer.preferredLanguage && customer.preferredLanguage !== 'ko' && (
                         <FlagIcon language={customer.preferredLanguage} size="sm" />
                       )}
@@ -213,7 +213,7 @@ export default function CustomersPage() {
                     </div>
 
                     {/* 총 지출 */}
-                    <div className="flex-shrink-0 w-20 text-right">
+                    <div className="flex-shrink-0 min-w-[80px] text-right">
                       <p className="text-xs font-semibold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
                         {formatPrice(customer.totalSpend)}
                       </p>
