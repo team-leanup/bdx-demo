@@ -4,8 +4,11 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Button, Input } from '@/components/ui';
+import { SignupConsentSection } from '@/components/auth/SignupConsentSection';
 import { useAppStore } from '@/store/app-store';
 import { useAuthStore } from '@/store/auth-store';
+
+const SIGNUP_CONSENT_STORAGE_KEY = 'signup-required-consents';
 
 export default function SignupPage(): React.ReactElement {
   const router = useRouter();
@@ -23,6 +26,8 @@ export default function SignupPage(): React.ReactElement {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -48,7 +53,20 @@ export default function SignupPage(): React.ReactElement {
     ownerName.trim().length > 0 &&
     email.trim().length > 0 &&
     password.length >= 6 &&
-    password === passwordConfirm;
+    password === passwordConfirm &&
+    agreedToTerms &&
+    agreedToPrivacy;
+
+  const updateConsentStorage = (nextTerms: boolean, nextPrivacy: boolean): void => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    sessionStorage.setItem(
+      SIGNUP_CONSENT_STORAGE_KEY,
+      JSON.stringify({ agreedToTerms: nextTerms, agreedToPrivacy: nextPrivacy }),
+    );
+  };
 
   const handleSignup = async (): Promise<void> => {
     if (!shopName.trim()) {
@@ -63,6 +81,11 @@ export default function SignupPage(): React.ReactElement {
 
     if (password !== passwordConfirm) {
       setError('비밀번호가 서로 일치하지 않습니다.');
+      return;
+    }
+
+    if (!agreedToTerms || !agreedToPrivacy) {
+      setError('이용약관 및 개인정보 수집·이용에 동의해 주세요.');
       return;
     }
 
@@ -82,6 +105,9 @@ export default function SignupPage(): React.ReactElement {
 
       resetApp();
       setShopSettings({ shopName: shopName.trim() });
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(SIGNUP_CONSENT_STORAGE_KEY);
+      }
       // useEffect handles redirect
     } finally {
       setIsLoading(false);
@@ -102,6 +128,13 @@ export default function SignupPage(): React.ReactElement {
   };
 
   const handleGoogleSignup = async (): Promise<void> => {
+    if (!agreedToTerms || !agreedToPrivacy) {
+      setError('이용약관 및 개인정보 수집·이용에 동의해 주세요.');
+      return;
+    }
+
+    updateConsentStorage(agreedToTerms, agreedToPrivacy);
+
     const result = await loginWithGoogle('signup');
 
     if (!result.success) {
@@ -228,6 +261,20 @@ export default function SignupPage(): React.ReactElement {
                 {password.length > 0 && password.length < 6 && (
                   <p className="text-xs text-text-muted">비밀번호는 6자 이상이어야 합니다.</p>
                 )}
+                <SignupConsentSection
+                  agreedToTerms={agreedToTerms}
+                  agreedToPrivacy={agreedToPrivacy}
+                  onAgreeToTermsChange={(checked) => {
+                    setAgreedToTerms(checked);
+                    updateConsentStorage(checked, agreedToPrivacy);
+                    setError('');
+                  }}
+                  onAgreeToPrivacyChange={(checked) => {
+                    setAgreedToPrivacy(checked);
+                    updateConsentStorage(agreedToTerms, checked);
+                    setError('');
+                  }}
+                />
               </div>
 
               {error && <p className="text-sm font-medium text-error">{error}</p>}
