@@ -448,6 +448,7 @@ BDX를 "상담 시스템"에서 **"고객 관리 CRM + 시술 기록 시스템"*
 | 2026-03-10 | 배포 환경에 Supabase 공개 env가 누락됐을 때 auth 요청이 `placeholder.supabase.co`로 나가지 않도록 guard를 추가하고, 명시적인 배포 설정 오류 메시지를 반환하도록 수정 |
 | 2026-03-10 | Google OAuth 버튼, callback route, Supabase SSR middleware를 추가해 Google 로그인/회원가입 진입 경로를 구현 |
 | 2026-03-10 | Google 로그인 시 아직 샵이 없는 계정은 추가 입력 화면으로 보내 이름/샵 이름을 받은 뒤 즉시 샵 생성 + 온보딩을 진행하도록 통합 |
+| 2026-03-13 | 앱 공통 사이트 URL 상수를 `https://beauty-decision.com`으로 도입하고, 루트 메타데이터의 `metadataBase`/canonical/Open Graph URL 및 intro-demo 공개 링크를 새 도메인 기준으로 통일 |
 
 ---
 

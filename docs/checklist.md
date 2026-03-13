@@ -273,6 +273,7 @@
 ### 13.2 🔵 구글 OAuth Provider 연동
 - **지금**: `src/app/(auth)/login/page.tsx`, `src/app/(auth)/signup/page.tsx`, `src/store/auth-store.ts`에 Google OAuth 진입 버튼과 `signInWithOAuth` 흐름을 연결했고, `src/app/auth/callback/route.ts` + `src/middleware.ts`에서 Supabase SSR 기반 코드 교환/세션 복원을 처리함
 - **완료 추가**: Google 로그인에서 아직 샵이 없는 계정은 `src/app/(auth)/signup/google/page.tsx`로 보내 이름/샵 이름을 입력받은 뒤 바로 샵 생성 + 온보딩으로 이어지도록 통합함
+- **완료 추가**: 앱 공통 도메인 상수를 `https://beauty-decision.com`으로 도입하고, `metadataBase`/canonical/Open Graph URL 및 intro-demo 공개 링크를 모두 새 프로덕션 도메인 기준으로 통일함
 - **남은 일**: Supabase Dashboard의 Google provider에 Client ID/Secret 입력, Google Cloud Console에 `https://pzwmqorvrhdkckkdqemo.supabase.co/auth/v1/callback` 및 앱 callback URL 등록. 로그인 장애 발생 시 callback/provider 설정과 Google 계정 보안 상태(2차 인증/차단)까지 함께 점검하는 운영 체크리스트 추가
 
 ### 13.3 ⬜ 미들웨어 인증 가드
