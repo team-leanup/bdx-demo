@@ -3,6 +3,7 @@ import './globals.css';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import SupabaseProvider from '@/components/SupabaseProvider';
 import { pretendard } from '@/lib/fonts';
+import { SITE_URL } from '@/lib/site';
 import { STORAGE_KEYS } from '@/constants/storage-keys';
 
 const themeBootstrapScript = `
@@ -27,6 +28,10 @@ const themeBootstrapScript = `
 export const metadata: Metadata = {
   title: 'BDX — Beauty Decision eXperience',
   description: '네일샵 현장 상담 & 고객 관리 플랫폼',
+  metadataBase: new URL(SITE_URL),
+  alternates: {
+    canonical: '/',
+  },
   manifest: '/manifest.json',
   icons: {
     icon: '/bdx-logo/bdx-symbol.svg',
@@ -36,6 +41,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'BDX — Beauty Decision eXperience',
     description: '네일샵 현장 상담 & 고객 관리 플랫폼',
+    url: SITE_URL,
     images: [{ url: '/bdx-og-image2.png', width: 1200, height: 630 }],
     type: 'website',
   },

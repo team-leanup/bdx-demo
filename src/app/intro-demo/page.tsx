@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { SITE_DOMAIN, SITE_URL } from '@/lib/site';
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 const N = {
   bg: '#ffffff',
@@ -90,7 +91,7 @@ function CodeBadge({ href, children }: { href?: string; children: React.ReactNod
 }
 
 function UrlBadge({ path }: { path: string }) {
-  const full = `https://bdx-demo.vercel.app${path}`;
+  const full = `${SITE_URL}${path}`;
   return (
     <CodeBadge href={full}>{full}</CodeBadge>
   );
@@ -431,7 +432,7 @@ export default function IntroDemoPage() {
     return () => observerRef.current?.disconnect();
   }, []);
 
-  const BASE = 'https://bdx-demo.vercel.app';
+  const BASE = SITE_URL;
 
   return (
     <div style={{ background: N.bg, minHeight: '100vh', fontFamily: "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif" }}>
@@ -633,7 +634,7 @@ export default function IntroDemoPage() {
                   textDecoration: 'none',
                 }}
               >
-                🔗 bdx-demo.vercel.app
+                🔗 {SITE_DOMAIN}
               </a>
               <Badge color="gray">v0.1.0 · 2026년 3월</Badge>
               <Badge color="yellow">📱 태블릿 (iPad 가로 모드) 추천</Badge>
@@ -1101,7 +1102,7 @@ export default function IntroDemoPage() {
               rel="noopener noreferrer"
               style={{ fontSize: '13px', color: N.accent, textDecoration: 'none' }}
             >
-              bdx-demo.vercel.app
+              {SITE_DOMAIN}
             </a>
           </footer>
         </main>
