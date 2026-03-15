@@ -396,13 +396,20 @@ function CustomerPageInner(): React.ReactElement {
 
               {/* 포트폴리오 브라우저 */}
               <PortfolioBrowser
-                onSelect={(url) => {
+                onToggleSelect={(url) => {
                   const current = consultation.referenceImages || [];
-                  if (!current.includes(url) && current.length < 5) {
+                  if (current.includes(url)) {
+                    removeReferenceImage(url);
+                    return;
+                  }
+
+                  if (current.length < 5) {
                     addReferenceImage(url);
                   }
                 }}
                 selectedUrls={consultation.referenceImages || []}
+                shopId={prefillShopId || consultation.sourceShopId}
+                shopName={visibleShopName}
               />
             </motion.div>
           )}
