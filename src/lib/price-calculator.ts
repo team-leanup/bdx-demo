@@ -38,6 +38,7 @@ export function buildServicePricingFromShopSettings(settings: {
   baseMonthlyArtPrice: number;
   surcharges: {
     repairPer: number;
+    extension: number;
     gradation: number;
     french: number;
     magnet: number;
@@ -51,7 +52,7 @@ export function buildServicePricingFromShopSettings(settings: {
     offSameShop: settings.baseOffSameShop,
     offOtherShop: settings.baseOffOtherShop,
     repairPerNail: settings.surcharges.repairPer,
-    extensionBase: DEFAULT_SERVICE_PRICING.extensionBase,
+    extensionBase: settings.surcharges.extension,
     solidTone: 0,
     solidPoint: settings.surcharges.pointArt,
     fullArt: settings.surcharges.fullArt,
@@ -247,4 +248,3 @@ export function calculatePrice(
     items,
   };
 }
-

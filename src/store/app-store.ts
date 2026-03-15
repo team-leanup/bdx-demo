@@ -74,6 +74,7 @@ const DEFAULT_SHOP_SETTINGS: ShopSettings = {
     partsExcessPer: 1000,
     largeParts: 3000,
     repairPer: 5000,
+    extension: 20000,
     overlay: 10000,
   },
   timeSettings: {

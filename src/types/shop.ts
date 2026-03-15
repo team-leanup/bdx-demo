@@ -24,6 +24,7 @@ export interface SurchargeSettings {
   partsExcessPer: number;     // 초과 개당 금액
   largeParts: number;         // 큰 파츠 추가금
   repairPer: number;          // 리페어 개당
+  extension: number;
   overlay: number;            // 오버레이
 }
 

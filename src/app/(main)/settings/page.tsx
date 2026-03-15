@@ -1091,6 +1091,8 @@ export default function SettingsPage() {
   const [priceFoot, setPriceFoot] = useState(String(shopSettings.baseFootPrice || DEFAULT_BASE_PRICES.foot));
   const [priceOffSame, setPriceOffSame] = useState(String(shopSettings.baseOffSameShop || DEFAULT_BASE_PRICES.offSameShop));
   const [priceOffOther, setPriceOffOther] = useState(String(shopSettings.baseOffOtherShop || DEFAULT_BASE_PRICES.offOtherShop));
+  const [priceRepair, setPriceRepair] = useState(String(shopSettings.surcharges.repairPer ?? DEFAULT_BASE_PRICES.repair));
+  const [priceExtension, setPriceExtension] = useState(String(shopSettings.surcharges.extension ?? DEFAULT_BASE_PRICES.extension));
   const [priceSolidPoint, setPriceSolidPoint] = useState(String(shopSettings.baseSolidPointPrice ?? DEFAULT_BASE_PRICES.solidPoint));
   const [priceFullArt, setPriceFullArt] = useState(String(shopSettings.baseFullArtPrice ?? DEFAULT_BASE_PRICES.fullArt));
   const [priceMonthlyArt, setPriceMonthlyArt] = useState(String(shopSettings.baseMonthlyArtPrice ?? DEFAULT_BASE_PRICES.monthlyArt));
@@ -1099,6 +1101,8 @@ export default function SettingsPage() {
     foot: shopSettings.baseFootPrice || DEFAULT_BASE_PRICES.foot,
     offSameShop: shopSettings.baseOffSameShop || DEFAULT_BASE_PRICES.offSameShop,
     offOtherShop: shopSettings.baseOffOtherShop || DEFAULT_BASE_PRICES.offOtherShop,
+    repair: shopSettings.surcharges.repairPer ?? DEFAULT_BASE_PRICES.repair,
+    extension: shopSettings.surcharges.extension ?? DEFAULT_BASE_PRICES.extension,
     solidPoint: shopSettings.baseSolidPointPrice ?? DEFAULT_BASE_PRICES.solidPoint,
     fullArt: shopSettings.baseFullArtPrice ?? DEFAULT_BASE_PRICES.fullArt,
     monthlyArt: shopSettings.baseMonthlyArtPrice ?? DEFAULT_BASE_PRICES.monthlyArt,
@@ -1109,12 +1113,27 @@ export default function SettingsPage() {
     const foot = parseInt(priceFoot, 10);
     const offSameShop = parseInt(priceOffSame, 10);
     const offOtherShop = parseInt(priceOffOther, 10);
+    const repair = parseInt(priceRepair, 10);
+    const extension = parseInt(priceExtension, 10);
     const solidPoint = parseInt(priceSolidPoint, 10);
     const fullArt = parseInt(priceFullArt, 10);
     const monthlyArt = parseInt(priceMonthlyArt, 10);
-    if ([hand, foot, offSameShop, offOtherShop, solidPoint, fullArt, monthlyArt].some((v) => isNaN(v) || v < 0)) return;
-    setSavedPrices({ hand, foot, offSameShop, offOtherShop, solidPoint, fullArt, monthlyArt });
-    setShopSettings({ baseHandPrice: hand, baseFootPrice: foot, baseOffSameShop: offSameShop, baseOffOtherShop: offOtherShop, baseSolidPointPrice: solidPoint, baseFullArtPrice: fullArt, baseMonthlyArtPrice: monthlyArt });
+    if ([hand, foot, offSameShop, offOtherShop, repair, extension, solidPoint, fullArt, monthlyArt].some((v) => isNaN(v) || v < 0)) return;
+    setSavedPrices({ hand, foot, offSameShop, offOtherShop, repair, extension, solidPoint, fullArt, monthlyArt });
+    setShopSettings({
+      baseHandPrice: hand,
+      baseFootPrice: foot,
+      baseOffSameShop: offSameShop,
+      baseOffOtherShop: offOtherShop,
+      baseSolidPointPrice: solidPoint,
+      baseFullArtPrice: fullArt,
+      baseMonthlyArtPrice: monthlyArt,
+      surcharges: {
+        ...shopSettings.surcharges,
+        repairPer: repair,
+        extension,
+      },
+    });
     setEditingPrices(false);
   };
 
@@ -1123,6 +1142,8 @@ export default function SettingsPage() {
     setPriceFoot(String(savedPrices.foot));
     setPriceOffSame(String(savedPrices.offSameShop));
     setPriceOffOther(String(savedPrices.offOtherShop));
+    setPriceRepair(String(savedPrices.repair));
+    setPriceExtension(String(savedPrices.extension));
     setPriceSolidPoint(String(savedPrices.solidPoint));
     setPriceFullArt(String(savedPrices.fullArt));
     setPriceMonthlyArt(String(savedPrices.monthlyArt));
@@ -1352,6 +1373,14 @@ export default function SettingsPage() {
                   <span className="text-text-secondary">타샵오프</span>
                   <span className="font-medium text-text">+{formatPrice(savedPrices.offOtherShop)}</span>
                 </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary">리페어 개당</span>
+                  <span className="font-medium text-text">+{formatPrice(savedPrices.repair)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary">연장 추가금</span>
+                  <span className="font-medium text-text">+{formatPrice(savedPrices.extension)}</span>
+                </div>
                 <div className="my-1 border-t border-border/50" />
                 <div className="flex justify-between text-sm">
                   <span className="text-text-secondary">{t('settings.service_solidPoint')}</span>
@@ -1373,6 +1402,8 @@ export default function SettingsPage() {
                   { labelKey: 'service_foot', value: priceFoot, onChange: setPriceFoot },
                   { label: '자샵오프', value: priceOffSame, onChange: setPriceOffSame },
                   { label: '타샵오프', value: priceOffOther, onChange: setPriceOffOther },
+                  { label: '리페어 개당', value: priceRepair, onChange: setPriceRepair },
+                  { label: '연장 추가금', value: priceExtension, onChange: setPriceExtension },
                   { labelKey: 'service_solidPoint', value: priceSolidPoint, onChange: setPriceSolidPoint },
                   { labelKey: 'service_fullArt', value: priceFullArt, onChange: setPriceFullArt },
                   { labelKey: 'service_monthlyArt', value: priceMonthlyArt, onChange: setPriceMonthlyArt },

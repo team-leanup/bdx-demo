@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useConsultationStore } from '@/store/consultation-store';
+import { useAppStore } from '@/store/app-store';
 import { Counter } from '@/components/ui';
 import { EXTENSION_TYPE_OPTIONS } from '@/data/service-options';
 import { formatPrice, formatLocaleCurrency } from '@/lib/format';
@@ -58,6 +59,21 @@ export function ExtensionSelector({ className }: ExtensionSelectorProps) {
   const repairCount = useConsultationStore((s) => s.consultation.repairCount ?? 1);
   const setExtensionType = useConsultationStore((s) => s.setExtensionType);
   const setRepairCount = useConsultationStore((s) => s.setRepairCount);
+  const shopSettings = useAppStore((s) => s.shopSettings);
+  const repairPrice = shopSettings.surcharges.repairPer;
+  const extensionPrice = shopSettings.surcharges.extension;
+
+  const options = EXTENSION_TYPE_OPTIONS.map((opt) => {
+    if (opt.value === 'repair') {
+      return { ...opt, price: repairPrice };
+    }
+
+    if (opt.value === 'extension') {
+      return { ...opt, price: extensionPrice };
+    }
+
+    return opt;
+  });
 
   return (
     <div className={cn('flex flex-col gap-4', className)}>
@@ -74,7 +90,7 @@ export function ExtensionSelector({ className }: ExtensionSelectorProps) {
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        {EXTENSION_TYPE_OPTIONS.map((opt) => {
+        {options.map((opt) => {
           const isSelected = extensionType === opt.value;
           return (
             <motion.button
@@ -183,8 +199,8 @@ export function ExtensionSelector({ className }: ExtensionSelectorProps) {
               {locale !== 'ko' && <span className="ml-1 text-[10px] opacity-60">{tKo('summary.subtotal')}</span>}
             </span>
             <span className="text-primary">
-              {locale !== 'ko' ? formatLocaleCurrency(repairCount * 3000, locale) : formatPrice(repairCount * 3000)}
-              {locale !== 'ko' && <span className="text-[9px] opacity-50 ml-0.5">{formatPrice(repairCount * 3000)}</span>}
+              {locale !== 'ko' ? formatLocaleCurrency(repairCount * repairPrice, locale) : formatPrice(repairCount * repairPrice)}
+              {locale !== 'ko' && <span className="text-[9px] opacity-50 ml-0.5">{formatPrice(repairCount * repairPrice)}</span>}
             </span>
           </div>
         </motion.div>

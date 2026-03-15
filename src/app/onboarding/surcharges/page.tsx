@@ -83,6 +83,7 @@ export default function SurchargesPage() {
   const [partsExcessPer, setPartsExcessPer] = useState(init.partsExcessPer);
   const [largeParts, setLargeParts] = useState(init.largeParts);
   const [repairPer, setRepairPer] = useState(init.repairPer);
+  const [extension, setExtension] = useState(init.extension);
   const [overlay, setOverlay] = useState(init.overlay);
 
   const handleNext = () => {
@@ -100,6 +101,7 @@ export default function SurchargesPage() {
       partsExcessPer,
       largeParts,
       repairPer,
+      extension,
       overlay,
     };
     setShopSettings({ surcharges });
@@ -157,7 +159,7 @@ export default function SurchargesPage() {
         {/* 5. 연장 (extension 선택 시) */}
         {serviceStructure.extension && (
           <SectionCard title="연장" delay={nextDelay()}>
-            <p className="text-xs text-text-muted -mt-2">연장 추가금은 상담 시 개별 설정됩니다.</p>
+            <PriceInput label="연장 추가금" value={extension} onChange={setExtension} />
           </SectionCard>
         )}
 
