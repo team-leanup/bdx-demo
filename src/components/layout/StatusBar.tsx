@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { RoleBadge } from '@/components/auth/RoleBadge';
 import { useAuthStore } from '@/store/auth-store';
 import { useLocaleStore } from '@/store/locale-store';
 import { useAppStore } from '@/store/app-store';
@@ -34,7 +33,6 @@ export function StatusBar({ shopName: shopNameProp }: StatusBarProps) {
       <div className="flex items-center justify-between px-4 h-14 max-w-2xl mx-auto lg:max-w-none lg:px-8">
         <div className="flex items-center gap-2 lg:hidden">
           <span className="font-bold text-base tracking-tight text-primary">{shopName}</span>
-          {isLoggedIn() && <RoleBadge />}
         </div>
 
         {/* Right: lang toggle + bell */}

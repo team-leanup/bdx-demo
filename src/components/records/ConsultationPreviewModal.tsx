@@ -49,10 +49,10 @@ export function ConsultationPreviewModal({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 60 }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-background px-5 pb-8 pt-5 max-h-[85vh] overflow-y-auto md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-1/2 md:-translate-x-1/2 md:right-auto md:w-full md:max-w-lg md:rounded-2xl"
+            className="fixed bottom-0 left-0 right-0 z-50 flex max-h-[88dvh] flex-col overflow-hidden rounded-t-2xl bg-background pt-5 pb-safe md:bottom-auto md:top-1/2 md:left-1/2 md:right-auto md:w-full md:max-h-[85vh] md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl"
           >
             {/* 헤더 */}
-            <div className="mb-4 flex items-start justify-between gap-2">
+            <div className="mb-4 flex flex-shrink-0 items-start justify-between gap-2 px-5">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="text-base font-bold text-text">{record.consultation.customerName ?? '고객'}</h3>
@@ -74,7 +74,7 @@ export function ConsultationPreviewModal({
               </button>
             </div>
 
-            <div className="flex flex-col gap-4">
+            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-5 pb-8">
               {/* 세이프티 태그 */}
               {safetyTags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">

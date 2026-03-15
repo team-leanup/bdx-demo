@@ -212,13 +212,13 @@ function KPIBottomSheet({ kpi, onClose }: BottomSheetProps) {
         onClick={onClose}
       />
       {/* 바텀시트 패널 */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-2xl bg-background shadow-sm md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-1/2 md:-translate-x-1/2 md:right-auto md:w-full md:max-w-lg md:rounded-2xl">
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex max-h-[88dvh] flex-col overflow-hidden rounded-t-2xl bg-background shadow-sm pb-safe md:bottom-auto md:top-1/2 md:left-1/2 md:right-auto md:w-full md:max-h-[85vh] md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl md:pb-0">
         {/* 핸들 */}
-        <div className="flex justify-center pt-3 pb-1">
+        <div className="flex flex-shrink-0 justify-center pt-3 pb-1">
           <div className="h-1 w-10 rounded-full bg-border" />
         </div>
         {/* 헤더 */}
-        <div className="flex items-center justify-between px-5 py-3">
+        <div className="flex flex-shrink-0 items-center justify-between px-5 py-3">
           <div className="flex items-center gap-2">
             <span className="text-xl">{kpi.icon}</span>
             <h3 className="text-base font-bold text-text">{kpi.label}</h3>
@@ -232,26 +232,28 @@ function KPIBottomSheet({ kpi, onClose }: BottomSheetProps) {
             </svg>
           </button>
         </div>
-        {/* 현재 값 */}
-        <div className="px-5 pb-3">
-          <p className="text-3xl font-bold text-text">{kpi.value}</p>
-          {kpi.changeDirection !== 'neutral' && (
-            <p
-              className={`mt-0.5 text-sm ${
-                kpi.changeDirection === 'up' ? 'text-success' : 'text-error'
-              }`}
-            >
-              {kpi.changeDirection === 'up' ? '▲' : '▼'} 전월 대비 {Math.abs(kpi.change)}%
-            </p>
-          )}
-        </div>
-        {/* 구분선 */}
-        <div className="mx-5 mb-4 h-px bg-border" />
-        {/* 상세 내용 */}
-        <div className="px-5 pb-8">
-          {detail ?? (
-            <p className="text-center text-sm text-text-muted">상세 정보가 없습니다.</p>
-          )}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          {/* 현재 값 */}
+          <div className="px-5 pb-3">
+            <p className="text-3xl font-bold text-text">{kpi.value}</p>
+            {kpi.changeDirection !== 'neutral' && (
+              <p
+                className={`mt-0.5 text-sm ${
+                  kpi.changeDirection === 'up' ? 'text-success' : 'text-error'
+                }`}
+              >
+                {kpi.changeDirection === 'up' ? '▲' : '▼'} 전월 대비 {Math.abs(kpi.change)}%
+              </p>
+            )}
+          </div>
+          {/* 구분선 */}
+          <div className="mx-5 mb-4 h-px bg-border" />
+          {/* 상세 내용 */}
+          <div className="px-5 pb-8">
+            {detail ?? (
+              <p className="text-center text-sm text-text-muted">상세 정보가 없습니다.</p>
+            )}
+          </div>
         </div>
       </div>
     </>
