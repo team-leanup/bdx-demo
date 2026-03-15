@@ -42,14 +42,14 @@ export const metadata: Metadata = {
     title: 'BDX — Beauty Decision eXperience',
     description: '네일샵 현장 상담 & 고객 관리 플랫폼',
     url: SITE_URL,
-    images: [{ url: '/bdx-og-image2.png', width: 1200, height: 630 }],
+    images: [{ url: '/bdx-og-image-final.png', width: 1200, height: 630 }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'BDX — Beauty Decision eXperience',
     description: '네일샵 현장 상담 & 고객 관리 플랫폼',
-    images: ['/bdx-og-image2.png'],
+    images: ['/bdx-og-image-final.png'],
   },
   appleWebApp: {
     capable: true,
