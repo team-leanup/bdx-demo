@@ -630,8 +630,8 @@ function CustomerDetailContent({ id }: { id: string }) {
       {/* 5. 시술 성향 태그 */}
       {/* ─────────────────────────────── */}
       <Card className="mx-4 shadow-md rounded-2xl">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <div className="min-w-0">
             <h2 className="text-sm font-semibold text-text-secondary">시술 성향 태그</h2>
             {editingTags && (
               <p className="mt-1 text-[11px] text-text-muted">
@@ -640,17 +640,17 @@ function CustomerDetailContent({ id }: { id: string }) {
             )}
           </div>
           {editingTags ? (
-            <div className="flex items-center gap-2">
+            <div className="flex w-full items-center justify-end gap-2 sm:w-auto sm:justify-start">
               <button
                 type="button"
-                className="rounded-full border border-border px-3 py-1 text-xs font-medium text-text-muted"
+                className="whitespace-nowrap rounded-full border border-border px-3 py-1 text-xs font-medium text-text-muted"
                 onClick={handleCancelTagEdit}
               >
                 취소
               </button>
               <button
                 type="button"
-                className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white"
+                className="whitespace-nowrap rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white"
                 onClick={handleSaveTagEdit}
               >
                 완료
@@ -669,12 +669,12 @@ function CustomerDetailContent({ id }: { id: string }) {
 
         {editingTags && (
           <div className="mb-4 rounded-2xl border border-border bg-surface-alt p-3">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div>
+            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+              <div className="min-w-0">
                 <p className="text-xs font-semibold text-text">상단 카드 노출 순서</p>
                 <p className="mt-1 text-[11px] text-text-muted">고정한 태그를 드래그해서 홈/예약 카드 우선순서를 정하세요.</p>
               </div>
-              <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-primary">
+              <span className="self-start whitespace-nowrap rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-primary sm:self-auto">
                 {pinnedTags.length}개 고정
               </span>
             </div>
