@@ -21,10 +21,6 @@ interface WeekCalendarProps {
   reservations: BookingRequest[];
 }
 
-function toDateStr(year: number, month: number, day: number): string {
-  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-}
-
 function getTodayStr(): string {
   return getTodayInKorea();
 }
@@ -68,7 +64,7 @@ export function WeekCalendar({ selectedDate, onSelectDate, reservations }: WeekC
     const d = parseKoreanDateString(dateStr);
     return {
       dateStr,
-      dayOfWeek: i,
+      dayOfWeek: d.getUTCDay(),
       date: d.getUTCDate(),
     };
   });

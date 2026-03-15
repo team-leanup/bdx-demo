@@ -15,7 +15,7 @@ interface MainTabBarProps {
 export function MainTabBar({
   activeTab,
   onTabChange,
-  reservationsLabel = '예약 관리',
+  reservationsLabel = '상담 관리',
   consultationsLabel = '상담 기록',
 }: MainTabBarProps): React.ReactElement {
   return (

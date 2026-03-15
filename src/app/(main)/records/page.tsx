@@ -429,7 +429,7 @@ export default function RecordsPage() {
         featureId="records-views"
         icon="🗂️"
         title="기록 관리"
-        description={"예약 관리와 상담 기록을\n탭으로 나누어 편리하게 관리하세요."}
+        description={"상담 관리와 상담 기록을\n탭으로 나누어 편리하게 관리하세요."}
       />
 
       <div className="px-4 md:px-0 pt-4">
@@ -442,9 +442,9 @@ export default function RecordsPage() {
         <>
           <StatsCards
             primaryValue={weekStats.weekCount}
-            primaryLabel="이번 주 예약"
+            primaryLabel="이번 주 상담"
             secondaryValue={weekStats.todayRemainingCount}
-            secondaryLabel="오늘 남은 예약"
+            secondaryLabel="오늘 남은 상담"
           />
 
           <ViewModeToggle
@@ -626,9 +626,9 @@ export default function RecordsPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 60 }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-background px-5 pb-8 pt-5 md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:left-1/2 md:-translate-x-1/2 md:right-auto md:w-full md:max-w-lg md:rounded-2xl md:max-h-[85vh] md:overflow-y-auto"
+              className="fixed bottom-0 left-0 right-0 z-50 flex max-h-[88dvh] flex-col overflow-hidden rounded-t-2xl bg-background pt-5 pb-safe md:bottom-auto md:top-1/2 md:left-1/2 md:right-auto md:w-full md:max-h-[85vh] md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl"
             >
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-4 flex flex-shrink-0 items-center justify-between px-5">
                 <h3 className="text-base font-bold text-text">
                   {editMode ? '예약 수정' : (selectedEvent.type === 'reservation' ? '예약 상세' : '기록 상세')}
                 </h3>
@@ -641,7 +641,7 @@ export default function RecordsPage() {
                   </svg>
                 </button>
               </div>
-              <div className="flex flex-col gap-3">
+              <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-5 pb-8">
                 {editMode ? (
                   <>
                     <div className="flex flex-col gap-1.5">
