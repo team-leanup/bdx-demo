@@ -762,13 +762,13 @@ export default function IntroDemoPage() {
                   <strong>새 상담 / 새 예약 등록</strong>: 메인 버튼으로 바로 상담 시작 또는 예약 등록
                 </>,
                 <>
-                  <strong>오늘의 예약</strong>: 시간순 목록, 탭하면 바로 상담 시작
+                  <strong>오늘의 상담</strong>: 시간순 목록, 탭하면 바로 상담 시작
                 </>,
                 <>
                   <strong>최근 상담 기록</strong>: 최근 4건 빠르게 확인
                 </>,
                 <>
-                  <strong>오늘 요약</strong>: 오늘 상담 건수, 예약 건수, 매출
+                  <strong>오늘 요약</strong>: 오늘 상담 건수, 상담 예정 건수, 매출
                 </>,
               ]}
             />
@@ -819,7 +819,7 @@ export default function IntroDemoPage() {
             <Para>2개의 탭으로 구성됩니다.</Para>
             <BulletList
               items={[
-                <><strong>예약 관리 탭</strong>: 주간 타임그리드 / 월간 캘린더</>,
+                <><strong>상담 관리 탭</strong>: 주간 타임그리드 / 월간 캘린더</>,
                 <><strong>상담 기록 탭</strong>: 고객명/전화번호 검색, 기간별 필터</>,
               ]}
             />

@@ -176,7 +176,7 @@ const SLIDES: Slide[] = [
   {
     icon: '🏠',
     title: '홈에서 모든 것을 시작해요',
-    description: '새 상담 시작, 오늘의 예약 확인, 최근 상담 기록을 한눈에 볼 수 있어요',
+    description: '새 상담 시작, 오늘의 상담 확인, 최근 상담 기록을 한눈에 볼 수 있어요',
     visual: <HomeScreenVisual />,
   },
   {
