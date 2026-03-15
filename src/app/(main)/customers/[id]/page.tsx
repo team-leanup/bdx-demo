@@ -107,6 +107,10 @@ function movePinnedTag(tags: CustomerTag[], draggedId: string, targetId: string)
   });
 }
 
+function isRenderableImageSrc(src: string | undefined): src is string {
+  return typeof src === 'string' && src.trim().length > 0;
+}
+
 function CustomerDetailContent({ id }: { id: string }) {
   const router = useRouter();
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
@@ -144,7 +148,9 @@ function CustomerDetailContent({ id }: { id: string }) {
   const reservations = useReservationStore((s) => s.reservations);
 
   const customerPhotos = getByCustomerId(id);
-  const treatmentPhotos = customerPhotos.filter((p) => p.kind === 'treatment');
+  const treatmentPhotos = customerPhotos.filter(
+    (p) => p.kind === 'treatment' && isRenderableImageSrc(p.imageDataUrl),
+  );
   const consultPhotos = customerPhotos.filter((p) => p.kind === 'reference');
 
   // CU-2: 최근 3장 미니 갤러리
@@ -943,7 +949,7 @@ function CustomerDetailContent({ id }: { id: string }) {
                     />
                     <button
                       onClick={() => handleRemovePhoto(photo.id)}
-                      className="absolute -top-1 -right-1 hidden group-hover:flex h-5 w-5 items-center justify-center rounded-full bg-error text-white text-xs shadow-md"
+                      className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-error text-white text-xs shadow-md transition-opacity lg:opacity-0 lg:pointer-events-none lg:group-hover:opacity-100 lg:group-hover:pointer-events-auto"
                     >
                       ×
                     </button>
