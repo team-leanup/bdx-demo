@@ -8,13 +8,13 @@ import { useConsultationStore } from '@/store/consultation-store';
  * Redirects to /consultation if the consultation flow hasn't been started.
  * Use on step pages to prevent direct URL access without data.
  */
-export function useConsultationGuard(): void {
+export function useConsultationGuard(isEnabled = true): void {
   const router = useRouter();
   const entryPoint = useConsultationStore((s) => s.consultation.entryPoint);
 
   useEffect(() => {
-    if (!entryPoint) {
+    if (isEnabled && !entryPoint) {
       router.replace('/consultation');
     }
-  }, [entryPoint, router]);
+  }, [entryPoint, isEnabled, router]);
 }

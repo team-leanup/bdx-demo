@@ -181,7 +181,6 @@ function StepValueControl({
 }
 
 export default function TreatmentSheetPage() {
-  useConsultationGuard();
   const router = useRouter();
   const searchParams = useSearchParams();
   const consultationId = searchParams.get('consultationId');
@@ -190,6 +189,7 @@ export default function TreatmentSheetPage() {
   const getRecordById = useRecordsStore((s) => s.getRecordById);
   const updateRecord = useRecordsStore((s) => s.updateRecord);
   const record = consultationId ? getRecordById(consultationId) : undefined;
+  useConsultationGuard(!consultationId || !record);
   const consultationData = record?.consultation ?? consultation;
   const [smallTalkText, setSmallTalkText] = useState('');
   const [isSaved, setIsSaved] = useState(false);
@@ -313,8 +313,10 @@ export default function TreatmentSheetPage() {
     }
 
     await new Promise((r) => setTimeout(r, 400));
-    reset();
-    router.push('/home');
+    router.replace('/home');
+    setTimeout(() => {
+      reset();
+    }, 0);
   };
 
   const handleAddExtra = () => {
