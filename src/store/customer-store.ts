@@ -85,6 +85,157 @@ function normalizeCustomer(customer: Customer): Customer {
   };
 }
 
+const DEMO_GOLDEN_TIME_CUSTOMERS: Customer[] = [
+  {
+    id: 'demo-golden-minji-001',
+    shopId: 'shop-1773300748626-x8a073',
+    name: '데모 골든 김민지',
+    phone: '010-5512-3401',
+    assignedDesignerId: 'designer-demo-002',
+    assignedDesignerName: '민서',
+    firstVisitDate: '2025-11-20',
+    lastVisitDate: '2026-02-09',
+    visitCount: 5,
+    averageSpend: 89000,
+    totalSpend: 445000,
+    tags: [],
+    smallTalkNotes: [],
+    treatmentHistory: [
+      {
+        recordId: 'demo-golden-record-001',
+        date: '2026-02-09',
+        bodyPart: 'hand',
+        designScope: '프리미엄 아트',
+        price: 92000,
+        designerName: '민서',
+        imageUrls: [],
+        colorLabels: ['밀크핑크', '실버'],
+        partsUsed: ['진주 파츠'],
+      },
+      {
+        recordId: 'demo-golden-record-000',
+        date: '2026-01-10',
+        bodyPart: 'hand',
+        designScope: '이달의 아트',
+        price: 86000,
+        designerName: '민서',
+        imageUrls: [],
+        colorLabels: ['누드베이지'],
+        partsUsed: [],
+      },
+    ],
+    isRegular: true,
+    regularSince: '2025-12-20',
+    visitFrequency: 'monthly',
+    preferredLanguage: 'ko',
+    createdAt: '2026-03-15T12:00:00+09:00',
+    updatedAt: '2026-03-15T12:00:00+09:00',
+  },
+  {
+    id: 'demo-golden-yuna-001',
+    shopId: 'shop-1773300748626-x8a073',
+    name: '데모 골든 박유나',
+    phone: '010-6734-1182',
+    assignedDesignerId: 'designer-demo-003',
+    assignedDesignerName: '하윤',
+    firstVisitDate: '2025-12-03',
+    lastVisitDate: '2026-02-12',
+    visitCount: 3,
+    averageSpend: 74000,
+    totalSpend: 222000,
+    tags: [],
+    smallTalkNotes: [],
+    treatmentHistory: [
+      {
+        recordId: 'demo-golden-record-002',
+        date: '2026-02-12',
+        bodyPart: 'foot',
+        designScope: '원컬러',
+        price: 73000,
+        designerName: '하윤',
+        imageUrls: [],
+        colorLabels: ['딥레드'],
+        partsUsed: [],
+      },
+      {
+        recordId: 'demo-golden-record-001b',
+        date: '2026-01-15',
+        bodyPart: 'foot',
+        designScope: '그라데이션',
+        price: 76000,
+        designerName: '하윤',
+        imageUrls: [],
+        colorLabels: ['와인'],
+        partsUsed: [],
+      },
+    ],
+    isRegular: true,
+    regularSince: '2026-01-15',
+    visitFrequency: 'monthly',
+    preferredLanguage: 'ko',
+    createdAt: '2026-03-15T12:00:00+09:00',
+    updatedAt: '2026-03-15T12:00:00+09:00',
+  },
+  {
+    id: 'demo-golden-sohee-001',
+    shopId: 'shop-1773300748626-x8a073',
+    name: '데모 골든 한소희',
+    phone: '010-8891-5524',
+    assignedDesignerId: '9a0ce791-7906-4476-811b-be48f7dee2c8',
+    assignedDesignerName: '데모 원장',
+    firstVisitDate: '2025-10-28',
+    lastVisitDate: '2026-02-15',
+    visitCount: 6,
+    averageSpend: 101000,
+    totalSpend: 606000,
+    tags: [],
+    smallTalkNotes: [],
+    treatmentHistory: [
+      {
+        recordId: 'demo-golden-record-003',
+        date: '2026-02-15',
+        bodyPart: 'hand',
+        designScope: '시그니처 아트',
+        price: 109000,
+        designerName: '데모 원장',
+        imageUrls: [],
+        colorLabels: ['로즈브라운', '골드'],
+        partsUsed: ['메탈 파츠'],
+      },
+      {
+        recordId: 'demo-golden-record-002b',
+        date: '2026-01-18',
+        bodyPart: 'hand',
+        designScope: '프렌치',
+        price: 93000,
+        designerName: '데모 원장',
+        imageUrls: [],
+        colorLabels: ['누드핑크'],
+        partsUsed: [],
+      },
+    ],
+    isRegular: true,
+    regularSince: '2025-12-01',
+    visitFrequency: 'monthly',
+    preferredLanguage: 'ko',
+    createdAt: '2026-03-15T12:00:00+09:00',
+    updatedAt: '2026-03-15T12:00:00+09:00',
+  },
+];
+
+function mergeDemoGoldenTimeCustomers(customers: Customer[], shopId: string | null): Customer[] {
+  if (shopId !== 'shop-1773300748626-x8a073') {
+    return customers;
+  }
+
+  const existingIds = new Set(customers.map((customer) => customer.id));
+  const missingDemoCustomers = DEMO_GOLDEN_TIME_CUSTOMERS.filter(
+    (customer) => !existingIds.has(customer.id),
+  );
+
+  return [...customers, ...missingDemoCustomers];
+}
+
 export const useCustomerStore = create<CustomerStore>()(
   persist(
     (set, get) => ({
@@ -94,7 +245,13 @@ export const useCustomerStore = create<CustomerStore>()(
       hydrateFromDB: async () => {
         const currentShopId = useAuthStore.getState().currentShopId;
         const dbCustomers = await fetchCustomers(currentShopId);
-        set({ customers: dbCustomers.map(normalizeCustomer), _dbReady: true });
+        set({
+          customers: mergeDemoGoldenTimeCustomers(
+            dbCustomers.map(normalizeCustomer),
+            currentShopId,
+          ),
+          _dbReady: true,
+        });
       },
 
       getById: (id) => get().customers.find((c) => c.id === id),
