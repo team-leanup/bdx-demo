@@ -454,7 +454,7 @@ export default function RecordsPage() {
 
           <div className="px-4 md:px-0">
             <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3 text-xs text-text-secondary">
-              <span className="font-semibold text-text">날짜 상태 범례</span>
+              <span className="font-semibold text-text">상담 상태</span>
               {READINESS_LEGEND.map((item) => (
                 <span key={item.label} className="inline-flex items-center gap-1.5">
                   <span className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
@@ -562,25 +562,27 @@ export default function RecordsPage() {
             </button>
             <button
               onClick={() => setTagFilter(tagFilter === '외국인' ? null : '외국인')}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold leading-none transition-colors ${
                 tagFilter === '외국인'
                   ? 'bg-primary text-white'
                   : 'bg-surface border border-border text-text-secondary hover:bg-surface-alt'
               }`}
             >
-              <TagIconSvg icon="🌏" className="w-3.5 h-3.5" /> 외국인
+              <TagIconSvg icon="🌏" className="h-3.5 w-3.5" />
+              <span>외국인</span>
             </button>
             {TAG_PRESETS.filter((p) => ['design', 'shape', 'etc'].includes(p.category)).flatMap((p) => p.options).map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => setTagFilter(tagFilter === opt.value ? null : opt.value)}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold leading-none transition-colors ${
                   tagFilter === opt.value
                     ? 'bg-primary text-white'
                     : 'bg-surface border border-border text-text-secondary hover:bg-surface-alt'
                 }`}
               >
-                {opt.icon && <TagIconSvg icon={opt.icon} className="w-3.5 h-3.5" />} {opt.value}
+                {opt.icon && <TagIconSvg icon={opt.icon} className="h-3.5 w-3.5" />}
+                <span>{opt.value}</span>
               </button>
             ))}
           </div>

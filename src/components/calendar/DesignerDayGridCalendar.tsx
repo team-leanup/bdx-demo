@@ -281,9 +281,19 @@ export function DesignerDayGridCalendar({
     return ((h * 60 + m) - START_HOUR * 60) / 60 * HOUR_HEIGHT;
   }, [currentTime, START_HOUR, END_HOUR, isToday]);
 
+  const hasUnassignedEvents = useMemo(() => {
+    const designerIds = new Set(designers.map((designer) => designer.id));
+
+    return events.some((event) =>
+      event.date === date && (!event.designerId || !designerIds.has(event.designerId)),
+    );
+  }, [date, designers, events]);
+
   const columns = useMemo(() => {
-    return [{ id: '__unassigned__', name: '미지정' }, ...designers];
-  }, [designers]);
+    return hasUnassignedEvents
+      ? [{ id: '__unassigned__', name: '미지정' }, ...designers]
+      : designers;
+  }, [designers, hasUnassignedEvents]);
 
   const eventsByColumn = useMemo(() => {
     const map: Record<string, TimeGridEvent[]> = {};
