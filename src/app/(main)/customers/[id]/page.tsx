@@ -10,7 +10,7 @@ import { SafetyTag } from '@/components/ui/SafetyTag';
 import { FlagIcon } from '@/components/ui/FlagIcon';
 import type { ToastData } from '@/components/ui';
 import { cn } from '@/lib/cn';
-import { formatPrice, formatRelativeDate, formatDateDot, getNowInKoreaIso } from '@/lib/format';
+import { formatPrice, formatRelativeDate, formatDateDot, getNowInKoreaIso, maskPhone } from '@/lib/format';
 import {
   CUSTOMER_TAG_ACCENTS,
   getCustomerTagDotClasses,
@@ -458,7 +458,7 @@ function CustomerDetailContent({ id }: { id: string }) {
                     단골
                   </button>
                 </div>
-                <p className="text-sm text-text-secondary">{customer.phone}</p>
+                <p className="text-sm text-text-secondary">{maskPhone(customer.phone)}</p>
               </div>
             </div>
             <div className="mt-1 flex items-center gap-1.5">

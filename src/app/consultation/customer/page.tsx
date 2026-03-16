@@ -271,7 +271,7 @@ function CustomerPageInner(): React.ReactElement {
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
       <ConsultationHeader
         stepNumber={stepNumber}
-        totalSteps={5}
+        totalSteps={6}
         title={t('consultation.customerInfo')}
         titleKo={tKo('consultation.customerInfo')}
         backHref={backHref}

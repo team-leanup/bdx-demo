@@ -343,8 +343,17 @@ export const useAuthStore = create<AuthStore>()(
           },
         });
 
-        if (error || !data.user) {
-          return { success: false, error: error?.message ?? '회원가입에 실패했습니다.' };
+        if (error) {
+          // Supabase 영문 에러를 한국어 메시지로 매핑
+          const errorMsg = error.message?.toLowerCase() ?? '';
+          if (errorMsg.includes('already registered') || errorMsg.includes('already been registered')) {
+            return { success: false, error: '이미 등록된 이메일입니다. 로그인을 이용해 주세요.' };
+          }
+          return { success: false, error: error.message ?? '회원가입에 실패했습니다.' };
+        }
+
+        if (!data.user) {
+          return { success: false, error: '회원가입에 실패했습니다.' };
         }
 
         if (!data.session) {

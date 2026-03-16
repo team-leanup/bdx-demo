@@ -35,8 +35,8 @@ export default function TraitsPage(): React.ReactElement {
   return (
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
       <ConsultationHeader
-        stepNumber={5}
-        totalSteps={5}
+        stepNumber={6}
+        totalSteps={6}
         title={t('consultation.traitsTitle')}
         titleKo={tKo('consultation.traitsTitle')}
         backHref="/consultation/canvas"

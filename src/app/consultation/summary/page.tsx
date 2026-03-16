@@ -152,6 +152,7 @@ export default function SummaryPage() {
       }
 
       updateReservationAfterPreconsult(bookingId, {
+        status: 'completed' as BookingStatus,
         preConsultationCompletedAt: now,
         preConsultationData: consultationSnapshot,
         customerId,
@@ -191,17 +192,20 @@ export default function SummaryPage() {
       }
     }
 
-    // 고객 데이터 연동: 방문횟수, 매출, 시술이력 갱신
+    // 고객 데이터 연동: records 기반으로 정확한 통계 계산
     const { getById: getCustById, updateCustomer: updateCust } = useCustomerStore.getState();
     const existingCustomer = getCustById(customerId);
     if (existingCustomer) {
-      const newVisitCount = existingCustomer.visitCount + 1;
-      const newTotalSpend = existingCustomer.totalSpend + adjustedFinalPrice;
+      // 방금 추가한 record 포함하여 전체 records에서 집계
+      const allRecords = useRecordsStore.getState().records;
+      const customerRecords = allRecords.filter((r) => r.customerId === customerId);
+      const recalcVisitCount = customerRecords.length;
+      const recalcTotalSpend = customerRecords.reduce((sum, r) => sum + r.finalPrice, 0);
       updateCust(customerId, {
-        visitCount: newVisitCount,
+        visitCount: recalcVisitCount,
         lastVisitDate: now.split('T')[0],
-        totalSpend: newTotalSpend,
-        averageSpend: Math.round(newTotalSpend / newVisitCount),
+        totalSpend: recalcTotalSpend,
+        averageSpend: recalcVisitCount > 0 ? Math.round(recalcTotalSpend / recalcVisitCount) : 0,
         treatmentHistory: [
           ...(existingCustomer.treatmentHistory ?? []),
           {
@@ -218,9 +222,8 @@ export default function SummaryPage() {
 
     // 스몰토크 메모 → customer store smallTalkNotes에 자동 push
     if (customerMemo) {
-      const customerName = consultation.customerName;
-      const { customers, appendSmallTalkNote } = useCustomerStore.getState();
-      const customer = customers.find((c) => c.name === customerName || c.id === customerId);
+      const { getById: getSmtCust, appendSmallTalkNote } = useCustomerStore.getState();
+      const customer = getSmtCust(customerId);
       if (customer) {
         const newNote = {
           id: `stn-${Date.now()}`,
@@ -282,8 +285,6 @@ export default function SummaryPage() {
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
       <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
       <ConsultationHeader
-        stepNumber={5}
-        totalSteps={5}
         title={t('consultation.summaryTitle')}
         titleKo={tKo('consultation.summaryTitle')}
         onBack={() => {

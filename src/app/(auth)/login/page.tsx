@@ -157,6 +157,10 @@ export default function LoginPage(): React.ReactElement {
 
               {error && <p className="text-sm font-medium text-error">{error}</p>}
 
+              {!isReady && !error && (
+                <p className="text-xs text-slate-400 text-center">이메일과 비밀번호를 모두 입력해 주세요</p>
+              )}
+
               <Button
                 size="lg"
                 fullWidth

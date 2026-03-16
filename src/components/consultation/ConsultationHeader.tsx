@@ -5,8 +5,8 @@ import { cn } from '@/lib/cn';
 import { useT, useLocale } from '@/lib/i18n';
 
 interface ConsultationHeaderProps {
-  stepNumber: number;
-  totalSteps: number;
+  stepNumber?: number;
+  totalSteps?: number;
   title: string;
   titleKo?: string;
   backHref?: string;
@@ -74,9 +74,11 @@ export function ConsultationHeader({
 
       {/* Step info */}
       <div className="flex flex-col items-center gap-0.5 flex-1 min-w-0">
-        <span className="text-xs font-semibold text-text-secondary tracking-wider uppercase">
-          STEP {stepNumber}/{totalSteps}
-        </span>
+        {stepNumber != null && totalSteps != null && (
+          <span className="text-xs font-semibold text-text-secondary tracking-wider uppercase">
+            STEP {stepNumber}/{totalSteps}
+          </span>
+        )}
         <span className="text-base font-bold text-text truncate w-full text-center">{title}</span>
         {locale !== 'ko' && titleKo && (
           <span className="text-[10px] text-text-muted opacity-60">{titleKo}</span>
