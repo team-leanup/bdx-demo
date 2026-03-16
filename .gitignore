@@ -39,3 +39,6 @@ next-env.d.ts
 # claude - local settings만 제외 (skills/commands는 공유)
 .claude/settings.local.json
 .env*.local
+
+# QA screenshots
+qa-*.png

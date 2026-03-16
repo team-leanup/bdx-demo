@@ -185,7 +185,7 @@ export default function TraitsPage(): React.ReactElement {
         </div>
       </motion.main>
 
-      <ConsultationFooter onNext={handleNext} showEstimated={false} nextLabel={t('common.complete')} />
+      <ConsultationFooter onNext={handleNext} showEstimated={false} nextLabel={t('consultation.complete')} />
     </div>
   );
 }
