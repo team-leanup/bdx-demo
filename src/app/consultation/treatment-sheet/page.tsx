@@ -286,7 +286,9 @@ export default function TreatmentSheetPage() {
     if (!smallTalkText.trim()) return;
 
     const { customers, appendSmallTalkNote } = useCustomerStore.getState();
-    const customer = customers.find(c => c.name === consultationData.customerName);
+    const customer = consultationData.customerId
+      ? customers.find(c => c.id === consultationData.customerId)
+      : customers.find(c => c.name === consultationData.customerName);
     if (customer) {
       const newNote = {
         id: `stn-${Date.now()}`,

@@ -60,7 +60,7 @@ export const NAIL_SHAPE_OPTIONS: ServiceOption<
   },
   {
     value: 'squoval',
-    label: '스퀘어 오프',
+    label: '스퀘오벌',
     labelEn: 'Squoval',
     description: '스퀘어 + 오발 결합',
     imageKey: 'squoval',

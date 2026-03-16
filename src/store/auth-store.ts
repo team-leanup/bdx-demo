@@ -395,6 +395,18 @@ export const useAuthStore = create<AuthStore>()(
           document.cookie = 'bdx-demo=;path=/;max-age=0';
         }
 
+        _initDone = false;
+        _initPromise = null;
+
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('bdx-customers');
+          localStorage.removeItem('bdx-records');
+          localStorage.removeItem('bdx-reservations');
+          localStorage.removeItem('bdx-portfolio');
+          localStorage.removeItem('bdx-shop');
+          localStorage.removeItem('bdx-app');
+        }
+
         if (!hasSupabaseEnv) {
           set({
             isInitialized: true,

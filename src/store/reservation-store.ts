@@ -13,6 +13,7 @@ import { getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
 interface ReservationStore {
   reservations: BookingRequest[];
   _dbReady: boolean;
+  _lastLocalUpdateAt: number;
 
   hydrateFromDB: () => Promise<void>;
   addReservation: (reservation: Omit<BookingRequest, 'id' | 'createdAt' | 'status' | 'shopId'>) => void;
@@ -31,8 +32,10 @@ export const useReservationStore = create<ReservationStore>()(
     (set, get) => ({
       reservations: [],
       _dbReady: false,
+      _lastLocalUpdateAt: 0,
 
       hydrateFromDB: async () => {
+        if (Date.now() - get()._lastLocalUpdateAt < 5000) return;
         const currentShopId = useAuthStore.getState().currentShopId;
         const dbReservations = await fetchBookingRequests(currentShopId);
         set({ reservations: dbReservations, _dbReady: true });
@@ -75,6 +78,7 @@ export const useReservationStore = create<ReservationStore>()(
           reservations: state.reservations.map((r) =>
             r.id === id ? { ...r, ...updates } : r,
           ),
+          _lastLocalUpdateAt: Date.now(),
         }));
       },
 
@@ -141,6 +145,10 @@ export const useReservationStore = create<ReservationStore>()(
               removeItem: () => {},
             },
       ),
+      partialize: (state) => ({
+        reservations: state.reservations,
+        _dbReady: state._dbReady,
+      }),
     },
   ),
 );

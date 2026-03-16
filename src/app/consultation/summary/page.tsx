@@ -173,12 +173,27 @@ export default function SummaryPage() {
 
       if (customerId && consultation.referenceImages?.length) {
         await Promise.all(consultation.referenceImages.map(async (imageUrl) => {
-          if (!imageUrl.startsWith('data:image/')) return;
+          let resolvedUrl = imageUrl;
+          if (imageUrl.startsWith('blob:')) {
+            try {
+              const response = await fetch(imageUrl);
+              const blob = await response.blob();
+              resolvedUrl = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+              });
+            } catch {
+              return;
+            }
+          }
+          if (!resolvedUrl.startsWith('data:image/')) return;
           await addPhoto({
             customerId,
             recordId: newId,
             kind: 'reference',
-            imageDataUrl: imageUrl,
+            imageDataUrl: resolvedUrl,
             takenAt: now,
             tags: consultation.selectedTraitValues,
             serviceType: DESIGN_SCOPE_LABEL[consultation.designScope] ?? consultation.designScope,

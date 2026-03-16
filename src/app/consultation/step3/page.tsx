@@ -22,7 +22,7 @@ export default function Step3Page() {
   const locale = useLocale();
 
   const handleNext = () => {
-    setStep(ConsultationStep.STEP3_OPTIONS);
+    setStep(ConsultationStep.TRAITS);
     router.push('/consultation/traits');
   };
 

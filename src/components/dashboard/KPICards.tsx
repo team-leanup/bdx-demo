@@ -15,7 +15,7 @@ import { BentoCard } from '@/components/ui';
 import { useRecordsStore } from '@/store/records-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { useReservationStore } from '@/store/reservation-store';
-import { getTodayInKorea, parseKoreanDateString, toKoreanDateString } from '@/lib/format';
+import { getTodayInKorea, toKoreanDateString } from '@/lib/format';
 
 function buildKPIDetail(
   label: string,
@@ -26,15 +26,15 @@ function buildKPIDetail(
   switch (label) {
     case '이달 상담 건수': {
       const today = getTodayInKorea();
-      const now = parseKoreanDateString(today);
       const prefix = today.slice(0, 7);
       const thisMonth = records.filter((r) => toKoreanDateString(r.createdAt).startsWith(prefix));
       const completedCount = thisMonth.filter((r) => getRecordStatus(r) === 'completed').length;
       const inProgressCount = thisMonth.filter((r) => getRecordStatus(r) === 'in_progress').length;
       const preConsultCount = thisMonth.filter((r) => getRecordStatus(r) === 'pre_consultation').length;
       const countExcludingPre = completedCount + inProgressCount;
-      const daysInMonth = new Date(now.getUTCFullYear(), now.getUTCMonth() + 1, 0).getDate();
-      const daysPassed = now.getUTCDate();
+      const [y, m, d] = today.split('-').map(Number);
+      const daysInMonth = new Date(y, m, 0).getDate();
+      const daysPassed = d;
       const dailyAvg = daysPassed > 0 ? (countExcludingPre / daysPassed).toFixed(1) : '0';
       return (
         <div className="flex flex-col gap-3">

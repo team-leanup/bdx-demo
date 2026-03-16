@@ -340,7 +340,7 @@ export function computeDesignerStats(
         designerName: designer.name,
         consultations: designerRecords.length,
         bookings: designerReservations.length,
-        revenue: designerRecords.reduce((sum, record) => sum + record.finalPrice, 0),
+        revenue: designerRecords.reduce((sum, record) => sum + record.finalPrice + (record.consultation.deposit ?? 0), 0),
         assignedBookingRate: roundToSingleDecimal(
           (designerReservations.length / totalActiveReservations) * 100,
         ),

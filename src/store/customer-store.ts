@@ -105,7 +105,7 @@ const DEMO_GOLDEN_TIME_CUSTOMERS: Customer[] = [
         recordId: 'demo-golden-record-001',
         date: '2026-02-09',
         bodyPart: 'hand',
-        designScope: '프리미엄 아트',
+        designScope: 'full_art',
         price: 92000,
         designerName: '민서',
         imageUrls: [],
@@ -116,7 +116,7 @@ const DEMO_GOLDEN_TIME_CUSTOMERS: Customer[] = [
         recordId: 'demo-golden-record-000',
         date: '2026-01-10',
         bodyPart: 'hand',
-        designScope: '이달의 아트',
+        designScope: 'monthly_art',
         price: 86000,
         designerName: '민서',
         imageUrls: [],
@@ -161,7 +161,7 @@ const DEMO_GOLDEN_TIME_CUSTOMERS: Customer[] = [
         recordId: 'demo-golden-record-001b',
         date: '2026-01-15',
         bodyPart: 'foot',
-        designScope: '그라데이션',
+        designScope: 'solid_tone',
         price: 76000,
         designerName: '하윤',
         imageUrls: [],
@@ -195,7 +195,7 @@ const DEMO_GOLDEN_TIME_CUSTOMERS: Customer[] = [
         recordId: 'demo-golden-record-003',
         date: '2026-02-15',
         bodyPart: 'hand',
-        designScope: '시그니처 아트',
+        designScope: 'monthly_art',
         price: 109000,
         designerName: '데모 원장',
         imageUrls: [],
@@ -206,7 +206,7 @@ const DEMO_GOLDEN_TIME_CUSTOMERS: Customer[] = [
         recordId: 'demo-golden-record-002b',
         date: '2026-01-18',
         bodyPart: 'hand',
-        designScope: '프렌치',
+        designScope: 'solid_point',
         price: 93000,
         designerName: '데모 원장',
         imageUrls: [],
@@ -298,7 +298,10 @@ export const useCustomerStore = create<CustomerStore>()(
 
         set((state) => ({ customers: [...state.customers, next] }));
 
-        dbUpsertCustomer(next).catch(console.error);
+        dbUpsertCustomer(next).catch((err) => {
+          console.error('Failed to save customer to DB:', err);
+          set((state) => ({ customers: state.customers.filter((c) => c.id !== next.id) }));
+        });
         dbUpsertCustomerTags(next.id, next.tags ?? []).catch(console.error);
 
         return next;

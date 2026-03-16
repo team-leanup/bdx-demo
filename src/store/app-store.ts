@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { ServiceStructure, SurchargeSettings, TimeSettings, BusinessHours, Shop } from '@/types/shop';
-import { dbUpdateShopSettings } from '@/lib/db';
+import { dbUpdateShopSettings, dbUpdateShopCore } from '@/lib/db';
 import { useAuthStore } from '@/store/auth-store';
 
 interface ShopSettings {
@@ -109,8 +109,10 @@ export const useAppStore = create<AppStore>()(
       isOnboardingComplete: false,
       shopSettings: { ...DEFAULT_SHOP_SETTINGS },
 
-      setOnboardingComplete: (complete) =>
-        set({ isOnboardingComplete: complete }),
+      setOnboardingComplete: (complete) => {
+        set({ isOnboardingComplete: complete });
+        useAuthStore.getState().setCurrentShopOnboardingComplete(complete);
+      },
 
       setShopSettings: async (settings) => {
         const previous = get().shopSettings;
@@ -120,23 +122,31 @@ export const useAppStore = create<AppStore>()(
 
         const shopId = useAuthStore.getState().currentShopId;
         if (shopId) {
-          const result = await dbUpdateShopSettings(shopId, {
-            addressDetail: next.shopAddressDetail,
-            baseOffSameShop: next.baseOffSameShop,
-            baseOffOtherShop: next.baseOffOtherShop,
-            baseSolidPointPrice: next.baseSolidPointPrice,
-            baseFullArtPrice: next.baseFullArtPrice,
-            baseMonthlyArtPrice: next.baseMonthlyArtPrice,
-            designerCount: next.designerCount,
-            selectedServices: next.selectedServices,
-            serviceStructure: next.serviceStructure,
-            surcharges: next.surcharges,
-            timeSettings: next.timeSettings,
-          });
+          const [coreResult, extResult] = await Promise.all([
+            dbUpdateShopCore(shopId, {
+              name: next.shopName || undefined,
+              phone: next.shopPhone || undefined,
+              address: next.shopAddress || undefined,
+              businessHours: next.businessHours,
+            }),
+            dbUpdateShopSettings(shopId, {
+              addressDetail: next.shopAddressDetail,
+              baseOffSameShop: next.baseOffSameShop,
+              baseOffOtherShop: next.baseOffOtherShop,
+              baseSolidPointPrice: next.baseSolidPointPrice,
+              baseFullArtPrice: next.baseFullArtPrice,
+              baseMonthlyArtPrice: next.baseMonthlyArtPrice,
+              designerCount: next.designerCount,
+              selectedServices: next.selectedServices,
+              serviceStructure: next.serviceStructure,
+              surcharges: next.surcharges,
+              timeSettings: next.timeSettings,
+            }),
+          ]);
 
-          if (!result.success) {
+          if (!coreResult.success || !extResult.success) {
             set({ shopSettings: previous });
-            return { success: false, error: result.error };
+            return { success: false, error: coreResult.error ?? extResult.error };
           }
         }
 
