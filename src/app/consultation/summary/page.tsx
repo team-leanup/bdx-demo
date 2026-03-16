@@ -261,12 +261,14 @@ export default function SummaryPage() {
     }
 
     sessionStorage.removeItem('consultation_customer_memo');
-    restoreLocale();
 
     if (isCustomerLinkFlow) {
-      router.push('/home');
+      // 고객용 완료 페이지로 이동 (locale 복원하지 않음 — save-complete에서 고객 언어 유지)
+      router.push('/consultation/save-complete?mode=preconsultation');
       return;
     }
+
+    restoreLocale();
 
     router.push(`/consultation/treatment-sheet?consultationId=${newId}&customerId=${customerId}`);
     } catch (err) {

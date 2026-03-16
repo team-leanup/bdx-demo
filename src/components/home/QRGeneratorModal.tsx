@@ -13,7 +13,7 @@ interface QRGeneratorModalProps {
 
 const CONSULTATION_URL_PATH = '/consultation?entry=customer-link';
 
-export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGeneratorModalProps): React.ReactElement | null {
+export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGeneratorModalProps): React.ReactElement {
   const [copied, setCopied] = useState(false);
   const [origin, setOrigin] = useState('');
 
@@ -22,6 +22,13 @@ export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGenera
       setOrigin(window.location.origin);
     }
   }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [isOpen]);
 
   const consultationUrl = origin
     ? `${origin}${CONSULTATION_URL_PATH}${shopId ? `&shopId=${shopId}` : ''}${shopName ? `&shopName=${encodeURIComponent(shopName)}` : ''}`
@@ -43,8 +50,6 @@ export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGenera
       setTimeout(() => setCopied(false), 2000);
     }
   };
-
-  if (!isOpen) return null;
 
   return (
     <AnimatePresence>

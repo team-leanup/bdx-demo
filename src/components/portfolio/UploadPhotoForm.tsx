@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { Button, Input } from '@/components/ui';
+import { TagDropdownInput } from '@/components/ui/TagDropdownInput';
 import { useCustomerStore } from '@/store/customer-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useRecordsStore } from '@/store/records-store';
@@ -13,6 +14,8 @@ import { cn } from '@/lib/cn';
 import type { PortfolioPhotoKind } from '@/types/portfolio';
 
 const PRESET_TAGS = ['봄', '웨딩', '자석젤', '키치', '내추럴', '글리터', '심플', '화려한스타일', '이달의아트', '프렌치', '그라데이션', '마그네틱'];
+const SERVICE_TYPE_PRESETS = ['원컬러', '단색+포인트', '풀아트', '이달의 아트'];
+const DESIGN_TYPE_PRESETS = ['웨딩', '시럽', '키치', '내추럴', '글리터', '프렌치', '그라데이션', '마그네틱', '심플', '화려한스타일'];
 const PRESET_COLORS = ['핑크', '누드', '베이지', '화이트', '블랙', '레드', '코랄', '브라운', '퍼플', '블루'];
 
 const DESIGN_SCOPE_LABEL: Record<string, string> = {
@@ -388,18 +391,22 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
         </div>
         <div>
           <label className="mb-1.5 block text-sm font-medium text-text-secondary">시술 종류</label>
-          <Input
+          <TagDropdownInput
             value={selectedRecord ? (DESIGN_SCOPE_LABEL[selectedRecord.consultation.designScope] ?? selectedRecord.consultation.designScope) : serviceType}
-            onChange={(e) => setServiceType(e.target.value)}
-            disabled={Boolean(selectedRecord)}
+            onChange={setServiceType}
+            presets={SERVICE_TYPE_PRESETS}
+            storageKey="bdx-custom-service-types"
             placeholder="예: 원컬러, 풀아트"
+            disabled={Boolean(selectedRecord)}
           />
         </div>
         <div>
           <label className="mb-1.5 block text-sm font-medium text-text-secondary">디자인 타입</label>
-          <Input
+          <TagDropdownInput
             value={designType}
-            onChange={(e) => setDesignType(e.target.value)}
+            onChange={setDesignType}
+            presets={DESIGN_TYPE_PRESETS}
+            storageKey="bdx-custom-design-types"
             placeholder="예: 웨딩, 시럽, 키치"
           />
         </div>

@@ -6,12 +6,14 @@ import { Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { ConsultationSummaryCard } from '@/components/consultation/ConsultationSummaryCard';
 import { useConsultationStore } from '@/store/consultation-store';
+import { useRecordsStore } from '@/store/records-store';
 import { useT, useKo, useLocale } from '@/lib/i18n';
 
 function SaveCompleteContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const consultationId = searchParams.get('consultationId') ?? 'record-001';
+  const allRecords = useRecordsStore((s) => s.records);
+  const consultationId = searchParams.get('consultationId') ?? (allRecords.length > 0 ? allRecords[0].id : '');
   const customerId = searchParams.get('customerId') ?? '';
   const mode = searchParams.get('mode') ?? 'default';
   const sourceShopId = useConsultationStore((s) => s.consultation.sourceShopId);

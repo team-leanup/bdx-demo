@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, Suspense } from 'react';
+import { use, useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -53,7 +53,12 @@ const EXPRESSION_LABEL: Record<string, string> = {
 function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
   const router = useRouter();
   const photos = usePortfolioStore((s) => s.photos);
+  const hydrateFromDB = usePortfolioStore((s) => s.hydrateFromDB);
   const removePhoto = usePortfolioStore((s) => s.removePhoto);
+
+  useEffect(() => {
+    hydrateFromDB();
+  }, [hydrateFromDB]);
   const getCustomerById = useCustomerStore((s) => s.getById);
   const getAllRecords = useRecordsStore((s) => s.getAllRecords);
   

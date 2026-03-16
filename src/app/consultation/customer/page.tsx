@@ -13,6 +13,7 @@ import { CustomerInfoForm } from '@/components/consultation/CustomerInfoForm';
 import { MoodTagSelector } from '@/components/consultation/MoodTagSelector';
 import { PortfolioBrowser } from '@/components/consultation/PortfolioBrowser';
 import type { Customer } from '@/types/customer';
+import { useCustomerStore } from '@/store/customer-store';
 import { useLocaleStore } from '@/store/locale-store';
 import type { Locale } from '@/store/locale-store';
 import { useT, useLocale, useKo } from '@/lib/i18n';
@@ -40,6 +41,7 @@ function CustomerPageInner(): React.ReactElement {
   const moodTags = useConsultationStore((s) => s.consultation.moodTags) ?? [];
   const toggleMoodTag = useConsultationStore((s) => s.toggleMoodTag);
   const setConsultationLocale = useLocaleStore((s) => s.setConsultationLocale);
+  const getCustomerById = useCustomerStore((s) => s.getById);
   const t = useT();
   const tKo = useKo();
   const locale = useLocale();
@@ -456,6 +458,7 @@ function CustomerPageInner(): React.ReactElement {
             onMemoChange={setMemo}
             onExistingCustomerSelect={handleExistingCustomer}
             allowExistingCustomerSearch={!isCustomerLinkFlow}
+            defaultSelectedCustomer={consultation.customerId ? getCustomerById(consultation.customerId) ?? undefined : undefined}
           />
 
           {/* 참고 이미지 업로드 — staff 모드에서만 표시 (customer_link는 상단에 이미 있음) */}

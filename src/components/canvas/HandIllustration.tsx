@@ -225,7 +225,7 @@ export function HandIllustration({
         </div>
 
         {/* Hand SVG (smaller) */}
-        <div className="w-[160px] md:w-[240px] overflow-hidden">
+        <div className="w-[160px] md:w-[240px] overflow-hidden touch-none">
           <svg
             viewBox="0 0 320 260"
             className="w-full"

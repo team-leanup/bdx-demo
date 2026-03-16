@@ -265,6 +265,13 @@ export default function RecordsPage() {
     });
   }, [sorted, search, filter, tagFilter, role, activeDesignerId, getPinnedTags, customerFilterId]);
 
+  useEffect(() => {
+    if (!selectedEvent) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [selectedEvent]);
+
   const handleEventClick = (ev: TimeGridEvent) => {
     if (ev.type === 'consultation') {
       router.push(`/records/${ev.originalId}`);

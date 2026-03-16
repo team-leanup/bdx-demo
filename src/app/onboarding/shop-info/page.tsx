@@ -27,7 +27,6 @@ export default function ShopInfoPage() {
   const [phone, setPhone] = useState(shopSettings.shopPhone || '');
   const [address, setAddress] = useState(shopSettings.shopAddress || '');
   const [addressDetail, setAddressDetail] = useState(shopSettings.shopAddressDetail || '');
-
   // 일괄 vs 요일별
   const [bulkMode, setBulkMode] = useState(true);
 
@@ -224,7 +223,7 @@ export default function ShopInfoPage() {
         </div>
       </div>
 
-      <div className="pt-6">
+      <div className="pt-6 flex flex-col gap-4">
         <Button size="lg" fullWidth onClick={handleNext}>
           다음
         </Button>

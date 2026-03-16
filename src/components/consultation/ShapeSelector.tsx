@@ -147,7 +147,7 @@ export function ShapeSelector({ className }: ShapeSelectorProps) {
               whileTap={{ scale: 0.93 }}
               onClick={() => setNailShape(shape)}
               className={cn(
-                'relative flex flex-col items-center gap-2 pt-4 pb-3 px-2 rounded-2xl transition-all duration-200',
+                'relative flex flex-col items-center gap-2 pt-4 pb-3 px-2 rounded-2xl transition-all duration-200 touch-manipulation',
                 isSelected
                   ? 'border-2 border-primary bg-white shadow-sm'
                   : 'border border-border bg-white hover:border-gray-300',

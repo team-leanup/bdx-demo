@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useConsultationStore } from '@/store/consultation-store';
 import { ConsultationHeader } from '@/components/consultation/ConsultationHeader';
@@ -101,8 +102,16 @@ export default function CanvasPage() {
     }));
   };
 
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
   const handleNext = () => {
-    router.push('/consultation/summary');
+    router.push('/consultation/traits');
   };
 
   const handleBack = () => {
@@ -119,13 +128,13 @@ export default function CanvasPage() {
         onBack={handleBack}
       />
 
-      <main className="flex-1 overflow-y-auto pb-28">
+      <main className="flex-1 overflow-y-auto overscroll-contain pb-28">
         <div className="px-4 md:px-8 py-4 max-w-2xl md:max-w-4xl mx-auto">
           <FingerCanvas onChange={handleChange} />
         </div>
       </main>
 
-      <ConsultationFooter onNext={handleNext} nextLabel={t('consultation.complete')} />
+      <ConsultationFooter onNext={handleNext} nextLabel={t('common.next')} />
     </div>
   );
 }

@@ -24,6 +24,8 @@ interface ShopSettings {
   serviceStructure: ServiceStructure;
   surcharges: SurchargeSettings;
   timeSettings: TimeSettings;
+  agreedToTerms: boolean;
+  agreedToPrivacy: boolean;
 }
 
 const DEFAULT_SHOP_SETTINGS: ShopSettings = {
@@ -87,6 +89,8 @@ const DEFAULT_SHOP_SETTINGS: ShopSettings = {
     repairPer: 10,
     parts: 5,
   },
+  agreedToTerms: false,
+  agreedToPrivacy: false,
 };
 
 interface AppStore {

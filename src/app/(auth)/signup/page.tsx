@@ -8,8 +8,6 @@ import { SignupConsentSection } from '@/components/auth/SignupConsentSection';
 import { useAppStore } from '@/store/app-store';
 import { useAuthStore } from '@/store/auth-store';
 
-const SIGNUP_CONSENT_STORAGE_KEY = 'signup-required-consents';
-
 export default function SignupPage(): React.ReactElement {
   const router = useRouter();
   const resetApp = useAppStore((s) => s.resetApp);
@@ -57,17 +55,6 @@ export default function SignupPage(): React.ReactElement {
     agreedToTerms &&
     agreedToPrivacy;
 
-  const updateConsentStorage = (nextTerms: boolean, nextPrivacy: boolean): void => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    sessionStorage.setItem(
-      SIGNUP_CONSENT_STORAGE_KEY,
-      JSON.stringify({ agreedToTerms: nextTerms, agreedToPrivacy: nextPrivacy }),
-    );
-  };
-
   const handleSignup = async (): Promise<void> => {
     if (!shopName.trim()) {
       setError('샵 이름을 입력해 주세요.');
@@ -81,11 +68,6 @@ export default function SignupPage(): React.ReactElement {
 
     if (password !== passwordConfirm) {
       setError('비밀번호가 서로 일치하지 않습니다.');
-      return;
-    }
-
-    if (!agreedToTerms || !agreedToPrivacy) {
-      setError('이용약관 및 개인정보 수집·이용에 동의해 주세요.');
       return;
     }
 
@@ -104,10 +86,7 @@ export default function SignupPage(): React.ReactElement {
       }
 
       resetApp();
-      setShopSettings({ shopName: shopName.trim() });
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem(SIGNUP_CONSENT_STORAGE_KEY);
-      }
+      await setShopSettings({ shopName: shopName.trim() });
       // useEffect handles redirect
     } finally {
       setIsLoading(false);
@@ -128,13 +107,6 @@ export default function SignupPage(): React.ReactElement {
   };
 
   const handleGoogleSignup = async (): Promise<void> => {
-    if (!agreedToTerms || !agreedToPrivacy) {
-      setError('이용약관 및 개인정보 수집·이용에 동의해 주세요.');
-      return;
-    }
-
-    updateConsentStorage(agreedToTerms, agreedToPrivacy);
-
     const result = await loginWithGoogle('signup');
 
     if (!result.success) {
@@ -259,21 +231,45 @@ export default function SignupPage(): React.ReactElement {
                   className="h-[52px] rounded-[14px] border-[#d7dce3] bg-white px-4 text-[15px] placeholder:text-slate-400 hover:border-[#c6ccd5] focus-visible:ring-primary/20"
                 />
                 {password.length > 0 && password.length < 6 && (
-                  <p className="text-xs text-text-muted">비밀번호는 6자 이상이어야 합니다.</p>
+                  <p className="flex items-center gap-1 text-xs font-medium text-error">
+                    <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                    </svg>
+                    비밀번호는 6자 이상이어야 합니다.
+                  </p>
                 )}
+                {password.length >= 6 && passwordConfirm.length === 0 && (
+                  <p className="flex items-center gap-1 text-xs font-medium text-green-600">
+                    <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    사용 가능한 비밀번호입니다.
+                  </p>
+                )}
+                {passwordConfirm.length > 0 && password !== passwordConfirm && (
+                  <p className="flex items-center gap-1 text-xs font-medium text-error">
+                    <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    비밀번호가 일치하지 않습니다.
+                  </p>
+                )}
+                {passwordConfirm.length > 0 && password.length >= 6 && password === passwordConfirm && (
+                  <p className="flex items-center gap-1 text-xs font-medium text-green-600">
+                    <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    비밀번호가 일치합니다.
+                  </p>
+                )}
+              </div>
+
+              <div className="pt-1 pb-1">
                 <SignupConsentSection
                   agreedToTerms={agreedToTerms}
                   agreedToPrivacy={agreedToPrivacy}
-                  onAgreeToTermsChange={(checked) => {
-                    setAgreedToTerms(checked);
-                    updateConsentStorage(checked, agreedToPrivacy);
-                    setError('');
-                  }}
-                  onAgreeToPrivacyChange={(checked) => {
-                    setAgreedToPrivacy(checked);
-                    updateConsentStorage(agreedToTerms, checked);
-                    setError('');
-                  }}
+                  onAgreeToTermsChange={setAgreedToTerms}
+                  onAgreeToPrivacyChange={setAgreedToPrivacy}
                 />
               </div>
 

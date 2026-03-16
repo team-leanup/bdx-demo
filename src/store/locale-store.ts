@@ -39,7 +39,7 @@ export const useLocaleStore = create<LocaleStore>()(
               removeItem: () => {},
             },
       ),
-      partialize: (state) => ({ previousLocale: state.previousLocale }),
+      partialize: (state) => ({ locale: state.locale, previousLocale: state.previousLocale }),
     },
   ),
 );

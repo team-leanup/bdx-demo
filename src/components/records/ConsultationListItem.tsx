@@ -68,7 +68,7 @@ export function ConsultationListItem({
         {/* 메인 콘텐츠 */}
         <button
           onClick={onClick}
-          className="flex min-w-0 flex-1 flex-col gap-1.5 text-left transition-opacity hover:opacity-80 active:opacity-60"
+          className="min-h-[44px] flex min-w-0 flex-1 flex-col gap-1.5 text-left transition-opacity hover:opacity-80 active:opacity-60"
         >
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
@@ -89,9 +89,11 @@ export function ConsultationListItem({
               </p>
             </div>
             <span className="shrink-0 text-right">
-              {!record.finalizedAt && (
+              {record.consultation.entryPoint === 'customer_link' && !record.finalizedAt ? (
+                <span className="block text-[10px] font-semibold text-blue-500">사전상담</span>
+              ) : !record.finalizedAt ? (
                 <span className="block text-[10px] font-semibold text-text-muted">미확정</span>
-              )}
+              ) : null}
               <span
                 className={`text-sm font-bold ${record.finalizedAt ? 'text-primary' : 'text-text-muted'}`}
                 style={{ fontVariantNumeric: 'tabular-nums' }}
@@ -148,7 +150,7 @@ export function ConsultationListItem({
             e.stopPropagation();
             onPreview();
           }}
-          className="rounded-lg border border-border bg-surface-alt px-2.5 py-2 text-[10px] font-semibold text-text-secondary transition-all hover:bg-border active:scale-95 sm:mt-1 sm:shrink-0"
+          className="min-h-[44px] rounded-lg border border-border bg-surface-alt px-2.5 py-2 text-[10px] font-semibold text-text-secondary transition-all hover:bg-border active:scale-95 sm:mt-1 sm:shrink-0"
         >
           <span className="sm:hidden">미리보기</span>
           <span className="hidden sm:inline">기록 미리보기</span>

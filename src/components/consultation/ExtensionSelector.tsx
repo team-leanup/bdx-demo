@@ -99,7 +99,7 @@ export function ExtensionSelector({ className }: ExtensionSelectorProps) {
               whileTap={{ scale: 0.95 }}
               onClick={() => setExtensionType(opt.value)}
               className={cn(
-                'relative flex flex-col items-center justify-center gap-3 py-6 px-2 rounded-2xl transition-all duration-300',
+                'relative flex flex-col items-center justify-center gap-3 py-6 px-2 rounded-2xl transition-all duration-300 touch-manipulation',
                 isSelected
                   ? 'border-2 border-primary bg-white shadow-sm'
                   : 'border border-border bg-white hover:border-gray-300',

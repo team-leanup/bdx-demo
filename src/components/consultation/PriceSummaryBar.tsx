@@ -20,8 +20,8 @@ export function PriceSummaryBar({ className, showEstimated = true }: PriceSummar
   const consultation = useConsultationStore((s) => s.consultation);
   const shopSettings = useAppStore((s) => s.shopSettings);
   const pricing = useMemo(() => buildServicePricingFromShopSettings(shopSettings), [shopSettings]);
-  const breakdown = calculatePrice(consultation, pricing);
-  const minutes = estimateTime(consultation);
+  const breakdown = useMemo(() => calculatePrice(consultation, pricing), [consultation, pricing]);
+  const minutes = useMemo(() => estimateTime(consultation), [consultation]);
 
   if (!showEstimated) {
     return null;

@@ -10,6 +10,7 @@ import { normalizePhone } from '@/lib/phone';
 import { useAuthStore } from '@/store/auth-store';
 import { FlagIcon } from '@/components/ui/FlagIcon';
 import { cn } from '@/lib/cn';
+import { useRecordsStore } from '@/store/records-store';
 
 // stats will be derived from store inside component (hooks cannot be used at module scope)
 
@@ -25,6 +26,18 @@ export default function CustomersPage() {
   const role = useAuthStore((s) => s.role);
   const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
   const customers = useCustomerStore((s) => s.customers);
+  const records = useRecordsStore((s) => s.records);
+
+  // records 기반 고객별 방문 횟수·총 금액 집계
+  const recordsStats = useMemo(() => {
+    const map = new Map<string, { count: number; spend: number }>();
+    for (const r of records) {
+      if (!r.customerId) continue;
+      const prev = map.get(r.customerId) ?? { count: 0, spend: 0 };
+      map.set(r.customerId, { count: prev.count + 1, spend: prev.spend + (r.finalPrice ?? 0) });
+    }
+    return map;
+  }, [records]);
 
   const { thisMonth, thisYear } = useMemo(() => {
     const now = new Date();
@@ -209,13 +222,13 @@ export default function CustomersPage() {
 
                     {/* 방문 횟수 */}
                     <div className="flex-shrink-0 text-right">
-                      <p className="text-xs text-text-muted">{customer.visitCount}회</p>
+                      <p className="text-xs text-text-muted">{Math.max(customer.visitCount, recordsStats.get(customer.id)?.count ?? 0)}회</p>
                     </div>
 
                     {/* 총 지출 */}
                     <div className="flex-shrink-0 min-w-[80px] text-right">
                       <p className="text-xs font-semibold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                        {formatPrice(customer.totalSpend)}
+                        {formatPrice(Math.max(customer.totalSpend, recordsStats.get(customer.id)?.spend ?? 0))}
                       </p>
                     </div>
 

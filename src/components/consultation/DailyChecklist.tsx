@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { cn } from '@/lib/cn';
 import { getNowInKoreaIso } from '@/lib/format';
 import { useT, useLocale } from '@/lib/i18n';
@@ -51,7 +51,7 @@ function ChecklistSection({ title, icon, children }: { title: string; icon: stri
   return (
     <div className="rounded-xl border border-border bg-surface-alt p-4">
       <div className="flex items-center gap-2 mb-3">
-        <TagIconSvg icon={icon} className="w-4.5 h-4.5 text-text-secondary" />
+        <TagIconSvg icon={icon} className="w-[18px] h-[18px] text-text-secondary" />
         <h4 className="text-sm font-bold text-text">{title}</h4>
       </div>
       {children}
@@ -87,6 +87,17 @@ export function DailyChecklist({
   const [memo, setMemo] = useState(initialData?.memo ?? '');
   const [savedState, setSavedState] = useState<'idle' | 'saved'>(initialData?.savedAt ? 'saved' : 'idle');
 
+  const memoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 항상 최신 state를 참조하기 위한 ref (debounce callback 내부에서 사용)
+  const latestRef = useRef({ shape, length, thickness, cuticleSensitivity, memo });
+  latestRef.current = { shape, length, thickness, cuticleSensitivity, memo };
+
+  const doSave = useCallback((data: DailyChecklistType) => {
+    onSave?.(data);
+    setSavedState('saved');
+    setTimeout(() => setSavedState('idle'), 2000);
+  }, [onSave]);
+
   const SHAPE_OPTIONS: { value: NailShape; i18nKey: string; koLabel: string }[] = [
     { value: 'round', i18nKey: 'checklist.shape_round', koLabel: '라운드' },
     { value: 'oval', i18nKey: 'checklist.shape_oval', koLabel: '오벌' },
@@ -116,17 +127,14 @@ export function DailyChecklist({
   ];
 
   const handleSave = () => {
-    const data: DailyChecklistType = {
+    doSave({
       shape,
       length,
       thickness,
       cuticleSensitivity,
       memo,
       savedAt: getNowInKoreaIso(),
-    };
-    onSave?.(data);
-    setSavedState('saved');
-    setTimeout(() => setSavedState('idle'), 2000);
+    });
   };
 
   const handleSaveToPreference = () => {
@@ -152,7 +160,12 @@ export function DailyChecklist({
             <SelectButton
               key={opt.value}
               selected={shape === opt.value}
-              onClick={() => setShape(shape === opt.value ? null : opt.value)}
+              onClick={() => {
+                const newShape = shape === opt.value ? null : opt.value;
+                setShape(newShape);
+                const s = latestRef.current;
+                doSave({ shape: newShape, length: s.length, thickness: s.thickness, cuticleSensitivity: s.cuticleSensitivity, memo: s.memo, savedAt: getNowInKoreaIso() });
+              }}
               icon={<TagIconSvg icon={SHAPE_ICON_EMOJI[opt.value]} className="w-4 h-4" />}
             >
               <span className="flex flex-col items-start leading-tight">
@@ -173,7 +186,12 @@ export function DailyChecklist({
             <SelectButton
               key={opt.value}
               selected={length === opt.value}
-              onClick={() => setLength(length === opt.value ? null : opt.value)}
+              onClick={() => {
+                const newLength = length === opt.value ? null : opt.value;
+                setLength(newLength);
+                const s = latestRef.current;
+                doSave({ shape: s.shape, length: newLength, thickness: s.thickness, cuticleSensitivity: s.cuticleSensitivity, memo: s.memo, savedAt: getNowInKoreaIso() });
+              }}
             >
               <span className="flex flex-col items-center leading-tight">
                 <span>{t(opt.i18nKey)}</span>
@@ -193,7 +211,12 @@ export function DailyChecklist({
             <SelectButton
               key={opt.value}
               selected={thickness === opt.value}
-              onClick={() => setThickness(thickness === opt.value ? null : opt.value)}
+              onClick={() => {
+                const newThickness = thickness === opt.value ? null : opt.value;
+                setThickness(newThickness);
+                const s = latestRef.current;
+                doSave({ shape: s.shape, length: s.length, thickness: newThickness, cuticleSensitivity: s.cuticleSensitivity, memo: s.memo, savedAt: getNowInKoreaIso() });
+              }}
             >
               <span className="flex flex-col items-center leading-tight">
                 <span>{t(opt.i18nKey)}</span>
@@ -213,7 +236,12 @@ export function DailyChecklist({
             <SelectButton
               key={opt.value}
               selected={cuticleSensitivity === opt.value}
-              onClick={() => setCuticleSensitivity(cuticleSensitivity === opt.value ? null : opt.value)}
+              onClick={() => {
+                const newCuticle = cuticleSensitivity === opt.value ? null : opt.value;
+                setCuticleSensitivity(newCuticle);
+                const s = latestRef.current;
+                doSave({ shape: s.shape, length: s.length, thickness: s.thickness, cuticleSensitivity: newCuticle, memo: s.memo, savedAt: getNowInKoreaIso() });
+              }}
             >
               <span className="flex flex-col items-center leading-tight">
                 <span>{t(opt.i18nKey)}</span>
@@ -230,7 +258,15 @@ export function DailyChecklist({
       <ChecklistSection title={t('checklist.sectionMemo')} icon="📝">
         <textarea
           value={memo}
-          onChange={(e) => setMemo(e.target.value)}
+          onChange={(e) => {
+            const newMemo = e.target.value;
+            setMemo(newMemo);
+            if (memoTimerRef.current) clearTimeout(memoTimerRef.current);
+            memoTimerRef.current = setTimeout(() => {
+              const s = latestRef.current;
+              doSave({ shape: s.shape, length: s.length, thickness: s.thickness, cuticleSensitivity: s.cuticleSensitivity, memo: newMemo, savedAt: getNowInKoreaIso() });
+            }, 800);
+          }}
           placeholder={t('checklist.memoPh')}
           rows={3}
           className="w-full resize-none rounded-xl border px-3 py-2.5 text-sm text-text placeholder:text-text-muted outline-none transition-colors focus:border-primary"

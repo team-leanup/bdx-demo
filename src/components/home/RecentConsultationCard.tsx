@@ -35,7 +35,7 @@ export function RecentConsultationCard({
         </div>
         <button
           onClick={onViewAll}
-          className="text-xs font-semibold text-primary active:opacity-60"
+          className="min-h-[44px] px-2 text-xs font-semibold text-primary active:opacity-60"
         >
           {viewAllLabel}
         </button>
@@ -45,6 +45,9 @@ export function RecentConsultationCard({
         {records.map((record, idx) => (
           <motion.div
             key={record.id}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRecordClick(record.id); } }}
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 + idx * 0.06, duration: 0.3 }}

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/cn';
 import type { ReactNode } from 'react';
@@ -13,6 +14,20 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children, className }: ModalProps) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -28,6 +43,9 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
           />
           <motion.div
             key="sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={title ? 'modal-title' : undefined}
             initial={{ y: '100%', opacity: 0.5 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
@@ -45,11 +63,11 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
             </div>
             {title && (
               <div className="flex items-center justify-between px-5 py-3 border-b border-border flex-shrink-0">
-                <h2 className="font-bold text-base text-text">{title}</h2>
+                <h2 id="modal-title" className="font-bold text-base text-text">{title}</h2>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="w-10 h-10 rounded-full hover:bg-surface-alt flex items-center justify-center transition-colors"
+                  className="min-h-[44px] min-w-[44px] rounded-full hover:bg-surface-alt flex items-center justify-center transition-colors"
                 >
                   <svg
                     className="w-5 h-5 text-text-muted"

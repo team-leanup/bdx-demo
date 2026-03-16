@@ -26,6 +26,7 @@ import { usePortfolioStore } from '@/store/portfolio-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { useConsultationStore } from '@/store/consultation-store';
+import { useRecordsStore } from '@/store/records-store';
 import { resizePortfolioImage } from '@/lib/image-utils';
 import type { PortfolioPhotoKind } from '@/types/portfolio';
 import { ConsultationStep } from '@/types/consultation';
@@ -146,6 +147,16 @@ function CustomerDetailContent({ id }: { id: string }) {
   const activeDesignerName = useAuthStore((s) => s.activeDesignerName);
   const getByCustomerId = usePortfolioStore((s) => s.getByCustomerId);
   const reservations = useReservationStore((s) => s.reservations);
+  const allRecords = useRecordsStore((s) => s.records);
+  const recordsForCustomer = useMemo(() =>
+    allRecords.filter((r) => r.customerId === id),
+    [allRecords, id],
+  );
+  const recordsVisitCount = recordsForCustomer.length;
+  const recordsTotalSpend = useMemo(() =>
+    recordsForCustomer.reduce((sum, r) => sum + (r.finalPrice ?? 0), 0),
+    [recordsForCustomer],
+  );
 
   const customerPhotos = getByCustomerId(id);
   const treatmentPhotos = customerPhotos.filter(
@@ -231,6 +242,7 @@ function CustomerDetailContent({ id }: { id: string }) {
     updateTagsInStore(id, resequencePinnedTags(localTags));
     setDraggedPinnedTagId(null);
     setEditingTags(false);
+    pushToast('success', '태그가 저장되었어요');
   };
 
   const handleToggleTagPinned = (tagId: string): void => {
@@ -331,7 +343,7 @@ function CustomerDetailContent({ id }: { id: string }) {
               break;
             }
 
-            pushToast('success', '포트폴리오 사진을 저장했어요');
+            pushToast('success', '사진이 저장되었어요 · 포트폴리오에도 자동 추가됩니다');
           } catch {
             setUploadError('이미지 변환에 실패했습니다');
             pushToast('error', '이미지 변환에 실패했습니다');
@@ -383,7 +395,7 @@ function CustomerDetailContent({ id }: { id: string }) {
       <div className="flex items-center gap-3 px-4 pt-4">
         <button
           onClick={() => router.back()}
-          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-surface-alt text-text-secondary"
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-surface-alt text-text-secondary"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -505,7 +517,7 @@ function CustomerDetailContent({ id }: { id: string }) {
               </svg>
             </div>
             <p className="text-base font-bold mt-0.5" style={{ color: 'var(--color-text)' }}>
-              {customer.visitCount}<span className="text-xs font-normal text-text-muted">회</span>
+              {Math.max(customer.visitCount, recordsVisitCount)}<span className="text-xs font-normal text-text-muted">회</span>
             </p>
             <p className="text-xs text-text-muted">총 방문</p>
           </div>
@@ -556,7 +568,7 @@ function CustomerDetailContent({ id }: { id: string }) {
             </svg>
             <span className="text-xs font-medium text-white opacity-80">총 이용금액</span>
           </div>
-          <span className="text-base font-bold text-white">{customer.totalSpend ? formatPrice(customer.totalSpend) : '–'}</span>
+          <span className="text-base font-bold text-white">{Math.max(customer.totalSpend ?? 0, recordsTotalSpend) > 0 ? formatPrice(Math.max(customer.totalSpend ?? 0, recordsTotalSpend)) : '–'}</span>
         </div>
         </Card>
       </div>
@@ -890,7 +902,7 @@ function CustomerDetailContent({ id }: { id: string }) {
       {/* ─────────────────────────────── */}
       <Card className="mx-4 shadow-md rounded-2xl">
         {/* 섹션 헤더 + 업로드 버튼 */}
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-1 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-text-secondary">시술 기록</h2>
           <button
             className="flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors hover:border-primary hover:text-primary"
@@ -918,6 +930,7 @@ function CustomerDetailContent({ id }: { id: string }) {
             onChange={(e) => handleFileChange(e, 'reference')}
           />
         </div>
+        <p className="mb-3 text-[11px] text-text-muted">추가한 사진은 포트폴리오에 자동으로 연동됩니다</p>
 
         {uploadError && (
           <div className="mb-3 rounded-xl bg-error/10 border border-error/20 px-3 py-2">
@@ -940,15 +953,25 @@ function CustomerDetailContent({ id }: { id: string }) {
               <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
                 {treatmentPhotos.map((photo) => (
                   <div key={photo.id} className="relative aspect-square group">
-                    <Image
-                      src={photo.imageDataUrl}
-                      alt="시술 사진"
-                      fill
-                      unoptimized
-                      className="rounded-xl object-cover shadow-sm"
-                    />
                     <button
-                      onClick={() => handleRemovePhoto(photo.id)}
+                      type="button"
+                      onClick={() => setPhotoPopupId(photo.id)}
+                      className="absolute inset-0 rounded-xl overflow-hidden"
+                      aria-label="이미지 확대"
+                    >
+                      <Image
+                        src={photo.imageDataUrl}
+                        alt="시술 사진"
+                        fill
+                        unoptimized
+                        className="object-cover"
+                      />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemovePhoto(photo.id);
+                      }}
                       className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-error text-white text-xs shadow-md transition-opacity lg:opacity-0 lg:pointer-events-none lg:group-hover:opacity-100 lg:group-hover:pointer-events-auto"
                     >
                       ×
@@ -1154,13 +1177,12 @@ function CustomerDetailContent({ id }: { id: string }) {
         return (
           <Modal isOpen={true} onClose={() => setPhotoPopupId(null)} title="시술 사진">
             <div className="flex flex-col gap-4 p-4">
-              <div className="relative aspect-square w-full max-w-sm mx-auto rounded-2xl overflow-hidden bg-surface-alt">
-                <Image
+              <div className="w-full max-w-sm mx-auto rounded-2xl overflow-hidden bg-surface-alt">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={photo.imageDataUrl}
                   alt="시술 사진"
-                  fill
-                  unoptimized
-                  className="object-cover"
+                  className="w-full h-auto rounded-2xl"
                 />
               </div>
               {photo.takenAt && (
@@ -1180,6 +1202,35 @@ function CustomerDetailContent({ id }: { id: string }) {
           </Modal>
         );
       })()}
+
+      {/* 태그 편집 sticky 저장 바 */}
+      <AnimatePresence>
+        {editingTags && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur-sm px-4 py-3 flex items-center gap-3"
+            style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+          >
+            <button
+              type="button"
+              className="flex-1 rounded-xl border border-border py-3 text-sm font-semibold text-text-secondary transition-colors active:scale-[0.98]"
+              onClick={handleCancelTagEdit}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-white transition-colors active:scale-[0.98]"
+              onClick={handleSaveTagEdit}
+            >
+              저장하기
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* 구분선 */}
       <div className="mx-4 h-px" style={{ background: 'var(--color-border)' }} />
@@ -1201,7 +1252,21 @@ function CustomerDetailContent({ id }: { id: string }) {
             router.push('/consultation');
           }}
         >
-          이 고객으로 새 상담 시작
+          기존 고객으로 상담 시작
+        </Button>
+        <Button
+          variant="secondary"
+          fullWidth
+          onClick={() => {
+            sessionStorage.removeItem('consultation_customer_memo');
+            hydrateConsultation({
+              entryPoint: 'staff',
+              currentStep: ConsultationStep.START,
+            });
+            router.push('/consultation');
+          }}
+        >
+          신규 고객으로 상담 시작
         </Button>
         <Button
           variant="secondary"

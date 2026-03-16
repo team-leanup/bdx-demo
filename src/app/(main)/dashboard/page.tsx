@@ -4,13 +4,39 @@ import { useMemo, useState } from 'react';
 import { BentoGrid, BentoCard, Button, ToastContainer } from '@/components/ui';
 import type { ToastData } from '@/components/ui';
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
+import dynamic from 'next/dynamic';
+
+// KPICards는 Fragment children을 반환하므로 static import 유지
 import { KPICards } from '@/components/dashboard/KPICards';
-import { RevenueChart } from '@/components/dashboard/RevenueChart';
-import { ServiceAnalytics } from '@/components/dashboard/ServiceAnalytics';
-import { CustomerAnalytics } from '@/components/dashboard/CustomerAnalytics';
-import { DesignerPerformance } from '@/components/dashboard/DesignerPerformance';
-import { WeeklySummary } from '@/components/dashboard/WeeklySummary';
-import { HourlyBookings } from '@/components/dashboard/HourlyBookings';
+
+function ChartSkeleton({ height = 'h-36' }: { height?: string }) {
+  return <div className={`${height} w-full animate-pulse rounded-xl bg-surface-alt`} />;
+}
+
+const RevenueChart = dynamic(
+  () => import('@/components/dashboard/RevenueChart').then((m) => m.RevenueChart),
+  { ssr: false, loading: () => <ChartSkeleton height="h-52" /> },
+);
+const WeeklySummary = dynamic(
+  () => import('@/components/dashboard/WeeklySummary').then((m) => m.WeeklySummary),
+  { ssr: false, loading: () => <ChartSkeleton /> },
+);
+const ServiceAnalytics = dynamic(
+  () => import('@/components/dashboard/ServiceAnalytics').then((m) => m.ServiceAnalytics),
+  { ssr: false, loading: () => <ChartSkeleton /> },
+);
+const CustomerAnalytics = dynamic(
+  () => import('@/components/dashboard/CustomerAnalytics').then((m) => m.CustomerAnalytics),
+  { ssr: false, loading: () => <ChartSkeleton /> },
+);
+const DesignerPerformance = dynamic(
+  () => import('@/components/dashboard/DesignerPerformance').then((m) => m.DesignerPerformance),
+  { ssr: false, loading: () => <ChartSkeleton /> },
+);
+const HourlyBookings = dynamic(
+  () => import('@/components/dashboard/HourlyBookings').then((m) => m.HourlyBookings),
+  { ssr: false, loading: () => <ChartSkeleton /> },
+);
 import { formatDateDot, formatNowInKorea, formatPrice } from '@/lib/format';
 import { DESIGN_SCOPE_LABEL } from '@/lib/labels';
 import { useAuthStore } from '@/store/auth-store';

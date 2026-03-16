@@ -84,8 +84,9 @@ interface SideNavProps {
 export function SideNav({ className }: SideNavProps) {
   const pathname = usePathname();
   const t = useT();
-  const { locale, setLocale } = useLocaleStore();
-  const { shopSettings } = useAppStore();
+  const locale = useLocaleStore((s) => s.locale);
+  const setLocale = useLocaleStore((s) => s.setLocale);
+  const shopSettings = useAppStore((s) => s.shopSettings);
   const storeShopName = useShopStore((s) => s.shop?.name);
   const shopName = shopSettings.shopName || (storeShopName ?? '네일숲');
   const [showLangMenu, setShowLangMenu] = useState(false);

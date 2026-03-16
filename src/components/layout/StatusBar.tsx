@@ -22,8 +22,9 @@ const LOCALE_LABELS: { value: Locale; label: string }[] = [
 
 export function StatusBar({ shopName: shopNameProp }: StatusBarProps) {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const { locale, setLocale } = useLocaleStore();
-  const { shopSettings } = useAppStore();
+  const locale = useLocaleStore((s) => s.locale);
+  const setLocale = useLocaleStore((s) => s.setLocale);
+  const shopSettings = useAppStore((s) => s.shopSettings);
   const storeShopName = useShopStore((s) => s.shop?.name);
   const shopName = shopNameProp || shopSettings.shopName || (storeShopName ?? '네일숲');
   const [showLangMenu, setShowLangMenu] = useState(false);

@@ -11,7 +11,8 @@ const LANGUAGES: { locale: Locale; flag: string; label: string }[] = [
 ];
 
 export function LanguageSelector() {
-  const { locale, setLocale } = useLocaleStore();
+  const locale = useLocaleStore((s) => s.locale);
+  const setLocale = useLocaleStore((s) => s.setLocale);
 
   return (
     <div className="flex flex-wrap gap-2">

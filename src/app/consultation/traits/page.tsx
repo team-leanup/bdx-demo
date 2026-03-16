@@ -35,11 +35,11 @@ export default function TraitsPage(): React.ReactElement {
   return (
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
       <ConsultationHeader
-        stepNumber={4}
+        stepNumber={5}
         totalSteps={5}
         title={t('consultation.traitsTitle')}
         titleKo={tKo('consultation.traitsTitle')}
-        backHref="/consultation/step2"
+        backHref="/consultation/canvas"
       />
       <PriceSummaryBar />
 
@@ -185,7 +185,7 @@ export default function TraitsPage(): React.ReactElement {
         </div>
       </motion.main>
 
-      <ConsultationFooter onNext={handleNext} showEstimated={false} />
+      <ConsultationFooter onNext={handleNext} showEstimated={false} nextLabel={t('common.complete')} />
     </div>
   );
 }

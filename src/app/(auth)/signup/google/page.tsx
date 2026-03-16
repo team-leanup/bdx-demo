@@ -8,8 +8,6 @@ import { SignupConsentSection } from '@/components/auth/SignupConsentSection';
 import { useAppStore } from '@/store/app-store';
 import { useAuthStore } from '@/store/auth-store';
 
-const SIGNUP_CONSENT_STORAGE_KEY = 'signup-required-consents';
-
 export default function GoogleSignupPage(): React.ReactElement {
   const router = useRouter();
   const resetApp = useAppStore((s) => s.resetApp);
@@ -44,37 +42,9 @@ export default function GoogleSignupPage(): React.ReactElement {
     if (!ownerName && pendingGoogleSignup.ownerName) {
       setOwnerName(pendingGoogleSignup.ownerName);
     }
-
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const raw = sessionStorage.getItem(SIGNUP_CONSENT_STORAGE_KEY);
-    if (!raw) {
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(raw) as { agreedToTerms?: boolean; agreedToPrivacy?: boolean };
-      setAgreedToTerms(Boolean(parsed.agreedToTerms));
-      setAgreedToPrivacy(Boolean(parsed.agreedToPrivacy));
-    } catch {
-      sessionStorage.removeItem(SIGNUP_CONSENT_STORAGE_KEY);
-    }
   }, [currentShopOnboardingComplete, isInitialized, isLoggedIn, ownerName, pendingGoogleSignup, router]);
 
   const isReady = shopName.trim().length > 0 && ownerName.trim().length > 0 && agreedToTerms && agreedToPrivacy;
-
-  const updateConsentStorage = (nextTerms: boolean, nextPrivacy: boolean): void => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    sessionStorage.setItem(
-      SIGNUP_CONSENT_STORAGE_KEY,
-      JSON.stringify({ agreedToTerms: nextTerms, agreedToPrivacy: nextPrivacy }),
-    );
-  };
 
   const handleComplete = async (): Promise<void> => {
     if (!shopName.trim()) {
@@ -84,11 +54,6 @@ export default function GoogleSignupPage(): React.ReactElement {
 
     if (!ownerName.trim()) {
       setError('이름을 입력해 주세요.');
-      return;
-    }
-
-    if (!agreedToTerms || !agreedToPrivacy) {
-      setError('이용약관 및 개인정보 수집·이용에 동의해 주세요.');
       return;
     }
 
@@ -106,9 +71,6 @@ export default function GoogleSignupPage(): React.ReactElement {
 
       resetApp();
       setShopSettings({ shopName: shopName.trim() });
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem(SIGNUP_CONSENT_STORAGE_KEY);
-      }
       // useEffect handles redirect
     } finally {
       setIsLoading(false);
@@ -178,19 +140,14 @@ export default function GoogleSignupPage(): React.ReactElement {
                   }}
                   className="h-[52px] rounded-[14px] border-[#d7dce3] bg-white px-4 text-[15px] placeholder:text-slate-400 hover:border-[#c6ccd5] focus-visible:ring-primary/20"
                 />
+              </div>
+
+              <div className="pt-1 pb-1">
                 <SignupConsentSection
                   agreedToTerms={agreedToTerms}
                   agreedToPrivacy={agreedToPrivacy}
-                  onAgreeToTermsChange={(checked) => {
-                    setAgreedToTerms(checked);
-                    updateConsentStorage(checked, agreedToPrivacy);
-                    setError('');
-                  }}
-                  onAgreeToPrivacyChange={(checked) => {
-                    setAgreedToPrivacy(checked);
-                    updateConsentStorage(agreedToTerms, checked);
-                    setError('');
-                  }}
+                  onAgreeToTermsChange={setAgreedToTerms}
+                  onAgreeToPrivacyChange={setAgreedToPrivacy}
                 />
               </div>
 

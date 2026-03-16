@@ -6,6 +6,18 @@ import { getTodayInKorea, toKoreanDateString } from '@/lib/format';
 import { calculatePrice } from '@/lib/price-calculator';
 import { getReservationReadiness } from '@/lib/reservation-readiness';
 
+// ─── Record Status ──────────────────────────────────────────────────────────
+
+export type RecordStatus = 'pre_consultation' | 'completed' | 'in_progress';
+
+export function getRecordStatus(record: ConsultationRecord): RecordStatus {
+  if (record.consultation.entryPoint === 'customer_link' && !record.finalizedAt) {
+    return 'pre_consultation';
+  }
+  if (record.finalizedAt) return 'completed';
+  return 'in_progress';
+}
+
 // ─── Dashboard Types ─────────────────────────────────────────────────────────
 
 export interface KPICard {
@@ -162,7 +174,9 @@ export function computeMonthlyConsultations(
   month: number,
 ): number {
   const prefix = `${year}-${String(month).padStart(2, '0')}`;
-  return records.filter((r) => toKoreanDateString(r.createdAt).startsWith(prefix)).length;
+  return records.filter(
+    (r) => toKoreanDateString(r.createdAt).startsWith(prefix) && getRecordStatus(r) !== 'pre_consultation',
+  ).length;
 }
 
 // Find the most common designScope value across records, return the label
@@ -218,7 +232,9 @@ export function computeDailyConsultations(
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const dateStr = toDateStr(d);
-      const dayRecords = records.filter((r) => toKoreanDateString(r.createdAt) === dateStr);
+      const dayRecords = records.filter(
+        (r) => toKoreanDateString(r.createdAt) === dateStr && getRecordStatus(r) !== 'pre_consultation',
+      );
 
     // Find top design scope for this day
     const scopeCounts: Record<string, number> = {};
@@ -288,7 +304,9 @@ export function computeDesignerStats(
   return designers
     .filter((d) => d.isActive)
     .map((designer) => {
-      const designerRecords = records.filter((r) => r.designerId === designer.id);
+      const designerRecords = records.filter(
+        (r) => r.designerId === designer.id && getRecordStatus(r) !== 'pre_consultation',
+      );
       const designerReservations = activeReservations.filter((reservation) => reservation.designerId === designer.id);
       const completedReservations = designerReservations.filter(
         (reservation) => reservation.status === 'completed',
@@ -327,8 +345,10 @@ export function computeDesignerStats(
           (designerReservations.length / totalActiveReservations) * 100,
         ),
         completedReservations,
-        consultationCompletionRate: designerReservations.length > 0
-          ? roundToSingleDecimal((completedReservations / designerReservations.length) * 100)
+        consultationCompletionRate: designerRecords.length > 0
+          ? roundToSingleDecimal(
+              (designerRecords.filter((r) => r.finalizedAt).length / designerRecords.length) * 100,
+            )
           : 0,
         topDesign: topScopeEntry ? (DESIGN_SCOPE_LABEL[topScopeEntry[0]] ?? topScopeEntry[0]) : '-',
         topShape: topShapeEntry ? (SHAPE_LABEL[topShapeEntry[0]] ?? topShapeEntry[0]) : '-',

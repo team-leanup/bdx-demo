@@ -195,11 +195,11 @@ export default function TreatmentSheetPage() {
   const [isSaved, setIsSaved] = useState(false);
   const [isFinalSaving, setIsFinalSaving] = useState(false);
   const [checklist, setChecklist] = useState<DailyChecklistState>({
-    shape: (consultationData.nailShape ?? null) as NailShape | null,
-    length: null,
-    thickness: null,
-    cuticleSensitivity: null,
-    memo: '',
+    shape: (record?.checklist?.shape ?? consultationData.nailShape ?? null) as NailShape | null,
+    length: record?.checklist?.length ?? null,
+    thickness: record?.checklist?.thickness ?? null,
+    cuticleSensitivity: record?.checklist?.cuticleSensitivity ?? null,
+    memo: record?.checklist?.memo ?? '',
   });
 
   const designers = useShopStore((s) => s.designers);
@@ -312,6 +312,13 @@ export default function TreatmentSheetPage() {
       handleSaveSmallTalk();
     }
 
+    // Save checklist to record
+    if (consultationId && (checklist.length || checklist.thickness || checklist.cuticleSensitivity || checklist.memo)) {
+      updateRecord(consultationId, {
+        checklist: { ...checklist, savedAt: getNowInKoreaIso() },
+      });
+    }
+
     await new Promise((r) => setTimeout(r, 400));
     router.replace('/home');
     setTimeout(() => {
@@ -355,8 +362,9 @@ export default function TreatmentSheetPage() {
           basePrice,
           extras: validExtras.map(({ label, amount }) => ({ label: label.trim(), amount })),
           finalPrice: calculatedFinalPrice,
-      },
-    });
+        },
+        checklist: { ...checklist, savedAt: getNowInKoreaIso() },
+      });
 
     setIsPriceFinalized(true);
     setIsFinalizing(false);

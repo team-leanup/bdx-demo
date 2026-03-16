@@ -68,7 +68,7 @@ function treatmentToArtType(type: TreatmentType): FingerSelection['artType'] {
 
 const DEFAULT_MODAL: ModalState = {
   isOpen: false,
-  hand: 'right',
+  hand: 'left',
   finger: null,
   activeTab: 'color',
   draftColor: '',
@@ -83,7 +83,7 @@ const DEFAULT_MODAL: ModalState = {
 };
 
 export function FingerCanvas({ initialSelections, onChange, className }: FingerCanvasProps) {
-  const [activeHand, setActiveHand] = useState<HandSide>('right');
+  const [activeHand, setActiveHand] = useState<HandSide>('left');
   const [selections, setSelections] = useState<CanvasSelections>(
     initialSelections ?? { left: {}, right: {} },
   );
@@ -235,7 +235,7 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
         <AnimatePresence mode="wait">
           <motion.div
             key={activeHand}
-            className="w-full"
+            className="w-full touch-none"
             initial={{ opacity: 0, x: activeHand === 'right' ? 30 : -30 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: activeHand === 'right' ? -30 : 30 }}
@@ -315,7 +315,7 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
         </div>
 
         {/* Tab content */}
-        <div className="overflow-y-auto">
+        <div>
           {modal.activeTab === 'color' ? (
             <ColorPicker
               selectedColor={modal.draftColor}
