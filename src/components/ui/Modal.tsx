@@ -16,14 +16,27 @@ interface ModalProps {
 export function Modal({ isOpen, onClose, title, children, className }: ModalProps) {
   useEffect(() => {
     if (!isOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+
+    const scrollY = window.scrollY;
+    const body = document.body;
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.overflow = 'hidden';
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     document.addEventListener('keydown', handleKeyDown);
+
     return () => {
-      document.body.style.overflow = prev;
+      body.style.position = '';
+      body.style.top = '';
+      body.style.left = '';
+      body.style.right = '';
+      body.style.overflow = '';
+      window.scrollTo(0, scrollY);
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose]);
@@ -51,7 +64,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 30, stiffness: 350 }}
             className={cn(
-              'fixed bottom-0 left-0 right-0 z-50 bg-surface rounded-t-2xl',
+              'fixed bottom-0 left-0 right-0 z-50 bg-surface rounded-t-2xl transform-gpu',
               'max-h-[90dvh] flex flex-col pb-safe',
               'lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 lg:left-[calc(100px+50%)] lg:-translate-x-1/2 lg:right-auto lg:w-full lg:max-w-lg lg:rounded-2xl lg:pb-0',
               className,

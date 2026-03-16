@@ -359,7 +359,7 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
       </div>
 
       {/* 액션 바 (fixed bottom) */}
-      <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background px-4 py-3">
+      <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
         <div className="flex gap-3">
           <button
             type="button"

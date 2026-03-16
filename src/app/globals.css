@@ -368,11 +368,15 @@ body {
   overflow-x: hidden;
   overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 /* 터치 반응 속도 개선 (300ms 딜레이 제거) */
 button,
-a {
+a,
+[role="button"],
+[onclick] {
   touch-action: manipulation;
 }
 
@@ -380,10 +384,6 @@ a {
 .overflow-y-auto,
 .overflow-y-scroll {
   -webkit-overflow-scrolling: touch;
-}
-
-#__next {
-  height: 100%;
 }
 
 /* Safe area support for mobile/tablet */
@@ -429,4 +429,10 @@ a {
 ::selection {
   background: var(--color-primary-light);
   color: var(--color-text);
+}
+
+/* 모바일 텍스트 overflow 방지 */
+.break-keep {
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }

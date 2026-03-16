@@ -19,7 +19,7 @@ export function AppShell({ children, hideStatusBar, hideTabBar }: AppShellProps)
         <main
           className={cn(
             'flex-1 min-h-0 overflow-y-auto overscroll-y-contain',
-            !hideStatusBar && 'pt-14',
+            !hideStatusBar && 'pt-[calc(3.5rem+env(safe-area-inset-top,0px))]',
             !hideTabBar && 'pb-[calc(4rem+env(safe-area-inset-bottom,0px))]',
             'lg:pt-0 lg:pb-0',
           )}

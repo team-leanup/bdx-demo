@@ -406,7 +406,7 @@ export default function ConsultationStartPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="flex-1 flex flex-col px-4 md:px-6 pt-6 pb-28 gap-6 md:gap-8 max-w-lg md:max-w-4xl mx-auto w-full overflow-y-auto"
+        className="flex-1 flex flex-col px-4 md:px-6 pt-6 pb-[calc(8rem+env(safe-area-inset-bottom,0px))] gap-6 md:gap-8 max-w-lg md:max-w-4xl mx-auto w-full overflow-y-auto md:pb-6"
       >
         {/* Single column layout: Hero → Steps → Designer → Language */}
         <div className="flex flex-col">
@@ -444,7 +444,7 @@ export default function ConsultationStartPage() {
                   <div className="w-9 h-9 md:w-12 md:h-12 rounded-xl bg-surface border border-border flex items-center justify-center text-primary shadow-sm">
                     {step.icon}
                   </div>
-                  <span className="text-[9px] md:text-xs text-text-muted font-medium leading-tight text-center whitespace-nowrap">
+                  <span className="text-[9px] md:text-xs text-text-muted font-medium leading-tight text-center break-keep max-w-[2.5rem] md:max-w-none">
                     {step.label}
                     {locale !== 'ko' && (
                       <span className="block text-[7px] md:text-[9px] opacity-60">{step.koLabel}</span>

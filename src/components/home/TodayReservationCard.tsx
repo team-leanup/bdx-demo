@@ -289,7 +289,7 @@ export function TodayReservationCard({
                 <div className="flex flex-wrap items-center gap-2 pl-14 md:ml-auto md:flex-nowrap md:pl-0">
                   {/* H-2: 썸네일 */}
                   {thumbnailItems.length > 0 && (
-                    <div className="flex gap-1.5 overflow-x-auto pb-0.5 max-w-[96px] md:max-w-none">
+                    <div className="flex gap-1.5 overflow-x-auto pb-0.5 max-w-[160px] md:max-w-none">
                       {thumbnailItems.map((item, thumbIdx) => (
                         <div
                           key={`${item.label}-${thumbIdx}-${item.src}`}

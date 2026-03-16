@@ -436,7 +436,7 @@ function CustomerDetailContent({ id }: { id: string }) {
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="max-w-[200px] truncate text-xl font-bold text-text">{customer.name}</h2>
+                  <h2 className="max-w-[280px] truncate text-xl font-bold text-text">{customer.name}</h2>
                   {/* CU-4: 외국어 고객 플래그 */}
                   {detectedLanguage && (
                     <FlagIcon language={detectedLanguage} size="sm" />

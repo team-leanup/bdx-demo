@@ -86,7 +86,7 @@ export function BottomTabBar() {
               </span>
               <span
                 className={cn(
-                  'text-[10px] lg:text-xs font-medium leading-none truncate max-w-[50px]',
+                  'text-[10px] lg:text-xs font-medium leading-none',
                   active ? 'text-primary' : 'text-text-muted',
                 )}
               >

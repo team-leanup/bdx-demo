@@ -128,7 +128,7 @@ export default function CanvasPage() {
         onBack={handleBack}
       />
 
-      <main className="flex-1 overflow-y-auto overscroll-contain pb-28">
+      <main className="flex-1 overflow-y-auto overscroll-contain pb-[calc(8rem+env(safe-area-inset-bottom,0px))] md:pb-6">
         <div className="px-4 md:px-8 py-4 max-w-2xl md:max-w-4xl mx-auto">
           <FingerCanvas onChange={handleChange} />
         </div>
