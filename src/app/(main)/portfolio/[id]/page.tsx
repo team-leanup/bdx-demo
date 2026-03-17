@@ -176,7 +176,7 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
                 {customer?.name.charAt(0) ?? '?'}
               </div>
               <div className="min-w-0">
-                <p className="font-semibold text-text truncate">{customer?.name ?? '미지정'}</p>
+                <p className="font-semibold text-text truncate">{photo.kind === 'reference' ? '레퍼런스' : (customer?.name ?? '고객')}</p>
                 <p className="text-xs text-text-muted">{formatDateDot(effectiveDate ?? photo.createdAt)}</p>
               </div>
             </div>
@@ -312,7 +312,7 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
             />
           </div>
 
-          {customer && (
+          {customer && photo.kind === 'treatment' && (
             <Button
               variant="secondary"
               fullWidth

@@ -172,7 +172,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
     }
 
     let effectiveCustomerId = selectedCustomerId;
-    if (!effectiveCustomerId) {
+    if (!effectiveCustomerId && selectedKind === 'treatment') {
       const placeholder = createCustomer({ name: '미지정' });
       effectiveCustomerId = placeholder.id;
     }
@@ -270,6 +270,34 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
       </div>
 
       <div>
+        <label className="mb-1.5 block text-sm font-medium text-text-secondary">종류</label>
+        <div className="flex gap-2">
+          {kindOptions.map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => {
+                setSelectedKind(key);
+                if (key === 'reference') {
+                  setSelectedCustomerId('');
+                  setCustomerSearch('');
+                }
+              }}
+              className={cn(
+                'flex-1 rounded-xl py-2.5 text-sm font-medium transition-all',
+                selectedKind === key
+                  ? 'bg-primary text-white'
+                  : 'bg-surface-alt text-text-secondary hover:bg-surface-alt/80',
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {selectedKind === 'treatment' && (
+      <div>
         <label className="mb-1.5 block text-sm font-medium text-text-secondary">
           고객 선택
         </label>
@@ -325,27 +353,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
           </div>
         )}
       </div>
-
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-text-secondary">종류</label>
-        <div className="flex gap-2">
-          {kindOptions.map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setSelectedKind(key)}
-              className={cn(
-                'flex-1 rounded-xl py-2.5 text-sm font-medium transition-all',
-                selectedKind === key
-                  ? 'bg-primary text-white'
-                  : 'bg-surface-alt text-text-secondary hover:bg-surface-alt/80',
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
 
       {selectedCustomerId && customerRecords.length > 0 && (
         <div>

@@ -10,6 +10,7 @@ import {
   dbUpsertCustomer,
   dbUpsertCustomerTags,
   dbInsertSmallTalkNote,
+  dbDeleteCustomer,
 } from '@/lib/db';
 
 interface LegacyCustomerTagAccent {
@@ -27,6 +28,7 @@ interface CustomerStore {
 
   createCustomer: (input: Partial<Customer>) => Customer;
   updateCustomer: (id: string, updates: Partial<Customer>) => void;
+  deleteCustomer: (id: string) => void;
 
   updateTags: (customerId: string, nextTags: CustomerTag[]) => void;
   setPinnedTraits: (customerId: string, pinnedValues: string[]) => void;
@@ -317,6 +319,15 @@ export const useCustomerStore = create<CustomerStore>()(
         if (updated) {
           dbUpsertCustomer(updated).catch(console.error);
         }
+      },
+
+      deleteCustomer: (id) => {
+        set((state) => ({
+          customers: state.customers.filter((c) => c.id !== id),
+        }));
+        dbDeleteCustomer(id).catch((err) => {
+          console.error('Failed to delete customer from DB:', err);
+        });
       },
 
       updateTags: (customerId, nextTags) => {

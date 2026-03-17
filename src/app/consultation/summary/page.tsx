@@ -18,7 +18,7 @@ import { formatPrice, formatLocaleCurrency, getNowInKoreaIso } from '@/lib/forma
 import { DESIGN_SCOPE_LABEL, EXPRESSION_LABEL } from '@/lib/labels';
 import { useRecordsStore } from '@/store/records-store';
 import { useReservationStore } from '@/store/reservation-store';
-import { usePortfolioStore } from '@/store/portfolio-store';
+
 import { useAuthStore } from '@/store/auth-store';
 import type { ConsultationRecord, BookingStatus } from '@/types/consultation';
 import type { CustomerTag, TagCategory } from '@/types/customer';
@@ -53,7 +53,7 @@ export default function SummaryPage() {
   const breakdown = useMemo(() => calculatePrice(consultation, shopPricing), [consultation, shopPricing]);
   const adjustedFinalPrice = breakdown.finalPrice + additionalCharge;
   const addRecord = useRecordsStore((s) => s.addRecord);
-  const addPhoto = usePortfolioStore((s) => s.addPhoto);
+
   const createCustomer = useCustomerStore((s) => s.createCustomer);
   const getDesignerName = useShopStore((s) => s.getDesignerName);
   const t = useT();
@@ -171,40 +171,6 @@ export default function SummaryPage() {
         });
       }
 
-      if (customerId && consultation.referenceImages?.length) {
-        await Promise.all(consultation.referenceImages.map(async (imageUrl) => {
-          let resolvedUrl = imageUrl;
-          if (imageUrl.startsWith('blob:')) {
-            try {
-              const response = await fetch(imageUrl);
-              const blob = await response.blob();
-              resolvedUrl = await new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-              });
-            } catch {
-              return;
-            }
-          }
-          if (!resolvedUrl.startsWith('data:image/')) return;
-          await addPhoto({
-            customerId,
-            recordId: newId,
-            kind: 'reference',
-            imageDataUrl: resolvedUrl,
-            takenAt: now,
-            tags: consultation.selectedTraitValues,
-            serviceType: DESIGN_SCOPE_LABEL[consultation.designScope] ?? consultation.designScope,
-            designType: consultation.expressions
-              .filter((expression) => expression !== 'solid')
-              .map((expression) => EXPRESSION_LABEL[expression] ?? expression)
-              .join(', ') || undefined,
-            price: adjustedFinalPrice,
-          });
-        }));
-      }
     }
 
     // 고객 데이터 연동: records 기반으로 정확한 통계 계산
@@ -232,6 +198,15 @@ export default function SummaryPage() {
             designerName: getDesignerName(designerId),
           },
         ],
+        // 선호도 프로필 자동 업데이트 (상담에서 선택한 쉐입)
+        ...(consultation.nailShape ? {
+          preference: {
+            ...existingCustomer.preference,
+            customerId,
+            preferredShape: consultation.nailShape,
+            updatedAt: now,
+          },
+        } : {}),
       });
     }
 

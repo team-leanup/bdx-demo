@@ -30,6 +30,13 @@ const DESIGN_SCOPE_LABEL: Record<string, string> = {
   monthly_art: '이달의 아트',
 };
 
+const SERVICE_TO_DESIGN_SCOPE: Record<string, string> = {
+  '원컬러': 'solid_tone',
+  '단색+포인트': 'solid_point',
+  '풀아트': 'full_art',
+  '이달의 아트': 'monthly_art',
+};
+
 export function PortfolioOverlay({
   photoIds,
   initialPhotoId,
@@ -145,7 +152,7 @@ export function PortfolioOverlay({
             {/* 고객 정보 */}
             <div className="px-4 pt-3 pb-2">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-bold text-foreground truncate">{customer?.name ?? '미지정'}</p>
+                <p className="text-sm font-bold text-foreground truncate">{photo.kind === 'reference' ? '레퍼런스' : (customer?.name ?? '고객')}</p>
                 {effectiveDate && (
                   <p className="text-xs text-muted-foreground shrink-0">{formatDateDot(effectiveDate)}</p>
                 )}
@@ -211,10 +218,12 @@ export function PortfolioOverlay({
                 size="sm"
                 className="flex-1"
                 onClick={() => {
+                  const scopeKey = serviceType ? SERVICE_TO_DESIGN_SCOPE[serviceType] : undefined;
                   hydrateConsultation({
                     referenceImages: photo.imageDataUrl ? [photo.imageDataUrl] : [],
                     entryPoint: 'staff',
                     currentStep: ConsultationStep.START,
+                    ...(scopeKey ? { designScope: scopeKey as 'solid_tone' | 'solid_point' | 'full_art' | 'monthly_art' } : {}),
                   });
                   router.push('/consultation');
                   onClose();

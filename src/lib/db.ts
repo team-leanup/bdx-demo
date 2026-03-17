@@ -793,6 +793,33 @@ export async function dbUpsertCustomerTags(customerId: string, tags: CustomerTag
   }
 }
 
+export async function dbDeleteCustomer(customerId: string): Promise<void> {
+  // 태그 먼저 삭제
+  const { error: tagError } = await supabase
+    .from('customer_tags')
+    .delete()
+    .eq('customer_id', customerId);
+  if (tagError) {
+    console.error('[db] dbDeleteCustomer tag cleanup error:', toDbErrorSnapshot(tagError));
+  }
+  // 스몰토크 노트 삭제
+  const { error: noteError } = await supabase
+    .from('small_talk_notes')
+    .delete()
+    .eq('customer_id', customerId);
+  if (noteError) {
+    console.error('[db] dbDeleteCustomer note cleanup error:', toDbErrorSnapshot(noteError));
+  }
+  // 고객 삭제
+  const { error } = await supabase
+    .from('customers')
+    .delete()
+    .eq('id', customerId);
+  if (error) {
+    console.error('[db] dbDeleteCustomer error:', toDbErrorSnapshot(error));
+  }
+}
+
 export async function dbInsertSmallTalkNote(note: SmallTalkNote): Promise<void> {
   const { error } = await supabase.from('small_talk_notes').insert({
     id: note.id,

@@ -106,7 +106,7 @@ export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGenera
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             role="dialog"
             aria-modal="true"
-            className="relative w-full max-w-sm mx-4 mb-safe rounded-3xl bg-surface overflow-hidden shadow-2xl"
+            className="relative w-full max-w-sm mx-4 mb-safe rounded-3xl bg-surface overflow-x-hidden overflow-y-auto max-h-[90dvh] shadow-2xl"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-border">

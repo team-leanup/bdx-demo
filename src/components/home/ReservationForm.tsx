@@ -87,10 +87,13 @@ export function ReservationForm({ onSubmit, onCancel }: ReservationFormProps) {
   const filteredCustomers = useMemo(() => {
     if (!customerSearch.trim()) return [];
     const query = customerSearch.toLowerCase();
-    return customers.filter((c) => 
-      c.name.toLowerCase().includes(query) ||
-      c.phone?.includes(customerSearch)
-    ).slice(0, 5);
+    const seen = new Set<string>();
+    return customers.filter((c) => {
+      if (seen.has(c.id)) return false;
+      seen.add(c.id);
+      return c.name.toLowerCase().includes(query) ||
+        c.phone?.includes(customerSearch);
+    }).slice(0, 5);
   }, [customerSearch, customers]);
 
   const handleSelectCustomer = (customerId: string): void => {

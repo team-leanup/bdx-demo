@@ -10,7 +10,7 @@ import { SafetyTag } from '@/components/ui/SafetyTag';
 import { FlagIcon } from '@/components/ui/FlagIcon';
 import type { ToastData } from '@/components/ui';
 import { cn } from '@/lib/cn';
-import { formatPrice, formatRelativeDate, formatDateDot, getNowInKoreaIso, maskPhone } from '@/lib/format';
+import { formatPrice, formatRelativeDate, formatDateDot, getNowInKoreaIso } from '@/lib/format';
 import {
   CUSTOMER_TAG_ACCENTS,
   getCustomerTagDotClasses,
@@ -119,6 +119,7 @@ function CustomerDetailContent({ id }: { id: string }) {
   const fromChecklist = searchParams.get('fromChecklist') === 'true';
   const customer = useCustomerStore((s) => s.getById(id));
   const updateCustomer = useCustomerStore((s) => s.updateCustomer);
+  const deleteCustomer = useCustomerStore((s) => s.deleteCustomer);
   const updateTagsInStore = useCustomerStore((s) => s.updateTags);
   const appendSmallTalkNote = useCustomerStore((s) => s.appendSmallTalkNote);
   const designers = useShopStore((s) => s.designers);
@@ -140,6 +141,10 @@ function CustomerDetailContent({ id }: { id: string }) {
   const consultFileRef = useRef<HTMLInputElement>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [toasts, setToasts] = useState<ToastData[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [editingInfo, setEditingInfo] = useState(false);
+  const [editName, setEditName] = useState(customer?.name ?? '');
+  const [editPhone, setEditPhone] = useState(customer?.phone ?? '');
 
   const addPhoto = usePortfolioStore((s) => s.addPhoto);
   const removePhoto = usePortfolioStore((s) => s.removePhoto);
@@ -195,6 +200,21 @@ function CustomerDetailContent({ id }: { id: string }) {
   const pushToast = useCallback((type: ToastData['type'], message: string): void => {
     setToasts((current) => [...current, { id: `toast-${Date.now()}`, type, message }]);
   }, []);
+
+  const handleSaveInfo = useCallback(() => {
+    if (!editName.trim()) return;
+    updateCustomer(id, {
+      name: editName.trim(),
+      phone: editPhone.trim(),
+    });
+    setEditingInfo(false);
+    pushToast('success', '고객 정보가 수정되었습니다');
+  }, [editName, editPhone, id, updateCustomer, pushToast]);
+
+  const handleDeleteCustomer = useCallback(() => {
+    deleteCustomer(id);
+    router.push('/customers');
+  }, [deleteCustomer, id, router]);
 
   const [prefData, setPrefData] = useState(() => {
     const p = useCustomerStore.getState().getById(id)?.preference;
@@ -402,6 +422,26 @@ function CustomerDetailContent({ id }: { id: string }) {
           </svg>
         </button>
         <h1 className="text-lg font-bold text-text">고객 상세</h1>
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setEditName(customer.name);
+              setEditPhone(customer.phone || '');
+              setEditingInfo(true);
+            }}
+            className="text-xs font-semibold text-primary"
+          >
+            편집
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(true)}
+            className="text-xs font-semibold text-error"
+          >
+            삭제
+          </button>
+        </div>
       </div>
 
       {/* ─────────────────────────────── */}
@@ -458,7 +498,7 @@ function CustomerDetailContent({ id }: { id: string }) {
                     단골
                   </button>
                 </div>
-                <p className="text-sm text-text-secondary">{maskPhone(customer.phone)}</p>
+                <p className="text-sm text-text-secondary">{customer.phone}</p>
               </div>
             </div>
             <div className="mt-1 flex items-center gap-1.5">
@@ -642,7 +682,7 @@ function CustomerDetailContent({ id }: { id: string }) {
       {/* 5. 시술 성향 태그 */}
       {/* ─────────────────────────────── */}
       <Card className="mx-4 shadow-md rounded-2xl">
-        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <div className="mb-4 flex items-center justify-between gap-2">
           <div className="min-w-0">
             <h2 className="text-sm font-semibold text-text-secondary">시술 성향 태그</h2>
             {editingTags && (
@@ -652,7 +692,7 @@ function CustomerDetailContent({ id }: { id: string }) {
             )}
           </div>
           {editingTags ? (
-            <div className="flex w-full items-center justify-end gap-2 sm:w-auto sm:justify-start">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 className="whitespace-nowrap rounded-full border border-border px-3 py-1 text-xs font-medium text-text-muted"
@@ -1232,49 +1272,113 @@ function CustomerDetailContent({ id }: { id: string }) {
         )}
       </AnimatePresence>
 
+      {/* 고객 정보 편집 모달 */}
+      <Modal isOpen={editingInfo} onClose={() => setEditingInfo(false)} title="고객 정보 수정">
+        <div className="flex flex-col gap-4 p-4">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-text-secondary">이름</label>
+            <input
+              type="text"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-text-secondary">연락처</label>
+            <input
+              type="tel"
+              value={editPhone}
+              onChange={(e) => setEditPhone(e.target.value)}
+              placeholder="010-0000-0000"
+              className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button variant="secondary" fullWidth onClick={() => setEditingInfo(false)}>
+              취소
+            </Button>
+            <Button variant="primary" fullWidth onClick={handleSaveInfo} disabled={!editName.trim()}>
+              저장
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 고객 삭제 확인 모달 */}
+      <Modal isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} title="고객 삭제">
+        <div className="p-4">
+          <p className="mb-4 text-sm text-text-secondary">
+            <strong className="text-text">{customer.name}</strong> 고객을 삭제하시겠습니까?<br />
+            삭제된 고객 정보는 복구할 수 없습니다.
+          </p>
+          <div className="flex gap-2">
+            <Button variant="secondary" fullWidth onClick={() => setShowDeleteConfirm(false)}>
+              취소
+            </Button>
+            <Button
+              variant="primary"
+              fullWidth
+              onClick={handleDeleteCustomer}
+              className="!bg-error hover:!bg-error/90"
+            >
+              삭제
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
       {/* 구분선 */}
       <div className="mx-4 h-px" style={{ background: 'var(--color-border)' }} />
 
-      {/* CTA 버튼 */}
+      {/* CTA 버튼 — 시술내역 유무에 따라 분기 */}
       <div className="px-4 flex flex-col gap-2">
-        <Button
-          variant="primary"
-          fullWidth
-          onClick={() => {
-            sessionStorage.removeItem('consultation_customer_memo');
-            hydrateConsultation({
-              customerId: customer.id,
-              customerName: customer.name,
-              customerPhone: customer.phone,
-              entryPoint: 'staff',
-              currentStep: ConsultationStep.START,
-            });
-            router.push('/consultation');
-          }}
-        >
-          기존 고객으로 상담 시작
-        </Button>
-        <Button
-          variant="secondary"
-          fullWidth
-          onClick={() => {
-            sessionStorage.removeItem('consultation_customer_memo');
-            hydrateConsultation({
-              entryPoint: 'staff',
-              currentStep: ConsultationStep.START,
-            });
-            router.push('/consultation');
-          }}
-        >
-          신규 고객으로 상담 시작
-        </Button>
-        <Button
-          variant="secondary"
-          fullWidth
-          onClick={() => router.push(`/records?customerId=${id}&view=list`)}
-        >
-          상담 기록 보기
-        </Button>
+        {(recordsVisitCount > 0 || (customer.treatmentHistory?.length ?? 0) > 0) ? (
+          <>
+            <Button
+              variant="primary"
+              fullWidth
+              onClick={() => {
+                sessionStorage.removeItem('consultation_customer_memo');
+                hydrateConsultation({
+                  customerId: customer.id,
+                  customerName: customer.name,
+                  customerPhone: customer.phone,
+                  entryPoint: 'staff',
+                  currentStep: ConsultationStep.START,
+                });
+                router.push('/consultation');
+              }}
+            >
+              기존 고객으로 상담 시작
+            </Button>
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={() => router.push(`/records?customerId=${id}&view=list`)}
+            >
+              상담 기록 보기
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="primary"
+            fullWidth
+            onClick={() => {
+              sessionStorage.removeItem('consultation_customer_memo');
+              hydrateConsultation({
+                customerId: customer.id,
+                customerName: customer.name,
+                customerPhone: customer.phone,
+                entryPoint: 'staff',
+                currentStep: ConsultationStep.START,
+              });
+              router.push('/consultation');
+            }}
+          >
+            신규 고객으로 상담 시작
+          </Button>
+        )}
       </div>
     </div>
   );
