@@ -86,6 +86,7 @@ export default function SummaryPage() {
     const linkedBooking = isCustomerLinkFlow && bookingId
       ? await fetchBookingRequestById(bookingId, consultation.sourceShopId)
       : null;
+    const isExternalCustomerLinkFlow = isCustomerLinkFlow && !currentShopId;
 
     const effectiveShopId = isCustomerLinkFlow
       ? (consultation.sourceShopId || linkedBooking?.shopId || currentShopId)
@@ -145,6 +146,33 @@ export default function SummaryPage() {
         ? reservations.find((r) => r.id === bookingId)?.language
         : undefined
     );
+
+    if (isCustomerLinkFlow && bookingId && isExternalCustomerLinkFlow) {
+      const preconsultationResult = await dbCompletePreconsultationBooking(
+        bookingId,
+        consultationSnapshot,
+        now,
+        linkedCustomerId,
+      );
+
+      if (!preconsultationResult.success) {
+        pushToast('error', '상담 저장에 실패했어요. 다시 시도해주세요');
+        setSaving(false);
+        return;
+      }
+
+      updateReservationAfterPreconsult(bookingId, {
+        preConsultationCompletedAt: now,
+        preConsultationData: consultationSnapshot,
+        customerId: linkedCustomerId,
+      });
+
+      sessionStorage.removeItem('consultation_customer_memo');
+      restoreLocale();
+      router.push(`/consultation/save-complete?mode=preconsultation${linkedCustomerId ? `&customerId=${linkedCustomerId}` : ''}`);
+      return;
+    }
+
     const savedRecord: ConsultationRecord = {
       id: newId,
       shopId: effectiveShopId,
