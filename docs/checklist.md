@@ -184,6 +184,7 @@
 - **완료 추가**: 상담 순서를 `고객 정보 → 기본 조건 → 시술 유형 → 고객 성향 → 최종 확인`으로 재정렬해 고객 정보를 Step 1로 당기고, staff 플로우에서 고객 정보 다음 단계가 `/consultation/step1`로 이어지도록 조정함
 - **완료 추가**: customer-link도 고객 정보 Step 1 이후 바로 요약으로 건너뛰지 않고 `/consultation/step1 → /consultation/step2 → /consultation/traits → /consultation/summary` 순서로 이어지도록 수정해, `다음` 클릭 시 Step 5로 점프하던 오동작을 제거함
 - **완료 추가**: customer-link 포트폴리오 선택은 같은 이미지를 다시 누르면 즉시 선택 해제되도록 토글 UX로 바꾸고, `BDX 포트폴리오 크게 보기` 전체화면 브라우저에서 더 큰 실사진을 감상하며 선택/취소할 수 있게 보강함. 이 브라우저는 링크의 `shopId` 기준으로 포트폴리오를 직접 불러와 로그인 세션과 무관하게 동작함
+- **완료 추가**: customer-link 저장은 더 이상 직원 로그인 세션(`currentShopId`, `activeDesignerId`)을 전제로 하지 않고, 링크의 `shopId + bookingId`로 예약을 다시 조회해 샵/담당 선생님/기존 고객 컨텍스트를 복원하도록 수정함. 저장 성공 후에는 `/home` 대신 customer-link 전용 완료 화면으로 이동함
 
 ### 8.2 🟢 매장 태블릿 모드
 - **완료**: 매장 태블릿 모드 구현됨
