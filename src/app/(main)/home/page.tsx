@@ -134,6 +134,7 @@ export default function HomePage() {
   }, [allReservations]);
   const foreignCount = todayReservations.filter((r) => r.language && r.language !== 'ko').length;
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
+  const reset = useConsultationStore((s) => s.reset);
 
   const handleAddReservation = (newBooking: BookingRequest) => {
     addReservation({
@@ -296,7 +297,7 @@ export default function HomePage() {
       </Modal>
 
       <HeroCTA
-        onStartConsultation={() => router.push('/consultation')}
+        onStartConsultation={() => { reset(); router.push('/consultation'); }}
         onNewReservation={() => setShowReservationModal(true)}
         onGenerateQR={currentShopId ? () => setShowQRModal(true) : undefined}
         shopId={currentShopId ?? undefined}

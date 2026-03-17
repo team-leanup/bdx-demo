@@ -245,6 +245,9 @@ function KPIBottomSheet({ kpi, onClose }: BottomSheetProps) {
                 {kpi.changeDirection === 'up' ? '▲' : '▼'} 전월 대비 {Math.abs(kpi.change)}%
               </p>
             )}
+            {KPI_DESCRIPTION[kpi.label] && (
+              <p className="mt-1 text-xs text-text-muted">{KPI_DESCRIPTION[kpi.label]}</p>
+            )}
           </div>
           {/* 구분선 */}
           <div className="mx-5 mb-4 h-px bg-border" />
@@ -259,6 +262,16 @@ function KPIBottomSheet({ kpi, onClose }: BottomSheetProps) {
     </>
   );
 }
+
+// KPI 설명 (바텀시트 내 표시)
+const KPI_DESCRIPTION: Record<string, string> = {
+  '이달 상담 건수': '이번 달 1일부터 오늘까지 완료된 상담 건수입니다.',
+  '인기 디자인': '전체 상담 기록에서 가장 많이 선택된 디자인 범위입니다.',
+  '재방문율': '2회 이상 방문한 고객의 비율입니다. (재방문 고객 / 전체 고객)',
+  '오늘 예약': '오늘 날짜의 예약 건수입니다. (취소 제외)',
+  '평균 옵션 선택': '상담당 평균 선택 옵션 수입니다.',
+  '단골 고객': '3회 이상 방문한 고객 목록입니다.',
+};
 
 // KPI 레이블 → 텍스트/심볼 아이콘 매핑
 const KPI_SYMBOL: Record<string, string> = {
@@ -301,7 +314,7 @@ export function KPICards() {
           hoverable
           onClick={() => setSelectedKPI(kpi)}
         >
-          <div className="p-4 h-full flex flex-col justify-between">
+          <div className="relative p-4 h-full flex flex-col justify-between">
             {/* Top: text symbol badge */}
             <div
               className="flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold text-white"
@@ -309,6 +322,14 @@ export function KPICards() {
             >
               {KPI_SYMBOL[kpi.label] ?? '#'}
             </div>
+            {/* Help hint */}
+            <button
+              type="button"
+              className="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-text-muted/10 text-text-muted text-[10px] font-bold"
+              onClick={(e) => { e.stopPropagation(); setSelectedKPI(kpi); }}
+            >
+              ?
+            </button>
 
             {/* Middle: large value */}
             <div

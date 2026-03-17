@@ -12,7 +12,7 @@ import { InstagramHashtags } from './InstagramHashtags';
 import type { PortfolioPhoto } from '@/types/portfolio';
 import type { Customer } from '@/types/customer';
 import { ConsultationStep } from '@/types/consultation';
-import type { ConsultationRecord } from '@/types/consultation';
+import type { ConsultationRecord, DesignScope } from '@/types/consultation';
 
 interface PortfolioOverlayProps {
   photoIds: string[];
@@ -30,6 +30,13 @@ const DESIGN_SCOPE_LABEL: Record<string, string> = {
   monthly_art: '이달의 아트',
 };
 
+const REVERSE_DESIGN_SCOPE: Record<string, string> = {
+  '원컬러': 'solid_tone',
+  '단색+포인트': 'solid_point',
+  '풀아트': 'full_art',
+  '이달의 아트': 'monthly_art',
+};
+
 export function PortfolioOverlay({
   photoIds,
   initialPhotoId,
@@ -45,7 +52,7 @@ export function PortfolioOverlay({
 
   const currentIndex = photoIds.indexOf(currentId);
   const photo = photos.find((p) => p.id === currentId);
-  const customer = photo ? customerMap.get(photo.customerId) : undefined;
+  const customer = photo?.customerId ? customerMap.get(photo.customerId) : undefined;
   const linkedRecord = photo?.recordId ? recordMap.get(photo.recordId) : undefined;
   const serviceType = photo?.serviceType
     ?? (linkedRecord ? DESIGN_SCOPE_LABEL[linkedRecord.consultation.designScope] ?? linkedRecord.consultation.designScope : undefined);
@@ -71,7 +78,8 @@ export function PortfolioOverlay({
     '/images/mock/nail/nail-7.jpg',
     '/images/mock/nail/nail-8.jpg',
   ];
-  const imgSrc = photo?.imageDataUrl || NAIL_FALLBACKS[currentIndex % NAIL_FALLBACKS.length];
+  const safeIndex = currentIndex >= 0 ? currentIndex : 0;
+  const imgSrc = photo?.imageDataUrl || NAIL_FALLBACKS[safeIndex % NAIL_FALLBACKS.length] || NAIL_FALLBACKS[0];
 
   if (!photo) return <></>;
 
@@ -82,7 +90,7 @@ export function PortfolioOverlay({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90"
         onClick={onClose}
       >
         <motion.div
@@ -102,6 +110,10 @@ export function PortfolioOverlay({
               fill
               unoptimized
               className="object-cover"
+              onError={(e) => {
+                const target = e.currentTarget as HTMLImageElement;
+                target.src = NAIL_FALLBACKS[0];
+              }}
             />
 
             {/* 상단 닫기 */}
@@ -211,13 +223,28 @@ export function PortfolioOverlay({
                 size="sm"
                 className="flex-1"
                 onClick={() => {
+                  const designScopeFromPhoto = photo.serviceType
+                    ? (REVERSE_DESIGN_SCOPE[photo.serviceType] ?? photo.serviceType)
+                    : undefined;
+                  const effectiveDesignScope = linkedRecord?.consultation.designScope ?? designScopeFromPhoto;
+
                   hydrateConsultation({
-                    customerId: customer?.id,
-                    customerName: customer?.name,
-                    customerPhone: customer?.phone,
                     referenceImages: photo.imageDataUrl ? [photo.imageDataUrl] : [],
                     entryPoint: 'staff',
                     currentStep: ConsultationStep.START,
+                    designScope: effectiveDesignScope as DesignScope | undefined,
+                    ...(linkedRecord ? {
+                      bodyPart: linkedRecord.consultation.bodyPart,
+                      offType: linkedRecord.consultation.offType,
+                      extensionType: linkedRecord.consultation.extensionType,
+                      nailShape: linkedRecord.consultation.nailShape,
+                    } : {}),
+                    ...(linkedRecord ? {
+                      expressions: linkedRecord.consultation.expressions,
+                      hasParts: linkedRecord.consultation.hasParts,
+                      partsSelections: linkedRecord.consultation.partsSelections,
+                      extraColorCount: linkedRecord.consultation.extraColorCount,
+                    } : {}),
                   });
                   router.push('/consultation');
                   onClose();

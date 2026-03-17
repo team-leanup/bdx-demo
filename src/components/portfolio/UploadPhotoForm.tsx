@@ -168,11 +168,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
       return;
     }
 
-    let effectiveCustomerId = selectedCustomerId;
-    if (!effectiveCustomerId) {
-      const placeholder = createCustomer({ name: '미지정' });
-      effectiveCustomerId = placeholder.id;
-    }
+    const effectiveCustomerId = selectedCustomerId || undefined;
 
     setIsProcessing(true);
     setError(null);
@@ -181,7 +177,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
       const dataUrl = await resizePortfolioImage(selectedFile);
       const derivedServiceType = selectedRecord
         ? DESIGN_SCOPE_LABEL[selectedRecord.consultation.designScope] ?? selectedRecord.consultation.designScope
-        : serviceType.trim() || undefined;
+        : (serviceType.trim() ? DESIGN_SCOPE_LABEL[serviceType.trim()] ?? serviceType.trim() : undefined);
       const derivedPrice = selectedRecord?.finalPrice ?? (priceInput ? Number(priceInput) : undefined);
 
       const result = await addPhoto({
@@ -388,12 +384,18 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
         </div>
         <div>
           <label className="mb-1.5 block text-sm font-medium text-text-secondary">시술 종류</label>
-          <Input
-            value={selectedRecord ? (DESIGN_SCOPE_LABEL[selectedRecord.consultation.designScope] ?? selectedRecord.consultation.designScope) : serviceType}
+          <select
+            value={selectedRecord ? selectedRecord.consultation.designScope : serviceType}
             onChange={(e) => setServiceType(e.target.value)}
             disabled={Boolean(selectedRecord)}
-            placeholder="예: 원컬러, 풀아트"
-          />
+            className="h-12 w-full rounded-xl border border-border bg-surface px-4 text-sm text-text appearance-none"
+          >
+            <option value="">선택해주세요</option>
+            <option value="solid_tone">원컬러</option>
+            <option value="solid_point">단색+포인트</option>
+            <option value="full_art">풀아트</option>
+            <option value="monthly_art">이달의 아트</option>
+          </select>
         </div>
         <div>
           <label className="mb-1.5 block text-sm font-medium text-text-secondary">디자인 타입</label>

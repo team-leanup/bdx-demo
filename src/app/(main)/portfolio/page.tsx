@@ -115,6 +115,7 @@ export default function PortfolioPage(): React.ReactElement {
       new Map(
         photos
           .map((p) => p.customerId)
+          .filter((cid): cid is string => cid !== undefined)
           .filter((cid, i, arr) => arr.indexOf(cid) === i)
           .map((cid) => [cid, getById(cid)] as [string, Customer | undefined])
           .filter((entry): entry is [string, Customer] => entry[1] !== undefined),
@@ -125,7 +126,7 @@ export default function PortfolioPage(): React.ReactElement {
 
   const photoCards = useMemo(() => {
     return photos.map((photo) => {
-      const customer = getById(photo.customerId);
+      const customer = photo.customerId ? getById(photo.customerId) : undefined;
       const linkedRecord = photo.recordId ? recordMap.get(photo.recordId) : undefined;
       const serviceType = photo.serviceType
         ?? (linkedRecord ? DESIGN_SCOPE_LABEL[linkedRecord.consultation.designScope] ?? linkedRecord.consultation.designScope : undefined);
@@ -182,7 +183,7 @@ export default function PortfolioPage(): React.ReactElement {
         if (moodFilter && !(photo.tags ?? []).some((t) => t.includes(moodFilter.replace('#', '')))) return false;
 
         // PF-2: 글로벌 베스트
-        if (globalBestFilter && !foreignCustomerIds.has(photo.customerId)) return false;
+        if (globalBestFilter && (!photo.customerId || !foreignCustomerIds.has(photo.customerId))) return false;
 
         if (!q) return true;
         return searchSource.includes(q);
@@ -453,7 +454,7 @@ export default function PortfolioPage(): React.ReactElement {
                   <div className="p-2.5 space-y-1.5">
                     <div className="flex items-center justify-between gap-1">
                       <p className="text-xs font-semibold text-foreground truncate">
-                        {customer?.name ?? '미지정'}
+                        {customer?.name || ''}
                       </p>
                       <p className="text-[10px] text-muted-foreground shrink-0">{formatDateDot(effectiveDate)}</p>
                     </div>

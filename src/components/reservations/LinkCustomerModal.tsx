@@ -117,7 +117,11 @@ export function LinkCustomerModal({
                 기존 고객 검색
               </button>
               <button
-                onClick={() => setMode('create')}
+                onClick={() => {
+                  setMode('create');
+                  setNewName(reservationName);
+                  setNewPhone(reservationPhone ?? '');
+                }}
                 className={cn(
                   'flex-1 py-2 rounded-lg text-sm font-semibold transition-all',
                   mode === 'create'

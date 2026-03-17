@@ -3,7 +3,7 @@ export type PortfolioPhotoKind = 'reference' | 'treatment';
 export interface PortfolioPhoto {
   id: string;
   shopId: string;
-  customerId: string;
+  customerId?: string;
   recordId?: string;
   kind: PortfolioPhotoKind;
   createdAt: string;

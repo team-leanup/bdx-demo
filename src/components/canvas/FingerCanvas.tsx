@@ -68,7 +68,7 @@ function treatmentToArtType(type: TreatmentType): FingerSelection['artType'] {
 
 const DEFAULT_MODAL: ModalState = {
   isOpen: false,
-  hand: 'right',
+  hand: 'left',
   finger: null,
   activeTab: 'color',
   draftColor: '',
@@ -83,7 +83,7 @@ const DEFAULT_MODAL: ModalState = {
 };
 
 export function FingerCanvas({ initialSelections, onChange, className }: FingerCanvasProps) {
-  const [activeHand, setActiveHand] = useState<HandSide>('right');
+  const [activeHand, setActiveHand] = useState<HandSide>('left');
   const [selections, setSelections] = useState<CanvasSelections>(
     initialSelections ?? { left: {}, right: {} },
   );

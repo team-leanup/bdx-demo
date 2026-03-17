@@ -107,6 +107,7 @@ export function TodayReservationCard({
   const router = useRouter();
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
   const getPrimaryTags = useCustomerStore((s) => s.getPrimaryTags);
+  const getCustomerById = useCustomerStore((s) => s.getById);
   const getByCustomerId = usePortfolioStore((s) => s.getByCustomerId);
   const setEntryPoint = useConsultationStore((s) => s.setEntryPoint);
   const getAllRecords = useRecordsStore((s) => s.getAllRecords);
@@ -194,6 +195,15 @@ export function TodayReservationCard({
               customerPhotos.map((photo) => photo.imageDataUrl),
             );
             const isForeign = booking.language && booking.language !== 'ko';
+            const customerRecord = booking.customerId ? getCustomerById(booking.customerId) : undefined;
+            const visitCount = customerRecord?.visitCount ?? 0;
+            const avatarLabel = !booking.customerId
+              ? '신규'
+              : visitCount >= 3
+                ? '단골'
+                : visitCount >= 1
+                  ? '재방문'
+                  : '신규';
 
             return (
               <motion.div
@@ -312,8 +322,20 @@ export function TodayReservationCard({
                       />
                     </div>
                   ) : (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-alt border border-border">
-                      <span className="text-[8px] font-bold text-text-muted">신규</span>
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-full border ${
+                      avatarLabel === '단골'
+                        ? 'bg-primary/10 border-primary/30'
+                        : avatarLabel === '재방문'
+                          ? 'bg-success/10 border-success/30'
+                          : 'bg-surface-alt border-border'
+                    }`}>
+                      <span className={`text-[8px] font-bold ${
+                        avatarLabel === '단골'
+                          ? 'text-primary'
+                          : avatarLabel === '재방문'
+                            ? 'text-success'
+                            : 'text-text-muted'
+                      }`}>{avatarLabel}</span>
                     </div>
                   )}
                   <div className="ml-auto flex shrink-0 gap-1.5">

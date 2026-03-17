@@ -26,6 +26,7 @@ import { usePortfolioStore } from '@/store/portfolio-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { useConsultationStore } from '@/store/consultation-store';
+import { useRecordsStore } from '@/store/records-store';
 import { resizePortfolioImage } from '@/lib/image-utils';
 import type { PortfolioPhotoKind } from '@/types/portfolio';
 import { ConsultationStep } from '@/types/consultation';
@@ -118,12 +119,17 @@ function CustomerDetailContent({ id }: { id: string }) {
   const fromChecklist = searchParams.get('fromChecklist') === 'true';
   const customer = useCustomerStore((s) => s.getById(id));
   const updateCustomer = useCustomerStore((s) => s.updateCustomer);
+  const deleteCustomer = useCustomerStore((s) => s.deleteCustomer);
   const updateTagsInStore = useCustomerStore((s) => s.updateTags);
   const appendSmallTalkNote = useCustomerStore((s) => s.appendSmallTalkNote);
   const designers = useShopStore((s) => s.designers);
 
   const [isVip, setIsVip] = useState(() => useCustomerStore.getState().getById(id)?.isRegular ?? false);
   const [vipToast, setVipToast] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [editingInfo, setEditingInfo] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
   const [tagsExpanded, setTagsExpanded] = useState(false);
   const [editingTags, setEditingTags] = useState(false);
   const [localTags, setLocalTags] = useState(customer?.tags ?? []);
@@ -146,6 +152,11 @@ function CustomerDetailContent({ id }: { id: string }) {
   const activeDesignerName = useAuthStore((s) => s.activeDesignerName);
   const getByCustomerId = usePortfolioStore((s) => s.getByCustomerId);
   const reservations = useReservationStore((s) => s.reservations);
+  const allRecords = useRecordsStore((s) => s.records);
+  const customerRecords = useMemo(
+    () => allRecords.filter((r) => r.customerId === id),
+    [allRecords, id],
+  );
 
   const customerPhotos = getByCustomerId(id);
   const treatmentPhotos = customerPhotos.filter(
@@ -422,31 +433,85 @@ function CustomerDetailContent({ id }: { id: string }) {
 
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="max-w-[200px] truncate text-xl font-bold text-text">{customer.name}</h2>
-                  {/* CU-4: 외국어 고객 플래그 */}
-                  {detectedLanguage && (
-                    <FlagIcon language={detectedLanguage} size="sm" />
+              <div className="flex-1 min-w-0">
+                {editingInfo ? (
+                  <div className="flex flex-col gap-2">
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="이름"
+                      className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-bold text-text placeholder:text-text-muted focus:border-primary/40 outline-none"
+                    />
+                    <input
+                      type="tel"
+                      value={editPhone}
+                      onChange={(e) => setEditPhone(e.target.value)}
+                      placeholder="전화번호"
+                      className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-text placeholder:text-text-muted focus:border-primary/40 outline-none"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setEditingInfo(false)}
+                        className="rounded-full border border-border px-3 py-1 text-xs font-medium text-text-muted"
+                      >
+                        취소
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateCustomer(id, { name: editName.trim(), phone: editPhone.trim() });
+                          setEditingInfo(false);
+                        }}
+                        className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white"
+                      >
+                        저장
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="max-w-[200px] truncate text-xl font-bold text-text">{customer.name}</h2>
+                      {/* CU-4: 외국어 고객 플래그 */}
+                      {detectedLanguage && (
+                        <FlagIcon language={detectedLanguage} size="sm" />
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleVipToggle}
+                        className={cn(
+                          'flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-all duration-200',
+                          isVip
+                            ? 'bg-primary/15 text-primary'
+                            : 'bg-surface-alt text-text-muted hover:bg-primary/10 hover:text-primary'
+                        )}
+                        aria-label={isVip ? '단골 해제' : '단골 지정'}
+                      >
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill={isVip ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                        </svg>
+                        단골
+                      </button>
+                    </div>
+                    <p className="text-sm text-text-secondary">{customer.phone}</p>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditName(customer.name);
+                    setEditPhone(customer.phone);
+                    setEditingInfo(true);
+                  }}
+                  className={cn(
+                    'mt-1 text-[11px] font-medium text-primary hover:underline',
+                    editingInfo && 'hidden',
                   )}
-                  <button
-                    type="button"
-                    onClick={handleVipToggle}
-                    className={cn(
-                      'flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-all duration-200',
-                      isVip
-                        ? 'bg-primary/15 text-primary'
-                        : 'bg-surface-alt text-text-muted hover:bg-primary/10 hover:text-primary'
-                    )}
-                    aria-label={isVip ? '단골 해제' : '단골 지정'}
-                  >
-                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill={isVip ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-                    </svg>
-                    단골
-                  </button>
-                </div>
-                <p className="text-sm text-text-secondary">{customer.phone}</p>
+                >
+                  수정
+                </button>
               </div>
             </div>
             <div className="mt-1 flex items-center gap-1.5">
@@ -627,10 +692,32 @@ function CustomerDetailContent({ id }: { id: string }) {
       </Card>
 
       {/* ─────────────────────────────── */}
+      {/* 1.6 사전 상담 특성 */}
+      {/* ─────────────────────────────── */}
+      {(() => {
+        const allTraits = customerRecords
+          .flatMap((r) => r.consultation.selectedTraitValues ?? [])
+          .filter((v, i, arr) => arr.indexOf(v) === i);
+        if (allTraits.length === 0) return null;
+        return (
+          <Card className="mx-4 shadow-md rounded-2xl">
+            <h2 className="text-sm font-semibold text-text-secondary mb-3">상담 특성</h2>
+            <div className="flex flex-wrap gap-2">
+              {allTraits.map((trait) => (
+                <span key={trait} className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                  {trait}
+                </span>
+              ))}
+            </div>
+          </Card>
+        );
+      })()}
+
+      {/* ─────────────────────────────── */}
       {/* 5. 시술 성향 태그 */}
       {/* ─────────────────────────────── */}
       <Card className="mx-4 shadow-md rounded-2xl">
-        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <div className="mb-4 flex items-center justify-between gap-2">
           <div className="min-w-0">
             <h2 className="text-sm font-semibold text-text-secondary">시술 성향 태그</h2>
             {editingTags && (
@@ -640,7 +727,7 @@ function CustomerDetailContent({ id }: { id: string }) {
             )}
           </div>
           {editingTags ? (
-            <div className="flex w-full items-center justify-end gap-2 sm:w-auto sm:justify-start">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 type="button"
                 className="whitespace-nowrap rounded-full border border-border px-3 py-1 text-xs font-medium text-text-muted"
@@ -659,7 +746,7 @@ function CustomerDetailContent({ id }: { id: string }) {
           ) : (
             <button
               type="button"
-              className="text-xs font-semibold text-primary"
+              className="text-xs font-semibold text-primary flex-shrink-0"
               onClick={handleStartTagEdit}
             >
               편집
@@ -1180,6 +1267,28 @@ function CustomerDetailContent({ id }: { id: string }) {
           </Modal>
         );
       })()}
+
+      {/* ─────────────────────────────── */}
+      {/* 고객 삭제 */}
+      {/* ─────────────────────────────── */}
+      <div className="mx-4 mb-2 rounded-2xl border border-error/20 bg-error/5 p-4">
+        <h2 className="text-sm font-semibold text-error mb-2">위험 영역</h2>
+        <p className="text-xs text-text-muted mb-3">고객을 삭제하면 관련 데이터가 모두 제거됩니다.</p>
+        <Button variant="ghost" size="sm" className="text-error border-error/30 border" onClick={() => setShowDeleteModal(true)}>
+          고객 삭제
+        </Button>
+      </div>
+
+      <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="고객 삭제">
+        <div className="p-4 flex flex-col gap-4">
+          <p className="text-sm text-text">정말 <strong>{customer.name}</strong>님을 삭제하시겠습니까?</p>
+          <p className="text-xs text-text-muted">이 작업은 되돌릴 수 없습니다.</p>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" className="flex-1" onClick={() => setShowDeleteModal(false)}>취소</Button>
+            <Button size="sm" className="flex-1 bg-error text-white" onClick={() => { deleteCustomer(customer.id); router.push('/customers'); }}>삭제</Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* 구분선 */}
       <div className="mx-4 h-px" style={{ background: 'var(--color-border)' }} />

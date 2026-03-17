@@ -22,8 +22,20 @@ import { DEFAULT_BASE_PRICES } from '@/data/service-options';
 import { formatPrice } from '@/lib/format';
 import { DesignPresetsManager } from '@/components/settings/DesignPresetsManager';
 import { resizeImageToBase64 } from '@/lib/image-utils';
+import type { ServiceStructure } from '@/types/shop';
 
 const DAY_LABEL_KEYS = ['days_mon', 'days_tue', 'days_wed', 'days_thu', 'days_fri', 'days_sat', 'days_sun'];
+
+const SERVICE_TOGGLE_ITEMS: { key: keyof ServiceStructure; label: string; description: string }[] = [
+  { key: 'removal', label: '오프 (제거)', description: '자샵오프, 타샵오프 선택 옵션' },
+  { key: 'gradation', label: '그라데이션', description: '그라데이션 표현 기법' },
+  { key: 'french', label: '프렌치', description: '프렌치 네일 표현 기법' },
+  { key: 'magnet', label: '마그네틱', description: '마그네틱/캣아이 표현 기법' },
+  { key: 'parts', label: '파츠', description: '파츠 (스톤, 참 등) 옵션' },
+  { key: 'repair', label: '리페어', description: '네일 리페어 서비스' },
+  { key: 'extension', label: '연장', description: '네일 연장 서비스' },
+  { key: 'overlay', label: '오버레이', description: '네일 오버레이 서비스' },
+];
 
 type TabId = 'shop' | 'service' | 'theme' | 'app';
 
@@ -429,7 +441,7 @@ function StaffSection() {
                 setFeedback(null);
               }
             }}
-            className="rounded-lg border border-primary px-3 py-1 text-xs font-medium text-primary"
+            className="rounded-lg border border-dashed border-primary/40 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors"
           >
             {showAddForm ? '취소' : t('settings.staff_add')}
           </button>
@@ -872,7 +884,7 @@ function OperatingHoursSection() {
           <button
             onClick={() => void handleSave()}
             disabled={isSaving}
-            className="rounded-lg border border-primary px-4 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors disabled:opacity-40"
+            className="rounded-lg bg-primary px-4 py-1.5 text-xs font-semibold text-white hover:bg-primary/90 transition-colors disabled:opacity-40"
           >
             {isSaving ? '저장 중...' : t('settings.hours_save')}
           </button>
@@ -1249,7 +1261,7 @@ export default function SettingsPage() {
                         setShopFeedback(null);
                         setEditingShop(true);
                       }}
-                      className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary"
+                      className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-alt transition-colors"
                     >
                       {t('settings.shop_edit')}
                     </button>
@@ -1442,6 +1454,35 @@ export default function SettingsPage() {
             <div className="my-3 border-t border-border" />
 
             <DesignPresetsManager />
+          </Card>
+
+          <Card className="mx-4 md:mx-0">
+            <div className="mb-3">
+              <span className="text-sm font-medium text-text">시술 항목 관리</span>
+              <p className="text-[11px] text-text-muted mt-0.5">현재 매장에서 제공 중인 시술을 선택하세요. OFF한 항목은 상담 시 표시되지 않습니다.</p>
+            </div>
+
+            <div className="flex flex-col gap-0">
+              {SERVICE_TOGGLE_ITEMS.map(item => (
+                <div key={item.key} className="flex items-center justify-between py-3 border-b border-border/50 last:border-b-0">
+                  <div>
+                    <p className="text-sm font-medium text-text">{item.label}</p>
+                    <p className="text-[11px] text-text-muted">{item.description}</p>
+                  </div>
+                  <Toggle
+                    checked={shopSettings.serviceStructure[item.key]}
+                    onChange={(checked) => {
+                      void setShopSettings({
+                        serviceStructure: {
+                          ...shopSettings.serviceStructure,
+                          [item.key]: checked,
+                        },
+                      });
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
           </Card>
         </Section>
       )}

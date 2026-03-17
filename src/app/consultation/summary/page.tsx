@@ -15,10 +15,10 @@ import { calculatePrice, buildServicePricingFromShopSettings } from '@/lib/price
 import { useAppStore } from '@/store/app-store';
 import { estimateTime } from '@/lib/time-calculator';
 import { formatPrice, formatLocaleCurrency, getNowInKoreaIso } from '@/lib/format';
-import { DESIGN_SCOPE_LABEL, EXPRESSION_LABEL } from '@/lib/labels';
+import { DESIGN_SCOPE_LABEL } from '@/lib/labels';
 import { useRecordsStore } from '@/store/records-store';
 import { useReservationStore } from '@/store/reservation-store';
-import { usePortfolioStore } from '@/store/portfolio-store';
+
 import { useAuthStore } from '@/store/auth-store';
 import type { ConsultationRecord, BookingStatus } from '@/types/consultation';
 import type { CustomerTag, TagCategory } from '@/types/customer';
@@ -53,7 +53,7 @@ export default function SummaryPage() {
   const breakdown = useMemo(() => calculatePrice(consultation, shopPricing), [consultation, shopPricing]);
   const adjustedFinalPrice = breakdown.finalPrice + additionalCharge;
   const addRecord = useRecordsStore((s) => s.addRecord);
-  const addPhoto = usePortfolioStore((s) => s.addPhoto);
+
   const createCustomer = useCustomerStore((s) => s.createCustomer);
   const getDesignerName = useShopStore((s) => s.getDesignerName);
   const t = useT();
@@ -170,25 +170,6 @@ export default function SummaryPage() {
         });
       }
 
-      if (customerId && consultation.referenceImages?.length) {
-        await Promise.all(consultation.referenceImages.map(async (imageUrl) => {
-          if (!imageUrl.startsWith('data:image/')) return;
-          await addPhoto({
-            customerId,
-            recordId: newId,
-            kind: 'reference',
-            imageDataUrl: imageUrl,
-            takenAt: now,
-            tags: consultation.selectedTraitValues,
-            serviceType: DESIGN_SCOPE_LABEL[consultation.designScope] ?? consultation.designScope,
-            designType: consultation.expressions
-              .filter((expression) => expression !== 'solid')
-              .map((expression) => EXPRESSION_LABEL[expression] ?? expression)
-              .join(', ') || undefined,
-            price: adjustedFinalPrice,
-          });
-        }));
-      }
     }
 
     // 고객 데이터 연동: 방문횟수, 매출, 시술이력 갱신
@@ -264,7 +245,7 @@ export default function SummaryPage() {
     restoreLocale();
 
     if (isCustomerLinkFlow) {
-      router.push('/home');
+      router.push('/consultation/save-complete?mode=preconsultation');
       return;
     }
 

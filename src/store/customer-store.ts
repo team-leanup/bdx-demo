@@ -27,6 +27,7 @@ interface CustomerStore {
 
   createCustomer: (input: Partial<Customer>) => Customer;
   updateCustomer: (id: string, updates: Partial<Customer>) => void;
+  deleteCustomer: (customerId: string) => void;
 
   updateTags: (customerId: string, nextTags: CustomerTag[]) => void;
   setPinnedTraits: (customerId: string, pinnedValues: string[]) => void;
@@ -314,6 +315,12 @@ export const useCustomerStore = create<CustomerStore>()(
         if (updated) {
           dbUpsertCustomer(updated).catch(console.error);
         }
+      },
+
+      deleteCustomer: (customerId) => {
+        set((state) => ({
+          customers: state.customers.filter((c) => c.id !== customerId),
+        }));
       },
 
       updateTags: (customerId, nextTags) => {

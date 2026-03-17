@@ -28,6 +28,7 @@ export default function SignupPage(): React.ReactElement {
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
+  const [googleConsentWarning, setGoogleConsentWarning] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -129,9 +130,10 @@ export default function SignupPage(): React.ReactElement {
 
   const handleGoogleSignup = async (): Promise<void> => {
     if (!agreedToTerms || !agreedToPrivacy) {
-      setError('이용약관 및 개인정보 수집·이용에 동의해 주세요.');
+      setGoogleConsentWarning(true);
       return;
     }
+    setGoogleConsentWarning(false);
 
     updateConsentStorage(agreedToTerms, agreedToPrivacy);
 
@@ -190,6 +192,11 @@ export default function SignupPage(): React.ReactElement {
                 </svg>
                 Google로 회원가입
               </button>
+              {googleConsentWarning && (
+                <p className="text-xs font-medium text-red-500 -mt-2">
+                  아래 이용약관 및 개인정보 수집·이용에 먼저 동의해 주세요.
+                </p>
+              )}
 
               <div className="flex items-center gap-3 py-1">
                 <div className="h-px flex-1 bg-[#d9dde4]" />
@@ -259,7 +266,10 @@ export default function SignupPage(): React.ReactElement {
                   className="h-[52px] rounded-[14px] border-[#d7dce3] bg-white px-4 text-[15px] placeholder:text-slate-400 hover:border-[#c6ccd5] focus-visible:ring-primary/20"
                 />
                 {password.length > 0 && password.length < 6 && (
-                  <p className="text-xs text-text-muted">비밀번호는 6자 이상이어야 합니다.</p>
+                  <p className="text-xs font-medium text-red-500">비밀번호는 6자 이상이어야 합니다.</p>
+                )}
+                {passwordConfirm.length > 0 && password !== passwordConfirm && (
+                  <p className="text-xs font-medium text-red-500">비밀번호가 서로 일치하지 않습니다.</p>
                 )}
                 <SignupConsentSection
                   agreedToTerms={agreedToTerms}

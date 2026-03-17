@@ -122,8 +122,9 @@ export function DesignerPerformance() {
                 tick={{ fontSize: 10, fill: 'var(--color-text-muted)' }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(value) => `${value}%`}
+                tickFormatter={(value: number) => `${value}%`}
                 domain={[0, 100]}
+                ticks={[0, 25, 50, 75, 100]}
               />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="예약 배정률" radius={[6, 6, 0, 0]} fill="var(--color-primary)" />

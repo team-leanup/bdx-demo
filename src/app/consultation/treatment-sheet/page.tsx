@@ -312,6 +312,20 @@ export default function TreatmentSheetPage() {
       handleSaveSmallTalk();
     }
 
+    // Save checklist data to record
+    if (consultationId && (checklist.shape || checklist.length || checklist.thickness || checklist.cuticleSensitivity || checklist.memo)) {
+      updateRecord(consultationId, {
+        checklist: {
+          shape: checklist.shape,
+          length: checklist.length,
+          thickness: checklist.thickness,
+          cuticleSensitivity: checklist.cuticleSensitivity,
+          memo: checklist.memo,
+          savedAt: getNowInKoreaIso(),
+        },
+      });
+    }
+
     await new Promise((r) => setTimeout(r, 400));
     router.replace('/home');
     setTimeout(() => {

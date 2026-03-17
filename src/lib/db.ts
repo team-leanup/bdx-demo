@@ -176,7 +176,7 @@ function toPortfolioPhoto(row: Database['public']['Tables']['portfolio_photos'][
   return {
     id: row.id,
     shopId: row.shop_id,
-    customerId: row.customer_id,
+    customerId: row.customer_id ?? undefined,
     recordId: row.record_id ?? undefined,
     kind: row.kind as PortfolioPhoto['kind'],
     createdAt: row.created_at ?? '',
@@ -1008,7 +1008,7 @@ export async function dbInsertPortfolioPhoto(photo: PortfolioPhoto): Promise<Por
       .upsert({
         id: photo.id,
         shop_id: photo.shopId,
-        customer_id: photo.customerId,
+        customer_id: photo.customerId ?? null,
         record_id: photo.recordId ?? null,
         kind: photo.kind,
         created_at: photo.createdAt,
@@ -1039,6 +1039,35 @@ export async function dbInsertPortfolioPhoto(photo: PortfolioPhoto): Promise<Por
     console.error('[db] dbInsertPortfolioPhoto unexpected error:', toDbErrorSnapshot(error));
     return { success: false, error: '포트폴리오 저장 중 오류가 발생했습니다' };
   }
+}
+
+export async function dbUpdatePortfolioPhoto(
+  photoId: string,
+  shopId: string,
+  updates: Partial<{
+    customer_id: string | null;
+    record_id: string | null;
+    kind: string;
+    taken_at: string | null;
+    note: string | null;
+    tags: import('@/types/database').Json | null;
+    color_labels: import('@/types/database').Json | null;
+    design_type: string | null;
+    service_type: string | null;
+    price: number | null;
+  }>,
+): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase
+    .from('portfolio_photos')
+    .update(updates)
+    .eq('id', photoId)
+    .eq('shop_id', shopId);
+
+  if (error) {
+    console.error('[db] dbUpdatePortfolioPhoto error:', toDbErrorSnapshot(error));
+    return { success: false, error: error.message };
+  }
+  return { success: true };
 }
 
 export async function dbDeletePortfolioPhoto(photo: PortfolioPhoto): Promise<{ success: boolean; error?: string }> {

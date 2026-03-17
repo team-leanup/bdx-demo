@@ -12,6 +12,12 @@ interface TourStep {
 
 const TOUR_STEPS: TourStep[] = [
   {
+    targetId: 'tour-stats',
+    title: '오늘 현황',
+    description: '오늘 예약과 상담 현황을 한눈에 확인하세요',
+    position: 'bottom',
+  },
+  {
     targetId: 'tour-new-consultation',
     title: '새 상담 시작',
     description: '여기서 새 상담을 바로 시작할 수 있어요',
@@ -21,12 +27,6 @@ const TOUR_STEPS: TourStep[] = [
     targetId: 'tour-recent',
     title: '최근 상담',
     description: '최근 상담 기록을 확인하고 이어서 진행하세요',
-    position: 'bottom',
-  },
-  {
-    targetId: 'tour-stats',
-    title: '오늘 현황',
-    description: '오늘 예약과 실시간 매출을 확인하세요',
     position: 'top',
   },
   {
@@ -81,14 +81,20 @@ export function TourOverlay({ active, onComplete }: TourOverlayProps) {
 
   useEffect(() => {
     if (!active) return;
-    // Scroll target element into view for proper alignment
+    // Scroll target into view only for non-fixed elements (fixed elements like the bottom tab
+    // bar don't respond to scrollIntoView, and calling it on them scrolls the page body,
+    // which can push other tour targets out of the viewport).
     if (currentStep?.targetId) {
       const el = document.querySelector(`[data-tour-id="${currentStep.targetId}"]`);
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        // Re-measure multiple times after scroll
-        setTimeout(measureTarget, 400);
-        setTimeout(measureTarget, 800);
+        const style = window.getComputedStyle(el);
+        const isFixed = style.position === 'fixed' || style.position === 'sticky';
+        if (!isFixed) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Re-measure multiple times after scroll settles
+          setTimeout(measureTarget, 400);
+          setTimeout(measureTarget, 800);
+        }
       }
     }
     window.addEventListener('resize', measureTarget);
@@ -126,12 +132,17 @@ export function TourOverlay({ active, onComplete }: TourOverlayProps) {
     : null;
 
   // tooltip position — smart version with auto-flip and viewport clamping
-  const gap = 16;
+  const gap = 12;
   const vw = typeof window !== 'undefined' ? window.innerWidth : 1024;
   const vh = typeof window !== 'undefined' ? window.innerHeight : 768;
-  const tw = 320; // max tooltip width
-  const th = 160; // approximate tooltip height
+  // On mobile (< 480px), constrain tooltip width to viewport minus edge padding
+  const tw = Math.min(320, vw - 32);
+  // Conservative tooltip height estimate that accounts for multi-line descriptions
+  const th = 200;
   const edgePad = 16;
+  // Account for safe-area-inset-bottom — iOS devices add ~34px for home indicator.
+  // We use a conservative 40px buffer when positioning above bottom-anchored elements.
+  const safeBottomBuffer = 40;
 
   const computeTooltipPos = (): { style: React.CSSProperties; resolvedPos: TourStep['position'] } => {
     if (!targetRect) {
@@ -149,25 +160,42 @@ export function TourOverlay({ active, onComplete }: TourOverlayProps) {
     if (pos === 'left' && targetRect.left - gap - tw < edgePad) pos = 'right';
     if (pos === 'right' && targetRect.right + gap + tw > vw - edgePad) pos = 'left';
 
-    // Clamped center positions for top/bottom (horizontal) and left/right (vertical)
+    // On narrow screens, right/left positions often don't have enough room — fall back to top/bottom
+    if (pos === 'right' && targetRect.right + gap + tw > vw - edgePad) pos = 'top';
+    if (pos === 'left' && targetRect.left - gap - tw < edgePad) pos = 'bottom';
+
+    // Clamped horizontal center: keep tooltip within viewport width
     const centerX = Math.max(edgePad, Math.min(vw - tw - edgePad, targetRect.left + targetRect.width / 2 - tw / 2));
+    // Clamped vertical center: keep tooltip within viewport height
     const centerY = Math.max(edgePad, Math.min(vh - th - edgePad, targetRect.top + targetRect.height / 2 - th / 2));
 
     switch (pos) {
       case 'bottom':
-        return { style: { top: targetRect.bottom + gap, left: centerX, maxWidth: tw }, resolvedPos: pos };
-      case 'top':
-        return { style: { bottom: vh - targetRect.top + gap, left: centerX, maxWidth: tw }, resolvedPos: pos };
+        return {
+          style: { top: targetRect.bottom + gap, left: centerX, width: tw },
+          resolvedPos: pos,
+        };
+      case 'top': {
+        // Place tooltip above the target, accounting for safe-area-inset-bottom on bottom-anchored elements.
+        // Use `bottom` CSS property so tooltip grows upward from above the target.
+        const bottomOffset = vh - targetRect.top + gap + safeBottomBuffer;
+        // Clamp so tooltip doesn't go off the top edge
+        const clampedBottom = Math.min(bottomOffset, vh - th - edgePad);
+        return {
+          style: { bottom: clampedBottom, left: centerX, width: tw },
+          resolvedPos: pos,
+        };
+      }
       case 'right':
-        return { style: { top: centerY, left: targetRect.right + gap, maxWidth: 280 }, resolvedPos: pos };
+        return { style: { top: centerY, left: targetRect.right + gap, width: Math.min(280, vw - targetRect.right - gap - edgePad) }, resolvedPos: pos };
       case 'left':
-        return { style: { top: centerY, right: vw - targetRect.left + gap, maxWidth: 280 }, resolvedPos: pos };
+        return { style: { top: centerY, right: vw - targetRect.left + gap, width: Math.min(280, targetRect.left - gap - edgePad) }, resolvedPos: pos };
     }
   };
 
   const { style: tooltipStyle, resolvedPos } = computeTooltipPos();
 
-  // Animation y offset: slide in from opposite direction
+  // Animation y offset: slide in toward the target (tooltip above target slides up from below)
   const animInitialY = resolvedPos === 'top' ? 8 : resolvedPos === 'bottom' ? -8 : 0;
   const animInitialX = resolvedPos === 'left' ? 8 : resolvedPos === 'right' ? -8 : 0;
 

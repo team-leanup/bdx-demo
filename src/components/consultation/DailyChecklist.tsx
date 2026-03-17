@@ -51,7 +51,7 @@ function ChecklistSection({ title, icon, children }: { title: string; icon: stri
   return (
     <div className="rounded-xl border border-border bg-surface-alt p-4">
       <div className="flex items-center gap-2 mb-3">
-        <TagIconSvg icon={icon} className="w-4.5 h-4.5 text-text-secondary" />
+        <TagIconSvg icon={icon} className="w-5 h-5 text-text-secondary" />
         <h4 className="text-sm font-bold text-text">{title}</h4>
       </div>
       {children}

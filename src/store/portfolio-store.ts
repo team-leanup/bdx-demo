@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/auth-store';
 import {
   fetchPortfolioPhotos,
   dbInsertPortfolioPhoto,
+  dbUpdatePortfolioPhoto,
   dbDeletePortfolioPhoto,
   dbDeleteAllPortfolioPhotos,
 } from '@/lib/db';
@@ -31,6 +32,10 @@ interface PortfolioStore {
   addPhoto: (
     photo: Omit<PortfolioPhoto, 'id' | 'createdAt' | 'shopId'>,
   ) => Promise<{ success: boolean; error?: string }>;
+  updatePhoto: (
+    id: string,
+    updates: Partial<Omit<PortfolioPhoto, 'id' | 'createdAt' | 'shopId' | 'imageDataUrl' | 'imagePath'>>,
+  ) => Promise<{ success: boolean; error?: string }>;
   removePhoto: (id: string) => Promise<{ success: boolean; error?: string }>;
 
   getByCustomerId: (customerId: string) => PortfolioPhoto[];
@@ -50,7 +55,7 @@ function isPortfolioPhoto(value: unknown): value is PortfolioPhoto {
     return false;
   }
 
-  return 'id' in value && 'customerId' in value && 'kind' in value && 'imageDataUrl' in value;
+  return 'id' in value && 'kind' in value && 'imageDataUrl' in value;
 }
 
 function readLegacyPortfolioPhotos(): PortfolioPhoto[] {
@@ -317,6 +322,46 @@ export const usePortfolioStore = create<PortfolioStore>()(
         }
 
         set((state) => ({ photos: [result.photo!, ...state.photos.filter((photo) => photo.id !== result.photo!.id)] }));
+        return { success: true };
+      },
+
+      updatePhoto: async (id, updates) => {
+        const currentShopId = useAuthStore.getState().currentShopId;
+        if (!currentShopId) {
+          return { success: false, error: '활성 샵 정보가 없습니다' };
+        }
+
+        if (currentShopId === 'shop-demo') {
+          set((state) => ({
+            photos: state.photos.map((photo) =>
+              photo.id === id ? { ...photo, ...updates } : photo,
+            ),
+          }));
+          return { success: true };
+        }
+
+        const dbUpdates: Parameters<typeof dbUpdatePortfolioPhoto>[2] = {};
+        if ('customerId' in updates) dbUpdates.customer_id = updates.customerId ?? null;
+        if ('recordId' in updates) dbUpdates.record_id = updates.recordId ?? null;
+        if ('kind' in updates && updates.kind !== undefined) dbUpdates.kind = updates.kind;
+        if ('takenAt' in updates) dbUpdates.taken_at = updates.takenAt ?? null;
+        if ('note' in updates) dbUpdates.note = updates.note ?? null;
+        if ('tags' in updates) dbUpdates.tags = (updates.tags ?? null) as import('@/types/database').Json | null;
+        if ('colorLabels' in updates) dbUpdates.color_labels = (updates.colorLabels ?? null) as import('@/types/database').Json | null;
+        if ('designType' in updates) dbUpdates.design_type = updates.designType ?? null;
+        if ('serviceType' in updates) dbUpdates.service_type = updates.serviceType ?? null;
+        if ('price' in updates) dbUpdates.price = updates.price ?? null;
+
+        const result = await dbUpdatePortfolioPhoto(id, currentShopId, dbUpdates);
+        if (!result.success) {
+          return { success: false, error: result.error };
+        }
+
+        set((state) => ({
+          photos: state.photos.map((photo) =>
+            photo.id === id ? { ...photo, ...updates } : photo,
+          ),
+        }));
         return { success: true };
       },
 

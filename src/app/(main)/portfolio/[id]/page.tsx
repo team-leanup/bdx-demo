@@ -1,22 +1,32 @@
 'use client';
 
-import { use, useState, Suspense } from 'react';
+import { use, useState, useCallback, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button, Badge, Card, Modal, ToastContainer } from '@/components/ui';
+import { AnimatePresence } from 'framer-motion';
+import { Button, Badge, Card, Modal, ToastContainer, Input } from '@/components/ui';
 import type { ToastData } from '@/components/ui';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { useRecordsStore } from '@/store/records-store';
-import { formatDateDot, formatPrice } from '@/lib/format';
+import { useConsultationStore } from '@/store/consultation-store';
+import { formatDateDot, formatPrice, getTodayInKorea } from '@/lib/format';
 import { cn } from '@/lib/cn';
-import type { PortfolioPhotoKind } from '@/types/portfolio';
+import type { PortfolioPhotoKind, PortfolioPhoto } from '@/types/portfolio';
+import { ConsultationStep } from '@/types/consultation';
+import type { DesignScope } from '@/types/consultation';
 import { InstagramHashtags } from '@/components/portfolio/InstagramHashtags';
 
 const KIND_LABEL: Record<PortfolioPhotoKind, string> = {
   reference: '레퍼런스',
   treatment: '시술',
+};
+
+const REVERSE_DESIGN_SCOPE: Record<string, string> = {
+  '원컬러': 'solid_tone',
+  '단색+포인트': 'solid_point',
+  '풀아트': 'full_art',
+  '이달의 아트': 'monthly_art',
 };
 
 const DESIGN_SCOPE_LABEL: Record<string, string> = {
@@ -50,19 +60,62 @@ const EXPRESSION_LABEL: Record<string, string> = {
   magnetic: '마그네틱',
 };
 
+const PRESET_TAGS = ['봄', '웨딩', '자석젤', '키치', '내추럴', '글리터', '심플', '화려한스타일', '이달의아트', '프렌치', '그라데이션', '마그네틱'];
+const PRESET_COLORS = ['핑크', '누드', '베이지', '화이트', '블랙', '레드', '코랄', '브라운', '퍼플', '블루'];
+
+interface EditFormState {
+  customerId: string;
+  customerSearch: string;
+  recordId: string;
+  kind: PortfolioPhotoKind;
+  note: string;
+  takenAt: string;
+  serviceType: string;
+  designType: string;
+  priceInput: string;
+  selectedTags: string[];
+  customTagInput: string;
+  selectedColors: string[];
+  customColorInput: string;
+}
+
+function buildInitialEditState(photo: PortfolioPhoto, customerName: string): EditFormState {
+  return {
+    customerId: photo.customerId ?? '',
+    customerSearch: customerName,
+    recordId: photo.recordId ?? '',
+    kind: photo.kind,
+    note: photo.note ?? '',
+    takenAt: photo.takenAt ? photo.takenAt.slice(0, 10) : getTodayInKorea(),
+    serviceType: photo.serviceType ?? '',
+    designType: photo.designType ?? '',
+    priceInput: photo.price != null ? String(photo.price) : '',
+    selectedTags: photo.tags ?? [],
+    customTagInput: '',
+    selectedColors: photo.colorLabels ?? [],
+    customColorInput: '',
+  };
+}
+
 function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
   const router = useRouter();
   const photos = usePortfolioStore((s) => s.photos);
   const removePhoto = usePortfolioStore((s) => s.removePhoto);
+  const updatePhoto = usePortfolioStore((s) => s.updatePhoto);
   const getCustomerById = useCustomerStore((s) => s.getById);
+  const customers = useCustomerStore((s) => s.customers);
   const getAllRecords = useRecordsStore((s) => s.getAllRecords);
-  
+  const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
+
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [toasts, setToasts] = useState<ToastData[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editForm, setEditForm] = useState<EditFormState | null>(null);
 
   const photo = photos.find((p) => p.id === id);
-  const customer = photo ? getCustomerById(photo.customerId) : undefined;
+  const customer = photo?.customerId ? getCustomerById(photo.customerId) : undefined;
   const records = getAllRecords();
   const linkedRecord = photo?.recordId ? records.find((r) => r.id === photo.recordId) : undefined;
   const serviceType = photo?.serviceType
@@ -83,8 +136,132 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
   const photoIndex = photos.findIndex((p) => p.id === id);
   const imgSrc = photo?.imageDataUrl || NAIL_FALLBACKS[(photoIndex >= 0 ? photoIndex : 0) % NAIL_FALLBACKS.length];
 
-  const handleDismissToast = (id: string): void => {
-    setToasts((current) => current.filter((toast) => toast.id !== id));
+  // 편집 모드 진입
+  const handleStartEdit = useCallback((): void => {
+    if (!photo) return;
+    setEditForm(buildInitialEditState(photo, customer?.name ?? ''));
+    setIsEditing(true);
+  }, [photo, customer]);
+
+  // 편집 취소
+  const handleCancelEdit = useCallback((): void => {
+    setIsEditing(false);
+    setEditForm(null);
+  }, []);
+
+  // 편집 폼에서 고객 변경 시 레코드 자동 매칭
+  const editFormCustomerId = editForm?.customerId;
+  useEffect(() => {
+    if (!editFormCustomerId) return;
+    const sorted = records
+      .filter((r) => r.customerId === editFormCustomerId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    setEditForm((prev) => {
+      if (!prev) return prev;
+      const currentRecordBelongsToCustomer = sorted.some((r) => r.id === prev.recordId);
+      if (currentRecordBelongsToCustomer) return prev;
+      return { ...prev, recordId: sorted[0]?.id ?? '' };
+    });
+  // records 길이 변경 또는 customerId 변경 시만 실행
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editFormCustomerId]);
+
+  const filteredCustomers = editForm
+    ? customers.filter((c) => c.name.toLowerCase().includes(editForm.customerSearch.toLowerCase()))
+    : [];
+
+  const editCustomerRecords = editForm?.customerId
+    ? records.filter((r) => r.customerId === editForm.customerId)
+    : [];
+
+  const editLinkedRecord = editForm?.recordId
+    ? editCustomerRecords.find((r) => r.id === editForm.recordId)
+    : undefined;
+
+  const toggleEditTag = useCallback((tag: string): void => {
+    setEditForm((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        selectedTags: prev.selectedTags.includes(tag)
+          ? prev.selectedTags.filter((t) => t !== tag)
+          : [...prev.selectedTags, tag],
+      };
+    });
+  }, []);
+
+  const toggleEditColor = useCallback((color: string): void => {
+    setEditForm((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        selectedColors: prev.selectedColors.includes(color)
+          ? prev.selectedColors.filter((c) => c !== color)
+          : [...prev.selectedColors, color],
+      };
+    });
+  }, []);
+
+  const addEditCustomTag = useCallback((): void => {
+    setEditForm((prev) => {
+      if (!prev) return prev;
+      const v = prev.customTagInput.trim();
+      if (!v || prev.selectedTags.includes(v)) return { ...prev, customTagInput: '' };
+      return { ...prev, selectedTags: [...prev.selectedTags, v], customTagInput: '' };
+    });
+  }, []);
+
+  const addEditCustomColor = useCallback((): void => {
+    setEditForm((prev) => {
+      if (!prev) return prev;
+      const v = prev.customColorInput.trim();
+      if (!v || prev.selectedColors.includes(v)) return { ...prev, customColorInput: '' };
+      return { ...prev, selectedColors: [...prev.selectedColors, v], customColorInput: '' };
+    });
+  }, []);
+
+  const handleSave = async (): Promise<void> => {
+    if (!editForm || !photo) return;
+    setSaving(true);
+
+    const derivedServiceType = editLinkedRecord
+      ? DESIGN_SCOPE_LABEL[editLinkedRecord.consultation.designScope] ?? editLinkedRecord.consultation.designScope
+      : (editForm.serviceType.trim() ? DESIGN_SCOPE_LABEL[editForm.serviceType.trim()] ?? editForm.serviceType.trim() : undefined);
+    const derivedPrice = editLinkedRecord?.finalPrice ?? (editForm.priceInput ? Number(editForm.priceInput) : undefined);
+
+    const result = await updatePhoto(photo.id, {
+      customerId: editForm.customerId || undefined,
+      recordId: editForm.recordId || undefined,
+      kind: editForm.kind,
+      takenAt: editForm.takenAt || undefined,
+      note: editForm.note.trim() || undefined,
+      serviceType: derivedServiceType,
+      designType: editForm.designType.trim() || undefined,
+      price: Number.isFinite(derivedPrice) ? derivedPrice : undefined,
+      tags: editForm.selectedTags.length > 0 ? editForm.selectedTags : undefined,
+      colorLabels: editForm.selectedColors.length > 0 ? editForm.selectedColors : undefined,
+    });
+
+    setSaving(false);
+
+    if (!result.success) {
+      setToasts((current) => [
+        ...current,
+        { id: `toast-${Date.now()}`, type: 'error', message: result.error ?? '저장에 실패했어요' },
+      ]);
+      return;
+    }
+
+    setToasts((current) => [
+      ...current,
+      { id: `toast-${Date.now()}`, type: 'success', message: '수정사항을 저장했어요' },
+    ]);
+    setIsEditing(false);
+    setEditForm(null);
+  };
+
+  const handleDismissToast = (toastId: string): void => {
+    setToasts((current) => current.filter((toast) => toast.id !== toastId));
   };
 
   const handleDelete = async (): Promise<void> => {
@@ -127,27 +304,52 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
   return (
     <div className="flex flex-col gap-6 pb-8 md:px-6">
       <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
+
+      {/* 상단 헤더 */}
       <div className="flex items-center gap-3 px-4 pt-4">
         <button
-          onClick={() => router.back()}
+          onClick={() => {
+            if (isEditing) {
+              handleCancelEdit();
+            } else {
+              router.back();
+            }
+          }}
           className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-surface-alt text-text-secondary"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 className="text-lg font-bold text-text">사진 상세</h1>
+        <h1 className="text-lg font-bold text-text">{isEditing ? '사진 수정' : '사진 상세'}</h1>
         <div className="flex-1" />
-        <button
-          onClick={() => setShowDeleteConfirm(true)}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-error/10 text-error hover:bg-error/20 transition-colors"
-        >
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </button>
+        {!isEditing && (
+          <>
+            {/* 수정 버튼 */}
+            <button
+              onClick={handleStartEdit}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+              aria-label="수정"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+              </svg>
+            </button>
+            {/* 삭제 버튼 */}
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-error/10 text-error hover:bg-error/20 transition-colors"
+              aria-label="삭제"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </>
+        )}
       </div>
 
+      {/* 이미지 */}
       <div className="mx-4">
         <div className="relative aspect-square w-full max-w-lg mx-auto rounded-2xl overflow-hidden bg-surface-alt shadow-lg">
           <Image
@@ -160,164 +362,472 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
         </div>
       </div>
 
-      <Card className="mx-4 shadow-md rounded-2xl">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div
-                className="flex h-11 w-11 items-center justify-center rounded-full text-base font-bold text-white"
-                style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))' }}
-              >
-                {customer?.name.charAt(0) ?? '?'}
-              </div>
-              <div className="min-w-0">
-                <p className="font-semibold text-text truncate">{customer?.name ?? '미지정'}</p>
-                <p className="text-xs text-text-muted">{formatDateDot(effectiveDate ?? photo.createdAt)}</p>
-              </div>
-            </div>
-            <Badge
-              variant={photo.kind === 'reference' ? 'neutral' : 'primary'}
-              size="md"
-            >
-              {KIND_LABEL[photo.kind]}
-            </Badge>
-          </div>
+      {/* 편집 폼 */}
+      {isEditing && editForm ? (
+        <Card className="mx-4 shadow-md rounded-2xl">
+          <div className="flex flex-col gap-5 py-1">
 
-          {photo.note && (
-            <div className="rounded-xl bg-surface-alt p-4">
-              <p className="text-xs font-medium text-text-muted mb-1">메모</p>
-              <p className="text-sm text-text leading-relaxed">{photo.note}</p>
-            </div>
-          )}
-
-          {(serviceType || photo.designType || photo.colorLabels?.length || effectivePrice != null) && (
-            <div className="rounded-xl bg-surface-alt p-4">
-              <p className="text-xs font-medium text-text-muted mb-2">검색 메타데이터</p>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                {serviceType && (
-                  <div>
-                    <p className="text-[10px] font-medium text-text-muted mb-0.5">시술 종류</p>
-                    <p className="font-medium text-text">{serviceType}</p>
-                  </div>
-                )}
-                {photo.designType && (
-                  <div>
-                    <p className="text-[10px] font-medium text-text-muted mb-0.5">디자인 타입</p>
-                    <p className="font-medium text-text">{photo.designType}</p>
-                  </div>
-                )}
-                {effectivePrice != null && (
-                  <div>
-                    <p className="text-[10px] font-medium text-text-muted mb-0.5">가격</p>
-                    <p className="font-medium text-text">{formatPrice(effectivePrice)}</p>
-                  </div>
-                )}
-                {effectiveDate && (
-                  <div>
-                    <p className="text-[10px] font-medium text-text-muted mb-0.5">촬영일</p>
-                    <p className="font-medium text-text">{formatDateDot(effectiveDate)}</p>
-                  </div>
-                )}
-              </div>
-              {photo.colorLabels && photo.colorLabels.length > 0 && (
-                <div className="mt-3">
-                  <p className="text-[10px] font-medium text-text-muted mb-1">컬러</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {photo.colorLabels.map((color, idx) => (
-                      <span key={`${color}-${idx}`} className="rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-600">
-                        {color}
+            {/* 고객 선택 */}
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-text-secondary">고객 선택</label>
+              <Input
+                placeholder="고객 이름 검색"
+                value={editForm.customerSearch}
+                onChange={(e) => setEditForm((prev) => prev ? { ...prev, customerSearch: e.target.value } : prev)}
+                className="mb-2"
+              />
+              {(editForm.customerSearch || editForm.customerId) && (
+                <div className="max-h-48 overflow-y-auto rounded-xl border border-border bg-surface">
+                  {filteredCustomers.slice(0, 10).map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setEditForm((prev) => prev ? { ...prev, customerId: c.id, customerSearch: c.name } : prev)}
+                      className={cn(
+                        'flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors',
+                        editForm.customerId === c.id
+                          ? 'bg-primary/10 font-medium text-primary'
+                          : 'text-text hover:bg-surface-alt',
+                      )}
+                    >
+                      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
+                        {c.name.charAt(0)}
                       </span>
-                    ))}
-                  </div>
+                      <span className="truncate min-w-0 flex-1">{c.name}</span>
+                    </button>
+                  ))}
+                  {editForm.customerSearch && filteredCustomers.length === 0 && (
+                    <p className="p-3 text-center text-sm text-text-muted">검색 결과가 없습니다</p>
+                  )}
                 </div>
               )}
+              {editForm.customerId && (
+                <button
+                  type="button"
+                  onClick={() => setEditForm((prev) => prev ? { ...prev, customerId: '', customerSearch: '', recordId: '' } : prev)}
+                  className="mt-1 text-xs text-text-muted hover:text-error transition-colors"
+                >
+                  고객 연결 해제
+                </button>
+              )}
             </div>
-          )}
 
-          {photo.tags && photo.tags.length > 0 && (
+            {/* 종류 */}
             <div>
-              <p className="text-xs font-medium text-text-muted mb-2">태그</p>
-              <div className="flex flex-wrap gap-1.5">
-                {photo.tags.map((tag, idx) => (
-                  <Badge key={idx} variant="neutral" size="sm">
-                    {tag}
-                  </Badge>
+              <label className="mb-1.5 block text-sm font-medium text-text-secondary">종류</label>
+              <div className="flex gap-2">
+                {(['reference', 'treatment'] as PortfolioPhotoKind[]).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setEditForm((prev) => prev ? { ...prev, kind: k } : prev)}
+                    className={cn(
+                      'flex-1 rounded-xl py-2.5 text-sm font-medium transition-all',
+                      editForm.kind === k
+                        ? 'bg-primary text-white'
+                        : 'bg-surface-alt text-text-secondary hover:bg-surface-alt/80',
+                    )}
+                  >
+                    {KIND_LABEL[k]}
+                  </button>
                 ))}
               </div>
             </div>
-          )}
 
-          {linkedRecord && (
-            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-bold text-primary">시술 기록</p>
-                <p className="text-lg font-bold text-primary">{formatPrice(linkedRecord.finalPrice)}</p>
+            {/* 상담 기록 연결 */}
+            {editForm.customerId && editCustomerRecords.length > 0 && (
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-text-secondary">
+                  상담 기록 연결 (선택)
+                </label>
+                <select
+                  value={editForm.recordId}
+                  onChange={(e) => setEditForm((prev) => prev ? { ...prev, recordId: e.target.value } : prev)}
+                  className="h-12 w-full rounded-xl border border-border bg-surface px-4 text-sm text-text"
+                >
+                  <option value="">연결 안함</option>
+                  {editCustomerRecords.slice(0, 10).map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {formatDateDot(r.createdAt)} -{' '}
+                      {DESIGN_SCOPE_LABEL[r.consultation.designScope] ?? r.consultation.designScope}
+                    </option>
+                  ))}
+                </select>
               </div>
-              
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-[10px] font-medium text-text-muted mb-0.5">시술 날짜</p>
-                  <p className="font-medium text-text">{formatDateDot(linkedRecord.createdAt)}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-medium text-text-muted mb-0.5">시술 부위</p>
-                  <p className="font-medium text-text">{BODY_PART_LABEL[linkedRecord.consultation.bodyPart] ?? linkedRecord.consultation.bodyPart}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-medium text-text-muted mb-0.5">시술 종류</p>
-                  <p className="font-medium text-text">{DESIGN_SCOPE_LABEL[linkedRecord.consultation.designScope] ?? linkedRecord.consultation.designScope}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-medium text-text-muted mb-0.5">오프</p>
-                  <p className="font-medium text-text">{OFF_TYPE_LABEL[linkedRecord.consultation.offType] ?? '없음'}</p>
-                </div>
-                {linkedRecord.consultation.extensionType !== 'none' && (
-                  <div>
-                    <p className="text-[10px] font-medium text-text-muted mb-0.5">연장/리페어</p>
-                    <p className="font-medium text-text">{EXTENSION_TYPE_LABEL[linkedRecord.consultation.extensionType]}</p>
-                  </div>
-                )}
-                {linkedRecord.consultation.expressions && linkedRecord.consultation.expressions.length > 0 && linkedRecord.consultation.expressions[0] !== 'solid' && (
-                  <div>
-                    <p className="text-[10px] font-medium text-text-muted mb-0.5">표현 기법</p>
-                    <p className="font-medium text-text truncate">
-                      {linkedRecord.consultation.expressions.map(e => EXPRESSION_LABEL[e] ?? e).join(', ')}
-                    </p>
-                  </div>
-                )}
-              </div>
+            )}
 
-              {linkedRecord.notes && (
-                <div className="mt-3 pt-3 border-t border-primary/10">
-                  <p className="text-[10px] font-medium text-text-muted mb-1">상담 메모</p>
-                  <p className="text-xs text-text-secondary leading-relaxed">{linkedRecord.notes}</p>
-                </div>
-              )}
+            {/* 메모 */}
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-text-secondary">메모 (선택)</label>
+              <textarea
+                value={editForm.note}
+                onChange={(e) => setEditForm((prev) => prev ? { ...prev, note: e.target.value } : prev)}
+                placeholder="사진에 대한 메모를 입력하세요"
+                className="w-full resize-none rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text placeholder:text-text-muted"
+                rows={3}
+              />
             </div>
-          )}
 
-          {/* PF-4: 인스타 해시태그 */}
-          <div className="rounded-xl bg-surface-alt overflow-hidden">
-            <InstagramHashtags
-              tags={photo.tags}
-              colorLabels={photo.colorLabels}
-              serviceType={serviceType}
-              designType={photo.designType}
-              price={effectivePrice}
-            />
+            {/* 촬영일 / 시술종류 / 디자인타입 / 가격 */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-text-secondary">촬영일</label>
+                <input
+                  type="date"
+                  value={editForm.takenAt}
+                  onChange={(e) => setEditForm((prev) => prev ? { ...prev, takenAt: e.target.value } : prev)}
+                  className="h-12 w-full rounded-xl border border-border bg-surface px-4 text-sm text-text"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-text-secondary">시술 종류</label>
+                <select
+                  value={editLinkedRecord ? editLinkedRecord.consultation.designScope : editForm.serviceType}
+                  onChange={(e) => setEditForm((prev) => prev ? { ...prev, serviceType: e.target.value } : prev)}
+                  disabled={Boolean(editLinkedRecord)}
+                  className="h-12 w-full rounded-xl border border-border bg-surface px-4 text-sm text-text appearance-none"
+                >
+                  <option value="">선택해주세요</option>
+                  <option value="solid_tone">원컬러</option>
+                  <option value="solid_point">단색+포인트</option>
+                  <option value="full_art">풀아트</option>
+                  <option value="monthly_art">이달의 아트</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-text-secondary">디자인 타입</label>
+                <Input
+                  value={editForm.designType}
+                  onChange={(e) => setEditForm((prev) => prev ? { ...prev, designType: e.target.value } : prev)}
+                  placeholder="예: 웨딩, 시럽, 키치"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-text-secondary">가격</label>
+                <Input
+                  value={editLinkedRecord ? String(editLinkedRecord.finalPrice) : editForm.priceInput}
+                  onChange={(e) => setEditForm((prev) => prev ? { ...prev, priceInput: e.target.value.replace(/[^0-9]/g, '') } : prev)}
+                  disabled={Boolean(editLinkedRecord)}
+                  placeholder="예: 85000"
+                  inputMode="numeric"
+                />
+              </div>
+            </div>
+
+            {/* 태그 */}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-text-secondary">태그</label>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {PRESET_TAGS.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => toggleEditTag(tag)}
+                    className={cn(
+                      'rounded-full px-3 py-1 text-xs font-medium border transition-colors',
+                      editForm.selectedTags.includes(tag)
+                        ? 'bg-primary text-white border-primary'
+                        : 'border-border text-text-secondary hover:border-primary/40 bg-surface',
+                    )}
+                  >
+                    {tag}
+                  </button>
+                ))}
+                {editForm.selectedTags.filter((t) => !PRESET_TAGS.includes(t)).map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => toggleEditTag(tag)}
+                    className="rounded-full px-3 py-1 text-xs font-medium border bg-primary text-white border-primary"
+                  >
+                    {tag} x
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={editForm.customTagInput}
+                  onChange={(e) => setEditForm((prev) => prev ? { ...prev, customTagInput: e.target.value } : prev)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addEditCustomTag(); } }}
+                  placeholder="직접 입력 후 Enter"
+                  className="flex-1 h-9 rounded-lg border border-border bg-surface px-3 text-sm text-text placeholder:text-text-muted"
+                />
+                <button
+                  type="button"
+                  onClick={addEditCustomTag}
+                  className="rounded-lg bg-surface-alt px-3 text-sm font-medium text-text-secondary hover:bg-border transition-colors"
+                >
+                  추가
+                </button>
+              </div>
+            </div>
+
+            {/* 컬러 */}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-text-secondary">컬러</label>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {PRESET_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => toggleEditColor(color)}
+                    className={cn(
+                      'rounded-full px-3 py-1 text-xs font-medium border transition-colors',
+                      editForm.selectedColors.includes(color)
+                        ? 'bg-rose-500 text-white border-rose-500'
+                        : 'border-border text-text-secondary hover:border-rose-300 bg-surface',
+                    )}
+                  >
+                    {color}
+                  </button>
+                ))}
+                {editForm.selectedColors.filter((c) => !PRESET_COLORS.includes(c)).map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => toggleEditColor(color)}
+                    className="rounded-full px-3 py-1 text-xs font-medium border bg-rose-500 text-white border-rose-500"
+                  >
+                    {color} x
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={editForm.customColorInput}
+                  onChange={(e) => setEditForm((prev) => prev ? { ...prev, customColorInput: e.target.value } : prev)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addEditCustomColor(); } }}
+                  placeholder="직접 입력 후 Enter"
+                  className="flex-1 h-9 rounded-lg border border-border bg-surface px-3 text-sm text-text placeholder:text-text-muted"
+                />
+                <button
+                  type="button"
+                  onClick={addEditCustomColor}
+                  className="rounded-lg bg-surface-alt px-3 text-sm font-medium text-text-secondary hover:bg-border transition-colors"
+                >
+                  추가
+                </button>
+              </div>
+            </div>
+
+            {/* 저장 / 취소 */}
+            <div className="flex gap-3 border-t border-border pt-4">
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={handleCancelEdit}
+                disabled={saving}
+              >
+                취소
+              </Button>
+              <Button
+                variant="primary"
+                className="flex-1"
+                loading={saving}
+                disabled={saving}
+                onClick={handleSave}
+              >
+                저장
+              </Button>
+            </div>
           </div>
+        </Card>
+      ) : (
+        /* 상세 보기 */
+        <Card className="mx-4 shadow-md rounded-2xl">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-base font-bold text-white"
+                  style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))' }}
+                >
+                  {customer?.name.charAt(0) ?? '?'}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-text truncate">{customer?.name || ''}</p>
+                  <p className="text-xs text-text-muted">{formatDateDot(effectiveDate ?? photo.createdAt)}</p>
+                </div>
+              </div>
+              <Badge
+                variant={photo.kind === 'reference' ? 'neutral' : 'primary'}
+                size="md"
+              >
+                {KIND_LABEL[photo.kind]}
+              </Badge>
+            </div>
 
-          {customer && (
+            {photo.note && (
+              <div className="rounded-xl bg-surface-alt p-4">
+                <p className="text-xs font-medium text-text-muted mb-1">메모</p>
+                <p className="text-sm text-text leading-relaxed">{photo.note}</p>
+              </div>
+            )}
+
+            {(serviceType || photo.designType || photo.colorLabels?.length || effectivePrice != null) && (
+              <div className="rounded-xl bg-surface-alt p-4">
+                <p className="text-xs font-medium text-text-muted mb-2">검색 메타데이터</p>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  {serviceType && (
+                    <div>
+                      <p className="text-[10px] font-medium text-text-muted mb-0.5">시술 종류</p>
+                      <p className="font-medium text-text">{serviceType}</p>
+                    </div>
+                  )}
+                  {photo.designType && (
+                    <div>
+                      <p className="text-[10px] font-medium text-text-muted mb-0.5">디자인 타입</p>
+                      <p className="font-medium text-text">{photo.designType}</p>
+                    </div>
+                  )}
+                  {effectivePrice != null && (
+                    <div>
+                      <p className="text-[10px] font-medium text-text-muted mb-0.5">가격</p>
+                      <p className="font-medium text-text">{formatPrice(effectivePrice)}</p>
+                    </div>
+                  )}
+                  {effectiveDate && (
+                    <div>
+                      <p className="text-[10px] font-medium text-text-muted mb-0.5">촬영일</p>
+                      <p className="font-medium text-text">{formatDateDot(effectiveDate)}</p>
+                    </div>
+                  )}
+                </div>
+                {photo.colorLabels && photo.colorLabels.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-[10px] font-medium text-text-muted mb-1">컬러</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {photo.colorLabels.map((color, idx) => (
+                        <span key={`${color}-${idx}`} className="rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-600">
+                          {color}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {photo.tags && photo.tags.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-text-muted mb-2">태그</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {photo.tags.map((tag, idx) => (
+                    <Badge key={idx} variant="neutral" size="sm">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {linkedRecord && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-bold text-primary">시술 기록</p>
+                  <p className="text-lg font-bold text-primary">{formatPrice(linkedRecord.finalPrice)}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-[10px] font-medium text-text-muted mb-0.5">시술 날짜</p>
+                    <p className="font-medium text-text">{formatDateDot(linkedRecord.createdAt)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-medium text-text-muted mb-0.5">시술 부위</p>
+                    <p className="font-medium text-text">{BODY_PART_LABEL[linkedRecord.consultation.bodyPart] ?? linkedRecord.consultation.bodyPart}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-medium text-text-muted mb-0.5">시술 종류</p>
+                    <p className="font-medium text-text">{DESIGN_SCOPE_LABEL[linkedRecord.consultation.designScope] ?? linkedRecord.consultation.designScope}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-medium text-text-muted mb-0.5">오프</p>
+                    <p className="font-medium text-text">{OFF_TYPE_LABEL[linkedRecord.consultation.offType] ?? '없음'}</p>
+                  </div>
+                  {linkedRecord.consultation.extensionType !== 'none' && (
+                    <div>
+                      <p className="text-[10px] font-medium text-text-muted mb-0.5">연장/리페어</p>
+                      <p className="font-medium text-text">{EXTENSION_TYPE_LABEL[linkedRecord.consultation.extensionType]}</p>
+                    </div>
+                  )}
+                  {linkedRecord.consultation.expressions && linkedRecord.consultation.expressions.length > 0 && linkedRecord.consultation.expressions[0] !== 'solid' && (
+                    <div>
+                      <p className="text-[10px] font-medium text-text-muted mb-0.5">표현 기법</p>
+                      <p className="font-medium text-text truncate">
+                        {linkedRecord.consultation.expressions.map(e => EXPRESSION_LABEL[e] ?? e).join(', ')}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {linkedRecord.notes && (
+                  <div className="mt-3 pt-3 border-t border-primary/10">
+                    <p className="text-[10px] font-medium text-text-muted mb-1">상담 메모</p>
+                    <p className="text-xs text-text-secondary leading-relaxed">{linkedRecord.notes}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* PF-4: 인스타 해시태그 */}
+            <div className="rounded-xl bg-surface-alt overflow-hidden">
+              <InstagramHashtags
+                tags={photo.tags}
+                colorLabels={photo.colorLabels}
+                serviceType={serviceType}
+                designType={photo.designType}
+                price={effectivePrice}
+              />
+            </div>
+
             <Button
-              variant="secondary"
+              variant="primary"
               fullWidth
-              onClick={() => router.push(`/customers/${customer.id}`)}
+              onClick={() => {
+                const designScopeFromPhoto = photo.serviceType
+                  ? (REVERSE_DESIGN_SCOPE[photo.serviceType] ?? photo.serviceType)
+                  : undefined;
+                const effectiveDesignScope = linkedRecord?.consultation.designScope ?? designScopeFromPhoto;
+
+                hydrateConsultation({
+                  referenceImages: photo.imageDataUrl ? [photo.imageDataUrl] : [],
+                  entryPoint: 'staff',
+                  currentStep: ConsultationStep.START,
+                  designScope: effectiveDesignScope as DesignScope | undefined,
+                  ...(linkedRecord ? {
+                    bodyPart: linkedRecord.consultation.bodyPart,
+                    offType: linkedRecord.consultation.offType,
+                    extensionType: linkedRecord.consultation.extensionType,
+                    nailShape: linkedRecord.consultation.nailShape,
+                  } : {}),
+                  ...(linkedRecord ? {
+                    expressions: linkedRecord.consultation.expressions,
+                    hasParts: linkedRecord.consultation.hasParts,
+                    partsSelections: linkedRecord.consultation.partsSelections,
+                    extraColorCount: linkedRecord.consultation.extraColorCount,
+                  } : {}),
+                });
+                router.push('/consultation');
+              }}
             >
-              고객 상세 보기
+              이 디자인으로 상담 시작
             </Button>
-          )}
-        </div>
-      </Card>
+
+            {customer && (
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={() => router.push(`/customers/${customer.id}`)}
+              >
+                고객 상세 보기
+              </Button>
+            )}
+          </div>
+        </Card>
+      )}
 
       <AnimatePresence>
         {showDeleteConfirm && (
