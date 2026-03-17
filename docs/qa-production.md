@@ -2,9 +2,21 @@
 
 > 프로덕션 환경 (beauty-decision.com) 기준 심층 QA
 > 작성일: 2026-03-17
-> 테스트 환경: Playwright + Chrome, 모바일 뷰포트 (390×844)
+> 테스트 환경: Playwright + Chrome + agent-browser, 모바일 뷰포트 (390×844)
 > 대상: 네일 샵 사장님 (원장) + 외국인 고객
-> 계정: admin@leanup.kr / leanup 매장
+> 계정: admin@leanup.kr / leanup 매장, test-qa@test.com / QA Test Shop (신규 온보딩 계정)
+
+### agent-browser 안전 실행 규칙
+- 같은 `--session`을 병렬 페이지 검증에 재사용하지 않는다. 병렬 검증이 필요하면 페이지마다 다른 세션을 쓴다.
+- 프로덕션 QA는 `login`, `home`, `dashboard`, `settings`처럼 목적이 드러나는 세션 이름을 사용한다.
+- 한 세션에서는 한 흐름만 순차 실행하고, 검증이 끝나면 `close`로 정리한다.
+- 세션 운영 상세는 `docs/qa-agent-browser.md`를 기준으로 한다.
+
+### 2026-03-17 추가 실계정 심층 QA 메모
+- `agent-browser` 격리 세션으로 `login -> home -> records -> customers -> dashboard -> settings -> consultation -> logout` 순차 검증 완료
+- 확인 결과: 로그인/로그아웃, 보호 라우트 리다이렉트, 홈/기록/고객/대시보드/설정 렌더링, 상담 진입/이름 검증 모두 정상
+- 미확정 항목: `/consultation/customer`의 `Close` 버튼은 role-based 자동화 클릭에서 반응이 불분명했지만, DOM 클릭(`aria-label="상담 종료"`)으로 `/home` 이동이 정상 확인되어 앱 버그가 아닌 자동화 상호작용 오차로 분류
+- 이번 런에서는 브라우저 오류/콘솔 오류 미발견
 
 ## 검증 범례
 `⬜ 미검증` · `✅ 통과` · `⚠️ 경미한 이슈` · `❌ 심각한 이슈` · `🔍 확인 필요`
@@ -165,7 +177,7 @@
 |---|------------|----------|------|
 | C-01-1 | 주간 탭 — 이번 주 예약 타임그리드 | `WeekCalendar` 컴포넌트 렌더링, 요일별 예약 표시 | ✅ (Browser: weekly calendar 3/16-3/22) |
 | C-01-2 | 월간 탭 — 이번 달 캘린더 | `MonthCalendar` 컴포넌트, 예약 있는 날짜에 인디케이터 표시 | ✅ (Browser: monthly view) |
-| C-01-3 | 디자이너별 탭 | `DesignerDayGridCalendar` — 디자이너별 예약 분리 표시 | ✅ (Browser: designer tab "test") |
+| C-01-3 | 디자이너별 탭 | `DesignerDayGridCalendar` — 디자이너별 예약 분리 표시, `미지정` 열은 항상 첫 열에 유지 | ✅ (2026-03-17 수정: unassigned column always visible) |
 | C-01-4 | 날짜 클릭 → 해당 날짜 예약 목록 | `DayReservationList` 하단 표시 | ✅ (Browser: day timegrid 10:00-20:00) |
 
 ### C-02. 상담 기록 목록 (리스트 뷰)
@@ -182,6 +194,7 @@
 |---|------------|----------|------|
 | C-03-1 | 예약 카드에서 "상담 시작" | 해당 예약 status → `in_progress`, `/consultation` 이동 | ✅ (Code: status update + /consultation redirect) |
 | C-03-2 | 완료된 예약 상담 기록 연결 | `record.consultation.bookingId === reservation.id` 연결 확인 | ✅ (Code: record.bookingId linking) |
+| C-03-3 | 예약 상세 — 고객용 상담 링크 | 예약 상세 바텀시트 안에서 customer-link URL 생성/복사/열기, 고객명/전화/메모/언어/bookingId/shopId/shopName 프리필 | ✅ (2026-03-17 수정: single-sheet link flow) |
 
 ---
 
@@ -442,6 +455,7 @@
 | I-02-1 | 사진 업로드 (`/portfolio/upload`) | Supabase `portfolio-images` 버킷 업로드, DB `portfolio_photos` 테이블 저장 | ✅ (Code: Supabase portfolio-images upload) |
 | I-02-2 | 업로드 후 목록 갱신 | 새 사진 즉시 그리드에 표시 | ✅ (Code: addPhoto → store update) |
 | I-02-3 | 상담 저장 시 참고 이미지 자동 포트폴리오 등록 | `kind: 'reference'` 타입으로 자동 저장 | ✅ (Code: consultation save → addPhoto auto) |
+| I-02-4 | 업로드 폼 고객 선택 드롭다운 | 고객 선택 또는 직접 추가 후 드롭다운이 닫히고 선택값만 입력창에 유지 | ✅ (2026-03-17 수정: `showCustomerDropdown` 상태로 선택 후 닫힘 처리) |
 
 ### I-03. 고객 상세 포트폴리오 연동
 | # | 테스트 항목 | 기대 결과 | 상태 |
@@ -655,4 +669,4 @@
 
 ---
 
-*최종 업데이트: 2026-03-17*
+*최종 업데이트: 2026-03-17 (QA 오탐 정정 반영)*
