@@ -42,3 +42,7 @@ next-env.d.ts
 
 # QA screenshots
 qa-*.png
+
+# agent-browser QA artifacts
+.qa/
+*.auth-state.json

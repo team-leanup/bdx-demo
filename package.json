@@ -7,7 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "qa:agent": "node scripts/agent-browser.mjs",
+    "qa:agent:prod:login": "node scripts/agent-browser.mjs open prod login --flow auth",
+    "qa:agent:prod:home": "node scripts/agent-browser.mjs open prod home --flow smoke",
+    "qa:agent:prod:dashboard": "node scripts/agent-browser.mjs open prod dashboard --flow smoke",
+    "qa:agent:prod:settings": "node scripts/agent-browser.mjs open prod settings --flow smoke"
   },
   "dependencies": {
     "@supabase/ssr": "^0.9.0",
