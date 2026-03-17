@@ -126,6 +126,7 @@ export default function ConsultationStartPage() {
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const setCustomerInfo = useConsultationStore((s) => s.setCustomerInfo);
   const setBookingId = useConsultationStore((s) => s.setBookingId);
+  const setDesignerId = useConsultationStore((s) => s.setDesignerId);
   const setEntryPoint = useConsultationStore((s) => s.setEntryPoint);
   const setStep = useConsultationStore((s) => s.setStep);
   const setSourceShopId = useConsultationStore((s) => s.setSourceShopId);
@@ -146,6 +147,8 @@ export default function ConsultationStartPage() {
   const prefillNote = searchParams.get('note') ?? '';
   const prefillLang = searchParams.get('lang') as Locale | null;
   const prefillBookingId = searchParams.get('bookingId') ?? '';
+  const prefillDesignerId = searchParams.get('designerId') ?? '';
+  const prefillCustomerId = searchParams.get('customerId') ?? '';
   const prefillShopId = searchParams.get('shopId') ?? '';
   const prefillShopName = searchParams.get('shopName') ?? '';
   const prefillEntry: 'staff' | 'customer_link' = (searchParams.get('entry') === 'customer-link'
@@ -161,6 +164,8 @@ export default function ConsultationStartPage() {
     prefillNote,
     prefillLang,
     prefillBookingId,
+    prefillDesignerId,
+    prefillCustomerId,
     prefillShopId,
     prefillShopName,
     prefillEntry,
@@ -175,6 +180,8 @@ export default function ConsultationStartPage() {
       prefillNote: note,
       prefillLang: lang,
       prefillBookingId: bookingId,
+      prefillDesignerId: designerId,
+      prefillCustomerId: customerId,
       prefillShopId: shopId,
       prefillShopName: shopName,
       prefillEntry: entryPoint,
@@ -182,8 +189,8 @@ export default function ConsultationStartPage() {
       customerPhone,
     } = initialRef.current;
 
-    if ((name || phone) && !customerName && !customerPhone) {
-      setCustomerInfo(name, phone);
+    if ((name || phone || customerId) && !customerName && !customerPhone) {
+      setCustomerInfo(name, phone, customerId || undefined);
     }
     if (note) {
       sessionStorage.setItem('consultation_customer_memo', note);
@@ -194,6 +201,9 @@ export default function ConsultationStartPage() {
     if (bookingId) {
       setBookingId(bookingId);
     }
+    if (designerId) {
+      setDesignerId(designerId);
+    }
     if (shopId) {
       setSourceShopId(shopId);
     }
@@ -201,7 +211,7 @@ export default function ConsultationStartPage() {
       setSourceShopName(shopName);
     }
     setEntryPoint(entryPoint);
-  }, [setBookingId, setConsultationLocale, setCustomerInfo, setEntryPoint, setSourceShopId, setSourceShopName]);
+  }, [setBookingId, setConsultationLocale, setCustomerInfo, setDesignerId, setEntryPoint, setSourceShopId, setSourceShopName]);
 
   useEffect(() => {
     if (!isCustomerLinkFlow) {

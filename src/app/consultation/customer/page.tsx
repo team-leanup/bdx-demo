@@ -30,6 +30,7 @@ function CustomerPageInner(): React.ReactElement {
   const searchParams = useSearchParams();
   const setCustomerInfo = useConsultationStore((s) => s.setCustomerInfo);
   const setBookingId = useConsultationStore((s) => s.setBookingId);
+  const setDesignerId = useConsultationStore((s) => s.setDesignerId);
   const setEntryPoint = useConsultationStore((s) => s.setEntryPoint);
   const setSourceShopId = useConsultationStore((s) => s.setSourceShopId);
   const setSourceShopName = useConsultationStore((s) => s.setSourceShopName);
@@ -60,6 +61,8 @@ function CustomerPageInner(): React.ReactElement {
   const prefillNote = searchParams.get('note') ?? '';
   const prefillLang = searchParams.get('lang') as Locale | null;
   const prefillBookingId = searchParams.get('bookingId') ?? consultation.bookingId ?? '';
+  const prefillDesignerId = searchParams.get('designerId') ?? consultation.designerId ?? '';
+  const prefillCustomerId = searchParams.get('customerId') ?? consultation.customerId ?? '';
   const prefillShopId = searchParams.get('shopId') ?? consultation.sourceShopId ?? '';
   const prefillShopName = searchParams.get('shopName') ?? consultation.sourceShopName ?? '';
   const prefillEntry: 'staff' | 'customer_link' = (searchParams.get('entry') === 'customer-link'
@@ -74,9 +77,11 @@ function CustomerPageInner(): React.ReactElement {
   const [phone, setPhone] = useState(consultation.customerPhone ?? prefillPhone);
   const [memo, setMemo] = useState(prefillNote);
   const [showEntrySplash, setShowEntrySplash] = useState(isCustomerLinkFlow);
-  const [selectedExistingCustomerId, setSelectedExistingCustomerId] = useState<string | undefined>(consultation.customerId);
+  const [selectedExistingCustomerId, setSelectedExistingCustomerId] = useState<string | undefined>(
+    (consultation.customerId ?? prefillCustomerId) || undefined,
+  );
   const [selectedExistingSnapshot, setSelectedExistingSnapshot] = useState<{ name: string; phone: string } | null>(
-    consultation.customerId
+    (consultation.customerId ?? prefillCustomerId)
       ? {
           name: consultation.customerName ?? prefillName,
           phone: consultation.customerPhone ?? prefillPhone,
@@ -99,6 +104,8 @@ function CustomerPageInner(): React.ReactElement {
     prefillNote,
       prefillLang,
       prefillBookingId,
+      prefillDesignerId,
+      prefillCustomerId,
       prefillShopId,
       prefillShopName,
       prefillEntry,
@@ -112,6 +119,8 @@ function CustomerPageInner(): React.ReactElement {
       prefillNote: note,
       prefillLang: lang,
       prefillBookingId: bookingId,
+      prefillDesignerId: designerId,
+      prefillCustomerId: customerId,
       prefillShopId: shopId,
       prefillShopName: shopName,
       prefillEntry: entryPoint,
@@ -124,8 +133,8 @@ function CustomerPageInner(): React.ReactElement {
     if (phone && !customerPhone) {
       setPhone(phone);
     }
-    if ((name || phone) && !customerName && !customerPhone) {
-      setCustomerInfo(name, phone);
+    if ((name || phone || customerId) && !customerName && !customerPhone) {
+      setCustomerInfo(name, phone, customerId || undefined);
     }
     if (note) {
       setMemo(note);
@@ -142,6 +151,9 @@ function CustomerPageInner(): React.ReactElement {
     if (bookingId) {
       setBookingId(bookingId);
     }
+    if (designerId) {
+      setDesignerId(designerId);
+    }
     if (shopId) {
       setSourceShopId(shopId);
     }
@@ -149,7 +161,7 @@ function CustomerPageInner(): React.ReactElement {
       setSourceShopName(shopName);
     }
     setEntryPoint(entryPoint);
-  }, [setBookingId, setConsultationLocale, setCustomerInfo, setEntryPoint, setSourceShopId, setSourceShopName]);
+  }, [setBookingId, setConsultationLocale, setCustomerInfo, setDesignerId, setEntryPoint, setSourceShopId, setSourceShopName]);
 
   useEffect(() => {
     if (!isCustomerLinkFlow) {

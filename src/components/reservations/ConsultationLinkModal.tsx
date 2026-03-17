@@ -35,6 +35,8 @@ export function ConsultationLinkContent({
     if (booking.requestNote) params.set("note", booking.requestNote);
     params.set("lang", booking.language ?? "ko");
     params.set("bookingId", booking.id);
+    if (booking.designerId) params.set("designerId", booking.designerId);
+    if (booking.customerId) params.set("customerId", booking.customerId);
     if (booking.shopId) params.set("shopId", booking.shopId);
     params.set("entry", "customer-link");
     if (shopName) params.set("shopName", shopName);
