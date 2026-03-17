@@ -8,6 +8,7 @@ import { fetchPortfolioPhotos } from '@/lib/db';
 import { cn } from '@/lib/cn';
 import { useT, useLocale, useKo } from '@/lib/i18n';
 import type { PortfolioPhoto } from '@/types/portfolio';
+import { DEMO_PORTFOLIO_PHOTOS } from '@/data/demo-portfolio';
 
 interface PortfolioBrowserProps {
   onToggleSelect: (imageUrl: string) => void;
@@ -55,6 +56,14 @@ export function PortfolioBrowser({
 
     const hydrate = async () => {
       setIsLoading(true);
+
+      if (shopId === 'shop-demo') {
+        if (!isCancelled) {
+          setLinkedShopPhotos(DEMO_PORTFOLIO_PHOTOS);
+          setIsLoading(false);
+        }
+        return;
+      }
 
       if (shopId) {
         const photos = await fetchPortfolioPhotos(shopId);
