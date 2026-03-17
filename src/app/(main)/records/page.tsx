@@ -16,7 +16,7 @@ import { useConsultationStore } from '@/store/consultation-store';
 import { ConsultationStep } from '@/types/consultation';
 import { useCustomerStore } from '@/store/customer-store';
 import { useT } from '@/lib/i18n';
-import { addDaysInKorea, formatPrice, getKoreanWeekStart, getTodayInKorea, toKoreanDateString, toKoreanTimeString } from '@/lib/format';
+import { formatPrice, getKoreanWeekStart, getTodayInKorea, toKoreanDateString, toKoreanTimeString } from '@/lib/format';
 import { MonthCalendar } from '@/components/calendar/MonthCalendar';
 import { DayReservationList } from '@/components/calendar/DayReservationList';
 import { WeekCalendar } from '@/components/calendar/WeekCalendar';
@@ -197,11 +197,17 @@ export default function RecordsPage() {
 
   const weekStats = useMemo(() => {
     const today = getTodayStr();
-    const weekStartStr = getKoreanWeekStart(today);
-    const weekEndStr = addDaysInKorea(weekStartStr, 6);
+    const todayDate = new Date(today);
+    const weekStart = new Date(todayDate);
+    weekStart.setDate(todayDate.getDate() - todayDate.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
 
     const thisWeek = allReservations.filter((r) => {
-      return r.reservationDate >= weekStartStr && r.reservationDate <= weekEndStr;
+      const d = new Date(r.reservationDate);
+      return d >= weekStart && d <= weekEnd;
     });
 
     const now = new Date();
@@ -251,21 +257,13 @@ export default function RecordsPage() {
         if (tagFilter === '외국인') {
           matchTag = !!r.language && r.language !== 'ko';
         } else {
-          const customer = getCustomerById(r.customerId);
-          const customerTags = customer?.tags ?? [];
+          const customerTags = getPinnedTags(r.customerId);
           matchTag = customerTags.some((t) => t.value === tagFilter);
         }
       }
       return matchSearch && matchPeriod && matchTag;
     });
-  }, [sorted, search, filter, tagFilter, role, activeDesignerId, getCustomerById, customerFilterId]);
-
-  useEffect(() => {
-    if (!selectedEvent) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
-  }, [selectedEvent]);
+  }, [sorted, search, filter, tagFilter, role, activeDesignerId, getPinnedTags, customerFilterId]);
 
   const handleEventClick = (ev: TimeGridEvent) => {
     if (ev.type === 'consultation') {

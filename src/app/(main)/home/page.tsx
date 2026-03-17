@@ -21,17 +21,9 @@ import {
   ReservationForm,
   RevisitReminderCard,
 } from '@/components/home';
-import dynamic from 'next/dynamic';
+import { QRGeneratorModal } from '@/components/home/QRGeneratorModal';
 import { ConsultationAlertBanner } from '@/components/home/ConsultationAlertBanner';
-
-const QRGeneratorModal = dynamic(
-  () => import('@/components/home/QRGeneratorModal').then((m) => m.QRGeneratorModal),
-  { ssr: false },
-);
-const PreConsultationNotificationCenter = dynamic(
-  () => import('@/components/home/PreConsultationNotificationCenter').then((m) => m.PreConsultationNotificationCenter),
-  { ssr: false },
-);
+import { PreConsultationNotificationCenter } from '@/components/home/PreConsultationNotificationCenter';
 import { Modal } from '@/components/ui';
 import { useT } from '@/lib/i18n';
 import { useAuthStore } from '@/store/auth-store';
@@ -79,12 +71,12 @@ export default function HomePage() {
   const getAllRecords = useRecordsStore((s) => s.getAllRecords);
   const records = useMemo(() => getAllRecords(), [getAllRecords]);
 
-  const CHANNEL_BADGE = useMemo<Record<BookingChannel, { label: string; icon: string; variant: 'primary' | 'neutral' | 'success' | 'warning' }>>(() => ({
+  const CHANNEL_BADGE: Record<BookingChannel, { label: string; icon: string; variant: 'primary' | 'neutral' | 'success' | 'warning' }> = {
     kakao: { label: t('home.channel_kakao'), icon: '💬', variant: 'neutral' },
     naver: { label: t('home.channel_naver'), icon: '🟢', variant: 'neutral' },
     phone: { label: t('home.channel_phone'), icon: '📞', variant: 'neutral' },
     walk_in: { label: t('home.channel_walk_in'), icon: '🚶', variant: 'neutral' },
-  }), [t]);
+  };
 
   useEffect(() => {
     restoreLocale();
@@ -117,7 +109,23 @@ export default function HomePage() {
 
   const allReservations = useReservationStore((s) => s.reservations);
   const addReservation = useReservationStore((s) => s.addReservation);
+  const hydrateFromDB = useReservationStore((s) => s.hydrateFromDB);
 
+  useEffect(() => {
+    const poll = (): void => {
+      if (document.visibilityState === 'visible') {
+        hydrateFromDB().catch(console.error);
+      }
+    };
+
+    const interval = setInterval(poll, 30000);
+    document.addEventListener('visibilitychange', poll);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', poll);
+    };
+  }, [hydrateFromDB]);
   const todayReservations = useMemo(() => {
     const todayStr = getTodayInKorea();
     return allReservations

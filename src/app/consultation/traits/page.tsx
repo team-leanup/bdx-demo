@@ -16,12 +16,8 @@ export default function TraitsPage(): React.ReactElement {
   useConsultationGuard();
   const router = useRouter();
   const setStep = useConsultationStore((s) => s.setStep);
-  const canvasData = useConsultationStore((s) => s.consultation.canvasData);
   const selectedTraitValues = useConsultationStore((s) => s.consultation.selectedTraitValues) ?? [];
   const toggleTraitValue = useConsultationStore((s) => s.toggleTraitValue);
-  const backHref = canvasData && canvasData.length > 0
-    ? '/consultation/canvas'
-    : '/consultation/step3';
   const t = useT();
   const tKo = useKo();
   const locale = useLocale();
@@ -39,11 +35,11 @@ export default function TraitsPage(): React.ReactElement {
   return (
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
       <ConsultationHeader
-        stepNumber={6}
-        totalSteps={6}
+        stepNumber={4}
+        totalSteps={5}
         title={t('consultation.traitsTitle')}
         titleKo={tKo('consultation.traitsTitle')}
-        backHref={backHref}
+        backHref="/consultation/step2"
       />
       <PriceSummaryBar />
 
@@ -51,7 +47,7 @@ export default function TraitsPage(): React.ReactElement {
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.25 }}
-        className="flex-1 overflow-y-auto px-4 md:px-8 pt-5 pb-[calc(8rem+env(safe-area-inset-bottom,0px))] md:pb-6"
+        className="flex-1 overflow-y-auto px-4 md:px-8 pt-5 pb-28 md:pb-6"
       >
         <div className="max-w-2xl md:max-w-3xl mx-auto flex flex-col gap-6">
           <motion.div
@@ -189,7 +185,7 @@ export default function TraitsPage(): React.ReactElement {
         </div>
       </motion.main>
 
-      <ConsultationFooter onNext={handleNext} showEstimated={false} nextLabel={t('consultation.complete')} />
+      <ConsultationFooter onNext={handleNext} showEstimated={false} />
     </div>
   );
 }

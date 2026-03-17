@@ -58,7 +58,7 @@ export default function ProPage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className="flex-1 overflow-y-auto px-4 pt-4 pb-[calc(8rem+env(safe-area-inset-bottom,0px))] md:pb-6"
+        className="flex-1 overflow-y-auto px-4 pt-4 pb-28 md:pb-6"
       >
         <div className="max-w-lg mx-auto flex flex-col gap-3">
           {/* Pro mode badge */}

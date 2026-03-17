@@ -1,8 +1,8 @@
 export const MAX_PROFILE_IMAGE_KB = 150;
 
 // Portfolio-specific settings
-export const PORTFOLIO_MAX_DIMENSION = 1200;
-export const PORTFOLIO_TARGET_KB = 500;
+export const PORTFOLIO_MAX_DIMENSION = 480;
+export const PORTFOLIO_TARGET_KB = 120;
 
 export function estimateBase64SizeKB(base64: string): number {
   // base64 data URL: "data:image/jpeg;base64,<data>"

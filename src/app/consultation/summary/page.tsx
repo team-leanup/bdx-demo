@@ -18,7 +18,7 @@ import { formatPrice, formatLocaleCurrency, getNowInKoreaIso } from '@/lib/forma
 import { DESIGN_SCOPE_LABEL, EXPRESSION_LABEL } from '@/lib/labels';
 import { useRecordsStore } from '@/store/records-store';
 import { useReservationStore } from '@/store/reservation-store';
-
+import { usePortfolioStore } from '@/store/portfolio-store';
 import { useAuthStore } from '@/store/auth-store';
 import type { ConsultationRecord, BookingStatus } from '@/types/consultation';
 import type { CustomerTag, TagCategory } from '@/types/customer';
@@ -53,7 +53,7 @@ export default function SummaryPage() {
   const breakdown = useMemo(() => calculatePrice(consultation, shopPricing), [consultation, shopPricing]);
   const adjustedFinalPrice = breakdown.finalPrice + additionalCharge;
   const addRecord = useRecordsStore((s) => s.addRecord);
-
+  const addPhoto = usePortfolioStore((s) => s.addPhoto);
   const createCustomer = useCustomerStore((s) => s.createCustomer);
   const getDesignerName = useShopStore((s) => s.getDesignerName);
   const t = useT();
@@ -152,7 +152,6 @@ export default function SummaryPage() {
       }
 
       updateReservationAfterPreconsult(bookingId, {
-        status: 'completed' as BookingStatus,
         preConsultationCompletedAt: now,
         preConsultationData: consultationSnapshot,
         customerId,
@@ -171,22 +170,38 @@ export default function SummaryPage() {
         });
       }
 
+      if (customerId && consultation.referenceImages?.length) {
+        await Promise.all(consultation.referenceImages.map(async (imageUrl) => {
+          if (!imageUrl.startsWith('data:image/')) return;
+          await addPhoto({
+            customerId,
+            recordId: newId,
+            kind: 'reference',
+            imageDataUrl: imageUrl,
+            takenAt: now,
+            tags: consultation.selectedTraitValues,
+            serviceType: DESIGN_SCOPE_LABEL[consultation.designScope] ?? consultation.designScope,
+            designType: consultation.expressions
+              .filter((expression) => expression !== 'solid')
+              .map((expression) => EXPRESSION_LABEL[expression] ?? expression)
+              .join(', ') || undefined,
+            price: adjustedFinalPrice,
+          });
+        }));
+      }
     }
 
-    // 고객 데이터 연동: records 기반으로 정확한 통계 계산
+    // 고객 데이터 연동: 방문횟수, 매출, 시술이력 갱신
     const { getById: getCustById, updateCustomer: updateCust } = useCustomerStore.getState();
     const existingCustomer = getCustById(customerId);
     if (existingCustomer) {
-      // 방금 추가한 record 포함하여 전체 records에서 집계
-      const allRecords = useRecordsStore.getState().records;
-      const customerRecords = allRecords.filter((r) => r.customerId === customerId);
-      const recalcVisitCount = customerRecords.length;
-      const recalcTotalSpend = customerRecords.reduce((sum, r) => sum + r.finalPrice, 0);
+      const newVisitCount = existingCustomer.visitCount + 1;
+      const newTotalSpend = existingCustomer.totalSpend + adjustedFinalPrice;
       updateCust(customerId, {
-        visitCount: recalcVisitCount,
+        visitCount: newVisitCount,
         lastVisitDate: now.split('T')[0],
-        totalSpend: recalcTotalSpend,
-        averageSpend: recalcVisitCount > 0 ? Math.round(recalcTotalSpend / recalcVisitCount) : 0,
+        totalSpend: newTotalSpend,
+        averageSpend: Math.round(newTotalSpend / newVisitCount),
         treatmentHistory: [
           ...(existingCustomer.treatmentHistory ?? []),
           {
@@ -198,22 +213,14 @@ export default function SummaryPage() {
             designerName: getDesignerName(designerId),
           },
         ],
-        // 선호도 프로필 자동 업데이트 (상담에서 선택한 쉐입)
-        ...(consultation.nailShape ? {
-          preference: {
-            ...existingCustomer.preference,
-            customerId,
-            preferredShape: consultation.nailShape,
-            updatedAt: now,
-          },
-        } : {}),
       });
     }
 
     // 스몰토크 메모 → customer store smallTalkNotes에 자동 push
     if (customerMemo) {
-      const { getById: getSmtCust, appendSmallTalkNote } = useCustomerStore.getState();
-      const customer = getSmtCust(customerId);
+      const customerName = consultation.customerName;
+      const { customers, appendSmallTalkNote } = useCustomerStore.getState();
+      const customer = customers.find((c) => c.name === customerName || c.id === customerId);
       if (customer) {
         const newNote = {
           id: `stn-${Date.now()}`,
@@ -254,14 +261,12 @@ export default function SummaryPage() {
     }
 
     sessionStorage.removeItem('consultation_customer_memo');
+    restoreLocale();
 
     if (isCustomerLinkFlow) {
-      // 고객용 완료 페이지로 이동 (locale 복원하지 않음 — save-complete에서 고객 언어 유지)
-      router.push('/consultation/save-complete?mode=preconsultation');
+      router.push('/home');
       return;
     }
-
-    restoreLocale();
 
     router.push(`/consultation/treatment-sheet?consultationId=${newId}&customerId=${customerId}`);
     } catch (err) {
@@ -275,6 +280,8 @@ export default function SummaryPage() {
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
       <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
       <ConsultationHeader
+        stepNumber={5}
+        totalSteps={5}
         title={t('consultation.summaryTitle')}
         titleKo={tKo('consultation.summaryTitle')}
         onBack={() => {

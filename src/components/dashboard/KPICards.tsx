@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import type { KPICard } from '@/lib/analytics';
 import {
   computeKPICards,
   computeDesignScopeBreakdown,
   computeReturnRate,
   computeCustomerAnalytics,
-  getRecordStatus,
 } from '@/lib/analytics';
 import type { ConsultationRecord, BookingRequest } from '@/types/consultation';
 import type { Customer } from '@/types/customer';
@@ -15,7 +14,7 @@ import { BentoCard } from '@/components/ui';
 import { useRecordsStore } from '@/store/records-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { useReservationStore } from '@/store/reservation-store';
-import { getTodayInKorea, toKoreanDateString } from '@/lib/format';
+import { getTodayInKorea, parseKoreanDateString, toKoreanDateString } from '@/lib/format';
 
 function buildKPIDetail(
   label: string,
@@ -26,29 +25,17 @@ function buildKPIDetail(
   switch (label) {
     case '이달 상담 건수': {
       const today = getTodayInKorea();
+      const now = parseKoreanDateString(today);
       const prefix = today.slice(0, 7);
       const thisMonth = records.filter((r) => toKoreanDateString(r.createdAt).startsWith(prefix));
-      const completedCount = thisMonth.filter((r) => getRecordStatus(r) === 'completed').length;
-      const inProgressCount = thisMonth.filter((r) => getRecordStatus(r) === 'in_progress').length;
-      const preConsultCount = thisMonth.filter((r) => getRecordStatus(r) === 'pre_consultation').length;
-      const countExcludingPre = completedCount + inProgressCount;
-      const [y, m, d] = today.split('-').map(Number);
-      const daysInMonth = new Date(y, m, 0).getDate();
-      const daysPassed = d;
-      const dailyAvg = daysPassed > 0 ? (countExcludingPre / daysPassed).toFixed(1) : '0';
+      const daysInMonth = new Date(now.getUTCFullYear(), now.getUTCMonth() + 1, 0).getDate();
+      const daysPassed = now.getUTCDate();
+      const dailyAvg = daysPassed > 0 ? (thisMonth.length / daysPassed).toFixed(1) : '0';
       return (
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
             <span className="text-sm text-text-secondary">완료된 상담</span>
-            <span className="font-bold text-text">{completedCount}건</span>
-          </div>
-          <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-            <span className="text-sm text-text-secondary">미확정 상담</span>
-            <span className="font-bold text-text">{inProgressCount}건</span>
-          </div>
-          <div className="flex items-center justify-between rounded-xl bg-blue-50 p-3">
-            <span className="text-sm text-text-secondary">사전 상담 접수</span>
-            <span className="font-bold text-blue-600">{preConsultCount}건</span>
+            <span className="font-bold text-text">{thisMonth.length}건</span>
           </div>
           <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
             <span className="text-sm text-text-secondary">하루 평균</span>
@@ -217,12 +204,6 @@ function KPIBottomSheet({ kpi, onClose }: BottomSheetProps) {
   const reservations = useReservationStore((s) => s.reservations);
   const detail = buildKPIDetail(kpi.label, records, customers, reservations);
 
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
-  }, []);
-
   return (
     <>
       {/* 오버레이 */}
@@ -244,7 +225,7 @@ function KPIBottomSheet({ kpi, onClose }: BottomSheetProps) {
           </div>
           <button
             onClick={onClose}
-            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-surface-alt text-text-muted"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-alt text-text-muted"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -289,15 +270,6 @@ const KPI_SYMBOL: Record<string, string> = {
   '오늘 예약': 'cal',
 };
 
-const KPI_DESCRIPTION: Record<string, string> = {
-  '이달 상담 건수': '이번 달 진행된 상담 건수 (완료+미확정, 사전상담 제외, 전월 대비 변화율)',
-  '인기 디자인': '전체 상담 중 가장 많이 선택된 디자인 유형',
-  '재방문율': '2회 이상 방문 고객 / 전체 고객 비율',
-  '오늘 예약': '오늘 날짜에 등록된 예약 건수',
-  '평균 옵션 선택': '상담 당 평균 추가 옵션 선택 개수',
-  '단골 고객': '3회 이상 방문한 고객 수',
-};
-
 const VISIBLE_KPI_LABELS = new Set([
   '이달 상담 건수',
   '인기 디자인',
@@ -330,29 +302,12 @@ export function KPICards() {
           onClick={() => setSelectedKPI(kpi)}
         >
           <div className="p-4 h-full flex flex-col justify-between">
-            {/* Top: text symbol badge + info icon */}
-            <div className="flex items-center justify-between">
-              <div
-                className="flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold text-white"
-                style={{ background: 'var(--color-primary)' }}
-              >
-                {KPI_SYMBOL[kpi.label] ?? '#'}
-              </div>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setSelectedKPI(kpi); }}
-                className="group relative flex min-h-[44px] min-w-[44px] -m-[10px] items-center justify-center text-text-muted hover:text-primary transition-colors"
-                aria-label={`${kpi.label} 설명`}
-              >
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-text-muted/10 group-hover:bg-primary/10 transition-colors">
-                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M12 18h.01" />
-                  </svg>
-                </span>
-                <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-max max-w-[180px] rounded-lg bg-text px-2.5 py-1.5 text-[10px] leading-snug text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
-                  {KPI_DESCRIPTION[kpi.label] ?? ''}
-                </span>
-              </button>
+            {/* Top: text symbol badge */}
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-xl text-xs font-bold text-white"
+              style={{ background: 'var(--color-primary)' }}
+            >
+              {KPI_SYMBOL[kpi.label] ?? '#'}
             </div>
 
             {/* Middle: large value */}

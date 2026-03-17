@@ -124,18 +124,12 @@ function CustomPartsManager() {
                 />
               </div>
               <div className="flex gap-2">
-                <button
-                  onClick={() => setEditingId(null)}
-                  className="flex-1 rounded-lg border border-border py-1.5 text-xs font-semibold text-text-secondary hover:bg-surface-alt transition-colors"
-                >
+                <Button variant="secondary" size="sm" className="flex-1" onClick={() => setEditingId(null)}>
                   {t('common.cancel')}
-                </button>
-                <button
-                  onClick={() => handleEditSave(part.id)}
-                  className="flex-1 rounded-lg bg-primary py-1.5 text-xs font-semibold text-white hover:bg-primary/90 transition-colors"
-                >
+                </Button>
+                <Button variant="primary" size="sm" className="flex-1" onClick={() => handleEditSave(part.id)}>
                   {t('common.save')}
-                </button>
+                </Button>
               </div>
             </div>
           );
@@ -155,18 +149,12 @@ function CustomPartsManager() {
             </button>
             {isConfirmingDelete ? (
               <div className="flex items-center gap-1 flex-shrink-0">
-                <button
-                  onClick={() => setConfirmDeleteId(null)}
-                  className="rounded-md border border-border px-2 py-1 text-[11px] font-semibold text-text-secondary hover:bg-surface transition-colors"
-                >
+                <Button variant="secondary" size="sm" onClick={() => setConfirmDeleteId(null)}>
                   {t('common.cancel')}
-                </button>
-                <button
-                  onClick={() => handleDelete(part.id)}
-                  className="rounded-md bg-error/10 border border-error/30 px-2 py-1 text-[11px] font-semibold text-error hover:bg-error/20 transition-colors"
-                >
+                </Button>
+                <Button variant="ghost" size="sm" className="text-error" onClick={() => handleDelete(part.id)}>
                   {t('common.delete')}
-                </button>
+                </Button>
               </div>
             ) : (
               <button
@@ -207,31 +195,21 @@ function CustomPartsManager() {
             />
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={() => { setShowAddForm(false); setNewPartName(''); setNewPartPrice(''); }}
-              className="flex-1 rounded-lg border border-border py-1.5 text-xs font-semibold text-text-secondary hover:bg-surface-alt transition-colors"
-            >
+            <Button variant="secondary" size="sm" className="flex-1" onClick={() => { setShowAddForm(false); setNewPartName(''); setNewPartPrice(''); }}>
               {t('common.cancel')}
-            </button>
-            <button
-              onClick={handleAdd}
-              disabled={!newPartName.trim() || !newPartPrice.trim()}
-              className="flex-1 rounded-lg bg-primary py-1.5 text-xs font-semibold text-white disabled:opacity-40 hover:bg-primary/90 transition-colors"
-            >
+            </Button>
+            <Button variant="primary" size="sm" className="flex-1" disabled={!newPartName.trim() || !newPartPrice.trim()} onClick={handleAdd}>
               {t('settings.staff_add')}
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="mt-1 flex items-center gap-1.5 rounded-xl border border-dashed border-primary/40 py-2 px-3 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors"
-        >
+        <Button variant="outline" size="sm" className="mt-1" onClick={() => setShowAddForm(true)}>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
           {t('settings.service_addPart')}
-        </button>
+        </Button>
       )}
 
       {customParts.length === 0 && !showAddForm && (
@@ -420,7 +398,9 @@ function StaffSection() {
       <Card className="mx-4 md:mx-0">
         <div className="mb-3 flex items-center justify-between">
           <span className="text-sm font-medium text-text">{t('settings.staff_registered')}</span>
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => {
               if (showAddForm) {
                 resetAddForm();
@@ -429,10 +409,9 @@ function StaffSection() {
                 setFeedback(null);
               }
             }}
-            className="min-h-[44px] rounded-lg border border-primary px-3 py-1 text-xs font-medium text-primary"
           >
             {showAddForm ? '취소' : t('settings.staff_add')}
-          </button>
+          </Button>
         </div>
 
         {feedback && (
@@ -583,13 +562,9 @@ function StaffSection() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-1.5 pl-11">
-                  <button
-                    onClick={() => startEdit(d)}
-                    className="rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-semibold text-text-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary transition-all"
-                    disabled={isBusy}
-                  >
+                  <Button variant="secondary" size="sm" onClick={() => startEdit(d)} disabled={isBusy}>
                     프로필 수정
-                  </button>
+                  </Button>
                   <label
                     htmlFor={inputId}
                     className={cn(
@@ -620,29 +595,17 @@ function StaffSection() {
                   )}
                   {isConfirmingDelete ? (
                     <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => setConfirmDeleteId(null)}
-                        className="rounded-md border border-border px-2 py-1 text-[11px] font-semibold text-text-secondary hover:bg-surface transition-colors"
-                        disabled={isBusy}
-                      >
+                      <Button variant="secondary" size="sm" onClick={() => setConfirmDeleteId(null)} disabled={isBusy}>
                         취소
-                      </button>
-                      <button
-                        onClick={() => void handleDelete(d)}
-                        className="rounded-md border border-error/30 bg-error/10 px-2 py-1 text-[11px] font-semibold text-error hover:bg-error/20 transition-colors"
-                        disabled={isBusy}
-                      >
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-error" onClick={() => void handleDelete(d)} disabled={isBusy}>
                         삭제
-                      </button>
+                      </Button>
                     </div>
                   ) : (
-                    <button
-                      onClick={() => void handleDelete(d)}
-                      className="rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-semibold text-text-secondary hover:border-error/40 hover:bg-error/10 hover:text-error transition-all disabled:opacity-40"
-                      disabled={isBusy || d.role === 'owner'}
-                    >
+                    <Button variant="ghost" size="sm" className="text-error" onClick={() => void handleDelete(d)} disabled={isBusy || d.role === 'owner'}>
                       프로필 삭제
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -869,13 +832,9 @@ function OperatingHoursSection() {
         )}
 
         <div className="mt-4 flex justify-end">
-          <button
-            onClick={() => void handleSave()}
-            disabled={isSaving}
-            className="rounded-lg border border-primary px-4 py-1.5 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors disabled:opacity-40"
-          >
+          <Button variant="outline" size="sm" onClick={() => void handleSave()} disabled={isSaving}>
             {isSaving ? '저장 중...' : t('settings.hours_save')}
-          </button>
+          </Button>
         </div>
       </Card>
     </Section>
@@ -995,18 +954,12 @@ function StorageManagementSection() {
             <div className="p-5">
               <p className="text-sm text-text-secondary mb-4">포트폴리오의 모든 사진이 삭제됩니다. 계속하시겠습니까?</p>
               <div className="flex gap-2">
-                <button
-                  onClick={() => setConfirmClearPortfolio(false)}
-                  className="flex-1 rounded-lg border border-border py-2 text-xs font-semibold text-text-secondary hover:bg-surface-alt transition-colors"
-                >
+                <Button variant="secondary" size="sm" className="flex-1" onClick={() => setConfirmClearPortfolio(false)}>
                   {t('common.cancel')}
-                </button>
-                <button
-                  onClick={() => { handleClearPortfolio(); }}
-                  className="flex-1 rounded-lg bg-warning/10 border border-warning/30 py-2 text-xs font-semibold text-warning hover:bg-warning/20 transition-colors"
-                >
+                </Button>
+                <Button variant="danger" size="sm" className="flex-1" onClick={() => { handleClearPortfolio(); }}>
                   포트폴리오 초기화
-                </button>
+                </Button>
               </div>
             </div>
           </Modal>
@@ -1035,18 +988,12 @@ function StorageManagementSection() {
             <div className="p-5">
               <p className="text-sm text-text-secondary mb-4">로컬 캐시 데이터(예약, 고객, 기록)가 초기화됩니다. 서버에 저장된 데이터는 앱 재시작 시 복원될 수 있습니다. 계속하시겠습니까?</p>
               <div className="flex gap-2">
-                <button
-                  onClick={() => setConfirmClearAll(false)}
-                  className="flex-1 rounded-lg border border-border py-2 text-xs font-semibold text-text-secondary hover:bg-surface-alt transition-colors"
-                >
+                <Button variant="secondary" size="sm" className="flex-1" onClick={() => setConfirmClearAll(false)}>
                   {t('common.cancel')}
-                </button>
-                <button
-                  onClick={() => { handleClearAll(); }}
-                  className="flex-1 rounded-lg bg-error/10 border border-error/30 py-2 text-xs font-semibold text-error hover:bg-error/20 transition-colors"
-                >
+                </Button>
+                <Button variant="danger" size="sm" className="flex-1" onClick={() => { handleClearAll(); }}>
                   전체 데이터 초기화
-                </button>
+                </Button>
               </div>
             </div>
           </Modal>
@@ -1062,6 +1009,73 @@ function StorageManagementSection() {
   );
 }
 
+
+// ── 시술 항목 관리 섹션 ──
+const SERVICE_STRUCTURE_LABELS: Record<string, string> = {
+  removal: '제거',
+  gradation: '그라데이션',
+  french: '프렌치',
+  magnet: '마그네틱',
+  pointFullArt: '포인트/풀아트',
+  parts: '파츠',
+  repair: '리페어',
+  overlay: '오버레이',
+  extension: '연장',
+};
+
+function ServiceStructureSection() {
+  const { shopSettings, setShopSettings } = useAppStore();
+  const serviceStructure = shopSettings.serviceStructure;
+  const [feedback, setFeedback] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
+
+  const handleToggle = async (key: string, value: boolean) => {
+    const result = await setShopSettings({
+      serviceStructure: { ...serviceStructure, [key]: value },
+    });
+    if (!result.success) {
+      setFeedback({ tone: 'error', message: result.error ?? '시술 항목 변경에 실패했습니다.' });
+      setTimeout(() => setFeedback(null), 2500);
+    }
+  };
+
+  return (
+    <Section title="시술 항목 관리">
+      <Card className="mx-4 md:mx-0">
+        <p className="text-sm text-text-muted mb-3">현재 시술 중인 항목을 ON/OFF 할 수 있습니다</p>
+        {feedback && (
+          <div
+            className={cn(
+              'mb-3 rounded-xl border px-3 py-2 text-xs font-medium',
+              feedback.tone === 'success'
+                ? 'border-success/20 bg-success/10 text-success'
+                : 'border-error/20 bg-error/10 text-error',
+            )}
+          >
+            {feedback.message}
+          </div>
+        )}
+        <div className="flex flex-col">
+          {Object.entries(SERVICE_STRUCTURE_LABELS).map(([key, label], index, arr) => (
+            <div
+              key={key}
+              className={cn(
+                'flex items-center justify-between py-3',
+                index !== arr.length - 1 && 'border-b border-border/50',
+              )}
+            >
+              <span className="text-sm font-medium text-text">{label}</span>
+              <Toggle
+                size="sm"
+                checked={serviceStructure[key as keyof typeof serviceStructure]}
+                onChange={(v) => void handleToggle(key, v)}
+              />
+            </div>
+          ))}
+        </div>
+      </Card>
+    </Section>
+  );
+}
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -1244,15 +1258,16 @@ export default function SettingsPage() {
                       <h2 className="text-lg font-bold text-text">{shopName}</h2>
                       <p className="mt-0.5 text-sm text-text-secondary">{shopPhone}</p>
                     </div>
-                    <button
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => {
                         setShopFeedback(null);
                         setEditingShop(true);
                       }}
-                      className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary"
                     >
                       {t('settings.shop_edit')}
-                    </button>
+                    </Button>
                   </div>
                   <div className="mt-3 flex flex-col gap-2 text-sm">
                     <div className="flex gap-2">
@@ -1325,31 +1340,26 @@ export default function SettingsPage() {
 
       {/* ── 서비스 탭 ── */}
       {effectiveTab === 'service' && (
+        <>
+        {/* 시술 항목 관리 */}
+        <ServiceStructureSection />
+
         <Section title={t('settings.service_title')}>
           <Card className="mx-4 md:mx-0">
             <div className="mb-3 flex items-center justify-between">
               <span className="text-sm font-medium text-text">{t('settings.service_priceTable')}</span>
               {!editingPrices ? (
-                <button
-                  onClick={() => setEditingPrices(true)}
-                  className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-alt transition-colors"
-                >
+                <Button variant="secondary" size="sm" onClick={() => setEditingPrices(true)}>
                   {t('settings.shop_edit')}
-                </button>
+                </Button>
               ) : (
                 <div className="flex gap-2">
-                  <button
-                    onClick={handleCancelPrices}
-                    className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-alt transition-colors"
-                  >
+                  <Button variant="secondary" size="sm" onClick={handleCancelPrices}>
                     {t('common.cancel')}
-                  </button>
-                  <button
-                    onClick={handleSavePrices}
-                    className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary/90 transition-colors"
-                  >
+                  </Button>
+                  <Button variant="primary" size="sm" onClick={handleSavePrices}>
                     {t('common.save')}
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -1444,6 +1454,7 @@ export default function SettingsPage() {
             <DesignPresetsManager />
           </Card>
         </Section>
+        </>
       )}
 
       {/* ── 테마 탭 ── */}
