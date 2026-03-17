@@ -32,6 +32,7 @@ interface UploadPhotoFormProps {
 
 export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): React.ReactElement {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const customerDropdownRef = useRef<HTMLDivElement>(null);
 
   const customers = useCustomerStore((s) => s.customers);
   const createCustomer = useCustomerStore((s) => s.createCustomer);
@@ -56,6 +57,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [customerSearch, setCustomerSearch] = useState('');
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
 
   const records = getAllRecords();
   const allPhotos = usePortfolioStore((s) => s.photos);
@@ -122,6 +124,56 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
     setCustomColorInput('');
   }, [customColorInput, selectedColors]);
 
+  useEffect(() => {
+    if (!showCustomerDropdown) return;
+
+    const handleClickOutside = (event: MouseEvent): void => {
+      if (customerDropdownRef.current && !customerDropdownRef.current.contains(event.target as Node)) {
+        setShowCustomerDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCustomerDropdown]);
+
+  const handleCustomerSearchChange = useCallback((value: string): void => {
+    setCustomerSearch(value);
+    setShowCustomerDropdown(true);
+
+    if (!selectedCustomerId) return;
+
+    const selectedCustomer = customers.find((customer) => customer.id === selectedCustomerId);
+    if (selectedCustomer && selectedCustomer.name !== value) {
+      setSelectedCustomerId('');
+    }
+  }, [customers, selectedCustomerId]);
+
+  const handleSelectCustomer = useCallback((customerId: string): void => {
+    const customer = customers.find((item) => item.id === customerId);
+    if (!customer) return;
+
+    setSelectedCustomerId(customer.id);
+    setCustomerSearch(customer.name);
+    setShowCustomerDropdown(false);
+  }, [customers]);
+
+  const handleCreateCustomer = useCallback((): void => {
+    const customerName = customerSearch.trim();
+    if (!customerName) return;
+
+    const newCustomer = createCustomer({
+      name: customerName,
+      assignedDesignerId: activeDesignerId ?? undefined,
+    });
+
+    setSelectedCustomerId(newCustomer.id);
+    setCustomerSearch(newCustomer.name);
+    setShowCustomerDropdown(false);
+  }, [activeDesignerId, createCustomer, customerSearch]);
+
   const resetForm = useCallback((): void => {
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
@@ -143,6 +195,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
     setCustomColorInput('');
     setError(null);
     setCustomerSearch('');
+    setShowCustomerDropdown(false);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -269,26 +322,24 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
         )}
       </div>
 
-      <div>
+      <div ref={customerDropdownRef}>
         <label className="mb-1.5 block text-sm font-medium text-text-secondary">
           고객 선택
         </label>
         <Input
           placeholder="고객 이름 검색"
           value={customerSearch}
-          onChange={(e) => setCustomerSearch(e.target.value)}
+          onChange={(e) => handleCustomerSearchChange(e.target.value)}
+          onFocus={() => setShowCustomerDropdown(true)}
           className="mb-2"
         />
-        {(customerSearch || selectedCustomerId) && (
+        {showCustomerDropdown && (customerSearch || selectedCustomerId) && (
           <div className="max-h-48 overflow-y-auto rounded-xl border border-border bg-surface">
             {filteredCustomers.slice(0, 10).map((customer) => (
               <button
                 key={customer.id}
                 type="button"
-                onClick={() => {
-                  setSelectedCustomerId(customer.id);
-                  setCustomerSearch(customer.name);
-                }}
+                onClick={() => handleSelectCustomer(customer.id)}
                 className={cn(
                   'flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition-colors',
                   selectedCustomerId === customer.id
@@ -305,14 +356,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
             {customerSearch.trim() && !filteredCustomers.some((c) => c.name === customerSearch.trim()) && (
               <button
                 type="button"
-                onClick={() => {
-                  const newCustomer = createCustomer({
-                    name: customerSearch.trim(),
-                    assignedDesignerId: activeDesignerId ?? undefined,
-                  });
-                  setSelectedCustomerId(newCustomer.id);
-                  setCustomerSearch(newCustomer.name);
-                }}
+                onClick={handleCreateCustomer}
                 className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-primary border-t border-border hover:bg-primary/5 transition-colors"
               >
                 <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">+</span>
