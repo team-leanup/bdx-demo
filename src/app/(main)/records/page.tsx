@@ -8,6 +8,7 @@ import { ReservationReadinessBadge } from '@/components/reservations/Reservation
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Card, Input, Modal } from '@/components/ui';
+import { ConsultationLinkContent } from '@/components/reservations/ConsultationLinkModal';
 import { useRecordsStore } from '@/store/records-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useReservationStore } from '@/store/reservation-store';
@@ -37,6 +38,7 @@ import {
 } from '@/components/records';
 import { TAG_PRESETS } from '@/data/tag-presets';
 import { TagIconSvg } from '@/components/ui/TagIconSvg';
+import type { BookingRequest } from '@/types/consultation';
 import type { ConsultationRecord } from '@/types/consultation';
 
 const READINESS_LEGEND = [
@@ -142,6 +144,7 @@ export default function RecordsPage() {
   const [filter, setFilter] = useState<FilterPeriod>('all');
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [previewRecord, setPreviewRecord] = useState<ConsultationRecord | null>(null);
+  const [linkGenBooking, setLinkGenBooking] = useState<BookingRequest | null>(null);
 
   const [selectedDate, setSelectedDate] = useState(getTodayStr());
   const [weekStartDate, setWeekStartDate] = useState(getMonday(getTodayStr()));
@@ -153,12 +156,19 @@ export default function RecordsPage() {
   const [editForm, setEditForm] = useState({ title: '', phone: '', startTime: '', requestNote: '', referenceImages: [] as string[], language: 'ko' as 'ko' | 'en' | 'zh' | 'ja', deposit: '' as string });
   const editPhotoRef = useRef<HTMLInputElement>(null);
 
+  const closeSelectedEventSheet = (): void => {
+    setLinkGenBooking(null);
+    setEditMode(false);
+    setSelectedEvent(null);
+  };
+
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const setConsultationLocale = useLocaleStore((s) => s.setConsultationLocale);
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
   const getCustomerById = useCustomerStore((s) => s.getById);
 
   const designers = useShopStore((s) => s.designers);
+  const shopName = useShopStore((s) => s.shop?.name);
   const role = useAuthStore((s) => s.role);
   const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
   const allReservations = useReservationStore((s) => s.reservations);
@@ -298,8 +308,7 @@ export default function RecordsPage() {
       language: editForm.language,
       deposit: !isNaN(depositAmount ?? NaN) && depositAmount ? depositAmount : undefined,
     });
-    setSelectedEvent(null);
-    setEditMode(false);
+    closeSelectedEventSheet();
   };
 
   const handleStartConsultation = () => {
@@ -325,7 +334,7 @@ export default function RecordsPage() {
         currentStep: ConsultationStep.START,
       });
     }
-    setSelectedEvent(null);
+    closeSelectedEventSheet();
     router.push('/consultation');
   };
 
@@ -342,7 +351,7 @@ export default function RecordsPage() {
       removeRecord(selectedEvent.originalId);
     }
     setConfirmDelete(false);
-    setSelectedEvent(null);
+    closeSelectedEventSheet();
   };
 
   const handleEditModeEnter = () => {
@@ -623,7 +632,7 @@ export default function RecordsPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-40 bg-black/40"
-              onClick={() => setSelectedEvent(null)}
+              onClick={closeSelectedEventSheet}
             />
             <motion.div
               initial={{ opacity: 0, y: 60 }}
@@ -634,10 +643,14 @@ export default function RecordsPage() {
             >
               <div className="mb-4 flex flex-shrink-0 items-center justify-between px-5">
                 <h3 className="text-base font-bold text-text">
-                  {editMode ? '예약 수정' : (selectedEvent.type === 'reservation' ? '예약 상세' : '기록 상세')}
+                  {linkGenBooking
+                    ? '상담 링크 생성'
+                    : editMode
+                      ? '예약 수정'
+                      : (selectedEvent.type === 'reservation' ? '예약 상세' : '기록 상세')}
                 </h3>
                 <button
-                  onClick={() => { setSelectedEvent(null); setEditMode(false); }}
+                  onClick={linkGenBooking ? () => setLinkGenBooking(null) : closeSelectedEventSheet}
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-alt text-text-muted"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -646,7 +659,14 @@ export default function RecordsPage() {
                 </button>
               </div>
               <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-5 pb-8">
-                {editMode ? (
+                {linkGenBooking ? (
+                  <ConsultationLinkContent
+                    booking={linkGenBooking}
+                    shopName={shopName || shopSettings.shopName}
+                    onClose={() => setLinkGenBooking(null)}
+                    closeLabel="예약 상세로 돌아가기"
+                  />
+                ) : editMode ? (
                   <>
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-semibold text-text-secondary">고객명</label>
@@ -957,6 +977,28 @@ export default function RecordsPage() {
                         </div>
                       );
                     })()}
+                    {(() => {
+                      if (selectedEvent.type !== 'reservation') {
+                        return null;
+                      }
+
+                      const booking = allReservations.find((reservation) => reservation.id === selectedEvent.originalId);
+                      if (!booking) {
+                        return null;
+                      }
+
+                      return (
+                        <button
+                          onClick={() => setLinkGenBooking(booking)}
+                          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary hover:bg-primary/10 active:scale-[0.98] transition-all"
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                          </svg>
+                          고객용 상담 링크
+                        </button>
+                      );
+                    })()}
                     <div className="mt-3 flex gap-2">
                       {selectedEvent.status === 'completed' ? (
                         <span className="flex-1 rounded-xl bg-surface-alt px-4 py-3 text-sm font-bold text-text-muted text-center">
@@ -977,7 +1019,7 @@ export default function RecordsPage() {
                         수정
                       </button>
                       <button
-                        onClick={() => setSelectedEvent(null)}
+                        onClick={closeSelectedEventSheet}
                         className="rounded-xl bg-surface-alt px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
                       >
                         닫기
