@@ -20,8 +20,6 @@ interface CustomerInfoFormProps {
   onMemoChange: (v: string) => void;
   onExistingCustomerSelect: (customer: Customer) => void;
   allowExistingCustomerSearch?: boolean;
-  /** 고객 상세에서 진입 시 기존 고객으로 사전 선택 */
-  defaultSelectedCustomer?: Customer;
   className?: string;
 }
 
@@ -45,7 +43,6 @@ export function CustomerInfoForm({
   onMemoChange,
   onExistingCustomerSelect,
   allowExistingCustomerSearch = true,
-  defaultSelectedCustomer,
   className,
 }: CustomerInfoFormProps) {
   const t = useT();
@@ -65,9 +62,9 @@ export function CustomerInfoForm({
     monthly_art: t('design.monthlyArt'),
   };
   const customers = useCustomerStore((s) => s.customers);
-  const [mode, setMode] = useState<'new' | 'existing'>(defaultSelectedCustomer ? 'existing' : 'new');
+  const [mode, setMode] = useState<'new' | 'existing'>('new');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(defaultSelectedCustomer ?? null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [filledFromExisting, setFilledFromExisting] = useState<string | null>(null);
 
   const filtered = searchQuery.trim()

@@ -1,5 +1,13 @@
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
 @import "tailwindcss";
+
+/* Pretendard Variable Font (self-hosted) */
+@font-face {
+  font-family: 'Pretendard Variable';
+  font-weight: 45 920;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/PretendardVariable.woff2') format('woff2');
+}
 
 /* 116angmuburi (앵무부리) — BDX 로고 서체 */
 @font-face {
@@ -42,7 +50,7 @@
   --shadow-elevated: var(--shadow-elevated);
   --color-backdrop: var(--color-backdrop);
 
-  --font-pretendard: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji';
+  --font-pretendard: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
 }
 
 /* ============================================================
@@ -367,23 +375,10 @@ body {
   height: 100%;
   overflow-x: hidden;
   overscroll-behavior-y: none;
-  -webkit-overflow-scrolling: touch;
-  word-break: keep-all;
-  overflow-wrap: break-word;
 }
 
-/* 터치 반응 속도 개선 (300ms 딜레이 제거) */
-button,
-a,
-[role="button"],
-[onclick] {
-  touch-action: manipulation;
-}
-
-/* 스크롤 컨테이너 iOS 모멘텀 스크롤 */
-.overflow-y-auto,
-.overflow-y-scroll {
-  -webkit-overflow-scrolling: touch;
+#__next {
+  height: 100%;
 }
 
 /* Safe area support for mobile/tablet */
@@ -429,10 +424,4 @@ a,
 ::selection {
   background: var(--color-primary-light);
   color: var(--color-text);
-}
-
-/* 모바일 텍스트 overflow 방지 */
-.break-keep {
-  word-break: keep-all;
-  overflow-wrap: break-word;
 }

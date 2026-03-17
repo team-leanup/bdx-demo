@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CustomerTagChip } from '@/components/customer/CustomerTagChip';
@@ -117,13 +117,6 @@ export function TodayReservationCard({
   const [linkGenBooking, setLinkGenBooking] = useState<BookingRequest | null>(null);
   const [previewBooking, setPreviewBooking] = useState<BookingRequest | null>(null);
 
-  useEffect(() => {
-    if (!previewBooking) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
-  }, [previewBooking]);
-
   const handleStartClick = (booking: BookingRequest): void => {
     if (booking.customerId) {
       const pinnedTags = getPinnedTags(booking.customerId);
@@ -153,7 +146,7 @@ export function TodayReservationCard({
 
   return (
     <>
-    <motion.div data-tour-id="tour-reservations" variants={itemVariants} className="rounded-2xl bg-surface border border-border overflow-hidden">
+    <motion.div variants={itemVariants} className="rounded-2xl bg-surface border border-border overflow-hidden">
       {/* 헤더 */}
       <div className="flex items-center justify-between px-4 pt-4 pb-3">
         <div className="flex items-center gap-2">
@@ -205,9 +198,6 @@ export function TodayReservationCard({
             return (
               <motion.div
                 key={booking.id}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!isCompleted) handleStartClick(booking); } }}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.06, duration: 0.3 }}
@@ -289,7 +279,7 @@ export function TodayReservationCard({
                 <div className="flex flex-wrap items-center gap-2 pl-14 md:ml-auto md:flex-nowrap md:pl-0">
                   {/* H-2: 썸네일 */}
                   {thumbnailItems.length > 0 && (
-                    <div className="flex gap-1.5 overflow-x-auto pb-0.5 max-w-[160px] md:max-w-none">
+                    <div className="flex gap-1.5 overflow-x-auto pb-0.5 max-w-[96px] md:max-w-none">
                       {thumbnailItems.map((item, thumbIdx) => (
                         <div
                           key={`${item.label}-${thumbIdx}-${item.src}`}
@@ -320,10 +310,6 @@ export function TodayReservationCard({
                         className="h-full w-full object-cover"
                         unoptimized
                       />
-                    </div>
-                  ) : booking.customerId ? (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 border-2 border-primary/30">
-                      <span className="text-xs font-bold text-primary">{booking.customerName.charAt(0)}</span>
                     </div>
                   ) : (
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-alt border border-border">
@@ -365,10 +351,7 @@ export function TodayReservationCard({
                             <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                           </svg>
                         </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleStartClick(booking); }}
-                          className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white active:scale-95 transition-transform"
-                        >
+                        <button className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white active:scale-95 transition-transform">
                           {startConsultationLabel}
                         </button>
                       </>

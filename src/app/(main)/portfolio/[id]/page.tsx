@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useEffect, Suspense } from 'react';
+import { use, useState, Suspense } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -53,12 +53,7 @@ const EXPRESSION_LABEL: Record<string, string> = {
 function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
   const router = useRouter();
   const photos = usePortfolioStore((s) => s.photos);
-  const hydrateFromDB = usePortfolioStore((s) => s.hydrateFromDB);
   const removePhoto = usePortfolioStore((s) => s.removePhoto);
-
-  useEffect(() => {
-    hydrateFromDB();
-  }, [hydrateFromDB]);
   const getCustomerById = useCustomerStore((s) => s.getById);
   const getAllRecords = useRecordsStore((s) => s.getAllRecords);
   
@@ -176,7 +171,7 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
                 {customer?.name.charAt(0) ?? '?'}
               </div>
               <div className="min-w-0">
-                <p className="font-semibold text-text truncate">{photo.kind === 'reference' ? '레퍼런스' : (customer?.name ?? '고객')}</p>
+                <p className="font-semibold text-text truncate">{customer?.name ?? '미지정'}</p>
                 <p className="text-xs text-text-muted">{formatDateDot(effectiveDate ?? photo.createdAt)}</p>
               </div>
             </div>
@@ -312,7 +307,7 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
             />
           </div>
 
-          {customer && photo.kind === 'treatment' && (
+          {customer && (
             <Button
               variant="secondary"
               fullWidth

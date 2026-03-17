@@ -793,33 +793,6 @@ export async function dbUpsertCustomerTags(customerId: string, tags: CustomerTag
   }
 }
 
-export async function dbDeleteCustomer(customerId: string): Promise<void> {
-  // 태그 먼저 삭제
-  const { error: tagError } = await supabase
-    .from('customer_tags')
-    .delete()
-    .eq('customer_id', customerId);
-  if (tagError) {
-    console.error('[db] dbDeleteCustomer tag cleanup error:', toDbErrorSnapshot(tagError));
-  }
-  // 스몰토크 노트 삭제
-  const { error: noteError } = await supabase
-    .from('small_talk_notes')
-    .delete()
-    .eq('customer_id', customerId);
-  if (noteError) {
-    console.error('[db] dbDeleteCustomer note cleanup error:', toDbErrorSnapshot(noteError));
-  }
-  // 고객 삭제
-  const { error } = await supabase
-    .from('customers')
-    .delete()
-    .eq('id', customerId);
-  if (error) {
-    console.error('[db] dbDeleteCustomer error:', toDbErrorSnapshot(error));
-  }
-}
-
 export async function dbInsertSmallTalkNote(note: SmallTalkNote): Promise<void> {
   const { error } = await supabase.from('small_talk_notes').insert({
     id: note.id,
@@ -868,32 +841,6 @@ export async function dbUpsertShop(shop: Shop): Promise<{ success: boolean; erro
     return { success: false, error: error.message };
   }
 
-  return { success: true };
-}
-
-export interface ShopCoreFields {
-  name?: string;
-  phone?: string;
-  address?: string;
-  businessHours?: BusinessHours[];
-  baseHandPrice?: number;
-  baseFootPrice?: number;
-}
-
-export async function dbUpdateShopCore(shopId: string, fields: ShopCoreFields): Promise<{ success: boolean; error?: string }> {
-  const updatePayload: Record<string, unknown> = { updated_at: getNowInKoreaIso() };
-  if (fields.name !== undefined) updatePayload.name = fields.name;
-  if (fields.phone !== undefined) updatePayload.phone = fields.phone;
-  if (fields.address !== undefined) updatePayload.address = fields.address;
-  if (fields.businessHours !== undefined) updatePayload.business_hours = fields.businessHours;
-  if (fields.baseHandPrice !== undefined) updatePayload.base_hand_price = fields.baseHandPrice;
-  if (fields.baseFootPrice !== undefined) updatePayload.base_foot_price = fields.baseFootPrice;
-
-  const { error } = await supabase.from('shops').update(updatePayload).eq('id', shopId);
-  if (error) {
-    console.error('[db] dbUpdateShopCore error:', toDbErrorSnapshot(error));
-    return { success: false, error: error.message };
-  }
   return { success: true };
 }
 

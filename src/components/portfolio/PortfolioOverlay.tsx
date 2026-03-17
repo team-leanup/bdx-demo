@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,13 +28,6 @@ const DESIGN_SCOPE_LABEL: Record<string, string> = {
   solid_point: '단색+포인트',
   full_art: '풀아트',
   monthly_art: '이달의 아트',
-};
-
-const SERVICE_TO_DESIGN_SCOPE: Record<string, string> = {
-  '원컬러': 'solid_tone',
-  '단색+포인트': 'solid_point',
-  '풀아트': 'full_art',
-  '이달의 아트': 'monthly_art',
 };
 
 export function PortfolioOverlay({
@@ -68,13 +61,6 @@ export function PortfolioOverlay({
     if (currentIndex < photoIds.length - 1) setCurrentId(photoIds[currentIndex + 1]);
   }, [currentIndex, photoIds]);
 
-  // Body scroll lock
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
-  }, []);
-
   const NAIL_FALLBACKS = [
     '/images/mock/nail/nail-1.jpg',
     '/images/mock/nail/nail-2.jpg',
@@ -96,7 +82,7 @@ export function PortfolioOverlay({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black overflow-y-auto overscroll-contain"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
         onClick={onClose}
       >
         <motion.div
@@ -105,7 +91,7 @@ export function PortfolioOverlay({
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full max-w-sm mx-4 my-4 flex flex-col gap-0 rounded-3xl overflow-hidden shadow-2xl max-h-[95dvh]"
+          className="relative w-full max-w-sm mx-4 flex flex-col gap-0 rounded-3xl overflow-hidden shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
           {/* 사진 */}
@@ -155,11 +141,11 @@ export function PortfolioOverlay({
           </div>
 
           {/* 정보 + 액션 */}
-          <div className="bg-surface flex flex-col gap-0 min-h-0 overflow-y-auto overscroll-contain">
+          <div className="bg-surface flex flex-col gap-0">
             {/* 고객 정보 */}
             <div className="px-4 pt-3 pb-2">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-bold text-foreground truncate">{photo.kind === 'reference' ? '레퍼런스' : (customer?.name ?? '고객')}</p>
+                <p className="text-sm font-bold text-foreground truncate">{customer?.name ?? '알 수 없음'}</p>
                 {effectiveDate && (
                   <p className="text-xs text-muted-foreground shrink-0">{formatDateDot(effectiveDate)}</p>
                 )}
@@ -225,12 +211,13 @@ export function PortfolioOverlay({
                 size="sm"
                 className="flex-1"
                 onClick={() => {
-                  const scopeKey = serviceType ? SERVICE_TO_DESIGN_SCOPE[serviceType] : undefined;
                   hydrateConsultation({
+                    customerId: customer?.id,
+                    customerName: customer?.name,
+                    customerPhone: customer?.phone,
                     referenceImages: photo.imageDataUrl ? [photo.imageDataUrl] : [],
                     entryPoint: 'staff',
                     currentStep: ConsultationStep.START,
-                    ...(scopeKey ? { designScope: scopeKey as 'solid_tone' | 'solid_point' | 'full_art' | 'monthly_art' } : {}),
                   });
                   router.push('/consultation');
                   onClose();

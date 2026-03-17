@@ -117,11 +117,7 @@ export function LinkCustomerModal({
                 기존 고객 검색
               </button>
               <button
-                onClick={() => {
-                  setMode('create');
-                  setNewName(reservationName);
-                  setNewPhone(reservationPhone ?? '');
-                }}
+                onClick={() => setMode('create')}
                 className={cn(
                   'flex-1 py-2 rounded-lg text-sm font-semibold transition-all',
                   mode === 'create'
@@ -141,7 +137,7 @@ export function LinkCustomerModal({
                   placeholder="이름 또는 전화번호로 검색"
                   className="text-sm"
                 />
-                <div className="flex flex-col gap-2 max-h-64 overflow-y-auto overscroll-contain">
+                <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
                   {filteredCustomers.length === 0 ? (
                     <div className="py-6 text-center">
                       <p className="text-sm text-text-muted">검색 결과가 없습니다</p>

@@ -453,7 +453,7 @@ export default function PortfolioPage(): React.ReactElement {
                   <div className="p-2.5 space-y-1.5">
                     <div className="flex items-center justify-between gap-1">
                       <p className="text-xs font-semibold text-foreground truncate">
-                        {photo.kind === 'reference' ? '레퍼런스' : (customer?.name ?? '고객')}
+                        {customer?.name ?? '미지정'}
                       </p>
                       <p className="text-[10px] text-muted-foreground shrink-0">{formatDateDot(effectiveDate)}</p>
                     </div>

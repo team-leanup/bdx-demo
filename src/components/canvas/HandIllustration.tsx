@@ -200,7 +200,7 @@ export function HandIllustration({
       {/* ── Middle finger label (top center — longest finger) ── */}
       {hasAnyLabel && middleHasLabel && (
         <div className="flex justify-center">
-          <div className="max-w-[220px] md:max-w-[260px]">
+          <div className="max-w-[200px] md:max-w-[260px]">
             <AnnotationCard
               fingerName={FINGER_LABELS.middle}
               fingerNameKo={FINGER_NAMES.ko.middle}
@@ -225,7 +225,7 @@ export function HandIllustration({
         </div>
 
         {/* Hand SVG (smaller) */}
-        <div className="w-[140px] md:w-[240px] overflow-hidden touch-none">
+        <div className="w-[160px] md:w-[240px] overflow-hidden">
           <svg
             viewBox="0 0 320 260"
             className="w-full"

@@ -68,7 +68,7 @@ function treatmentToArtType(type: TreatmentType): FingerSelection['artType'] {
 
 const DEFAULT_MODAL: ModalState = {
   isOpen: false,
-  hand: 'left',
+  hand: 'right',
   finger: null,
   activeTab: 'color',
   draftColor: '',
@@ -83,7 +83,7 @@ const DEFAULT_MODAL: ModalState = {
 };
 
 export function FingerCanvas({ initialSelections, onChange, className }: FingerCanvasProps) {
-  const [activeHand, setActiveHand] = useState<HandSide>('left');
+  const [activeHand, setActiveHand] = useState<HandSide>('right');
   const [selections, setSelections] = useState<CanvasSelections>(
     initialSelections ?? { left: {}, right: {} },
   );
@@ -235,7 +235,7 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
         <AnimatePresence mode="wait">
           <motion.div
             key={activeHand}
-            className="w-full touch-none"
+            className="w-full"
             initial={{ opacity: 0, x: activeHand === 'right' ? 30 : -30 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: activeHand === 'right' ? -30 : 30 }}
@@ -288,7 +288,7 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
         isOpen={modal.isOpen}
         onClose={closeModal}
         title={modalTitle}
-        className="md:max-w-2xl md:w-[90vw]"
+        className="max-h-[80vh] md:max-w-2xl md:w-[90vw]"
       >
         {/* Tabs */}
         <div className="flex border-b border-border">
@@ -315,7 +315,7 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
         </div>
 
         {/* Tab content */}
-        <div>
+        <div className="overflow-y-auto">
           {modal.activeTab === 'color' ? (
             <ColorPicker
               selectedColor={modal.draftColor}
@@ -356,8 +356,8 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
           />
         </div>
 
-        {/* Actions — sticky bottom so always reachable */}
-        <div className="flex gap-2 px-4 py-4 border-t border-border sticky bottom-0 bg-surface z-10">
+        {/* Actions */}
+        <div className="flex gap-2 px-4 py-4 border-t border-border">
           {modal.finger && selections[modal.hand][modal.finger]?.colorCode && (
             <Button
               variant="ghost"
