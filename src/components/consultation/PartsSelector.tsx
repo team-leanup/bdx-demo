@@ -176,57 +176,64 @@ export function PartsSelector({ className }: PartsSelectorProps) {
                   initial={{ opacity: 0, y: -6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-2xl border-2 border-primary bg-white"
+                  className="flex flex-col gap-2 px-3 py-2.5 rounded-2xl border-2 border-primary bg-white md:flex-row md:items-center md:gap-3"
                 >
-                  {/* Part icon dot */}
-                  <div className="w-7 h-7 rounded-xl bg-surface-alt border border-border flex items-center justify-center flex-shrink-0">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <circle cx="7" cy="7" r="3" fill="currentColor" className="text-primary" />
-                      <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1" className="text-primary" fillOpacity="0" />
-                    </svg>
+                  <div className="flex min-w-0 items-center gap-3 md:flex-1">
+                    {/* Part icon dot */}
+                    <div className="w-7 h-7 rounded-xl bg-surface-alt border border-border flex items-center justify-center flex-shrink-0">
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <circle cx="7" cy="7" r="3" fill="currentColor" className="text-primary" />
+                        <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1" className="text-primary" fillOpacity="0" />
+                      </svg>
+                    </div>
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-text">
+                      {(() => {
+                        const key = entry.customPartId ? PARTS_I18N_MAP[entry.customPartId] : undefined;
+                        if (key) {
+                          return <>{t(key)}{!isKo && <span className="ml-1 text-[10px] text-text-muted opacity-60">{ko(key)}</span>}</>;
+                        }
+                        return entry.name;
+                      })()}
+                    </span>
                   </div>
-                  <span className="flex-1 min-w-0 truncate text-sm font-semibold text-text">
-                    {(() => {
-                      const key = entry.customPartId ? PARTS_I18N_MAP[entry.customPartId] : undefined;
-                      if (key) {
-                        return <>{t(key)}{!isKo && <span className="ml-1 text-[10px] text-text-muted opacity-60">{ko(key)}</span>}</>;
-                      }
-                      return entry.name;
-                    })()}
-                  </span>
-                  <Counter
-                    value={entry.quantity}
-                    onChange={(qty) => updateCustomQuantity(entry.id, qty)}
-                    min={0}
-                    max={20}
-                  />
-                  <AnimatePresence>
-                    {entry.quantity > 0 && entry.customPartId && (() => {
-                      const part = quickPartsChips.find((p) => p.id === entry.customPartId);
-                      if (!part) return null;
-                      return (
-                        <motion.span
-                          key="price"
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          className="text-xs font-bold text-primary whitespace-nowrap flex-shrink-0"
-                        >
-                          +₩{(part.pricePerUnit * entry.quantity).toLocaleString(localeMap[currentLocale] || 'ko-KR')}
-                        </motion.span>
-                      );
-                    })()}
-                  </AnimatePresence>
-                  <button
-                    type="button"
-                    onClick={() => removeCustomEntry(entry.id)}
-                    className="w-7 h-7 rounded-full border border-border bg-surface flex items-center justify-center text-text-muted hover:text-error hover:border-error/30 hover:bg-error/5 transition-all flex-shrink-0"
-                    aria-label={t('common.delete')}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                    </svg>
-                  </button>
+
+                  <div className="flex items-center justify-between gap-2 pl-10 md:pl-0 md:flex-shrink-0">
+                    <Counter
+                      value={entry.quantity}
+                      onChange={(qty) => updateCustomQuantity(entry.id, qty)}
+                      min={0}
+                      max={20}
+                    />
+                    <div className="ml-auto flex items-center gap-2">
+                      <AnimatePresence>
+                        {entry.quantity > 0 && entry.customPartId && (() => {
+                          const part = quickPartsChips.find((p) => p.id === entry.customPartId);
+                          if (!part) return null;
+                          return (
+                            <motion.span
+                              key="price"
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.8 }}
+                              className="text-xs font-bold text-primary whitespace-nowrap flex-shrink-0"
+                            >
+                              +₩{(part.pricePerUnit * entry.quantity).toLocaleString(localeMap[currentLocale] || 'ko-KR')}
+                            </motion.span>
+                          );
+                        })()}
+                      </AnimatePresence>
+                      <button
+                        type="button"
+                        onClick={() => removeCustomEntry(entry.id)}
+                        className="w-7 h-7 rounded-full border border-border bg-surface flex items-center justify-center text-text-muted hover:text-error hover:border-error/30 hover:bg-error/5 transition-all flex-shrink-0"
+                        aria-label={t('common.delete')}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                          <path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
                 </motion.div>
               ))}
             </motion.div>
