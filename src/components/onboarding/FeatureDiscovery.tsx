@@ -269,7 +269,7 @@ export function FeatureDiscovery({
             onClick={dismiss}
           >
             {/* Prevent click-through on modal */}
-            <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm">
+            <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm max-h-[90dvh] overflow-y-auto overscroll-contain rounded-2xl">
               {steps && steps.length > 0 ? (
                 <MultiStepModal
                   icon={icon}

@@ -94,6 +94,14 @@ export function PortfolioBrowser({
     }
   }, [activePhotoId, photos]);
 
+  // Body scroll lock when fullscreen viewer is open
+  useEffect(() => {
+    if (!isViewerOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [isViewerOpen]);
+
   if (isLoading) {
     return (
       <div className={cn('rounded-2xl border border-border bg-surface p-5 text-center', className)}>
@@ -251,7 +259,7 @@ export function PortfolioBrowser({
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 py-4">
+            <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
               <div className="mx-auto flex max-w-3xl flex-col gap-4">
                 <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-surface-alt">
                   <Image

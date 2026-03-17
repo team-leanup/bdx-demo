@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -68,6 +68,13 @@ export function PortfolioOverlay({
     if (currentIndex < photoIds.length - 1) setCurrentId(photoIds[currentIndex + 1]);
   }, [currentIndex, photoIds]);
 
+  // Body scroll lock
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
   const NAIL_FALLBACKS = [
     '/images/mock/nail/nail-1.jpg',
     '/images/mock/nail/nail-2.jpg',
@@ -89,7 +96,7 @@ export function PortfolioOverlay({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black overflow-y-auto overscroll-contain"
         onClick={onClose}
       >
         <motion.div
@@ -98,7 +105,7 @@ export function PortfolioOverlay({
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full max-w-sm mx-4 flex flex-col gap-0 rounded-3xl overflow-hidden shadow-2xl"
+          className="relative w-full max-w-sm mx-4 my-4 flex flex-col gap-0 rounded-3xl overflow-hidden shadow-2xl max-h-[95dvh]"
           onClick={(e) => e.stopPropagation()}
         >
           {/* 사진 */}
@@ -148,7 +155,7 @@ export function PortfolioOverlay({
           </div>
 
           {/* 정보 + 액션 */}
-          <div className="bg-surface flex flex-col gap-0">
+          <div className="bg-surface flex flex-col gap-0 min-h-0 overflow-y-auto overscroll-contain">
             {/* 고객 정보 */}
             <div className="px-4 pt-3 pb-2">
               <div className="flex items-center justify-between gap-2">
