@@ -102,7 +102,7 @@ export default function CanvasPage() {
   };
 
   const handleNext = () => {
-    router.push('/consultation/summary');
+    router.push('/consultation/traits');
   };
 
   const handleBack = () => {
@@ -125,7 +125,7 @@ export default function CanvasPage() {
         </div>
       </main>
 
-      <ConsultationFooter onNext={handleNext} nextLabel={t('consultation.complete')} />
+      <ConsultationFooter onNext={handleNext} nextLabel={t('common.next')} />
     </div>
   );
 }
