@@ -126,8 +126,8 @@ export function DesignerPerformance() {
                 domain={[0, 100]}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="예약 배정률" radius={[6, 6, 0, 0]} fill="var(--color-primary)" minPointSize={2} />
-              <Bar dataKey="상담 완료율" radius={[6, 6, 0, 0]} fill="color-mix(in srgb, var(--color-primary) 50%, white)" minPointSize={2} />
+              <Bar dataKey="예약 배정률" radius={[6, 6, 0, 0]} fill="var(--color-primary)" />
+              <Bar dataKey="상담 완료율" radius={[6, 6, 0, 0]} fill="color-mix(in srgb, var(--color-primary) 50%, white)" />
             </BarChart>
           </ResponsiveContainer>
         </div>

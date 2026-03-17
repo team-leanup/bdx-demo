@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useConsultationStore } from '@/store/consultation-store';
 import { ConsultationHeader } from '@/components/consultation/ConsultationHeader';
@@ -102,16 +101,8 @@ export default function CanvasPage() {
     }));
   };
 
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, []);
-
   const handleNext = () => {
-    router.push('/consultation/traits');
+    router.push('/consultation/summary');
   };
 
   const handleBack = () => {
@@ -121,20 +112,20 @@ export default function CanvasPage() {
   return (
     <div className="h-dvh flex flex-col bg-background overflow-hidden">
       <ConsultationHeader
-        stepNumber={5}
-        totalSteps={6}
+        stepNumber={4}
+        totalSteps={5}
         title={t('consultation.canvasTitle')}
         titleKo={tKo('consultation.canvasTitle')}
         onBack={handleBack}
       />
 
-      <main className="flex-1 overflow-y-auto overscroll-contain pb-[calc(8rem+env(safe-area-inset-bottom,0px))] md:pb-6">
+      <main className="flex-1 overflow-y-auto pb-28">
         <div className="px-4 md:px-8 py-4 max-w-2xl md:max-w-4xl mx-auto">
           <FingerCanvas onChange={handleChange} />
         </div>
       </main>
 
-      <ConsultationFooter onNext={handleNext} nextLabel={t('common.next')} />
+      <ConsultationFooter onNext={handleNext} nextLabel={t('consultation.complete')} />
     </div>
   );
 }

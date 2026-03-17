@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/cn';
 import type { ReactNode } from 'react';
@@ -14,33 +13,6 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children, className }: ModalProps) {
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const scrollY = window.scrollY;
-    const body = document.body;
-    body.style.position = 'fixed';
-    body.style.top = `-${scrollY}px`;
-    body.style.left = '0';
-    body.style.right = '0';
-    body.style.overflow = 'hidden';
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      body.style.position = '';
-      body.style.top = '';
-      body.style.left = '';
-      body.style.right = '';
-      body.style.overflow = '';
-      window.scrollTo(0, scrollY);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, onClose]);
-
   return (
     <AnimatePresence>
       {isOpen && (
@@ -56,15 +28,12 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
           />
           <motion.div
             key="sheet"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={title ? 'modal-title' : undefined}
             initial={{ y: '100%', opacity: 0.5 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 30, stiffness: 350 }}
             className={cn(
-              'fixed bottom-0 left-0 right-0 z-50 bg-surface rounded-t-2xl transform-gpu',
+              'fixed bottom-0 left-0 right-0 z-50 bg-surface rounded-t-2xl',
               'max-h-[90dvh] flex flex-col pb-safe',
               'lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 lg:left-[calc(100px+50%)] lg:-translate-x-1/2 lg:right-auto lg:w-full lg:max-w-lg lg:rounded-2xl lg:pb-0',
               className,
@@ -76,11 +45,11 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
             </div>
             {title && (
               <div className="flex items-center justify-between px-5 py-3 border-b border-border flex-shrink-0">
-                <h2 id="modal-title" className="font-bold text-base text-text">{title}</h2>
+                <h2 className="font-bold text-base text-text">{title}</h2>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="min-h-[44px] min-w-[44px] rounded-full hover:bg-surface-alt flex items-center justify-center transition-colors"
+                  className="w-10 h-10 rounded-full hover:bg-surface-alt flex items-center justify-center transition-colors"
                 >
                   <svg
                     className="w-5 h-5 text-text-muted"

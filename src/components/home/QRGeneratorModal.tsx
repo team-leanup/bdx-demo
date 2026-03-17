@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -13,10 +13,9 @@ interface QRGeneratorModalProps {
 
 const CONSULTATION_URL_PATH = '/consultation?entry=customer-link';
 
-export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGeneratorModalProps): React.ReactElement {
+export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGeneratorModalProps): React.ReactElement | null {
   const [copied, setCopied] = useState(false);
   const [origin, setOrigin] = useState('');
-  const qrRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -24,49 +23,9 @@ export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGenera
     }
   }, []);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.body.style.overflow = prev;
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, onClose]);
-
   const consultationUrl = origin
     ? `${origin}${CONSULTATION_URL_PATH}${shopId ? `&shopId=${shopId}` : ''}${shopName ? `&shopName=${encodeURIComponent(shopName)}` : ''}`
     : CONSULTATION_URL_PATH;
-
-  const handleDownload = (): void => {
-    const svgEl = qrRef.current?.querySelector('svg');
-    if (!svgEl) return;
-    const svgData = new XMLSerializer().serializeToString(svgEl);
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(svgBlob);
-    img.onload = () => {
-      canvas.width = 304;
-      canvas.height = 304;
-      if (ctx) {
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      }
-      const a = document.createElement('a');
-      a.href = canvas.toDataURL('image/png');
-      a.download = 'bdx-qr-code.png';
-      a.click();
-      URL.revokeObjectURL(url);
-    };
-    img.src = url;
-  };
 
   const handleCopy = async () => {
     try {
@@ -84,6 +43,8 @@ export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGenera
       setTimeout(() => setCopied(false), 2000);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <AnimatePresence>
@@ -104,8 +65,6 @@ export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGenera
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 40 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            role="dialog"
-            aria-modal="true"
             className="relative w-full max-w-sm mx-4 mb-safe rounded-3xl bg-surface overflow-hidden shadow-2xl"
           >
             {/* Header */}
@@ -127,7 +86,7 @@ export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGenera
 
             {/* QR Code */}
             <div className="flex flex-col items-center gap-4 px-5 py-6">
-              <div ref={qrRef} className="w-44 h-44 rounded-2xl border-2 border-border bg-white flex items-center justify-center p-3 shadow-sm">
+              <div className="w-44 h-44 rounded-2xl border-2 border-border bg-white flex items-center justify-center p-3 shadow-sm">
                 <QRCodeSVG
                   value={consultationUrl}
                   size={152}
@@ -144,22 +103,12 @@ export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGenera
                 <svg className="w-3 h-3 text-primary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
                 </svg>
-                <span className="text-xs text-text-secondary font-medium truncate max-w-[260px]">{consultationUrl}</span>
+                <span className="text-xs text-text-secondary font-medium truncate max-w-[220px]">{consultationUrl}</span>
               </div>
             </div>
 
             {/* Actions */}
             <div className="flex gap-3 px-5 pb-5">
-              <button
-                type="button"
-                onClick={handleDownload}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm bg-surface-alt border border-border text-text-secondary transition-all active:scale-[0.98] hover:bg-border"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                </svg>
-                저장
-              </button>
               <button
                 type="button"
                 onClick={handleCopy}

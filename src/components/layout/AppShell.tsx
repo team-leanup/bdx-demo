@@ -1,7 +1,6 @@
 import { StatusBar } from './StatusBar';
 import { BottomTabBar } from './BottomTabBar';
 import { SideNav } from './SideNav';
-import { cn } from '@/lib/cn';
 import type { ReactNode } from 'react';
 
 interface AppShellProps {
@@ -17,12 +16,11 @@ export function AppShell({ children, hideStatusBar, hideTabBar }: AppShellProps)
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {!hideStatusBar && <StatusBar />}
         <main
-          className={cn(
-            'flex-1 min-h-0 overflow-y-auto overscroll-y-contain',
-            !hideStatusBar && 'pt-[calc(3.5rem+env(safe-area-inset-top,0px))]',
-            !hideTabBar && 'pb-[calc(4rem+env(safe-area-inset-bottom,0px))]',
-            'lg:pt-0 lg:pb-0',
-          )}
+          className="flex-1 min-h-0 overflow-y-auto lg:!pt-0 lg:!pb-0"
+          style={{
+            paddingTop: hideStatusBar ? 0 : '3.5rem',
+            paddingBottom: hideTabBar ? 0 : 'calc(4rem + env(safe-area-inset-bottom, 0px))',
+          }}
         >
           <div className="max-w-2xl mx-auto w-full lg:max-w-none lg:px-8 lg:pt-10">
             {children}

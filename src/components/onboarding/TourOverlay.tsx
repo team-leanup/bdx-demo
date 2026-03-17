@@ -12,27 +12,21 @@ interface TourStep {
 
 const TOUR_STEPS: TourStep[] = [
   {
-    targetId: 'tour-reservations',
-    title: '오늘 예약',
-    description: '오늘의 예약 현황을 한눈에 확인하고 바로 상담을 시작하세요',
-    position: 'bottom',
-  },
-  {
-    targetId: 'tour-stats',
-    title: '오늘 현황',
-    description: '오늘 상담 수, 예약 수, 실시간 매출을 확인하세요',
-    position: 'bottom',
-  },
-  {
     targetId: 'tour-new-consultation',
     title: '새 상담 시작',
-    description: '여기서 새 상담을 바로 시작하거나 예약을 등록할 수 있어요',
+    description: '여기서 새 상담을 바로 시작할 수 있어요',
     position: 'bottom',
   },
   {
     targetId: 'tour-recent',
     title: '최근 상담',
     description: '최근 상담 기록을 확인하고 이어서 진행하세요',
+    position: 'bottom',
+  },
+  {
+    targetId: 'tour-stats',
+    title: '오늘 현황',
+    description: '오늘 예약과 실시간 매출을 확인하세요',
     position: 'top',
   },
   {

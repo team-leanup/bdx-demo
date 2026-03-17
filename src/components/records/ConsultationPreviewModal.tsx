@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { FlagIcon } from '@/components/ui/FlagIcon';
@@ -25,13 +24,6 @@ export function ConsultationPreviewModal({
 }: ConsultationPreviewModalProps): React.ReactElement {
   const getByRecordId = usePortfolioStore((s) => s.getByRecordId);
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
-
-  useEffect(() => {
-    if (!record) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
-  }, [record]);
 
   const photos = record ? getByRecordId(record.id) : [];
   const refImages = record?.consultation.referenceImages ?? [];

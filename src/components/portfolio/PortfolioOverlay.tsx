@@ -82,7 +82,7 @@ export function PortfolioOverlay({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
         onClick={onClose}
       >
         <motion.div
@@ -145,7 +145,7 @@ export function PortfolioOverlay({
             {/* 고객 정보 */}
             <div className="px-4 pt-3 pb-2">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-bold text-foreground truncate">{customer?.name ?? '미지정'}</p>
+                <p className="text-sm font-bold text-foreground truncate">{customer?.name ?? '알 수 없음'}</p>
                 {effectiveDate && (
                   <p className="text-xs text-muted-foreground shrink-0">{formatDateDot(effectiveDate)}</p>
                 )}
@@ -212,6 +212,9 @@ export function PortfolioOverlay({
                 className="flex-1"
                 onClick={() => {
                   hydrateConsultation({
+                    customerId: customer?.id,
+                    customerName: customer?.name,
+                    customerPhone: customer?.phone,
                     referenceImages: photo.imageDataUrl ? [photo.imageDataUrl] : [],
                     entryPoint: 'staff',
                     currentStep: ConsultationStep.START,

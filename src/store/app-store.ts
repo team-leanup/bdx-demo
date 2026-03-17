@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { ServiceStructure, SurchargeSettings, TimeSettings, BusinessHours, Shop } from '@/types/shop';
-import { dbUpdateShopSettings, dbUpdateShopCore } from '@/lib/db';
+import { dbUpdateShopSettings } from '@/lib/db';
 import { useAuthStore } from '@/store/auth-store';
 
 interface ShopSettings {
@@ -24,8 +24,6 @@ interface ShopSettings {
   serviceStructure: ServiceStructure;
   surcharges: SurchargeSettings;
   timeSettings: TimeSettings;
-  agreedToTerms: boolean;
-  agreedToPrivacy: boolean;
 }
 
 const DEFAULT_SHOP_SETTINGS: ShopSettings = {
@@ -89,8 +87,6 @@ const DEFAULT_SHOP_SETTINGS: ShopSettings = {
     repairPer: 10,
     parts: 5,
   },
-  agreedToTerms: false,
-  agreedToPrivacy: false,
 };
 
 interface AppStore {
@@ -109,10 +105,8 @@ export const useAppStore = create<AppStore>()(
       isOnboardingComplete: false,
       shopSettings: { ...DEFAULT_SHOP_SETTINGS },
 
-      setOnboardingComplete: (complete) => {
-        set({ isOnboardingComplete: complete });
-        useAuthStore.getState().setCurrentShopOnboardingComplete(complete);
-      },
+      setOnboardingComplete: (complete) =>
+        set({ isOnboardingComplete: complete }),
 
       setShopSettings: async (settings) => {
         const previous = get().shopSettings;
@@ -122,31 +116,23 @@ export const useAppStore = create<AppStore>()(
 
         const shopId = useAuthStore.getState().currentShopId;
         if (shopId) {
-          const [coreResult, extResult] = await Promise.all([
-            dbUpdateShopCore(shopId, {
-              name: next.shopName || undefined,
-              phone: next.shopPhone || undefined,
-              address: next.shopAddress || undefined,
-              businessHours: next.businessHours,
-            }),
-            dbUpdateShopSettings(shopId, {
-              addressDetail: next.shopAddressDetail,
-              baseOffSameShop: next.baseOffSameShop,
-              baseOffOtherShop: next.baseOffOtherShop,
-              baseSolidPointPrice: next.baseSolidPointPrice,
-              baseFullArtPrice: next.baseFullArtPrice,
-              baseMonthlyArtPrice: next.baseMonthlyArtPrice,
-              designerCount: next.designerCount,
-              selectedServices: next.selectedServices,
-              serviceStructure: next.serviceStructure,
-              surcharges: next.surcharges,
-              timeSettings: next.timeSettings,
-            }),
-          ]);
+          const result = await dbUpdateShopSettings(shopId, {
+            addressDetail: next.shopAddressDetail,
+            baseOffSameShop: next.baseOffSameShop,
+            baseOffOtherShop: next.baseOffOtherShop,
+            baseSolidPointPrice: next.baseSolidPointPrice,
+            baseFullArtPrice: next.baseFullArtPrice,
+            baseMonthlyArtPrice: next.baseMonthlyArtPrice,
+            designerCount: next.designerCount,
+            selectedServices: next.selectedServices,
+            serviceStructure: next.serviceStructure,
+            surcharges: next.surcharges,
+            timeSettings: next.timeSettings,
+          });
 
-          if (!coreResult.success || !extResult.success) {
+          if (!result.success) {
             set({ shopSettings: previous });
-            return { success: false, error: coreResult.error ?? extResult.error };
+            return { success: false, error: result.error };
           }
         }
 

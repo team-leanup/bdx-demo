@@ -22,7 +22,7 @@ export default function Step3Page() {
   const locale = useLocale();
 
   const handleNext = () => {
-    setStep(ConsultationStep.TRAITS);
+    setStep(ConsultationStep.STEP3_OPTIONS);
     router.push('/consultation/traits');
   };
 
@@ -41,7 +41,7 @@ export default function Step3Page() {
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.25 }}
-        className="flex-1 overflow-y-auto px-4 md:px-8 pt-5 pb-[calc(8rem+env(safe-area-inset-bottom,0px))] md:pb-6"
+        className="flex-1 overflow-y-auto px-4 md:px-8 pt-5 pb-28 md:pb-6"
       >
         <div className="max-w-2xl md:max-w-3xl mx-auto flex flex-col gap-6">
           {/* Visual Step Header */}

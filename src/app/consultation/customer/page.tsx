@@ -13,7 +13,6 @@ import { CustomerInfoForm } from '@/components/consultation/CustomerInfoForm';
 import { MoodTagSelector } from '@/components/consultation/MoodTagSelector';
 import { PortfolioBrowser } from '@/components/consultation/PortfolioBrowser';
 import type { Customer } from '@/types/customer';
-import { useCustomerStore } from '@/store/customer-store';
 import { useLocaleStore } from '@/store/locale-store';
 import type { Locale } from '@/store/locale-store';
 import { useT, useLocale, useKo } from '@/lib/i18n';
@@ -41,7 +40,6 @@ function CustomerPageInner(): React.ReactElement {
   const moodTags = useConsultationStore((s) => s.consultation.moodTags) ?? [];
   const toggleMoodTag = useConsultationStore((s) => s.toggleMoodTag);
   const setConsultationLocale = useLocaleStore((s) => s.setConsultationLocale);
-  const getCustomerById = useCustomerStore((s) => s.getById);
   const t = useT();
   const tKo = useKo();
   const locale = useLocale();
@@ -271,7 +269,7 @@ function CustomerPageInner(): React.ReactElement {
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
       <ConsultationHeader
         stepNumber={stepNumber}
-        totalSteps={6}
+        totalSteps={5}
         title={t('consultation.customerInfo')}
         titleKo={tKo('consultation.customerInfo')}
         backHref={backHref}
@@ -321,7 +319,7 @@ function CustomerPageInner(): React.ReactElement {
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.25 }}
-        className="flex-1 overflow-y-auto px-4 md:px-8 pt-5 pb-[calc(8rem+env(safe-area-inset-bottom,0px))] md:pb-6"
+        className="flex-1 overflow-y-auto px-4 md:px-8 pt-5 pb-28 md:pb-6"
       >
         <div className="max-w-2xl md:max-w-3xl mx-auto flex flex-col gap-5">
 
@@ -458,7 +456,6 @@ function CustomerPageInner(): React.ReactElement {
             onMemoChange={setMemo}
             onExistingCustomerSelect={handleExistingCustomer}
             allowExistingCustomerSearch={!isCustomerLinkFlow}
-            defaultSelectedCustomer={consultation.customerId ? getCustomerById(consultation.customerId) ?? undefined : undefined}
           />
 
           {/* 참고 이미지 업로드 — staff 모드에서만 표시 (customer_link는 상단에 이미 있음) */}

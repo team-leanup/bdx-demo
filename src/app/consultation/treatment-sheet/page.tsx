@@ -195,11 +195,11 @@ export default function TreatmentSheetPage() {
   const [isSaved, setIsSaved] = useState(false);
   const [isFinalSaving, setIsFinalSaving] = useState(false);
   const [checklist, setChecklist] = useState<DailyChecklistState>({
-    shape: (record?.checklist?.shape ?? consultationData.nailShape ?? null) as NailShape | null,
-    length: record?.checklist?.length ?? null,
-    thickness: record?.checklist?.thickness ?? null,
-    cuticleSensitivity: record?.checklist?.cuticleSensitivity ?? null,
-    memo: record?.checklist?.memo ?? '',
+    shape: (consultationData.nailShape ?? null) as NailShape | null,
+    length: null,
+    thickness: null,
+    cuticleSensitivity: null,
+    memo: '',
   });
 
   const designers = useShopStore((s) => s.designers);
@@ -286,9 +286,7 @@ export default function TreatmentSheetPage() {
     if (!smallTalkText.trim()) return;
 
     const { customers, appendSmallTalkNote } = useCustomerStore.getState();
-    const customer = consultationData.customerId
-      ? customers.find(c => c.id === consultationData.customerId)
-      : customers.find(c => c.name === consultationData.customerName);
+    const customer = customers.find(c => c.name === consultationData.customerName);
     if (customer) {
       const newNote = {
         id: `stn-${Date.now()}`,
@@ -312,13 +310,6 @@ export default function TreatmentSheetPage() {
     // Save small talk memo if present
     if (smallTalkText.trim()) {
       handleSaveSmallTalk();
-    }
-
-    // Save checklist to record
-    if (consultationId && (checklist.length || checklist.thickness || checklist.cuticleSensitivity || checklist.memo)) {
-      updateRecord(consultationId, {
-        checklist: { ...checklist, savedAt: getNowInKoreaIso() },
-      });
     }
 
     await new Promise((r) => setTimeout(r, 400));
@@ -364,9 +355,8 @@ export default function TreatmentSheetPage() {
           basePrice,
           extras: validExtras.map(({ label, amount }) => ({ label: label.trim(), amount })),
           finalPrice: calculatedFinalPrice,
-        },
-        checklist: { ...checklist, savedAt: getNowInKoreaIso() },
-      });
+      },
+    });
 
     setIsPriceFinalized(true);
     setIsFinalizing(false);

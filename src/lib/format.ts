@@ -284,24 +284,6 @@ export function formatPhone(phone: string): string {
 }
 
 /**
- * 전화번호 중간 자리를 마스킹
- * @example maskPhone("010-1234-5678") → "010-****-5678"
- * @example maskPhone("01012345678") → "010-****-5678"
- */
-export function maskPhone(phone: string): string {
-  if (!phone) return '';
-  const digits = phone.replace(/[^0-9]/g, '');
-  if (digits.length < 7) return phone;
-  if (digits.length === 11) {
-    return `${digits.slice(0, 3)}-****-${digits.slice(7)}`;
-  }
-  if (digits.length === 10) {
-    return `${digits.slice(0, 3)}-***-${digits.slice(6)}`;
-  }
-  return `${digits.slice(0, 3)}-****-${digits.slice(-4)}`;
-}
-
-/**
  * 분을 시간/분 형식으로 포맷팅 (locale-aware)
  * @example formatMinutes(90) → "1시간 30분"
  * @example formatMinutes(90, 'en') → "1h 30min"

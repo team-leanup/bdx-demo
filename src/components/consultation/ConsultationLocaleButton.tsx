@@ -31,7 +31,7 @@ export function ConsultationLocaleButton() {
   const current = LOCALES.find((l) => l.locale === locale) ?? LOCALES[0];
 
   return (
-    <div ref={ref} className="fixed top-[calc(1rem+env(safe-area-inset-top,0px))] right-4 z-50">
+    <div ref={ref} className="fixed top-4 right-4 z-50 safe-top">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

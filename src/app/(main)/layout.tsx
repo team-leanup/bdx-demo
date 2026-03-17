@@ -6,7 +6,6 @@ import { AppShell } from '@/components/layout/AppShell';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { useLocaleStore } from '@/store/locale-store';
 import { useAuthStore } from '@/store/auth-store';
-import { useReservationStore } from '@/store/reservation-store';
 import type { ReactNode } from 'react';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
@@ -27,23 +26,6 @@ export default function MainLayout({ children }: { children: ReactNode }) {
       router.replace('/onboarding');
     }
   }, [isInitialized, isLoggedIn, currentShopOnboardingComplete, router]);
-
-  const hydrateFromDB = useReservationStore((s) => s.hydrateFromDB);
-
-  useEffect(() => {
-    const poll = (): void => {
-      if (document.visibilityState === 'visible') {
-        hydrateFromDB().catch(console.error);
-      }
-    };
-    poll();
-    const interval = setInterval(poll, 30000);
-    document.addEventListener('visibilitychange', poll);
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', poll);
-    };
-  }, [hydrateFromDB]);
 
   return (
     <AuthGuard>

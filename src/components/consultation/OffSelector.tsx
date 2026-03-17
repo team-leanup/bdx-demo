@@ -84,7 +84,7 @@ export function OffSelector({ className }: OffSelectorProps) {
               whileTap={{ scale: 0.95 }}
               onClick={() => setOffType(opt.value)}
               className={cn(
-                'relative flex flex-col items-center justify-center gap-4 py-8 px-2 pb-8 rounded-2xl transition-all duration-300 text-left touch-manipulation',
+                'relative flex flex-col items-center justify-center gap-4 py-8 px-2 pb-8 rounded-2xl transition-all duration-300 text-left',
                 isSelected
                   ? 'border-2 border-primary bg-white shadow-sm'
                   : 'border border-border bg-white hover:border-gray-300',

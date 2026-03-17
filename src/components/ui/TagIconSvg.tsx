@@ -1,7 +1,5 @@
 'use client';
 
-import React from 'react';
-
 interface TagIconSvgProps {
   icon: string;
   className?: string;
@@ -401,7 +399,7 @@ export function TagIconSvg({ icon, className = 'w-3.5 h-3.5' }: TagIconSvgProps)
 
   return (
     <span className={`inline-flex items-center justify-center shrink-0 ${className}`}>
-      {React.cloneElement(svgElement as React.ReactElement<React.SVGProps<SVGSVGElement>>, { className: 'w-full h-full' })}
+      {svgElement}
     </span>
   );
 }

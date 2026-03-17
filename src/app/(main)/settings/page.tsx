@@ -429,7 +429,7 @@ function StaffSection() {
                 setFeedback(null);
               }
             }}
-            className="min-h-[44px] rounded-lg border border-primary px-3 py-1 text-xs font-medium text-primary"
+            className="rounded-lg border border-primary px-3 py-1 text-xs font-medium text-primary"
           >
             {showAddForm ? '취소' : t('settings.staff_add')}
           </button>

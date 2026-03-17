@@ -844,32 +844,6 @@ export async function dbUpsertShop(shop: Shop): Promise<{ success: boolean; erro
   return { success: true };
 }
 
-export interface ShopCoreFields {
-  name?: string;
-  phone?: string;
-  address?: string;
-  businessHours?: BusinessHours[];
-  baseHandPrice?: number;
-  baseFootPrice?: number;
-}
-
-export async function dbUpdateShopCore(shopId: string, fields: ShopCoreFields): Promise<{ success: boolean; error?: string }> {
-  const updatePayload: Record<string, unknown> = { updated_at: getNowInKoreaIso() };
-  if (fields.name !== undefined) updatePayload.name = fields.name;
-  if (fields.phone !== undefined) updatePayload.phone = fields.phone;
-  if (fields.address !== undefined) updatePayload.address = fields.address;
-  if (fields.businessHours !== undefined) updatePayload.business_hours = fields.businessHours;
-  if (fields.baseHandPrice !== undefined) updatePayload.base_hand_price = fields.baseHandPrice;
-  if (fields.baseFootPrice !== undefined) updatePayload.base_foot_price = fields.baseFootPrice;
-
-  const { error } = await supabase.from('shops').update(updatePayload).eq('id', shopId);
-  if (error) {
-    console.error('[db] dbUpdateShopCore error:', toDbErrorSnapshot(error));
-    return { success: false, error: error.message };
-  }
-  return { success: true };
-}
-
 export async function dbUpdateShopSettings(shopId: string, settings: ShopExtendedSettings): Promise<{ success: boolean; error?: string }> {
   const { error } = await supabase
     .from('shops')
