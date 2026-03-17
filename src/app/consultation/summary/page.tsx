@@ -24,7 +24,7 @@ import type { ConsultationRecord, BookingStatus } from '@/types/consultation';
 import type { CustomerTag, TagCategory } from '@/types/customer';
 import { useCustomerStore } from '@/store/customer-store';
 import { useShopStore } from '@/store/shop-store';
-import { dbCompletePreconsultationBooking, dbUpsertCustomer } from '@/lib/db';
+import { dbCompletePreconsultationBooking, dbUpsertCustomer, fetchBookingRequestById, fetchDesignerById } from '@/lib/db';
 import { ConsultationStep } from '@/types/consultation';
 import { useConsultationGuard } from '@/lib/use-consultation-guard';
 
@@ -83,23 +83,45 @@ export default function SummaryPage() {
     setSaving(true);
     try {
     await new Promise((r) => setTimeout(r, 600));
-    if (!currentShopId || !activeDesignerId) {
-      pushToast('error', '매장 또는 담당 선생님 정보가 없어요');
+    const linkedBooking = isCustomerLinkFlow && bookingId
+      ? await fetchBookingRequestById(bookingId, consultation.sourceShopId)
+      : null;
+
+    const effectiveShopId = isCustomerLinkFlow
+      ? (consultation.sourceShopId || linkedBooking?.shopId || currentShopId)
+      : currentShopId;
+
+    const effectiveDesignerId = consultation.designerId
+      || linkedBooking?.designerId
+      || activeDesignerId;
+
+    if (!effectiveShopId) {
+      pushToast('error', '샵 정보를 찾을 수 없어요');
       setSaving(false);
       return;
     }
 
-    const designerId = consultation.designerId || activeDesignerId;
-    const createdCustomer = consultation.customerId
+    if (!effectiveDesignerId) {
+      pushToast('error', '예약에 연결된 담당 선생님 정보를 찾을 수 없어요');
+      setSaving(false);
+      return;
+    }
+
+    const effectiveDesignerName = getDesignerName(effectiveDesignerId)
+      || (await fetchDesignerById(effectiveDesignerId))?.name
+      || '디자이너';
+
+    const linkedCustomerId = consultation.customerId || linkedBooking?.customerId;
+    const createdCustomer = linkedCustomerId
       ? null
       : createCustomer({
           name: consultation.customerName ?? '새 고객',
           phone: consultation.customerPhone ?? '',
-          assignedDesignerId: designerId,
-          assignedDesignerName: getDesignerName(designerId),
-          shopId: currentShopId,
+          assignedDesignerId: effectiveDesignerId,
+          assignedDesignerName: effectiveDesignerName,
+          shopId: effectiveShopId,
         });
-    const customerId = consultation.customerId || createdCustomer?.id;
+    const customerId = linkedCustomerId || createdCustomer?.id;
 
     if (!customerId) {
       pushToast('error', '고객 정보를 확인해주세요');
@@ -118,13 +140,15 @@ export default function SummaryPage() {
     const minutes = estimateTime(consultation);
     const now = getNowInKoreaIso();
     const consultationSnapshot = JSON.parse(JSON.stringify({ ...consultation })) as typeof consultation;
-    const bookingLanguage = bookingId
-      ? reservations.find((r) => r.id === bookingId)?.language
-      : undefined;
+    const bookingLanguage = linkedBooking?.language || (
+      bookingId
+        ? reservations.find((r) => r.id === bookingId)?.language
+        : undefined
+    );
     const savedRecord: ConsultationRecord = {
       id: newId,
-      shopId: currentShopId,
-      designerId,
+      shopId: effectiveShopId,
+      designerId: effectiveDesignerId,
       customerId,
       consultation: consultationSnapshot,
       totalPrice: breakdown.subtotal,
@@ -164,7 +188,7 @@ export default function SummaryPage() {
       if (bookingId) {
         updateReservation(bookingId, {
           status: 'completed' as BookingStatus,
-          designerId,
+          designerId: effectiveDesignerId,
           preConsultationData: consultationSnapshot,
           customerId,
         });
@@ -210,7 +234,7 @@ export default function SummaryPage() {
             bodyPart: consultation.bodyPart,
             designScope: consultation.designScope,
             price: adjustedFinalPrice,
-            designerName: getDesignerName(designerId),
+            designerName: effectiveDesignerName,
           },
         ],
       });
@@ -228,9 +252,9 @@ export default function SummaryPage() {
           consultationRecordId: newId,
           noteText: customerMemo,
           createdAt: now,
-          createdByDesignerId: designerId,
+          createdByDesignerId: effectiveDesignerId,
           createdByDesignerName:
-            customer.assignedDesignerName ?? '디자이너',
+            customer.assignedDesignerName ?? effectiveDesignerName,
         };
         appendSmallTalkNote(customer.id, newNote);
       }
@@ -264,7 +288,7 @@ export default function SummaryPage() {
     restoreLocale();
 
     if (isCustomerLinkFlow) {
-      router.push('/home');
+      router.push(`/consultation/save-complete?consultationId=${newId}&customerId=${customerId}&mode=preconsultation`);
       return;
     }
 
