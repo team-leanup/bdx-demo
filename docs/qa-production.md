@@ -510,7 +510,7 @@
 | # | 테스트 항목 | 기대 결과 | 상태 |
 |---|------------|----------|------|
 | J-06-1 | QR 링크 고객 상담 완료 저장 | `dbCompletePreconsultationBooking()` — bookings 테이블 업데이트 | ✅ |
-| J-06-2 | 사전 상담 완료 후 예약 상태 | 로그인 세션 없는 외부 디바이스에서도 `shopId + bookingId` 기준 저장 성공, `preConsultationCompletedAt` 필드 설정, Records 뷰에서 뱃지 표시 | ✅ (2026-03-17 수정: customer-link save decoupled from staff auth) |
+| J-06-2 | 사전 상담 완료 후 예약 상태 | 로그인 세션 없는 외부 디바이스에서도 `shopId + bookingId + designerId` 링크 컨텍스트로 저장 성공, `preConsultationCompletedAt` 필드 설정, Records 뷰에서 뱃지 표시 | ✅ (2026-03-17 QA 통과: customer-link external submit) |
 
 ---
 

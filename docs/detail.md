@@ -289,7 +289,7 @@ BDX를 "상담 시스템"에서 **"고객 관리 CRM + 시술 기록 시스템"*
 | 2026-03-12 | 상담 단계 순서를 `고객 정보`를 Step 1로 앞당기도록 재정렬. staff 시작 버튼은 `/consultation/customer`부터 시작하고, customer 페이지 다음 단계를 `/consultation/step1`로 변경했으며 summary 뒤로가기는 staff=`traits`, customer-link=`/consultation`으로 분기 |
 | 2026-03-12 | customer-link도 Step 1(고객 정보) 다음에 `/consultation/step1`로 이어지도록 수정해, `다음` 버튼이 곧바로 summary로 점프하던 흐름을 제거하고 staff/customer-link 모두 `고객 정보 → 기본 조건 → 시술 유형 → 고객 성향 → 요약` 순서를 따르도록 정리 |
 | 2026-03-15 | customer-link 포트폴리오 선택은 동일 이미지를 다시 누르면 선택 해제되도록 토글 UX로 수정하고, `PortfolioBrowser`가 더 이상 placeholder 썸네일이 아닌 실제 `shopId` 기준 포트폴리오 이미지를 직접 읽어오도록 보강. 동시에 `BDX 포트폴리오 크게 보기` 전체화면 브라우저를 추가해 고객이 큰 사진을 감상하며 선택/취소할 수 있게 정리 |
-| 2026-03-17 | customer-link 저장 경로는 더 이상 직원 로그인 세션을 필수로 보지 않고, `shopId + bookingId`로 예약 단건을 다시 조회해 샵/담당 선생님/기존 고객 정보를 복원하도록 수정. 외부 디바이스 제출 성공 후에는 `/home`이 아닌 `save-complete?mode=preconsultation`으로 이동해 고객용 완료 경험을 유지 |
+| 2026-03-17 | customer-link URL에 `designerId`/`customerId`도 함께 포함하고, 외부 디바이스 저장 경로는 직원 로그인 세션 없이도 작동하도록 정리. 외부 고객 세션에서는 booking 기반 `dbCompletePreconsultationBooking()`만 수행해 예약의 사전 상담 데이터/완료 시각을 반영하고, 성공 후에는 `/home`이 아닌 `save-complete?mode=preconsultation`으로 이동해 고객용 완료 경험을 유지 |
 | 2026-03-12 | 현장 상담 시작/저장 시 선택한 `designerId`를 연결된 예약에도 함께 저장하도록 보강해, `records` 탭 디자이너 데이 그리드에서 예약 카드가 선택한 디자이너 열에 표시되도록 정리 |
 | 2026-03-12 | 홈 `새 예약 등록` 모달의 submit 경로에서도 `designerId`를 누락하지 않도록 수정해, 예약 생성 직후부터 `records` 디자이너 데이 그리드가 선택한 담당 선생님 열에 바로 표시되게 정리 |
 
