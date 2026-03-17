@@ -91,7 +91,11 @@ export function TourOverlay({ active, onComplete }: TourOverlayProps) {
     if (currentStep?.targetId) {
       const el = document.querySelector(`[data-tour-id="${currentStep.targetId}"]`);
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Skip scrollIntoView for fixed/sticky elements (e.g. tab bar)
+        const style = window.getComputedStyle(el);
+        if (style.position !== 'fixed' && style.position !== 'sticky') {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
         // Re-measure multiple times after scroll
         setTimeout(measureTarget, 400);
         setTimeout(measureTarget, 800);
@@ -135,7 +139,7 @@ export function TourOverlay({ active, onComplete }: TourOverlayProps) {
   const gap = 16;
   const vw = typeof window !== 'undefined' ? window.innerWidth : 1024;
   const vh = typeof window !== 'undefined' ? window.innerHeight : 768;
-  const tw = 320; // max tooltip width
+  const tw = Math.min(320, vw - 32); // max tooltip width, responsive to screen
   const th = 160; // approximate tooltip height
   const edgePad = 16;
 

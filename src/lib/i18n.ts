@@ -57,7 +57,7 @@ const translations = {
       cta_consultation: '상담',
       cta_newConsultation: '새 상담 시작',
       cta_reservation: '예약',
-      cta_newReservation: '새 상담 등록',
+      cta_newReservation: '새 예약 등록',
       section_todayReservation: '오늘의 상담',
       section_noReservation: '오늘 상담 예정이 없어요',
       section_noReservationSub: '위에서 새 예약을 등록해보세요',

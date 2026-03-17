@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useConsultationStore } from '@/store/consultation-store';
 import { ConsultationHeader } from '@/components/consultation/ConsultationHeader';
@@ -102,13 +101,7 @@ export default function CanvasPage() {
     }));
   };
 
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, []);
+  // Container div already uses overflow-hidden, no body override needed
 
   const handleNext = () => {
     router.push('/consultation/traits');

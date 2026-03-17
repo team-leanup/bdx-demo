@@ -288,7 +288,7 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
         isOpen={modal.isOpen}
         onClose={closeModal}
         title={modalTitle}
-        className="max-h-[80vh] md:max-w-2xl md:w-[90vw]"
+        className="md:max-w-2xl md:w-[90vw]"
       >
         {/* Tabs */}
         <div className="flex border-b border-border">
@@ -356,8 +356,8 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
           />
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-2 px-4 py-4 border-t border-border">
+        {/* Actions — sticky bottom so always reachable */}
+        <div className="flex gap-2 px-4 py-4 border-t border-border sticky bottom-0 bg-surface z-10">
           {modal.finger && selections[modal.hand][modal.finger]?.colorCode && (
             <Button
               variant="ghost"
