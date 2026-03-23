@@ -100,6 +100,12 @@ const CUSTOMER_LINK_STEP_ORDER: ConsultationStep[] = [
   ConsultationStep.SUMMARY,
 ];
 
+export const RETURN_VISIT_STEP_ORDER: ConsultationStep[] = [
+  ConsultationStep.START,
+  ConsultationStep.CUSTOMER_INFO,
+  ConsultationStep.SUMMARY,
+];
+
 export const useConsultationStore = create<ConsultationStore>()(
   persist(
     (set, get) => ({
@@ -253,9 +259,13 @@ export const useConsultationStore = create<ConsultationStore>()(
       goNext: () => {
         const state = get();
         const current = state.consultation.currentStep;
-        const order = state.consultation.entryPoint === 'customer_link'
-          ? CUSTOMER_LINK_STEP_ORDER
-          : STEP_ORDER;
+        const entryPoint = state.consultation.entryPoint;
+        const order =
+          entryPoint === 'customer_link'
+            ? CUSTOMER_LINK_STEP_ORDER
+            : entryPoint === 'return_visit'
+              ? RETURN_VISIT_STEP_ORDER
+              : STEP_ORDER;
         const idx = order.indexOf(current);
         if (idx === -1) return;
         if (idx < order.length - 1) {
@@ -271,9 +281,13 @@ export const useConsultationStore = create<ConsultationStore>()(
       goPrev: () => {
         const state = get();
         const current = state.consultation.currentStep;
-        const order = state.consultation.entryPoint === 'customer_link'
-          ? CUSTOMER_LINK_STEP_ORDER
-          : STEP_ORDER;
+        const entryPoint = state.consultation.entryPoint;
+        const order =
+          entryPoint === 'customer_link'
+            ? CUSTOMER_LINK_STEP_ORDER
+            : entryPoint === 'return_visit'
+              ? RETURN_VISIT_STEP_ORDER
+              : STEP_ORDER;
         const idx = order.indexOf(current);
         if (idx === -1) return;
         if (idx > 0) {

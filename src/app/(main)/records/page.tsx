@@ -38,7 +38,8 @@ import {
 } from '@/components/records';
 import { TAG_PRESETS } from '@/data/tag-presets';
 import { TagIconSvg } from '@/components/ui/TagIconSvg';
-import type { BookingRequest } from '@/types/consultation';
+import { ReservationForm } from '@/components/home/ReservationForm';
+import type { BookingChannel, BookingRequest } from '@/types/consultation';
 import type { ConsultationRecord } from '@/types/consultation';
 
 const READINESS_LEGEND = [
@@ -155,6 +156,9 @@ export default function RecordsPage() {
   const [editMode, setEditMode] = useState(false);
   const [editForm, setEditForm] = useState({ title: '', phone: '', startTime: '', requestNote: '', referenceImages: [] as string[], language: 'ko' as 'ko' | 'en' | 'zh' | 'ja', deposit: '' as string });
   const editPhotoRef = useRef<HTMLInputElement>(null);
+  const [showAddReservationModal, setShowAddReservationModal] = useState(false);
+  const [reservationPrefill, setReservationPrefill] = useState<{ time?: string; designerId?: string; channel?: BookingChannel } | null>(null);
+  const [reservationNaverMode, setReservationNaverMode] = useState(false);
 
   const closeSelectedEventSheet = (): void => {
     setLinkGenBooking(null);
@@ -172,6 +176,7 @@ export default function RecordsPage() {
   const role = useAuthStore((s) => s.role);
   const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
   const allReservations = useReservationStore((s) => s.reservations);
+  const addReservation = useReservationStore((s) => s.addReservation);
   const updateReservation = useReservationStore((s) => s.updateReservation);
   const removeReservation = useReservationStore((s) => s.removeReservation);
   const removeRecord = useRecordsStore((s) => s.removeRecord);
@@ -371,6 +376,28 @@ export default function RecordsPage() {
     updateReservation(reservationId, updates);
   };
 
+  const handleSlotLongPress = (time: string, designerId: string): void => {
+    setReservationPrefill({ time, designerId });
+    setReservationNaverMode(false);
+    setShowAddReservationModal(true);
+  };
+
+  const handleAddReservation = (newBooking: BookingRequest): void => {
+    addReservation({
+      customerName: newBooking.customerName,
+      phone: newBooking.phone,
+      reservationDate: newBooking.reservationDate,
+      reservationTime: newBooking.reservationTime,
+      channel: newBooking.channel,
+      requestNote: newBooking.requestNote,
+      referenceImageUrls: newBooking.referenceImageUrls,
+      language: newBooking.language,
+      designerId: newBooking.designerId,
+      serviceLabel: newBooking.serviceLabel,
+      customerId: newBooking.customerId,
+    });
+  };
+
   const periodLabels: Record<FilterPeriod, string> = {
     all: t('records.filterAll'),
     today: t('records.filterToday'),
@@ -441,8 +468,20 @@ export default function RecordsPage() {
         description={"상담 관리와 상담 기록을\n탭으로 나누어 편리하게 관리하세요."}
       />
 
-      <div className="px-4 md:px-0 pt-4">
+      <div className="px-4 md:px-0 pt-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-text">{t('nav.records')}</h1>
+        <button
+          type="button"
+          onClick={() => {
+            setReservationPrefill(null);
+            setReservationNaverMode(true);
+            setShowAddReservationModal(true);
+          }}
+          className="flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 transition-colors"
+        >
+          <span>🟢</span>
+          네이버 예약
+        </button>
       </div>
 
       <MainTabBar activeTab={mainTab} onTabChange={setMainTab} />
@@ -490,6 +529,7 @@ export default function RecordsPage() {
                 endHour={calendarEndHour}
                 onEventClick={handleEventClick}
                 onEventMove={handleEventMove}
+                onSlotLongPress={handleSlotLongPress}
                 role={role}
                 activeDesignerId={activeDesignerId}
               />
@@ -1036,6 +1076,28 @@ export default function RecordsPage() {
           </>
         )}
       </AnimatePresence>
+
+      <Modal
+        isOpen={showAddReservationModal}
+        onClose={() => { setShowAddReservationModal(false); setReservationPrefill(null); setReservationNaverMode(false); }}
+        title={reservationNaverMode ? '네이버 예약 등록' : '예약 등록'}
+      >
+        <ReservationForm
+          naverMode={reservationNaverMode}
+          initialValues={reservationPrefill ? {
+            date: selectedDate,
+            time: reservationPrefill.time,
+            designerId: reservationPrefill.designerId,
+          } : { date: selectedDate }}
+          onSubmit={(booking) => {
+            handleAddReservation(booking);
+            setShowAddReservationModal(false);
+            setReservationPrefill(null);
+            setReservationNaverMode(false);
+          }}
+          onCancel={() => { setShowAddReservationModal(false); setReservationPrefill(null); setReservationNaverMode(false); }}
+        />
+      </Modal>
 
       <Modal isOpen={confirmDelete} onClose={() => setConfirmDelete(false)} title="기록 삭제">
         <div className="p-5">

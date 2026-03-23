@@ -39,6 +39,9 @@ interface PortfolioStore {
   getRecent: (limit?: number) => PortfolioPhoto[];
   getByKind: (kind: PortfolioPhotoKind) => PortfolioPhoto[];
 
+  togglePhotoVisibility: (id: string) => void;
+  updatePhoto: (id: string, updates: Partial<PortfolioPhoto>) => void;
+
   clearAll: () => Promise<{ success: boolean; error?: string }>;
 }
 
@@ -241,6 +244,21 @@ export const usePortfolioStore = create<PortfolioStore>()(
       },
 
       getByKind: (kind) => get().photos.filter((p) => p.kind === kind),
+
+      togglePhotoVisibility: (id) => {
+        set((state) => ({
+          photos: state.photos.map((p) => {
+            if (p.id !== id) return p;
+            return { ...p, isPublic: !(p.isPublic ?? true) };
+          }),
+        }));
+      },
+
+      updatePhoto: (id, updates) => {
+        set((state) => ({
+          photos: state.photos.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+        }));
+      },
 
       clearAll: async () => {
         const currentShopId = useAuthStore.getState().currentShopId;

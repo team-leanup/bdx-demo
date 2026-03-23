@@ -155,6 +155,26 @@ const SHAPE_LABEL: Record<string, string> = {
   coffin: '코핀',
 };
 
+// Sum finalPrice of records where finalizedAt falls on today (Korea)
+export function computeTodayRevenue(records: ConsultationRecord[]): number {
+  const today = getTodayInKorea();
+  return records
+    .filter((r) => r.finalizedAt && toKoreanDateString(r.finalizedAt) === today)
+    .reduce((sum, r) => sum + r.finalPrice, 0);
+}
+
+// Sum finalPrice of records where finalizedAt falls in the given year/month
+export function computeMonthlyRevenue(
+  records: ConsultationRecord[],
+  year: number,
+  month: number,
+): number {
+  const prefix = `${year}-${String(month).padStart(2, '0')}`;
+  return records
+    .filter((r) => r.finalizedAt && toKoreanDateString(r.finalizedAt).startsWith(prefix))
+    .reduce((sum, r) => sum + r.finalPrice, 0);
+}
+
 // Count records where createdAt falls in the given year/month
 export function computeMonthlyConsultations(
   records: ConsultationRecord[],
@@ -599,6 +619,37 @@ export function computeKPICards(
   const regularCount = computeRegularCount(customers);
   const todayBookings = computeTodayBookings(reservations);
 
+  // 오늘 매출 및 어제 대비
+  const todayRevenue = computeTodayRevenue(records);
+  const yesterdayStr = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return toKoreanDateString(d);
+  })();
+  const yesterdayRevenue = records
+    .filter((r) => r.finalizedAt && toKoreanDateString(r.finalizedAt) === yesterdayStr)
+    .reduce((sum, r) => sum + r.finalPrice, 0);
+  const todayRevenueChange = computeChangeRate(todayRevenue, yesterdayRevenue);
+
+  // 재방문율 전월 대비 계산
+  const customerMap = new Map(customers.map((c) => [c.id, c]));
+  const thisMonthPrefix = `${year}-${String(month).padStart(2, '0')}`;
+  const prevMonthPrefix = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
+
+  function monthReturnRate(prefix: string): number {
+    const monthRecords = records.filter((r) => toKoreanDateString(r.createdAt).startsWith(prefix));
+    if (monthRecords.length === 0) return 0;
+    const returning = monthRecords.filter((r) => {
+      const c = customerMap.get(r.customerId);
+      return c !== undefined && c.visitCount >= 2;
+    }).length;
+    return Math.round((returning / monthRecords.length) * 1000) / 10;
+  }
+
+  const thisMonthReturnRate = monthReturnRate(thisMonthPrefix);
+  const prevMonthReturnRate = monthReturnRate(prevMonthPrefix);
+  const returnRateChange = computeChangeRate(thisMonthReturnRate, prevMonthReturnRate);
+
   // Change direction helper
   const dir = (change: number): 'up' | 'down' | 'neutral' =>
     change > 0 ? 'up' : change < 0 ? 'down' : 'neutral';
@@ -632,8 +683,8 @@ export function computeKPICards(
       label: '재방문율',
       value: `${returnRate}%`,
       rawValue: returnRate,
-      change: 0,
-      changeDirection: 'neutral',
+      change: returnRateChange,
+      changeDirection: dir(returnRateChange),
       icon: '🔄',
     },
     {
@@ -651,6 +702,14 @@ export function computeKPICards(
       change: 0,
       changeDirection: 'neutral',
       icon: '📅',
+    },
+    {
+      label: '오늘 매출',
+      value: `${todayRevenue.toLocaleString('ko-KR')}원`,
+      rawValue: todayRevenue,
+      change: todayRevenueChange,
+      changeDirection: dir(todayRevenueChange),
+      icon: '💰',
     },
   ];
 }

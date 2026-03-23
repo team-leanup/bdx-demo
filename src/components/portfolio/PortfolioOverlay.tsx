@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui';
 import { useConsultationStore } from '@/store/consultation-store';
+import { usePortfolioStore } from '@/store/portfolio-store';
 import { formatPrice, formatDateDot } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { InstagramHashtags } from './InstagramHashtags';
@@ -40,6 +41,7 @@ export function PortfolioOverlay({
 }: PortfolioOverlayProps): React.ReactElement {
   const router = useRouter();
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
+  const togglePhotoVisibility = usePortfolioStore((s) => s.togglePhotoVisibility);
   const [currentId, setCurrentId] = useState(initialPhotoId);
   const [showHashtags, setShowHashtags] = useState(false);
 
@@ -199,6 +201,19 @@ export function PortfolioOverlay({
               >
                 #해시태그
               </Button>
+              <button
+                type="button"
+                onClick={() => togglePhotoVisibility(photo.id)}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors',
+                  photo.isPublic !== false
+                    ? 'border-border text-text-secondary hover:border-primary/40 hover:text-primary'
+                    : 'border-error/30 text-error bg-error/5',
+                )}
+                title={photo.isPublic !== false ? '공개 중 (클릭하여 비공개)' : '비공개 (클릭하여 공개)'}
+              >
+                {photo.isPublic !== false ? '👁️' : '🚫'}
+              </button>
               <Button
                 variant="secondary"
                 size="sm"

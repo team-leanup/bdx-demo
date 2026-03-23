@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, useAnimationControls } from 'framer-motion';
 import { CustomerTagChip } from '@/components/customer/CustomerTagChip';
 import { ReservationReadinessBadge } from '@/components/reservations/ReservationReadinessBadge';
+import { DragConfirmModal } from '@/components/calendar/DragConfirmModal';
+import { useLongPress } from '@/lib/hooks/useLongPress';
 import { cn } from '@/lib/cn';
 import { formatDayLabelKo, getCurrentTimeInKorea, getTodayInKorea } from '@/lib/format';
 import { useCustomerStore } from '@/store/customer-store';
@@ -27,8 +29,18 @@ interface DesignerDayGridCalendarProps {
   endHour?: number;
   onEventClick?: (event: TimeGridEvent) => void;
   onEventMove?: (reservationId: string, updates: { reservationTime: string; designerId?: string }) => void;
+  onSlotLongPress?: (time: string, designerId: string) => void;
   role: UserRole;
   activeDesignerId: string | null;
+}
+
+interface PendingMove {
+  eventId: string;
+  eventTitle: string;
+  fromTime: string;
+  toTime: string;
+  fromDesigner: string | undefined;
+  toDesigner: string | undefined;
 }
 
 const HOUR_HEIGHT = 84;
@@ -82,6 +94,7 @@ interface DraggableEventProps {
   activeDesignerId: string | null;
   onEventClick?: (event: TimeGridEvent) => void;
   onEventMove?: (reservationId: string, updates: { reservationTime: string; designerId?: string }) => void;
+  onRequestMove?: (pending: PendingMove) => void;
 }
 
 function DraggableEvent({
@@ -99,6 +112,7 @@ function DraggableEvent({
   activeDesignerId,
   onEventClick,
   onEventMove,
+  onRequestMove,
 }: DraggableEventProps): React.ReactElement {
   const controls = useAnimationControls();
   const [isDragging, setIsDragging] = useState(false);
@@ -178,6 +192,28 @@ function DraggableEvent({
       return;
     }
 
+    // 동일 위치 드래그는 무시
+    if (timeStr === ev.startTime && targetDesignerId === ev.designerId) {
+      void controls.start({ x: 0, y: 0 });
+      return;
+    }
+
+    // 확인 모달을 띄울 경우
+    if (onRequestMove) {
+      const fromDesignerName = columns.find((c) => c.id === (ev.designerId ?? '__unassigned__'))?.name;
+      const toDesignerName = columns.find((c) => c.id === (targetDesignerId ?? '__unassigned__'))?.name;
+      onRequestMove({
+        eventId: ev.originalId,
+        eventTitle: ev.title,
+        fromTime: ev.startTime,
+        toTime: timeStr,
+        fromDesigner: fromDesignerName,
+        toDesigner: toDesignerName,
+      });
+      void controls.start({ x: 0, y: 0 });
+      return;
+    }
+
     onEventMove?.(ev.originalId, { reservationTime: timeStr, designerId: targetDesignerId });
     void controls.start({ x: 0, y: 0 });
   };
@@ -246,6 +282,120 @@ function DraggableEvent({
   );
 }
 
+interface SlotColumnProps {
+  col: { id: string; name: string };
+  events: TimeGridEvent[];
+  gridHeight: number;
+  startHour: number;
+  endHour: number;
+  gridRef: React.RefObject<HTMLDivElement | null>;
+  columns: { id: string; name: string }[];
+  allEvents: TimeGridEvent[];
+  role: UserRole;
+  activeDesignerId: string | null;
+  getPrimaryTags: (customerId: string) => CustomerTag[];
+  onEventClick?: (event: TimeGridEvent) => void;
+  onEventMove?: (reservationId: string, updates: { reservationTime: string; designerId?: string }) => void;
+  onRequestMove: (pending: PendingMove) => void;
+  onSlotLongPress?: (time: string, designerId: string) => void;
+}
+
+function SlotColumn({
+  col,
+  events,
+  gridHeight,
+  startHour,
+  endHour,
+  gridRef,
+  columns,
+  allEvents,
+  role,
+  activeDesignerId,
+  getPrimaryTags,
+  onEventClick,
+  onEventMove,
+  onRequestMove,
+  onSlotLongPress,
+}: SlotColumnProps): React.ReactElement {
+  const [isHolding, setIsHolding] = useState(false);
+  const longPressTimeRef = useRef('');
+
+  const handleLongPress = useCallback(() => {
+    setIsHolding(false);
+    if (onSlotLongPress && col.id !== '__unassigned__') {
+      onSlotLongPress(longPressTimeRef.current, col.id);
+    }
+  }, [col.id, onSlotLongPress]);
+
+  const longPressHandlers = useLongPress({ onLongPress: handleLongPress, delay: 600 });
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const minuteFromTop = (y / HOUR_HEIGHT) * 60 + startHour * 60;
+    const snapped = snapToInterval(minuteFromTop, 30);
+    longPressTimeRef.current = minutesToTimeStr(
+      clampStartMinutes({ startMinutes: snapped, startHour, endHour, durationMinutes: 30 }),
+    );
+    setIsHolding(true);
+    longPressHandlers.onMouseDown(e);
+  };
+
+  const handleMouseUp = () => {
+    setIsHolding(false);
+    longPressHandlers.onMouseUp();
+  };
+
+  const handleMouseLeave = () => {
+    setIsHolding(false);
+    longPressHandlers.onMouseLeave();
+  };
+
+  return (
+    <div
+      className={cn('relative border-l border-border overflow-visible transition-colors', isHolding && 'bg-primary/10 animate-pulse')}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
+      onTouchStart={longPressHandlers.onTouchStart}
+      onTouchEnd={() => { setIsHolding(false); longPressHandlers.onTouchEnd(); }}
+      onTouchMove={longPressHandlers.onTouchMove}
+    >
+      {events.map((ev) => {
+        const startMin = timeToMinutes(ev.startTime);
+        const endMin = timeToMinutes(ev.endTime);
+        const rawTop = ((startMin - startHour * 60) / 60) * HOUR_HEIGHT;
+        const rawHeight = Math.max(((endMin - startMin) / 60) * HOUR_HEIGHT, 40);
+        const top = Math.max(0, Math.min(rawTop, gridHeight - rawHeight));
+        const height = rawHeight;
+        const color = getEventColor(ev.designerId);
+        const customerTags = ev.customerId ? getPrimaryTags(ev.customerId) : [];
+
+        return (
+          <DraggableEvent
+            key={ev.id}
+            ev={ev}
+            top={top}
+            height={height}
+            color={color}
+            customerTags={customerTags}
+            gridRef={gridRef}
+            columns={columns}
+            events={allEvents}
+            startHour={startHour}
+            endHour={endHour}
+            role={role}
+            activeDesignerId={activeDesignerId}
+            onEventClick={onEventClick}
+            onEventMove={onEventMove}
+            onRequestMove={onRequestMove}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
 export function DesignerDayGridCalendar({
   date,
   events,
@@ -256,8 +406,10 @@ export function DesignerDayGridCalendar({
   activeDesignerId,
   onEventClick,
   onEventMove,
+  onSlotLongPress,
 }: DesignerDayGridCalendarProps) {
   const [currentTime, setCurrentTime] = useState(getCurrentTimeInKorea());
+  const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
   const getPrimaryTags = useCustomerStore((s) => s.getPrimaryTags);
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -351,39 +503,24 @@ export function DesignerDayGridCalendar({
             >
               <div />
               {columns.map((col) => (
-                <div key={col.id} className="relative border-l border-border overflow-visible">
-                  {(eventsByColumn[col.id] || []).map((ev) => {
-                    const startMin = timeToMinutes(ev.startTime);
-                    const endMin = timeToMinutes(ev.endTime);
-                    const rawTop = ((startMin - START_HOUR * 60) / 60) * HOUR_HEIGHT;
-                    const rawHeight = Math.max(((endMin - startMin) / 60) * HOUR_HEIGHT, 40);
-                    const top = Math.max(0, Math.min(rawTop, gridHeight - rawHeight));
-                    const height = rawHeight;
-
-                    const color = getEventColor(ev.designerId);
-                    const customerTags = ev.customerId ? getPrimaryTags(ev.customerId) : [];
-
-                    return (
-                      <DraggableEvent
-                        key={ev.id}
-                        ev={ev}
-                        top={top}
-                        height={height}
-                        color={color}
-                         customerTags={customerTags}
-                        gridRef={gridRef}
-                        columns={columns}
-                        events={events}
-                        startHour={START_HOUR}
-                        endHour={END_HOUR}
-                        role={role}
-                        activeDesignerId={activeDesignerId}
-                        onEventClick={onEventClick}
-                        onEventMove={onEventMove}
-                      />
-                    );
-                  })}
-                </div>
+                <SlotColumn
+                  key={col.id}
+                  col={col}
+                  events={eventsByColumn[col.id] || []}
+                  gridHeight={gridHeight}
+                  startHour={START_HOUR}
+                  endHour={END_HOUR}
+                  gridRef={gridRef}
+                  columns={columns}
+                  allEvents={events}
+                  role={role}
+                  activeDesignerId={activeDesignerId}
+                  getPrimaryTags={getPrimaryTags}
+                  onEventClick={onEventClick}
+                  onEventMove={onEventMove}
+                  onRequestMove={setPendingMove}
+                  onSlotLongPress={onSlotLongPress}
+                />
               ))}
             </div>
 
@@ -399,6 +536,25 @@ export function DesignerDayGridCalendar({
           </div>
         </div>
       </div>
+
+      <DragConfirmModal
+        open={pendingMove !== null}
+        eventTitle={pendingMove?.eventTitle ?? ''}
+        fromTime={pendingMove?.fromTime ?? ''}
+        toTime={pendingMove?.toTime ?? ''}
+        fromDesigner={pendingMove?.fromDesigner}
+        toDesigner={pendingMove?.toDesigner}
+        onConfirm={() => {
+          if (pendingMove) {
+            onEventMove?.(pendingMove.eventId, {
+              reservationTime: pendingMove.toTime,
+              designerId: columns.find((c) => c.name === pendingMove.toDesigner)?.id,
+            });
+          }
+          setPendingMove(null);
+        }}
+        onCancel={() => setPendingMove(null)}
+      />
     </div>
   );
 }

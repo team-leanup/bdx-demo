@@ -22,6 +22,10 @@ import {
   computeUpsellMetrics,
   computeForeignReservationSummary,
   computeGoldenTimeTargets,
+  computeTodayRevenue,
+  computeMonthlyRevenue,
+  computeMonthlyConsultations,
+  computeChangeRate,
 } from '@/lib/analytics';
 
 export default function DashboardPage() {
@@ -39,6 +43,27 @@ export default function DashboardPage() {
 
   const regularVisitRate = useMemo(() => computeRegularVisitRate(customers), [customers]);
   const upsellMetrics = useMemo(() => computeUpsellMetrics(records), [records]);
+
+  const todayRevenue = useMemo(() => computeTodayRevenue(records), [records]);
+  const monthlyGrowthData = useMemo(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const prevYear = month === 1 ? year - 1 : year;
+    const prevMonth = month === 1 ? 12 : month - 1;
+    const thisMonthRevenue = computeMonthlyRevenue(records, year, month);
+    const prevMonthRevenue = computeMonthlyRevenue(records, prevYear, prevMonth);
+    const thisMonthCount = computeMonthlyConsultations(records, year, month);
+    const prevMonthCount = computeMonthlyConsultations(records, prevYear, prevMonth);
+    return {
+      revenueChange: computeChangeRate(thisMonthRevenue, prevMonthRevenue),
+      countChange: computeChangeRate(thisMonthCount, prevMonthCount),
+      thisMonthRevenue,
+      prevMonthRevenue,
+      thisMonthCount,
+      prevMonthCount,
+    };
+  }, [records]);
   const foreignReservationSummary = useMemo(
     () => computeForeignReservationSummary(reservations),
     [reservations],
@@ -145,6 +170,65 @@ export default function DashboardPage() {
                 </div>
               </div>
 
+            </div>
+          </BentoCard>
+
+          {/* 오늘 매출 + 전월 대비 성장: 4×1 */}
+          <BentoCard span="4x1">
+            <div className="flex h-full flex-col gap-3 p-4 md:p-5 md:flex-row md:items-center md:gap-6">
+              {/* 오늘 매출 */}
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-text-secondary">오늘 매출</p>
+                <p className="mt-1 text-2xl font-extrabold text-primary">
+                  {formatPrice(todayRevenue)}
+                </p>
+                <p className="mt-0.5 text-xs text-text-muted">최종 결제 완료 기준</p>
+              </div>
+              <div className="h-px w-full bg-border md:h-16 md:w-px" />
+              {/* 전월 대비 매출 성장 */}
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-text-secondary">전월 대비 매출 성장</p>
+                <div className="mt-1 flex items-center gap-1.5">
+                  <span
+                    className={`text-2xl font-extrabold ${
+                      monthlyGrowthData.revenueChange > 0
+                        ? 'text-success'
+                        : monthlyGrowthData.revenueChange < 0
+                          ? 'text-error'
+                          : 'text-text'
+                    }`}
+                  >
+                    {monthlyGrowthData.revenueChange > 0 ? '+' : ''}
+                    {monthlyGrowthData.revenueChange}%
+                  </span>
+                  <span className="text-xs text-text-muted">
+                    {formatPrice(monthlyGrowthData.prevMonthRevenue)} →{' '}
+                    {formatPrice(monthlyGrowthData.thisMonthRevenue)}
+                  </span>
+                </div>
+              </div>
+              <div className="h-px w-full bg-border md:h-16 md:w-px" />
+              {/* 전월 대비 상담 건수 */}
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-text-secondary">전월 대비 상담 건수</p>
+                <div className="mt-1 flex items-center gap-1.5">
+                  <span
+                    className={`text-2xl font-extrabold ${
+                      monthlyGrowthData.countChange > 0
+                        ? 'text-success'
+                        : monthlyGrowthData.countChange < 0
+                          ? 'text-error'
+                          : 'text-text'
+                    }`}
+                  >
+                    {monthlyGrowthData.countChange > 0 ? '+' : ''}
+                    {monthlyGrowthData.countChange}%
+                  </span>
+                  <span className="text-xs text-text-muted">
+                    {monthlyGrowthData.prevMonthCount}건 → {monthlyGrowthData.thisMonthCount}건
+                  </span>
+                </div>
+              </div>
             </div>
           </BentoCard>
 

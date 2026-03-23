@@ -479,7 +479,17 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
 
       {/* PF-1: 태그 칩 UI */}
       <div>
-        <label className="mb-2 block text-sm font-medium text-text-secondary">태그</label>
+        <div className="mb-2 flex items-center justify-between">
+          <label className="text-sm font-medium text-text-secondary">태그</label>
+          <span className={cn(
+            'rounded-full px-2 py-0.5 text-[10px] font-semibold border',
+            selectedTags.length >= 3
+              ? 'bg-success/10 text-success border-success/20'
+              : 'bg-surface-alt text-text-muted border-border',
+          )}>
+            태그 {selectedTags.length}/3 (최소 3개)
+          </span>
+        </div>
         <div className="flex flex-wrap gap-1.5 mb-2">
           {PRESET_TAGS.map((tag) => (
             <button
@@ -589,8 +599,11 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
           variant="primary"
           onClick={handleUpload}
           loading={isProcessing}
-          disabled={!selectedFile}
-          className="h-14 w-full text-base shadow-sm sm:h-11 sm:flex-1 sm:text-base"
+          disabled={!selectedFile || selectedTags.length < 3}
+          className={cn(
+            'h-14 w-full text-base shadow-sm sm:h-11 sm:flex-1 sm:text-base',
+            selectedTags.length < 3 && 'opacity-50',
+          )}
         >
           업로드
         </Button>

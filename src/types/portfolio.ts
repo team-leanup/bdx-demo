@@ -16,4 +16,5 @@ export interface PortfolioPhoto {
   designType?: string;
   serviceType?: string;
   price?: number;
+  isPublic?: boolean;
 }

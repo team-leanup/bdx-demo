@@ -302,11 +302,12 @@ export default function ConsultationStartPage() {
     { icon: <StepFlowIcon type="summary" />, label: t('consultation.summaryTitle'), koLabel: tKo('consultation.summaryTitle') },
   ];
 
-  const handleStart = () => {
+  const handleStartWithEntry = (ep: 'staff' | 'return_visit') => {
     const nextDesignerId = selectedDesignerId || consultation.designerId;
     const nextConsultation = {
       ...consultation,
       designerId: nextDesignerId,
+      entryPoint: ep,
       currentStep: ConsultationStep.CUSTOMER_INFO,
     };
 
@@ -321,6 +322,8 @@ export default function ConsultationStartPage() {
 
     router.push('/consultation/customer');
   };
+
+  const handleStart = () => handleStartWithEntry('staff');
 
   if (isCustomerLinkFlow) {
     if (showEntrySplash) {
@@ -603,20 +606,32 @@ export default function ConsultationStartPage() {
 
       {/* Footer */}
       <footer className="fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur-sm border-t border-border px-4 py-4 safe-bottom md:static md:flex-shrink-0 md:px-8">
-        <div className="w-full md:max-w-4xl md:mx-auto">
-        <Button
-          variant="primary"
-          size="lg"
-          fullWidth
-          onClick={handleStart}
-          disabled={!selectedDesignerId}
-          className="shadow-sm"
-        >
-          <span>{t('consultation.startConsultation')}</span>
-          {locale !== 'ko' && (
-            <span className="ml-1 text-xs opacity-70">{tKo('consultation.startConsultation')}</span>
-          )}
-        </Button>
+        <div className="w-full md:max-w-4xl md:mx-auto flex flex-col gap-2">
+          <Button
+            variant="primary"
+            size="lg"
+            fullWidth
+            onClick={() => handleStartWithEntry('staff')}
+            disabled={!selectedDesignerId}
+            className="shadow-sm"
+          >
+            <span>{t('consultation.startConsultation')}</span>
+            {locale !== 'ko' && (
+              <span className="ml-1 text-xs opacity-70">{tKo('consultation.startConsultation')}</span>
+            )}
+          </Button>
+          <Button
+            variant="secondary"
+            size="lg"
+            fullWidth
+            onClick={() => handleStartWithEntry('return_visit')}
+            disabled={!selectedDesignerId}
+          >
+            <span>재방문 예약</span>
+            {locale !== 'ko' && (
+              <span className="ml-1 text-xs opacity-70 font-normal">Return Visit</span>
+            )}
+          </Button>
         </div>
       </footer>
       </>

@@ -10,6 +10,7 @@ import { normalizePhone } from '@/lib/phone';
 import { useAuthStore } from '@/store/auth-store';
 import { FlagIcon } from '@/components/ui/FlagIcon';
 import { cn } from '@/lib/cn';
+import { getSafetyTagMeta } from '@/lib/tag-safety';
 
 // stats will be derived from store inside component (hooks cannot be used at module scope)
 
@@ -188,8 +189,17 @@ export default function CustomersPage() {
                     className="flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-alt active:bg-surface-alt transition-colors"
                   >
                     {/* 아바타 원 */}
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary">
+                    <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary">
                       {customer.name.charAt(0)}
+                      {/* etc 카테고리 high 레벨 태그 아이콘 뱃지 */}
+                      {(() => {
+                        const highEtcTag = (customer.tags ?? []).find((t) => t.category === 'etc' && getSafetyTagMeta(t).level === 'high');
+                        return highEtcTag ? (
+                          <span className="absolute -top-0.5 -right-0.5 text-[10px] leading-none">
+                            {getSafetyTagMeta(highEtcTag).icon}
+                          </span>
+                        ) : null;
+                      })()}
                     </div>
 
                     <div className="flex flex-1 min-w-0 items-center gap-2">

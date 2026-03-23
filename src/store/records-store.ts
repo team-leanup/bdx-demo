@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { ConsultationRecord } from '@/types/consultation';
+import { ConsultationStep } from '@/types/consultation';
 import { useAuthStore } from '@/store/auth-store';
 import { getNowInKoreaIso } from '@/lib/format';
 import {
@@ -17,6 +18,14 @@ interface RecordsStore {
 
   hydrateFromDB: () => Promise<void>;
   addRecord: (record: ConsultationRecord) => Promise<void>;
+  addQuickSaleRecord: (params: {
+    id: string;
+    shopId: string;
+    designerId: string;
+    customerId: string;
+    finalPrice: number;
+    notes?: string;
+  }) => Promise<void>;
   updateRecord: (id: string, patch: Partial<ConsultationRecord>) => void;
   removeRecord: (id: string) => void;
   getRecordById: (id: string) => ConsultationRecord | undefined;
@@ -36,6 +45,43 @@ export const useRecordsStore = create<RecordsStore>()(
       },
 
       addRecord: (record) => {
+        set((state) => ({
+          records: [record, ...state.records],
+        }));
+        return dbUpsertRecord(record).catch((err: unknown) => {
+          console.error(err);
+          throw err;
+        });
+      },
+
+      addQuickSaleRecord: ({ id, shopId, designerId, customerId, finalPrice, notes }) => {
+        const now = getNowInKoreaIso();
+        const record: ConsultationRecord = {
+          id,
+          shopId,
+          designerId,
+          customerId,
+          consultation: {
+            bodyPart: 'hand',
+            offType: 'none',
+            extensionType: 'none',
+            nailShape: 'round',
+            designScope: 'solid_tone',
+            expressions: [],
+            hasParts: false,
+            partsSelections: [],
+            extraColorCount: 0,
+            currentStep: ConsultationStep.SUMMARY,
+          },
+          totalPrice: finalPrice,
+          estimatedMinutes: 0,
+          finalPrice,
+          createdAt: now,
+          updatedAt: now,
+          finalizedAt: now,
+          isQuickSale: true,
+          notes,
+        };
         set((state) => ({
           records: [record, ...state.records],
         }));

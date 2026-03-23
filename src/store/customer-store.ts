@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Customer, CustomerTag, SmallTalkNote, TagAccent } from '@/types/customer';
+import type { Customer, CustomerTag, SmallTalkNote, TagAccent, Membership, MembershipTransaction } from '@/types/customer';
 import { useAuthStore } from '@/store/auth-store';
 import { getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
 import {
@@ -38,6 +38,10 @@ interface CustomerStore {
   getPrimaryTags: (customerId: string) => CustomerTag[];
 
   appendSmallTalkNote: (customerId: string, note: SmallTalkNote) => void;
+
+  addMembership: (customerId: string, membership: Membership) => void;
+  useMembershipSession: (customerId: string, recordId?: string) => void;
+  updateMembership: (customerId: string, updates: Partial<Membership>) => void;
 }
 
 function deepClone<T>(v: T): T {
@@ -418,6 +422,74 @@ export const useCustomerStore = create<CustomerStore>()(
         const customer = get().customers.find((c) => c.id === customerId);
         if (!customer) return [];
         return sortTagsByPriority(customer.tags ?? []);
+      },
+
+      addMembership: (customerId, membership) => {
+        set((state) => ({
+          customers: state.customers.map((c) => {
+            if (c.id !== customerId) return c;
+            return { ...c, membership, updatedAt: getNowInKoreaIso() };
+          }),
+        }));
+        const updated = get().customers.find((c) => c.id === customerId);
+        if (updated) {
+          dbUpsertCustomer(updated).catch(console.error);
+        }
+      },
+
+      useMembershipSession: (customerId, recordId) => {
+        set((state) => ({
+          customers: state.customers.map((c) => {
+            if (c.id !== customerId) return c;
+            const m = c.membership;
+            if (!m || m.remainingSessions <= 0) return c;
+
+            const transaction: MembershipTransaction = {
+              id: `txn-${Date.now()}`,
+              date: getTodayInKorea(),
+              type: 'use',
+              sessionsDelta: -1,
+              recordId,
+            };
+
+            const remainingSessions = m.remainingSessions - 1;
+            const usedSessions = m.usedSessions + 1;
+            const status: Membership['status'] =
+              remainingSessions === 0 ? 'used_up' : m.status;
+
+            const updatedMembership: Membership = {
+              ...m,
+              remainingSessions,
+              usedSessions,
+              status,
+              transactions: [...(m.transactions ?? []), transaction],
+            };
+
+            return { ...c, membership: updatedMembership, updatedAt: getNowInKoreaIso() };
+          }),
+        }));
+        const updated = get().customers.find((c) => c.id === customerId);
+        if (updated) {
+          dbUpsertCustomer(updated).catch(console.error);
+        }
+      },
+
+      updateMembership: (customerId, updates) => {
+        set((state) => ({
+          customers: state.customers.map((c) => {
+            if (c.id !== customerId) return c;
+            if (!c.membership) return c;
+            return {
+              ...c,
+              membership: { ...c.membership, ...updates },
+              updatedAt: getNowInKoreaIso(),
+            };
+          }),
+        }));
+        const updated = get().customers.find((c) => c.id === customerId);
+        if (updated) {
+          dbUpsertCustomer(updated).catch(console.error);
+        }
       },
     }),
     {

@@ -6,13 +6,14 @@ import { motion } from 'framer-motion';
 import { Button, Badge, Card, Input, Modal, ToastContainer } from '@/components/ui';
 import type { ToastData } from '@/components/ui';
 import { PaymentSummary } from '@/components/payment/PaymentSummary';
+import { PaymentMethodSelector } from '@/components/payment/PaymentMethodSelector';
 import { useRecordsStore } from '@/store/records-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { calculatePrice } from '@/lib/price-calculator';
 import { formatPrice, formatDateDot, getNowInKoreaIso } from '@/lib/format';
 import { cn } from '@/lib/cn';
-import type { DiscountConfig } from '@/types/consultation';
+import type { DiscountConfig, PaymentMethod } from '@/types/consultation';
 
 interface ExtraItem {
   label: string;
@@ -37,6 +38,7 @@ function PaymentContent(): React.ReactElement {
   const updateRecord = useRecordsStore((s) => s.updateRecord);
   const reservations = useReservationStore((s) => s.reservations);
   const getCustomerById = useCustomerStore((s) => s.getById);
+  const consumeMembershipSession = useCustomerStore((s) => s.useMembershipSession);
 
   // recordId 또는 bookingId로 레코드 찾기
   const record = useMemo(() => {
@@ -73,6 +75,7 @@ function PaymentContent(): React.ReactElement {
   const [discountValue, setDiscountValue] = useState(
     String(record?.consultation.discount?.value ?? ''),
   );
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | undefined>(undefined);
   const [completing, setCompleting] = useState(false);
   const [toasts, setToasts] = useState<ToastData[]>([]);
 
@@ -115,8 +118,10 @@ function PaymentContent(): React.ReactElement {
     setShowDiscountEdit(false);
   };
 
+  const membershipRemaining = customer?.membership?.remainingSessions ?? 0;
+
   const handleComplete = async (): Promise<void> => {
-    if (!record || !breakdown) return;
+    if (!record || !breakdown || !paymentMethod) return;
     setCompleting(true);
 
     const extrasTotal = extraItems.reduce((s, i) => s + i.amount, 0);
@@ -131,6 +136,10 @@ function PaymentContent(): React.ReactElement {
         finalPrice: grandTotal,
       },
     });
+
+    if (paymentMethod === 'membership') {
+      consumeMembershipSession(record.customerId, record.id);
+    }
 
     pushToast('success', '결제가 완료되었어요');
     setTimeout(() => { setCompleting(false); router.push('/records'); }, 1200);
@@ -331,14 +340,27 @@ function PaymentContent(): React.ReactElement {
         )}
       </Card>
 
+      {/* 결제 수단 */}
+      <Card className="mx-4 shadow-md rounded-2xl">
+        <h2 className="mb-3 text-sm font-semibold text-text-secondary">결제 수단</h2>
+        <PaymentMethodSelector
+          value={paymentMethod}
+          onChange={setPaymentMethod}
+          membershipRemaining={membershipRemaining}
+        />
+        {!paymentMethod && (
+          <p className="mt-2 text-xs text-text-muted">결제 수단을 선택해주세요</p>
+        )}
+      </Card>
+
       {/* 결제 완료 버튼 */}
       <div className="fixed inset-x-0 bottom-0 bg-surface border-t border-border px-4 pb-6 pt-3 safe-area-inset">
         <Button
           variant="primary"
           fullWidth
           loading={completing}
-          disabled={completing}
-          className="h-14 text-base font-bold"
+          disabled={completing || !paymentMethod}
+          className={cn('h-14 text-base font-bold', !paymentMethod && 'opacity-50')}
           onClick={handleComplete}
         >
           결제 완료

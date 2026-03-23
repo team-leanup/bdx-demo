@@ -42,6 +42,8 @@ const SERVICE_OPTIONS = ['원컬러', '그라데이션', '자석젤', '아트'];
 interface ReservationFormProps {
   onSubmit: (reservation: BookingRequest) => void;
   onCancel?: () => void;
+  initialValues?: { date?: string; time?: string; designerId?: string; channel?: BookingChannel };
+  naverMode?: boolean;
 }
 
 function readFileAsDataUrl(file: File): Promise<string> {
@@ -65,20 +67,22 @@ function readFileAsDataUrl(file: File): Promise<string> {
   });
 }
 
-export function ReservationForm({ onSubmit, onCancel }: ReservationFormProps) {
+export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode = false }: ReservationFormProps) {
   const today = getTodayInKorea();
   const currentShopId = useAuthStore((s) => s.currentShopId);
   const customers = useCustomerStore((s) => s.customers);
   const designers = useShopStore((s) => s.designers);
   const [formName, setFormName] = useState('');
   const [formPhone, setFormPhone] = useState('');
-  const [formDate, setFormDate] = useState(today);
-  const [formTime, setFormTime] = useState('');
-  const [formChannel, setFormChannel] = useState<BookingChannel>('kakao');
+  const [formDate, setFormDate] = useState(initialValues?.date ?? today);
+  const [formTime, setFormTime] = useState(initialValues?.time ?? '');
+  const [formChannel, setFormChannel] = useState<BookingChannel>(
+    naverMode ? 'naver' : (initialValues?.channel ?? 'kakao'),
+  );
   const [formNote, setFormNote] = useState('');
   const [formLanguage, setFormLanguage] = useState<Locale>('ko');
   const [formImages, setFormImages] = useState<string[]>([]);
-  const [formDesignerId, setFormDesignerId] = useState('');
+  const [formDesignerId, setFormDesignerId] = useState(initialValues?.designerId ?? '');
   const [serviceLabel, setServiceLabel] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
@@ -179,6 +183,12 @@ export function ReservationForm({ onSubmit, onCancel }: ReservationFormProps) {
 
   return (
     <div className="flex flex-col gap-3 p-5">
+        {naverMode && (
+          <div className="flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2">
+            <span className="text-base">🟢</span>
+            <span className="text-xs font-bold text-emerald-700">네이버 예약 등록</span>
+          </div>
+        )}
         {/* 고객 검색 */}
         <div className="relative">
           <label className="mb-1 block text-xs font-medium text-text-secondary">
@@ -307,22 +317,24 @@ export function ReservationForm({ onSubmit, onCancel }: ReservationFormProps) {
         </div>
 
         {/* 예약 채널 */}
-        <div>
-          <label className="mb-1 block text-xs font-medium text-text-secondary">
-            예약 채널
-          </label>
-          <select
-            value={formChannel}
-            onChange={(e) => setFormChannel(e.target.value as BookingChannel)}
-            className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
-          >
-            {CHANNEL_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        {!naverMode && (
+          <div>
+            <label className="mb-1 block text-xs font-medium text-text-secondary">
+              예약 채널
+            </label>
+            <select
+              value={formChannel}
+              onChange={(e) => setFormChannel(e.target.value as BookingChannel)}
+              className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
+            >
+              {CHANNEL_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* 상담 언어 */}
         <div>

@@ -84,6 +84,7 @@ const translations = {
       alertBannerSuffix: '님이 사전 상담을 제출했어요',
       alertBannerView: '확인하기',
       alertBannerDismiss: '나중에',
+      quickSale: '매출 등록',
     },
     consultation: {
       selectDesigner: '담당 선생님 선택',
@@ -197,6 +198,12 @@ const translations = {
       },
       customerLinkBack: '이전으로',
       customerLinkSubmit: '상담 제출',
+      returnVisit: {
+        title: '재방문 예약',
+        description: '기존 고객의 재방문 예약',
+        newConsultation: '신규 상담',
+        returnVisit: '재방문 예약',
+      },
     },
     bodyPart: {
       hand: '핸드',
@@ -388,6 +395,9 @@ const translations = {
       popularServices: '인기 서비스',
       customerAnalysis: '고객 분석',
       designerPerformance: '디자이너별 선택 패턴',
+      todayRevenue: '오늘 매출',
+      monthlyGrowth: '전월 대비',
+      revenueGrowth: '매출 성장',
     },
     customer: {
       title: '고객',
@@ -406,6 +416,23 @@ const translations = {
       vipSet: 'VIP 지정',
       vipUnset: 'VIP 해제',
       longPressHint: '길게 누르면 VIP 설정',
+      membership: {
+        title: '회원권',
+        remaining: '잔여 횟수',
+        expiry: '만료일',
+        purchase: '구매금액',
+        addSession: '회원권 등록',
+        useSession: '1회 차감',
+        expired: '만료됨',
+        usedUp: '소진됨',
+      },
+      durationPreference: {
+        title: '시술 시간 선호',
+        short: '짧음',
+        normal: '보통',
+        long: '김',
+      },
+      quickSale: '매출 등록',
     },
     onboarding: {
       welcome: '환영합니다',
@@ -801,6 +828,25 @@ const translations = {
       '왼손잡이': '왼손잡이',
       '피가잘남': '피가잘남',
     },
+    payment: {
+      method: {
+        title: '결제 방법',
+        cash: '현금',
+        card: '카드',
+        membership: '회원권',
+        remaining: '잔여 {n}회',
+        selectRequired: '결제 방법을 선택해주세요',
+      },
+    },
+    portfolio: {
+      minTags: '태그 최소 3개',
+      tagCount: '태그 {n}/3',
+      visibility: {
+        public: '공개',
+        private: '비공개',
+        toggle: '공개 전환',
+      },
+    },
   },
 
   en: {
@@ -882,6 +928,7 @@ const translations = {
       alertBannerSuffix: 'submitted a pre-consultation',
       alertBannerView: 'View',
       alertBannerDismiss: 'Later',
+      quickSale: 'Quick Sale',
     },
     consultation: {
       selectDesigner: 'Select Designer',
@@ -995,6 +1042,12 @@ const translations = {
       },
       customerLinkBack: 'Back',
       customerLinkSubmit: 'Submit',
+      returnVisit: {
+        title: 'Return Visit',
+        description: 'Existing customer return visit',
+        newConsultation: 'New Consultation',
+        returnVisit: 'Return Visit',
+      },
     },
     bodyPart: {
       hand: 'Hand',
@@ -1186,6 +1239,9 @@ const translations = {
       popularServices: 'Popular Services',
       customerAnalysis: 'Customer Analysis',
       designerPerformance: 'Designer Performance',
+      todayRevenue: "Today's Revenue",
+      monthlyGrowth: 'Month-over-Month',
+      revenueGrowth: 'Revenue Growth',
     },
     customer: {
       title: 'Customers',
@@ -1204,6 +1260,23 @@ const translations = {
       vipSet: 'Set as VIP',
       vipUnset: 'Remove VIP',
       longPressHint: 'Long press for VIP',
+      membership: {
+        title: 'Membership',
+        remaining: 'Remaining Sessions',
+        expiry: 'Expiry Date',
+        purchase: 'Purchase Amount',
+        addSession: 'Add Membership',
+        useSession: 'Use Session',
+        expired: 'Expired',
+        usedUp: 'Used Up',
+      },
+      durationPreference: {
+        title: 'Duration Preference',
+        short: 'Short',
+        normal: 'Normal',
+        long: 'Long',
+      },
+      quickSale: 'Quick Sale',
     },
     onboarding: {
       welcome: 'Welcome',
@@ -1599,6 +1672,25 @@ const translations = {
       '왼손잡이': 'Left-handed',
       '피가잘남': 'Bleeds easily',
     },
+    payment: {
+      method: {
+        title: 'Payment Method',
+        cash: 'Cash',
+        card: 'Card',
+        membership: 'Membership',
+        remaining: '{n} remaining',
+        selectRequired: 'Please select a payment method',
+      },
+    },
+    portfolio: {
+      minTags: 'Min. 3 tags',
+      tagCount: 'Tags {n}/3',
+      visibility: {
+        public: 'Public',
+        private: 'Private',
+        toggle: 'Toggle Visibility',
+      },
+    },
   },
 
   zh: {
@@ -1680,6 +1772,7 @@ const translations = {
       alertBannerSuffix: '提交了预约咨询',
       alertBannerView: '查看',
       alertBannerDismiss: '稍后',
+      quickSale: '快速销售',
     },
     consultation: {
       selectDesigner: '选择设计师',
@@ -1793,6 +1886,12 @@ const translations = {
       },
       customerLinkBack: '返回',
       customerLinkSubmit: '提交咨询',
+      returnVisit: {
+        title: '复诊预约',
+        description: '老客户复诊',
+        newConsultation: '新咨询',
+        returnVisit: '复诊预约',
+      },
     },
     bodyPart: {
       hand: '手部',
@@ -1983,6 +2082,9 @@ const translations = {
       popularServices: '热门服务',
       customerAnalysis: '客户分析',
       designerPerformance: '设计师业绩',
+      todayRevenue: '今日营收',
+      monthlyGrowth: '环比',
+      revenueGrowth: '营收增长',
     },
     customer: {
       title: '客户',
@@ -2001,6 +2103,23 @@ const translations = {
       vipSet: '设为VIP',
       vipUnset: '取消VIP',
       longPressHint: '长按设置VIP',
+      membership: {
+        title: '会员卡',
+        remaining: '剩余次数',
+        expiry: '到期日',
+        purchase: '购买金额',
+        addSession: '添加会员卡',
+        useSession: '使用1次',
+        expired: '已过期',
+        usedUp: '已用完',
+      },
+      durationPreference: {
+        title: '施术时间偏好',
+        short: '短',
+        normal: '普通',
+        long: '长',
+      },
+      quickSale: '快速销售',
     },
     onboarding: {
       welcome: '欢迎',
@@ -2396,6 +2515,25 @@ const translations = {
       '왼손잡이': '左手惯用',
       '피가잘남': '容易出血',
     },
+    payment: {
+      method: {
+        title: '支付方式',
+        cash: '现金',
+        card: '银行卡',
+        membership: '会员卡',
+        remaining: '剩余{n}次',
+        selectRequired: '请选择支付方式',
+      },
+    },
+    portfolio: {
+      minTags: '至少3个标签',
+      tagCount: '标签 {n}/3',
+      visibility: {
+        public: '公开',
+        private: '私密',
+        toggle: '切换可见性',
+      },
+    },
   },
 
   ja: {
@@ -2477,6 +2615,7 @@ const translations = {
       alertBannerSuffix: 'さんが事前相談を提出しました',
       alertBannerView: '確認する',
       alertBannerDismiss: '後で',
+      quickSale: '売上登録',
     },
     consultation: {
       selectDesigner: '担当者を選択',
@@ -2590,6 +2729,12 @@ const translations = {
       },
       customerLinkBack: '前へ',
       customerLinkSubmit: 'カウンセリング提出',
+      returnVisit: {
+        title: '再来予約',
+        description: '既存のお客様の再来',
+        newConsultation: '新規相談',
+        returnVisit: '再来予約',
+      },
     },
     bodyPart: {
       hand: 'ハンド',
@@ -2780,6 +2925,9 @@ const translations = {
       popularServices: '人気サービス',
       customerAnalysis: '顧客分析',
       designerPerformance: 'デザイナー実績',
+      todayRevenue: '本日売上',
+      monthlyGrowth: '前月比',
+      revenueGrowth: '売上成長',
     },
     customer: {
       title: '顧客',
@@ -2798,6 +2946,23 @@ const translations = {
       vipSet: 'VIP指定',
       vipUnset: 'VIP解除',
       longPressHint: '長押しでVIP設定',
+      membership: {
+        title: '会員券',
+        remaining: '残り回数',
+        expiry: '有効期限',
+        purchase: '購入金額',
+        addSession: '会員券登録',
+        useSession: '1回使用',
+        expired: '期限切れ',
+        usedUp: '使用済み',
+      },
+      durationPreference: {
+        title: '施術時間の好み',
+        short: '短め',
+        normal: '普通',
+        long: '長め',
+      },
+      quickSale: '売上登録',
     },
     onboarding: {
       welcome: 'ようこそ',
@@ -3192,6 +3357,25 @@ const translations = {
       '오른손잡이': '右利き',
       '왼손잡이': '左利き',
       '피가잘남': '出血しやすい',
+    },
+    payment: {
+      method: {
+        title: '支払い方法',
+        cash: '現金',
+        card: 'カード',
+        membership: '会員券',
+        remaining: '残り{n}回',
+        selectRequired: '支払い方法を選択してください',
+      },
+    },
+    portfolio: {
+      minTags: 'タグ最低3個',
+      tagCount: 'タグ {n}/3',
+      visibility: {
+        public: '公開',
+        private: '非公開',
+        toggle: '公開切り替え',
+      },
     },
   },
 } as const;

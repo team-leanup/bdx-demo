@@ -155,6 +155,28 @@ function buildKPIDetail(
         </div>
       );
     }
+    case '오늘 매출': {
+      const today = getTodayInKorea();
+      const todayRecords = records.filter((r) => r.finalizedAt && toKoreanDateString(r.finalizedAt) === today);
+      const totalRevenue = todayRecords.reduce((sum, r) => sum + r.finalPrice, 0);
+      const avgRevenue = todayRecords.length > 0 ? Math.round(totalRevenue / todayRecords.length) : 0;
+      return (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
+            <span className="text-sm text-text-secondary">완료된 상담</span>
+            <span className="font-bold text-text">{todayRecords.length}건</span>
+          </div>
+          <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
+            <span className="text-sm text-text-secondary">평균 단가</span>
+            <span className="font-bold text-text">{avgRevenue.toLocaleString('ko-KR')}원</span>
+          </div>
+          <div className="flex items-center justify-between rounded-xl bg-primary/10 p-3">
+            <span className="text-sm font-semibold text-primary">오늘 총 매출</span>
+            <span className="font-bold text-primary">{totalRevenue.toLocaleString('ko-KR')}원</span>
+          </div>
+        </div>
+      );
+    }
     case '오늘 예약': {
       const today = getTodayInKorea();
       const todayRes = reservations
@@ -268,6 +290,7 @@ const KPI_SYMBOL: Record<string, string> = {
   '재방문율': '%',
   '단골 고객': 'vip',
   '오늘 예약': 'cal',
+  '오늘 매출': '₩',
 };
 
 const VISIBLE_KPI_LABELS = new Set([
@@ -275,6 +298,7 @@ const VISIBLE_KPI_LABELS = new Set([
   '인기 디자인',
   '재방문율',
   '오늘 예약',
+  '오늘 매출',
 ]);
 
 export function KPICards() {

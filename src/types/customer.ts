@@ -57,14 +57,25 @@ export interface TreatmentHistory {
 
 export type VisitFrequency = 'weekly' | 'biweekly' | 'monthly' | 'irregular';
 
+export interface MembershipTransaction {
+  id: string;
+  date: string;
+  type: 'purchase' | 'use' | 'refund' | 'adjust';
+  sessionsDelta: number;
+  recordId?: string;
+  note?: string;
+}
+
 export interface Membership {
   id: string;
   totalSessions: number;
   usedSessions: number;
   remainingSessions: number;
   purchaseAmount: number;
+  purchaseDate?: string;
   expiryDate: string;
   status: 'active' | 'expired' | 'used_up';
+  transactions?: MembershipTransaction[];
 }
 
 export interface Customer {
@@ -87,6 +98,7 @@ export interface Customer {
   isRegular?: boolean;
   regularSince?: string;
   visitFrequency?: VisitFrequency;
+  durationPreference?: 'short' | 'normal' | 'long';
   membership?: Membership;
   preferredLanguage?: 'ko' | 'en' | 'zh' | 'ja';
   createdAt: string;

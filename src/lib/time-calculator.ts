@@ -13,11 +13,17 @@ interface TimeBreakdown {
 /**
  * 상담 내용을 기반으로 예상 시술 시간을 계산합니다 (단위: 분)
  */
-export function estimateTime(consultation: ConsultationType): number {
-  return calculateTimeBreakdown(consultation).total;
+export function estimateTime(
+  consultation: ConsultationType,
+  customerDurationPreference?: 'short' | 'normal' | 'long',
+): number {
+  return calculateTimeBreakdown(consultation, customerDurationPreference).total;
 }
 
-export function calculateTimeBreakdown(consultation: ConsultationType): TimeBreakdown {
+export function calculateTimeBreakdown(
+  consultation: ConsultationType,
+  customerDurationPreference?: 'short' | 'normal' | 'long',
+): TimeBreakdown {
   // 기본 시간 (핸드: 60분, 페디큐어: 90분)
   const base = consultation.bodyPart === 'hand' ? 60 : 90;
 
@@ -63,7 +69,18 @@ export function calculateTimeBreakdown(consultation: ConsultationType): TimeBrea
     parts = Math.ceil(totalParts / 2) * 5;
   }
 
-  const total = base + off + extension + design + expression + parts;
+  const subtotal = base + off + extension + design + expression + parts;
+
+  // 고객 소요 시간 선호 보정
+  const preference = customerDurationPreference ?? consultation.customerDurationPreference;
+  let total: number;
+  if (preference === 'short') {
+    total = Math.round(subtotal * 0.9);
+  } else if (preference === 'long') {
+    total = subtotal + 20;
+  } else {
+    total = subtotal;
+  }
 
   return { base, off, extension, design, expression, parts, total };
 }

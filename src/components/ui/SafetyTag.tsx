@@ -6,6 +6,7 @@ interface SafetyTagProps {
   tag: Pick<CustomerTag, 'category' | 'value'>;
   size?: 'xs' | 'sm' | 'md';
   showLevel?: boolean;
+  showIcon?: boolean;
   className?: string;
 }
 
@@ -19,6 +20,7 @@ export function SafetyTag({
   tag,
   size = 'sm',
   showLevel = false,
+  showIcon = false,
   className,
 }: SafetyTagProps): React.ReactElement {
   const meta = getSafetyTagMeta(tag);
@@ -32,6 +34,7 @@ export function SafetyTag({
         className,
       )}
     >
+      {showIcon && <span>{meta.icon}</span>}
       <span>{tag.value}</span>
       {showLevel && (
         <span className="opacity-70">{meta.label}</span>

@@ -117,11 +117,14 @@ export interface ConsultationType {
   // 연결된 예약 ID
   bookingId?: string;
 
-  entryPoint?: 'staff' | 'customer_link';
+  entryPoint?: 'staff' | 'customer_link' | 'return_visit';
+  customerDurationPreference?: 'short' | 'normal' | 'long';
 
   // 현재 단계
   currentStep: ConsultationStep;
 }
+
+export type PaymentMethod = 'cash' | 'card' | 'membership';
 
 export type BookingChannel = 'kakao' | 'naver' | 'phone' | 'walk_in';
 export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
@@ -177,4 +180,6 @@ export interface ConsultationRecord {
   notes?: string;
   imageUrls?: string[];
   checklist?: DailyChecklist;
+  paymentMethod?: PaymentMethod;
+  isQuickSale?: boolean;
 }

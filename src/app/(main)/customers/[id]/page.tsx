@@ -34,6 +34,8 @@ import {
   IconCamera,
   IconCalendar,
 } from '@/components/icons';
+import { MembershipCard } from '@/components/customer/MembershipCard';
+import { TreatmentPhotoCarousel } from '@/components/customer/TreatmentPhotoCarousel';
 
 // Design type icon mapping for timeline
 const DESIGN_SCOPE_ICON: Record<string, string> = {
@@ -558,6 +560,44 @@ function CustomerDetailContent({ id }: { id: string }) {
           </div>
           <span className="text-base font-bold text-white">{customer.totalSpend ? formatPrice(customer.totalSpend) : '–'}</span>
         </div>
+
+        {/* 시술 시간 선호 */}
+        <div className="mt-3">
+          <p className="mb-1.5 text-[11px] font-semibold text-text-muted">시술 시간 선호</p>
+          <div className="flex gap-1.5">
+            {(['short', 'normal', 'long'] as const).map((val) => {
+              const labels = { short: '짧음', normal: '보통', long: '김' };
+              const isSelected = (customer.durationPreference ?? 'normal') === val;
+              return (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => updateCustomer(id, { durationPreference: val })}
+                  className={cn(
+                    'flex-1 rounded-xl py-1.5 text-xs font-semibold border transition-all',
+                    isSelected
+                      ? 'bg-primary text-white border-primary'
+                      : 'bg-surface-alt text-text-secondary border-border hover:border-primary/40',
+                  )}
+                >
+                  {labels[val]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 매출 등록 버튼 */}
+        <button
+          type="button"
+          onClick={() => router.push(`/quick-sale?customerId=${id}`)}
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-primary/30 bg-primary/5 py-2.5 text-sm font-semibold text-primary hover:bg-primary/10 transition-colors"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          매출 등록
+        </button>
         </Card>
       </div>
 
@@ -577,32 +617,11 @@ function CustomerDetailContent({ id }: { id: string }) {
         </div>
       )}
 
-      {/* CU-2: 최근 시술 사진 미니 갤러리 */}
-      {recentTreatmentPhotos.length > 0 && (
+      {/* 비주얼 시술 이력 캐러셀 */}
+      {treatmentPhotos.length > 0 && (
         <div className="mx-4 -mt-2">
-          <p className="mb-2 text-xs font-semibold text-text-secondary">최근 시술</p>
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {recentTreatmentPhotos.map((photo) => (
-              <button
-                key={photo.id}
-                onClick={() => setPhotoPopupId(photo.id)}
-                className="relative flex-shrink-0 h-20 w-20 rounded-xl overflow-hidden bg-surface-alt shadow-sm hover:shadow-md transition-shadow"
-              >
-                <Image
-                  src={photo.imageDataUrl}
-                  alt="시술 사진"
-                  fill
-                  unoptimized
-                  className="object-cover"
-                />
-                {photo.takenAt && (
-                  <div className="absolute inset-x-0 bottom-0 bg-black/50 px-1.5 py-1">
-                    <p className="text-[9px] text-white text-center leading-none">{formatDateDot(photo.takenAt)}</p>
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
+          <p className="mb-2 text-xs font-semibold text-text-secondary">시술 이력</p>
+          <TreatmentPhotoCarousel photos={treatmentPhotos} maxItems={5} />
         </div>
       )}
 
@@ -734,12 +753,16 @@ function CustomerDetailContent({ id }: { id: string }) {
                       )}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <CustomerTagChip
-                          tag={tag}
-                          size="sm"
-                          showPin={Boolean(tag.pinned)}
-                          icon={tagIconMap[tag.value]}
-                        />
+                        {preset.category === 'etc' ? (
+                          <SafetyTag tag={tag} size="sm" showIcon />
+                        ) : (
+                          <CustomerTagChip
+                            tag={tag}
+                            size="sm"
+                            showPin={Boolean(tag.pinned)}
+                            icon={tagIconMap[tag.value]}
+                          />
+                        )}
                         {editingTags && (
                           <button
                             type="button"
@@ -884,6 +907,16 @@ function CustomerDetailContent({ id }: { id: string }) {
           }}
         />
       </div>
+
+      {/* ─────────────────────────────── */}
+      {/* 2.5 회원권 */}
+      {/* ─────────────────────────────── */}
+      {customer.membership && (
+        <div className="mx-4">
+          <h2 className="mb-2 text-sm font-semibold text-text-secondary">회원권</h2>
+          <MembershipCard membership={customer.membership} />
+        </div>
+      )}
 
       {/* ─────────────────────────────── */}
       {/* 3. 이미지 갤러리 (real upload) */}
