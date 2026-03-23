@@ -189,6 +189,7 @@ function toPortfolioPhoto(row: Database['public']['Tables']['portfolio_photos'][
     designType: row.design_type ?? undefined,
     serviceType: row.service_type ?? undefined,
     price: row.price ?? undefined,
+    isPublic: row.is_public ?? true,
   };
 }
 
@@ -652,6 +653,7 @@ export async function fetchCustomers(shopId?: string | null): Promise<Customer[]
     createdAt: row.created_at ?? '',
     updatedAt: row.updated_at ?? '',
     preferredLanguage: (row.preferred_language as Customer['preferredLanguage']) ?? undefined,
+    durationPreference: (row.duration_preference as Customer['durationPreference']) ?? undefined,
   }));
 }
 
@@ -682,6 +684,8 @@ export async function fetchConsultationRecords(shopId?: string | null): Promise<
     imageUrls: (row.image_urls as unknown as string[]) ?? [],
     checklist: (row.checklist as unknown as DailyChecklist) ?? undefined,
     language: (row.language as ConsultationRecord['language']) ?? undefined,
+    paymentMethod: (row.payment_method as ConsultationRecord['paymentMethod']) ?? undefined,
+    isQuickSale: row.is_quick_sale ?? false,
   }));
 }
 
@@ -800,6 +804,7 @@ export async function dbUpsertCustomer(customer: Customer): Promise<void> {
     visit_frequency: customer.visitFrequency ?? null,
     membership: (customer.membership as unknown as import('@/types/database').Json) ?? null,
     preferred_language: customer.preferredLanguage ?? null,
+    duration_preference: customer.durationPreference ?? null,
     updated_at: getNowInKoreaIso(),
   });
   if (error) {
@@ -921,6 +926,8 @@ export async function dbUpsertRecord(record: ConsultationRecord): Promise<void> 
     image_urls: (record.imageUrls as unknown as import('@/types/database').Json) ?? null,
     checklist: (record.checklist as unknown as import('@/types/database').Json) ?? null,
     language: record.language ?? null,
+    payment_method: record.paymentMethod ?? null,
+    is_quick_sale: record.isQuickSale ?? false,
   });
   if (error) {
     console.error('[db] dbUpsertRecord error:', toDbErrorSnapshot(error));
@@ -1062,6 +1069,7 @@ export async function dbInsertPortfolioPhoto(photo: PortfolioPhoto): Promise<Por
         design_type: photo.designType ?? null,
         service_type: photo.serviceType ?? null,
         price: photo.price ?? null,
+        is_public: photo.isPublic ?? true,
       })
       .select('*')
       .single();
@@ -1125,4 +1133,78 @@ export async function dbDeleteAllPortfolioPhotos(photos: PortfolioPhoto[]): Prom
   }
 
   return { success: true };
+}
+
+// ─── Portfolio Visibility ────────────────────────────────────────────────────
+
+export async function dbTogglePhotoVisibility(
+  photoId: string,
+  shopId: string,
+  isPublic: boolean,
+): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase
+    .from('portfolio_photos')
+    .update({ is_public: isPublic })
+    .eq('id', photoId)
+    .eq('shop_id', shopId);
+  if (error) {
+    console.error('[db] dbTogglePhotoVisibility error:', toDbErrorSnapshot(error));
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}
+
+// ─── Membership Transactions ─────────────────────────────────────────────────
+
+export async function dbInsertMembershipTransaction(
+  transaction: {
+    id: string;
+    customerId: string;
+    shopId: string;
+    date: string;
+    type: 'purchase' | 'use' | 'refund' | 'adjust';
+    sessionsDelta: number;
+    recordId?: string;
+    note?: string;
+  },
+): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase.from('membership_transactions').insert({
+    id: transaction.id,
+    customer_id: transaction.customerId,
+    shop_id: transaction.shopId,
+    date: transaction.date,
+    type: transaction.type,
+    sessions_delta: transaction.sessionsDelta,
+    record_id: transaction.recordId ?? null,
+    note: transaction.note ?? null,
+  });
+  if (error) {
+    console.error('[db] dbInsertMembershipTransaction error:', toDbErrorSnapshot(error));
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}
+
+export async function dbFetchMembershipTransactions(
+  customerId: string,
+  shopId: string,
+): Promise<{ id: string; date: string; type: string; sessionsDelta: number; recordId?: string; note?: string }[]> {
+  const { data, error } = await supabase
+    .from('membership_transactions')
+    .select('*')
+    .eq('customer_id', customerId)
+    .eq('shop_id', shopId)
+    .order('date', { ascending: false });
+  if (error || !data) {
+    console.error('[db] dbFetchMembershipTransactions error:', toDbErrorSnapshot(error));
+    return [];
+  }
+  return data.map((row) => ({
+    id: row.id,
+    date: row.date,
+    type: row.type,
+    sessionsDelta: row.sessions_delta,
+    recordId: row.record_id ?? undefined,
+    note: row.note ?? undefined,
+  }));
 }

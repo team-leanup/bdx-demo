@@ -9,6 +9,7 @@ import {
   dbInsertPortfolioPhoto,
   dbDeletePortfolioPhoto,
   dbDeleteAllPortfolioPhotos,
+  dbTogglePhotoVisibility,
 } from '@/lib/db';
 import { getNowInKoreaIso } from '@/lib/format';
 import { DEMO_PORTFOLIO_PHOTOS } from '@/data/demo-portfolio';
@@ -246,12 +247,18 @@ export const usePortfolioStore = create<PortfolioStore>()(
       getByKind: (kind) => get().photos.filter((p) => p.kind === kind),
 
       togglePhotoVisibility: (id) => {
+        const currentShopId = useAuthStore.getState().currentShopId;
+        let newIsPublic = true;
         set((state) => ({
           photos: state.photos.map((p) => {
             if (p.id !== id) return p;
-            return { ...p, isPublic: !(p.isPublic ?? true) };
+            newIsPublic = !(p.isPublic ?? true);
+            return { ...p, isPublic: newIsPublic };
           }),
         }));
+        if (currentShopId && currentShopId !== 'shop-demo') {
+          dbTogglePhotoVisibility(id, currentShopId, newIsPublic).catch(console.error);
+        }
       },
 
       updatePhoto: (id, updates) => {

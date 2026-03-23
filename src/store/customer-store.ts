@@ -10,6 +10,7 @@ import {
   dbUpsertCustomer,
   dbUpsertCustomerTags,
   dbInsertSmallTalkNote,
+  dbInsertMembershipTransaction,
 } from '@/lib/db';
 
 interface LegacyCustomerTagAccent {
@@ -434,6 +435,17 @@ export const useCustomerStore = create<CustomerStore>()(
         const updated = get().customers.find((c) => c.id === customerId);
         if (updated) {
           dbUpsertCustomer(updated).catch(console.error);
+          const shopId = useAuthStore.getState().currentShopId;
+          if (shopId && shopId !== 'shop-demo') {
+            dbInsertMembershipTransaction({
+              id: `txn-${Date.now()}`,
+              customerId,
+              shopId,
+              date: getTodayInKorea(),
+              type: 'purchase',
+              sessionsDelta: membership.totalSessions,
+            }).catch(console.error);
+          }
         }
       },
 
@@ -471,6 +483,18 @@ export const useCustomerStore = create<CustomerStore>()(
         const updated = get().customers.find((c) => c.id === customerId);
         if (updated) {
           dbUpsertCustomer(updated).catch(console.error);
+          const shopId = useAuthStore.getState().currentShopId;
+          if (shopId && shopId !== 'shop-demo') {
+            dbInsertMembershipTransaction({
+              id: `txn-${Date.now()}`,
+              customerId,
+              shopId,
+              date: getTodayInKorea(),
+              type: 'use',
+              sessionsDelta: -1,
+              recordId,
+            }).catch(console.error);
+          }
         }
       },
 

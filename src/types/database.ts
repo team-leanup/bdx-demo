@@ -108,8 +108,10 @@ export type Database = {
           finalized_at: string | null
           id: string
           image_urls: Json | null
+          is_quick_sale: boolean
           language: string | null
           notes: string | null
+          payment_method: string | null
           pricing_adjustments: Json | null
           shop_id: string
           total_price: number | null
@@ -126,8 +128,10 @@ export type Database = {
           finalized_at?: string | null
           id: string
           image_urls?: Json | null
+          is_quick_sale?: boolean
           language?: string | null
           notes?: string | null
+          payment_method?: string | null
           pricing_adjustments?: Json | null
           shop_id: string
           total_price?: number | null
@@ -144,8 +148,10 @@ export type Database = {
           finalized_at?: string | null
           id?: string
           image_urls?: Json | null
+          is_quick_sale?: boolean
           language?: string | null
           notes?: string | null
+          payment_method?: string | null
           pricing_adjustments?: Json | null
           shop_id?: string
           total_price?: number | null
@@ -225,6 +231,7 @@ export type Database = {
           assigned_designer_name: string | null
           average_spend: number | null
           created_at: string | null
+          duration_preference: string | null
           first_visit_date: string | null
           id: string
           is_regular: boolean | null
@@ -248,6 +255,7 @@ export type Database = {
           assigned_designer_name?: string | null
           average_spend?: number | null
           created_at?: string | null
+          duration_preference?: string | null
           first_visit_date?: string | null
           id: string
           is_regular?: boolean | null
@@ -271,6 +279,7 @@ export type Database = {
           assigned_designer_name?: string | null
           average_spend?: number | null
           created_at?: string | null
+          duration_preference?: string | null
           first_visit_date?: string | null
           id?: string
           is_regular?: boolean | null
@@ -347,6 +356,64 @@ export type Database = {
           },
         ]
       }
+      membership_transactions: {
+        Row: {
+          created_at: string
+          customer_id: string
+          date: string
+          id: string
+          note: string | null
+          record_id: string | null
+          sessions_delta: number
+          shop_id: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          date?: string
+          id: string
+          note?: string | null
+          record_id?: string | null
+          sessions_delta?: number
+          shop_id: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          date?: string
+          id?: string
+          note?: string | null
+          record_id?: string | null
+          sessions_delta?: number
+          shop_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_transactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_transactions_record_id_fkey"
+            columns: ["record_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_transactions_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portfolio_photos: {
         Row: {
           color_labels: Json
@@ -356,6 +423,7 @@ export type Database = {
           id: string
           image_data_url: string | null
           image_path: string | null
+          is_public: boolean
           kind: string
           note: string | null
           price: number | null
@@ -373,6 +441,7 @@ export type Database = {
           id: string
           image_data_url?: string | null
           image_path?: string | null
+          is_public?: boolean
           kind: string
           note?: string | null
           price?: number | null
@@ -390,6 +459,7 @@ export type Database = {
           id?: string
           image_data_url?: string | null
           image_path?: string | null
+          is_public?: boolean
           kind?: string
           note?: string | null
           price?: number | null
