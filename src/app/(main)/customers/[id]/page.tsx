@@ -208,13 +208,16 @@ function CustomerDetailContent({ id }: { id: string }) {
   const orderedTags = sortTagsByDisplayOrder(localTags);
   const pinnedTags = orderedTags.filter((tag) => tag.pinned);
 
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => { clearTimeout(toastTimerRef.current); }, []);
+
   const handleVipToggle = () => {
     const newVal = !isVip;
     setIsVip(newVal);
     updateCustomer(id, { isRegular: newVal });
     navigator.vibrate?.(50);
     setVipToast(newVal ? '단골 지정됨' : '단골 해제됨');
-    setTimeout(() => setVipToast(null), 2000);
+    toastTimerRef.current = setTimeout(() => setVipToast(null), 2000);
   };
 
   const handleStartTagEdit = (): void => {
@@ -329,7 +332,7 @@ function CustomerDetailContent({ id }: { id: string }) {
             if (!result.success && result.error) {
               setUploadError(result.error);
               pushToast('error', result.error);
-              setTimeout(() => setUploadError(null), 3000);
+              toastTimerRef.current = setTimeout(() => setUploadError(null), 3000);
               break;
             }
 
@@ -337,7 +340,7 @@ function CustomerDetailContent({ id }: { id: string }) {
           } catch {
             setUploadError('이미지 변환에 실패했습니다');
             pushToast('error', '이미지 변환에 실패했습니다');
-            setTimeout(() => setUploadError(null), 3000);
+            toastTimerRef.current = setTimeout(() => setUploadError(null), 3000);
           }
         }
       

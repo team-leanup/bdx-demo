@@ -311,7 +311,9 @@ export function formatMinutes(minutes: number, locale?: string): string {
  * @example formatRelativeDate("2026-02-20") → "6일 전"
  */
 export function formatRelativeDate(dateStr: string): string {
+  if (!dateStr) return '-';
   const diffDays = getRelativeDayDiffInKorea(dateStr);
+  if (Number.isNaN(diffDays)) return '-';
 
   if (diffDays === 0) return '오늘';
   if (diffDays === 1) return '어제';

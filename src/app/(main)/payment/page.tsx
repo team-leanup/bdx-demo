@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, Suspense } from 'react';
+import { useMemo, useState, useRef, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Button, Badge, Card, Input, Modal, ToastContainer } from '@/components/ui';
@@ -77,6 +77,8 @@ function PaymentContent(): React.ReactElement {
   );
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | undefined>(undefined);
   const [completing, setCompleting] = useState(false);
+  const completingTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => { clearTimeout(completingTimerRef.current); }, []);
   const [toasts, setToasts] = useState<ToastData[]>([]);
 
   const pushToast = (type: ToastData['type'], message: string): void => {
@@ -142,7 +144,7 @@ function PaymentContent(): React.ReactElement {
     }
 
     pushToast('success', '결제가 완료되었어요');
-    setTimeout(() => { setCompleting(false); router.push('/records'); }, 1200);
+    completingTimerRef.current = setTimeout(() => { setCompleting(false); router.push('/records'); }, 1200);
   };
 
   if (!record || !breakdown) {

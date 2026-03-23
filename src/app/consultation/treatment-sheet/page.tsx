@@ -474,7 +474,7 @@ export default function TreatmentSheetPage() {
           <div className="rounded-2xl border border-border bg-surface p-4">
             <h3 className="text-sm font-bold text-text mb-3">참고 이미지</h3>
             <div className="grid grid-cols-2 gap-3">
-              {consultationData.referenceImages!.map((url, i) => (
+              {consultationData.referenceImages?.map((url, i) => (
                 <div key={i} className="relative rounded-xl overflow-hidden border border-border aspect-square">
                   <Image src={url} alt="" fill unoptimized className="object-contain" />
                 </div>

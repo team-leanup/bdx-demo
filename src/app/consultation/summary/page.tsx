@@ -132,10 +132,15 @@ export default function SummaryPage() {
 
     if (createdCustomer) {
       // Wait for customer to be saved to DB before saving record (FK constraint)
-      await dbUpsertCustomer(createdCustomer).catch((err) => {
+      const upsertResult = await dbUpsertCustomer(createdCustomer).catch((err) => {
         console.error(err);
-        pushToast('warning', '고객 데이터 저장에 실패했어요');
+        return { success: false } as const;
       });
+      if (!upsertResult || !upsertResult.success) {
+        pushToast('error', '고객 데이터 저장에 실패했어요. 다시 시도해주세요');
+        setSaving(false);
+        return;
+      }
     }
     const newId = `record-${Date.now()}`;
     const minutes = estimateTime(consultation);

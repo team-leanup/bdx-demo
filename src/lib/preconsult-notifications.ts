@@ -45,7 +45,8 @@ function writeState(state: ReadState): void {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     window.dispatchEvent(new Event(PRECONSULT_NOTIFICATIONS_UPDATED));
-  } catch {
+  } catch (e) {
+    console.warn('[preconsult-notifications] localStorage write failed:', e);
   }
 }
 

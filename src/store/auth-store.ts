@@ -261,7 +261,7 @@ export const useAuthStore = create<AuthStore>()(
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+            redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback?next=${encodeURIComponent(nextPath)}`,
             scopes: 'email profile',
           },
         });

@@ -25,8 +25,8 @@ function QuickSaleContent(): React.ReactElement {
   const addQuickSaleRecord = useRecordsStore((s) => s.addQuickSaleRecord);
   const { currentShopId, activeDesignerId } = useAuthStore();
 
-  const handleSubmit = (data: QuickSaleSubmitData): void => {
-    addQuickSaleRecord({
+  const handleSubmit = async (data: QuickSaleSubmitData): Promise<void> => {
+    await addQuickSaleRecord({
       id: `qs-${Date.now()}`,
       shopId: currentShopId ?? 'shop-1',
       designerId: data.designerId || activeDesignerId || 'designer-1',

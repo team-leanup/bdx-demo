@@ -33,14 +33,20 @@ export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGenera
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      const el = document.createElement('textarea');
-      el.value = consultationUrl;
-      document.body.appendChild(el);
-      el.select();
-      document.execCommand('copy');
-      document.body.removeChild(el);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      try {
+        const el = document.createElement('textarea');
+        el.value = consultationUrl;
+        el.style.position = 'fixed';
+        el.style.opacity = '0';
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (e) {
+        console.warn('[clipboard] fallback copy failed:', e);
+      }
     }
   };
 

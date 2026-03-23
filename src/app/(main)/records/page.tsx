@@ -190,7 +190,8 @@ export default function RecordsPage() {
       .map((bh) => ({
         open: parseInt(bh.openTime!.split(':')[0], 10),
         close: parseInt(bh.closeTime!.split(':')[0], 10),
-      }));
+      }))
+      .filter((h) => !Number.isNaN(h.open) && !Number.isNaN(h.close));
     if (openHours.length === 0) return { calendarStartHour: 10, calendarEndHour: 20 };
     const earliest = Math.min(...openHours.map((h) => h.open));
     const latest = Math.max(...openHours.map((h) => h.close));

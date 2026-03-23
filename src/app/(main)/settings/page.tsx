@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, Button, Input, LanguageSelector, Toggle, TimeInput, AddressInput, ProfileAvatar } from '@/components/ui';
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
@@ -900,6 +900,8 @@ function StorageManagementSection() {
   const [confirmClearPortfolio, setConfirmClearPortfolio] = useState(false);
   const [confirmClearAll, setConfirmClearAll] = useState(false);
   const [clearSuccess, setClearSuccess] = useState<string | null>(null);
+  const clearTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => { clearTimeout(clearTimerRef.current); }, []);
 
   const portfolioClearAll = usePortfolioStore((s) => s.clearAll);
 
@@ -922,13 +924,13 @@ function StorageManagementSection() {
 
       if (!result.success) {
         setClearSuccess(result.error ?? '포트폴리오 초기화에 실패했습니다');
-        setTimeout(() => setClearSuccess(null), 2500);
+        clearTimerRef.current = setTimeout(() => setClearSuccess(null), 2500);
         return;
       }
 
       setClearSuccess(t('settings.storage_cleared'));
       refreshStorageInfo();
-      setTimeout(() => setClearSuccess(null), 2000);
+      clearTimerRef.current = setTimeout(() => setClearSuccess(null), 2000);
     })();
   };
 
@@ -938,7 +940,7 @@ function StorageManagementSection() {
       if (!portfolioResult.success) {
         setConfirmClearAll(false);
         setClearSuccess(portfolioResult.error ?? '포트폴리오 초기화에 실패했습니다');
-        setTimeout(() => setClearSuccess(null), 2500);
+        clearTimerRef.current = setTimeout(() => setClearSuccess(null), 2500);
         return;
       }
 
@@ -946,17 +948,17 @@ function StorageManagementSection() {
         try { localStorage.removeItem(k); } catch { /* noop */ }
       });
 
-      try { useCustomerStore.setState({ customers: [] }); } catch {}
-      try { useReservationStore.setState({ reservations: [] }); } catch {}
-      try { useRecordsStore.setState({ records: [] }); } catch {}
-      try { usePortfolioStore.setState({ photos: [] }); } catch {}
+      useCustomerStore.setState({ customers: [] });
+      useReservationStore.setState({ reservations: [] });
+      useRecordsStore.setState({ records: [] });
+      usePortfolioStore.setState({ photos: [] });
 
       setConfirmClearAll(false);
       setClearSuccess(t('settings.storage_cleared'));
       refreshStorageInfo();
-      setTimeout(() => {
+      clearTimerRef.current = setTimeout(() => {
         setClearSuccess(null);
-        try { window.location.reload(); } catch {}
+        window.location.reload();
       }, 1000);
     })();
   };

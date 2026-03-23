@@ -38,7 +38,7 @@ export function RevisitReminderCard({
     navigator.clipboard.writeText(msg).then(() => {
       setCopiedId(customerId);
       setTimeout(() => setCopiedId(null), 2000);
-    }).catch(() => {});
+    }).catch((e) => console.warn('[clipboard] copy failed:', e));
   };
 
   return (
