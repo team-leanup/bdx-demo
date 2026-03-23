@@ -273,7 +273,7 @@ export default function PortfolioPage(): React.ReactElement {
       <BentoGrid cols={3} className="px-4 md:px-0">
         <BentoCard span="1x1" variant="accent">
           <div className="p-4 flex flex-col items-center justify-center h-full">
-            <span className="text-2xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
+            <span className="text-xl font-extrabold text-primary sm:text-2xl" style={{ fontVariantNumeric: 'tabular-nums' }}>
               {stats.total}
             </span>
             <span className="text-xs text-text-secondary mt-1">전체 사진</span>
@@ -281,7 +281,7 @@ export default function PortfolioPage(): React.ReactElement {
         </BentoCard>
         <BentoCard span="1x1" variant="accent">
           <div className="p-4 flex flex-col items-center justify-center h-full">
-            <span className="text-2xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
+            <span className="text-xl font-extrabold text-primary sm:text-2xl" style={{ fontVariantNumeric: 'tabular-nums' }}>
               {stats.referenceCount}
             </span>
             <span className="text-xs text-text-secondary mt-1">레퍼런스</span>
@@ -289,7 +289,7 @@ export default function PortfolioPage(): React.ReactElement {
         </BentoCard>
         <BentoCard span="1x1" variant="accent">
           <div className="p-4 flex flex-col items-center justify-center h-full">
-            <span className="text-2xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
+            <span className="text-xl font-extrabold text-primary sm:text-2xl" style={{ fontVariantNumeric: 'tabular-nums' }}>
               {stats.treatmentCount}
             </span>
             <span className="text-xs text-text-secondary mt-1">시술 사진</span>

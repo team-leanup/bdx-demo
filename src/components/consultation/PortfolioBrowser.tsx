@@ -252,7 +252,7 @@ export function PortfolioBrowser({
               <button
                 type="button"
                 onClick={() => setIsViewerOpen(false)}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-text"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-border text-text"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

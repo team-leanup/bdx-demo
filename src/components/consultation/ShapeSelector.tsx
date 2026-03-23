@@ -136,7 +136,7 @@ export function ShapeSelector({ className }: ShapeSelectorProps) {
           {locale !== 'ko' && <span className="ml-2 text-xs font-medium text-text-muted opacity-60">{tKo('selector.nailShape')}</span>}
         </p>
       </div>
-      <div className="grid grid-cols-4 lg:grid-cols-7 gap-2">
+      <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
         {NAIL_SHAPE_OPTIONS.map((opt) => {
           const isSelected = nailShape === opt.value;
           const shape = opt.value as NailShape;
@@ -159,7 +159,7 @@ export function ShapeSelector({ className }: ShapeSelectorProps) {
               </span>
               {/* Label */}
               <div className="flex flex-col items-center gap-0.5">
-                <span className="text-[11px] font-bold leading-tight text-center">
+                <span className="text-[10px] sm:text-[11px] font-bold leading-tight text-center">
                   {t(`shape.${opt.value}`)}
                 </span>
                 {/* Korean secondary label — shown only in non-Korean mode */}

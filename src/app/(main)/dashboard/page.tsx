@@ -141,7 +141,7 @@ export default function DashboardPage() {
                 <div>
                   <p className="text-sm font-semibold text-text-secondary">업셀링 리포트</p>
                   <div className="mt-2 flex flex-wrap items-end gap-2">
-                    <span className="text-3xl font-extrabold leading-none text-primary md:text-4xl">
+                    <span className="text-2xl font-extrabold leading-none text-primary sm:text-3xl md:text-4xl">
                       {formatPrice(upsellMetrics.totalUpsellRevenue)}
                     </span>
                     <span className="pb-1 text-xs font-medium text-text-muted">BDX 상담으로 추가된 옵션 매출</span>
@@ -156,7 +156,7 @@ export default function DashboardPage() {
 
               <div className="rounded-2xl border border-border bg-surface/80 px-4 py-3">
                 <p className="text-[11px] font-semibold text-text-muted">업셀링 포인트</p>
-                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <p className="text-[11px] text-text-muted">파츠 추가</p>
                     <p className="mt-1 text-lg font-bold text-text">총 {upsellMetrics.partsUpsellCount}개</p>
@@ -179,7 +179,7 @@ export default function DashboardPage() {
               {/* 오늘 매출 */}
               <div className="flex-1">
                 <p className="text-xs font-semibold text-text-secondary">오늘 매출</p>
-                <p className="mt-1 text-2xl font-extrabold text-primary">
+                <p className="mt-1 text-xl font-extrabold text-primary sm:text-2xl">
                   {formatPrice(todayRevenue)}
                 </p>
                 <p className="mt-0.5 text-xs text-text-muted">최종 결제 완료 기준</p>
@@ -190,7 +190,7 @@ export default function DashboardPage() {
                 <p className="text-xs font-semibold text-text-secondary">전월 대비 매출 성장</p>
                 <div className="mt-1 flex items-center gap-1.5">
                   <span
-                    className={`text-2xl font-extrabold ${
+                    className={`text-xl font-extrabold sm:text-2xl ${
                       monthlyGrowthData.revenueChange > 0
                         ? 'text-success'
                         : monthlyGrowthData.revenueChange < 0
@@ -213,7 +213,7 @@ export default function DashboardPage() {
                 <p className="text-xs font-semibold text-text-secondary">전월 대비 상담 건수</p>
                 <div className="mt-1 flex items-center gap-1.5">
                   <span
-                    className={`text-2xl font-extrabold ${
+                    className={`text-xl font-extrabold sm:text-2xl ${
                       monthlyGrowthData.countChange > 0
                         ? 'text-success'
                         : monthlyGrowthData.countChange < 0
@@ -276,7 +276,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="rounded-2xl bg-primary/10 px-3 py-2 text-right">
                   <p className="text-[10px] text-primary">오늘의 외국인 예약</p>
-                  <p className="text-2xl font-extrabold text-primary">{foreignReservationSummary.foreignerCount}명</p>
+                  <p className="text-xl font-extrabold text-primary sm:text-2xl">{foreignReservationSummary.foreignerCount}명</p>
                 </div>
               </div>
 
@@ -325,7 +325,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="rounded-2xl bg-primary/10 px-3 py-2 text-right">
                   <p className="text-[10px] text-primary">이번 주 대상</p>
-                  <p className="text-2xl font-extrabold text-primary">{goldenTimeTargets.length}명</p>
+                  <p className="text-xl font-extrabold text-primary sm:text-2xl">{goldenTimeTargets.length}명</p>
                 </div>
               </div>
 

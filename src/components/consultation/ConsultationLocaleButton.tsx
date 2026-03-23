@@ -35,7 +35,7 @@ export function ConsultationLocaleButton() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface border border-border shadow-sm text-xs font-bold text-text hover:border-primary/40 hover:bg-surface-alt transition-all"
+        className="flex items-center gap-1.5 px-3 py-2 min-h-[36px] rounded-full bg-surface border border-border shadow-sm text-xs font-bold text-text hover:border-primary/40 hover:bg-surface-alt transition-all"
         aria-label="Change language"
       >
         <span>🌐</span>

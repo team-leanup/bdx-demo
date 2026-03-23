@@ -87,7 +87,7 @@ export function HeroCTA({
               <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 18.75h.75v.75h-.75v-.75zM18 13.5h.75v.75H18v-.75zM18 18.75h.75v.75H18v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
             </svg>
             <span className="text-sm font-semibold">{qrLabel ?? 'QR 생성'}</span>
-            <span className="text-xs text-text-muted ml-auto">사전 상담 링크</span>
+            <span className="hidden text-xs text-text-muted ml-auto sm:inline">사전 상담 링크</span>
           </motion.button>
         )}
 

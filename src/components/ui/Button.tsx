@@ -42,7 +42,7 @@ export function Button({
   };
 
   const sizes = {
-    sm: 'h-8 px-3 text-sm gap-1.5',
+    sm: 'h-9 px-3 text-sm gap-1.5',
     md: 'h-11 px-5 text-base',
     lg: 'h-14 md:h-16 px-7 text-lg md:text-xl',
   };

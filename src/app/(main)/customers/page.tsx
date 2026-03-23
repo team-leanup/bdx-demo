@@ -110,7 +110,7 @@ export default function CustomersPage() {
       <BentoGrid cols={4} className="px-4 md:px-0">
         <BentoCard span="1x1" variant="accent">
           <div className="p-4 flex flex-col items-center justify-center h-full">
-            <span className="text-2xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
+            <span className="text-xl font-extrabold text-primary sm:text-2xl" style={{ fontVariantNumeric: 'tabular-nums' }}>
               {customers.length}
             </span>
             <span className="text-xs text-text-secondary mt-1">총 고객</span>
@@ -118,7 +118,7 @@ export default function CustomersPage() {
         </BentoCard>
         <BentoCard span="1x1" variant="accent">
           <div className="p-4 flex flex-col items-center justify-center h-full">
-            <span className="text-2xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
+            <span className="text-xl font-extrabold text-primary sm:text-2xl" style={{ fontVariantNumeric: 'tabular-nums' }}>
               {newThisMonth}
             </span>
             <span className="text-xs text-text-secondary mt-1">이번달 신규</span>
@@ -134,7 +134,7 @@ export default function CustomersPage() {
         </BentoCard>
         <BentoCard span="1x1" variant="accent">
           <div className="p-4 flex flex-col items-center justify-center h-full">
-            <span className="text-2xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
+            <span className="text-xl font-extrabold text-primary sm:text-2xl" style={{ fontVariantNumeric: 'tabular-nums' }}>
               {regularCount}
             </span>
             <span className="text-xs text-text-secondary mt-1">단골 고객</span>
@@ -223,7 +223,7 @@ export default function CustomersPage() {
                     </div>
 
                     {/* 총 지출 */}
-                    <div className="flex-shrink-0 min-w-[80px] text-right">
+                    <div className="flex-shrink-0 min-w-[70px] sm:min-w-[80px] text-right">
                       <p className="text-xs font-semibold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
                         {formatPrice(customer.totalSpend)}
                       </p>

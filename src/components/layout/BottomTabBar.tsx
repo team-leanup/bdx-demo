@@ -77,7 +77,7 @@ export function BottomTabBar() {
               key={tab.href}
               href={tab.href}
               className={cn(
-                'flex-1 flex flex-col items-center justify-center gap-0.5 transition-all duration-200',
+                'flex-1 flex flex-col items-center justify-center gap-px transition-all duration-200',
                 active ? 'text-primary' : 'text-text-muted hover:text-text-secondary',
               )}
             >
@@ -86,7 +86,7 @@ export function BottomTabBar() {
               </span>
               <span
                 className={cn(
-                  'text-[10px] lg:text-xs font-medium leading-none truncate max-w-[50px]',
+                  'text-[9px] lg:text-xs font-medium leading-none truncate max-w-[50px]',
                   active ? 'text-primary' : 'text-text-muted',
                 )}
               >

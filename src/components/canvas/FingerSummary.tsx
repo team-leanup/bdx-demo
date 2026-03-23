@@ -53,7 +53,7 @@ function FingerItem({ handLabel, fingerLabel, handLabelKo, fingerLabelKo, select
       type="button"
       onClick={onTap}
       className={cn(
-        'flex items-center gap-2 md:gap-3 px-3 py-2 md:px-4 md:py-3 rounded-xl transition-all duration-150',
+        'flex items-center gap-2 md:gap-3 px-3 py-2.5 md:px-4 md:py-3 min-h-[44px] rounded-xl transition-all duration-150',
         'text-left',
         isActive && hasColor
           ? 'bg-primary/10 border border-primary/20'

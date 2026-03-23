@@ -145,7 +145,7 @@ export default function Step2Page() {
                   whileTap={{ scale: 0.97 }}
                   onClick={() => handleSelect(option)}
                   className={cn(
-                    'relative flex flex-col items-center justify-center gap-2 p-5 md:p-6 rounded-2xl border-2 transition-all duration-200',
+                    'relative flex flex-col items-center justify-center gap-2 p-4 sm:p-5 md:p-6 rounded-2xl border-2 transition-all duration-200',
                     isSelected
                       ? 'border-2 border-primary bg-white shadow-sm'
                       : 'border-border bg-surface hover:border-primary/40 hover:shadow-sm',

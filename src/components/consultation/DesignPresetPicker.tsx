@@ -79,7 +79,10 @@ export function DesignPresetPicker({ onSelect, selectedId }: DesignPresetPickerP
   }
 
   return (
-    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
+    <div className="relative -mx-1">
+      {/* 오른쪽 그라디언트 마스크 — 스크롤 가능 힌트 */}
+      <div className="pointer-events-none absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-background to-transparent z-10" />
+    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide px-1">
       {designPresets.map((preset) => {
         const scopeConf = SCOPE_CONFIG[preset.designScope];
         const isSelected = selectedId === preset.id;
@@ -140,6 +143,7 @@ export function DesignPresetPicker({ onSelect, selectedId }: DesignPresetPickerP
           </motion.button>
         );
       })}
+    </div>
     </div>
   );
 }

@@ -116,7 +116,7 @@ function AnnotationCard({ fingerName, fingerNameKo, selection, locale, t }: {
             style={{ backgroundColor: hexColor, boxShadow: `0 0 4px ${hexColor}66` }}
           />
         )}
-        <p className="text-[11px] font-bold text-text-muted">
+        <p className="text-[10px] sm:text-[11px] font-bold text-text-muted">
           {fingerName}
           {showKo && fingerNameKo && (
             <span className="ml-0.5 opacity-60">{fingerNameKo}</span>
@@ -125,7 +125,7 @@ function AnnotationCard({ fingerName, fingerNameKo, selection, locale, t }: {
       </div>
       {/* Art type (note) */}
       {selection?.note && (
-        <p className="text-sm font-extrabold text-primary leading-snug break-words min-w-0 truncate">
+        <p className="text-xs sm:text-sm font-extrabold text-primary leading-snug break-words min-w-0 truncate">
           {TREATMENT_TYPE_I18N[selection.note] ? t(TREATMENT_TYPE_I18N[selection.note]) : selection.note}
         </p>
       )}
@@ -225,7 +225,7 @@ export function HandIllustration({
         </div>
 
         {/* Hand SVG (smaller) */}
-        <div className="w-[160px] md:w-[240px] overflow-hidden">
+        <div className="w-[130px] sm:w-[160px] md:w-[240px] overflow-hidden">
           <svg
             viewBox="0 0 320 260"
             className="w-full"

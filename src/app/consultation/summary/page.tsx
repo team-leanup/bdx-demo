@@ -347,7 +347,7 @@ export default function SummaryPage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className="flex-1 overflow-y-auto px-4 md:px-8 pt-5 pb-40 md:pb-6"
+        className="flex-1 overflow-y-auto px-4 md:px-8 pt-5 pb-32 sm:pb-40 md:pb-6"
       >
         <div className="max-w-2xl md:max-w-3xl mx-auto flex flex-col gap-4">
           {isCustomerLinkFlow && consultation.sourceShopName && (

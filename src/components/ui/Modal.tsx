@@ -40,7 +40,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
             )}
           >
             {/* handle */}
-            <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+            <div className="flex justify-center pt-3 pb-1 flex-shrink-0 lg:hidden">
               <div className="w-10 h-1 rounded-full bg-border" />
             </div>
             {title && (

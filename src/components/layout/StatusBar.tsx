@@ -41,7 +41,7 @@ export function StatusBar({ shopName: shopNameProp }: StatusBarProps) {
           <button
             type="button"
             onClick={() => setShowLangMenu((v) => !v)}
-            className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-surface-alt transition-colors"
+            className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-alt transition-colors"
             aria-label="언어 변경"
           >
             <svg

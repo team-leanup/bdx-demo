@@ -165,7 +165,7 @@ export function ColorPicker({
             <p className="text-[10px] text-text-muted mt-0.5">{ko('canvas.artType')}</p>
           )}
         </div>
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-5 gap-1.5">
           {TREATMENT_OPTIONS.map((type) => {
             const isSelected = treatmentType === type.value;
             return (
@@ -175,7 +175,7 @@ export function ColorPicker({
                 whileTap={{ scale: 0.94 }}
                 onClick={() => onTreatmentTypeChange(type.value)}
                 className={cn(
-                  'flex flex-col items-center gap-1 py-2 px-1 rounded-2xl border-2 transition-all duration-200',
+                  'flex flex-col items-center gap-1 py-1.5 px-0.5 sm:py-2 sm:px-1 rounded-2xl border-2 transition-all duration-200',
                   isSelected
                     ? 'border-primary bg-primary/10 text-primary'
                     : 'border-border bg-surface text-text-muted hover:border-primary/40',

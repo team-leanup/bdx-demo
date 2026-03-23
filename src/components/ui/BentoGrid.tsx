@@ -30,7 +30,7 @@ export function BentoGrid({ children, className, cols = 4 }: BentoGridProps) {
       initial="hidden"
       animate="visible"
       className={cn(
-        'grid gap-4',
+        'grid gap-3 sm:gap-4',
         cols === 4 && 'grid-cols-2 md:grid-cols-4',
         cols === 3 && 'grid-cols-2 md:grid-cols-3',
         cols === 2 && 'grid-cols-1 md:grid-cols-2',
