@@ -2,9 +2,9 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Input, BentoGrid, BentoCard } from '@/components/ui';
+import { Input, BentoGrid, BentoCard, Modal } from '@/components/ui';
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
-import { formatPrice } from '@/lib/format';
+import { formatPrice, getNowInKoreaIso } from '@/lib/format';
 import { useCustomerStore } from '@/store/customer-store';
 import { normalizePhone } from '@/lib/phone';
 import { useAuthStore } from '@/store/auth-store';
@@ -23,9 +23,16 @@ export default function CustomersPage() {
   const [search, setSearch] = useState('');
   const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [memo, setMemo] = useState('');
   const role = useAuthStore((s) => s.role);
   const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
   const customers = useCustomerStore((s) => s.customers);
+  const createCustomer = useCustomerStore((s) => s.createCustomer);
+  const appendSmallTalkNote = useCustomerStore((s) => s.appendSmallTalkNote);
+  const findByPhoneNormalized = useCustomerStore((s) => s.findByPhoneNormalized);
 
   const { thisMonth, thisYear } = useMemo(() => {
     const now = new Date();
@@ -50,6 +57,32 @@ export default function CustomersPage() {
   const regularCount = useMemo(() => {
     return customers.filter((c) => c.isRegular || (c.visitCount ?? 0) >= 5).length;
   }, [customers]);
+
+  const duplicateCustomer = phone.trim().length >= 8 ? findByPhoneNormalized(phone.trim()) : undefined;
+
+  const handleCreateCustomer = () => {
+    if (!name.trim()) return;
+    const newCustomer = createCustomer({
+      name: name.trim(),
+      phone: phone.trim() || undefined,
+    });
+    if (memo.trim()) {
+      const now = getNowInKoreaIso();
+      appendSmallTalkNote(newCustomer.id, {
+        id: `stn-${Date.now()}`,
+        customerId: newCustomer.id,
+        noteText: memo.trim(),
+        createdAt: now,
+        createdByDesignerId: activeDesignerId ?? '',
+        createdByDesignerName: '',
+      });
+    }
+    setShowAddModal(false);
+    setName('');
+    setPhone('');
+    setMemo('');
+    router.push(`/customers/${newCustomer.id}`);
+  };
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -102,8 +135,18 @@ export default function CustomersPage() {
         description={"고객의 시술 이력, 선호도, 연락처를 관리하고\n단골 고객을 한눈에 파악하세요."}
       />
       {/* 헤더 */}
-      <div className="px-4 md:px-0 pt-4">
+      <div className="px-4 md:px-0 pt-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-text">고객 목록</h1>
+        <button
+          type="button"
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary-dark active:scale-[0.97] transition-all"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          새 고객 등록
+        </button>
       </div>
 
       {/* Stats Bento Strip */}
@@ -269,6 +312,68 @@ export default function CustomersPage() {
           </div>
         )}
       </div>
+
+      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="새 고객 등록">
+        <div className="px-5 py-4 flex flex-col gap-4">
+          <div>
+            <label className="text-xs font-semibold text-text-secondary mb-1 block">이름 *</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="고객 이름"
+              className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-text-secondary mb-1 block">전화번호</label>
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="010-0000-0000"
+              className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+            />
+            {duplicateCustomer && (
+              <p className="mt-1 text-xs text-warning">
+                이미 등록된 고객이에요 —{' '}
+                <button
+                  type="button"
+                  onClick={() => { setShowAddModal(false); router.push(`/customers/${duplicateCustomer.id}`); }}
+                  className="text-primary underline"
+                >
+                  고객 카드 보기
+                </button>
+              </p>
+            )}
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-text-secondary mb-1 block">메모</label>
+            <textarea
+              value={memo}
+              onChange={(e) => setMemo(e.target.value)}
+              placeholder="특이사항, 선호 스타일 등"
+              rows={2}
+              className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none resize-none"
+            />
+          </div>
+          <div className="flex gap-3 pt-2 pb-2">
+            <button
+              type="button"
+              onClick={() => setShowAddModal(false)}
+              className="flex-1 rounded-xl border border-border py-3 text-sm font-semibold text-text-secondary"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={handleCreateCustomer}
+              disabled={!name.trim()}
+              className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-white disabled:opacity-40"
+            >
+              등록
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

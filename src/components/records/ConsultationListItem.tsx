@@ -90,7 +90,7 @@ export function ConsultationListItem({
             </div>
             <span className="shrink-0 text-right">
               {!record.finalizedAt && (
-                <span className="block text-[10px] font-semibold text-text-muted">미확정</span>
+                <span className="block text-[10px] font-semibold text-text-muted">결제 전</span>
               )}
               <span
                 className={`text-sm font-bold ${record.finalizedAt ? 'text-primary' : 'text-text-muted'}`}
