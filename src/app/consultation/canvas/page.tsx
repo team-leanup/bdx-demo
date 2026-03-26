@@ -6,12 +6,58 @@ import { ConsultationHeader } from '@/components/consultation/ConsultationHeader
 import { ConsultationFooter } from '@/components/consultation/ConsultationFooter';
 import { FingerCanvas } from '@/components/canvas/FingerCanvas';
 import type { CanvasSelections } from '@/components/canvas/FingerCanvas';
-import type { FingerPosition } from '@/types/canvas';
-import type { FingerArtSelection, FingerPartSelection } from '@/types/consultation';
+import type { FingerPosition, FingerSelection, PartPlacement } from '@/types/canvas';
+import { ConsultationStep } from '@/types/consultation';
+import type { FingerArtSelection, FingerPartSelection, CanvasData } from '@/types/consultation';
 import { useT, useKo } from '@/lib/i18n';
 import { useConsultationGuard } from '@/lib/use-consultation-guard';
 
 const FINGER_ORDER: FingerPosition[] = ['thumb', 'index', 'middle', 'ring', 'pinky'];
+
+const VALID_ART_TYPES = new Set(['solid', 'gradient', 'art', 'french', 'magnetic']);
+
+function buildInitialSelections(canvasData: CanvasData[]): CanvasSelections {
+  const result: CanvasSelections = { left: {}, right: {} };
+  for (const handData of canvasData) {
+    const hand: 'left' | 'right' = handData.handSide === 'left_hand' ? 'left' : 'right';
+    for (const art of handData.fingerArts) {
+      const finger = art.fingerId.split('_').pop() as FingerPosition;
+      if (!finger) continue;
+      const rawArtType = art.artType;
+      const artType: FingerSelection['artType'] = VALID_ART_TYPES.has(rawArtType)
+        ? (rawArtType as FingerSelection['artType'])
+        : undefined;
+      result[hand][finger] = {
+        finger,
+        isPoint: art.isPoint ?? rawArtType === 'point',
+        artType,
+        colorCode: art.colorCode,
+        parts: [],
+        note: art.note,
+        memo: art.memo,
+      };
+    }
+    for (const part of handData.fingerParts) {
+      const finger = part.fingerId.split('_').pop() as FingerPosition;
+      if (!finger) continue;
+      const fingerSel = result[hand][finger];
+      if (!fingerSel) continue;
+      for (let i = 0; i < part.quantity; i++) {
+        const placement: PartPlacement = {
+          id: `restored-${part.fingerId}-${part.partGrade}-${i}`,
+          partType: 'stone',
+          grade: part.partGrade,
+          customPartId: part.customPartId,
+          // N-21: 저장된 좌표가 있으면 복원, 없으면 기본 중앙
+          x: part.position?.x ?? 0.5,
+          y: part.position?.y ?? 0.5,
+        };
+        fingerSel.parts.push(placement);
+      }
+    }
+  }
+  return result;
+}
 
 export default function CanvasPage() {
   useConsultationGuard();
@@ -20,9 +66,6 @@ export default function CanvasPage() {
   const setStep = useConsultationStore((s) => s.setStep);
   const t = useT();
   const tKo = useKo();
-
-  void consultation;
-  void setStep;
 
   const handleChange = (selections: CanvasSelections) => {
     // Convert canvas selections to ConsultationType.canvasData format
@@ -101,19 +144,23 @@ export default function CanvasPage() {
     }));
   };
 
+  const initialSelections = consultation.canvasData?.length
+    ? buildInitialSelections(consultation.canvasData)
+    : undefined;
+
   const handleNext = () => {
+    setStep(ConsultationStep.TRAITS);
     router.push('/consultation/traits');
   };
 
   const handleBack = () => {
-    router.back();
+    setStep(ConsultationStep.STEP2_DESIGN);
+    router.push('/consultation/step2');
   };
 
   return (
     <div className="h-dvh flex flex-col bg-background overflow-hidden">
       <ConsultationHeader
-        stepNumber={4}
-        totalSteps={5}
         title={t('consultation.canvasTitle')}
         titleKo={tKo('consultation.canvasTitle')}
         onBack={handleBack}
@@ -121,7 +168,7 @@ export default function CanvasPage() {
 
       <main className="flex-1 overflow-y-auto pb-28">
         <div className="px-4 md:px-8 py-4 max-w-2xl md:max-w-4xl mx-auto">
-          <FingerCanvas onChange={handleChange} />
+          <FingerCanvas onChange={handleChange} initialSelections={initialSelections} />
         </div>
       </main>
 

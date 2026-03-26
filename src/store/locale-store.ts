@@ -20,7 +20,11 @@ export const useLocaleStore = create<LocaleStore>()(
       previousLocale: null,
       setLocale: (locale) => set({ locale }),
       setConsultationLocale: (locale) =>
-        set((state) => ({ previousLocale: state.locale, locale })),
+        set((state) => ({
+          // M-2: previousLocale이 이미 있으면 덮어쓰지 않음 (비정상 종료 보호)
+          previousLocale: state.previousLocale ?? state.locale,
+          locale,
+        })),
       restoreLocale: () => {
         const prev = get().previousLocale;
         if (prev) {
@@ -39,7 +43,7 @@ export const useLocaleStore = create<LocaleStore>()(
               removeItem: () => {},
             },
       ),
-      partialize: (state) => ({ previousLocale: state.previousLocale }),
+      partialize: (state) => ({ locale: state.locale, previousLocale: state.previousLocale }),
     },
   ),
 );

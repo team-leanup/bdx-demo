@@ -107,7 +107,7 @@ function buildKPIDetail(
     }
     case '재방문율': {
       const analytics = computeCustomerAnalytics(records, customers);
-      const returnRate = computeReturnRate(records, customers);
+      const returnRate = computeReturnRate(customers);
       return (
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">

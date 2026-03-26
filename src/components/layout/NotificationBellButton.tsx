@@ -46,6 +46,9 @@ export function NotificationBellButton({
   }, [notifications]);
 
   useEffect(() => {
+    // M-6: /home 페이지에서는 home/page.tsx가 이미 폴링 중이므로 중복 방지
+    if (pathname === '/home') return;
+
     const poll = (): void => {
       if (document.visibilityState === 'visible') {
         hydrateFromDB().catch(console.error);
@@ -59,7 +62,7 @@ export function NotificationBellButton({
       clearInterval(interval);
       document.removeEventListener('visibilitychange', poll);
     };
-  }, [hydrateFromDB]);
+  }, [hydrateFromDB, pathname]);
 
   const handleClick = (): void => {
     const params = new URLSearchParams(pathname === '/home' ? searchParams.toString() : '');

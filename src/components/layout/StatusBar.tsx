@@ -6,6 +6,8 @@ import { useLocaleStore } from '@/store/locale-store';
 import { useAppStore } from '@/store/app-store';
 import { useShopStore } from '@/store/shop-store';
 import { NotificationBellButton } from '@/components/layout/NotificationBellButton';
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
+import { ProfileSwitcher } from '@/components/auth/ProfileSwitcher';
 import type { Locale } from '@/store/locale-store';
 import { cn } from '@/lib/cn';
 
@@ -22,17 +24,37 @@ const LOCALE_LABELS: { value: Locale; label: string }[] = [
 
 export function StatusBar({ shopName: shopNameProp }: StatusBarProps) {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
+  const activeDesignerName = useAuthStore((s) => s.activeDesignerName);
   const { locale, setLocale } = useLocaleStore();
   const { shopSettings } = useAppStore();
   const storeShopName = useShopStore((s) => s.shop?.name);
   const shopName = shopNameProp || shopSettings.shopName || (storeShopName ?? '네일숲');
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const [showSwitcher, setShowSwitcher] = useState(false);
 
   return (
+    <>
     <header className="fixed top-0 left-0 right-0 z-30 bg-surface border-b border-border safe-top lg:hidden">
       <div className="flex items-center justify-between px-4 h-14 max-w-2xl mx-auto lg:max-w-none lg:px-8">
         <div className="flex items-center gap-2 lg:hidden">
-          <span className="font-bold text-base tracking-tight text-primary">{shopName}</span>
+          {isLoggedIn() && activeDesignerId && activeDesignerName ? (
+            <button
+              type="button"
+              onClick={() => setShowSwitcher(true)}
+              className="flex items-center gap-2 rounded-full pr-2 hover:bg-surface-alt transition-colors"
+              aria-label="프로필 전환"
+            >
+              <ProfileAvatar
+                designerId={activeDesignerId}
+                name={activeDesignerName}
+                size="sm"
+              />
+              <span className="text-sm font-semibold text-text hidden sm:inline">{activeDesignerName}</span>
+            </button>
+          ) : (
+            <span className="font-bold text-base tracking-tight text-primary">{shopName}</span>
+          )}
         </div>
 
         {/* Right: lang toggle + bell */}
@@ -93,5 +115,7 @@ export function StatusBar({ shopName: shopNameProp }: StatusBarProps) {
         </div>
       </div>
     </header>
+    <ProfileSwitcher isOpen={showSwitcher} onClose={() => setShowSwitcher(false)} />
+    </>
   );
 }

@@ -15,7 +15,10 @@ const CONSULTATION_URL_PATH = '/consultation?entry=customer-link';
 
 export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGeneratorModalProps): React.ReactElement | null {
   const [copied, setCopied] = useState(false);
-  const [origin, setOrigin] = useState('');
+  // L-4: SSR hydration mismatch 방지를 위해 초기값에서 즉시 설정
+  const [origin, setOrigin] = useState(
+    typeof window !== 'undefined' ? window.location.origin : '',
+  );
 
   useEffect(() => {
     if (typeof window !== 'undefined') {

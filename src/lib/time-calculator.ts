@@ -72,7 +72,7 @@ export function calculateTimeBreakdown(
   const subtotal = base + off + extension + design + expression + parts;
 
   // 고객 소요 시간 선호 보정
-  const preference = customerDurationPreference ?? consultation.customerDurationPreference;
+  const preference = customerDurationPreference;
   let total: number;
   if (preference === 'short') {
     total = Math.round(subtotal * 0.9);

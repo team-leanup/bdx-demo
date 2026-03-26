@@ -1,13 +1,17 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/cn';
 import { PaymentMethodSelector } from './PaymentMethodSelector';
+import { useCustomerStore } from '@/store/customer-store';
+import { useShopStore } from '@/store/shop-store';
 import type { PaymentMethod } from '@/types/consultation';
+import type { Customer } from '@/types/customer';
 
 interface QuickSaleFormValues {
   customerId?: string;
   customerQuery: string;
+  customerPhone?: string;
   serviceType: string;
   amount: string;
   paymentMethod: PaymentMethod | undefined;
@@ -17,7 +21,9 @@ interface QuickSaleFormValues {
 
 interface QuickSaleSubmitData {
   customerId?: string;
+  customerName: string;
   customerQuery: string;
+  customerPhone?: string;
   serviceType: string;
   amount: number;
   paymentMethod: PaymentMethod;
@@ -29,6 +35,7 @@ interface QuickSaleFormProps {
   onSubmit: (data: QuickSaleSubmitData) => void;
   onCancel: () => void;
   initialCustomerId?: string;
+  initialCustomerName?: string;
 }
 
 const SERVICE_OPTIONS = [
@@ -43,20 +50,37 @@ const SERVICE_OPTIONS = [
   '기타',
 ];
 
-const DESIGNER_OPTIONS = [
-  { id: 'designer-1', name: '김디자이너' },
-  { id: 'designer-2', name: '이디자이너' },
-  { id: 'designer-3', name: '박디자이너' },
-];
-
 export function QuickSaleForm({
   onSubmit,
   onCancel,
   initialCustomerId,
+  initialCustomerName,
 }: QuickSaleFormProps): React.ReactElement {
+  const customers = useCustomerStore((s) => s.customers);
+  const designers = useShopStore((s) => s.designers);
+  const activeDesigners = useMemo(() => designers.filter((d) => d.isActive), [designers]);
+
+  // N-4: initialCustomerId가 있으면 고객명 자동 채우기
+  const resolvedInitialName = useMemo(() => {
+    if (initialCustomerId) {
+      const found = customers.find((c) => c.id === initialCustomerId);
+      if (found) return found.name;
+    }
+    return initialCustomerName ?? '';
+  }, [initialCustomerId, initialCustomerName, customers]);
+
+  const resolvedInitialPhone = useMemo(() => {
+    if (initialCustomerId) {
+      const found = customers.find((c) => c.id === initialCustomerId);
+      if (found) return found.phone;
+    }
+    return undefined;
+  }, [initialCustomerId, customers]);
+
   const [form, setForm] = useState<QuickSaleFormValues>({
     customerId: initialCustomerId,
-    customerQuery: '',
+    customerQuery: resolvedInitialName,
+    customerPhone: resolvedInitialPhone,
     serviceType: '',
     amount: '',
     paymentMethod: undefined,
@@ -64,10 +88,34 @@ export function QuickSaleForm({
     memo: '',
   });
   const [errors, setErrors] = useState<Partial<Record<keyof QuickSaleFormValues, string>>>({});
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const set = useCallback(<K extends keyof QuickSaleFormValues>(key: K, val: QuickSaleFormValues[K]) => {
     setForm((prev) => ({ ...prev, [key]: val }));
     setErrors((prev) => ({ ...prev, [key]: undefined }));
+  }, []);
+
+  const filteredCustomers = useMemo<Customer[]>(() => {
+    const q = form.customerQuery.trim();
+    if (!q) return [];
+    const qLower = q.toLowerCase();
+    const qDigits = q.replace(/\D/g, '');
+    return customers.filter((c) => {
+      const nameMatch = c.name.toLowerCase().includes(qLower);
+      const phoneDigits = c.phone.replace(/\D/g, '');
+      const phoneMatch = qDigits.length >= 3 && phoneDigits.includes(qDigits);
+      return nameMatch || phoneMatch;
+    }).slice(0, 5);
+  }, [customers, form.customerQuery]);
+
+  const handleSelectCustomer = useCallback((customer: Customer) => {
+    setForm((prev) => ({
+      ...prev,
+      customerId: customer.id,
+      customerQuery: customer.name,
+      customerPhone: customer.phone,
+    }));
+    setShowDropdown(false);
   }, []);
 
   const handleSubmit = useCallback(
@@ -90,7 +138,9 @@ export function QuickSaleForm({
 
       onSubmit({
         customerId: form.customerId,
+        customerName: form.customerQuery,
         customerQuery: form.customerQuery,
+        customerPhone: form.customerPhone,
         serviceType: form.serviceType,
         amount: parsedAmount,
         paymentMethod: form.paymentMethod!,
@@ -106,13 +156,40 @@ export function QuickSaleForm({
       {/* 고객 검색 */}
       <div className="flex flex-col gap-1.5">
         <label className="text-xs font-semibold text-text-secondary">고객 검색</label>
-        <input
-          type="text"
-          value={form.customerQuery}
-          onChange={(e) => set('customerQuery', e.target.value)}
-          placeholder="이름 또는 전화번호"
-          className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-text text-sm placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors"
-        />
+        <div className="relative">
+          <input
+            type="text"
+            value={form.customerQuery}
+            onChange={(e) => {
+              set('customerQuery', e.target.value);
+              setForm((prev) => ({ ...prev, customerId: undefined, customerPhone: undefined }));
+              setShowDropdown(true);
+            }}
+            onFocus={() => setShowDropdown(true)}
+            onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+            placeholder="이름 또는 전화번호"
+            className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-text text-sm placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors"
+          />
+          {showDropdown && filteredCustomers.length > 0 && (
+            <ul className="absolute top-full left-0 right-0 mt-1 bg-surface border border-border rounded-xl shadow-elevated z-10 overflow-hidden">
+              {filteredCustomers.map((c) => (
+                <li key={c.id}>
+                  <button
+                    type="button"
+                    onMouseDown={() => handleSelectCustomer(c)}
+                    className="w-full px-3 py-2.5 text-left hover:bg-surface-alt flex items-center justify-between"
+                  >
+                    <span className="text-sm font-medium text-text">{c.name}</span>
+                    <span className="text-xs text-text-muted">{c.phone}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        {form.customerId && (
+          <p className="text-[11px] text-primary">✓ 고객 선택됨</p>
+        )}
       </div>
 
       {/* 시술 종류 */}
@@ -170,7 +247,7 @@ export function QuickSaleForm({
           className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-text text-sm focus:outline-none focus:border-primary transition-colors appearance-none"
         >
           <option value="">선택 (선택사항)</option>
-          {DESIGNER_OPTIONS.map((d) => (
+          {activeDesigners.map((d) => (
             <option key={d.id} value={d.id}>{d.name}</option>
           ))}
         </select>
@@ -193,13 +270,13 @@ export function QuickSaleForm({
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 py-3 rounded-xl bg-surface-alt text-text-secondary font-semibold text-sm"
+          className="flex-1 py-3.5 rounded-xl bg-surface-alt text-text-secondary font-semibold text-sm"
         >
           취소
         </button>
         <button
           type="submit"
-          className="flex-1 py-3 rounded-xl bg-primary text-white font-bold text-sm shadow-sm"
+          className="flex-1 py-3.5 rounded-xl bg-primary text-white font-bold text-sm shadow-sm"
         >
           매출 등록
         </button>

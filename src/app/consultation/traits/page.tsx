@@ -17,6 +17,7 @@ export default function TraitsPage(): React.ReactElement {
   const router = useRouter();
   const setStep = useConsultationStore((s) => s.setStep);
   const selectedTraitValues = useConsultationStore((s) => s.consultation.selectedTraitValues) ?? [];
+  const backHref = '/consultation/canvas';
   const toggleTraitValue = useConsultationStore((s) => s.toggleTraitValue);
   const t = useT();
   const tKo = useKo();
@@ -39,7 +40,7 @@ export default function TraitsPage(): React.ReactElement {
         totalSteps={5}
         title={t('consultation.traitsTitle')}
         titleKo={tKo('consultation.traitsTitle')}
-        backHref="/consultation/step2"
+        backHref={backHref}
       />
       <PriceSummaryBar />
 

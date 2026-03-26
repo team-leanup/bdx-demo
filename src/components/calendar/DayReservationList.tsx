@@ -82,6 +82,7 @@ function AddReservationForm({ date, onDone }: { date: string; onDone: () => void
   const t = useT();
   const addReservation = useReservationStore((s) => s.addReservation);
   const designers = useShopStore((s) => s.designers);
+  const customers = useCustomerStore((s) => s.customers);
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -90,6 +91,27 @@ function AddReservationForm({ date, onDone }: { date: string; onDone: () => void
   const [note, setNote] = useState('');
   const [language, setLanguage] = useState<Locale>('ko');
   const [designerId, setDesignerId] = useState('');
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | undefined>(undefined);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const filteredCustomers = customerSearch.trim()
+    ? customers.filter((c) => {
+        const q = customerSearch.toLowerCase();
+        return c.name.toLowerCase().includes(q) || (c.phone ?? '').includes(customerSearch);
+      }).slice(0, 5)
+    : [];
+
+  const handleSelectCustomer = (customerId: string): void => {
+    const customer = customers.find((c) => c.id === customerId);
+    if (customer) {
+      setSelectedCustomerId(customerId);
+      setName(customer.name);
+      setPhone(customer.phone ?? '');
+      setCustomerSearch(customer.name);
+      setShowDropdown(false);
+    }
+  };
 
   const handleSubmit = () => {
     if (!name.trim() || !time) return;
@@ -103,6 +125,7 @@ function AddReservationForm({ date, onDone }: { date: string; onDone: () => void
       referenceImageUrls: [],
       language,
       designerId: designerId || undefined,
+      customerId: selectedCustomerId,
     });
     onDone();
   };
@@ -115,6 +138,43 @@ function AddReservationForm({ date, onDone }: { date: string; onDone: () => void
       className="flex flex-col gap-3 p-4 rounded-2xl border-2 border-primary/30 bg-primary/5"
     >
       <p className="text-xs font-bold text-primary">{t('calendar.addFormTitle')}</p>
+
+      {/* 고객 검색 */}
+      <div className="relative">
+        <input
+          type="text"
+          value={customerSearch}
+          onChange={(e) => {
+            setCustomerSearch(e.target.value);
+            setShowDropdown(true);
+            if (selectedCustomerId) {
+              const c = customers.find((x) => x.id === selectedCustomerId);
+              if (c && c.name !== e.target.value) setSelectedCustomerId(undefined);
+            }
+          }}
+          onFocus={() => setShowDropdown(true)}
+          placeholder="고객 검색 (선택)"
+          className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-sm text-text placeholder:text-text-muted focus:outline-none focus:border-primary"
+        />
+        {selectedCustomerId && (
+          <span className="absolute right-3 top-2.5 text-[10px] text-success font-medium">연결됨</span>
+        )}
+        {showDropdown && filteredCustomers.length > 0 && (
+          <div className="absolute z-10 mt-1 w-full rounded-xl border border-border bg-surface shadow-lg max-h-40 overflow-y-auto">
+            {filteredCustomers.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => handleSelectCustomer(c.id)}
+                className="w-full px-3 py-2 text-left text-sm hover:bg-surface-alt transition-colors flex justify-between items-center"
+              >
+                <span className="font-medium text-text">{c.name}</span>
+                <span className="text-xs text-text-muted">{c.phone}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       <input
         type="text"
@@ -212,6 +272,18 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
   const [alertTags, setAlertTags] = useState<CustomerTag[]>([]);
   const [linkModalBooking, setLinkModalBooking] = useState<BookingRequest | null>(null);
   const [linkGenBooking, setLinkGenBooking] = useState<BookingRequest | null>(null);
+
+  const handleAlertQuickSale = (): void => {
+    if (alertBooking) {
+      const params = new URLSearchParams();
+      params.set('bookingId', alertBooking.id);
+      if (alertBooking.customerId) params.set('customerId', alertBooking.customerId);
+      params.set('customerName', alertBooking.customerName);
+      router.push(`/quick-sale?${params.toString()}`);
+    }
+    setAlertBooking(null);
+    setAlertTags([]);
+  };
 
   const localeMap: Record<string, string> = { ko: 'ko-KR', en: 'en-US', zh: 'zh-CN', ja: 'ja-JP' };
   const formatDate = (dateStr: string) => {
@@ -371,9 +443,9 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
                         {!booking.customerId && (
                           <button
                             onClick={() => setLinkModalBooking(booking)}
-                            className="text-[10px] text-warning font-medium hover:underline mt-1"
+                            className="text-[10px] text-primary font-medium hover:underline mt-1"
                           >
-                            고객 연결 필요
+                            고객 카드 연결
                           </button>
                         )}
                       </div>
@@ -425,6 +497,7 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
         isOpen={alertBooking !== null}
         onClose={handleAlertClose}
         onConfirm={handleAlertConfirm}
+        onQuickSale={handleAlertQuickSale}
         customerName={alertBooking?.customerName ?? ''}
         pinnedTags={alertTags}
       />
@@ -435,6 +508,8 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
         reservationId={linkModalBooking?.id ?? ''}
         reservationName={linkModalBooking?.customerName ?? ''}
         reservationPhone={linkModalBooking?.phone}
+        reservationLanguage={linkModalBooking?.language}
+        reservationDesignerId={linkModalBooking?.designerId}
       />
 
       <ConsultationLinkModal

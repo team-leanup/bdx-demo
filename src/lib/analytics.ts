@@ -4,6 +4,7 @@ import type { Customer } from '@/types/customer';
 import type { Designer } from '@/types/shop';
 import { getTodayInKorea, toKoreanDateString } from '@/lib/format';
 import { calculatePrice } from '@/lib/price-calculator';
+import type { ServicePricing } from '@/types/price';
 import { getReservationReadiness } from '@/lib/reservation-readiness';
 
 // ─── Dashboard Types ─────────────────────────────────────────────────────────
@@ -201,7 +202,6 @@ export function computeTopDesignScope(records: ConsultationRecord[]): string {
 
 // Return rate = (customers with visitCount >= 2) / total * 100
 export function computeReturnRate(
-  _records: ConsultationRecord[],
   customers: Customer[],
 ): number {
   if (customers.length === 0) return 0;
@@ -342,7 +342,7 @@ export function computeDesignerStats(
         designerName: designer.name,
         consultations: designerRecords.length,
         bookings: designerReservations.length,
-        revenue: designerRecords.reduce((sum, record) => sum + record.finalPrice, 0),
+        revenue: designerRecords.filter((r) => r.finalizedAt).reduce((sum, record) => sum + record.finalPrice, 0),
         assignedBookingRate: roundToSingleDecimal(
           (designerReservations.length / totalActiveReservations) * 100,
         ),
@@ -358,7 +358,7 @@ export function computeDesignerStats(
     .sort((a, b) => b.consultations - a.consultations);
 }
 
-export function computeUpsellMetrics(records: ConsultationRecord[]): UpsellMetrics {
+export function computeUpsellMetrics(records: ConsultationRecord[], shopPricing?: ServicePricing): UpsellMetrics {
   let totalUpsellRevenue = 0;
   let upsellConsultations = 0;
   let partsUpsellCount = 0;
@@ -367,7 +367,7 @@ export function computeUpsellMetrics(records: ConsultationRecord[]): UpsellMetri
   let colorUpsellConsultations = 0;
 
   records.forEach((record) => {
-    const breakdown = calculatePrice(record.consultation);
+    const breakdown = calculatePrice(record.consultation, shopPricing);
     const manualExtras = record.pricingAdjustments?.extras.reduce(
       (sum, extra) => sum + extra.amount,
       0,
@@ -433,7 +433,7 @@ export function computeForeignReservationSummary(
   const statuses: ForeignLanguageStatus[] = (['en', 'zh', 'ja'] as const).map((language) => {
     const bookings = foreignReservations.filter((reservation) => reservation.language === language);
     const ready = bookings.filter(
-      (reservation) => getReservationReadiness(reservation).state === 'ready',
+      (reservation) => getReservationReadiness(reservation).state === 'completed',
     ).length;
     const total = bookings.length;
 
@@ -615,7 +615,7 @@ export function computeKPICards(
         ) / 10
       : 0;
 
-  const returnRate = computeReturnRate(records, customers);
+  const returnRate = computeReturnRate(customers);
   const regularCount = computeRegularCount(customers);
   const todayBookings = computeTodayBookings(reservations);
 

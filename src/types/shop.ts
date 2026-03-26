@@ -55,6 +55,7 @@ export interface Designer {
   phone?: string;
   isActive: boolean;
   createdAt: string;
+  pin?: string;
 }
 
 export interface ShopExtendedSettings {

@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
+import { useReservationStore } from "@/store/reservation-store";
+import { getNowInKoreaIso } from "@/lib/format";
 import type { BookingRequest } from "@/types/consultation";
 
 interface Props {
@@ -48,6 +50,12 @@ export function ConsultationLinkContent({
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
+      // 링크 복사 시 consultationLinkSentAt 기록
+      if (booking && !booking.consultationLinkSentAt) {
+        useReservationStore.getState().updateReservation(booking.id, {
+          consultationLinkSentAt: getNowInKoreaIso(),
+        });
+      }
       setTimeout(() => setCopied(false), 2000);
     } catch {
       setCopied(false);
@@ -57,6 +65,11 @@ export function ConsultationLinkContent({
   const handleOpen = () => {
     if (!url) return;
     window.open(url, "_blank");
+    if (booking && !booking.consultationLinkSentAt) {
+      useReservationStore.getState().updateReservation(booking.id, {
+        consultationLinkSentAt: getNowInKoreaIso(),
+      });
+    }
   };
 
   return (

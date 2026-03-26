@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, Button, Input, LanguageSelector, Toggle, TimeInput, AddressInput, ProfileAvatar } from '@/components/ui';
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
@@ -22,6 +22,7 @@ import { DEFAULT_BASE_PRICES } from '@/data/service-options';
 import { formatPrice } from '@/lib/format';
 import { DesignPresetsManager } from '@/components/settings/DesignPresetsManager';
 import { resizeImageToBase64 } from '@/lib/image-utils';
+import { dbUpdateDesignerPin } from '@/lib/db';
 import type { ServiceStructure } from '@/types/shop';
 
 const DAY_LABEL_KEYS = ['days_mon', 'days_tue', 'days_wed', 'days_thu', 'days_fri', 'days_sat', 'days_sun'];
@@ -273,6 +274,8 @@ function StaffSection() {
   const deleteDesigner = useShopStore((s) => s.deleteDesigner);
   const uploadDesignerProfileImage = useShopStore((s) => s.uploadDesignerProfileImage);
   const deleteDesignerProfileImage = useShopStore((s) => s.deleteDesignerProfileImage);
+  const currentShopId = useAuthStore((s) => s.currentShopId);
+  const setPassword = useAuthStore((s) => s.setPassword);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newName, setNewName] = useState('');
@@ -285,6 +288,11 @@ function StaffSection() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [feedback, setFeedback] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
+
+  // PIN 관리 상태
+  const [pinEditingId, setPinEditingId] = useState<string | null>(null);
+  const [newPin, setNewPin] = useState('');
+  const [pinBusyId, setPinBusyId] = useState<string | null>(null);
 
   const resetAddForm = () => {
     setNewName('');
@@ -425,6 +433,22 @@ function StaffSection() {
       setFeedback({ tone: 'error', message: '프로필 이미지 업로드에 실패했습니다.' });
     }
     e.target.value = '';
+  };
+
+  const handlePinSave = async (designerId: string) => {
+    if (!/^\d{4}$/.test(newPin)) {
+      setFeedback({ tone: 'error', message: '숫자 4자리 PIN을 입력해 주세요.' });
+      return;
+    }
+    if (!currentShopId) return;
+
+    setPinBusyId(designerId);
+    await dbUpdateDesignerPin(currentShopId, designerId, newPin);
+    setPassword(designerId, newPin);
+    setPinBusyId(null);
+    setPinEditingId(null);
+    setNewPin('');
+    setFeedback({ tone: 'success', message: 'PIN이 변경되었습니다.' });
   };
 
   return (
@@ -597,7 +621,7 @@ function StaffSection() {
                 <div className="flex flex-wrap items-center gap-1.5 pl-11">
                   <button
                     onClick={() => startEdit(d)}
-                    className="rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-semibold text-text-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary transition-all"
+                    className="rounded-lg border border-border px-2.5 py-2 text-[11px] font-semibold text-text-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary transition-all"
                     disabled={isBusy}
                   >
                     프로필 수정
@@ -605,7 +629,7 @@ function StaffSection() {
                   <label
                     htmlFor={inputId}
                     className={cn(
-                      'rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-semibold text-text-secondary transition-all',
+                      'rounded-lg border border-border px-2.5 py-2 text-[11px] font-semibold text-text-secondary transition-all',
                       isBusy
                         ? 'cursor-not-allowed opacity-40'
                         : 'cursor-pointer hover:border-primary/40 hover:bg-primary/10 hover:text-primary',
@@ -624,7 +648,7 @@ function StaffSection() {
                   {hasImage && (
                     <button
                       onClick={() => void handleDeleteProfileImage(d.id)}
-                      className="rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-semibold text-text-secondary hover:border-error/40 hover:bg-error/10 hover:text-error transition-all"
+                      className="rounded-lg border border-border px-2.5 py-2 text-[11px] font-semibold text-text-secondary hover:border-error/40 hover:bg-error/10 hover:text-error transition-all"
                       disabled={isBusy}
                     >
                       사진 삭제
@@ -650,11 +674,55 @@ function StaffSection() {
                   ) : (
                     <button
                       onClick={() => void handleDelete(d)}
-                      className="rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-semibold text-text-secondary hover:border-error/40 hover:bg-error/10 hover:text-error transition-all disabled:opacity-40"
+                      className="rounded-lg border border-border px-2.5 py-2 text-[11px] font-semibold text-text-secondary hover:border-error/40 hover:bg-error/10 hover:text-error transition-all disabled:opacity-40"
                       disabled={isBusy || d.role === 'owner'}
                     >
                       프로필 삭제
                     </button>
+                  )}
+                </div>
+
+                {/* PIN 관리 */}
+                <div className="pl-11">
+                  {pinEditingId === d.id ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={4}
+                        value={newPin}
+                        onChange={(e) => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                        placeholder="새 PIN 4자리"
+                        className="w-28 rounded-lg border border-primary/40 bg-surface px-2.5 py-1.5 text-xs font-mono tracking-widest text-text focus:outline-none focus:ring-1 focus:ring-primary/60"
+                        disabled={pinBusyId === d.id}
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => void handlePinSave(d.id)}
+                        disabled={pinBusyId === d.id || newPin.length !== 4}
+                        className="rounded-lg bg-primary px-2.5 py-2 text-[11px] font-semibold text-white disabled:opacity-40"
+                      >
+                        {pinBusyId === d.id ? '저장 중...' : '저장'}
+                      </button>
+                      <button
+                        onClick={() => { setPinEditingId(null); setNewPin(''); }}
+                        disabled={pinBusyId === d.id}
+                        className="rounded-lg border border-border px-2.5 py-2 text-[11px] font-semibold text-text-secondary"
+                      >
+                        취소
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-text-muted">PIN: ••••</span>
+                      <button
+                        onClick={() => { setPinEditingId(d.id); setNewPin(''); setFeedback(null); }}
+                        disabled={isBusy}
+                        className="rounded-lg border border-border px-2.5 py-1 text-[11px] font-semibold text-text-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary transition-all"
+                      >
+                        변경
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -1101,6 +1169,19 @@ export default function SettingsPage() {
 
   // 서비스 가격 인라인 편집
   const [editingPrices, setEditingPrices] = useState(false);
+
+  // N-20: 편집 중 이탈 시 브라우저 경고
+  useEffect(() => {
+    const isEditing = editingShop || editingPrices;
+    if (!isEditing) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent): void => {
+      e.preventDefault();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [editingShop, editingPrices]);
   const [priceHand, setPriceHand] = useState(String(shopSettings.baseHandPrice || DEFAULT_BASE_PRICES.hand));
   const [priceFoot, setPriceFoot] = useState(String(shopSettings.baseFootPrice || DEFAULT_BASE_PRICES.foot));
   const [priceOffSame, setPriceOffSame] = useState(String(shopSettings.baseOffSameShop || DEFAULT_BASE_PRICES.offSameShop));

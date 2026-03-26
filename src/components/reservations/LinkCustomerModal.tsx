@@ -15,6 +15,8 @@ interface LinkCustomerModalProps {
   reservationId: string;
   reservationName: string;
   reservationPhone?: string;
+  reservationLanguage?: 'ko' | 'en' | 'zh' | 'ja';
+  reservationDesignerId?: string;
   onLinked?: (customerId: string) => void;
 }
 
@@ -24,6 +26,8 @@ export function LinkCustomerModal({
   reservationId,
   reservationName,
   reservationPhone,
+  reservationLanguage,
+  reservationDesignerId,
   onLinked,
 }: LinkCustomerModalProps): React.ReactElement {
   const customers = useCustomerStore((s) => s.customers);
@@ -63,6 +67,8 @@ export function LinkCustomerModal({
     const newCustomer = createCustomer({
       name: newName.trim(),
       phone: newPhone.trim(),
+      preferredLanguage: reservationLanguage,
+      assignedDesignerId: reservationDesignerId,
     });
     updateReservation(reservationId, { customerId: newCustomer.id });
     onLinked?.(newCustomer.id);

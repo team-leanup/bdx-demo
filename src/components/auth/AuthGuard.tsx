@@ -8,7 +8,8 @@ import type { AuthGuardProps } from '@/types/auth';
 export function AuthGuard({ children, requiredRole, fallbackPath = '/home' }: AuthGuardProps) {
   const router = useRouter();
   const isInitialized = useAuthStore((s) => s.isInitialized);
-  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  // M-1: 함수 참조 대신 상태를 직접 구독하여 불필요한 리렌더 방지
+  const isAuthenticated = useAuthStore((s) => s.role !== null && s.currentShopId !== null);
   const role = useAuthStore((s) => s.role);
   const [mounted, setMounted] = useState(false);
 
@@ -18,16 +19,16 @@ export function AuthGuard({ children, requiredRole, fallbackPath = '/home' }: Au
 
   useEffect(() => {
     if (!mounted || !isInitialized) return;
-    if (!isLoggedIn()) {
+    if (!isAuthenticated) {
       router.replace('/login');
       return;
     }
     if (requiredRole && role !== requiredRole) {
       router.replace(fallbackPath);
     }
-  }, [mounted, isInitialized, isLoggedIn, role, requiredRole, fallbackPath, router]);
+  }, [mounted, isInitialized, isAuthenticated, role, requiredRole, fallbackPath, router]);
 
-  if (!mounted || !isInitialized || !isLoggedIn() || (requiredRole && role !== requiredRole)) {
+  if (!mounted || !isInitialized || !isAuthenticated || (requiredRole && role !== requiredRole)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <img

@@ -355,6 +355,7 @@ export default function TreatmentSheetPage() {
           basePrice,
           extras: validExtras.map(({ label, amount }) => ({ label: label.trim(), amount })),
           finalPrice: calculatedFinalPrice,
+          discountAmount: discountAmount ?? 0,
       },
     });
 

@@ -1,6 +1,7 @@
 import { StatusBar } from './StatusBar';
 import { BottomTabBar } from './BottomTabBar';
 import { SideNav } from './SideNav';
+import { ConsultationAlertBanner } from '@/components/home/ConsultationAlertBanner';
 import { cn } from '@/lib/cn';
 import type { ReactNode } from 'react';
 
@@ -24,6 +25,7 @@ export function AppShell({ children, hideStatusBar, hideTabBar }: AppShellProps)
             'lg:pt-0 lg:pb-0',
           )}
         >
+          <ConsultationAlertBanner />
           <div className="max-w-2xl md:max-w-3xl mx-auto w-full lg:max-w-none lg:px-8 lg:pt-10">
             {children}
           </div>

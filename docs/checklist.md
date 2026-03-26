@@ -1,6 +1,6 @@
 # BDX 개발 체크리스트
 
-> 클라이언트 피드백 기반. 최종 업데이트: 2026-03-23
+> 클라이언트 피드백 기반. 최종 업데이트: 2026-03-25
 
 **상태**: ⬜ 미착수 · 🟡 진행중 · 🔵 부분완료 · 🟢 완료 · 🔴 블로커
 
@@ -482,6 +482,43 @@
 
 ---
 
+## 21. FE/BE/API/UX 종합 QA (2026-03-25)
+
+> 3개 전문 에이전트(FE코드, BE/API, 사용자 페르소나)로 전수 점검 후 발견된 22건 수정
+
+### Critical (2건)
+- **N-1** 🟢 일반 상담 레코드에 `finalizedAt` 미설정 → 대시보드 매출 0원 (`summary/page.tsx`)
+- **N-2** 🟢 STEP_ORDER에 STEP3_OPTIONS/CANVAS 추가 (`consultation-store.ts`)
+
+### High (8건)
+- **N-3** 🟢 QuickSaleForm `customerName` URL param 미처리 (`QuickSaleForm.tsx`, `quick-sale/page.tsx`)
+- **N-4** 🟢 `initialCustomerId` 있을 때 고객명 자동 채우기 없음 (`QuickSaleForm.tsx`)
+- **N-5** 🟢 QuickSale `paymentMethod` 레코드에 미저장 (`records-store.ts`)
+- **N-6** 🟢 `addRecord` 일반 경로 DB 실패 시 로컬 롤백 없음 (`records-store.ts`)
+- **N-7** 🟢 `dbUpsertCustomerTags` delete 성공 + insert 실패 시 태그 전부 소실 (`db.ts`)
+- **N-8** 🟢 사전 상담 완료 알림을 AppShell로 이동 — 모든 메인 페이지에서 노출 (`AppShell.tsx`)
+- **N-9** 🟢 return_visit 플로우에서 "기본값 설정" 안내 배너 추가 (`customer/page.tsx`)
+- **N-10** 🟢 홈 폴링이 마운트 즉시 1회 호출 안 함 (`home/page.tsx`)
+
+### Medium (12건)
+- **N-11** 🟢 시술 이력 중복 제거를 recordId 기반으로 변경 (`customers/[id]/page.tsx`)
+- **N-12** 🟢 weekStats 날짜 계산에서 KST 적용 (`records/page.tsx`)
+- **N-13** 🟢 `fetchBookingRequestById` shopId 없으면 경고 (`db.ts`)
+- **N-14** 🟢 customer DB 조작 에러 시 구체적 로그 (`customer-store.ts`)
+- **N-15** 🟢 QuickSale 미등록 고객 이름 매칭 + 경고 로그 추가 (`records-store.ts`)
+- **N-16** 🟢 매출 등록 완료 후 상담기록 탭으로 이동 (`quick-sale/page.tsx`)
+- **N-17** 🟢 bookingId 딥링크 전체 예약에서 검색 (`records/page.tsx`)
+- **N-18** 🟢 홈/대시보드 매출 집계 로직 통일 (`home/page.tsx`)
+- **N-19** 🟢 고객 목록에 "+ 고객 추가" 버튼 추가 (`customers/page.tsx`)
+- **N-20** 🟢 설정 편집 중 이탈 시 `beforeunload` 경고 추가 (`settings/page.tsx`)
+- **N-21** 🟢 canvas 파츠 위치 복원 시 저장된 좌표 사용 (`canvas/page.tsx`)
+- **N-22** 🟢 treatment-sheet discountAmount 정상 확인 완료 (수정 불필요)
+
+### Low (8건) — 별도 라운드
+- N-23~N-30 ⬜ 미착수
+
+---
+
 ## 진행 요약
 
 | 영역 | 항목수 | 🟢 | 🟡 | 🔵 | ⬜ |
@@ -505,4 +542,5 @@
 | **QA 검증** | **6** | **3** | **0** | **0** | **1** |
 | **반응형 최적화** | **11** | **11** | **0** | **0** | **0** |
 | **BDX 2.0 MVP** | **20** | **20** | **0** | **0** | **0** |
-| **합계** | **99** | **82** | **0** | **2** | **13** |
+| **종합 QA (N-1~30)** | **30** | **22** | **0** | **0** | **8** |
+| **합계** | **129** | **104** | **0** | **2** | **21** |

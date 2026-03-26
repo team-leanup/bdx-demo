@@ -65,8 +65,10 @@ interface AuthStore {
     password: string;
   }) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
+  switchToDesigner: (designerId: string, designerName: string, designerRole: 'owner' | 'staff') => void;
   setPassword: (designerId: string, newPassword: string) => void;
   checkPassword: (designerId: string, password: string) => boolean;
+  resetInitFlag: () => void;
   setCurrentShopOnboardingComplete: (complete: boolean) => void;
   isOwner: () => boolean;
   isStaff: () => boolean;
@@ -381,6 +383,9 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       logout: async () => {
+        // M-9: _initDone 리셋 (재로그인 시 initializeAuth 재실행 보장)
+        _initDone = false;
+
         // 데모 쿠키 제거
         if (typeof document !== 'undefined') {
           document.cookie = 'bdx-demo=;path=/;max-age=0';
@@ -405,6 +410,18 @@ export const useAuthStore = create<AuthStore>()(
           ...getLoggedOutState(),
         });
       },
+
+      resetInitFlag: () => {
+        _initDone = false;
+        _initPromise = null;
+      },
+
+      switchToDesigner: (designerId, designerName, designerRole) =>
+        set({
+          activeDesignerId: designerId,
+          activeDesignerName: designerName,
+          role: designerRole,
+        }),
 
       setPassword: (designerId, newPassword) =>
         set((state) => ({

@@ -19,6 +19,7 @@ import { DailyChecklist } from '@/components/consultation/DailyChecklist';
 import { ChecklistSummaryRow } from '@/components/records/ChecklistSummaryRow';
 import type { DailyChecklist as DailyChecklistType } from '@/types/consultation';
 import { ConsultationStep } from '@/types/consultation';
+import { useLocaleStore } from '@/store/locale-store';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -33,7 +34,10 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
   const updateRecord = useRecordsStore((s) => s.updateRecord);
   const portfolioPhotos = usePortfolioStore(useShallow((s) => s.photos.filter((p) => p.recordId === id)));
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
+  const updateCustomer = useCustomerStore((s) => s.updateCustomer);
+  const getCustomerById = useCustomerStore((s) => s.getById);
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
+  const setConsultationLocale = useLocaleStore((s) => s.setConsultationLocale);
 
   const [checklistData, setChecklistData] = useState<DailyChecklistType | undefined>(record?.checklist);
   const [editingFinalPrice, setEditingFinalPrice] = useState(false);
@@ -64,9 +68,23 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
   const hasImages = referenceImages.length > 0 || portfolioPhotos.length > 0;
 
   const handleSaveFinalPrice = (): void => {
-    const now = getNowInKoreaIso();
     setEditingFinalPrice(false);
-    updateRecord(id, { finalPrice: finalPriceValue, finalizedAt: now });
+    updateRecord(id, { finalPrice: finalPriceValue });
+  };
+
+  const handleFinalize = (): void => {
+    const now = getNowInKoreaIso();
+    updateRecord(id, { finalizedAt: now });
+    const customer = getCustomerById(record.customerId);
+    if (customer) {
+      const newVisitCount = customer.visitCount + 1;
+      const newTotalSpend = customer.totalSpend + record.finalPrice;
+      updateCustomer(record.customerId, {
+        visitCount: newVisitCount,
+        totalSpend: newTotalSpend,
+        averageSpend: Math.round(newTotalSpend / newVisitCount),
+      });
+    }
   };
 
   const handleStartEditing = (): void => {
@@ -80,8 +98,12 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
       customerId: record.customerId,
       customerName: c.customerName,
       customerPhone: c.customerPhone,
+      bookingId: undefined,
       currentStep: ConsultationStep.START,
     });
+    if (record.language && record.language !== 'ko') {
+      setConsultationLocale(record.language);
+    }
     router.push('/consultation');
   };
 
@@ -286,6 +308,23 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
                 <span className="text-error">-{formatPrice(item.amount)}</span>
               </div>
             ))}
+
+          {!record.finalizedAt && (
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={handleFinalize}
+                className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-white hover:bg-primary-dark active:scale-[0.98] transition-all"
+              >
+                결제 완료
+              </button>
+            </div>
+          )}
+          {record.finalizedAt && (
+            <div className="mt-2 flex items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200 py-2.5">
+              <span className="text-sm font-semibold text-emerald-700">✓ 결제 완료됨</span>
+            </div>
+          )}
 
           <div className="mt-2 rounded-xl bg-primary/10 p-3">
             {editingFinalPrice ? (

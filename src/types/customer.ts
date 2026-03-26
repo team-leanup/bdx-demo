@@ -60,7 +60,7 @@ export type VisitFrequency = 'weekly' | 'biweekly' | 'monthly' | 'irregular';
 export interface MembershipTransaction {
   id: string;
   date: string;
-  type: 'purchase' | 'use' | 'refund' | 'adjust';
+  type: 'purchase' | 'use';
   sessionsDelta: number;
   recordId?: string;
   note?: string;

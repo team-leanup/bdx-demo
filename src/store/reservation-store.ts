@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { BookingRequest } from '@/types/consultation';
 import { useAuthStore } from '@/store/auth-store';
+import { useCustomerStore } from '@/store/customer-store';
 import {
   fetchBookingRequests,
   dbUpsertReservation,
@@ -17,7 +18,6 @@ interface ReservationStore {
   hydrateFromDB: () => Promise<void>;
   addReservation: (reservation: Omit<BookingRequest, 'id' | 'createdAt' | 'status' | 'shopId'>) => void;
   updateReservation: (id: string, updates: Partial<BookingRequest>) => void;
-  updateReservationLocally: (id: string, updates: Partial<BookingRequest>) => void;
   removeReservation: (id: string) => void;
   getByDate: (date: string) => BookingRequest[];
   getByMonth: (year: number, month: number) => BookingRequest[];
@@ -45,10 +45,37 @@ export const useReservationStore = create<ReservationStore>()(
           return;
         }
 
+        // 고객 자동 생성/연결: 예약에 customerId가 없으면 이름/전화로 매칭 또는 신규 생성
+        let resolvedCustomerId = reservation.customerId;
+        if (!resolvedCustomerId && reservation.customerName) {
+          const customerStore = useCustomerStore.getState();
+          // 전화번호로 먼저 매칭
+          const byPhone = reservation.phone ? customerStore.findByPhoneNormalized(reservation.phone) : undefined;
+          if (byPhone) {
+            resolvedCustomerId = byPhone.id;
+          } else {
+            // 이름으로 매칭
+            const byName = customerStore.customers.find((c) => c.name === reservation.customerName);
+            if (byName) {
+              resolvedCustomerId = byName.id;
+            } else {
+              // 신규 고객 생성
+              const newCustomer = customerStore.createCustomer({
+                name: reservation.customerName,
+                phone: reservation.phone,
+                preferredLanguage: reservation.language,
+                assignedDesignerId: reservation.designerId,
+              });
+              resolvedCustomerId = newCustomer.id;
+            }
+          }
+        }
+
         const newEntry: BookingRequest = {
           ...reservation,
           id: `booking-${Date.now()}`,
           shopId: currentShopId,
+          customerId: resolvedCustomerId,
           status: 'pending' as const,
           createdAt: getNowInKoreaIso(),
         };
@@ -68,14 +95,6 @@ export const useReservationStore = create<ReservationStore>()(
         if (updated) {
           dbUpsertReservation(updated).catch(console.error);
         }
-      },
-
-      updateReservationLocally: (id, updates) => {
-        set((state) => ({
-          reservations: state.reservations.map((r) =>
-            r.id === id ? { ...r, ...updates } : r,
-          ),
-        }));
       },
 
       removeReservation: (id) => {

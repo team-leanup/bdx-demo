@@ -322,6 +322,7 @@ export type Database = {
           is_active: boolean | null
           name: string
           phone: string | null
+          pin: string | null
           profile_image_url: string | null
           role: string
           shop_id: string
@@ -332,6 +333,7 @@ export type Database = {
           is_active?: boolean | null
           name: string
           phone?: string | null
+          pin?: string | null
           profile_image_url?: string | null
           role: string
           shop_id: string
@@ -342,6 +344,7 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           phone?: string | null
+          pin?: string | null
           profile_image_url?: string | null
           role?: string
           shop_id?: string

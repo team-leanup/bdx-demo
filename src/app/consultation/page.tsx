@@ -149,7 +149,9 @@ export default function ConsultationStartPage() {
   const prefillBookingId = searchParams.get('bookingId') ?? '';
   const prefillDesignerId = searchParams.get('designerId') ?? '';
   const prefillCustomerId = searchParams.get('customerId') ?? '';
-  const prefillShopId = searchParams.get('shopId') ?? '';
+  // M-10: shopId 기본 형식 검증 (빈 문자열, 공백만 있는 값 차단)
+  const rawShopId = searchParams.get('shopId') ?? '';
+  const prefillShopId = rawShopId.trim().length > 0 && rawShopId.trim().length <= 128 ? rawShopId.trim() : '';
   const prefillShopName = searchParams.get('shopName') ?? '';
   const prefillEntry: 'staff' | 'customer_link' = (searchParams.get('entry') === 'customer-link'
     || consultation.entryPoint === 'customer_link')
@@ -271,7 +273,6 @@ export default function ConsultationStartPage() {
     const routeByStep: Partial<Record<ConsultationStep, string>> = {
       [ConsultationStep.STEP1_BASIC]: '/consultation/step1',
       [ConsultationStep.STEP2_DESIGN]: '/consultation/step2',
-      [ConsultationStep.STEP3_OPTIONS]: '/consultation/step3',
       [ConsultationStep.TRAITS]: '/consultation/traits',
       [ConsultationStep.CANVAS]: '/consultation/canvas',
       [ConsultationStep.SUMMARY]: '/consultation/summary',
@@ -323,8 +324,6 @@ export default function ConsultationStartPage() {
     router.push('/consultation/customer');
   };
 
-  const handleStart = () => handleStartWithEntry('staff');
-
   if (isCustomerLinkFlow) {
     if (showEntrySplash) {
       return (
@@ -365,7 +364,6 @@ export default function ConsultationStartPage() {
                   [ConsultationStep.CUSTOMER_INFO]: '/consultation/customer',
                   [ConsultationStep.STEP1_BASIC]: '/consultation/step1',
                   [ConsultationStep.STEP2_DESIGN]: '/consultation/step2',
-                  [ConsultationStep.STEP3_OPTIONS]: '/consultation/step3',
                   [ConsultationStep.TRAITS]: '/consultation/traits',
                   [ConsultationStep.CANVAS]: '/consultation/canvas',
                   [ConsultationStep.SUMMARY]: '/consultation/summary',
@@ -474,10 +472,6 @@ export default function ConsultationStartPage() {
           </div>
 
           <div className="flex items-center justify-center gap-2 mb-6">
-            <span className="inline-flex items-center gap-1 rounded-full border border-border bg-surface-alt px-3 py-1 text-[11px] font-semibold text-text-muted">
-              {t('consultation.treatmentType.detailedOptions')}
-              {locale !== 'ko' && <span className="opacity-60">{tKo('consultation.treatmentType.detailedOptions')}</span>}
-            </span>
             <span className="inline-flex items-center gap-1 rounded-full border border-border bg-surface-alt px-3 py-1 text-[11px] font-semibold text-text-muted">
               {t('consultation.canvasTitle')} {getOptionalLabel(locale)}
               {locale !== 'ko' && <span className="opacity-60">{tKo('consultation.canvasTitle')} (선택)</span>}
@@ -618,18 +612,6 @@ export default function ConsultationStartPage() {
             <span>{t('consultation.startConsultation')}</span>
             {locale !== 'ko' && (
               <span className="ml-1 text-xs opacity-70">{tKo('consultation.startConsultation')}</span>
-            )}
-          </Button>
-          <Button
-            variant="secondary"
-            size="lg"
-            fullWidth
-            onClick={() => handleStartWithEntry('return_visit')}
-            disabled={!selectedDesignerId}
-          >
-            <span>재방문 예약</span>
-            {locale !== 'ko' && (
-              <span className="ml-1 text-xs opacity-70 font-normal">Return Visit</span>
             )}
           </Button>
         </div>

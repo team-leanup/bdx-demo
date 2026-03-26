@@ -84,18 +84,17 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
   const [formImages, setFormImages] = useState<string[]>([]);
   const [formDesignerId, setFormDesignerId] = useState(initialValues?.designerId ?? '');
   const [serviceLabel, setServiceLabel] = useState('');
-  const [customerSearch, setCustomerSearch] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
 
   const filteredCustomers = useMemo(() => {
-    if (!customerSearch.trim()) return [];
-    const query = customerSearch.toLowerCase();
-    return customers.filter((c) => 
+    if (!formName.trim()) return [];
+    const query = formName.toLowerCase();
+    return customers.filter((c) =>
       c.name.toLowerCase().includes(query) ||
-      c.phone?.includes(customerSearch)
+      c.phone?.includes(formName)
     ).slice(0, 5);
-  }, [customerSearch, customers]);
+  }, [formName, customers]);
 
   const handleSelectCustomer = (customerId: string): void => {
     const customer = customers.find((c) => c.id === customerId);
@@ -103,13 +102,11 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
       setSelectedCustomerId(customerId);
       setFormName(customer.name);
       setFormPhone(customer.phone || '');
-      setCustomerSearch(customer.name);
       setShowCustomerDropdown(false);
     }
   };
 
   const handleCustomerSearchChange = (value: string): void => {
-    setCustomerSearch(value);
     setShowCustomerDropdown(true);
     if (selectedCustomerId) {
       const customer = customers.find((c) => c.id === selectedCustomerId);
@@ -176,7 +173,6 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
     setFormImages([]);
     setFormDesignerId('');
     setServiceLabel('');
-    setCustomerSearch('');
     setSelectedCustomerId(null);
     onCancel?.();
   };
@@ -189,17 +185,20 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
             <span className="text-xs font-bold text-emerald-700">네이버 예약 등록</span>
           </div>
         )}
-        {/* 고객 검색 */}
+        {/* 고객명 (검색 통합) */}
         <div className="relative">
           <label className="mb-1 block text-xs font-medium text-text-secondary">
-            고객 검색 <span className="text-text-muted">(선택)</span>
+            고객명 <span className="text-error">*</span>
           </label>
           <input
             type="text"
-            value={customerSearch}
-            onChange={(e) => handleCustomerSearchChange(e.target.value)}
-            onFocus={() => setShowCustomerDropdown(true)}
-            placeholder="고객 이름 또는 전화번호"
+            value={formName}
+            onChange={(e) => {
+              setFormName(e.target.value);
+              handleCustomerSearchChange(e.target.value);
+            }}
+            onFocus={() => { if (formName.trim()) setShowCustomerDropdown(true); }}
+            placeholder="고객 이름 입력 또는 검색"
             className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text placeholder-text-muted outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
           />
           {selectedCustomerId && (
@@ -220,20 +219,6 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
               ))}
             </div>
           )}
-        </div>
-
-        {/* 고객명 */}
-        <div>
-          <label className="mb-1 block text-xs font-medium text-text-secondary">
-            고객명 <span className="text-error">*</span>
-          </label>
-          <input
-            type="text"
-            value={formName}
-            onChange={(e) => setFormName(e.target.value)}
-            placeholder="고객 이름 입력"
-            className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text placeholder-text-muted outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
-          />
         </div>
 
         {/* 연락처 */}
@@ -336,10 +321,10 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
           </div>
         )}
 
-        {/* 상담 언어 */}
+        {/* 고객 언어 */}
         <div>
           <label className="mb-1 block text-xs font-medium text-text-secondary">
-            상담 언어
+            고객 언어
           </label>
           <select
             value={formLanguage}
@@ -381,7 +366,7 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
                 <button
                     type="button"
                     onClick={() => removeImage(i)}
-                    className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center"
+                    className="absolute top-0.5 right-0.5 w-8 h-8 rounded-full bg-black/60 flex items-center justify-center"
                   >
                     <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

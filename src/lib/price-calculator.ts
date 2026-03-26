@@ -93,6 +93,7 @@ export function calculatePrice(
   // 3. 연장/리페어 추가금
   let extensionSurcharge = 0;
   if (consultation.extensionType === 'repair') {
+    // L-6: repairCount ?? 1 은 합리적인 폴백 (1개 수리가 최소 단위)
     const count = consultation.repairCount ?? 1;
     extensionSurcharge = pricing.repairPerNail * count;
     items.push({
@@ -203,6 +204,8 @@ export function calculatePrice(
     } else {
       discountAmount = Math.round(subtotal * (consultation.discount.value / 100));
     }
+    // L-7: percent 할인이 소계를 초과하지 않도록 cap
+    discountAmount = Math.min(discountAmount, subtotal);
     if (discountAmount > 0) {
       items.push({
         label: consultation.discount.type === 'percent'

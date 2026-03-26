@@ -65,7 +65,7 @@ function toShop(row: Database['public']['Tables']['shops']['Row']): Shop {
   };
 }
 
-function toDesigner(row: Database['public']['Tables']['designers']['Row']): Designer {
+function toDesigner(row: Database['public']['Tables']['designers']['Row'] & { pin?: string | null }): Designer {
   const profileImageValue = row.profile_image_url ?? undefined;
   return {
     id: row.id,
@@ -80,6 +80,7 @@ function toDesigner(row: Database['public']['Tables']['designers']['Row']): Desi
     phone: row.phone ?? undefined,
     isActive: row.is_active ?? false,
     createdAt: row.created_at ?? '',
+    pin: row.pin ?? undefined,
   };
 }
 
@@ -566,6 +567,21 @@ export async function dbDeleteDesignerProfileImage(
   return { success: true, designer: toDesigner(data) };
 }
 
+export async function dbUpdateDesignerPin(
+  shopId: string,
+  designerId: string,
+  pin: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('designers')
+    .update({ pin })
+    .eq('id', designerId)
+    .eq('shop_id', shopId);
+  if (error) {
+    console.error('[db] dbUpdateDesignerPin error:', toDbErrorSnapshot(error));
+  }
+}
+
 export async function fetchCustomers(shopId?: string | null): Promise<Customer[]> {
   if (!shopId) {
     return [];
@@ -724,6 +740,9 @@ export async function fetchBookingRequestById(
   bookingId: string,
   shopId?: string | null,
 ): Promise<BookingRequest | null> {
+  if (!shopId) {
+    console.warn('[db] fetchBookingRequestById called without shopId — no shop isolation', { bookingId });
+  }
   let query = supabase.from('booking_requests').select('*').eq('id', bookingId);
 
   if (shopId) {
@@ -835,7 +854,12 @@ export async function dbUpsertCustomerTags(customerId: string, tags: CustomerTag
   }));
   const { error: insertError } = await supabase.from('customer_tags').insert(rows);
   if (insertError) {
-    console.error('[db] dbUpsertCustomerTags insert error:', toDbErrorSnapshot(insertError));
+    // N-7: delete 성공 + insert 실패 → 태그 전부 소실 위험. 1회 재시도
+    console.error('[db] dbUpsertCustomerTags insert error (retrying):', toDbErrorSnapshot(insertError));
+    const { error: retryError } = await supabase.from('customer_tags').insert(rows);
+    if (retryError) {
+      console.error('[db] dbUpsertCustomerTags retry also failed — tags may be lost for', customerId, toDbErrorSnapshot(retryError));
+    }
   }
 }
 
@@ -854,11 +878,15 @@ export async function dbInsertSmallTalkNote(note: SmallTalkNote): Promise<void> 
   }
 }
 
-export async function dbUpdateCustomerField(customerId: string, field: string, value: unknown): Promise<void> {
-  const { error } = await supabase
+export async function dbUpdateCustomerField(customerId: string, field: string, value: unknown, shopId?: string): Promise<void> {
+  let query = supabase
     .from('customers')
     .update({ [field]: value, updated_at: getNowInKoreaIso() })
     .eq('id', customerId);
+  if (shopId) {
+    query = query.eq('shop_id', shopId);
+  }
+  const { error } = await query;
   if (error) {
     console.error('[db] dbUpdateCustomerField error:', toDbErrorSnapshot(error));
   }
@@ -935,10 +963,11 @@ export async function dbUpsertRecord(record: ConsultationRecord): Promise<void> 
 }
 
 export async function dbDeleteRecord(id: string, shopId?: string): Promise<void> {
-  let query = supabase.from('consultation_records').delete().eq('id', id);
-  if (shopId) {
-    query = query.eq('shop_id', shopId);
+  if (!shopId) {
+    console.warn('[db] dbDeleteRecord called without shopId — skipping for safety');
+    return;
   }
+  const query = supabase.from('consultation_records').delete().eq('id', id).eq('shop_id', shopId);
   const { error } = await query;
   if (error) {
     console.error('[db] dbDeleteRecord error:', toDbErrorSnapshot(error));
@@ -1019,10 +1048,11 @@ export async function dbCompletePreconsultationBooking(
 }
 
 export async function dbDeleteReservation(id: string, shopId?: string): Promise<void> {
-  let query = supabase.from('booking_requests').delete().eq('id', id);
-  if (shopId) {
-    query = query.eq('shop_id', shopId);
+  if (!shopId) {
+    console.warn('[db] dbDeleteReservation called without shopId — skipping for safety');
+    return;
   }
+  const query = supabase.from('booking_requests').delete().eq('id', id).eq('shop_id', shopId);
   const { error } = await query;
   if (error) {
     console.error('[db] dbDeleteReservation error:', toDbErrorSnapshot(error));
@@ -1162,7 +1192,7 @@ export async function dbInsertMembershipTransaction(
     customerId: string;
     shopId: string;
     date: string;
-    type: 'purchase' | 'use' | 'refund' | 'adjust';
+    type: 'purchase' | 'use';
     sessionsDelta: number;
     recordId?: string;
     note?: string;

@@ -82,25 +82,17 @@ interface ConsultationStore {
   reset: () => void;
 }
 
-const STEP_ORDER: ConsultationStep[] = [
+export const STEP_ORDER: ConsultationStep[] = [
   ConsultationStep.START,
   ConsultationStep.CUSTOMER_INFO,
   ConsultationStep.STEP1_BASIC,
   ConsultationStep.STEP2_DESIGN,
+  ConsultationStep.CANVAS,
   ConsultationStep.TRAITS,
   ConsultationStep.SUMMARY,
 ];
 
-const CUSTOMER_LINK_STEP_ORDER: ConsultationStep[] = [
-  ConsultationStep.START,
-  ConsultationStep.CUSTOMER_INFO,
-  ConsultationStep.STEP1_BASIC,
-  ConsultationStep.STEP2_DESIGN,
-  ConsultationStep.TRAITS,
-  ConsultationStep.SUMMARY,
-];
-
-export const RETURN_VISIT_STEP_ORDER: ConsultationStep[] = [
+const RETURN_VISIT_STEP_ORDER: ConsultationStep[] = [
   ConsultationStep.START,
   ConsultationStep.CUSTOMER_INFO,
   ConsultationStep.SUMMARY,
@@ -260,12 +252,7 @@ export const useConsultationStore = create<ConsultationStore>()(
         const state = get();
         const current = state.consultation.currentStep;
         const entryPoint = state.consultation.entryPoint;
-        const order =
-          entryPoint === 'customer_link'
-            ? CUSTOMER_LINK_STEP_ORDER
-            : entryPoint === 'return_visit'
-              ? RETURN_VISIT_STEP_ORDER
-              : STEP_ORDER;
+        const order = entryPoint === 'return_visit' ? RETURN_VISIT_STEP_ORDER : STEP_ORDER;
         const idx = order.indexOf(current);
         if (idx === -1) return;
         if (idx < order.length - 1) {
@@ -282,12 +269,7 @@ export const useConsultationStore = create<ConsultationStore>()(
         const state = get();
         const current = state.consultation.currentStep;
         const entryPoint = state.consultation.entryPoint;
-        const order =
-          entryPoint === 'customer_link'
-            ? CUSTOMER_LINK_STEP_ORDER
-            : entryPoint === 'return_visit'
-              ? RETURN_VISIT_STEP_ORDER
-              : STEP_ORDER;
+        const order = entryPoint === 'return_visit' ? RETURN_VISIT_STEP_ORDER : STEP_ORDER;
         const idx = order.indexOf(current);
         if (idx === -1) return;
         if (idx > 0) {

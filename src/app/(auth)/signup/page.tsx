@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from '@/components/ui';
 import { SignupConsentSection } from '@/components/auth/SignupConsentSection';
 import { useAppStore } from '@/store/app-store';
@@ -30,6 +30,8 @@ export default function SignupPage(): React.ReactElement {
   const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [consentNudge, setConsentNudge] = useState(false);
+  const consentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isInitialized) {
@@ -129,7 +131,9 @@ export default function SignupPage(): React.ReactElement {
 
   const handleGoogleSignup = async (): Promise<void> => {
     if (!agreedToTerms || !agreedToPrivacy) {
-      setError('이용약관 및 개인정보 수집·이용에 동의해 주세요.');
+      setConsentNudge(true);
+      consentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => setConsentNudge(false), 2500);
       return;
     }
 
@@ -190,6 +194,19 @@ export default function SignupPage(): React.ReactElement {
                 </svg>
                 Google로 회원가입
               </button>
+
+              <AnimatePresence>
+                {consentNudge && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    className="text-[13px] font-medium text-amber-600 text-center"
+                  >
+                    아래 이용약관에 먼저 동의해 주세요 ↓
+                  </motion.p>
+                )}
+              </AnimatePresence>
 
               <div className="flex items-center gap-3 py-1">
                 <div className="h-px flex-1 bg-[#d9dde4]" />
@@ -261,20 +278,31 @@ export default function SignupPage(): React.ReactElement {
                 {password.length > 0 && password.length < 6 && (
                   <p className="text-xs text-text-muted">비밀번호는 6자 이상이어야 합니다.</p>
                 )}
-                <SignupConsentSection
-                  agreedToTerms={agreedToTerms}
-                  agreedToPrivacy={agreedToPrivacy}
-                  onAgreeToTermsChange={(checked) => {
-                    setAgreedToTerms(checked);
-                    updateConsentStorage(checked, agreedToPrivacy);
-                    setError('');
-                  }}
-                  onAgreeToPrivacyChange={(checked) => {
-                    setAgreedToPrivacy(checked);
-                    updateConsentStorage(agreedToTerms, checked);
-                    setError('');
-                  }}
-                />
+                <motion.div
+                  ref={consentRef}
+                  animate={consentNudge ? {
+                    x: [0, -6, 6, -4, 4, 0],
+                    transition: { duration: 0.4 },
+                  } : {}}
+                  className={`rounded-xl px-3 py-2.5 transition-colors duration-300 ${consentNudge ? 'bg-amber-50 ring-2 ring-amber-300' : ''}`}
+                >
+                  <SignupConsentSection
+                    agreedToTerms={agreedToTerms}
+                    agreedToPrivacy={agreedToPrivacy}
+                    onAgreeToTermsChange={(checked) => {
+                      setAgreedToTerms(checked);
+                      updateConsentStorage(checked, agreedToPrivacy);
+                      setError('');
+                      setConsentNudge(false);
+                    }}
+                    onAgreeToPrivacyChange={(checked) => {
+                      setAgreedToPrivacy(checked);
+                      updateConsentStorage(agreedToTerms, checked);
+                      setError('');
+                      setConsentNudge(false);
+                    }}
+                  />
+                </motion.div>
               </div>
 
               {error && <p className="text-sm font-medium text-error">{error}</p>}

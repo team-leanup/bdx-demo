@@ -3,9 +3,8 @@ export enum ConsultationStep {
   CUSTOMER_INFO = 'customer_info',
   STEP1_BASIC = 'step1_basic',
   STEP2_DESIGN = 'step2_design',
-  STEP3_OPTIONS = 'step3_options',
+  STEP3_OPTIONS = 'step3_options', // deprecated: removed from flow
   TRAITS = 'traits',
-  PRO_MODE = 'pro_mode',
   CANVAS = 'canvas',
   SUMMARY = 'summary',
 }
@@ -118,7 +117,6 @@ export interface ConsultationType {
   bookingId?: string;
 
   entryPoint?: 'staff' | 'customer_link' | 'return_visit';
-  customerDurationPreference?: 'short' | 'normal' | 'long';
 
   // 현재 단계
   currentStep: ConsultationStep;
@@ -127,7 +125,7 @@ export interface ConsultationType {
 export type PaymentMethod = 'cash' | 'card' | 'membership';
 
 export type BookingChannel = 'kakao' | 'naver' | 'phone' | 'walk_in';
-export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
+export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled'; // 'confirmed', 'cancelled': 현재 UI에서 미사용
 
 export interface BookingRequest {
   id: string;
@@ -145,6 +143,7 @@ export interface BookingRequest {
   designerId?: string;
   serviceLabel?: string;   // e.g., "자석젤", "원컬러", "그라데이션", "아트"
   customerId?: string;     // link to customer in customer-store
+  consultationLinkSentAt?: string;   // 사전 상담 링크 발송 시각
   preConsultationCompletedAt?: string;
   preConsultationData?: ConsultationType;
   deposit?: number;        // 원장 직접 입력 예약금
@@ -175,6 +174,8 @@ export interface ConsultationRecord {
   pricingAdjustments?: {
     basePrice: number;
     extras: { label: string; amount: number }[];
+    // L-8: discountAmount 저장 필드 추가
+    discountAmount?: number;
     finalPrice: number;
   };
   notes?: string;

@@ -17,6 +17,8 @@ import { useAuthStore } from '@/store/auth-store';
 import { useRecordsStore } from '@/store/records-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { useReservationStore } from '@/store/reservation-store';
+import { useAppStore } from '@/store/app-store';
+import { buildServicePricingFromShopSettings } from '@/lib/price-calculator';
 import {
   computeRegularVisitRate,
   computeUpsellMetrics,
@@ -39,10 +41,15 @@ export default function DashboardPage() {
   const records = useRecordsStore((s) => s.records);
   const customers = useCustomerStore((s) => s.customers);
   const reservations = useReservationStore((s) => s.reservations);
+  const shopSettings = useAppStore((s) => s.shopSettings);
   const [toasts, setToasts] = useState<ToastData[]>([]);
 
+  const shopPricing = useMemo(
+    () => buildServicePricingFromShopSettings(shopSettings),
+    [shopSettings],
+  );
   const regularVisitRate = useMemo(() => computeRegularVisitRate(customers), [customers]);
-  const upsellMetrics = useMemo(() => computeUpsellMetrics(records), [records]);
+  const upsellMetrics = useMemo(() => computeUpsellMetrics(records, shopPricing), [records, shopPricing]);
 
   const todayRevenue = useMemo(() => computeTodayRevenue(records), [records]);
   const monthlyGrowthData = useMemo(() => {

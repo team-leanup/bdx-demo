@@ -1,9 +1,11 @@
+'use client';
+
 import { cn } from '@/lib/cn';
 import { getReservationReadiness } from '@/lib/reservation-readiness';
 import type { BookingRequest } from '@/types/consultation';
 
 interface ReservationReadinessBadgeProps {
-  booking: Pick<BookingRequest, 'preConsultationCompletedAt'>;
+  booking: Pick<BookingRequest, 'preConsultationCompletedAt' | 'consultationLinkSentAt' | 'channel'>;
   size?: 'sm' | 'xs';
   compact?: boolean;
   className?: string;
@@ -19,7 +21,11 @@ export function ReservationReadinessBadge({
   size = 'sm',
   compact = false,
   className,
-}: ReservationReadinessBadgeProps): React.ReactElement {
+}: ReservationReadinessBadgeProps): React.ReactElement | null {
+  if (booking.channel === 'walk_in' || booking.channel === 'phone') {
+    return null;
+  }
+
   const readiness = getReservationReadiness(booking);
 
   return (
@@ -32,6 +38,7 @@ export function ReservationReadinessBadge({
       )}
       title={readiness.label}
     >
+      <span className={cn('h-1.5 w-1.5 rounded-full flex-shrink-0', readiness.dotColor)} />
       <span>{compact ? readiness.shortLabel : readiness.label}</span>
     </span>
   );

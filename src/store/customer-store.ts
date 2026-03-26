@@ -30,7 +30,6 @@ interface CustomerStore {
   updateCustomer: (id: string, updates: Partial<Customer>) => void;
 
   updateTags: (customerId: string, nextTags: CustomerTag[]) => void;
-  setPinnedTraits: (customerId: string, pinnedValues: string[]) => void;
 
   toggleTagPinned: (customerId: string, tagId: string) => void;
   setTagAccent: (customerId: string, tagId: string, accent: TagAccent | undefined) => void;
@@ -303,8 +302,12 @@ export const useCustomerStore = create<CustomerStore>()(
 
         set((state) => ({ customers: [...state.customers, next] }));
 
-        dbUpsertCustomer(next).catch(console.error);
-        dbUpsertCustomerTags(next.id, next.tags ?? []).catch(console.error);
+        dbUpsertCustomer(next).catch((err) => {
+          console.error('[customer-store] createCustomer DB sync failed:', err);
+        });
+        dbUpsertCustomerTags(next.id, next.tags ?? []).catch((err) => {
+          console.error('[customer-store] createCustomer tags DB sync failed:', err);
+        });
 
         return next;
       },
@@ -317,7 +320,9 @@ export const useCustomerStore = create<CustomerStore>()(
         }));
         const updated = get().customers.find((c) => c.id === id);
         if (updated) {
-          dbUpsertCustomer(updated).catch(console.error);
+          dbUpsertCustomer(updated).catch((err) => {
+            console.error('[customer-store] updateCustomer DB sync failed:', err);
+          });
         }
       },
 
@@ -331,18 +336,6 @@ export const useCustomerStore = create<CustomerStore>()(
         }));
         dbUpsertCustomerTags(customerId, nextTags).catch(console.error);
       },
-
-      setPinnedTraits: (customerId, pinnedValues) =>
-        set((state) => ({
-          customers: state.customers.map((c) => {
-            if (c.id !== customerId) return c;
-            const pinnedSet = new Set(pinnedValues);
-            const tags = c.tags ?? [];
-            const pinned = tags.filter((t) => pinnedSet.has(t.value));
-            const rest = tags.filter((t) => !pinnedSet.has(t.value));
-            return { ...c, tags: [...pinned, ...rest], updatedAt: getNowInKoreaIso() };
-          }),
-        })),
 
       appendSmallTalkNote: (customerId, note) => {
         set((state) => ({
@@ -450,6 +443,8 @@ export const useCustomerStore = create<CustomerStore>()(
       },
 
       useMembershipSession: (customerId, recordId) => {
+        // M-8: txnId를 한 번만 생성하여 로컬/DB 트랜잭션 ID 통일
+        const txnId = `txn-${Date.now()}`;
         set((state) => ({
           customers: state.customers.map((c) => {
             if (c.id !== customerId) return c;
@@ -457,7 +452,7 @@ export const useCustomerStore = create<CustomerStore>()(
             if (!m || m.remainingSessions <= 0) return c;
 
             const transaction: MembershipTransaction = {
-              id: `txn-${Date.now()}`,
+              id: txnId,
               date: getTodayInKorea(),
               type: 'use',
               sessionsDelta: -1,
@@ -486,7 +481,7 @@ export const useCustomerStore = create<CustomerStore>()(
           const shopId = useAuthStore.getState().currentShopId;
           if (shopId && shopId !== 'shop-demo') {
             dbInsertMembershipTransaction({
-              id: `txn-${Date.now()}`,
+              id: txnId,
               customerId,
               shopId,
               date: getTodayInKorea(),

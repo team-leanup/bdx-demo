@@ -90,10 +90,8 @@ const DEFAULT_SHOP_SETTINGS: ShopSettings = {
 };
 
 interface AppStore {
-  isOnboardingComplete: boolean;
   shopSettings: ShopSettings;
 
-  setOnboardingComplete: (complete: boolean) => void;
   setShopSettings: (settings: Partial<ShopSettings>) => Promise<{ success: boolean; error?: string }>;
   syncShopSettingsFromShop: (shop: Shop | null) => void;
   resetApp: () => void;
@@ -102,11 +100,7 @@ interface AppStore {
 export const useAppStore = create<AppStore>()(
   persist(
     (set, get) => ({
-      isOnboardingComplete: false,
       shopSettings: { ...DEFAULT_SHOP_SETTINGS },
-
-      setOnboardingComplete: (complete) =>
-        set({ isOnboardingComplete: complete }),
 
       setShopSettings: async (settings) => {
         const previous = get().shopSettings;
@@ -183,7 +177,6 @@ export const useAppStore = create<AppStore>()(
 
       resetApp: () =>
         set({
-          isOnboardingComplete: false,
           shopSettings: { ...DEFAULT_SHOP_SETTINGS },
         }),
     }),

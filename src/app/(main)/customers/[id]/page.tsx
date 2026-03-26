@@ -25,10 +25,11 @@ import { useCustomerStore } from '@/store/customer-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useReservationStore } from '@/store/reservation-store';
-import { useConsultationStore } from '@/store/consultation-store';
+import { useRecordsStore } from '@/store/records-store';
+import type { TreatmentHistory } from '@/types/customer';
+import { DESIGN_SCOPE_LABEL } from '@/lib/labels';
 import { resizePortfolioImage } from '@/lib/image-utils';
 import type { PortfolioPhotoKind } from '@/types/portfolio';
-import { ConsultationStep } from '@/types/consultation';
 import { getSafetyTagMeta } from '@/lib/tag-safety';
 import {
   IconCamera,
@@ -115,7 +116,6 @@ function isRenderableImageSrc(src: string | undefined): src is string {
 
 function CustomerDetailContent({ id }: { id: string }) {
   const router = useRouter();
-  const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const searchParams = useSearchParams();
   const fromChecklist = searchParams.get('fromChecklist') === 'true';
   const customer = useCustomerStore((s) => s.getById(id));
@@ -148,6 +148,28 @@ function CustomerDetailContent({ id }: { id: string }) {
   const activeDesignerName = useAuthStore((s) => s.activeDesignerName);
   const getByCustomerId = usePortfolioStore((s) => s.getByCustomerId);
   const reservations = useReservationStore((s) => s.reservations);
+  const getAllRecords = useRecordsStore((s) => s.getAllRecords);
+
+  // UF-4: records-store에서 해당 고객 레코드를 가져와 시술 이력과 병합
+  const mergedTreatmentHistory = useMemo((): TreatmentHistory[] => {
+    const existingHistory = customer?.treatmentHistory ?? [];
+    const recordBased = getAllRecords()
+      .filter((r) => r.customerId === id)
+      .map((r): TreatmentHistory => ({
+        recordId: r.id,
+        date: r.createdAt.split('T')[0],
+        bodyPart: r.consultation.bodyPart,
+        designScope: DESIGN_SCOPE_LABEL[r.consultation.designScope] ?? r.consultation.designScope,
+        price: r.finalPrice,
+        designerName: useShopStore.getState().getDesignerName(r.designerId) || r.designerId,
+      }));
+
+    // N-11: 중복 제거 — recordId 기반 (날짜+금액은 다른 고객의 같은 시술도 중복 처리될 수 있음)
+    const seen = new Set(existingHistory.map((h) => h.recordId).filter(Boolean));
+    const unique = recordBased.filter((r) => !r.recordId || !seen.has(r.recordId));
+
+    return [...existingHistory, ...unique].sort((a, b) => b.date.localeCompare(a.date));
+  }, [customer?.treatmentHistory, getAllRecords, id]);
 
   const customerPhotos = getByCustomerId(id);
   const treatmentPhotos = customerPhotos.filter(
@@ -429,7 +451,7 @@ function CustomerDetailContent({ id }: { id: string }) {
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="max-w-[160px] truncate text-xl font-bold text-text sm:max-w-[200px]">{customer.name}</h2>
+                  <h2 className="max-w-[200px] truncate text-xl font-bold text-text sm:max-w-[200px]">{customer.name}</h2>
                   {/* CU-4: 외국어 고객 플래그 */}
                   {detectedLanguage && (
                     <FlagIcon language={detectedLanguage} size="sm" />
@@ -494,7 +516,7 @@ function CustomerDetailContent({ id }: { id: string }) {
         <div className="my-4 h-px" style={{ background: 'var(--color-border)' }} />
 
         {/* 시각적 스탯 카드 */}
-        <div className="grid grid-cols-3 gap-2 md:gap-4">
+        <div className="grid grid-cols-3 gap-1.5 md:gap-4">
           {/* 방문 횟수 */}
           <div
             className="flex flex-col items-center gap-1 rounded-2xl p-3 border"
@@ -1013,7 +1035,7 @@ function CustomerDetailContent({ id }: { id: string }) {
           )}
         </div>
 
-        {/* 상담 기록 보기 링크 */}
+        {/* 시술 기록 보기 링크 */}
         <button
           onClick={() => router.push(`/records?customerId=${id}`)}
           className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-border py-2.5 text-xs font-medium text-text-secondary hover:border-primary hover:text-primary transition-colors"
@@ -1021,7 +1043,7 @@ function CustomerDetailContent({ id }: { id: string }) {
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
           </svg>
-          상담 기록 보기
+          시술 기록 보기
         </button>
       </Card>
 
@@ -1031,12 +1053,12 @@ function CustomerDetailContent({ id }: { id: string }) {
       <Card className="mx-4 shadow-md rounded-2xl">
         <h2 className="mb-4 text-sm font-semibold text-text-secondary">시술 이력</h2>
         <div className="relative flex flex-col gap-0">
-          {customer.treatmentHistory.map((hist, idx) => {
+          {mergedTreatmentHistory.map((hist, idx) => {
             const scopeIcon = DESIGN_SCOPE_ICON[hist.designScope] ?? '●';
             return (
               <div key={`${hist.recordId}-${idx}`} className="relative flex gap-3 pb-5 last:pb-0">
                 {/* 타임라인 라인 */}
-                {idx < customer.treatmentHistory.length - 1 && (
+                {idx < mergedTreatmentHistory.length - 1 && (
                   <div
                     className="absolute left-3 top-6 h-full w-0.5"
                     style={{ background: 'var(--color-border)' }}
@@ -1226,25 +1248,20 @@ function CustomerDetailContent({ id }: { id: string }) {
           variant="primary"
           fullWidth
           onClick={() => {
-            sessionStorage.removeItem('consultation_customer_memo');
-            hydrateConsultation({
-              customerId: customer.id,
-              customerName: customer.name,
-              customerPhone: customer.phone,
-              entryPoint: 'staff',
-              currentStep: ConsultationStep.START,
-            });
-            router.push('/consultation');
+            const params = new URLSearchParams();
+            params.set('customerId', customer.id);
+            params.set('customerName', customer.name);
+            router.push(`/quick-sale?${params.toString()}`);
           }}
         >
-          이 고객으로 새 상담 시작
+          매출 등록
         </Button>
         <Button
           variant="secondary"
           fullWidth
           onClick={() => router.push(`/records?customerId=${id}&view=list`)}
         >
-          상담 기록 보기
+          시술 기록 보기
         </Button>
       </div>
     </div>

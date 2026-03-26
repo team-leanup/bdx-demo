@@ -77,6 +77,15 @@ export default function SummaryPage() {
   useEffect(() => {
     const memo = sessionStorage.getItem('consultation_customer_memo') ?? '';
     setCustomerMemo(memo);
+    // M-5: additionalCharge 복원 (이전 입력 유지)
+    const savedCharge = sessionStorage.getItem('bdx-additional-charge');
+    if (savedCharge) {
+      const num = parseInt(savedCharge, 10);
+      if (!isNaN(num) && num !== 0) {
+        setAdditionalCharge(num);
+        setAdditionalChargeInput(savedCharge);
+      }
+    }
   }, []);
 
   const handleSave = async () => {
@@ -145,14 +154,33 @@ export default function SummaryPage() {
     const newId = `record-${Date.now()}`;
     const minutes = estimateTime(consultation);
     const now = getNowInKoreaIso();
-    const consultationSnapshot = JSON.parse(JSON.stringify({ ...consultation })) as typeof consultation;
+    // H-8: designerId를 snapshot에 명시적으로 포함하여 hydrate 시 보장
+    const consultationSnapshot = JSON.parse(JSON.stringify({ ...consultation, designerId: effectiveDesignerId })) as typeof consultation;
     const bookingLanguage = linkedBooking?.language || (
       bookingId
         ? reservations.find((r) => r.id === bookingId)?.language
         : undefined
     );
 
+    // C-1: savedRecord를 isExternalCustomerLinkFlow 분기 전에 생성
+    const savedRecord: ConsultationRecord = {
+      id: newId,
+      shopId: effectiveShopId,
+      designerId: effectiveDesignerId,
+      customerId,
+      consultation: consultationSnapshot,
+      totalPrice: breakdown.subtotal,
+      estimatedMinutes: minutes,
+      finalPrice: adjustedFinalPrice,
+      createdAt: now,
+      updatedAt: now,
+      notes: customerMemo || undefined,
+      language: bookingLanguage,
+    };
+
     if (isCustomerLinkFlow && bookingId && isExternalCustomerLinkFlow) {
+      // C-1: 외부 customer_link 레코드도 로컬 스토어에 저장
+      await addRecord(savedRecord);
       const preconsultationResult = await dbCompletePreconsultationBooking(
         bookingId,
         consultationSnapshot,
@@ -173,25 +201,11 @@ export default function SummaryPage() {
       });
 
       sessionStorage.removeItem('consultation_customer_memo');
+      sessionStorage.removeItem('bdx-additional-charge');
       restoreLocale();
       router.push(`/consultation/save-complete?mode=preconsultation${linkedCustomerId ? `&customerId=${linkedCustomerId}` : ''}`);
       return;
     }
-
-    const savedRecord: ConsultationRecord = {
-      id: newId,
-      shopId: effectiveShopId,
-      designerId: effectiveDesignerId,
-      customerId,
-      consultation: consultationSnapshot,
-      totalPrice: breakdown.subtotal,
-      estimatedMinutes: minutes,
-      finalPrice: adjustedFinalPrice,
-      createdAt: now,
-      updatedAt: now,
-      notes: customerMemo || undefined,
-      language: bookingLanguage,
-    };
 
     if (isCustomerLinkFlow && bookingId) {
       await addRecord(savedRecord);
@@ -203,6 +217,8 @@ export default function SummaryPage() {
       );
 
       if (!preconsultationResult.success) {
+        // H-6: DB 실패 시 로컬 스토어에서 롤백
+        useRecordsStore.getState().removeRecord(newId);
         pushToast('error', '상담 저장에 실패했어요. 다시 시도해주세요');
         setSaving(false);
         return;
@@ -248,17 +264,12 @@ export default function SummaryPage() {
       }
     }
 
-    // 고객 데이터 연동: 방문횟수, 매출, 시술이력 갱신
+    // 고객 데이터 연동: 시술이력 갱신 (방문횟수/매출은 결제 확정 시 갱신)
     const { getById: getCustById, updateCustomer: updateCust } = useCustomerStore.getState();
     const existingCustomer = getCustById(customerId);
     if (existingCustomer) {
-      const newVisitCount = existingCustomer.visitCount + 1;
-      const newTotalSpend = existingCustomer.totalSpend + adjustedFinalPrice;
       updateCust(customerId, {
-        visitCount: newVisitCount,
         lastVisitDate: now.split('T')[0],
-        totalSpend: newTotalSpend,
-        averageSpend: Math.round(newTotalSpend / newVisitCount),
         treatmentHistory: [
           ...(existingCustomer.treatmentHistory ?? []),
           {
@@ -318,6 +329,7 @@ export default function SummaryPage() {
     }
 
     sessionStorage.removeItem('consultation_customer_memo');
+    sessionStorage.removeItem('bdx-additional-charge');
     restoreLocale();
 
     if (isCustomerLinkFlow) {
@@ -342,6 +354,11 @@ export default function SummaryPage() {
         title={t('consultation.summaryTitle')}
         titleKo={tKo('consultation.summaryTitle')}
         onBack={() => {
+          if (entryPoint === 'return_visit') {
+            setStep(ConsultationStep.CUSTOMER_INFO);
+            router.push('/consultation/customer');
+            return;
+          }
           setStep(ConsultationStep.TRAITS);
           router.push('/consultation/traits');
         }}
@@ -427,7 +444,14 @@ export default function SummaryPage() {
                     const raw = e.target.value.replace(/[^0-9-]/g, '');
                     setAdditionalChargeInput(raw);
                     const num = parseInt(raw, 10);
-                    setAdditionalCharge(isNaN(num) ? 0 : num);
+                    const val = isNaN(num) ? 0 : num;
+                    setAdditionalCharge(val);
+                    // M-5: 추가 금액 sessionStorage에 보존
+                    if (val !== 0) {
+                      sessionStorage.setItem('bdx-additional-charge', String(val));
+                    } else {
+                      sessionStorage.removeItem('bdx-additional-charge');
+                    }
                   }}
                   placeholder="0"
                   className="w-24 text-right text-sm font-medium text-text bg-surface-alt border border-border rounded-lg px-2 py-1.5 focus:outline-none focus:border-primary"
@@ -475,22 +499,32 @@ export default function SummaryPage() {
       {/* Action bar */}
       <footer className="fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur-sm border-t border-border px-4 pt-3 pb-5 flex flex-col gap-2.5 safe-bottom md:static md:flex-shrink-0 md:px-8">
         <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            size="md"
-            onClick={() => router.back()}
-            className={isCustomerLinkFlow ? 'w-full gap-1.5' : 'flex-1 gap-1.5'}
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
-            </svg>
-            {isCustomerLinkFlow ? customerLinkBackLabel : t('consultation.modifyConsultation')}
-            {locale !== 'ko' && (
-              <span className="ml-1 text-[10px] opacity-60">
-                {isCustomerLinkFlow ? tKo('consultation.customerLinkBack') : tKo('consultation.modifyConsultation')}
-              </span>
-            )}
-          </Button>
+          {!isCustomerLinkFlow && (
+            <Button
+              variant="ghost"
+              size="md"
+              onClick={() => {
+                if (entryPoint === 'return_visit') {
+                  setStep(ConsultationStep.CUSTOMER_INFO);
+                  router.push('/consultation/customer');
+                } else {
+                  setStep(ConsultationStep.TRAITS);
+                  router.push('/consultation/traits');
+                }
+              }}
+              className="flex-1 gap-1.5"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+              </svg>
+              {t('consultation.modifyConsultation')}
+              {locale !== 'ko' && (
+                <span className="ml-1 text-[10px] opacity-60">
+                  {tKo('consultation.modifyConsultation')}
+                </span>
+              )}
+            </Button>
+          )}
           {!isCustomerLinkFlow && (
             <Button
               variant="secondary"

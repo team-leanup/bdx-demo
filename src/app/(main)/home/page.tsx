@@ -22,7 +22,6 @@ import {
   RevisitReminderCard,
 } from '@/components/home';
 import { QRGeneratorModal } from '@/components/home/QRGeneratorModal';
-import { ConsultationAlertBanner } from '@/components/home/ConsultationAlertBanner';
 import { PreConsultationNotificationCenter } from '@/components/home/PreConsultationNotificationCenter';
 import { Modal } from '@/components/ui';
 import { useT } from '@/lib/i18n';
@@ -101,7 +100,9 @@ export default function HomePage() {
   const todayConsultations = records.filter(
     (r) => toKoreanDateString(r.createdAt) === today,
   );
-  const todayRevenue = todayConsultations.reduce((sum, r) => sum + r.finalPrice, 0);
+  const todayRevenue = records
+    .filter((r) => r.finalizedAt && toKoreanDateString(r.finalizedAt) === today)
+    .reduce((sum, r) => sum + r.finalPrice, 0);
 
   const recentConsultations = [...records]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -117,6 +118,9 @@ export default function HomePage() {
         hydrateFromDB().catch(console.error);
       }
     };
+
+    // N-10: 마운트 즉시 1회 호출 (최대 30초 구데이터 방지)
+    hydrateFromDB().catch(console.error);
 
     const interval = setInterval(poll, 30000);
     document.addEventListener('visibilitychange', poll);
@@ -244,8 +248,6 @@ export default function HomePage() {
         router.replace('/home', { scroll: false });
       }} />
 
-      <ConsultationAlertBanner />
-
       <PreConsultationNotificationCenter
         isOpen={showNotificationCenter}
         onClose={handleCloseNotificationCenter}
@@ -298,34 +300,20 @@ export default function HomePage() {
       <HeroCTA
         onStartConsultation={() => router.push('/consultation')}
         onNewReservation={() => setShowReservationModal(true)}
+        onQuickSale={() => router.push('/quick-sale')}
         onGenerateQR={currentShopId ? () => setShowQRModal(true) : undefined}
         shopId={currentShopId ?? undefined}
         shopName={shopName}
         consultationLabel={t('home.cta_consultation')}
         consultationTitle={t('home.cta_newConsultation')}
+        consultationSubtitle="처음 오시는 분 · 외국인 고객용"
         reservationLabel={t('home.cta_reservation')}
         reservationTitle={t('home.cta_newReservation')}
+        quickSaleLabel="매출"
+        quickSaleTitle="매출 등록"
         qrLabel={t('home.generateQR')}
         itemVariants={itemVariants}
       />
-
-      <motion.div variants={itemVariants}>
-        <button
-          onClick={() => router.push('/quick-sale')}
-          className="w-full flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3.5 text-left shadow-sm hover:bg-surface-alt active:bg-surface-alt transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-lg">💰</span>
-            <div>
-              <p className="text-sm font-bold text-text">매출 등록</p>
-              <p className="text-xs text-text-muted">상담 없이 빠르게 매출 기록</p>
-            </div>
-          </div>
-          <svg className="h-4 w-4 flex-shrink-0 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </motion.div>
 
       <QRGeneratorModal
         isOpen={showQRModal}

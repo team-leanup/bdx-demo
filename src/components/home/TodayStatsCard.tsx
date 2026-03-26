@@ -45,7 +45,7 @@ export function TodayStatsCard({
           <span className="text-base md:text-lg font-bold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
             {consultationCount}
           </span>
-          <span className="text-[10px] text-text-muted text-center leading-tight">{consultationLabel}</span>
+          <span className="text-[11px] text-text-muted text-center leading-tight">{consultationLabel}</span>
         </div>
         {/* 예약 */}
         <div className="flex flex-col items-center gap-1 py-4">
@@ -55,7 +55,7 @@ export function TodayStatsCard({
           <span className="text-base md:text-lg font-bold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
             {reservationCount}
           </span>
-          <span className="text-[10px] text-text-muted text-center leading-tight">{reservationLabel}</span>
+          <span className="text-[11px] text-text-muted text-center leading-tight">{reservationLabel}</span>
         </div>
         {/* 오늘 매출 */}
         <div className="flex flex-col items-center gap-1 py-4">
@@ -65,7 +65,7 @@ export function TodayStatsCard({
           <span className="text-sm font-bold text-text truncate w-full text-center" style={{ fontVariantNumeric: 'tabular-nums' }}>
             {formatPrice(revenue)}
           </span>
-          <span className="text-[10px] text-text-muted text-center leading-tight">{revenueLabel}</span>
+          <span className="text-[11px] text-text-muted text-center leading-tight">{revenueLabel}</span>
         </div>
         {/* 외국인 예약 */}
         <div className="flex flex-col items-center gap-1 py-4">
@@ -75,7 +75,7 @@ export function TodayStatsCard({
           <span className="text-base md:text-lg font-bold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
             {foreignCount}
           </span>
-          <span className="text-[10px] text-text-muted text-center leading-tight">외국인</span>
+          <span className="text-[11px] text-text-muted text-center leading-tight">외국인</span>
         </div>
       </div>
       {/* 매출 상세 바 */}

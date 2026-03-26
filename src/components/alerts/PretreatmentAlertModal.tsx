@@ -9,6 +9,7 @@ interface PretreatmentAlertModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  onQuickSale?: () => void;
   customerName: string;
   pinnedTags: CustomerTag[];
 }
@@ -17,6 +18,7 @@ export function PretreatmentAlertModal({
   isOpen,
   onClose,
   onConfirm,
+  onQuickSale,
   customerName,
   pinnedTags,
 }: PretreatmentAlertModalProps): React.ReactElement {
@@ -80,21 +82,32 @@ export function PretreatmentAlertModal({
           })}
         </div>
 
-        <div className="flex gap-3 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 py-3 rounded-xl border border-border text-sm font-semibold text-text-secondary hover:bg-surface-alt active:bg-surface-alt transition-colors"
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            className="flex-1 py-3 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all"
-          >
-            확인하고 시작
-          </button>
+        <div className="flex flex-col gap-2 pt-2">
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-3 rounded-xl border border-border text-sm font-semibold text-text-secondary hover:bg-surface-alt active:bg-surface-alt transition-colors"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={onConfirm}
+              className="flex-1 py-3 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all"
+            >
+              확인하고 시작
+            </button>
+          </div>
+          {onQuickSale && (
+            <button
+              type="button"
+              onClick={onQuickSale}
+              className="w-full py-2.5 rounded-xl border border-border bg-surface-alt text-sm font-semibold text-text-secondary hover:bg-border active:scale-[0.98] transition-all"
+            >
+              확인 완료 (매출만 등록)
+            </button>
+          )}
         </div>
       </div>
     </Modal>

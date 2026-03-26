@@ -9,7 +9,10 @@ import { useT } from '@/lib/i18n';
 import { useLocaleStore } from '@/store/locale-store';
 import { useAppStore } from '@/store/app-store';
 import { useShopStore } from '@/store/shop-store';
+import { useAuthStore } from '@/store/auth-store';
 import { NotificationBellButton } from '@/components/layout/NotificationBellButton';
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
+import { ProfileSwitcher } from '@/components/auth/ProfileSwitcher';
 import type { Locale } from '@/store/locale-store';
 
 const TAB_DEFS = [
@@ -88,9 +91,14 @@ export function SideNav({ className }: SideNavProps) {
   const { shopSettings } = useAppStore();
   const storeShopName = useShopStore((s) => s.shop?.name);
   const shopName = shopSettings.shopName || (storeShopName ?? '네일숲');
+  const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
+  const activeDesignerName = useAuthStore((s) => s.activeDesignerName);
+  const role = useAuthStore((s) => s.role);
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const [showSwitcher, setShowSwitcher] = useState(false);
 
   return (
+    <>
     <aside
       className={cn(
         'w-[200px] h-full flex-shrink-0 flex flex-col bg-surface border-r border-border',
@@ -134,7 +142,29 @@ export function SideNav({ className }: SideNavProps) {
         })}
       </nav>
 
-      <div className="px-3 py-4 border-t border-border">
+      <div className="px-3 py-4 border-t border-border flex flex-col gap-1">
+        {/* Profile switcher button */}
+        {activeDesignerId && activeDesignerName && (
+          <button
+            type="button"
+            onClick={() => setShowSwitcher(true)}
+            className="flex items-center gap-3 px-3 py-2.5 hover:bg-surface-alt rounded-xl transition-colors w-full text-left"
+          >
+            <ProfileAvatar
+              designerId={activeDesignerId}
+              name={activeDesignerName}
+              size="sm"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-text truncate">{activeDesignerName}</p>
+              <p className="text-xs text-text-muted">{role === 'owner' ? '원장' : '디자이너'}</p>
+            </div>
+            <svg className="w-4 h-4 text-text-muted flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="m9 18 6-6-6-6" />
+            </svg>
+          </button>
+        )}
+
         <div className="px-3">
           <div className="relative">
             <button
@@ -206,11 +236,13 @@ export function SideNav({ className }: SideNavProps) {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 px-3 py-2 mt-2">
+        <div className="flex items-center gap-2 px-3 py-2">
           <span className="font-bold text-sm tracking-tight text-primary truncate">{shopName}</span>
           <NotificationBellButton compact className="ml-auto" />
         </div>
       </div>
     </aside>
+    <ProfileSwitcher isOpen={showSwitcher} onClose={() => setShowSwitcher(false)} />
+    </>
   );
 }

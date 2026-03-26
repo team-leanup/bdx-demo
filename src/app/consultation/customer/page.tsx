@@ -45,13 +45,21 @@ function CustomerPageInner(): React.ReactElement {
   const tKo = useKo();
   const locale = useLocale();
 
+  // M-7: Blob URL 대신 base64로 저장 (세션 종료 후에도 유효)
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
     const current = consultation.referenceImages || [];
-    for (let i = 0; i < files.length && current.length + i < 5; i++) {
-      addReferenceImage(URL.createObjectURL(files[i]));
-    }
+    Array.from(files).slice(0, 5 - current.length).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const result = ev.target?.result;
+        if (typeof result === 'string') {
+          addReferenceImage(result);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
     e.target.value = '';
   };
 
@@ -201,7 +209,6 @@ function CustomerPageInner(): React.ReactElement {
     const routeByStep: Partial<Record<ConsultationStep, string>> = {
       [ConsultationStep.STEP1_BASIC]: '/consultation/step1',
       [ConsultationStep.STEP2_DESIGN]: '/consultation/step2',
-      [ConsultationStep.STEP3_OPTIONS]: '/consultation/step3',
       [ConsultationStep.TRAITS]: '/consultation/traits',
       [ConsultationStep.CANVAS]: '/consultation/canvas',
       [ConsultationStep.SUMMARY]: '/consultation/summary',
@@ -241,6 +248,11 @@ function CustomerPageInner(): React.ReactElement {
       sessionStorage.setItem('consultation_customer_memo', memo.trim());
     } else {
       sessionStorage.removeItem('consultation_customer_memo');
+    }
+    if (consultation.entryPoint === 'return_visit') {
+      setStep(ConsultationStep.SUMMARY);
+      router.push('/consultation/summary');
+      return;
     }
     setStep(ConsultationStep.STEP1_BASIC);
     router.push('/consultation/step1');
@@ -300,6 +312,18 @@ function CustomerPageInner(): React.ReactElement {
                 {tKo('consultation.sourceShopLinkDesc').replace('{shopName}', visibleShopName)}
               </span>
             )}
+          </p>
+        </div>
+      )}
+
+      {/* N-9: 재방문 빠른 등록 모드 안내 */}
+      {consultation.entryPoint === 'return_visit' && (
+        <div className="mx-4 mt-3 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5">
+          <svg className="h-4 w-4 flex-shrink-0 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-xs text-amber-700 font-medium">
+            재방문 고객 빠른 등록 모드입니다. 시술 옵션은 기본값으로 설정됩니다.
           </p>
         </div>
       )}

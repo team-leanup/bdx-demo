@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { useAppStore } from '@/store/app-store';
@@ -38,9 +39,16 @@ function SummaryRow({ icon, label, value }: SummaryRowProps) {
 
 export default function CompletePage() {
   const router = useRouter();
-  const { setOnboardingComplete, shopSettings } = useAppStore();
+  const { shopSettings } = useAppStore();
   const setCurrentShopOnboardingComplete = useAuthStore((s) => s.setCurrentShopOnboardingComplete);
   const updateShop = useShopStore((s) => s.updateShop);
+
+  // M-4: 이전 온보딩 스텝(샵명 입력)이 완료되지 않으면 온보딩 시작으로 리다이렉트
+  useEffect(() => {
+    if (!shopSettings.shopName || shopSettings.shopName.trim() === '') {
+      router.replace('/onboarding');
+    }
+  }, [shopSettings.shopName, router]);
 
   const {
     shopName,
@@ -63,7 +71,6 @@ export default function CompletePage() {
       baseFootPrice,
       onboardingCompletedAt,
     });
-    setOnboardingComplete(true);
     setCurrentShopOnboardingComplete(true);
     router.push('/home?tour=true');
   };
@@ -79,7 +86,6 @@ export default function CompletePage() {
       baseFootPrice,
       onboardingCompletedAt,
     });
-    setOnboardingComplete(true);
     setCurrentShopOnboardingComplete(true);
     router.push('/home');
   };

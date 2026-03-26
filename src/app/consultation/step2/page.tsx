@@ -82,8 +82,8 @@ export default function Step2Page() {
   };
 
   const handleNext = () => {
-    setStep(ConsultationStep.TRAITS);
-    router.push('/consultation/traits');
+    setStep(ConsultationStep.CANVAS);
+    router.push('/consultation/canvas');
   };
 
   return (
@@ -198,27 +198,6 @@ export default function Step2Page() {
             })}
           </div>
 
-          <motion.button
-            type="button"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            onClick={() => {
-              setStep(ConsultationStep.STEP3_OPTIONS);
-              router.push('/consultation/step3');
-            }}
-            className="flex items-center justify-center gap-2 py-3 text-text-muted hover:text-primary transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            <span className="text-sm font-medium">
-              {t('consultation.treatmentType.detailedOptions')}
-              {locale !== 'ko' && (
-                <span className="ml-1 text-xs opacity-60">({tKo('consultation.treatmentType.detailedOptions')})</span>
-              )}
-            </span>
-          </motion.button>
         </div>
       </motion.main>
 

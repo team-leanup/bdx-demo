@@ -56,7 +56,7 @@ const DEFAULT_COLOR = { bg: 'bg-primary/10', border: 'border-primary', text: 'te
 
 const CHANNEL_EMOJI: Record<string, string> = {
   kakao: '💬',
-  naver: '🟢',
+  naver: 'N',
   phone: '📞',
   walk_in: '🚶',
 };
@@ -245,7 +245,7 @@ function DraggableEvent({
       <div className="text-[10px] font-semibold opacity-70 truncate">
         {ev.startTime}–{ev.endTime}
       </div>
-      <div className="text-[11px] font-bold leading-tight truncate">{ev.title}</div>
+      <div className="text-xs font-bold leading-tight truncate">{ev.title}</div>
       {showMetaRow && (
         <div className="mt-1 flex items-center gap-1 flex-wrap">
           {ev.serviceLabel && (
@@ -255,7 +255,7 @@ function DraggableEvent({
           )}
           {ev.type === 'reservation' && (
             <ReservationReadinessBadge
-              booking={{ preConsultationCompletedAt: ev.preConsultationCompletedAt }}
+              booking={{ preConsultationCompletedAt: ev.preConsultationCompletedAt, consultationLinkSentAt: ev.consultationLinkSentAt, channel: (ev.channel ?? 'walk_in') as 'kakao' | 'naver' | 'phone' | 'walk_in' }}
               size="xs"
               compact
             />
@@ -353,13 +353,25 @@ function SlotColumn({
 
   return (
     <div
-      className={cn('relative border-l border-border overflow-visible transition-colors', isHolding && 'bg-primary/10 animate-pulse')}
+      className={cn('relative border-l border-border overflow-visible transition-colors select-none', isHolding && 'bg-primary/10 animate-pulse')}
+      style={{ WebkitUserSelect: 'none', touchAction: 'pan-y' }}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
-      onTouchStart={longPressHandlers.onTouchStart}
+      onTouchStart={(e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const touch = e.touches[0];
+        const y = touch.clientY - rect.top;
+        const minuteFromTop = (y / HOUR_HEIGHT) * 60 + startHour * 60;
+        const snapped = snapToInterval(minuteFromTop, 30);
+        longPressTimeRef.current = minutesToTimeStr(
+          clampStartMinutes({ startMinutes: snapped, startHour, endHour, durationMinutes: 30 }),
+        );
+        setIsHolding(true);
+        longPressHandlers.onTouchStart(e);
+      }}
       onTouchEnd={() => { setIsHolding(false); longPressHandlers.onTouchEnd(); }}
-      onTouchMove={longPressHandlers.onTouchMove}
+      onTouchMove={(e) => { setIsHolding(false); longPressHandlers.onTouchMove(e); }}
     >
       {events.map((ev) => {
         const startMin = timeToMinutes(ev.startTime);
@@ -434,7 +446,7 @@ export function DesignerDayGridCalendar({
   }, [currentTime, START_HOUR, END_HOUR, isToday]);
 
   const columns = useMemo(() => {
-    return [{ id: '__unassigned__', name: '미지정' }, ...designers];
+    return [...designers, { id: '__unassigned__', name: '미지정' }];
   }, [designers]);
 
   const eventsByColumn = useMemo(() => {

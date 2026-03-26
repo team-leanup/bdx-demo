@@ -17,7 +17,7 @@ import { useConsultationStore } from '@/store/consultation-store';
 import { ConsultationStep } from '@/types/consultation';
 import { useCustomerStore } from '@/store/customer-store';
 import { useT } from '@/lib/i18n';
-import { formatPrice, getKoreanWeekStart, getTodayInKorea, toKoreanDateString, toKoreanTimeString } from '@/lib/format';
+import { formatPrice, getKoreanWeekStart, getTodayInKorea, toKoreanDateString, toKoreanTimeString, getNowInKoreaIso } from '@/lib/format';
 import { MonthCalendar } from '@/components/calendar/MonthCalendar';
 import { DayReservationList } from '@/components/calendar/DayReservationList';
 import { WeekCalendar } from '@/components/calendar/WeekCalendar';
@@ -43,8 +43,9 @@ import type { BookingChannel, BookingRequest } from '@/types/consultation';
 import type { ConsultationRecord } from '@/types/consultation';
 
 const READINESS_LEGEND = [
-  { color: 'bg-amber-400', label: '상담 필요' },
-  { color: 'bg-emerald-500', label: '상담 완료' },
+  { color: 'bg-slate-300', label: '링크 미발송' },
+  { color: 'bg-amber-400', label: '응답 대기' },
+  { color: 'bg-emerald-500', label: '응답 완료' },
 ] as const;
 
 type MainTab = 'reservations' | 'consultations';
@@ -60,7 +61,8 @@ function isInPeriod(dateStr: string, period: FilterPeriod): boolean {
   if (period === 'today') return normalizedDate === today;
   if (period === 'week') {
     const startOfWeek = new Date(todayDate);
-    startOfWeek.setDate(todayDate.getDate() - todayDate.getDay());
+    const dayOfWeek = (todayDate.getDay() + 6) % 7; // Monday=0, Sunday=6
+    startOfWeek.setDate(todayDate.getDate() - dayOfWeek);
     startOfWeek.setHours(0, 0, 0, 0);
     return d >= startOfWeek;
   }
@@ -80,7 +82,6 @@ function getTodayStr(): string {
 
 function toTimeGridEvents(
   reservations: import('@/types/consultation').BookingRequest[],
-  consultations: import('@/types/consultation').ConsultationRecord[],
 ): TimeGridEvent[] {
   const events: TimeGridEvent[] = [];
 
@@ -103,32 +104,8 @@ function toTimeGridEvents(
       originalId: r.id,
       customerId: r.customerId,
       serviceLabel: r.serviceLabel,
+      consultationLinkSentAt: r.consultationLinkSentAt,
       preConsultationCompletedAt: r.preConsultationCompletedAt,
-    });
-  }
-
-  for (const c of consultations) {
-    const date = c.createdAt.split('T')[0];
-    const time = toKoreanTimeString(c.createdAt);
-    const [h, m] = time.split(':').map(Number);
-    const durationMin = c.estimatedMinutes || 60;
-    const endTotal = h * 60 + m + durationMin;
-    const endH = Math.floor(endTotal / 60);
-    const endM = endTotal % 60;
-    events.push({
-      id: `con-${c.id}`,
-      title: c.consultation.customerName || '이름 없음',
-      date,
-      startTime: time,
-      endTime: `${String(Math.min(endH, 23)).padStart(2, '0')}:${String(endM).padStart(2, '0')}`,
-      type: 'consultation',
-      status: 'done',
-      designerId: c.designerId,
-      originalId: c.id,
-      designScope: c.consultation.designScope,
-      bodyPart: c.consultation.bodyPart,
-      finalPrice: c.finalPrice,
-      expressions: c.consultation.expressions,
     });
   }
 
@@ -180,6 +157,8 @@ export default function RecordsPage() {
   const updateReservation = useReservationStore((s) => s.updateReservation);
   const removeReservation = useReservationStore((s) => s.removeReservation);
   const removeRecord = useRecordsStore((s) => s.removeRecord);
+  const updateRecord = useRecordsStore((s) => s.updateRecord);
+  const updateCustomer = useCustomerStore((s) => s.updateCustomer);
   const { shopSettings } = useAppStore();
   const getAllRecords = useRecordsStore((s) => s.getAllRecords);
   const allConsultations = useMemo(() => getAllRecords(), [getAllRecords]);
@@ -213,9 +192,10 @@ export default function RecordsPage() {
 
   const weekStats = useMemo(() => {
     const today = getTodayStr();
-    const todayDate = new Date(today);
+    // N-12: KST 기준으로 날짜 파싱 (UTC 파싱 방지)
+    const todayDate = new Date(`${today}T00:00:00+09:00`);
     const weekStart = new Date(todayDate);
-    weekStart.setDate(todayDate.getDate() - todayDate.getDay());
+    weekStart.setDate(todayDate.getDate() - ((todayDate.getDay() + 6) % 7));
     weekStart.setHours(0, 0, 0, 0);
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6);
@@ -245,7 +225,7 @@ export default function RecordsPage() {
   }, [allConsultations]);
 
   const timeGridEvents = useMemo(
-    () => toTimeGridEvents(allReservations, []),
+    () => toTimeGridEvents(allReservations),
     [allReservations],
   );
 
@@ -340,6 +320,16 @@ export default function RecordsPage() {
     }
     closeSelectedEventSheet();
     router.push('/consultation');
+  };
+
+  const handleQuickSale = () => {
+    if (!selectedEvent) return;
+    const params = new URLSearchParams();
+    params.set('bookingId', selectedEvent.originalId);
+    if (selectedEvent.customerId) params.set('customerId', selectedEvent.customerId);
+    params.set('customerName', selectedEvent.title);
+    closeSelectedEventSheet();
+    router.push(`/quick-sale?${params.toString()}`);
   };
 
   const handleDeleteRecord = () => {
@@ -444,21 +434,26 @@ export default function RecordsPage() {
     const bookingId = searchParams.get('bookingId');
     if (!bookingId) return;
 
+    // N-17: timeGridEvents 대신 전체 예약에서 검색 (오늘 날짜 외 예약도 딥링크 가능)
+    const targetReservation = allReservations.find((r) => r.id === bookingId);
+    if (!targetReservation) return;
+
     const targetEvent = timeGridEvents.find(
       (event) => event.type === 'reservation' && event.originalId === bookingId,
     );
-    if (!targetEvent) return;
 
     setMainTab('reservations');
     setViewMode('day');
-    setSelectedDate(targetEvent.date);
-    setSelectedEvent(targetEvent);
+    setSelectedDate(targetReservation.reservationDate);
+    if (targetEvent) {
+      setSelectedEvent(targetEvent);
+    }
 
     const params = new URLSearchParams(searchParams.toString());
     params.delete('bookingId');
     const nextQuery = params.toString();
     router.replace(nextQuery ? `/records?${nextQuery}` : '/records', { scroll: false });
-  }, [searchParams, timeGridEvents, router]);
+  }, [searchParams, timeGridEvents, allReservations, router]);
 
   return (
     <div className="flex flex-col gap-4 pb-6">
@@ -466,23 +461,11 @@ export default function RecordsPage() {
         featureId="records-views"
         icon="🗂️"
         title="기록 관리"
-        description={"상담 관리와 상담 기록을\n탭으로 나누어 편리하게 관리하세요."}
+        description={"스케줄과 시술 기록을\n탭으로 나누어 편리하게 관리하세요."}
       />
 
-      <div className="px-4 md:px-0 pt-4 flex items-center justify-between">
+      <div className="px-4 md:px-0 pt-4">
         <h1 className="text-2xl font-bold text-text">{t('nav.records')}</h1>
-        <button
-          type="button"
-          onClick={() => {
-            setReservationPrefill(null);
-            setReservationNaverMode(true);
-            setShowAddReservationModal(true);
-          }}
-          className="flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 transition-colors"
-        >
-          <span>🟢</span>
-          네이버 예약
-        </button>
       </div>
 
       <MainTabBar activeTab={mainTab} onTabChange={setMainTab} />
@@ -491,9 +474,9 @@ export default function RecordsPage() {
         <>
           <StatsCards
             primaryValue={weekStats.weekCount}
-            primaryLabel="이번 주 상담"
+            primaryLabel="이번 주 예약"
             secondaryValue={weekStats.todayRemainingCount}
-            secondaryLabel="오늘 남은 상담"
+            secondaryLabel="오늘 남은 예약"
           />
 
           <ViewModeToggle
@@ -503,7 +486,7 @@ export default function RecordsPage() {
 
           <div className="px-4 md:px-0">
             <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3 text-xs text-text-secondary">
-              <span className="font-semibold text-text">상담 상태</span>
+              <span className="font-semibold text-text">사전 상담 상태</span>
               {READINESS_LEGEND.map((item) => (
                 <span key={item.label} className="inline-flex items-center gap-1.5">
                   <span className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
@@ -562,9 +545,9 @@ export default function RecordsPage() {
         <>
           <StatsCards
             primaryValue={allConsultations.length}
-            primaryLabel="총 상담 기록"
+            primaryLabel="총 시술 기록"
             secondaryValue={`${todayConsultations}건`}
-            secondaryLabel="오늘 상담"
+            secondaryLabel="오늘 시술"
           />
 
           <div className="px-4 md:px-0">
@@ -582,7 +565,7 @@ export default function RecordsPage() {
                 <div>
                   <p className="text-xs font-semibold text-primary">고객 기준 필터 적용됨</p>
                   <p className="mt-1 text-sm text-text">
-                    {getCustomerById(customerFilterId)?.name ?? customerFilterId} 상담 기록만 보고 있어요.
+                    {getCustomerById(customerFilterId)?.name ?? customerFilterId} 시술 기록만 보고 있어요.
                   </p>
                 </div>
                 <button
@@ -869,7 +852,7 @@ export default function RecordsPage() {
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-text-secondary">상담 준비</span>
                         <ReservationReadinessBadge
-                          booking={{ preConsultationCompletedAt: selectedEvent.preConsultationCompletedAt }}
+                          booking={{ preConsultationCompletedAt: selectedEvent.preConsultationCompletedAt, consultationLinkSentAt: selectedEvent.consultationLinkSentAt, channel: selectedEvent.channel as BookingRequest['channel'] }}
                           size="sm"
                         />
                       </div>
@@ -973,9 +956,7 @@ export default function RecordsPage() {
                     {(() => {
                       const booking = allReservations.find((r) => r.id === selectedEvent.originalId);
                       const matchedRecord = allConsultations.find(
-                        (r) => r.consultation?.bookingId === selectedEvent.originalId
-                          || (r.customerId === selectedEvent.customerId
-                            && selectedEvent.date === r.createdAt?.slice(0, 10)),
+                        (r) => r.consultation?.bookingId === selectedEvent.originalId,
                       );
                       const hasSheet = !!matchedRecord || !!booking?.preConsultationData;
                       const handleSheetClick = () => {
@@ -996,7 +977,34 @@ export default function RecordsPage() {
                         }
                       };
                       return (
-                        <div className="mt-2 flex gap-2">
+                        <div className="mt-2 flex flex-col gap-2">
+                          {matchedRecord && !matchedRecord.finalizedAt && (
+                            <button
+                              onClick={() => {
+                                const now = getNowInKoreaIso();
+                                updateRecord(matchedRecord.id, { finalizedAt: now });
+                                const customer = getCustomerById(matchedRecord.customerId);
+                                if (customer) {
+                                  const newVisitCount = customer.visitCount + 1;
+                                  const newTotalSpend = customer.totalSpend + matchedRecord.finalPrice;
+                                  updateCustomer(matchedRecord.customerId, {
+                                    visitCount: newVisitCount,
+                                    totalSpend: newTotalSpend,
+                                    averageSpend: Math.round(newTotalSpend / newVisitCount),
+                                  });
+                                }
+                              }}
+                              className="w-full rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary-dark active:scale-[0.98] transition-all"
+                            >
+                              결제 완료
+                            </button>
+                          )}
+                          {matchedRecord && matchedRecord.finalizedAt && (
+                            <div className="flex items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200 py-2.5">
+                              <span className="text-xs font-semibold text-emerald-700">✓ 결제 완료됨</span>
+                            </div>
+                          )}
+                          <div className="flex gap-2">
                           {selectedEvent.customerId && (
                             <button
                               onClick={() => router.push(`/customers/${selectedEvent.customerId}`)}
@@ -1019,6 +1027,7 @@ export default function RecordsPage() {
                               {matchedRecord ? '시술 확인서' : '사전 상담 내역'}
                             </button>
                           )}
+                          </div>
                         </div>
                       );
                     })()}
@@ -1044,31 +1053,63 @@ export default function RecordsPage() {
                         </button>
                       );
                     })()}
-                    <div className="mt-3 flex gap-2">
+                    <div className="mt-3 flex flex-col gap-2">
                       {selectedEvent.status === 'completed' ? (
                         <span className="flex-1 rounded-xl bg-surface-alt px-4 py-3 text-sm font-bold text-text-muted text-center">
-                          상담 완료
+                          완료
                         </span>
                       ) : (
-                        <button
-                          onClick={handleStartConsultation}
-                          className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
-                        >
-                          상담 시작
-                        </button>
+                        <div className="flex gap-2">
+                          {selectedEvent.customerId ? (
+                            <>
+                              <button
+                                onClick={() => {
+                                  closeSelectedEventSheet();
+                                  router.push(`/customers/${selectedEvent.customerId}`);
+                                }}
+                                className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
+                              >
+                                고객 카드 보기
+                              </button>
+                              <button
+                                onClick={handleQuickSale}
+                                className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
+                              >
+                                매출 등록
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={handleStartConsultation}
+                                className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
+                              >
+                                {selectedEvent.language && selectedEvent.language !== 'ko' ? '상담 시작' : '고객 등록 + 상담'}
+                              </button>
+                              <button
+                                onClick={handleQuickSale}
+                                className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
+                              >
+                                매출 등록
+                              </button>
+                            </>
+                          )}
+                        </div>
                       )}
-                      <button
-                        onClick={handleEditModeEnter}
-                        className="rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
-                      >
-                        수정
-                      </button>
-                      <button
-                        onClick={closeSelectedEventSheet}
-                        className="rounded-xl bg-surface-alt px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
-                      >
-                        닫기
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleEditModeEnter}
+                          className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
+                        >
+                          수정
+                        </button>
+                        <button
+                          onClick={closeSelectedEventSheet}
+                          className="flex-1 rounded-xl bg-surface-alt px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
+                        >
+                          닫기
+                        </button>
+                      </div>
                     </div>
                     <button
                       onClick={handleDeleteRecord}
