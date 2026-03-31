@@ -84,11 +84,9 @@ interface ConsultationStore {
 
 export const STEP_ORDER: ConsultationStep[] = [
   ConsultationStep.START,
-  ConsultationStep.CUSTOMER_INFO,
   ConsultationStep.STEP1_BASIC,
   ConsultationStep.STEP2_DESIGN,
-  ConsultationStep.CANVAS,
-  ConsultationStep.TRAITS,
+  ConsultationStep.CUSTOMER_INFO,
   ConsultationStep.SUMMARY,
 ];
 

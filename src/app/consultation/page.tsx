@@ -13,7 +13,6 @@ import { cn } from '@/lib/cn';
 import { useLocaleStore } from '@/store/locale-store';
 import type { Locale } from '@/store/locale-store';
 import { useT, useKo } from '@/lib/i18n';
-import CustomerPage from '@/app/consultation/customer/page';
 import { useReservationStore } from '@/store/reservation-store';
 import { CustomerLinkSplash } from '@/components/consultation/CustomerLinkSplash';
 
@@ -242,39 +241,21 @@ export default function ConsultationStartPage() {
     }
 
     if (consultation.currentStep === ConsultationStep.START) {
-      const customerLinkParams = new URLSearchParams(searchParams.toString());
-      customerLinkParams.set('entry', 'customer-link');
-      if (!customerLinkParams.get('bookingId') && consultation.bookingId) {
-        customerLinkParams.set('bookingId', consultation.bookingId);
-      }
-      if (!customerLinkParams.get('shopId') && consultation.sourceShopId) {
-        customerLinkParams.set('shopId', consultation.sourceShopId);
-      }
-      if (!customerLinkParams.get('shopName') && consultation.sourceShopName) {
-        customerLinkParams.set('shopName', consultation.sourceShopName);
-      }
-      if (!customerLinkParams.get('name') && consultation.customerName) {
-        customerLinkParams.set('name', consultation.customerName);
-      }
-      if (!customerLinkParams.get('phone') && consultation.customerPhone) {
-        customerLinkParams.set('phone', consultation.customerPhone);
-      }
-
       setEntryPoint('customer_link');
-      setStep(ConsultationStep.CUSTOMER_INFO);
-      router.replace(`/consultation?${customerLinkParams.toString()}`);
+      setStep(ConsultationStep.STEP1_BASIC);
+      router.replace('/consultation/step1');
       return;
     }
 
     if (consultation.currentStep === ConsultationStep.CUSTOMER_INFO) {
+      router.replace('/consultation/customer');
       return;
     }
 
     const routeByStep: Partial<Record<ConsultationStep, string>> = {
       [ConsultationStep.STEP1_BASIC]: '/consultation/step1',
       [ConsultationStep.STEP2_DESIGN]: '/consultation/step2',
-      [ConsultationStep.TRAITS]: '/consultation/traits',
-      [ConsultationStep.CANVAS]: '/consultation/canvas',
+      [ConsultationStep.CUSTOMER_INFO]: '/consultation/customer',
       [ConsultationStep.SUMMARY]: '/consultation/summary',
     };
 
@@ -296,11 +277,9 @@ export default function ConsultationStartPage() {
   }, [consultation.currentStep, isCustomerLinkFlow, showEntrySplash]);
 
   const STEP_FLOW = [
-    { icon: <StepFlowIcon type="customer" />, label: t('consultation.customerInfo'), koLabel: tKo('consultation.customerInfo') },
     { icon: <StepFlowIcon type="basic" />, label: t('consultation.step1Title'), koLabel: tKo('consultation.step1Title') },
     { icon: <StepFlowIcon type="treatment" />, label: t('consultation.treatmentType.title'), koLabel: tKo('consultation.treatmentType.title') },
-    { icon: <StepFlowIcon type="traits" />, label: t('consultation.traitsTitle'), koLabel: tKo('consultation.traitsTitle') },
-    { icon: <StepFlowIcon type="summary" />, label: t('consultation.summaryTitle'), koLabel: tKo('consultation.summaryTitle') },
+    { icon: <StepFlowIcon type="customer" />, label: t('consultation.customerInfo'), koLabel: tKo('consultation.customerInfo') },
   ];
 
   const handleStartWithEntry = (ep: 'staff' | 'return_visit') => {
@@ -309,7 +288,7 @@ export default function ConsultationStartPage() {
       ...consultation,
       designerId: nextDesignerId,
       entryPoint: ep,
-      currentStep: ConsultationStep.CUSTOMER_INFO,
+      currentStep: ConsultationStep.STEP1_BASIC,
     };
 
     hydrateConsultation(nextConsultation);
@@ -321,7 +300,7 @@ export default function ConsultationStartPage() {
       });
     }
 
-    router.push('/consultation/customer');
+    router.push('/consultation/step1');
   };
 
   if (isCustomerLinkFlow) {
@@ -335,11 +314,6 @@ export default function ConsultationStartPage() {
           descriptionKo={tKo('consultation.linkSplashDesc')}
         />
       );
-    }
-
-    if (consultation.currentStep === ConsultationStep.CUSTOMER_INFO
-      || consultation.currentStep === ConsultationStep.START) {
-      return <CustomerPage />;
     }
 
     return <div className="h-dvh bg-background" />;
@@ -361,14 +335,12 @@ export default function ConsultationStartPage() {
               <Button variant="primary" fullWidth onClick={() => {
                 setShowResumeDialog(false);
                 const stepRoutes: Record<string, string> = {
-                  [ConsultationStep.CUSTOMER_INFO]: '/consultation/customer',
                   [ConsultationStep.STEP1_BASIC]: '/consultation/step1',
                   [ConsultationStep.STEP2_DESIGN]: '/consultation/step2',
-                  [ConsultationStep.TRAITS]: '/consultation/traits',
-                  [ConsultationStep.CANVAS]: '/consultation/canvas',
+                  [ConsultationStep.CUSTOMER_INFO]: '/consultation/customer',
                   [ConsultationStep.SUMMARY]: '/consultation/summary',
                 };
-                const route = stepRoutes[consultation.currentStep] || '/consultation/customer';
+                const route = stepRoutes[consultation.currentStep] || '/consultation/step1';
                 router.push(route);
               }}>
                 {tKo('consultation.resumeBtn')}

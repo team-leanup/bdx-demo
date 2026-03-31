@@ -328,6 +328,24 @@ export default function SummaryPage() {
       }
     }
 
+    // A-9: 고객 선호도 자동 채우기 — 상담 데이터에서 preference 자동 매핑
+    if (customerId) {
+      const { getById: getPrefCust, updateCustomer: updatePrefCust } = useCustomerStore.getState();
+      const prefCustomer = getPrefCust(customerId);
+      if (prefCustomer) {
+        const currentPref = prefCustomer.preference;
+        const updatedPref = {
+          ...(currentPref ?? {}),
+          customerId,
+          preferredShape: consultation.nailShape || currentPref?.preferredShape,
+          updatedAt: now,
+        };
+        if (!currentPref || updatedPref.preferredShape !== currentPref.preferredShape) {
+          updatePrefCust(customerId, { preference: updatedPref });
+        }
+      }
+    }
+
     sessionStorage.removeItem('consultation_customer_memo');
     sessionStorage.removeItem('bdx-additional-charge');
     restoreLocale();
@@ -349,8 +367,8 @@ export default function SummaryPage() {
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
       <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
       <ConsultationHeader
-        stepNumber={5}
-        totalSteps={5}
+        stepNumber={3}
+        totalSteps={3}
         title={t('consultation.summaryTitle')}
         titleKo={tKo('consultation.summaryTitle')}
         onBack={() => {
@@ -359,8 +377,8 @@ export default function SummaryPage() {
             router.push('/consultation/customer');
             return;
           }
-          setStep(ConsultationStep.TRAITS);
-          router.push('/consultation/traits');
+          setStep(ConsultationStep.CUSTOMER_INFO);
+          router.push('/consultation/customer');
         }}
         onClose={() => router.push(isCustomerLinkFlow ? customerLinkEntryHref : '/home')}
       />

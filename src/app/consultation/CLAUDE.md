@@ -19,17 +19,19 @@ const locale = useLocale();
 )}
 ```
 
-## Page Flow
+## Page Flow (3단계 — 2026-03-27 회의 결정)
 
 ```
-/consultation
-├── /customer      # Step 1: 고객 정보 입력
-├── /step1         # Step 2: 기본 조건 (부위/오프/연장/쉐입)
-├── /step2         # Step 3: 시술 범위
-├── /step3         # Step 4: 추가 옵션 (표현기법/파츠/컬러)
-├── /canvas        # 손가락별 디자인 선택
-└── /summary       # 최종 요약 및 저장
+/consultation          # 진입 화면 (디자이너 선택 / customer_link 스플래시)
+├── /step1             # Step 1/3: 포트폴리오 + 기본 조건 (부위/오프/연장/쉐입)
+├── /step2             # Step 2/3: 시술 유형 (원컬러/그라데이션/마그네틱/아트)
+├── /customer          # Step 3/3: 고객 정보 입력 (마지막)
+├── /summary           # 최종 요약 및 저장
+├── /canvas            # (보조 도구 — 메인 플로우 외)
+└── /traits            # (보조 도구 — 메인 플로우 외)
 ```
+
+STEP_ORDER: `START → STEP1_BASIC → STEP2_DESIGN → CUSTOMER_INFO → SUMMARY`
 
 ## State Management
 

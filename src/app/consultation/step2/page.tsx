@@ -82,15 +82,15 @@ export default function Step2Page() {
   };
 
   const handleNext = () => {
-    setStep(ConsultationStep.CANVAS);
-    router.push('/consultation/canvas');
+    setStep(ConsultationStep.CUSTOMER_INFO);
+    router.push('/consultation/customer');
   };
 
   return (
     <div className="h-dvh md:min-h-0 md:flex-1 bg-background flex flex-col overflow-hidden">
       <ConsultationHeader
-        stepNumber={3}
-        totalSteps={5}
+        stepNumber={2}
+        totalSteps={3}
         title={t('consultation.treatmentType.title')}
         titleKo={tKo('consultation.treatmentType.title')}
         backHref="/consultation/step1"
