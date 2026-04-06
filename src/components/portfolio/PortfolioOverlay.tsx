@@ -208,6 +208,15 @@ export function PortfolioOverlay({
               >
                 상세 보기
               </Button>
+              {photo.recordId && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => { router.push(`/records/${photo.recordId}`); onClose(); }}
+                >
+                  공유카드
+                </Button>
+              )}
               {customer?.id && (
                 <Button
                   variant="primary"
