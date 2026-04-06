@@ -1194,6 +1194,16 @@ export default function RecordsPage() {
                           {stage === 'completed' && (
                             <div className="mt-3 flex flex-col gap-2">
                               <button
+                                onClick={() => {
+                                  const recordId = matchedRecord?.id ?? selectedEvent.originalId;
+                                  closeSelectedEventSheet();
+                                  router.push(`/records/${recordId}`);
+                                }}
+                                className="w-full rounded-xl border border-primary bg-primary/5 px-4 py-3 text-sm font-semibold text-primary active:scale-[0.98] transition-transform"
+                              >
+                                공유카드 만들기
+                              </button>
+                              <button
                                 onClick={closeSelectedEventSheet}
                                 className="w-full rounded-xl bg-surface-alt px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
                               >

@@ -4,7 +4,8 @@ import { use, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Card, Badge, Button } from '@/components/ui';
-import { formatPrice, formatDateDotWithTime, getNowInKoreaIso } from '@/lib/format';
+import { formatPrice, formatDateDotWithTime, getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
+import { ShareCardGeneratorModal } from '@/components/share-card/ShareCardGeneratorModal';
 import { BODY_PART_LABEL, DESIGN_SCOPE_LABEL, EXPRESSION_LABEL, getDesignerName } from '@/lib/labels';
 import { useShallow } from 'zustand/react/shallow';
 import { useRecordsStore } from '@/store/records-store';
@@ -20,6 +21,7 @@ import { ChecklistSummaryRow } from '@/components/records/ChecklistSummaryRow';
 import type { DailyChecklist as DailyChecklistType } from '@/types/consultation';
 import { ConsultationStep } from '@/types/consultation';
 import { useLocaleStore } from '@/store/locale-store';
+import { useAppStore } from '@/store/app-store';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -38,8 +40,10 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
   const getCustomerById = useCustomerStore((s) => s.getById);
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const setConsultationLocale = useLocaleStore((s) => s.setConsultationLocale);
+  const shopSettings = useAppStore((s) => s.shopSettings);
 
   const [checklistData, setChecklistData] = useState<DailyChecklistType | undefined>(record?.checklist);
+  const [showShareCard, setShowShareCard] = useState(false);
   const [editingFinalPrice, setEditingFinalPrice] = useState(false);
   const [finalPriceValue, setFinalPriceValue] = useState(record?.finalPrice ?? 0);
   const priceInputRef = useRef<HTMLInputElement>(null);
@@ -83,6 +87,7 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
         visitCount: newVisitCount,
         totalSpend: newTotalSpend,
         averageSpend: Math.round(newTotalSpend / newVisitCount),
+        lastVisitDate: getTodayInKorea(),
       });
     }
   };
@@ -104,7 +109,7 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
     if (record.language && record.language !== 'ko') {
       setConsultationLocale(record.language);
     }
-    router.push('/consultation');
+    router.push('/field-mode');
   };
 
   return (
@@ -313,10 +318,17 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
             <div className="mt-2">
               <button
                 type="button"
-                onClick={handleFinalize}
+                onClick={() => {
+                  if (record.paymentMethod) {
+                    handleFinalize(); // finalizedAt + stats
+                  } else {
+                    updateRecord(id, { finalizedAt: getNowInKoreaIso() }); // finalizedAt만 (stats는 payment에서)
+                    router.push(`/payment?recordId=${id}`);
+                  }
+                }}
                 className="w-full rounded-xl bg-primary py-3 text-sm font-bold text-white hover:bg-primary-dark active:scale-[0.98] transition-all"
               >
-                결제 완료
+                {record.paymentMethod ? '결제 완료' : '결제하기'}
               </button>
             </div>
           )}
@@ -399,6 +411,13 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
 
       {/* 액션 바 (fixed bottom) */}
       <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background px-4 py-3">
+        <button
+          type="button"
+          onClick={() => setShowShareCard(true)}
+          className="mb-2 w-full rounded-2xl border border-primary bg-primary/5 py-2.5 text-sm font-semibold text-primary"
+        >
+          공유카드 만들기
+        </button>
         <div className="flex gap-3">
           <button
             type="button"
@@ -416,6 +435,25 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
           </button>
         </div>
       </div>
+
+      {record && (
+        <ShareCardGeneratorModal
+          isOpen={showShareCard}
+          onClose={() => setShowShareCard(false)}
+          record={{
+            id: record.id,
+            shopId: record.shopId,
+            consultation: record.consultation,
+            shareCardId: record.shareCardId,
+          }}
+          portfolioPhotos={portfolioPhotos.map(p => ({
+            id: p.id,
+            imageDataUrl: p.imageDataUrl,
+            imagePath: p.imagePath,
+          }))}
+          shopName={shopSettings.shopName}
+        />
+      )}
     </div>
   );
 }

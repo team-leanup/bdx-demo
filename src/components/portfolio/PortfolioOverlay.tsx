@@ -9,6 +9,7 @@ import { useConsultationStore } from '@/store/consultation-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { formatPrice, formatDateDot } from '@/lib/format';
 import { cn } from '@/lib/cn';
+import { downloadForInstagram } from '@/lib/image-utils';
 import { InstagramHashtags } from './InstagramHashtags';
 import type { PortfolioPhoto } from '@/types/portfolio';
 import type { Customer } from '@/types/customer';
@@ -44,6 +45,7 @@ export function PortfolioOverlay({
   const togglePhotoVisibility = usePortfolioStore((s) => s.togglePhotoVisibility);
   const [currentId, setCurrentId] = useState(initialPhotoId);
   const [showHashtags, setShowHashtags] = useState(false);
+  const [downloadingInsta, setDownloadingInsta] = useState(false);
 
   const currentIndex = photoIds.indexOf(currentId);
   const photo = photos.find((p) => p.id === currentId);
@@ -207,6 +209,24 @@ export function PortfolioOverlay({
                 onClick={() => router.push(`/portfolio/${photo.id}`)}
               >
                 상세 보기
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={downloadingInsta}
+                onClick={async () => {
+                  if (!photo.imageDataUrl) return;
+                  setDownloadingInsta(true);
+                  try {
+                    await downloadForInstagram(photo.imageDataUrl, '4:5');
+                  } catch {
+                    // 다운로드 실패 시 무시
+                  } finally {
+                    setDownloadingInsta(false);
+                  }
+                }}
+              >
+                {downloadingInsta ? '저장 중...' : '인스타 저장'}
               </Button>
               {photo.recordId && (
                 <Button
