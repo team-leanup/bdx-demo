@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/Button';
 import { ShareCardGeneratorModal } from '@/components/share-card/ShareCardGeneratorModal';
 import { useAuthStore } from '@/store/auth-store';
 import { useAppStore } from '@/store/app-store';
+import { CATEGORY_LABELS } from '@/lib/labels';
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 
@@ -102,6 +103,7 @@ export default function WrapUpPage(): React.ReactElement {
   const [showShareCard, setShowShareCard] = useState(false);
   const [photosSaved, setPhotosSaved] = useState(false);
   const [isSavingPhotos, setIsSavingPhotos] = useState(false);
+  const [photoSaveError, setPhotoSaveError] = useState(false);
 
   const shopName = useAppStore((s) => s.shopSettings.shopName);
   const shopId = useAuthStore((s) => s.currentShopId ?? '');
@@ -212,16 +214,10 @@ export default function WrapUpPage(): React.ReactElement {
     setSkipped(true);
   }, []);
 
-  const CATEGORY_LABEL: Record<string, string> = {
-    simple: '심플',
-    french: '프렌치',
-    magnet: '자석',
-    art: '아트',
-  };
-
   const savePhotosToPortfolio = useCallback(async (): Promise<void> => {
     if (afterPhotoUrls.length === 0 || photosSaved) return;
     setIsSavingPhotos(true);
+    setPhotoSaveError(false);
     try {
       const rec = recordId ? useRecordsStore.getState().getRecordById(recordId) : null;
       for (const dataUrl of afterPhotoUrls) {
@@ -233,14 +229,17 @@ export default function WrapUpPage(): React.ReactElement {
           styleCategory: selectedCategory ?? undefined,
           isPublic: true,
           price: rec?.finalPrice,
-          serviceType: selectedCategory ? CATEGORY_LABEL[selectedCategory] : undefined,
+          serviceType: selectedCategory ? CATEGORY_LABELS[selectedCategory] : undefined,
         });
       }
       setPhotosSaved(true);
+    } catch (err) {
+      console.error('[wrap-up] savePhotosToPortfolio failed:', err);
+      setPhotoSaveError(true);
     } finally {
       setIsSavingPhotos(false);
     }
-  }, [afterPhotoUrls, addPhoto, customerId, recordId, selectedCategory, photosSaved, CATEGORY_LABEL]);
+  }, [afterPhotoUrls, addPhoto, customerId, recordId, selectedCategory, photosSaved]);
 
   const handleGoHome = useCallback(async (): Promise<void> => {
     setIsGoingHome(true);
@@ -424,6 +423,9 @@ export default function WrapUpPage(): React.ReactElement {
           >
             {photosSaved ? '✓ 포트폴리오에 저장됨' : '포트폴리오에 저장'}
           </Button>
+        )}
+        {photoSaveError && (
+          <p className="text-xs text-error text-center mt-1">사진 저장에 실패했어요. 다시 시도해주세요.</p>
         )}
       </motion.section>
 

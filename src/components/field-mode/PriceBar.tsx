@@ -4,13 +4,7 @@ import { motion } from 'framer-motion';
 import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/Button';
 import type { PreConsultPriceEstimate } from '@/types/pre-consultation';
-
-const CATEGORY_LABEL: Record<string, string> = {
-  simple: '심플',
-  french: '프렌치',
-  magnet: '자석',
-  art: '아트',
-};
+import { CATEGORY_LABELS } from '@/lib/labels';
 
 interface PriceBarProps {
   estimate: PreConsultPriceEstimate;
@@ -37,8 +31,8 @@ export function PriceBar({
       : `₩${estimate.minTotal.toLocaleString()}~${estimate.maxTotal.toLocaleString()}`;
 
   const summaryParts: string[] = [];
-  if (designCategory && CATEGORY_LABEL[designCategory]) {
-    summaryParts.push(CATEGORY_LABEL[designCategory]);
+  if (designCategory && CATEGORY_LABELS[designCategory]) {
+    summaryParts.push(CATEGORY_LABELS[designCategory]);
   }
   if (hasRemoval) summaryParts.push('제거');
   if (hasExtension) summaryParts.push('연장');

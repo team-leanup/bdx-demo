@@ -240,6 +240,14 @@ function mergeDemoGoldenTimeCustomers(customers: Customer[], shopId: string | nu
   return [...customers, ...missingDemoCustomers];
 }
 
+async function loadDemoCustomers(customers: Customer[], shopId: string | null): Promise<Customer[]> {
+  if (shopId !== 'shop-demo') return customers;
+  const { DEMO_CUSTOMERS } = await import('@/data/mock-demo-data');
+  const existingIds = new Set(customers.map((c) => c.id));
+  const missing = DEMO_CUSTOMERS.filter((c) => !existingIds.has(c.id));
+  return [...customers, ...missing];
+}
+
 export const useCustomerStore = create<CustomerStore>()(
   persist(
     (set, get) => ({
@@ -249,13 +257,12 @@ export const useCustomerStore = create<CustomerStore>()(
       hydrateFromDB: async () => {
         const currentShopId = useAuthStore.getState().currentShopId;
         const dbCustomers = await fetchCustomers(currentShopId);
-        set({
-          customers: mergeDemoGoldenTimeCustomers(
-            dbCustomers.map(normalizeCustomer),
-            currentShopId,
-          ),
-          _dbReady: true,
-        });
+        const withGolden = mergeDemoGoldenTimeCustomers(
+          dbCustomers.map(normalizeCustomer),
+          currentShopId,
+        );
+        const withDemo = await loadDemoCustomers(withGolden, currentShopId);
+        set({ customers: withDemo, _dbReady: true });
       },
 
       getById: (id) => get().customers.find((c) => c.id === id),

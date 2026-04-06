@@ -36,6 +36,16 @@ export const useReservationStore = create<ReservationStore>()(
       hydrateFromDB: async () => {
         const currentShopId = useAuthStore.getState().currentShopId;
         const dbReservations = await fetchBookingRequests(currentShopId);
+        if (currentShopId === 'shop-demo') {
+          const { DEMO_RESERVATIONS } = await import('@/data/mock-demo-data');
+          const existingIds = new Set(dbReservations.map((r) => r.id));
+          const merged = [
+            ...dbReservations,
+            ...DEMO_RESERVATIONS.filter((r) => !existingIds.has(r.id)),
+          ];
+          set({ reservations: merged, _dbReady: true });
+          return;
+        }
         set({ reservations: dbReservations, _dbReady: true });
       },
 

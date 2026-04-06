@@ -256,7 +256,7 @@ export default function TreatmentSheetPage() {
     setDiscountValue(nextConsultation.discount?.value ?? 0);
     setDepositAmount(nextConsultation.deposit ?? 0);
     setIsPriceFinalized(Boolean(record?.finalizedAt));
-  }, [consultation, record]);
+  }, [consultation, record, shopPricing]);
 
   // Build canvas selections for read-only display from canvasData
   const buildSelections = (handSide: 'left_hand' | 'right_hand'): Partial<Record<FingerPosition, FingerSelection>> => {

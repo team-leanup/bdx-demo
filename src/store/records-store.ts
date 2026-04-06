@@ -53,6 +53,16 @@ export const useRecordsStore = create<RecordsStore>()(
       hydrateFromDB: async () => {
         const currentShopId = useAuthStore.getState().currentShopId;
         const dbRecords = await fetchConsultationRecords(currentShopId);
+        if (currentShopId === 'shop-demo') {
+          const { DEMO_RECORDS } = await import('@/data/mock-demo-data');
+          const existingIds = new Set(dbRecords.map((r) => r.id));
+          const merged = [
+            ...dbRecords,
+            ...DEMO_RECORDS.filter((r) => !existingIds.has(r.id)),
+          ];
+          set({ records: merged, _dbReady: true });
+          return;
+        }
         set({ records: dbRecords, _dbReady: true });
       },
 

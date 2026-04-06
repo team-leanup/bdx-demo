@@ -51,6 +51,7 @@ export default function PaymentPage(): React.ReactElement | null {
   // Section 4: photos
   const [photos, setPhotos] = useState<{ id: string; dataUrl: string }[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [photoError, setPhotoError] = useState(false);
 
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -219,6 +220,7 @@ export default function PaymentPage(): React.ReactElement | null {
       setCurrentSection(5);
     } catch (err) {
       console.error('[payment] photo save failed:', err);
+      setPhotoError(true);
     } finally {
       setIsUploading(false);
     }
@@ -436,6 +438,9 @@ export default function PaymentPage(): React.ReactElement | null {
             >
               {isUploading ? '저장 중...' : '사진 저장하기'}
             </button>
+            {photoError && (
+              <p className="text-xs text-error text-center mt-1">사진 저장에 실패했어요. 다시 시도해주세요.</p>
+            )}
             <button
               type="button"
               onClick={() => setCurrentSection(5)}

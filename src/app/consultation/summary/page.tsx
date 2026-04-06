@@ -391,7 +391,7 @@ export default function SummaryPage() {
     }, 0);
     router.push(`/records/${newId}`);
     } catch (err) {
-      console.error(err);
+      console.error('[summary]', err);
       pushToast('error', '저장 중 오류가 발생했어요. 다시 시도해주세요');
       setSaving(false);
     }
