@@ -390,7 +390,7 @@ export function TodayReservationCard({
                       ) : stage === 'pre_consult_done' ? (
                         <>
                           <button
-                            onClick={(e) => { e.stopPropagation(); setPreviewBooking(booking); }}
+                            onClick={(e) => { e.stopPropagation(); router.push(`/records/preconsult/${booking.id}`); }}
                             className="rounded-lg bg-surface-alt border border-border px-2.5 py-2.5 text-[11px] font-semibold text-text-secondary cursor-pointer hover:bg-border active:scale-95 transition-all"
                           >
                             상담 내용
