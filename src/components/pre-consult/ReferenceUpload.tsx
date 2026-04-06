@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useT, useKo, useLocale } from '@/lib/i18n';
 import { usePreConsultStore } from '@/store/pre-consult-store';
-import { uploadPreConsultImage } from '@/lib/db';
+import { uploadPreConsultImage, fetchBookingRequestById } from '@/lib/db';
 import { Button } from '@/components/ui/Button';
 
 const MAX_FILES = 5;
@@ -20,11 +20,24 @@ export function ReferenceUpload({ onComplete }: ReferenceUploadProps): React.Rea
   const tKo = useKo();
   const locale = useLocale();
   const shopId = usePreConsultStore((s) => s.shopId);
+  const bookingId = usePreConsultStore((s) => s.bookingId);
   const referenceImageUrls = usePreConsultStore((s) => s.referenceImageUrls);
   const addReferenceImageUrl = usePreConsultStore((s) => s.addReferenceImageUrl);
   const removeReferenceImageUrl = usePreConsultStore((s) => s.removeReferenceImageUrl);
 
   const [uploading, setUploading] = useState(false);
+
+  // 예약 시 첨부한 참고 이미지 자동 채우기
+  useEffect(() => {
+    if (!bookingId || referenceImageUrls.length > 0) return;
+    fetchBookingRequestById(bookingId, shopId).then((booking) => {
+      if (booking?.referenceImageUrls) {
+        for (const url of booking.referenceImageUrls) {
+          addReferenceImageUrl(url);
+        }
+      }
+    });
+  }, [bookingId, shopId, referenceImageUrls.length, addReferenceImageUrl]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -81,7 +94,7 @@ export function ReferenceUpload({ onComplete }: ReferenceUploadProps): React.Rea
         )}
         <p className="text-sm text-text-muted mt-1">{t('preConsult.uploadHint')}</p>
         <p className="text-xs text-text-muted mt-1 opacity-70">
-          네이버나 카톡에서 받은 디자인 사진이 있다면 여기에 올려주세요
+          원하는 디자인 사진이 있다면 여기에 올려주세요
         </p>
       </div>
 
