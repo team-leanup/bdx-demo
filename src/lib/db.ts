@@ -1,10 +1,11 @@
-import { getNowInKoreaIso } from '@/lib/format';
+import { getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database';
 import type { Customer, CustomerTag, SmallTalkNote, VisitFrequency, TagCategory, TagAccent } from '@/types/customer';
 import type { ConsultationRecord, ConsultationType, BookingRequest, BookingChannel, BookingStatus, DailyChecklist } from '@/types/consultation';
 import type { PortfolioPhoto } from '@/types/portfolio';
-import type { Shop, Designer, BusinessHours, ShopExtendedSettings } from '@/types/shop';
+import type { Shop, Designer, BusinessHours, ShopExtendedSettings, CategoryPricingSettings, SurchargeSettings } from '@/types/shop';
+import type { ShopPublicData } from '@/types/pre-consultation';
 
 const PORTFOLIO_BUCKET = 'portfolio-images';
 const DESIGNER_AVATAR_BUCKET = 'designer-profile-images';
@@ -84,7 +85,7 @@ function toDesigner(row: Database['public']['Tables']['designers']['Row'] & { pi
   };
 }
 
-function getPortfolioPublicUrl(path: string): string {
+export function getPortfolioPublicUrl(path: string): string {
   const { data } = supabase.storage.from(PORTFOLIO_BUCKET).getPublicUrl(path);
   return data.publicUrl;
 }
@@ -191,6 +192,8 @@ function toPortfolioPhoto(row: Database['public']['Tables']['portfolio_photos'][
     serviceType: row.service_type ?? undefined,
     price: row.price ?? undefined,
     isPublic: row.is_public ?? true,
+    styleCategory: (row.style_category as PortfolioPhoto['styleCategory']) ?? undefined,
+    isFeatured: row.is_featured ?? false,
   };
 }
 
@@ -283,8 +286,10 @@ export async function fetchShopByOwnerId(ownerId: string): Promise<Shop | null> 
   return toShop(data);
 }
 
-export async function fetchDesignerById(designerId: string): Promise<Designer | null> {
-  const { data, error } = await supabase.from('designers').select('*').eq('id', designerId).single();
+export async function fetchDesignerById(designerId: string, shopId?: string): Promise<Designer | null> {
+  let query = supabase.from('designers').select('*').eq('id', designerId);
+  if (shopId) query = query.eq('shop_id', shopId);
+  const { data, error } = await query.maybeSingle();
   if (error || !data) {
     console.error('[db] fetchDesignerById error:', toDbErrorSnapshot(error));
     return null;
@@ -702,6 +707,7 @@ export async function fetchConsultationRecords(shopId?: string | null): Promise<
     language: (row.language as ConsultationRecord['language']) ?? undefined,
     paymentMethod: (row.payment_method as ConsultationRecord['paymentMethod']) ?? undefined,
     isQuickSale: row.is_quick_sale ?? false,
+    shareCardId: (row as Record<string, unknown>).share_card_id as string | undefined,
   }));
 }
 
@@ -733,6 +739,7 @@ export async function fetchBookingRequests(shopId?: string | null): Promise<Book
     customerId: row.customer_id ?? undefined,
     preConsultationData: (row.pre_consultation_data as unknown as BookingRequest['preConsultationData']) ?? undefined,
     preConsultationCompletedAt: row.pre_consultation_completed_at ?? undefined,
+    consultationLinkSentAt: row.consultation_link_sent_at ?? undefined,
   }));
 }
 
@@ -777,6 +784,7 @@ export async function fetchBookingRequestById(
     customerId: data.customer_id ?? undefined,
     preConsultationData: (data.pre_consultation_data as unknown as BookingRequest['preConsultationData']) ?? undefined,
     preConsultationCompletedAt: data.pre_consultation_completed_at ?? undefined,
+    consultationLinkSentAt: data.consultation_link_sent_at ?? undefined,
   };
 }
 
@@ -802,7 +810,7 @@ export async function fetchPortfolioPhotos(shopId?: string | null): Promise<Port
 
 // ─── Customer Mutations ───────────────────────────────────────────────────────
 
-export async function dbUpsertCustomer(customer: Customer): Promise<void> {
+export async function dbUpsertCustomer(customer: Customer): Promise<{ success: boolean }> {
   const { error } = await supabase.from('customers').upsert({
     id: customer.id,
     shop_id: customer.shopId,
@@ -828,10 +836,18 @@ export async function dbUpsertCustomer(customer: Customer): Promise<void> {
   });
   if (error) {
     console.error('[db] dbUpsertCustomer error:', toDbErrorSnapshot(error));
+    return { success: false };
   }
+  return { success: true };
 }
 
 export async function dbUpsertCustomerTags(customerId: string, tags: CustomerTag[]): Promise<void> {
+  // Backup existing tags before delete so we can restore on insert failure
+  const { data: existingTags } = await supabase
+    .from('customer_tags')
+    .select('*')
+    .eq('customer_id', customerId);
+
   const { error: deleteError } = await supabase
     .from('customer_tags')
     .delete()
@@ -858,7 +874,14 @@ export async function dbUpsertCustomerTags(customerId: string, tags: CustomerTag
     console.error('[db] dbUpsertCustomerTags insert error (retrying):', toDbErrorSnapshot(insertError));
     const { error: retryError } = await supabase.from('customer_tags').insert(rows);
     if (retryError) {
-      console.error('[db] dbUpsertCustomerTags retry also failed — tags may be lost for', customerId, toDbErrorSnapshot(retryError));
+      console.error('[db] dbUpsertCustomerTags retry failed — restoring backup for', customerId, toDbErrorSnapshot(retryError));
+      // Restore backup to prevent total tag loss
+      if (existingTags && existingTags.length > 0) {
+        const { error: restoreErr } = await supabase.from('customer_tags').insert(existingTags);
+        if (restoreErr) {
+          console.error('[db] dbUpsertCustomerTags backup restore failed for', customerId, toDbErrorSnapshot(restoreErr));
+        }
+      }
     }
   }
 }
@@ -936,7 +959,7 @@ export async function dbUpdateShopSettings(shopId: string, settings: ShopExtende
 
 // ─── Record Mutations ─────────────────────────────────────────────────────────
 
-export async function dbUpsertRecord(record: ConsultationRecord): Promise<void> {
+export async function dbUpsertRecord(record: ConsultationRecord): Promise<{ success: boolean }> {
   const { error } = await supabase.from('consultation_records').upsert({
     id: record.id,
     shop_id: record.shopId,
@@ -956,10 +979,13 @@ export async function dbUpsertRecord(record: ConsultationRecord): Promise<void> 
     language: record.language ?? null,
     payment_method: record.paymentMethod ?? null,
     is_quick_sale: record.isQuickSale ?? false,
+    share_card_id: record.shareCardId ?? null,
   });
   if (error) {
     console.error('[db] dbUpsertRecord error:', toDbErrorSnapshot(error));
+    return { success: false };
   }
+  return { success: true };
 }
 
 export async function dbDeleteRecord(id: string, shopId?: string): Promise<void> {
@@ -972,6 +998,100 @@ export async function dbDeleteRecord(id: string, shopId?: string): Promise<void>
   if (error) {
     console.error('[db] dbDeleteRecord error:', toDbErrorSnapshot(error));
   }
+}
+
+export async function dbCreateShareCard(
+  recordId: string,
+  shareCardId: string,
+  shopId: string,
+): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase
+    .from('consultation_records')
+    .update({ share_card_id: shareCardId } as Record<string, unknown>)
+    .eq('id', recordId)
+    .eq('shop_id', shopId);
+
+  if (error) {
+    console.error('[db] dbCreateShareCard error:', toDbErrorSnapshot(error));
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}
+
+export async function fetchShareCardPublicData(shareCardId: string): Promise<import('@/types/share-card').ShareCardPublicData | null> {
+  // Find the consultation record by share_card_id
+  const { data: record, error: recErr } = await supabase
+    .from('consultation_records')
+    .select('id, shop_id, consultation, image_urls, share_card_id')
+    .eq('share_card_id' as string, shareCardId)
+    .single();
+
+  if (recErr || !record) {
+    console.error('[db] fetchShareCardPublicData record error:', toDbErrorSnapshot(recErr));
+    return null;
+  }
+
+  if (!record.consultation) {
+    console.error('[db] fetchShareCardPublicData: consultation is null for record', record.id);
+    return null;
+  }
+
+  // Fetch shop data
+  const { data: shop, error: shopErr } = await supabase
+    .from('shops')
+    .select('id, name, phone, address, logo_url, settings')
+    .eq('id', record.shop_id)
+    .single();
+
+  if (shopErr || !shop) {
+    console.error('[db] fetchShareCardPublicData shop error:', toDbErrorSnapshot(shopErr));
+    return null;
+  }
+
+  // Fetch portfolio photos for this record
+  const { data: photos } = await supabase
+    .from('portfolio_photos')
+    .select('image_data_url, image_path')
+    .eq('record_id', record.id)
+    .eq('shop_id', record.shop_id);
+
+  const imageUrls: string[] = [];
+  if (photos) {
+    for (const p of photos) {
+      if (p.image_path) {
+        const { data: urlData } = supabase.storage.from('portfolio-images').getPublicUrl(p.image_path);
+        imageUrls.push(urlData.publicUrl);
+      } else if (p.image_data_url) {
+        imageUrls.push(p.image_data_url);
+      }
+    }
+  }
+
+  // Also include record imageUrls if any
+  const recordImageUrls = (record.image_urls as unknown as string[]) ?? [];
+  const allImages = [...imageUrls, ...recordImageUrls];
+
+  const consultation = record.consultation as unknown as import('@/types/consultation').ConsultationType;
+  const settings = (shop.settings as unknown as import('@/types/shop').ShopExtendedSettings) ?? {};
+
+  return {
+    shopId: shop.id,
+    shopName: shop.name,
+    shopPhone: shop.phone ?? undefined,
+    shopAddress: shop.address ?? undefined,
+    shopLogoUrl: shop.logo_url ?? undefined,
+    imageUrls: allImages,
+    design: {
+      designScope: consultation.designScope,
+      expressions: consultation.expressions,
+      hasParts: consultation.hasParts,
+      bodyPart: consultation.bodyPart,
+    },
+    kakaoTalkUrl: settings.kakaoTalkUrl,
+    naverReservationUrl: settings.naverReservationUrl,
+    recordId: record.id,
+  };
 }
 
 // ─── Reservation Mutations ────────────────────────────────────────────────────
@@ -1016,6 +1136,7 @@ export async function dbUpsertReservation(reservation: BookingRequest): Promise<
     customer_id: customerId,
     pre_consultation_data: (reservation.preConsultationData as unknown as import('@/types/database').Json) ?? null,
     pre_consultation_completed_at: reservation.preConsultationCompletedAt ?? null,
+    consultation_link_sent_at: reservation.consultationLinkSentAt ?? null,
   });
   if (error) {
     console.error('[db] dbUpsertReservation error:', {
@@ -1100,6 +1221,8 @@ export async function dbInsertPortfolioPhoto(photo: PortfolioPhoto): Promise<Por
         service_type: photo.serviceType ?? null,
         price: photo.price ?? null,
         is_public: photo.isPublic ?? true,
+        style_category: photo.styleCategory ?? null,
+        is_featured: photo.isFeatured ?? false,
       })
       .select('*')
       .single();
@@ -1118,6 +1241,22 @@ export async function dbInsertPortfolioPhoto(photo: PortfolioPhoto): Promise<Por
     console.error('[db] dbInsertPortfolioPhoto unexpected error:', toDbErrorSnapshot(error));
     return { success: false, error: '포트폴리오 저장 중 오류가 발생했습니다' };
   }
+}
+
+/** 온보딩 배치 업로드: 사진 여러 장을 순차 업로드 */
+export async function dbBatchInsertPortfolioPhotos(
+  photos: PortfolioPhoto[],
+  onProgress?: (completed: number, total: number) => void,
+): Promise<{ success: boolean; uploaded: number; errors: number }> {
+  let uploaded = 0;
+  let errors = 0;
+  for (let i = 0; i < photos.length; i++) {
+    const result = await dbInsertPortfolioPhoto(photos[i]);
+    if (result.success) uploaded++;
+    else errors++;
+    onProgress?.(i + 1, photos.length);
+  }
+  return { success: errors === 0, uploaded, errors };
 }
 
 export async function dbDeletePortfolioPhoto(photo: PortfolioPhoto): Promise<{ success: boolean; error?: string }> {
@@ -1237,4 +1376,236 @@ export async function dbFetchMembershipTransactions(
     recordId: row.record_id ?? undefined,
     note: row.note ?? undefined,
   }));
+}
+
+// ─── Pre-Consult ──────────────────────────────────────────────────────────────
+
+export async function fetchShopPublicData(shopId: string): Promise<ShopPublicData | null> {
+  const { data, error } = await supabase
+    .from('shops')
+    .select('id, name, phone, address, logo_url, settings')
+    .eq('id', shopId)
+    .single();
+
+  if (error || !data) {
+    console.error('[db] fetchShopPublicData error:', toDbErrorSnapshot(error));
+    return null;
+  }
+
+  const settings = (data.settings as unknown as ShopExtendedSettings) ?? {};
+
+  const defaultCategoryPricing: CategoryPricingSettings = {
+    simple: { price: 50000, time: 60 },
+    french: { price: 55000, time: 70 },
+    magnet: { price: 60000, time: 80 },
+    art: { price: 70000, time: 90 },
+  };
+
+  const defaultSurcharges: SurchargeSettings = {
+    selfRemoval: 5000,
+    otherRemoval: 10000,
+    gradation: 10000,
+    french: 10000,
+    magnet: 10000,
+    pointArt: 20000,
+    fullArt: 40000,
+    parts1000included: 2,
+    parts2000included: 2,
+    parts3000included: 2,
+    partsExcessPer: 1000,
+    largeParts: 3000,
+    repairPer: 5000,
+    extension: 20000,
+    overlay: 10000,
+  };
+
+  return {
+    id: data.id,
+    name: data.name,
+    phone: data.phone ?? undefined,
+    address: data.address ?? undefined,
+    logoUrl: data.logo_url ?? undefined,
+    categoryPricing: settings.categoryPricing
+      ? { ...defaultCategoryPricing, ...settings.categoryPricing }
+      : defaultCategoryPricing,
+    surcharges: settings.surcharges
+      ? { ...defaultSurcharges, ...settings.surcharges }
+      : defaultSurcharges,
+    customerNotice: settings.customerNotice ?? undefined,
+  };
+}
+
+export async function fetchPublicPortfolioPhotos(shopId: string): Promise<PortfolioPhoto[]> {
+  const { data, error } = await supabase
+    .from('portfolio_photos')
+    .select('*')
+    .eq('shop_id', shopId)
+    .eq('is_public', true)
+    .order('is_featured', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (error || !data) {
+    console.error('[db] fetchPublicPortfolioPhotos error:', toDbErrorSnapshot(error));
+    return [];
+  }
+
+  return data.map(toPortfolioPhoto);
+}
+
+export async function dbCreatePreConsultation(
+  shopId: string,
+  language: string,
+): Promise<{ success: boolean; id?: string; error?: string }> {
+  const id = createId('pc');
+  const now = getNowInKoreaIso();
+
+  const { error } = await supabase.from('pre_consultations').insert({
+    id,
+    shop_id: shopId,
+    language,
+    status: 'in_progress',
+    data: {},
+    reference_image_paths: [],
+    created_at: now,
+  });
+
+  if (error) {
+    console.error('[db] dbCreatePreConsultation error:', toDbErrorSnapshot(error));
+    return { success: false, error: error.message };
+  }
+
+  return { success: true, id };
+}
+
+export async function dbUpdatePreConsultation(
+  id: string,
+  payload: Partial<{
+    data: unknown;
+    design_category: string;
+    reference_image_paths: string[];
+    customer_name: string;
+    customer_phone: string;
+  }>,
+  shopId?: string,
+): Promise<{ success: boolean; error?: string }> {
+  const update: Database['public']['Tables']['pre_consultations']['Update'] = {};
+  if (payload.data !== undefined) update.data = payload.data as Database['public']['Tables']['pre_consultations']['Update']['data'];
+  if (payload.design_category !== undefined) update.design_category = payload.design_category;
+  if (payload.reference_image_paths !== undefined) update.reference_image_paths = payload.reference_image_paths as unknown as Database['public']['Tables']['pre_consultations']['Update']['reference_image_paths'];
+  if (payload.customer_name !== undefined) update.customer_name = payload.customer_name;
+  if (payload.customer_phone !== undefined) update.customer_phone = payload.customer_phone;
+
+  let query = supabase
+    .from('pre_consultations')
+    .update(update)
+    .eq('id', id);
+
+  if (shopId) query = query.eq('shop_id', shopId);
+
+  const { error } = await query;
+
+  if (error) {
+    console.error('[db] dbUpdatePreConsultation error:', toDbErrorSnapshot(error));
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}
+
+export async function dbCompletePreConsultation(
+  id: string,
+  payload: {
+    data: unknown;
+    confirmed_price: number;
+    estimated_minutes: number;
+    customer_name: string;
+    customer_phone: string;
+    design_category: string;
+    reference_image_paths: string[];
+  },
+  shopId: string,
+  language: string,
+): Promise<{ success: boolean; error?: string }> {
+  const now = getNowInKoreaIso();
+
+  const { error } = await supabase
+    .from('pre_consultations')
+    .update({
+      data: payload.data as Database['public']['Tables']['pre_consultations']['Update']['data'],
+      confirmed_price: payload.confirmed_price,
+      estimated_minutes: payload.estimated_minutes,
+      customer_name: payload.customer_name,
+      customer_phone: payload.customer_phone,
+      design_category: payload.design_category,
+      reference_image_paths: payload.reference_image_paths as unknown as Database['public']['Tables']['pre_consultations']['Update']['reference_image_paths'],
+      status: 'completed',
+      completed_at: now,
+    })
+    .eq('id', id)
+    .eq('shop_id', shopId);
+
+  if (error) {
+    console.error('[db] dbCompletePreConsultation error:', toDbErrorSnapshot(error));
+    return { success: false, error: error.message };
+  }
+
+  // Bridge: INSERT into booking_requests so the owner receives a notification
+  const bookingId = createId('bk');
+  const { error: bookingError } = await supabase.from('booking_requests').insert({
+    id: bookingId,
+    shop_id: shopId,
+    customer_name: payload.customer_name,
+    phone: payload.customer_phone,
+    reservation_date: getTodayInKorea(),
+    reservation_time: '미정',
+    channel: 'pre_consult',
+    status: 'pending',
+    language,
+    service_label: payload.design_category,
+    pre_consultation_completed_at: now,
+    pre_consultation_data: payload.data as Database['public']['Tables']['booking_requests']['Insert']['pre_consultation_data'],
+    created_at: now,
+  });
+
+  if (bookingError) {
+    console.warn('[db] dbCompletePreConsultation: booking_requests insert failed (non-critical):', {
+      ...toDbErrorSnapshot(bookingError),
+      preConsultationId: id,
+      shopId,
+    });
+  }
+
+  return { success: true };
+}
+
+const PRE_CONSULT_REFS_BUCKET = 'pre-consult-refs';
+
+export async function uploadPreConsultImage(
+  shopId: string,
+  file: File,
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const uuid = createId('img');
+    const ext = file.name.split('.').pop() ?? 'jpg';
+    const path = `${shopId}/${uuid}/${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(PRE_CONSULT_REFS_BUCKET)
+      .upload(path, file, {
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error('[db] uploadPreConsultImage upload error:', toDbErrorSnapshot(uploadError));
+      return { success: false, error: uploadError.message };
+    }
+
+    const { data } = supabase.storage.from(PRE_CONSULT_REFS_BUCKET).getPublicUrl(path);
+
+    return { success: true, url: data.publicUrl };
+  } catch (err) {
+    console.error('[db] uploadPreConsultImage unexpected error:', toDbErrorSnapshot(err));
+    return { success: false, error: '이미지 업로드 중 오류가 발생했습니다.' };
+  }
 }

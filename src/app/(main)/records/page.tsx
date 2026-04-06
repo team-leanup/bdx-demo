@@ -14,7 +14,9 @@ import { useAuthStore } from '@/store/auth-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { useAppStore } from '@/store/app-store';
 import { useConsultationStore } from '@/store/consultation-store';
+import { useFieldModeStore } from '@/store/field-mode-store';
 import { ConsultationStep } from '@/types/consultation';
+import type { DesignCategory, RemovalPreference, LengthPreference, AddOnOption } from '@/types/pre-consultation';
 import { useCustomerStore } from '@/store/customer-store';
 import { useT } from '@/lib/i18n';
 import { formatPrice, getKoreanWeekStart, getTodayInKorea, toKoreanDateString, toKoreanTimeString, getNowInKoreaIso } from '@/lib/format';
@@ -23,6 +25,7 @@ import { DayReservationList } from '@/components/calendar/DayReservationList';
 import { WeekCalendar } from '@/components/calendar/WeekCalendar';
 import { DesignerDayGridCalendar } from '@/components/calendar/DesignerDayGridCalendar';
 import { getSafetyTagMeta, sortSafetyTags } from '@/lib/tag-safety';
+import { getBookingStage } from '@/lib/booking-stage';
 import { cn } from '@/lib/cn';
 import type { TimeGridEvent } from '@/components/calendar/TimeGridCalendar';
 import { DESIGN_SCOPE_LABEL } from '@/lib/labels';
@@ -144,6 +147,7 @@ export default function RecordsPage() {
   };
 
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
+  const hydrateFromBooking = useFieldModeStore((s) => s.hydrateFromBooking);
   const setConsultationLocale = useLocaleStore((s) => s.setConsultationLocale);
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
   const getCustomerById = useCustomerStore((s) => s.getById);
@@ -317,9 +321,23 @@ export default function RecordsPage() {
         entryPoint: 'staff',
         currentStep: ConsultationStep.START,
       });
+      // field-mode store에도 동일 예약 데이터 반영
+      const raw = booking.preConsultationData as Record<string, unknown> | undefined;
+      hydrateFromBooking({
+        customerName: booking.customerName,
+        customerPhone: booking.phone,
+        customerId: booking.customerId ?? booking.preConsultationData?.customerId ?? null,
+        designerId: booking.designerId ?? booking.preConsultationData?.designerId ?? '',
+        designCategory: (raw?.designCategory ?? null) as DesignCategory | null,
+        removalType: (raw?.removalPreference ?? 'none') as RemovalPreference,
+        lengthType: (raw?.lengthPreference ?? 'keep') as LengthPreference,
+        addOns: (raw?.addOns ?? []) as AddOnOption[],
+        selectedPhotoUrl: (raw?.selectedPhotoUrl as string | undefined) ?? null,
+        selectedPhotoId: (raw?.selectedPhotoId as string | undefined) ?? null,
+      });
     }
     closeSelectedEventSheet();
-    router.push('/consultation');
+    router.push('/field-mode');
   };
 
   const handleQuickSale = () => {
@@ -875,6 +893,12 @@ export default function RecordsPage() {
                       );
                     })()}
                     {selectedEvent.customerId && (() => {
+                      // 주의사항은 기존 상담 이력이 있거나 사전 상담이 완료된 경우에만 표시
+                      const customer = getCustomerById(selectedEvent.customerId!);
+                      const booking = allReservations.find((r) => r.id === selectedEvent.originalId);
+                      const hasConsultationHistory = (customer?.visitCount ?? 0) > 0 || !!booking?.preConsultationData;
+                      if (!hasConsultationHistory) return null;
+
                       const pinnedTags = sortSafetyTags(getPinnedTags(selectedEvent.customerId!));
                       if (pinnedTags.length === 0) return null;
                       const dangerTags = pinnedTags.filter((tag) => {
@@ -952,13 +976,15 @@ export default function RecordsPage() {
                         </>
                       );
                     })()}
-                    {/* 고객 상세 + 시술 확인서 버튼 (가로 배치) */}
+                    {/* Stage 기반 액션 영역 */}
                     {(() => {
                       const booking = allReservations.find((r) => r.id === selectedEvent.originalId);
                       const matchedRecord = allConsultations.find(
                         (r) => r.consultation?.bookingId === selectedEvent.originalId,
                       );
+                      const stage = booking ? getBookingStage(booking, matchedRecord) : 'just_registered';
                       const hasSheet = !!matchedRecord || !!booking?.preConsultationData;
+
                       const handleSheetClick = () => {
                         if (matchedRecord) {
                           router.push(`/consultation/treatment-sheet?consultationId=${matchedRecord.id}&customerId=${matchedRecord.customerId}`);
@@ -976,147 +1002,185 @@ export default function RecordsPage() {
                           router.push('/consultation/summary');
                         }
                       };
+
                       return (
-                        <div className="mt-2 flex flex-col gap-2">
-                          {matchedRecord && !matchedRecord.finalizedAt && (
-                            <button
-                              onClick={() => {
-                                const now = getNowInKoreaIso();
-                                updateRecord(matchedRecord.id, { finalizedAt: now });
-                                const customer = getCustomerById(matchedRecord.customerId);
-                                if (customer) {
-                                  const newVisitCount = customer.visitCount + 1;
-                                  const newTotalSpend = customer.totalSpend + matchedRecord.finalPrice;
-                                  updateCustomer(matchedRecord.customerId, {
-                                    visitCount: newVisitCount,
-                                    totalSpend: newTotalSpend,
-                                    averageSpend: Math.round(newTotalSpend / newVisitCount),
-                                  });
-                                }
-                              }}
-                              className="w-full rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary-dark active:scale-[0.98] transition-all"
-                            >
-                              결제 완료
-                            </button>
-                          )}
-                          {matchedRecord && matchedRecord.finalizedAt && (
-                            <div className="flex items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200 py-2.5">
-                              <span className="text-xs font-semibold text-emerald-700">✓ 결제 완료됨</span>
+                        <>
+                          {/* 영역 1: 고객 상세 + 시술 확인서 (Stage 1 제외) */}
+                          {stage !== 'just_registered' && (
+                            <div className="mt-2 flex flex-col gap-2">
+                              {stage === 'in_treatment' && matchedRecord && !matchedRecord.finalizedAt && (
+                                <button
+                                  onClick={() => {
+                                    const now = getNowInKoreaIso();
+                                    updateRecord(matchedRecord.id, { finalizedAt: now });
+                                    if (selectedEvent?.originalId) {
+                                      updateReservation(selectedEvent.originalId, { status: 'completed' });
+                                    }
+                                    const customer = getCustomerById(matchedRecord.customerId);
+                                    if (customer) {
+                                      const newVisitCount = customer.visitCount + 1;
+                                      const newTotalSpend = customer.totalSpend + matchedRecord.finalPrice;
+                                      updateCustomer(matchedRecord.customerId, {
+                                        visitCount: newVisitCount,
+                                        totalSpend: newTotalSpend,
+                                        averageSpend: Math.round(newTotalSpend / newVisitCount),
+                                        lastVisitDate: getTodayInKorea(),
+                                      });
+                                    }
+                                  }}
+                                  className="w-full rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary-dark active:scale-[0.98] transition-all"
+                                >
+                                  결제 완료
+                                </button>
+                              )}
+                              {stage === 'completed' && (
+                                <div className="flex items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200 py-2.5">
+                                  <span className="text-xs font-semibold text-emerald-700">✓ 결제 완료됨</span>
+                                </div>
+                              )}
+                              <div className="flex gap-2">
+                                {selectedEvent.customerId && (
+                                  <button
+                                    onClick={() => router.push(`/customers/${selectedEvent.customerId}`)}
+                                    className={cn(
+                                      "rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5 text-xs font-semibold text-primary hover:bg-primary/10 active:scale-[0.98] transition-all",
+                                      hasSheet ? 'flex-1' : 'w-full',
+                                    )}
+                                  >
+                                    고객 상세
+                                  </button>
+                                )}
+                                {hasSheet && (
+                                  <button
+                                    onClick={handleSheetClick}
+                                    className="flex-1 rounded-xl border border-primary/30 bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
+                                  >
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
+                                    </svg>
+                                    {matchedRecord ? '시술 확인서' : '사전 상담 내역'}
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           )}
-                          <div className="flex gap-2">
-                          {selectedEvent.customerId && (
-                            <button
-                              onClick={() => router.push(`/customers/${selectedEvent.customerId}`)}
-                              className={cn(
-                                "rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5 text-xs font-semibold text-primary hover:bg-primary/10 active:scale-[0.98] transition-all",
-                                hasSheet ? 'flex-1' : 'w-full',
-                              )}
-                            >
-                              고객 상세
-                            </button>
-                          )}
-                          {hasSheet && (
-                            <button
-                              onClick={handleSheetClick}
-                              className="flex-1 rounded-xl border border-primary/30 bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
-                            >
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
-                              </svg>
-                              {matchedRecord ? '시술 확인서' : '사전 상담 내역'}
-                            </button>
-                          )}
-                          </div>
-                        </div>
-                      );
-                    })()}
-                    {(() => {
-                      if (selectedEvent.type !== 'reservation') {
-                        return null;
-                      }
 
-                      const booking = allReservations.find((reservation) => reservation.id === selectedEvent.originalId);
-                      if (!booking) {
-                        return null;
-                      }
-
-                      return (
-                        <button
-                          onClick={() => setLinkGenBooking(booking)}
-                          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary hover:bg-primary/10 active:scale-[0.98] transition-all"
-                        >
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                          </svg>
-                          고객용 상담 링크
-                        </button>
-                      );
-                    })()}
-                    <div className="mt-3 flex flex-col gap-2">
-                      {selectedEvent.status === 'completed' ? (
-                        <span className="flex-1 rounded-xl bg-surface-alt px-4 py-3 text-sm font-bold text-text-muted text-center">
-                          완료
-                        </span>
-                      ) : (
-                        <div className="flex gap-2">
-                          {selectedEvent.customerId ? (
-                            <>
+                          {/* 영역 3: 하단 CTA (Stage별) */}
+                          {stage === 'just_registered' && (
+                            <div className="mt-3 flex flex-col gap-2">
                               <button
-                                onClick={() => {
-                                  closeSelectedEventSheet();
-                                  router.push(`/customers/${selectedEvent.customerId}`);
-                                }}
-                                className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
+                                onClick={() => booking && setLinkGenBooking(booking)}
+                                className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
                               >
-                                고객 카드 보기
+                                상담 링크 보내기
                               </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={handleEditModeEnter}
+                                  className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
+                                >
+                                  수정
+                                </button>
+                                <button
+                                  onClick={closeSelectedEventSheet}
+                                  className="flex-1 rounded-xl bg-surface-alt px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
+                                >
+                                  닫기
+                                </button>
+                              </div>
                               <button
-                                onClick={handleQuickSale}
-                                className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
+                                onClick={handleDeleteRecord}
+                                className="mt-2 w-full rounded-xl py-2.5 text-xs font-medium text-error hover:bg-error/10 transition-colors"
                               >
-                                매출 등록
+                                삭제
                               </button>
-                            </>
-                          ) : (
-                            <>
+                            </div>
+                          )}
+                          {stage === 'link_sent' && (
+                            <div className="mt-3 flex flex-col gap-2">
                               <button
                                 onClick={handleStartConsultation}
-                                className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
+                                className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
                               >
-                                {selectedEvent.language && selectedEvent.language !== 'ko' ? '상담 시작' : '고객 등록 + 상담'}
+                                상담 시작
                               </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => booking && setLinkGenBooking(booking)}
+                                  className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
+                                >
+                                  링크 재발송
+                                </button>
+                                <button
+                                  onClick={handleEditModeEnter}
+                                  className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
+                                >
+                                  수정
+                                </button>
+                              </div>
                               <button
-                                onClick={handleQuickSale}
-                                className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
+                                onClick={closeSelectedEventSheet}
+                                className="w-full rounded-xl bg-surface-alt px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
                               >
-                                매출 등록
+                                닫기
                               </button>
-                            </>
+                            </div>
                           )}
-                        </div>
-                      )}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={handleEditModeEnter}
-                          className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
-                        >
-                          수정
-                        </button>
-                        <button
-                          onClick={closeSelectedEventSheet}
-                          className="flex-1 rounded-xl bg-surface-alt px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
-                        >
-                          닫기
-                        </button>
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleDeleteRecord}
-                      className="mt-2 w-full rounded-xl py-2.5 text-xs font-medium text-error hover:bg-error/10 transition-colors"
-                    >
-                      삭제
-                    </button>
+                          {stage === 'pre_consult_done' && (
+                            <div className="mt-3 flex flex-col gap-2">
+                              <button
+                                onClick={handleStartConsultation}
+                                className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
+                              >
+                                상담 시작
+                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={handleEditModeEnter}
+                                  className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
+                                >
+                                  수정
+                                </button>
+                                <button
+                                  onClick={closeSelectedEventSheet}
+                                  className="flex-1 rounded-xl bg-surface-alt px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
+                                >
+                                  닫기
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                          {stage === 'in_treatment' && (
+                            <div className="mt-3 flex flex-col gap-2">
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={handleQuickSale}
+                                  className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
+                                >
+                                  매출 등록
+                                </button>
+                                <button
+                                  onClick={closeSelectedEventSheet}
+                                  className="flex-1 rounded-xl bg-surface-alt px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
+                                >
+                                  닫기
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                          {stage === 'completed' && (
+                            <div className="mt-3 flex flex-col gap-2">
+                              <button
+                                onClick={closeSelectedEventSheet}
+                                className="w-full rounded-xl bg-surface-alt px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
+                              >
+                                닫기
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </>
                 )}
               </div>

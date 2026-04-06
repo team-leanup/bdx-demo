@@ -17,6 +17,7 @@ export type Database = {
       booking_requests: {
         Row: {
           channel: string | null
+          consultation_link_sent_at: string | null
           created_at: string | null
           customer_id: string | null
           customer_name: string
@@ -36,6 +37,7 @@ export type Database = {
         }
         Insert: {
           channel?: string | null
+          consultation_link_sent_at?: string | null
           created_at?: string | null
           customer_id?: string | null
           customer_name: string
@@ -55,6 +57,7 @@ export type Database = {
         }
         Update: {
           channel?: string | null
+          consultation_link_sent_at?: string | null
           created_at?: string | null
           customer_id?: string | null
           customer_name?: string
@@ -113,6 +116,7 @@ export type Database = {
           notes: string | null
           payment_method: string | null
           pricing_adjustments: Json | null
+          share_card_id: string | null
           shop_id: string
           total_price: number | null
           updated_at: string | null
@@ -133,6 +137,7 @@ export type Database = {
           notes?: string | null
           payment_method?: string | null
           pricing_adjustments?: Json | null
+          share_card_id?: string | null
           shop_id: string
           total_price?: number | null
           updated_at?: string | null
@@ -153,6 +158,7 @@ export type Database = {
           notes?: string | null
           payment_method?: string | null
           pricing_adjustments?: Json | null
+          share_card_id?: string | null
           shop_id?: string
           total_price?: number | null
           updated_at?: string | null
@@ -426,6 +432,7 @@ export type Database = {
           id: string
           image_data_url: string | null
           image_path: string | null
+          is_featured: boolean
           is_public: boolean
           kind: string
           note: string | null
@@ -433,6 +440,7 @@ export type Database = {
           record_id: string | null
           service_type: string | null
           shop_id: string
+          style_category: string | null
           tags: Json | null
           taken_at: string | null
         }
@@ -444,6 +452,7 @@ export type Database = {
           id: string
           image_data_url?: string | null
           image_path?: string | null
+          is_featured?: boolean
           is_public?: boolean
           kind: string
           note?: string | null
@@ -451,6 +460,7 @@ export type Database = {
           record_id?: string | null
           service_type?: string | null
           shop_id: string
+          style_category?: string | null
           tags?: Json | null
           taken_at?: string | null
         }
@@ -462,6 +472,7 @@ export type Database = {
           id?: string
           image_data_url?: string | null
           image_path?: string | null
+          is_featured?: boolean
           is_public?: boolean
           kind?: string
           note?: string | null
@@ -469,6 +480,7 @@ export type Database = {
           record_id?: string | null
           service_type?: string | null
           shop_id?: string
+          style_category?: string | null
           tags?: Json | null
           taken_at?: string | null
         }
@@ -546,6 +558,74 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      pre_consultations: {
+        Row: {
+          id: string
+          shop_id: string
+          booking_id: string | null
+          customer_id: string | null
+          language: string
+          status: string
+          data: Json
+          design_category: string | null
+          confirmed_price: number | null
+          estimated_minutes: number | null
+          reference_image_paths: Json
+          customer_name: string | null
+          customer_phone: string | null
+          created_at: string | null
+          completed_at: string | null
+          reviewed_at: string | null
+          expires_at: string | null
+        }
+        Insert: {
+          id: string
+          shop_id: string
+          booking_id?: string | null
+          customer_id?: string | null
+          language: string
+          status?: string
+          data?: Json
+          design_category?: string | null
+          confirmed_price?: number | null
+          estimated_minutes?: number | null
+          reference_image_paths?: Json
+          customer_name?: string | null
+          customer_phone?: string | null
+          created_at?: string | null
+          completed_at?: string | null
+          reviewed_at?: string | null
+          expires_at?: string | null
+        }
+        Update: {
+          id?: string
+          shop_id?: string
+          booking_id?: string | null
+          customer_id?: string | null
+          language?: string
+          status?: string
+          data?: Json
+          design_category?: string | null
+          confirmed_price?: number | null
+          estimated_minutes?: number | null
+          reference_image_paths?: Json
+          customer_name?: string | null
+          customer_phone?: string | null
+          created_at?: string | null
+          completed_at?: string | null
+          reviewed_at?: string | null
+          expires_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pre_consultations_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       small_talk_notes: {
         Row: {

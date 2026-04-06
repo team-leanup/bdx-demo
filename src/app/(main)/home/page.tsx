@@ -9,8 +9,10 @@ import { useRecordsStore } from '@/store/records-store';
 import { useAppStore } from '@/store/app-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { useConsultationStore } from '@/store/consultation-store';
+import { useFieldModeStore } from '@/store/field-mode-store';
 import { ConsultationStep } from '@/types/consultation';
 import type { BookingChannel, BookingRequest } from '@/types/consultation';
+import type { DesignCategory, RemovalPreference, LengthPreference, AddOnOption } from '@/types/pre-consultation';
 import {
   GreetingHeader,
   HeroCTA,
@@ -75,6 +77,7 @@ export default function HomePage() {
     naver: { label: t('home.channel_naver'), icon: '🟢', variant: 'neutral' },
     phone: { label: t('home.channel_phone'), icon: '📞', variant: 'neutral' },
     walk_in: { label: t('home.channel_walk_in'), icon: '🚶', variant: 'neutral' },
+    pre_consult: { label: '미리 정하기', icon: '📋', variant: 'primary' },
   };
 
   useEffect(() => {
@@ -138,6 +141,7 @@ export default function HomePage() {
   }, [allReservations]);
   const foreignCount = todayReservations.filter((r) => r.language && r.language !== 'ko').length;
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
+  const hydrateFromBooking = useFieldModeStore((s) => s.hydrateFromBooking);
 
   const handleAddReservation = (newBooking: BookingRequest) => {
     addReservation({
@@ -199,7 +203,22 @@ export default function HomePage() {
       entryPoint: 'staff',
       currentStep: ConsultationStep.START,
     });
-    router.push('/consultation');
+    // field-mode store에도 동일 예약 데이터 반영 (실제 이동 목적지)
+    // preConsultationData는 JSONB로 저장되어 런타임에 pre-consult 필드를 포함할 수 있음
+    const raw = booking.preConsultationData as Record<string, unknown> | undefined;
+    hydrateFromBooking({
+      customerName: booking.customerName,
+      customerPhone: booking.phone,
+      customerId: booking.customerId ?? booking.preConsultationData?.customerId ?? null,
+      designerId: booking.designerId ?? booking.preConsultationData?.designerId ?? '',
+      designCategory: (raw?.designCategory ?? null) as DesignCategory | null,
+      removalType: (raw?.removalPreference ?? 'none') as RemovalPreference,
+      lengthType: (raw?.lengthPreference ?? 'keep') as LengthPreference,
+      addOns: (raw?.addOns ?? []) as AddOnOption[],
+      selectedPhotoUrl: (raw?.selectedPhotoUrl as string | undefined) ?? null,
+      selectedPhotoId: (raw?.selectedPhotoId as string | undefined) ?? null,
+    });
+    router.push('/field-mode');
   };
 
   const [todayDateStr, setTodayDateStr] = useState('');
@@ -298,19 +317,19 @@ export default function HomePage() {
       </Modal>
 
       <HeroCTA
-        onStartConsultation={() => router.push('/consultation')}
+        onStartConsultation={() => router.push('/field-mode')}
         onNewReservation={() => setShowReservationModal(true)}
         onQuickSale={() => router.push('/quick-sale')}
         onGenerateQR={currentShopId ? () => setShowQRModal(true) : undefined}
         shopId={currentShopId ?? undefined}
         shopName={shopName}
-        consultationLabel={t('home.cta_consultation')}
-        consultationTitle={t('home.cta_newConsultation')}
-        consultationSubtitle="처음 오시는 분 · 외국인 고객용"
+        consultationLabel="현장 시술"
+        consultationTitle="디자인 고르기"
+        consultationSubtitle="포트폴리오에서 디자인 고르기"
         reservationLabel={t('home.cta_reservation')}
         reservationTitle={t('home.cta_newReservation')}
         quickSaleLabel="매출"
-        quickSaleTitle="매출 등록"
+        quickSaleTitle="즉시 매출"
         qrLabel={t('home.generateQR')}
         itemVariants={itemVariants}
       />

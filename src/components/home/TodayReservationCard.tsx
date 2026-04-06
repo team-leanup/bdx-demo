@@ -26,6 +26,7 @@ import { PretreatmentAlertModal } from '@/components/alerts/PretreatmentAlertMod
 import { LinkCustomerModal } from '@/components/reservations/LinkCustomerModal';
 import ConsultationLinkModal from '@/components/reservations/ConsultationLinkModal';
 import { getSafetyTagMeta } from '@/lib/tag-safety';
+import { getBookingStage } from '@/lib/booking-stage';
 import type { BookingChannel, BookingRequest } from '@/types/consultation';
 import type { CustomerTag } from '@/types/customer';
 
@@ -111,7 +112,7 @@ export function TodayReservationCard({
   const getById = useCustomerStore((s) => s.getById);
   const getByCustomerId = usePortfolioStore((s) => s.getByCustomerId);
   const setEntryPoint = useConsultationStore((s) => s.setEntryPoint);
-  const getAllRecords = useRecordsStore((s) => s.getAllRecords);
+  const allRecords = useRecordsStore((s) => s.getAllRecords());
 
   const [alertBooking, setAlertBooking] = useState<BookingRequest | null>(null);
   const [alertTags, setAlertTags] = useState<CustomerTag[]>([]);
@@ -212,10 +213,15 @@ export function TodayReservationCard({
 
             const isExistingCustomer = Boolean(booking.customerId);
 
+            const matchedRecord = allRecords.find((r) => r.consultation?.bookingId === booking.id);
+            const stage = getBookingStage(booking, matchedRecord);
+
             const handleCardClick = (): void => {
-              if (isCompleted) return;
-              if (isExistingCustomer) {
+              if (stage === 'completed') return;
+              if (booking.customerId) {
                 setExpandedBookingId((prev) => (prev === booking.id ? null : booking.id));
+              } else if (stage === 'just_registered') {
+                setLinkGenBooking(booking);
               } else {
                 handleStartClick(booking);
               }
@@ -352,11 +358,11 @@ export function TodayReservationCard({
                       </div>
                     ) : null}
                     <div className="ml-auto flex shrink-0 gap-1.5">
-                      {isCompleted ? (
+                      {stage === 'completed' ? (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            const records = getAllRecords();
+                            const records = allRecords;
                             const byBooking = records.find((r) => r.consultation.bookingId === booking.id);
                             if (byBooking) { router.push(`/records/${byBooking.id}`); return; }
                             if (booking.customerId) {
@@ -372,48 +378,51 @@ export function TodayReservationCard({
                         >
                           상담 완료
                         </button>
-                      ) : isExistingCustomer ? (
+                      ) : stage === 'just_registered' ? (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setLinkGenBooking(booking); }}
+                          className="rounded-lg bg-primary px-3 py-2.5 text-xs font-semibold text-white active:scale-95 transition-transform"
+                        >
+                          상담 링크 보내기
+                        </button>
+                      ) : stage === 'link_sent' ? (
                         <>
+                          <span className="rounded-lg bg-amber-100 px-2.5 py-2.5 text-[11px] font-semibold text-amber-700">
+                            응답 대기
+                          </span>
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push(`/customers/${booking.customerId}`);
-                            }}
-                            className="rounded-lg bg-surface-alt border border-border px-3 py-2.5 text-xs font-semibold text-text-secondary hover:bg-border active:scale-95 transition-all"
-                          >
-                            고객 카드
-                          </button>
-                          <button
-                            onClick={quickSaleHandler}
+                            onClick={(e) => { e.stopPropagation(); handleStartClick(booking); }}
                             className="rounded-lg bg-primary px-3 py-2.5 text-xs font-semibold text-white active:scale-95 transition-transform"
                           >
-                            매출 등록
+                            상담 시작
                           </button>
                         </>
+                      ) : stage === 'pre_consult_done' ? (
+                        <>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setPreviewBooking(booking); }}
+                            className="rounded-lg bg-emerald-100 px-2.5 py-2.5 text-[11px] font-semibold text-emerald-700 cursor-pointer hover:bg-emerald-200"
+                          >
+                            사전상담 완료
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleStartClick(booking); }}
+                            className="rounded-lg bg-primary px-3 py-2.5 text-xs font-semibold text-white active:scale-95 transition-transform"
+                          >
+                            상담 시작
+                          </button>
+                        </>
+                      ) : stage === 'in_treatment' ? (
+                        <span className="rounded-lg bg-blue-100 px-2.5 py-2.5 text-[11px] font-semibold text-blue-700">
+                          결제 대기
+                        </span>
                       ) : (
-                        <>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setLinkGenBooking(booking);
-                            }}
-                            className="rounded-lg bg-surface-alt border border-border px-2.5 py-2.5 text-xs font-semibold text-text-secondary hover:bg-border active:scale-95 transition-all"
-                            title="상담 링크"
-                          >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleStartClick(booking);
-                            }}
-                            className="rounded-lg bg-primary px-3 py-2.5 text-xs font-semibold text-white active:scale-95 transition-transform"
-                          >
-                            {isForeign ? startConsultationLabel : '고객 등록 + 상담'}
-                          </button>
-                        </>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStartClick(booking); }}
+                          className="rounded-lg bg-primary px-3 py-2.5 text-xs font-semibold text-white active:scale-95 transition-transform"
+                        >
+                          상담 시작
+                        </button>
                       )}
                     </div>
                   </div>
