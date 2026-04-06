@@ -102,7 +102,7 @@ export function DesignGallery({ onConfirm, onSkip }: DesignGalleryProps): React.
       {/* Photo grid */}
       <div className="grid grid-cols-2 gap-2">
         {filteredPhotos.map((photo) => {
-          const url = photo.imagePath ?? photo.imageDataUrl;
+          const url = photo.imageDataUrl;
           const isSelected = selectedUrl === url;
           return (
             <motion.button
