@@ -72,13 +72,25 @@ export default function WrapUpPage(): React.ReactElement {
   // Customer store
   const customers = useCustomerStore((s) => s.customers);
   const createCustomer = useCustomerStore((s) => s.createCustomer);
+  const getById = useCustomerStore((s) => s.getById);
 
   // Portfolio store
   const addPhoto = usePortfolioStore((s) => s.addPhoto);
+  const hydrateRecordsFromDB = useRecordsStore((s) => s.hydrateFromDB);
 
-  // Local form state
-  const [localName, setLocalName] = useState(customerName);
-  const [localPhone, setLocalPhone] = useState(customerPhone);
+  // customerId가 있는 경우 고객 정보를 store에서 읽어옴 (예약 연동 자동 매핑)
+  const linkedCustomer = useMemo(
+    () => (customerId ? getById(customerId) : undefined),
+    [customerId, getById],
+  );
+
+  // Local form state: 이미 연결된 고객이 있으면 그 정보 사용
+  const [localName, setLocalName] = useState(
+    linkedCustomer?.name ?? customerName,
+  );
+  const [localPhone, setLocalPhone] = useState(
+    linkedCustomer?.phone ?? customerPhone,
+  );
   const [customerSaved, setCustomerSaved] = useState(!!customerId);
   const [isSaving, setIsSaving] = useState(false);
   const [isGoingHome, setIsGoingHome] = useState(false);
@@ -215,12 +227,15 @@ export default function WrapUpPage(): React.ReactElement {
         useRecordsStore.getState().updateRecord(currentRecordId, { customerId: currentCustomerId });
       }
 
+      // records store 재조회 (기록 탭 갱신)
+      await hydrateRecordsFromDB();
+
       reset();
       router.push('/home');
     } catch {
       setIsGoingHome(false);
     }
-  }, [afterPhotoUrls, addPhoto, customerId, recordId, selectedCategory, reset, router]);
+  }, [afterPhotoUrls, addPhoto, customerId, recordId, selectedCategory, reset, router, hydrateRecordsFromDB]);
 
   // ─── Redirect if no record ───────────────────────────────────────────────────
   if (!hasRecord) {
@@ -280,8 +295,11 @@ export default function WrapUpPage(): React.ReactElement {
               <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center flex-shrink-0">
                 <span className="text-success text-sm">✓</span>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-text">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-success mb-0.5">
+                  {customerId ? '고객 카드 연결됨' : '고객 정보 저장됨'}
+                </p>
+                <p className="text-sm font-semibold text-text truncate">
                   {localName}
                 </p>
                 {localPhone && (

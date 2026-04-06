@@ -242,39 +242,43 @@ function DraggableEvent({
       )}
       style={{ top, height }}
     >
-      <div className="text-[10px] font-semibold opacity-70 truncate">
+      <div className="text-[10px] font-semibold opacity-70 truncate leading-none">
         {ev.startTime}–{ev.endTime}
       </div>
-      <div className="text-xs font-bold leading-tight truncate">{ev.title}</div>
+      <div className="text-xs font-bold leading-tight truncate mt-0.5">{ev.title}</div>
       {showMetaRow && (
-        <div className="mt-1 flex items-center gap-1 flex-wrap">
+        <div className="mt-1 flex items-center gap-1 overflow-hidden" style={{ flexWrap: 'nowrap' }}>
           {ev.serviceLabel && (
-            <span className="inline-flex items-center rounded-full bg-white/55 px-1.5 py-0.5 text-[9px] font-semibold text-text">
+            <span className="inline-flex items-center rounded-full bg-white/55 px-1.5 py-0.5 text-[9px] font-semibold text-text flex-shrink-0 truncate max-w-[60px]">
               {ev.serviceLabel}
             </span>
           )}
           {ev.type === 'reservation' && (
-            <ReservationReadinessBadge
-              booking={{ preConsultationCompletedAt: ev.preConsultationCompletedAt, consultationLinkSentAt: ev.consultationLinkSentAt, channel: (ev.channel ?? 'walk_in') as 'kakao' | 'naver' | 'phone' | 'walk_in' }}
-              size="xs"
-              compact
-            />
+            <span className="flex-shrink-0">
+              <ReservationReadinessBadge
+                booking={{ preConsultationCompletedAt: ev.preConsultationCompletedAt, consultationLinkSentAt: ev.consultationLinkSentAt, channel: (ev.channel ?? 'walk_in') as 'kakao' | 'naver' | 'phone' | 'walk_in' }}
+                size="xs"
+                compact
+              />
+            </span>
           )}
           {ev.channel && CHANNEL_EMOJI[ev.channel] && (
-            <span className="text-[10px]">{CHANNEL_EMOJI[ev.channel]}</span>
+            <span className="text-[10px] flex-shrink-0">{CHANNEL_EMOJI[ev.channel]}</span>
           )}
           {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
-            <span className="text-[10px]">{LANGUAGE_FLAG[ev.language]}</span>
+            <span className="text-[10px] flex-shrink-0">{LANGUAGE_FLAG[ev.language]}</span>
           )}
         </div>
       )}
       {showTags && (
-        <div className="mt-1 flex items-center gap-1 flex-wrap">
+        <div className="mt-1 flex items-center gap-1 overflow-hidden" style={{ flexWrap: 'nowrap' }}>
           {displayTags.map((tag) => (
-            <CustomerTagChip key={tag.id} tag={tag} size="xs" />
+            <span key={tag.id} className="flex-shrink-0">
+              <CustomerTagChip tag={tag} size="xs" />
+            </span>
           ))}
           {extraTagCount > 0 && (
-            <span className="text-[9px] text-text-muted">+{extraTagCount}</span>
+            <span className="text-[9px] text-text-muted flex-shrink-0">+{extraTagCount}</span>
           )}
         </div>
       )}
