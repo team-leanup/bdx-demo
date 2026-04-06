@@ -217,49 +217,54 @@ export default function PreConsultConfirmPage(): React.ReactElement {
     };
 
     // 1. Create a pre-consultation record
-    const createResult = await dbCreatePreConsultation(params.shopId, locale);
-
-    if (!createResult.success || !createResult.id) {
-      store.setSubmitting(false);
-      setSubmitError(createResult.error ?? '오류가 발생했어요');
-      return;
-    }
-
-    // 2. Complete it with full payload
-    const result = await dbCompletePreConsultation(
-      createResult.id,
-      {
-        data,
-        confirmed_price: priceEstimate.minTotal,
-        estimated_minutes: priceEstimate.estimatedMinutes,
-        customer_name: name.trim(),
-        customer_phone: phone.trim(),
-        design_category: selectedCategory,
-        reference_image_paths: referenceImageUrls,
-      },
-      params.shopId,
-      locale,
-    );
-
-    if (result.success) {
-      // bookingId가 있으면 booking_requests 테이블과 연결
-      if (bookingId) {
-        const bookingPayload = {
-          ...data,
-          customerName: name.trim(),
-          customerPhone: phone.trim(),
-        } as unknown as import('@/types/consultation').ConsultationType;
-        await dbCompletePreconsultationBooking(
-          bookingId,
-          bookingPayload,
-          getNowInKoreaIso(),
-        );
+    if (bookingId) {
+      // bookingId가 있으면 booking_requests만 업데이트 (별도 pre_consultation 불필요)
+      const bookingPayload = {
+        ...data,
+        customerName: name.trim(),
+        customerPhone: phone.trim(),
+      } as unknown as import('@/types/consultation').ConsultationType;
+      const result = await dbCompletePreconsultationBooking(
+        bookingId,
+        bookingPayload,
+        getNowInKoreaIso(),
+      );
+      if (result.success) {
+        store.setSubmitted(bookingId);
+        router.push(`/pre-consult/${params.shopId}/complete`);
+      } else {
+        store.setSubmitting(false);
+        setSubmitError(result.error ?? '오류가 발생했어요');
       }
-      store.setSubmitted(createResult.id);
-      router.push(`/pre-consult/${params.shopId}/complete`);
     } else {
-      store.setSubmitting(false);
-      setSubmitError(result.error ?? '오류가 발생했어요');
+      // bookingId 없으면 기존 플로우: pre_consultations 테이블에 신규 생성
+      const createResult = await dbCreatePreConsultation(params.shopId, locale);
+      if (!createResult.success || !createResult.id) {
+        store.setSubmitting(false);
+        setSubmitError(createResult.error ?? '오류가 발생했어요');
+        return;
+      }
+      const result = await dbCompletePreConsultation(
+        createResult.id,
+        {
+          data,
+          confirmed_price: priceEstimate.minTotal,
+          estimated_minutes: priceEstimate.estimatedMinutes,
+          customer_name: name.trim(),
+          customer_phone: phone.trim(),
+          design_category: selectedCategory,
+          reference_image_paths: referenceImageUrls,
+        },
+        params.shopId,
+        locale,
+      );
+      if (result.success) {
+        store.setSubmitted(createResult.id);
+        router.push(`/pre-consult/${params.shopId}/complete`);
+      } else {
+        store.setSubmitting(false);
+        setSubmitError(result.error ?? '오류가 발생했어요');
+      }
     }
   };
 
@@ -483,9 +488,9 @@ export default function PreConsultConfirmPage(): React.ReactElement {
         >
           <div>
             <h2 className="text-lg font-bold text-text">
-              {t('preConsult.bookingTitle')}
+              {bookingId && name && phone ? '예약 정보를 확인해주세요' : t('preConsult.bookingTitle')}
             </h2>
-            {locale !== 'ko' && (
+            {locale !== 'ko' && !(bookingId && name && phone) && (
               <p className="text-xs text-text-muted opacity-60 mt-0.5">
                 {tKo('preConsult.bookingTitle')}
               </p>
