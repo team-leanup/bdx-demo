@@ -26,9 +26,12 @@ export default function Step1Page() {
   const removeReferenceImage = useConsultationStore((s) => s.removeReferenceImage);
   const moodTags = useConsultationStore((s) => s.consultation.moodTags) ?? [];
   const toggleMoodTag = useConsultationStore((s) => s.toggleMoodTag);
+  const entryPoint = useConsultationStore((s) => s.consultation.entryPoint);
   const t = useT();
   const tKo = useKo();
   const locale = useLocale();
+
+  const isRefImagesReadOnly = entryPoint === 'customer_link' && (consultation.referenceImages?.length ?? 0) > 0;
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -97,21 +100,23 @@ export default function Step1Page() {
                 {(consultation.referenceImages || []).map((url, i) => (
                   <div key={i} className="relative w-24 h-24 rounded-xl overflow-hidden border border-border flex-shrink-0">
                     <Image src={url} alt="" fill unoptimized className="object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => removeReferenceImage(url)}
-                      className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center"
-                    >
-                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
+                    {!isRefImagesReadOnly && (
+                      <button
+                        type="button"
+                        onClick={() => removeReferenceImage(url)}
+                        className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center"
+                      >
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
             )}
 
-            {(consultation.referenceImages || []).length < 5 && (
+            {!isRefImagesReadOnly && (consultation.referenceImages || []).length < 5 && (
               <label className="w-full rounded-xl border-2 border-dashed border-primary/30 bg-white/50 flex items-center justify-center gap-2 py-5 text-primary cursor-pointer hover:border-primary hover:bg-white/80 transition-colors">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />

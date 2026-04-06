@@ -181,6 +181,32 @@ export const useAuthStore = create<AuthStore>()(
 
         const userId = user?.id;
         if (!userId) {
+          // Supabase auth 세션 없음 — persist에서 복원된 shopId가 있으면 유지
+          const persisted = get();
+          if (persisted.currentShopId && persisted.role) {
+            set({ isInitialized: true, pendingGoogleSignup: null });
+            return;
+          }
+          // persist에도 없으면 bdx-shop localStorage에서 복구 시도
+          if (typeof window !== 'undefined') {
+            try {
+              const shopRaw = window.localStorage.getItem('bdx-shop');
+              const shopState = shopRaw ? (JSON.parse(shopRaw) as { state?: { shop?: { id?: string; name?: string; onboardingCompletedAt?: string } } }) : null;
+              const localShop = shopState?.state?.shop;
+              if (localShop?.id) {
+                set({
+                  isInitialized: true,
+                  pendingGoogleSignup: null,
+                  role: 'owner',
+                  currentShopId: localShop.id,
+                  currentShopOnboardingComplete: Boolean(localShop.onboardingCompletedAt),
+                  activeDesignerId: localShop.id,
+                  activeDesignerName: '원장',
+                });
+                return;
+              }
+            } catch { /* ignore */ }
+          }
           set({ isInitialized: true, pendingGoogleSignup: null, ...getLoggedOutState() });
           return;
         }
@@ -459,6 +485,11 @@ export const useAuthStore = create<AuthStore>()(
       ),
       partialize: (state) => ({
         passwords: state.passwords,
+        role: state.role,
+        currentShopId: state.currentShopId,
+        currentShopOnboardingComplete: state.currentShopOnboardingComplete,
+        activeDesignerId: state.activeDesignerId,
+        activeDesignerName: state.activeDesignerName,
       }),
     },
   ),

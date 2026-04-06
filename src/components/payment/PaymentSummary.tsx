@@ -66,14 +66,11 @@ export function PaymentSummary({ breakdown, extraItems = [], className }: Paymen
       </div>
 
       {/* 최종 결제금액 */}
-      <div
-        className="mt-4 flex items-center justify-between rounded-2xl px-5 py-4"
-        style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))' }}
-      >
+      <div className="mt-4 flex items-center justify-between rounded-2xl px-5 py-4 bg-gradient-to-br from-primary to-primary-dark">
         <div>
-          <p className="text-xs text-white/70">결제할 금액</p>
+          <p className="text-xs text-white/90">결제할 금액</p>
           {breakdown.depositAmount > 0 && (
-            <p className="text-[10px] text-white/50 mt-0.5">
+            <p className="text-[10px] text-white/70 mt-0.5">
               시술총액 {formatPrice(breakdown.subtotal + extrasTotal)} - 예약금 {formatPrice(breakdown.depositAmount)}
             </p>
           )}

@@ -786,7 +786,6 @@ export default function IntroDemoPage() {
                 ['1', '고객 정보', '고객명, 연락처, 참고 이미지 첨부', <UrlBadge key="c1" path="/consultation/customer" />],
                 ['2', '기본 조건', '시술 부위, 오프, 연장/리페어, 네일 쉐입', <UrlBadge key="c2" path="/consultation/step1" />],
                 ['3', '디자인 범위', '원컬러/단색+포인트/풀아트/이달의 아트', <UrlBadge key="c3" path="/consultation/step2" />],
-                ['4', '추가 옵션', '표현 기법, 파츠(장식), 추가 컬러', <UrlBadge key="c4" path="/consultation/step3" />],
                 ['✨', '네일 캔버스', '손가락별 개별 색상/아트/파츠 지정', <UrlBadge key="c5" path="/consultation/canvas" />],
                 ['✅', '최종 요약', '전체 상담 요약 + 가격 분해표 + 할인 적용', <UrlBadge key="c6" path="/consultation/summary" />],
               ]}
@@ -922,13 +921,13 @@ export default function IntroDemoPage() {
             <Table
               headers={['단계', '화면', '설정 내용', 'URL']}
               rows={[
-                ['1', '매장 정보', '매장 이름, 전화번호, 주소, 영업시간', <UrlBadge key="o1" path="/onboarding/shop-info" />],
-                ['2', '서비스 선택', '네일, 페디, 추가 서비스 카테고리', <UrlBadge key="o2" path="/onboarding/services" />],
-                ['3', '기본 가격', '핸드 기본가, 페디큐어, 오프 가격', <UrlBadge key="o3" path="/onboarding/pricing" />],
-                ['4', '추가금 설정', '그라데이션, 프렌치, 마그네틱, 아트 등', <UrlBadge key="o4" path="/onboarding/surcharges" />],
-                ['5', '시술 시간', '서비스별 평균 소요 시간', <UrlBadge key="o5" path="/onboarding/time" />],
-                ['6', '테마 선택', '9종 컬러 테마 중 선택', <UrlBadge key="o6" path="/onboarding/theme" />],
-                ['7', '완료', '설정 요약 확인 → 홈으로 이동', <UrlBadge key="o7" path="/onboarding/complete" />],
+                ['1', '기본 정보', '샵 이름, 연락처', <UrlBadge key="o1" path="/onboarding/shop-info" />],
+                ['2', '포트폴리오 업로드', '대표 디자인 사진 업로드', <UrlBadge key="o2" path="/onboarding/portfolio-upload" />],
+                ['3', '포트폴리오 정리', '스타일 분류 + 대표 디자인 선택', <UrlBadge key="o3" path="/onboarding/portfolio-classify" />],
+                ['4', '가격 & 시간', '카테고리별 가격/시간 설정', <UrlBadge key="o4" path="/onboarding/pricing" />],
+                ['5', '추가 비용', '제거/연장/추가옵션', <UrlBadge key="o5" path="/onboarding/surcharges" />],
+                ['6', '고객 안내 문구', '고객에게 보여질 안내 문구', <UrlBadge key="o6" path="/onboarding/notice" />],
+                ['7', '완료', '설정 완료 → 현장모드 시작', <UrlBadge key="o7" path="/onboarding/complete" />],
               ]}
               highlight
             />
@@ -971,10 +970,8 @@ export default function IntroDemoPage() {
                 ['고객 정보', <UrlBadge key="f2" path="/consultation/customer" />],
                 ['기본 조건', <UrlBadge key="f3" path="/consultation/step1" />],
                 ['디자인 범위', <UrlBadge key="f4" path="/consultation/step2" />],
-                ['추가 옵션', <UrlBadge key="f5" path="/consultation/step3" />],
                 ['네일 캔버스', <UrlBadge key="f6" path="/consultation/canvas" />],
                 ['최종 요약', <UrlBadge key="f7" path="/consultation/summary" />],
-                ['Pro 모드', <UrlBadge key="f8" path="/consultation/pro" />],
                 ['시술 확인서', <UrlBadge key="f9" path="/consultation/treatment-sheet" />],
                 ['저장 완료', <UrlBadge key="f10" path="/consultation/save-complete" />],
               ]}
@@ -984,12 +981,12 @@ export default function IntroDemoPage() {
             <Table
               headers={['화면', 'URL']}
               rows={[
-                ['매장 정보', <UrlBadge key="ob1" path="/onboarding/shop-info" />],
-                ['서비스 선택', <UrlBadge key="ob2" path="/onboarding/services" />],
-                ['기본 가격', <UrlBadge key="ob3" path="/onboarding/pricing" />],
-                ['추가금 설정', <UrlBadge key="ob4" path="/onboarding/surcharges" />],
-                ['시술 시간', <UrlBadge key="ob5" path="/onboarding/time" />],
-                ['테마 선택', <UrlBadge key="ob6" path="/onboarding/theme" />],
+                ['기본 정보', <UrlBadge key="ob1" path="/onboarding/shop-info" />],
+                ['포트폴리오 업로드', <UrlBadge key="ob2" path="/onboarding/portfolio-upload" />],
+                ['포트폴리오 정리', <UrlBadge key="ob3" path="/onboarding/portfolio-classify" />],
+                ['가격 & 시간', <UrlBadge key="ob4" path="/onboarding/pricing" />],
+                ['추가 비용', <UrlBadge key="ob5" path="/onboarding/surcharges" />],
+                ['고객 안내 문구', <UrlBadge key="ob6" path="/onboarding/notice" />],
                 ['완료', <UrlBadge key="ob7" path="/onboarding/complete" />],
               ]}
             />

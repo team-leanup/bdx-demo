@@ -26,6 +26,7 @@ const CHANNEL_BADGE_STYLE: Record<BookingChannel, { className: string; emoji: st
   naver: { className: 'bg-surface-alt text-text-secondary border-transparent', emoji: '🟢' },
   phone: { className: 'bg-surface-alt text-text-secondary border-transparent', emoji: '📞' },
   walk_in: { className: 'bg-surface-alt text-text-secondary border-transparent', emoji: '🚶' },
+  pre_consult: { className: 'bg-primary/10 text-primary border-transparent', emoji: '📋' },
 };
 
 const CHANNEL_I18N_KEY: Record<BookingChannel, string> = {
@@ -33,6 +34,7 @@ const CHANNEL_I18N_KEY: Record<BookingChannel, string> = {
   naver: 'channel.naver',
   phone: 'channel.phone',
   walk_in: 'channel.walkIn',
+  pre_consult: 'channel.preConsult',
 };
 
 const STATUS_BADGE_STYLE: Record<BookingStatus, string> = {

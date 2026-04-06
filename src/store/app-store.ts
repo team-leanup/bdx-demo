@@ -2,9 +2,12 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { ServiceStructure, SurchargeSettings, TimeSettings, BusinessHours, Shop } from '@/types/shop';
+import type { ServiceStructure, SurchargeSettings, TimeSettings, BusinessHours, Shop, CategoryPricingSettings } from '@/types/shop';
 import { dbUpdateShopSettings } from '@/lib/db';
 import { useAuthStore } from '@/store/auth-store';
+
+// Re-exported for backward compatibility with files that import CategoryPricing from this module
+export type { CategoryPricingSettings as CategoryPricing };
 
 interface ShopSettings {
   shopName: string;
@@ -24,7 +27,18 @@ interface ShopSettings {
   serviceStructure: ServiceStructure;
   surcharges: SurchargeSettings;
   timeSettings: TimeSettings;
+  customerNotice: string;
+  categoryPricing: CategoryPricingSettings;
+  kakaoTalkUrl: string;
+  naverReservationUrl: string;
 }
+
+const DEFAULT_CATEGORY_PRICING: CategoryPricingSettings = {
+  simple: { price: 50000, time: 60 },
+  french: { price: 55000, time: 70 },
+  magnet: { price: 60000, time: 80 },
+  art: { price: 70000, time: 90 },
+};
 
 const DEFAULT_SHOP_SETTINGS: ShopSettings = {
   shopName: '',
@@ -40,6 +54,10 @@ const DEFAULT_SHOP_SETTINGS: ShopSettings = {
   baseMonthlyArtPrice: 80000,
   designerCount: 1,
   selectedServices: [],
+  customerNotice: '선택하신 디자인을 기준으로 가격과 시간은 변동될 수 있어요',
+  categoryPricing: { ...DEFAULT_CATEGORY_PRICING },
+  kakaoTalkUrl: '',
+  naverReservationUrl: '',
   businessHours: [
     { dayOfWeek: 0, isOpen: false },
     { dayOfWeek: 1, isOpen: true, openTime: '10:00', closeTime: '20:00' },
@@ -122,6 +140,10 @@ export const useAppStore = create<AppStore>()(
             serviceStructure: next.serviceStructure,
             surcharges: next.surcharges,
             timeSettings: next.timeSettings,
+            customerNotice: next.customerNotice,
+            categoryPricing: next.categoryPricing,
+            kakaoTalkUrl: next.kakaoTalkUrl || undefined,
+            naverReservationUrl: next.naverReservationUrl || undefined,
           });
 
           if (!result.success) {
@@ -170,6 +192,12 @@ export const useAppStore = create<AppStore>()(
               timeSettings: s.timeSettings
                 ? { ...state.shopSettings.timeSettings, ...s.timeSettings }
                 : state.shopSettings.timeSettings,
+              customerNotice: s.customerNotice ?? state.shopSettings.customerNotice,
+              categoryPricing: s.categoryPricing
+                ? { ...state.shopSettings.categoryPricing, ...s.categoryPricing }
+                : state.shopSettings.categoryPricing,
+              kakaoTalkUrl: s.kakaoTalkUrl ?? state.shopSettings.kakaoTalkUrl,
+              naverReservationUrl: s.naverReservationUrl ?? state.shopSettings.naverReservationUrl,
             } : {}),
           },
         }));
@@ -211,6 +239,11 @@ export const useAppStore = create<AppStore>()(
             timeSettings: {
               ...DEFAULT_SHOP_SETTINGS.timeSettings,
               ...(p.shopSettings?.timeSettings ?? {}),
+            },
+            customerNotice: p.shopSettings?.customerNotice ?? DEFAULT_SHOP_SETTINGS.customerNotice,
+            categoryPricing: {
+              ...DEFAULT_CATEGORY_PRICING,
+              ...(p.shopSettings?.categoryPricing ?? {}),
             },
           },
         };

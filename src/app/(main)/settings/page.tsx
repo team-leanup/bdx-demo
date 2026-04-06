@@ -7,6 +7,7 @@ import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { IconShop, IconService, IconPalette, IconGear } from '@/components/icons';
 import { useAppStore } from '@/store/app-store';
+import type { CategoryPricingSettings } from '@/types/shop';
 import { useAuthStore } from '@/store/auth-store';
 import { usePartsStore } from '@/store/parts-store';
 import { useCustomerStore } from '@/store/customer-store';
@@ -1145,6 +1146,16 @@ function StorageManagementSection() {
 }
 
 
+function isValidBookingUrl(url: string): boolean {
+  if (!url) return true; // empty is ok
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
 export default function SettingsPage() {
   const router = useRouter();
   const t = useT();
@@ -1166,6 +1177,8 @@ export default function SettingsPage() {
   const [shopPhone, setShopPhone] = useState(shopSettings.shopPhone || shop?.phone || '');
   const [shopAddress, setShopAddress] = useState(shopSettings.shopAddress || shop?.address || '');
   const [shopAddressDetail, setShopAddressDetail] = useState(shopSettings.shopAddressDetail || '');
+  const [kakaoTalkUrl, setKakaoTalkUrl] = useState(shopSettings.kakaoTalkUrl || '');
+  const [naverReservationUrl, setNaverReservationUrl] = useState(shopSettings.naverReservationUrl || '');
 
   // 서비스 가격 인라인 편집
   const [editingPrices, setEditingPrices] = useState(false);
@@ -1202,6 +1215,9 @@ export default function SettingsPage() {
     fullArt: shopSettings.baseFullArtPrice ?? DEFAULT_BASE_PRICES.fullArt,
     monthlyArt: shopSettings.baseMonthlyArtPrice ?? DEFAULT_BASE_PRICES.monthlyArt,
   });
+
+  const [categoryPricingEdit, setCategoryPricingEdit] = useState<CategoryPricingSettings>(shopSettings.categoryPricing);
+  const [editingCategoryPricing, setEditingCategoryPricing] = useState(false);
 
   const handleSavePrices = () => {
     const hand = parseInt(priceHand, 10);
@@ -1243,6 +1259,16 @@ export default function SettingsPage() {
     setPriceFullArt(String(savedPrices.fullArt));
     setPriceMonthlyArt(String(savedPrices.monthlyArt));
     setEditingPrices(false);
+  };
+
+  const handleSaveCategoryPricing = () => {
+    void setShopSettings({ categoryPricing: categoryPricingEdit });
+    setEditingCategoryPricing(false);
+  };
+
+  const handleCancelCategoryPricing = () => {
+    setCategoryPricingEdit(shopSettings.categoryPricing);
+    setEditingCategoryPricing(false);
   };
 
   const handleSaveShop = async () => {
@@ -1410,6 +1436,45 @@ export default function SettingsPage() {
             </Card>
           </Section>
 
+          {/* 예약 채널 연결 */}
+          <Section title={t('settings.booking_channel')}>
+            <Card className="mx-4 md:mx-0">
+              <div className="flex flex-col gap-4">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-text-secondary">
+                    {t('settings.booking_kakao')}
+                  </label>
+                  <Input
+                    value={kakaoTalkUrl}
+                    onChange={(e) => setKakaoTalkUrl(e.target.value)}
+                    placeholder={t('settings.booking_kakaoPlaceholder')}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-text-secondary">
+                    {t('settings.booking_naver')}
+                  </label>
+                  <Input
+                    value={naverReservationUrl}
+                    onChange={(e) => setNaverReservationUrl(e.target.value)}
+                    placeholder={t('settings.booking_naverPlaceholder')}
+                  />
+                </div>
+                <p className="text-xs text-text-muted">{t('settings.booking_hint')}</p>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (kakaoTalkUrl && !isValidBookingUrl(kakaoTalkUrl)) return;
+                    if (naverReservationUrl && !isValidBookingUrl(naverReservationUrl)) return;
+                    void setShopSettings({ kakaoTalkUrl, naverReservationUrl });
+                  }}
+                >
+                  저장
+                </Button>
+              </div>
+            </Card>
+          </Section>
+
           {/* 선생님 관리 */}
           <StaffSection />
 
@@ -1525,6 +1590,89 @@ export default function SettingsPage() {
                 ))}
               </div>
             )}
+
+            <div className="my-3 border-t border-border" />
+
+            {/* 카테고리별 기본 가격 (미리 상담하기 / 현장모드) */}
+            <div className="mb-3 flex items-center justify-between">
+              <div>
+                <span className="text-sm font-medium text-text">카테고리별 기본 가격</span>
+                <p className="mt-0.5 text-[11px] text-text-muted">미리 상담하기 및 현장모드에서 사용되는 가격입니다</p>
+              </div>
+              {!editingCategoryPricing ? (
+                <button
+                  onClick={() => setEditingCategoryPricing(true)}
+                  className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-alt transition-colors"
+                >
+                  {t('settings.shop_edit')}
+                </button>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleCancelCategoryPricing}
+                    className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-alt transition-colors"
+                  >
+                    {t('common.cancel')}
+                  </button>
+                  <button
+                    onClick={handleSaveCategoryPricing}
+                    className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary/90 transition-colors"
+                  >
+                    {t('common.save')}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {(['simple', 'french', 'magnet', 'art'] as const).map((cat) => {
+              const catLabel = cat === 'simple' ? '심플' : cat === 'french' ? '프렌치' : cat === 'magnet' ? '마그네틱' : '아트';
+              return (
+                <div key={cat} className="flex items-center gap-2 mb-2">
+                  <span className="w-16 flex-shrink-0 text-sm text-text-secondary">{catLabel}</span>
+                  {editingCategoryPricing ? (
+                    <div className="flex flex-1 items-center gap-2">
+                      <div className="flex items-center gap-1 flex-1">
+                        <input
+                          type="number"
+                          value={categoryPricingEdit[cat].price}
+                          onChange={(e) =>
+                            setCategoryPricingEdit((prev) => ({
+                              ...prev,
+                              [cat]: { ...prev[cat], price: Number(e.target.value) },
+                            }))
+                          }
+                          min={0}
+                          step={1000}
+                          className="w-24 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-right text-text focus:outline-none focus:border-primary transition-colors"
+                        />
+                        <span className="text-xs text-text-muted">{t('home.stat_won')}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          value={categoryPricingEdit[cat].time}
+                          onChange={(e) =>
+                            setCategoryPricingEdit((prev) => ({
+                              ...prev,
+                              [cat]: { ...prev[cat], time: Number(e.target.value) },
+                            }))
+                          }
+                          min={0}
+                          step={10}
+                          className="w-16 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-right text-text focus:outline-none focus:border-primary transition-colors"
+                        />
+                        <span className="text-xs text-text-muted">분</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-1 items-center justify-between">
+                      <span className="text-sm font-medium text-text">{formatPrice(shopSettings.categoryPricing[cat].price)}</span>
+                      <span className="text-xs text-text-muted">{shopSettings.categoryPricing[cat].time}분</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
 
             <div className="my-3 border-t border-border" />
 

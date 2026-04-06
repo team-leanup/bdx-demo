@@ -7,16 +7,16 @@ import { AuthGuard } from '@/components/auth/AuthGuard';
 
 const STEPS = [
   { path: '/onboarding', label: '시작' },
-  { path: '/onboarding/shop-info', label: '매장 정보' },
-  { path: '/onboarding/services', label: '서비스' },
-  { path: '/onboarding/pricing', label: '기본 가격' },
-  { path: '/onboarding/surcharges', label: '추가금' },
-  { path: '/onboarding/time', label: '시술 시간' },
-  { path: '/onboarding/theme', label: '테마' },
+  { path: '/onboarding/shop-info', label: '기본 정보' },
+  { path: '/onboarding/portfolio-upload', label: '포트폴리오 업로드' },
+  { path: '/onboarding/portfolio-classify', label: '포트폴리오 정리' },
+  { path: '/onboarding/pricing', label: '가격 & 시간' },
+  { path: '/onboarding/surcharges', label: '추가 비용' },
+  { path: '/onboarding/notice', label: '안내 문구' },
   { path: '/onboarding/complete', label: '완료' },
 ];
 
-const TOTAL_STEPS = STEPS.length - 1; // 시작 페이지 제외, 7단계
+const TOTAL_STEPS = STEPS.length - 1; // 시작 페이지 제외, 7단계(6스텝 + 완료)
 
 export default function OnboardingLayout({
   children,

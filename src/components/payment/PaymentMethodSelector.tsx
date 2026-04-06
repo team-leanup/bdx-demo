@@ -23,7 +23,7 @@ export function PaymentMethodSelector({
   const membershipDisabled = membershipRemaining === 0;
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2" role="radiogroup" aria-label="결제수단 선택">
       {METHODS.map(({ key, label, icon }) => {
         const isMembership = key === 'membership';
         const isSelected = value === key;
@@ -33,17 +33,20 @@ export function PaymentMethodSelector({
           <button
             key={key}
             type="button"
+            role="radio"
+            aria-checked={isSelected}
+            aria-disabled={isDisabled}
             disabled={isDisabled}
             onClick={() => onChange(key)}
             className={cn(
               'relative flex-1 flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border text-sm font-semibold transition-all duration-200',
               isSelected
                 ? 'border-primary bg-primary/5 text-primary'
-                : 'border-border bg-surface text-text-secondary hover:border-gray-300',
-              isDisabled && 'opacity-50 pointer-events-none',
+                : 'border-border bg-surface text-text-secondary hover:border-text-muted/40',
+              isDisabled && 'opacity-50 cursor-not-allowed',
             )}
           >
-            <span className="text-xl leading-none">{icon}</span>
+            <span className="text-xl leading-none" aria-hidden="true">{icon}</span>
             <span className="text-xs font-bold">{label}</span>
 
             {isMembership && membershipRemaining !== undefined && membershipRemaining > 0 && (

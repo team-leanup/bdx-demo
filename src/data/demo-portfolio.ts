@@ -1,4 +1,23 @@
-import type { PortfolioPhoto } from '@/types/portfolio';
+import type { PortfolioPhoto, StyleCategory } from '@/types/portfolio';
+
+/** SVG 기반 데모 플레이스홀더 이미지 생성 */
+function makePlaceholder(label: string, bg: string, fg: string): string {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500" viewBox="0 0 400 500">
+    <rect width="400" height="500" rx="16" fill="${bg}"/>
+    <circle cx="200" cy="200" r="60" fill="${fg}" opacity="0.3"/>
+    <circle cx="200" cy="200" r="35" fill="${fg}" opacity="0.5"/>
+    <text x="200" y="350" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="bold" fill="${fg}">${label}</text>
+    <text x="200" y="380" text-anchor="middle" font-family="sans-serif" font-size="13" fill="${fg}" opacity="0.6">DEMO</text>
+  </svg>`;
+  return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+}
+
+const PALETTES: Record<StyleCategory, { bg: string; fg: string }> = {
+  simple: { bg: '#F5F0ED', fg: '#8B7262' },
+  french: { bg: '#FDF2F8', fg: '#EC4899' },
+  magnet: { bg: '#F3F0FF', fg: '#8B5CF6' },
+  art: { bg: '#FEF2F0', fg: '#F4845F' },
+};
 
 export const DEMO_PORTFOLIO_PHOTOS: PortfolioPhoto[] = [
   {
@@ -8,13 +27,16 @@ export const DEMO_PORTFOLIO_PHOTOS: PortfolioPhoto[] = [
     kind: 'treatment',
     createdAt: '2026-02-15T10:30:00+09:00',
     takenAt: '2026-02-15T10:30:00+09:00',
-    imageDataUrl: '',
+    imageDataUrl: makePlaceholder('글리터 그라데이션', PALETTES.art.bg, PALETTES.art.fg),
     tags: ['글리터', '파스텔'],
     colorLabels: ['핑크', '실버'],
     designType: '글리터 그라데이션',
     serviceType: '풀아트',
+    styleCategory: 'art',
+    isFeatured: true,
     price: 95000,
     note: '봄 웨딩 시즌 디자인',
+    isPublic: true,
   },
   {
     id: 'demo-photo-2',
@@ -23,13 +45,16 @@ export const DEMO_PORTFOLIO_PHOTOS: PortfolioPhoto[] = [
     kind: 'treatment',
     createdAt: '2026-02-10T14:00:00+09:00',
     takenAt: '2026-02-10T14:00:00+09:00',
-    imageDataUrl: '',
+    imageDataUrl: makePlaceholder('프렌치 팁', PALETTES.french.bg, PALETTES.french.fg),
     tags: ['프렌치', '심플'],
     colorLabels: ['화이트', '누드'],
     designType: '프렌치 팁',
     serviceType: '원컬러',
+    styleCategory: 'french',
+    isFeatured: true,
     price: 55000,
     note: '깔끔한 오피스 네일',
+    isPublic: true,
   },
   {
     id: 'demo-photo-3',
@@ -38,12 +63,15 @@ export const DEMO_PORTFOLIO_PHOTOS: PortfolioPhoto[] = [
     kind: 'reference',
     createdAt: '2026-02-08T11:00:00+09:00',
     takenAt: '2026-02-08T11:00:00+09:00',
-    imageDataUrl: '',
+    imageDataUrl: makePlaceholder('플라워 아트', PALETTES.art.bg, PALETTES.art.fg),
     tags: ['플라워', '봄'],
     colorLabels: ['핑크', '그린'],
     designType: '플라워 아트',
     serviceType: '풀아트',
+    styleCategory: 'art',
+    isFeatured: true,
     price: 110000,
+    isPublic: true,
   },
   {
     id: 'demo-photo-4',
@@ -52,13 +80,15 @@ export const DEMO_PORTFOLIO_PHOTOS: PortfolioPhoto[] = [
     kind: 'treatment',
     createdAt: '2026-01-28T16:00:00+09:00',
     takenAt: '2026-01-28T16:00:00+09:00',
-    imageDataUrl: '',
+    imageDataUrl: makePlaceholder('캐릭터 아트', '#EBF4FF', '#3182F6'),
     tags: ['캐릭터', '트렌디'],
     colorLabels: ['블루', '옐로'],
     designType: '캐릭터 아트',
     serviceType: '풀아트',
+    styleCategory: 'art',
     price: 120000,
     note: '인기 캐릭터 디자인',
+    isPublic: true,
   },
   {
     id: 'demo-photo-5',
@@ -67,12 +97,15 @@ export const DEMO_PORTFOLIO_PHOTOS: PortfolioPhoto[] = [
     kind: 'treatment',
     createdAt: '2026-01-20T13:30:00+09:00',
     takenAt: '2026-01-20T13:30:00+09:00',
-    imageDataUrl: '',
+    imageDataUrl: makePlaceholder('그라데이션', PALETTES.simple.bg, PALETTES.simple.fg),
     tags: ['그라데이션', '심플'],
     colorLabels: ['레드', '와인'],
     designType: '그라데이션',
     serviceType: '단색+포인트',
+    styleCategory: 'simple',
+    isFeatured: true,
     price: 70000,
+    isPublic: true,
   },
   {
     id: 'demo-photo-6',
@@ -81,13 +114,15 @@ export const DEMO_PORTFOLIO_PHOTOS: PortfolioPhoto[] = [
     kind: 'reference',
     createdAt: '2026-01-15T09:00:00+09:00',
     takenAt: '2026-01-15T09:00:00+09:00',
-    imageDataUrl: '',
+    imageDataUrl: makePlaceholder('마블 아트', '#1A1A2E', '#C9A96E'),
     tags: ['마블', '고급'],
     colorLabels: ['블랙', '골드'],
     designType: '마블 아트',
     serviceType: '풀아트',
+    styleCategory: 'art',
     price: 130000,
     note: '고급스러운 마블 패턴',
+    isPublic: true,
   },
   {
     id: 'demo-photo-7',
@@ -96,12 +131,14 @@ export const DEMO_PORTFOLIO_PHOTOS: PortfolioPhoto[] = [
     kind: 'treatment',
     createdAt: '2026-01-10T15:00:00+09:00',
     takenAt: '2026-01-10T15:00:00+09:00',
-    imageDataUrl: '',
+    imageDataUrl: makePlaceholder('젤리 네일', '#FDF2F8', '#F472B6'),
     tags: ['젤리', '투명'],
     colorLabels: ['투명', '핑크'],
     designType: '젤리 네일',
     serviceType: '이달의 아트',
+    styleCategory: 'simple',
     price: 85000,
+    isPublic: true,
   },
   {
     id: 'demo-photo-8',
@@ -110,12 +147,15 @@ export const DEMO_PORTFOLIO_PHOTOS: PortfolioPhoto[] = [
     kind: 'treatment',
     createdAt: '2026-01-05T11:30:00+09:00',
     takenAt: '2026-01-05T11:30:00+09:00',
-    imageDataUrl: '',
+    imageDataUrl: makePlaceholder('미러 네일', PALETTES.magnet.bg, PALETTES.magnet.fg),
     tags: ['미러', '메탈릭'],
     colorLabels: ['실버', '크롬'],
     designType: '미러 네일',
     serviceType: '단색+포인트',
+    styleCategory: 'magnet',
+    isFeatured: true,
     price: 75000,
     note: '트렌디한 미러 효과',
+    isPublic: true,
   },
 ];

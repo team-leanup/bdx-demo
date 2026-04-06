@@ -42,6 +42,7 @@ interface PortfolioStore {
 
   togglePhotoVisibility: (id: string) => void;
   updatePhoto: (id: string, updates: Partial<PortfolioPhoto>) => void;
+  setPhotos: (photos: PortfolioPhoto[]) => void;
 
   clearAll: () => Promise<{ success: boolean; error?: string }>;
 }
@@ -74,7 +75,7 @@ function readLegacyPortfolioPhotos(): PortfolioPhoto[] {
 
     return photos
       .filter(isPortfolioPhoto)
-      .filter((photo) => photo.imageDataUrl.startsWith('data:image/'));
+      .filter((photo) => photo.imageDataUrl.startsWith('data:image/') || !!photo.imagePath);
   } catch (error) {
     console.error('[portfolio-store] readLegacyPortfolioPhotos error:', error);
     return [];
@@ -104,11 +105,13 @@ export const usePortfolioStore = create<PortfolioStore>()(
         }
 
         if (currentShopId === 'shop-demo') {
-          // localStorage에 사진이 없으면 데모 데이터 주입
-          if (get().photos.length === 0) {
-            set({ photos: DEMO_PORTFOLIO_PHOTOS, _dbReady: true });
-          } else {
+          // 데모 모드: 유저가 온보딩에서 업로드한 사진이 있으면 유지
+          const current = get().photos;
+          const hasUserPhotos = current.some((p) => p.customerId === 'onboarding');
+          if (hasUserPhotos) {
             set({ _dbReady: true });
+          } else {
+            set({ photos: DEMO_PORTFOLIO_PHOTOS, _dbReady: true });
           }
           return;
         }
@@ -265,6 +268,10 @@ export const usePortfolioStore = create<PortfolioStore>()(
         set((state) => ({
           photos: state.photos.map((p) => (p.id === id ? { ...p, ...updates } : p)),
         }));
+      },
+
+      setPhotos: (photos) => {
+        set({ photos: sortPortfolioPhotos(photos) });
       },
 
       clearAll: async () => {

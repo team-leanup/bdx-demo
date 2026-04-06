@@ -1,112 +1,144 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { useAppStore } from '@/store/app-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useShopStore } from '@/store/shop-store';
-import { formatPrice, formatMinutes, getNowInKoreaIso } from '@/lib/format';
+import { useOnboardingPhotoStore } from '@/store/onboarding-photo-store';
+import { dbBatchInsertPortfolioPhotos } from '@/lib/db';
+import { usePortfolioStore } from '@/store/portfolio-store';
+import { getNowInKoreaIso } from '@/lib/format';
+import type { PortfolioPhoto } from '@/types/portfolio';
 
-const SERVICE_LABELS: Record<string, string> = {
-  gel: '젤네일',
-  acrylic: '아크릴',
-  art: '네일아트',
-  care: '케어',
-  remove: '제거',
-  pedi: '페디큐어',
-  extension: '연장',
-  repair: '리페어',
-  overlay: '오버레이',
-};
-
-interface SummaryRowProps {
-  icon: string;
-  label: string;
-  value: string;
-}
-
-function SummaryRow({ icon, label, value }: SummaryRowProps) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="text-base leading-none flex-shrink-0">{icon}</span>
-      <span className="text-sm text-text-secondary flex-1">{label}</span>
-      <span className="text-sm font-semibold text-text">{value}</span>
-    </div>
-  );
-}
+const FEATURES = [
+  {
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+        <path d="M3 9h18M9 21V9" />
+      </svg>
+    ),
+    title: '포트폴리오 등록 완료',
+    description: '등록된 디자인이 고객에게 바로 보여져요',
+  },
+  {
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="12" y1="1" x2="12" y2="23" />
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+      </svg>
+    ),
+    title: '가격표 설정 완료',
+    description: '고객이 가격을 미리 확인할 수 있어요',
+  },
+  {
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </svg>
+    ),
+    title: '안내 문구 설정 완료',
+    description: '고객에게 자동으로 안내돼요',
+  },
+];
 
 export default function CompletePage() {
   const router = useRouter();
-  const { shopSettings } = useAppStore();
+  const { shopSettings, setShopSettings } = useAppStore();
+  const currentShopId = useAuthStore((s) => s.currentShopId);
   const setCurrentShopOnboardingComplete = useAuthStore((s) => s.setCurrentShopOnboardingComplete);
   const updateShop = useShopStore((s) => s.updateShop);
+  const { photos, featuredIds, reset: resetPhotos } = useOnboardingPhotoStore();
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState(false);
 
-  // M-4: 이전 온보딩 스텝(샵명 입력)이 완료되지 않으면 온보딩 시작으로 리다이렉트
+  const { shopName, baseHandPrice, baseFootPrice } = shopSettings;
+
   useEffect(() => {
-    if (!shopSettings.shopName || shopSettings.shopName.trim() === '') {
+    if (!shopName || shopName.trim() === '') {
       router.replace('/onboarding');
     }
-  }, [shopSettings.shopName, router]);
+  }, [shopName, router]);
 
-  const {
-    shopName,
-    selectedServices,
-    baseHandPrice,
-    baseFootPrice,
-    surcharges,
-    serviceStructure,
-    timeSettings,
-  } = shopSettings;
+  const commitDB = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
 
-  const handleTour = async () => {
-    const onboardingCompletedAt = getNowInKoreaIso();
-    await updateShop({
-      name: shopName || '우리 샵',
-      phone: shopSettings.shopPhone || undefined,
-      address: shopSettings.shopAddress || undefined,
-      businessHours: shopSettings.businessHours,
-      baseHandPrice,
-      baseFootPrice,
-      onboardingCompletedAt,
-    });
-    setCurrentShopOnboardingComplete(true);
-    router.push('/home?tour=true');
+    try {
+      const onboardingCompletedAt = getNowInKoreaIso();
+
+      // 1. Shop 기본 정보 + 설정 저장
+      await updateShop({
+        name: shopName || '우리 샵',
+        phone: shopSettings.shopPhone || undefined,
+        address: shopSettings.shopAddress || undefined,
+        businessHours: shopSettings.businessHours,
+        baseHandPrice,
+        baseFootPrice,
+        onboardingCompletedAt,
+      });
+
+      // 2. categoryPricing + customerNotice DB 저장
+      await setShopSettings({
+        categoryPricing: shopSettings.categoryPricing,
+        customerNotice: shopSettings.customerNotice,
+        surcharges: shopSettings.surcharges,
+      });
+
+      // 3. 포트폴리오 사진 저장
+      if (photos.length > 0 && currentShopId) {
+        const portfolioPhotos: PortfolioPhoto[] = photos.map((p) => ({
+          id: p.id,
+          shopId: currentShopId,
+          customerId: 'onboarding',
+          kind: 'reference' as const,
+          createdAt: onboardingCompletedAt,
+          imageDataUrl: p.dataUrl,
+          styleCategory: p.category,
+          isFeatured: featuredIds.includes(p.id),
+          isPublic: true,
+        }));
+
+        if (currentShopId === 'shop-demo') {
+          // 데모 모드: 포트폴리오 스토어에 직접 저장
+          usePortfolioStore.getState().setPhotos(portfolioPhotos);
+        } else {
+          // 실제 모드: Supabase Storage + DB 업로드
+          await dbBatchInsertPortfolioPhotos(portfolioPhotos);
+        }
+      }
+
+      setCurrentShopOnboardingComplete(true);
+      resetPhotos();
+    } catch {
+      setError(true);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePreview = async () => {
+    await commitDB();
+    if (!error) router.push(currentShopId ? `/pre-consult/${currentShopId}` : '/home');
   };
 
   const handleHome = async () => {
-    const onboardingCompletedAt = getNowInKoreaIso();
-    await updateShop({
-      name: shopName || '우리 샵',
-      phone: shopSettings.shopPhone || undefined,
-      address: shopSettings.shopAddress || undefined,
-      businessHours: shopSettings.businessHours,
-      baseHandPrice,
-      baseFootPrice,
-      onboardingCompletedAt,
-    });
-    setCurrentShopOnboardingComplete(true);
-    router.push('/home');
+    await commitDB();
+    if (!error) router.push('/home');
   };
 
-  // Active surcharges (non-zero)
-  const activeSurcharges: { label: string; value: number }[] = [
-    ...(surcharges.selfRemoval > 0 ? [{ label: '자샵오프', value: surcharges.selfRemoval }] : []),
-    ...(surcharges.otherRemoval > 0 ? [{ label: '타샵오프', value: surcharges.otherRemoval }] : []),
-    ...(serviceStructure.gradation && surcharges.gradation > 0 ? [{ label: '그라데이션', value: surcharges.gradation }] : []),
-    ...(serviceStructure.french && surcharges.french > 0 ? [{ label: '프렌치', value: surcharges.french }] : []),
-    ...(serviceStructure.magnet && surcharges.magnet > 0 ? [{ label: '마그네틱', value: surcharges.magnet }] : []),
-    ...(serviceStructure.pointFullArt && surcharges.pointArt > 0 ? [{ label: '포인트아트', value: surcharges.pointArt }] : []),
-    ...(serviceStructure.pointFullArt && surcharges.fullArt > 0 ? [{ label: '풀아트', value: surcharges.fullArt }] : []),
-    ...(serviceStructure.repair && surcharges.repairPer > 0 ? [{ label: '리페어/개', value: surcharges.repairPer }] : []),
-    ...(serviceStructure.overlay && surcharges.overlay > 0 ? [{ label: '오버레이', value: surcharges.overlay }] : []),
-  ];
+  const handleFieldMode = async () => {
+    await commitDB();
+    if (!error) router.push('/field-mode');
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] px-8 py-12 max-w-2xl mx-auto w-full">
+    <div className="flex flex-col items-center justify-center min-h-[calc(100dvh-112px)] px-5 py-12 max-w-xl mx-auto w-full">
       {/* Checkmark animation */}
-      <div className="relative flex items-center justify-center mb-8">
+      <div className="relative flex items-center justify-center mb-10">
         {[1, 2, 3].map((i) => (
           <motion.div
             key={i}
@@ -145,77 +177,77 @@ export default function CompletePage() {
         </motion.div>
       </div>
 
+      {/* Title */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="flex flex-col items-center text-center gap-5 w-full"
+        transition={{ duration: 0.45, delay: 0.35 }}
+        className="text-center mb-8"
       >
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl md:text-3xl font-bold text-text">설정이 완료되었습니다!</h1>
-          <p className="text-base text-text-secondary">이제 BDX를 시작할 준비가 되었어요.</p>
-        </div>
+        <h1 className="text-2xl font-bold text-text mb-2">이제 상담이 훨씬 쉬워질 거예요</h1>
+        <p className="text-sm text-text-secondary">고객이 직접 고르고, 더 빠르게 결정하게 됩니다</p>
+      </motion.div>
 
-        {/* Summary card */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.45 }}
-          className="w-full rounded-2xl border border-border bg-surface p-4 flex flex-col gap-4 text-left"
-        >
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">설정 요약</p>
-
-          {/* 매장명 */}
-          <SummaryRow icon="🏪" label="매장명" value={shopName || '미입력'} />
-
-          {/* 선택 서비스 */}
-          <div className="flex items-start gap-3">
-            <span className="text-base leading-none flex-shrink-0 mt-0.5">💅</span>
-            <span className="text-sm text-text-secondary flex-shrink-0">선택 서비스</span>
-            <div className="flex flex-wrap gap-1.5 ml-auto justify-end">
-              {(selectedServices.length > 0 ? selectedServices : ['gel']).map((id) => (
-                <span
-                  key={id}
-                  className="text-xs font-medium px-2 py-0.5 rounded-full border border-border bg-background text-text-secondary"
-                >
-                  {SERVICE_LABELS[id] ?? id}
-                </span>
-              ))}
+      {/* Feature highlights */}
+      <div className="w-full flex flex-col gap-3 mb-10">
+        {FEATURES.map((feature, i) => (
+          <motion.div
+            key={feature.title}
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.35, delay: 0.5 + i * 0.1 }}
+            className="flex items-center gap-4 rounded-2xl border border-border bg-surface px-4 py-3.5"
+          >
+            {/* Icon container */}
+            <div
+              className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{ backgroundColor: 'var(--color-primary-light, color-mix(in srgb, var(--color-primary) 12%, transparent))' }}
+            >
+              <span style={{ color: 'var(--color-primary)' }}>{feature.icon}</span>
             </div>
-          </div>
 
-          <div className="h-px bg-border" />
+            {/* Text */}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-text">{feature.title}</p>
+              <p className="text-xs text-text-secondary mt-0.5">{feature.description}</p>
+            </div>
 
-          {/* 기본가 */}
-          <SummaryRow icon="💰" label="핸드 기본가" value={formatPrice(baseHandPrice)} />
-          <SummaryRow icon="🦶" label="페디큐어 기본가" value={formatPrice(baseFootPrice)} />
+            {/* Check badge */}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.65 + i * 0.1 }}
+              className="flex-shrink-0 w-5 h-5 rounded-full bg-primary flex items-center justify-center"
+            >
+              <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                <path d="M1 4L4 7L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </motion.div>
+          </motion.div>
+        ))}
+      </div>
 
-          {/* 활성 추가금 */}
-          {activeSurcharges.length > 0 && (
-            <>
-              <div className="h-px bg-border" />
-              <p className="text-xs font-semibold text-text-muted">활성 추가금</p>
-              {activeSurcharges.map(({ label, value }) => (
-                <SummaryRow key={label} icon="➕" label={label} value={formatPrice(value)} />
-              ))}
-            </>
-          )}
+      {/* Error message */}
+      {error && (
+        <p className="text-sm text-error text-center mb-4">저장 중 오류가 발생했어요. 다시 시도해 주세요.</p>
+      )}
 
-          <div className="h-px bg-border" />
-
-          {/* 기본 시술 시간 */}
-          <SummaryRow icon="⏱️" label="기본 시술 시간" value={formatMinutes(timeSettings.baseHand)} />
-        </motion.div>
-
-        {/* Action buttons */}
-        <div className="w-full flex flex-col gap-3 mt-2">
-          <Button size="lg" fullWidth onClick={handleTour}>
-            앱 둘러보기
-          </Button>
-          <Button size="lg" fullWidth variant="secondary" onClick={handleHome}>
-            홈으로 이동
-          </Button>
-        </div>
+      {/* CTAs */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.85 }}
+        className="w-full flex flex-col gap-3"
+      >
+        <Button size="lg" fullWidth onClick={handleFieldMode} disabled={isSaving}>
+          {isSaving ? '저장 중...' : '현장모드 시작'}
+        </Button>
+        <Button size="lg" fullWidth variant="secondary" onClick={handlePreview} disabled={isSaving}>
+          고객 화면 미리보기
+        </Button>
+        <Button size="lg" fullWidth variant="ghost" onClick={handleHome} disabled={isSaving}>
+          홈으로
+        </Button>
       </motion.div>
     </div>
   );

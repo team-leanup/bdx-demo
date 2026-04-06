@@ -51,7 +51,7 @@ export default function SummaryPage() {
   const shopSettings = useAppStore((s) => s.shopSettings);
   const shopPricing = useMemo(() => buildServicePricingFromShopSettings(shopSettings), [shopSettings]);
   const breakdown = useMemo(() => calculatePrice(consultation, shopPricing), [consultation, shopPricing]);
-  const adjustedFinalPrice = breakdown.finalPrice + additionalCharge;
+  const adjustedFinalPrice = Math.max(0, breakdown.finalPrice + additionalCharge);
   const addRecord = useRecordsStore((s) => s.addRecord);
   const addPhoto = usePortfolioStore((s) => s.addPhoto);
   const createCustomer = useCustomerStore((s) => s.createCustomer);
@@ -179,6 +179,18 @@ export default function SummaryPage() {
     };
 
     if (isCustomerLinkFlow && bookingId && isExternalCustomerLinkFlow) {
+      // 신규 고객이면 DB에 먼저 저장 (FK 제약)
+      if (createdCustomer) {
+        const upsertResult = await dbUpsertCustomer(createdCustomer).catch((err) => {
+          console.error(err);
+          return { success: false } as const;
+        });
+        if (!upsertResult || !upsertResult.success) {
+          pushToast('error', '고객 데이터 저장에 실패했어요. 다시 시도해주세요');
+          setSaving(false);
+          return;
+        }
+      }
       // C-1: 외부 customer_link 레코드도 로컬 스토어에 저장
       await addRecord(savedRecord);
       const preconsultationResult = await dbCompletePreconsultationBooking(
@@ -229,9 +241,27 @@ export default function SummaryPage() {
         preConsultationData: consultationSnapshot,
         customerId,
       });
-    } else {
-      sessionStorage.setItem(`bdx-saved-record-${newId}`, JSON.stringify(savedRecord));
 
+      if (customerId && consultation.referenceImages?.length) {
+        await Promise.all(consultation.referenceImages.map(async (imageUrl) => {
+          if (!imageUrl.startsWith('data:image/')) return;
+          await addPhoto({
+            customerId,
+            recordId: newId,
+            kind: 'reference',
+            imageDataUrl: imageUrl,
+            takenAt: now,
+            tags: consultation.selectedTraitValues,
+            serviceType: DESIGN_SCOPE_LABEL[consultation.designScope] ?? consultation.designScope,
+            designType: consultation.expressions
+              .filter((expression) => expression !== 'solid')
+              .map((expression) => EXPRESSION_LABEL[expression] ?? expression)
+              .join(', ') || undefined,
+            price: adjustedFinalPrice,
+          });
+        }));
+      }
+    } else {
       await addRecord(savedRecord);
 
       if (bookingId) {
@@ -526,8 +556,8 @@ export default function SummaryPage() {
                   setStep(ConsultationStep.CUSTOMER_INFO);
                   router.push('/consultation/customer');
                 } else {
-                  setStep(ConsultationStep.TRAITS);
-                  router.push('/consultation/traits');
+                  setStep(ConsultationStep.STEP2_DESIGN);
+                  router.push('/consultation/step2');
                 }
               }}
               className="flex-1 gap-1.5"

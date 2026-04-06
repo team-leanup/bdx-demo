@@ -3,7 +3,6 @@ export enum ConsultationStep {
   CUSTOMER_INFO = 'customer_info',
   STEP1_BASIC = 'step1_basic',
   STEP2_DESIGN = 'step2_design',
-  STEP3_OPTIONS = 'step3_options', // deprecated: removed from flow
   TRAITS = 'traits',
   CANVAS = 'canvas',
   SUMMARY = 'summary',
@@ -118,13 +117,17 @@ export interface ConsultationType {
 
   entryPoint?: 'staff' | 'customer_link' | 'return_visit';
 
+  // pre-consult 데이터 호환 필드 (JSONB에서 PreConsultationData가 저장될 때 포함)
+  selectedPhotoUrl?: string;
+  selectedPhotoId?: string;
+
   // 현재 단계
   currentStep: ConsultationStep;
 }
 
 export type PaymentMethod = 'cash' | 'card' | 'membership';
 
-export type BookingChannel = 'kakao' | 'naver' | 'phone' | 'walk_in';
+export type BookingChannel = 'kakao' | 'naver' | 'phone' | 'walk_in' | 'pre_consult';
 export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled'; // 'confirmed', 'cancelled': 현재 UI에서 미사용
 
 export interface BookingRequest {
@@ -183,4 +186,5 @@ export interface ConsultationRecord {
   checklist?: DailyChecklist;
   paymentMethod?: PaymentMethod;
   isQuickSale?: boolean;
+  shareCardId?: string;
 }

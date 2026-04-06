@@ -13,6 +13,7 @@ const CHANNEL_COLORS: Record<BookingChannel, string> = {
   naver: 'bg-green-500',
   phone: 'bg-blue-400',
   walk_in: 'bg-text-muted',
+  pre_consult: 'bg-primary',
 };
 
 interface WeekCalendarProps {

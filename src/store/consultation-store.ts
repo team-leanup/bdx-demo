@@ -292,6 +292,13 @@ export const useConsultationStore = create<ConsultationStore>()(
           removeItem: () => {},
         }
       ),
+      partialize: (state) => {
+        const { referenceImages: _, ...rest } = state.consultation;
+        return {
+          ...state,
+          consultation: { ...rest, referenceImages: [] },
+        };
+      },
     },
   ),
 );

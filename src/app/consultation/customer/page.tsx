@@ -227,8 +227,8 @@ function CustomerPageInner(): React.ReactElement {
       router.push('/consultation/summary');
       return;
     }
-    setStep(ConsultationStep.STEP1_BASIC);
-    router.push('/consultation/step1');
+    setStep(ConsultationStep.SUMMARY);
+    router.push('/consultation/summary');
   };
 
   const canProceed = name.trim().length > 0;
@@ -243,7 +243,7 @@ function CustomerPageInner(): React.ReactElement {
   };
 
   const stepNumber = 3;
-  const backHref = '/consultation/step2';
+  const backHref = consultation.entryPoint === 'return_visit' ? '/consultation' : '/consultation/step2';
   const customerLinkParams = new URLSearchParams();
   customerLinkParams.set('entry', 'customer-link');
   if (prefillShopId) customerLinkParams.set('shopId', prefillShopId);

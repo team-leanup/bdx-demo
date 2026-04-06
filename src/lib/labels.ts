@@ -19,6 +19,13 @@ export const EXPRESSION_LABEL: Record<string, string> = {
   magnetic: '마그네틱/캣아이',
 };
 
+export const CATEGORY_LABELS: Record<string, string> = {
+  simple: '심플',
+  french: '프렌치',
+  magnet: '자석',
+  art: '아트',
+};
+
 export const OFF_TYPE_LABEL: Record<string, string> = {
   none: '없음',
   same_shop: '자샵오프',

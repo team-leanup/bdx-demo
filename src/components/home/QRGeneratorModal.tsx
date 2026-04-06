@@ -11,8 +11,6 @@ interface QRGeneratorModalProps {
   shopName?: string;
 }
 
-const CONSULTATION_URL_PATH = '/consultation?entry=customer-link';
-
 export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGeneratorModalProps): React.ReactElement | null {
   const [copied, setCopied] = useState(false);
   // L-4: SSR hydration mismatch 방지를 위해 초기값에서 즉시 설정
@@ -26,9 +24,9 @@ export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGenera
     }
   }, []);
 
-  const consultationUrl = origin
-    ? `${origin}${CONSULTATION_URL_PATH}${shopId ? `&shopId=${shopId}` : ''}${shopName ? `&shopName=${encodeURIComponent(shopName)}` : ''}`
-    : CONSULTATION_URL_PATH;
+  // 미리 정하기 링크: /pre-consult/[shopId]
+  const preConsultPath = shopId ? `/pre-consult/${shopId}` : '/pre-consult';
+  const consultationUrl = origin ? `${origin}${preConsultPath}` : preConsultPath;
 
   const handleCopy = async () => {
     try {
@@ -79,8 +77,8 @@ export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGenera
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-border">
               <div>
-                <h2 className="text-base font-bold text-text">상담 링크 QR</h2>
-                <p className="text-xs text-text-muted mt-0.5">고객이 스캔하면 사전 상담을 시작해요</p>
+                <h2 className="text-base font-bold text-text">미리 정하기 QR</h2>
+                <p className="text-xs text-text-muted mt-0.5">고객이 스캔하면 디자인을 미리 선택할 수 있어요</p>
               </div>
               <button
                 type="button"

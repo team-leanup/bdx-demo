@@ -56,6 +56,14 @@ const FIXED_DISCOUNT_PRESETS = [3000, 5000, 10000, 20000] as const;
 const PERCENT_DISCOUNT_PRESETS = [5, 10, 15, 20] as const;
 const DEPOSIT_PRESETS = [0, 10000, 20000, 30000, 50000] as const;
 
+const QUICK_ADD_PRESETS = [
+  { label: '파츠', amount: 2000 },
+  { label: '글리터', amount: 3000 },
+  { label: '포인트', amount: 5000 },
+  { label: '연장 추가', amount: 10000 },
+  { label: '기타', amount: 0 },
+] as const;
+
 function SegmentControl<T extends string>({
   options,
   value,
@@ -594,6 +602,30 @@ export default function TreatmentSheetPage() {
                 )}
               </div>
 
+              {!isPriceFinalized && (
+                <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+                  {QUICK_ADD_PRESETS.map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => {
+                        setExtras(prev => [...prev, {
+                          id: `extra-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                          label: preset.label === '기타' ? '' : preset.label,
+                          amount: preset.amount,
+                        }]);
+                      }}
+                      className="flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-alt text-text-secondary border border-border hover:border-primary/40 hover:text-primary transition-all active:scale-[0.97]"
+                    >
+                      {preset.label}
+                      {preset.amount > 0 && (
+                        <span className="ml-1 text-primary">+{(preset.amount / 1000).toFixed(0)}k</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {extras.length === 0 && !isPriceFinalized && (
                 <p className="text-xs text-text-muted py-2">추가 비용이 있으면 항목으로 더해주세요</p>
               )}
@@ -819,7 +851,7 @@ export default function TreatmentSheetPage() {
         )}
         <button
           onClick={handleComplete}
-          disabled={isFinalSaving}
+          disabled={isFinalSaving || !isPriceFinalized}
           className="w-full py-3.5 rounded-xl font-bold text-sm text-white transition-all active:scale-[0.98] disabled:opacity-60"
           style={{ background: 'var(--color-primary)' }}
         >

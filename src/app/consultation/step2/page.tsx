@@ -119,7 +119,7 @@ export default function Step2Page() {
             </div>
             <div>
               <p className="text-[11px] font-bold text-primary uppercase tracking-widest mb-0.5">
-                STEP 3
+                STEP 2
               </p>
               <h2 className="text-lg font-bold text-text">
                 {t('consultation.treatmentType.title')}

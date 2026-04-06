@@ -58,6 +58,18 @@ export interface Designer {
   pin?: string;
 }
 
+export interface CategoryPricingItem {
+  price: number;
+  time: number;
+}
+
+export interface CategoryPricingSettings {
+  simple: CategoryPricingItem;
+  french: CategoryPricingItem;
+  magnet: CategoryPricingItem;
+  art: CategoryPricingItem;
+}
+
 export interface ShopExtendedSettings {
   addressDetail?: string;
   baseOffSameShop?: number;
@@ -70,6 +82,10 @@ export interface ShopExtendedSettings {
   serviceStructure?: ServiceStructure;
   surcharges?: SurchargeSettings;
   timeSettings?: TimeSettings;
+  customerNotice?: string;
+  categoryPricing?: CategoryPricingSettings;
+  kakaoTalkUrl?: string;
+  naverReservationUrl?: string;
 }
 
 export interface Shop {

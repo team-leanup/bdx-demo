@@ -1,7 +1,7 @@
 # BDX 기능 상세 명세 (Feature Detail)
 
 > 각 기능의 개요, 인터뷰 근거, 기술 설계, 히스토리를 기록
-> 최종 업데이트: 2026-03-15
+> 최종 업데이트: 2026-04-03
 
 ---
 
@@ -609,3 +609,98 @@ BDX를 "상담 시스템"에서 **"고객 관리 CRM + 시술 기록 시스템"*
 | 날짜 | 내용 |
 |------|------|
 | 2026-03-17 | `agent-browser` 세션 오염으로 인한 QA 오탐을 줄이기 위해 `docs/qa-agent-browser.md`, `scripts/agent-browser.mjs`, `pnpm qa:agent:*` 실행 스크립트를 추가하고 세션 네이밍/종료 규칙을 문서화 |
+
+---
+
+## 19. 미리 정하기 (Pre-Consult)
+
+### 개요
+고객이 사전 링크를 받아 비로그인으로 혼자 디자인/옵션을 미리 선택하는 퍼블릭 플로우. 매장 방문 시 사전 선택 내용을 바탕으로 더 빠른 시술 진행 가능.
+
+### 인터뷰 근거
+- 외국인 고객은 사전에 원하는 디자인을 정하고 싶어함
+- 매장에서의 상담 시간 단축 요구
+- "복잡한 상담"이 아닌 자연스러운 선택 플로우 필요
+- 가격 불투명성 해소 (초반 범위 → 마지막 확정)
+
+### 기술 설계
+
+#### 라우트 구조
+```
+src/app/pre-consult/[shopId]/
+├── layout.tsx          Server: shopId 검증 + Client wrapper
+├── page.tsx            STEP 0: 시작 화면
+├── not-found.tsx       잘못된 shopId
+├── design/page.tsx     STEP 1: 카테고리 → 디자인 이미지 → 예상 가격대
+├── consult/page.tsx    STEP 2: 분기형 섹션 reveal (8개 섹션)
+├── confirm/page.tsx    STEP 3: 요약 → 확정 가격 → 예약 입력
+└── complete/page.tsx   STEP 4: 완료
+```
+
+#### 핵심 컴포넌트 (17개)
+- `PreConsultProgressBar`: pathname 기반 진행률 바
+- `CategoryPicker`: 4개 카테고리 2×2 그리드
+- `DesignGallery`: 포트폴리오 필터링 + 안심 문구
+- `PriceRangeHint`: 예상 가격/시간 표시
+- `ReferenceUpload`: Supabase Storage 이미지 업로드
+- `NailStatusSelector`: 현재 네일 상태 + 분기 (자샵/타샵)
+- `LengthSelector`: 길이 선택 + 분기 (연장 길이)
+- `ShapePickerSimple`: 4종 손톱 모양 SVG
+- `VibeSelector`: 디자인 느낌 4종
+- `StyleSelector`: 단일 선택 + 복수 키워드
+- `AdditionalOptions`: 추가 옵션 토글 + 인라인 가격
+- `ConsultReview`: 전체 요약 + 수정/확정
+- `FatigueMessage`: 격려 문구 (30%/60%/80% 지점)
+
+#### DB
+- `pre_consultations` 테이블 (UUID PK, JSONB data, 상태/가격/시간)
+- `pre-consult-refs` Supabase Storage 버킷
+
+#### 상태 관리
+- `pre-consult-store.ts` (Zustand + localStorage persist)
+- `pre-consult-price.ts` (가격 계산 순수 함수)
+
+#### i18n
+- `preConsult` 네임스페이스 ko/en/zh/ja (90키×4언어)
+
+### 히스토리
+| 날짜 | 내용 |
+|------|------|
+| 2026-04-03 | 전체 구현 완료: 타입(T-01~02), DB(T-03~04), 스토어/가격(T-05~06), DB함수(T-07), i18n(T-08~09), 레이아웃+STEP0(T-10~13), STEP1(T-14~17), STEP2(T-18~26), STEP3(T-27), STEP4(T-28). 빌드/타입체크/린트 통과 |
+
+---
+
+## 23. 시술 후 결제 UX (STEP 6~11)
+
+### 개요
+시술 확인서(treatment-sheet) 가격 확정 이후 → 결제 → 고객등록 → 사진저장 → 포트폴리오 연결까지의 전체 후처리 플로우.
+
+핵심 원칙: 시술 전 = 기준 합의(예상가), 시술 후 = 최종 정산(확정가). 정산 화면은 "계산 화면"이 아닌 "정리 화면".
+
+### 기술 설계
+| 파일 | 역할 |
+|------|------|
+| `src/lib/price-utils.ts` | `buildBreakdownFromRecord()` — record.pricingAdjustments → PriceBreakdown 변환 |
+| `src/app/(main)/payment/page.tsx` | 5섹션 순차 스크롤: 시술정리 → 결제수단 → 고객등록(조건부) → 사진저장 → 완료 |
+| `src/app/consultation/treatment-sheet/page.tsx` | Quick Add Chips 5종 추가 (파츠/글리터/포인트아트/연장/기타) |
+
+### 재사용 컴포넌트
+- `PaymentMethodSelector` (결제수단 3종)
+- `PaymentSummary` + `PriceBreakdown` (금액 내역)
+- `portfolioStore.addPhoto()` (시술 사진 → 포트폴리오)
+- `customerStore.useMembershipSession()` (회원권 차감)
+
+### 데이터 플로우
+```
+treatment-sheet "결제하기" → /payment?recordId=xxx
+  Section 1: record.pricingAdjustments → buildBreakdownFromRecord → PaymentSummary
+  Section 2: paymentMethod 선택 → updateRecord + 고객통계 갱신
+  Section 3: (워크인 신규) 전화→이름→생성 3단계 매칭 → updateRecord
+  Section 4: FileReader → portfolioStore.addPhoto(kind='treatment') → record.imageUrls
+  Section 5: consultation reset → /home 또는 /records
+```
+
+### 히스토리
+| 날짜 | 내용 |
+|------|------|
+| 2026-04-03 | 전체 구현: /payment 5섹션 페이지, price-utils.ts, Quick Add Chips, 고객매칭, 사진저장, 포트폴리오 연결 |

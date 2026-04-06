@@ -527,6 +527,73 @@
 
 ---
 
+## 22. 미리 정하기 (Pre-Consult) — 고객 사전 선택 퍼블릭 플로우
+
+> 핵심: 고객이 사전 링크를 받아 **혼자 미리 디자인/옵션을 선택**하는 비로그인 플로우
+
+### 22.1 🟢 타입 정의 (`src/types/pre-consultation.ts`)
+- **완료**: PreConsultStep, DesignCategory, NailCurrentStatus 등 10종 union type + 4개 인터페이스 (PreConsultationData, PreConsultationType, PreConsultPriceEstimate, ShopPublicData)
+
+### 22.2 🟢 BookingChannel 확장
+- **완료**: `BookingChannel`에 `'pre_consult'` 추가, 관련 exhaustive Record 3곳 수정
+
+### 22.3 🟢 DB 마이그레이션 + Storage
+- **완료**: `pre_consultations` 테이블 SQL 작성 (3개 인덱스), `pre-consult-refs` 버킷 설정 문서화
+- **참고**: Supabase MCP 토큰 만료로 수동 적용 필요 (`supabase/migrations/20260403_create_pre_consultations.sql`)
+
+### 22.4 🟢 Zustand 스토어 (`src/store/pre-consult-store.ts`)
+- **완료**: localStorage persist (key: `bdx-pre-consult`), shopData/portfolioPhotos 제외 partialize, 전체 상태+액션 구현
+
+### 22.5 🟢 가격 계산 (`src/lib/pre-consult-price.ts`)
+- **완료**: 카테고리 기본가 + 제거/연장/추가옵션 서차지 계산, min/max 가격 + 예상 시간
+
+### 22.6 🟢 DB 함수 (`src/lib/db.ts` 확장)
+- **완료**: fetchShopPublicData, fetchPublicPortfolioPhotos, dbCreate/Update/CompletePreConsultation, uploadPreConsultImage 6개 함수
+
+### 22.7 🟢 i18n 4개 언어 (`src/lib/i18n.ts`)
+- **완료**: `preConsult` 네임스페이스 ko/en/zh/ja 90키×4언어 추가
+
+### 22.8 🟢 레이아웃 + STEP 0 시작
+- **완료**: Server+Client layout, PreConsultProgressBar, 시작 페이지 (샵 이름 + 언어 선택 + 시작 버튼), not-found 페이지
+
+### 22.9 🟢 STEP 1 디자인 선택
+- **완료**: CategoryPicker (2×2 그리드), DesignGallery (포트폴리오 필터 + 안심 문구), PriceRangeHint (예상 가격/시간), design/page.tsx (순차 reveal)
+
+### 22.10 🟢 STEP 2 스마트 상담
+- **완료**: ReferenceUpload, NailStatusSelector(+분기), LengthSelector(+분기), ShapePickerSimple, VibeSelector, StyleSelector(단일+복수), AdditionalOptions, ConsultReview, FatigueMessage, consult/page.tsx (8개 섹션 순차 reveal + 피로 관리 문구)
+
+### 22.11 🟢 STEP 3 확정 + 예약
+- **완료**: 4개 섹션 (최종 요약, 확정 가격 breakdown, 방문 안내, 예약 폼), DB 저장 + 라우팅
+
+### 22.12 🟢 STEP 4 완료
+- **완료**: 체크 애니메이션, 자동 저장 안내, 5초 후 스토어 리셋
+
+---
+
+## 23. 시술 후 결제 UX (STEP 6~11)
+
+> treatment-sheet → /payment 결제 → 고객등록 → 사진저장 → 포트폴리오 연결
+
+### 23.1 🟢 `/payment` 페이지 전면 재구현
+- **완료**: 기존 redirect → 5섹션 순차 스크롤 페이지 전환. Section 1(시술 정리), Section 2(결제수단), Section 3(고객등록 조건부), Section 4(사진 저장), Section 5(완료)
+
+### 23.2 🟢 `PriceBreakdown` 빌드 유틸
+- **완료**: `src/lib/price-utils.ts` — `buildBreakdownFromRecord()` 함수. record.pricingAdjustments → PriceBreakdown 변환
+
+### 23.3 🟢 고객 매칭 + 통계 갱신
+- **완료**: 전화→이름→신규 생성 3단계 매칭 패턴 (records-store 패턴 재사용). visitCount/totalSpend/averageSpend/treatmentHistory 자동 갱신
+
+### 23.4 🟢 사진 저장 + 포트폴리오 자동 연결
+- **완료**: 카메라/갤러리 입력, FileReader data URL, portfolioStore.addPhoto(kind='treatment', isPublic=false), record.imageUrls + customer.treatmentHistory.imageUrls 업데이트
+
+### 23.5 🟢 treatment-sheet Quick Add Chips (STEP 6)
+- **완료**: extras 섹션 상단 가로 스크롤 프리셋 버튼 5종 (파츠 +2k, 글리터 +3k, 포인트 아트 +5k, 연장 추가 +10k, 기타). isPriceFinalized 시 숨김
+
+### 23.6 🟢 회원권 결제 연동
+- **완료**: PaymentMethodSelector membership 잔여 횟수 표시, useMembershipSession 호출, dbInsertMembershipTransaction 연동
+
+---
+
 ## 진행 요약
 
 | 영역 | 항목수 | 🟢 | 🟡 | 🔵 | ⬜ |
@@ -551,4 +618,6 @@
 | **반응형 최적화** | **11** | **11** | **0** | **0** | **0** |
 | **BDX 2.0 MVP** | **20** | **20** | **0** | **0** | **0** |
 | **종합 QA (N-1~30)** | **30** | **22** | **0** | **0** | **8** |
-| **합계** | **129** | **104** | **0** | **2** | **21** |
+| **미리 정하기** | **12** | **12** | **0** | **0** | **0** |
+| **시술 후 결제 UX** | **6** | **6** | **0** | **0** | **0** |
+| **합계** | **147** | **122** | **0** | **2** | **21** |

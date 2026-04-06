@@ -115,14 +115,13 @@
 
 | 스텝 | 경로 | 입력 내용 |
 |------|------|----------|
-| 1 | `/onboarding/shop-info` | 샵명, 주소, 연락처, 로고 |
-| 2 | `/onboarding/services` | 제공 서비스 선택 (젤, 아크릴, 아트 등) |
-| 3 | `/onboarding/pricing` | 서비스별 기본 가격표 |
-| 4 | `/onboarding/surcharges` | 추가금 설정 (연장, 오프, 파츠 등급별) |
-| 5 | `/onboarding/time` | 영업 시간, 휴무일 |
-| 6 | `/onboarding/theme` | 앱 테마 선택 |
-| 7 | `/onboarding/guide` | 사용 가이드 |
-| 완료 | `/onboarding/complete` | 설정 요약 → `/home` |
+| 1 | `/onboarding/shop-info` | 샵 이름, 연락처 |
+| 2 | `/onboarding/portfolio-upload` | 대표 디자인 사진 업로드 |
+| 3 | `/onboarding/portfolio-classify` | 스타일 분류 + 대표 디자인 선택 |
+| 4 | `/onboarding/pricing` | 카테고리별 가격/시간 설정 |
+| 5 | `/onboarding/surcharges` | 제거/연장/추가옵션 |
+| 6 | `/onboarding/notice` | 고객 안내 문구 |
+| 완료 | `/onboarding/complete` | 설정 완료 → 현장모드 시작 |
 
 ---
 

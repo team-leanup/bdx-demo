@@ -1,4 +1,9 @@
+import type { DesignCategory } from '@/types/pre-consultation';
+
 export type PortfolioPhotoKind = 'reference' | 'treatment';
+
+// StyleCategory is identical to DesignCategory; unified under DesignCategory
+export type { DesignCategory as StyleCategory };
 
 export interface PortfolioPhoto {
   id: string;
@@ -15,6 +20,8 @@ export interface PortfolioPhoto {
   colorLabels?: string[];
   designType?: string;
   serviceType?: string;
+  styleCategory?: DesignCategory;
   price?: number;
   isPublic?: boolean;
+  isFeatured?: boolean;
 }
