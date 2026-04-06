@@ -414,6 +414,20 @@ export function TodayReservationCard({
                       )}
                     </div>
                   </div>
+                  {/* 고객 상세 보기 — 항상 표시 */}
+                  {booking.customerId && (
+                    <div className="pl-14 pt-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/customers/${booking.customerId}`);
+                        }}
+                        className="text-xs font-semibold text-primary hover:underline"
+                      >
+                        상세 보기 →
+                      </button>
+                    </div>
+                  )}
                 </motion.div>
 
                 {/* 인라인 고객 미리보기 아코디언 (기존 고객 전용) */}
@@ -452,16 +466,6 @@ export function TodayReservationCard({
                           {latestMemo && (
                             <p className="text-xs text-text-muted line-clamp-1 mb-2">💬 {latestMemo.noteText}</p>
                           )}
-                          {/* 상세 보기 링크 */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push(`/customers/${booking.customerId}`);
-                            }}
-                            className="text-xs font-semibold text-primary hover:underline"
-                          >
-                            상세 보기 →
-                          </button>
                         </div>
                       </motion.div>
                     );
