@@ -107,6 +107,8 @@ export function PreferenceEditor({ customerId: _customerId, preference, onSave, 
   const [editing, setEditing] = useState(initialEditMode || initialEditing);
   const [draft, setDraft] = useState<PreferenceData>({ ...preference });
 
+  const isEmpty = !preference?.shape && !preference?.length && !preference?.thickness;
+
   const handleSave = () => {
     onSave(draft);
     setEditing(false);
@@ -168,13 +170,24 @@ export function PreferenceEditor({ customerId: _customerId, preference, onSave, 
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-text-secondary">선호도 프로필</h3>
         {!editing && (
-          <button
-            onClick={() => setEditing(true)}
-            className="text-xs font-medium transition-colors hover:opacity-80"
-            style={{ color: 'var(--color-primary)' }}
-          >
-            편집
-          </button>
+          isEmpty ? (
+            <button
+              onClick={() => setEditing(true)}
+              className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
+            >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              프로필 설정
+            </button>
+          ) : (
+            <button
+              onClick={() => setEditing(true)}
+              className="rounded-full bg-surface-alt border border-border px-3 py-1.5 text-xs font-semibold text-text-secondary hover:bg-border transition-colors"
+            >
+              편집
+            </button>
+          )
         )}
       </div>
 

@@ -23,7 +23,7 @@ import { useCustomerStore } from '@/store/customer-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useRecordsStore } from '@/store/records-store';
 import { PretreatmentAlertModal } from '@/components/alerts/PretreatmentAlertModal';
-import { LinkCustomerModal } from '@/components/reservations/LinkCustomerModal';
+
 import ConsultationLinkModal from '@/components/reservations/ConsultationLinkModal';
 import { getSafetyTagMeta } from '@/lib/tag-safety';
 import { getBookingStage } from '@/lib/booking-stage';
@@ -116,7 +116,6 @@ export function TodayReservationCard({
 
   const [alertBooking, setAlertBooking] = useState<BookingRequest | null>(null);
   const [alertTags, setAlertTags] = useState<CustomerTag[]>([]);
-  const [linkModalBooking, setLinkModalBooking] = useState<BookingRequest | null>(null);
   const [linkGenBooking, setLinkGenBooking] = useState<BookingRequest | null>(null);
   const [previewBooking, setPreviewBooking] = useState<BookingRequest | null>(null);
   const [expandedBookingId, setExpandedBookingId] = useState<string | null>(null);
@@ -301,17 +300,6 @@ export function TodayReservationCard({
                           ))}
                         </div>
                       )}
-                      {!booking.customerId && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setLinkModalBooking(booking);
-                          }}
-                          className="self-start text-left text-[11px] text-primary font-medium hover:underline py-1.5 px-1"
-                        >
-                          고객 카드 연결
-                        </button>
-                      )}
                       {booking.requestNote && (
                         <p className="text-xs text-text-muted line-clamp-2 whitespace-pre-line">{booking.requestNote.replace(/\.\s*/g, '.\n')}</p>
                       )}
@@ -492,16 +480,6 @@ export function TodayReservationCard({
         onQuickSale={handleAlertQuickSale}
         customerName={alertBooking?.customerName ?? ''}
         pinnedTags={alertTags}
-      />
-
-      <LinkCustomerModal
-        isOpen={linkModalBooking !== null}
-        onClose={() => setLinkModalBooking(null)}
-        reservationId={linkModalBooking?.id ?? ''}
-        reservationName={linkModalBooking?.customerName ?? ''}
-        reservationPhone={linkModalBooking?.phone}
-        reservationLanguage={linkModalBooking?.language}
-        reservationDesignerId={linkModalBooking?.designerId}
       />
 
       <ConsultationLinkModal

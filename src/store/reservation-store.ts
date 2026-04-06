@@ -7,6 +7,7 @@ import { useCustomerStore } from '@/store/customer-store';
 import {
   fetchBookingRequests,
   dbUpsertReservation,
+  dbUpsertCustomer,
   dbDeleteReservation,
 } from '@/lib/db';
 import { getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
@@ -47,6 +48,7 @@ export const useReservationStore = create<ReservationStore>()(
 
         // 고객 자동 생성/연결: 예약에 customerId가 없으면 이름/전화로 매칭 또는 신규 생성
         let resolvedCustomerId = reservation.customerId;
+        let newlyCreatedCustomer: import('@/types/customer').Customer | null = null;
         if (!resolvedCustomerId && reservation.customerName) {
           const customerStore = useCustomerStore.getState();
           // 전화번호로 먼저 매칭
@@ -67,13 +69,14 @@ export const useReservationStore = create<ReservationStore>()(
                 assignedDesignerId: reservation.designerId,
               });
               resolvedCustomerId = newCustomer.id;
+              newlyCreatedCustomer = newCustomer;
             }
           }
         }
 
         const newEntry: BookingRequest = {
           ...reservation,
-          id: `booking-${Date.now()}`,
+          id: `booking-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           shopId: currentShopId,
           customerId: resolvedCustomerId,
           status: 'pending' as const,
@@ -82,7 +85,11 @@ export const useReservationStore = create<ReservationStore>()(
         set((state) => ({
           reservations: [...state.reservations, newEntry],
         }));
-        dbUpsertReservation(newEntry).catch(console.error);
+        // 신규 고객 생성 시: DB에 고객 먼저 저장 → 예약 저장 (FK 충돌 방지)
+        const dbSync = newlyCreatedCustomer
+          ? dbUpsertCustomer(newlyCreatedCustomer).then(() => dbUpsertReservation(newEntry))
+          : dbUpsertReservation(newEntry);
+        dbSync.catch(console.error);
       },
 
       updateReservation: (id, updates) => {
@@ -160,6 +167,10 @@ export const useReservationStore = create<ReservationStore>()(
               removeItem: () => {},
             },
       ),
+      partialize: (state) => {
+        const { _dbReady: _, ...rest } = state;
+        return rest;
+      },
     },
   ),
 );

@@ -656,7 +656,15 @@ function CustomerDetailContent({ id }: { id: string }) {
       <Card className="mx-4 shadow-md rounded-2xl">
         <h2 className="mb-3 text-sm font-semibold text-text-secondary">특이사항</h2>
         {pinnedTags.length === 0 ? (
-          <p className="text-sm text-text-muted">특이사항 없음</p>
+          <button
+            onClick={handleStartTagEdit}
+            className="flex items-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-xs text-text-muted hover:border-primary hover:text-primary transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            태그에서 상단 고정으로 추가
+          </button>
         ) : (
           <div className="flex flex-wrap gap-2">
             {pinnedTags.map((tag) => {
@@ -701,13 +709,26 @@ function CustomerDetailContent({ id }: { id: string }) {
               </button>
             </div>
           ) : (
-            <button
-              type="button"
-              className="text-xs font-semibold text-primary"
-              onClick={handleStartTagEdit}
-            >
-              편집
-            </button>
+            localTags.length === 0 ? (
+              <button
+                type="button"
+                className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
+                onClick={handleStartTagEdit}
+              >
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                태그 추가
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="rounded-full bg-surface-alt border border-border px-3 py-1.5 text-xs font-semibold text-text-secondary hover:bg-border transition-colors"
+                onClick={handleStartTagEdit}
+              >
+                편집
+              </button>
+            )
           )}
         </div>
 
