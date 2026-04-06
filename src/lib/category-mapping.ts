@@ -25,6 +25,7 @@ export function designScopeToCategory(scope: DesignScope): DesignCategory {
 
 /** 포트폴리오 service_type → style_category 매핑 */
 const SERVICE_TYPE_TO_CATEGORY: Record<string, DesignCategory> = {
+  // 한국어 레이블
   '원컬러': 'simple',
   '그라데이션': 'simple',
   '마그네틱': 'magnet',
@@ -34,6 +35,11 @@ const SERVICE_TYPE_TO_CATEGORY: Record<string, DesignCategory> = {
   '아트': 'art',
   '풀아트': 'art',
   '포인트아트': 'art',
+  // 카테고리 값 자체 (service_type에 잘못 저장된 경우 안전장치)
+  'simple': 'simple',
+  'french': 'french',
+  'magnet': 'magnet',
+  'art': 'art',
 };
 
 export function serviceTypeToCategory(serviceType: string | null | undefined): DesignCategory | null {
