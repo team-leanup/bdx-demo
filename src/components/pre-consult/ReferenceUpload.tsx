@@ -27,17 +27,21 @@ export function ReferenceUpload({ onComplete }: ReferenceUploadProps): React.Rea
 
   const [uploading, setUploading] = useState(false);
 
-  // 예약 시 첨부한 참고 이미지 자동 채우기
+  // 예약 시 첨부한 참고 이미지 자동 채우기 (1회)
+  const prefilled = useRef(false);
   useEffect(() => {
-    if (!bookingId || referenceImageUrls.length > 0) return;
+    if (prefilled.current || !bookingId) return;
+    prefilled.current = true;
     fetchBookingRequestById(bookingId, shopId).then((booking) => {
       if (booking?.referenceImageUrls) {
+        const store = usePreConsultStore.getState();
+        if (store.referenceImageUrls.length > 0) return;
         for (const url of booking.referenceImageUrls) {
-          addReferenceImageUrl(url);
+          usePreConsultStore.getState().addReferenceImageUrl(url);
         }
       }
     });
-  }, [bookingId, shopId, referenceImageUrls.length, addReferenceImageUrl]);
+  }, [bookingId, shopId]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
