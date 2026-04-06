@@ -77,12 +77,13 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
   const [formDate, setFormDate] = useState(initialValues?.date ?? today);
   const [formTime, setFormTime] = useState(initialValues?.time ?? '');
   const [formChannel, setFormChannel] = useState<BookingChannel>(
-    naverMode ? 'naver' : (initialValues?.channel ?? 'kakao'),
+    naverMode ? 'naver' : (initialValues?.channel ?? 'naver'),
   );
   const [formNote, setFormNote] = useState('');
   const [formLanguage, setFormLanguage] = useState<Locale>('ko');
   const [formImages, setFormImages] = useState<string[]>([]);
-  const [formDesignerId, setFormDesignerId] = useState(initialValues?.designerId ?? '');
+  const ownerDesigner = designers.find((d) => d.role === 'owner' && d.isActive);
+  const [formDesignerId, setFormDesignerId] = useState(initialValues?.designerId ?? ownerDesigner?.id ?? '');
   const [serviceLabel, setServiceLabel] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);

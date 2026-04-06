@@ -382,17 +382,12 @@ export function TodayReservationCard({
                           상담 링크 보내기
                         </button>
                       ) : stage === 'link_sent' ? (
-                        <>
-                          <span className="rounded-lg bg-amber-100 px-2.5 py-2.5 text-[11px] font-semibold text-amber-700">
-                            응답 대기
-                          </span>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleStartClick(booking); }}
-                            className="rounded-lg bg-primary px-3 py-2.5 text-xs font-semibold text-white active:scale-95 transition-transform"
-                          >
-                            상담 시작
-                          </button>
-                        </>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStartClick(booking); }}
+                          className="rounded-lg bg-primary px-3 py-2.5 text-xs font-semibold text-white active:scale-95 transition-transform"
+                        >
+                          상담 시작
+                        </button>
                       ) : stage === 'pre_consult_done' ? (
                         <>
                           <button

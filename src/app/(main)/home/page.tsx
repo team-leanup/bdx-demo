@@ -19,11 +19,9 @@ import {
   TodayReservationCard,
   RecentConsultationCard,
   TodayStatsCard,
-  QuickActions,
   ReservationForm,
   RevisitReminderCard,
 } from '@/components/home';
-import { QRGeneratorModal } from '@/components/home/QRGeneratorModal';
 import { PreConsultationNotificationCenter } from '@/components/home/PreConsultationNotificationCenter';
 import { Modal } from '@/components/ui';
 import { useT } from '@/lib/i18n';
@@ -36,12 +34,6 @@ import {
   getTodayInKorea,
   toKoreanDateString,
 } from '@/lib/format';
-import {
-  IconUsers,
-  IconCalendar,
-  IconChart,
-  IconGear,
-} from '@/components/icons';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -63,7 +55,6 @@ export default function HomePage() {
   const t = useT();
   const [showTour, setShowTour] = useState(false);
   const [showReservationModal, setShowReservationModal] = useState(false);
-  const [showQRModal, setShowQRModal] = useState(false);
   const [showNotificationCenter, setShowNotificationCenter] = useState(false);
   const { shopSettings } = useAppStore();
   const { activeDesignerName, role, currentShopId } = useAuthStore();
@@ -239,12 +230,6 @@ export default function HomePage() {
       : t('home.greeting_evening'));
   }, [t]);
 
-  const quickActions = [
-    { label: t('home.quickAction_customers'), icon: IconUsers, href: '/customers' },
-    { label: t('home.quickAction_schedule'), icon: IconCalendar, href: '/records' },
-    { label: t('home.quickAction_dashboard'), icon: IconChart, href: '/dashboard' },
-    { label: t('home.quickAction_settings'), icon: IconGear, href: '/settings' },
-  ];
 
   return (
     <motion.div
@@ -320,9 +305,6 @@ export default function HomePage() {
         onStartConsultation={() => router.push('/field-mode')}
         onNewReservation={() => setShowReservationModal(true)}
         onQuickSale={() => router.push('/quick-sale')}
-        onGenerateQR={currentShopId ? () => setShowQRModal(true) : undefined}
-        shopId={currentShopId ?? undefined}
-        shopName={shopName}
         consultationLabel="현장 시술"
         consultationTitle="디자인 고르기"
         consultationSubtitle="포트폴리오에서 디자인 고르기"
@@ -330,15 +312,7 @@ export default function HomePage() {
         reservationTitle={t('home.cta_newReservation')}
         quickSaleLabel="매출"
         quickSaleTitle="즉시 매출"
-        qrLabel={t('home.generateQR')}
         itemVariants={itemVariants}
-      />
-
-      <QRGeneratorModal
-        isOpen={showQRModal}
-        onClose={() => setShowQRModal(false)}
-        shopId={currentShopId ?? undefined}
-        shopName={shopName}
       />
 
       <RecentConsultationCard
@@ -355,11 +329,6 @@ export default function HomePage() {
         itemVariants={itemVariants}
       />
 
-      <QuickActions
-        actions={quickActions}
-        onNavigate={(href) => router.push(href)}
-        itemVariants={itemVariants}
-      />
     </motion.div>
   );
 }
