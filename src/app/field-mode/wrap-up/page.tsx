@@ -100,6 +100,8 @@ export default function WrapUpPage(): React.ReactElement {
   const [isGoingHome, setIsGoingHome] = useState(false);
   const [skipped, setSkipped] = useState(false);
   const [showShareCard, setShowShareCard] = useState(false);
+  const [photosSaved, setPhotosSaved] = useState(false);
+  const [isSavingPhotos, setIsSavingPhotos] = useState(false);
 
   const shopName = useAppStore((s) => s.shopSettings.shopName);
   const shopId = useAuthStore((s) => s.currentShopId ?? '');
@@ -210,19 +212,18 @@ export default function WrapUpPage(): React.ReactElement {
     setSkipped(true);
   }, []);
 
-  const handleGoHome = useCallback(async (): Promise<void> => {
-    setIsGoingHome(true);
+  const CATEGORY_LABEL: Record<string, string> = {
+    simple: '심플',
+    french: '프렌치',
+    magnet: '자석',
+    art: '아트',
+  };
 
+  const savePhotosToPortfolio = useCallback(async (): Promise<void> => {
+    if (afterPhotoUrls.length === 0 || photosSaved) return;
+    setIsSavingPhotos(true);
     try {
-      const CATEGORY_LABEL: Record<string, string> = {
-        simple: '심플',
-        french: '프렌치',
-        magnet: '자석',
-        art: '아트',
-      };
       const rec = recordId ? useRecordsStore.getState().getRecordById(recordId) : null;
-
-      // Save photos to portfolio
       for (const dataUrl of afterPhotoUrls) {
         await addPhoto({
           customerId: customerId ?? '',
@@ -234,6 +235,20 @@ export default function WrapUpPage(): React.ReactElement {
           price: rec?.finalPrice,
           serviceType: selectedCategory ? CATEGORY_LABEL[selectedCategory] : undefined,
         });
+      }
+      setPhotosSaved(true);
+    } finally {
+      setIsSavingPhotos(false);
+    }
+  }, [afterPhotoUrls, addPhoto, customerId, recordId, selectedCategory, photosSaved, CATEGORY_LABEL]);
+
+  const handleGoHome = useCallback(async (): Promise<void> => {
+    setIsGoingHome(true);
+
+    try {
+      // 아직 사진이 저장되지 않았으면 저장
+      if (!photosSaved && afterPhotoUrls.length > 0) {
+        await savePhotosToPortfolio();
       }
 
       // Ensure record has customerId
@@ -251,7 +266,7 @@ export default function WrapUpPage(): React.ReactElement {
     } catch {
       setIsGoingHome(false);
     }
-  }, [afterPhotoUrls, addPhoto, customerId, recordId, selectedCategory, reset, router, hydrateRecordsFromDB]);
+  }, [afterPhotoUrls, photosSaved, savePhotosToPortfolio, reset, router, hydrateRecordsFromDB]);
 
   // ─── Redirect if no record ───────────────────────────────────────────────────
   if (!hasRecord) {
@@ -397,6 +412,19 @@ export default function WrapUpPage(): React.ReactElement {
           onRemove={removeAfterPhoto}
           maxPhotos={3}
         />
+        {afterPhotoUrls.length > 0 && (
+          <Button
+            variant={photosSaved ? 'ghost' : 'primary'}
+            size="md"
+            fullWidth
+            onClick={() => { void savePhotosToPortfolio(); }}
+            loading={isSavingPhotos}
+            disabled={photosSaved}
+            className="min-h-[44px]"
+          >
+            {photosSaved ? '✓ 포트폴리오에 저장됨' : '포트폴리오에 저장'}
+          </Button>
+        )}
       </motion.section>
 
       {/* Section 3: Auto data checklist */}
@@ -452,11 +480,20 @@ export default function WrapUpPage(): React.ReactElement {
             consultation: currentRecord.consultation,
             shareCardId: currentRecord.shareCardId,
           }}
-          portfolioPhotos={portfolioPhotos.map((p) => ({
-            id: p.id,
-            imageDataUrl: p.imageDataUrl,
-            imagePath: p.imagePath,
-          }))}
+          portfolioPhotos={[
+            ...portfolioPhotos.map((p) => ({
+              id: p.id,
+              imageDataUrl: p.imageDataUrl,
+              imagePath: p.imagePath,
+            })),
+            ...afterPhotoUrls
+              .filter((url) => !portfolioPhotos.some((p) => p.imageDataUrl === url))
+              .map((url, i) => ({
+                id: `after-photo-${i}`,
+                imageDataUrl: url,
+                imagePath: null,
+              })),
+          ]}
           shopName={shopName}
         />
       )}
