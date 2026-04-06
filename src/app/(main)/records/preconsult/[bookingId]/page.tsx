@@ -8,375 +8,286 @@ import { useReservationStore } from '@/store/reservation-store';
 import { useConsultationStore } from '@/store/consultation-store';
 import { useLocaleStore } from '@/store/locale-store';
 import { ConsultationStep } from '@/types/consultation';
-import { DESIGN_SCOPE_LABEL, EXPRESSION_LABEL } from '@/lib/labels';
-import { toKoreanDateString, toKoreanTimeString } from '@/lib/format';
+import { useFieldModeStore } from '@/store/field-mode-store';
+import { toKoreanDateString } from '@/lib/format';
+import { calculatePreConsultPrice } from '@/lib/pre-consult-price';
+import { formatPrice } from '@/lib/format';
+import { useAppStore } from '@/store/app-store';
+import type { PreConsultationData, DesignCategory } from '@/types/pre-consultation';
 
-// ───────── 레이블 매핑 ─────────
-const BODY_PART_LABEL: Record<string, string> = { hand: '핸드', foot: '풋' };
-const OFF_TYPE_LABEL: Record<string, string> = {
-  none: '없음',
-  same_shop: '당샵 오프',
-  other_shop: '타샵 오프',
+// ───────── PreConsultationData 전용 레이블 ─────────
+const CATEGORY_LABEL: Record<string, string> = {
+  simple: '심플 (원컬러·그라데이션)',
+  french: '프렌치',
+  magnet: '자석 (캣아이·자석젤)',
+  art: '아트 (풀아트·포인트)',
 };
-const EXTENSION_LABEL: Record<string, string> = {
-  none: '없음',
-  repair: '리페어',
-  extension: '연장',
-};
+const NAIL_STATUS_LABEL: Record<string, string> = { none: '맨손', existing: '기존 젤 있음' };
+const REMOVAL_LABEL: Record<string, string> = { none: '오프 없음', self_shop: '당샵 오프', other_shop: '타샵 오프' };
+const LENGTH_PREF_LABEL: Record<string, string> = { keep: '현재 유지', shorten: '짧게', extend: '연장' };
+const EXTENSION_LEN_LABEL: Record<string, string> = { natural: '자연스러운 길이', medium: '중간', long: '길게' };
 const SHAPE_LABEL: Record<string, string> = {
-  round: '라운드',
-  oval: '오벌',
-  square: '스퀘어',
-  squoval: '스퀘오벌',
-  almond: '아몬드',
-  stiletto: '스틸레토',
-  coffin: '코핀',
+  round: '라운드', oval: '오벌', square: '스퀘어', squoval: '스퀘오벌',
+  almond: '아몬드', stiletto: '스틸레토', coffin: '코핀',
 };
-const CHANNEL_LABEL: Record<string, string> = {
-  kakao: '카카오',
-  naver: '네이버',
-  phone: '전화',
-  walk_in: '워크인',
-  pre_consult: '사전상담',
+const FEEL_LABEL: Record<string, string> = { natural: '내추럴', french: '프렌치', trendy: '트렌디', fancy: '화려한' };
+const STYLE_PREF_LABEL: Record<string, string> = { photo_match: '사진과 동일하게', natural_fit: '자연스럽게', clean_subtle: '깔끔하게' };
+const STYLE_KW_LABEL: Record<string, string> = {
+  office_friendly: '오피스 룩', slim_fingers: '손가락 길어보이게',
+  tidy_look: '단정한 느낌', subtle_point: '은은한 포인트', more_fancy: '좀 더 화려하게',
 };
+const ADDON_LABEL: Record<string, string> = { stone: '스톤', parts: '파츠', glitter: '글리터', point_art: '포인트 아트' };
 
 // ───────── 서브 컴포넌트 ─────────
-
-interface InfoRowProps {
-  label: string;
-  value: string;
-}
-
-function InfoRow({ label, value }: InfoRowProps): React.ReactElement {
+function SectionCard({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }): React.ReactElement {
   return (
-    <div className="flex items-center justify-between py-2">
-      <span className="text-sm text-text-muted">{label}</span>
-      <span className="text-sm font-medium text-text">{value}</span>
+    <div className="rounded-2xl bg-surface border border-border p-4">
+      <h3 className="flex items-center gap-2 text-sm font-bold text-text mb-3">
+        <span>{icon}</span> {title}
+      </h3>
+      <div className="flex flex-col gap-2">{children}</div>
     </div>
   );
 }
 
-interface SectionCardProps {
-  icon: string;
-  title: string;
-  children: React.ReactNode;
+function InfoRow({ label, value }: { label: string; value?: string }): React.ReactElement | null {
+  if (!value) return null;
+  return (
+    <div className="flex justify-between text-xs">
+      <span className="text-text-muted">{label}</span>
+      <span className="font-medium text-text">{value}</span>
+    </div>
+  );
 }
 
-function SectionCard({ icon, title, children }: SectionCardProps): React.ReactElement {
+function TagList({ tags, labelMap }: { tags: string[]; labelMap: Record<string, string> }): React.ReactElement {
   return (
-    <div className="rounded-2xl bg-surface border border-border p-4 space-y-1">
-      <div className="flex items-center gap-1.5 mb-3">
-        <span className="text-base">{icon}</span>
-        <h3 className="text-sm font-bold text-text">{title}</h3>
-      </div>
-      <div className="divide-y divide-border/60">{children}</div>
+    <div className="flex flex-wrap gap-1.5">
+      {tags.map((tag) => (
+        <span key={tag} className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
+          {labelMap[tag] ?? tag}
+        </span>
+      ))}
     </div>
   );
 }
 
 // ───────── 메인 페이지 ─────────
-
-interface Props {
-  params: Promise<{ bookingId: string }>;
-}
-
-export default function PreConsultDetailPage({ params }: Props): React.ReactElement {
+export default function PreConsultDetailPage({ params }: { params: Promise<{ bookingId: string }> }): React.ReactElement {
   const { bookingId } = use(params);
   const router = useRouter();
-
-  const reservations = useReservationStore((s) => s.reservations);
-  const booking = reservations.find((r) => r.id === bookingId);
-
+  const booking = useReservationStore((s) => s.reservations.find((r) => r.id === bookingId));
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
+  const hydrateFromBooking = useFieldModeStore((s) => s.hydrateFromBooking);
   const setConsultationLocale = useLocaleStore((s) => s.setConsultationLocale);
-
+  const shopSettings = useAppStore((s) => s.shopSettings);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
-  // booking 없으면 records로 리다이렉트
   if (!booking) {
-    router.replace('/records');
     return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <p className="text-text-muted text-sm">예약을 찾을 수 없습니다</p>
+      <div className="flex flex-col items-center justify-center min-h-[60dvh] gap-4 px-4">
+        <p className="text-text-muted">예약을 찾을 수 없습니다</p>
+        <button onClick={() => router.replace('/records')} className="rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white">
+          기록으로 돌아가기
+        </button>
       </div>
     );
   }
 
-  const data = booking.preConsultationData;
-  const images: string[] = data?.referenceImages ?? booking.referenceImageUrls ?? [];
+  const raw = booking.preConsultationData as unknown as PreConsultationData | undefined;
+  const images = raw?.referenceImageUrls?.length
+    ? raw.referenceImageUrls
+    : (booking.referenceImageUrls ?? []);
+  // selectedPhotoUrl도 이미지에 포함
+  if (raw?.selectedPhotoUrl && !images.includes(raw.selectedPhotoUrl)) {
+    images.unshift(raw.selectedPhotoUrl);
+  }
+
+  // 가격 계산
+  const categoryPricing = shopSettings?.categoryPricing;
+  const surcharges = shopSettings?.surcharges;
+  const priceEstimate = raw?.designCategory && categoryPricing && surcharges
+    ? calculatePreConsultPrice({
+        designCategory: raw.designCategory,
+        removalPreference: raw.removalPreference ?? 'none',
+        lengthPreference: raw.lengthPreference ?? 'keep',
+        addOns: raw.addOns ?? [],
+        categoryPricing,
+        surcharges,
+      })
+    : null;
 
   const handleStartConsultation = (): void => {
     if (booking.language && ['ko', 'en', 'zh', 'ja'].includes(booking.language)) {
-      setConsultationLocale(booking.language as 'ko' | 'en' | 'zh' | 'ja');
+      setConsultationLocale(booking.language);
     }
     hydrateConsultation({
-      ...data,
+      ...booking.preConsultationData,
       bookingId: booking.id,
       customerName: booking.customerName,
       customerPhone: booking.phone,
-      customerId: booking.customerId ?? data?.customerId,
+      customerId: booking.customerId ?? booking.preConsultationData?.customerId,
       referenceImages: images,
       entryPoint: 'staff',
       currentStep: ConsultationStep.START,
     });
+    if (booking.preConsultationData) {
+      hydrateFromBooking(booking.preConsultationData);
+    }
     router.push('/field-mode');
   };
 
-  const dateLabel = booking.reservationDate
-    ? `${booking.reservationDate.replace(/-/g, '.')} ${booking.reservationTime}`
-    : '';
-
-  const channelLabel = CHANNEL_LABEL[booking.channel] ?? booking.channel;
-
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* ── 헤더 ── */}
-      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="flex items-center h-14 px-4 gap-3">
-          <button
-            onClick={() => router.back()}
-            className="w-9 h-9 flex items-center justify-center rounded-xl text-text-muted hover:bg-surface transition-colors"
-            aria-label="뒤로가기"
-          >
-            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </button>
-          <h1 className="text-base font-bold text-text flex-1">사전 상담 내용</h1>
-          {booking.preConsultationCompletedAt && (
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">
-              응답 완료
-            </span>
-          )}
-        </div>
-      </header>
+    <div className="flex flex-col min-h-[100dvh] bg-background">
+      {/* 헤더 */}
+      <div className="sticky top-0 z-10 flex items-center justify-between bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3">
+        <button onClick={() => router.back()} className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-alt text-text-muted">
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </button>
+        <h1 className="text-sm font-bold text-text">사전 상담 내용</h1>
+        <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold text-emerald-700">응답 완료</span>
+      </div>
 
-      {/* ── 스크롤 콘텐츠 ── */}
-      <main className="flex-1 overflow-y-auto px-4 py-4 space-y-3 pb-28">
+      {/* 본문 */}
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-28 flex flex-col gap-3">
 
-        {/* 고객 / 예약 기본 정보 */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className="rounded-2xl bg-primary/5 border border-primary/15 p-4"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xl font-black text-text truncate">{booking.customerName}</p>
-              <p className="text-sm text-text-muted mt-0.5">
-                {dateLabel}
-                {dateLabel && channelLabel && <span className="mx-1.5 opacity-40">·</span>}
-                {channelLabel}
-              </p>
-            </div>
+        {/* 고객 정보 */}
+        <div className="rounded-2xl bg-primary/5 border border-primary/20 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-base font-bold text-text">{booking.customerName}</h2>
             {booking.language && booking.language !== 'ko' && (
-              <span className="shrink-0 text-xs font-bold px-2.5 py-1 rounded-full bg-primary/10 text-primary">
-                {{ en: '영어', zh: '중국어', ja: '일본어' }[booking.language] ?? booking.language}
-              </span>
+              <span className="text-xs text-text-muted">{booking.language.toUpperCase()}</span>
             )}
           </div>
-          {booking.phone && (
-            <a
-              href={`tel:${booking.phone}`}
-              className="mt-3 flex items-center gap-2 text-sm font-medium text-primary"
-            >
-              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .18h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92z" />
-              </svg>
-              {booking.phone}
-            </a>
-          )}
-        </motion.div>
+          <div className="flex flex-col gap-1 text-xs text-text-secondary">
+            <span>{toKoreanDateString(booking.reservationDate)} {booking.reservationTime}</span>
+            {booking.phone && <a href={`tel:${booking.phone}`} className="text-primary font-medium">{booking.phone}</a>}
+          </div>
+        </div>
+
+        {/* 가격 예상 */}
+        {priceEstimate && (
+          <div className="rounded-2xl bg-surface border border-border p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold text-text">예상 금액</span>
+              <span className="text-lg font-black text-primary">
+                {formatPrice(priceEstimate.minTotal)}
+                {priceEstimate.maxTotal > priceEstimate.minTotal && ` ~ ${formatPrice(priceEstimate.maxTotal)}`}원
+              </span>
+            </div>
+            <p className="text-xs text-text-muted mt-1">예상 시간 약 {priceEstimate.estimatedMinutes}분</p>
+          </div>
+        )}
 
         {/* 참고 이미지 */}
         {images.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <SectionCard icon="📷" title="참고 이미지">
-              <div className="overflow-x-auto -mx-1 pt-1">
-                <div className="flex gap-2.5 px-1 pb-1" style={{ width: 'max-content' }}>
-                  {images.map((url, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setLightboxUrl(url)}
-                      className="relative shrink-0 w-36 h-36 rounded-xl overflow-hidden border border-border bg-surface shadow-sm hover:opacity-90 transition-opacity"
-                    >
-                      <Image
-                        src={url}
-                        alt={`참고 이미지 ${i + 1}`}
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </SectionCard>
-          </motion.div>
+          <SectionCard icon="📷" title="참고 이미지">
+            <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+              {images.map((url, i) => (
+                <button
+                  key={i}
+                  onClick={() => setLightboxUrl(url)}
+                  className="relative h-28 w-28 flex-shrink-0 rounded-xl overflow-hidden border border-border hover:ring-2 hover:ring-primary/40 transition-all"
+                >
+                  <Image src={url} alt="" fill className="object-cover" unoptimized />
+                  {i === 0 && raw?.selectedPhotoUrl === url && (
+                    <span className="absolute bottom-1 left-1 rounded bg-primary/90 px-1.5 py-0.5 text-[8px] font-bold text-white">선택</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </SectionCard>
         )}
 
         {/* 디자인 선택 */}
-        {data && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <SectionCard icon="💅" title="디자인 선택">
-              <InfoRow label="시술 부위" value={BODY_PART_LABEL[data.bodyPart] ?? data.bodyPart} />
-              <InfoRow label="디자인 범위" value={DESIGN_SCOPE_LABEL[data.designScope] ?? data.designScope} />
-              <InfoRow label="네일 쉐입" value={SHAPE_LABEL[data.nailShape] ?? data.nailShape} />
-              {data.expressions?.length > 0 && (
-                <InfoRow
-                  label="표현 기법"
-                  value={data.expressions.map((e) => EXPRESSION_LABEL[e] ?? e).join(', ')}
-                />
-              )}
-            </SectionCard>
-          </motion.div>
+        {raw?.designCategory && (
+          <SectionCard icon="💅" title="디자인 선택">
+            <InfoRow label="디자인 카테고리" value={CATEGORY_LABEL[raw.designCategory]} />
+            {raw.designFeel && <InfoRow label="디자인 느낌" value={FEEL_LABEL[raw.designFeel] ?? raw.designFeel} />}
+            {raw.nailShape && <InfoRow label="네일 쉐입" value={SHAPE_LABEL[raw.nailShape] ?? raw.nailShape} />}
+            {raw.stylePreference && <InfoRow label="시술 방향" value={STYLE_PREF_LABEL[raw.stylePreference] ?? raw.stylePreference} />}
+          </SectionCard>
         )}
 
-        {/* 시술 조건 */}
-        {data && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <SectionCard icon="⚙️" title="시술 조건">
-              <InfoRow label="오프" value={OFF_TYPE_LABEL[data.offType] ?? data.offType} />
-              <InfoRow label="연장 / 리페어" value={EXTENSION_LABEL[data.extensionType] ?? data.extensionType} />
-              {data.extensionType === 'repair' && data.repairCount != null && (
-                <InfoRow label="리페어 개수" value={`${data.repairCount}개`} />
-              )}
-            </SectionCard>
-          </motion.div>
+        {/* 네일 상태 & 길이 */}
+        {(raw?.nailStatus || raw?.removalPreference || raw?.lengthPreference) && (
+          <SectionCard icon="✋" title="네일 상태">
+            {raw?.nailStatus && <InfoRow label="현재 상태" value={NAIL_STATUS_LABEL[raw.nailStatus]} />}
+            {raw?.removalPreference && raw.removalPreference !== 'none' && (
+              <InfoRow label="오프" value={REMOVAL_LABEL[raw.removalPreference]} />
+            )}
+            {raw?.lengthPreference && <InfoRow label="길이 선호" value={LENGTH_PREF_LABEL[raw.lengthPreference]} />}
+            {raw?.extensionLength && raw.lengthPreference === 'extend' && (
+              <InfoRow label="연장 길이" value={EXTENSION_LEN_LABEL[raw.extensionLength]} />
+            )}
+          </SectionCard>
         )}
 
-        {/* 추가 옵션 (hasParts 또는 extraColorCount > 0 일 때만) */}
-        {data && (data.hasParts || data.extraColorCount > 0) && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <SectionCard icon="✨" title="추가 옵션">
-              <InfoRow label="파츠" value={data.hasParts ? `${data.partsSelections?.length ?? 0}종` : '없음'} />
-              <InfoRow label="추가 컬러" value={data.extraColorCount > 0 ? `${data.extraColorCount}개` : '없음'} />
-            </SectionCard>
-          </motion.div>
+        {/* 스타일 키워드 */}
+        {raw?.styleKeyword && raw.styleKeyword.length > 0 && (
+          <SectionCard icon="✨" title="스타일 키워드">
+            <TagList tags={raw.styleKeyword} labelMap={STYLE_KW_LABEL} />
+          </SectionCard>
         )}
 
-        {/* 무드 태그 */}
-        {data?.moodTags && data.moodTags.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.22, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <SectionCard icon="🎨" title="무드 태그">
-              <div className="flex flex-wrap gap-2 pt-1">
-                {data.moodTags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </SectionCard>
-          </motion.div>
+        {/* 추가 옵션 */}
+        {raw?.addOns && raw.addOns.length > 0 && (
+          <SectionCard icon="💎" title="추가 옵션">
+            <TagList tags={raw.addOns} labelMap={ADDON_LABEL} />
+          </SectionCard>
         )}
 
         {/* 요청 메모 */}
         {booking.requestNote && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className="rounded-2xl bg-surface border border-border p-4">
-              <div className="flex items-center gap-1.5 mb-2">
-                <span className="text-base">📝</span>
-                <h3 className="text-sm font-bold text-text">요청 메모</h3>
-              </div>
-              <p className="text-sm text-text leading-relaxed whitespace-pre-wrap bg-background rounded-xl p-3 border border-border/60">
-                &ldquo;{booking.requestNote}&rdquo;
-              </p>
+          <SectionCard icon="📝" title="요청 메모">
+            <div className="rounded-xl bg-surface-alt p-3">
+              <p className="text-xs text-text-secondary whitespace-pre-line">{booking.requestNote}</p>
             </div>
-          </motion.div>
+          </SectionCard>
         )}
 
-        {/* 사전상담 데이터 없는 경우 안내 */}
-        {!data && images.length === 0 && !booking.requestNote && (
-          <div className="rounded-2xl bg-surface border border-border p-8 text-center">
-            <p className="text-3xl mb-3">📋</p>
-            <p className="text-sm font-medium text-text">아직 사전상담 내용이 없습니다</p>
-            <p className="text-xs text-text-muted mt-1">고객이 링크를 통해 응답하면 여기에 표시됩니다</p>
+        {/* 데이터 없음 */}
+        {!raw && !booking.requestNote && images.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-sm text-text-muted">사전 상담 내용이 없습니다</p>
           </div>
         )}
-      </main>
+      </div>
 
-      {/* ── 하단 CTA ── */}
-      <div className="sticky bottom-0 bg-background border-t border-border px-4 py-3 pb-safe flex gap-2.5 z-20">
+      {/* 하단 CTA */}
+      <div className="sticky bottom-0 bg-background border-t border-border px-4 py-3 pb-safe flex gap-2">
         {booking.customerId && (
           <button
             onClick={() => router.push(`/customers/${booking.customerId}`)}
-            className="flex-1 rounded-xl border border-border py-3 text-sm font-semibold text-text-secondary hover:bg-surface transition-colors"
+            className="flex-1 rounded-xl border border-border bg-surface py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
           >
             고객 상세
           </button>
         )}
         <button
           onClick={handleStartConsultation}
-          className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-white active:scale-95 transition-transform"
+          className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
         >
           상담 시작
         </button>
       </div>
 
-      {/* ── 이미지 라이트박스 ── */}
+      {/* 라이트박스 */}
       <AnimatePresence>
         {lightboxUrl && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
-            onClick={() => setLightboxUrl(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              className="relative max-w-[90vw] max-h-[85vh] rounded-2xl overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={lightboxUrl}
-                alt="참고 이미지 확대"
-                className="max-w-[90vw] max-h-[85vh] object-contain"
-              />
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/80" onClick={() => setLightboxUrl(null)} />
+            <motion.div initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }} className="fixed inset-4 z-50 flex items-center justify-center" onClick={() => setLightboxUrl(null)}>
+              <Image src={lightboxUrl} alt="" width={600} height={600} className="max-h-[80dvh] w-auto rounded-2xl object-contain" unoptimized />
+              <button onClick={() => setLightboxUrl(null)} className="absolute top-2 right-2 flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </motion.div>
-            <button
-              onClick={() => setLightboxUrl(null)}
-              className="absolute top-5 right-5 w-10 h-10 flex items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm"
-              aria-label="닫기"
-            >
-              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </button>
-          </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>
