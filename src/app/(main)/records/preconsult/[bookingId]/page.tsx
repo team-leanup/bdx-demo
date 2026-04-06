@@ -231,7 +231,7 @@ export default function PreConsultDetailPage({ params }: Props): React.ReactElem
               <InfoRow label="시술 부위" value={BODY_PART_LABEL[data.bodyPart] ?? data.bodyPart} />
               <InfoRow label="디자인 범위" value={DESIGN_SCOPE_LABEL[data.designScope] ?? data.designScope} />
               <InfoRow label="네일 쉐입" value={SHAPE_LABEL[data.nailShape] ?? data.nailShape} />
-              {data.expressions.length > 0 && (
+              {data.expressions?.length > 0 && (
                 <InfoRow
                   label="표현 기법"
                   value={data.expressions.map((e) => EXPRESSION_LABEL[e] ?? e).join(', ')}
@@ -266,7 +266,7 @@ export default function PreConsultDetailPage({ params }: Props): React.ReactElem
             transition={{ duration: 0.35, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
           >
             <SectionCard icon="✨" title="추가 옵션">
-              <InfoRow label="파츠" value={data.hasParts ? `${data.partsSelections.length}종` : '없음'} />
+              <InfoRow label="파츠" value={data.hasParts ? `${data.partsSelections?.length ?? 0}종` : '없음'} />
               <InfoRow label="추가 컬러" value={data.extraColorCount > 0 ? `${data.extraColorCount}개` : '없음'} />
             </SectionCard>
           </motion.div>
