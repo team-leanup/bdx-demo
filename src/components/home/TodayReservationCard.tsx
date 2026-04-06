@@ -345,7 +345,15 @@ export function TodayReservationCard({
                         <span className="text-[8px] font-bold text-text-muted">신규</span>
                       </div>
                     ) : null}
-                    <div className="ml-auto flex shrink-0 gap-1.5">
+                    <div className="ml-auto flex shrink-0 items-center gap-1.5">
+                      {booking.customerId && stage !== 'completed' && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); router.push(`/customers/${booking.customerId}`); }}
+                          className="rounded-lg bg-surface-alt border border-border px-2.5 py-2.5 text-[11px] font-semibold text-text-secondary hover:bg-border active:scale-95 transition-all"
+                        >
+                          고객 정보
+                        </button>
+                      )}
                       {stage === 'completed' ? (
                         <button
                           onClick={(e) => {
@@ -414,20 +422,6 @@ export function TodayReservationCard({
                       )}
                     </div>
                   </div>
-                  {/* 고객 상세 보기 — 항상 표시 */}
-                  {booking.customerId && (
-                    <div className="pl-14 pt-1">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/customers/${booking.customerId}`);
-                        }}
-                        className="text-xs font-semibold text-primary hover:underline"
-                      >
-                        상세 보기 →
-                      </button>
-                    </div>
-                  )}
                 </motion.div>
 
                 {/* 인라인 고객 미리보기 아코디언 (기존 고객 전용) */}
