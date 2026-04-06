@@ -232,9 +232,15 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
 
     try {
       const dataUrl = await resizePortfolioImage(selectedFile);
+      const STYLE_CATEGORIES = ['simple', 'french', 'magnet', 'art'];
+      const rawType = selectedRecord
+        ? selectedRecord.consultation.designScope
+        : serviceType.trim();
+      const isStyleCategory = STYLE_CATEGORIES.includes(rawType);
       const derivedServiceType = selectedRecord
         ? DESIGN_SCOPE_LABEL[selectedRecord.consultation.designScope] ?? selectedRecord.consultation.designScope
-        : (serviceType.trim() ? DESIGN_SCOPE_LABEL[serviceType.trim()] ?? serviceType.trim() : undefined);
+        : (isStyleCategory ? undefined : rawType || undefined);
+      const derivedStyleCategory = isStyleCategory ? rawType : undefined;
       const derivedPrice = selectedRecord?.finalPrice ?? (priceInput ? Number(priceInput) : undefined);
 
       const result = await addPhoto({
@@ -245,6 +251,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
         takenAt: takenAt || undefined,
         note: note.trim() || undefined,
         serviceType: derivedServiceType,
+        styleCategory: derivedStyleCategory as 'simple' | 'french' | 'magnet' | 'art' | undefined,
         designType: designType.trim() || undefined,
         price: Number.isFinite(derivedPrice) ? derivedPrice : undefined,
         tags: selectedTags.length > 0 ? selectedTags : undefined,
@@ -439,10 +446,10 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
             className="h-12 w-full rounded-xl border border-border bg-surface px-4 text-sm text-text appearance-none"
           >
             <option value="">선택해주세요</option>
-            <option value="solid_tone">원컬러</option>
-            <option value="solid_point">단색+포인트</option>
-            <option value="full_art">풀아트</option>
-            <option value="monthly_art">이달의 아트</option>
+            <option value="simple">심플 (원컬러·그라데이션)</option>
+            <option value="french">프렌치</option>
+            <option value="magnet">자석 (캣아이·자석젤)</option>
+            <option value="art">아트 (풀아트·포인트)</option>
           </select>
         </div>
         <div>

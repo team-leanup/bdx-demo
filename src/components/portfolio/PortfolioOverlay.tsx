@@ -201,19 +201,6 @@ export function PortfolioOverlay({
               >
                 #해시태그
               </Button>
-              <button
-                type="button"
-                onClick={() => togglePhotoVisibility(photo.id)}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors',
-                  photo.isPublic !== false
-                    ? 'border-border text-text-secondary hover:border-primary/40 hover:text-primary'
-                    : 'border-error/30 text-error bg-error/5',
-                )}
-                title={photo.isPublic !== false ? '공개 중 (클릭하여 비공개)' : '비공개 (클릭하여 공개)'}
-              >
-                {photo.isPublic !== false ? '👁️' : '🚫'}
-              </button>
               <Button
                 variant="secondary"
                 size="sm"
@@ -221,7 +208,7 @@ export function PortfolioOverlay({
               >
                 상세 보기
               </Button>
-              {customer?.id ? (
+              {customer?.id && (
                 <Button
                   variant="primary"
                   size="sm"
@@ -232,26 +219,6 @@ export function PortfolioOverlay({
                   }}
                 >
                   고객 카드 보기
-                </Button>
-              ) : (
-                <Button
-                  variant="primary"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => {
-                    hydrateConsultation({
-                      customerId: customer?.id,
-                      customerName: customer?.name,
-                      customerPhone: customer?.phone,
-                      referenceImages: photo.imageDataUrl ? [photo.imageDataUrl] : [],
-                      entryPoint: 'staff',
-                      currentStep: ConsultationStep.START,
-                    });
-                    router.push('/consultation');
-                    onClose();
-                  }}
-                >
-                  이 디자인으로 상담 시작
                 </Button>
               )}
             </div>
