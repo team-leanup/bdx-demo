@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useT, useKo, useLocale } from '@/lib/i18n';
 import { usePreConsultStore } from '@/store/pre-consult-store';
 import { calculatePreConsultPrice } from '@/lib/pre-consult-price';
-import { dbCompletePreConsultation, dbCompletePreconsultationBooking, dbCreatePreConsultation, fetchShopPublicData } from '@/lib/db';
+import { dbCompletePreConsultation, dbCompletePreconsultationBooking, dbCreatePreConsultation, fetchShopPublicData, fetchBookingRequestById } from '@/lib/db';
 import { getNowInKoreaIso } from '@/lib/format';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -152,6 +152,17 @@ export default function PreConsultConfirmPage(): React.ReactElement {
   const [name, setName] = useState(customerName);
   const [phone, setPhone] = useState(customerPhone);
   const [submitError, setSubmitError] = useState('');
+
+  // bookingId로 예약 정보 자동 채우기
+  useEffect(() => {
+    if (!bookingId || (name && phone)) return;
+    fetchBookingRequestById(bookingId, params.shopId as string).then((booking) => {
+      if (booking) {
+        if (!name && booking.customerName) setName(booking.customerName);
+        if (!phone && booking.phone) setPhone(booking.phone);
+      }
+    });
+  }, [bookingId, params.shopId, name, phone]);
 
   // ─── Price calculation ─────────────────────────────────────────────────────
 
@@ -481,22 +492,37 @@ export default function PreConsultConfirmPage(): React.ReactElement {
             )}
           </div>
 
-          <Input
-            label={t('preConsult.nameLabel')}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={locale === 'ko' ? '홍길동' : 'Your name'}
-            autoComplete="name"
-          />
+          {bookingId && name && phone ? (
+            <div className="rounded-xl bg-surface-alt border border-border p-4 flex flex-col gap-2">
+              <div className="flex justify-between">
+                <span className="text-xs text-text-muted">{t('preConsult.nameLabel')}</span>
+                <span className="text-sm font-semibold text-text">{name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-text-muted">{t('preConsult.phoneLabel')}</span>
+                <span className="text-sm font-semibold text-text">{phone}</span>
+              </div>
+            </div>
+          ) : (
+            <>
+              <Input
+                label={t('preConsult.nameLabel')}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={locale === 'ko' ? '홍길동' : 'Your name'}
+                autoComplete="name"
+              />
 
-          <Input
-            label={t('preConsult.phoneLabel')}
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="010-0000-0000"
-            autoComplete="tel"
-          />
+              <Input
+                label={t('preConsult.phoneLabel')}
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="010-0000-0000"
+                autoComplete="tel"
+              />
+            </>
+          )}
 
           {submitError && (
             <p className="text-xs text-error">{submitError}</p>
