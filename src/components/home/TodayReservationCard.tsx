@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui';
 import { SafetyTag } from '@/components/ui/SafetyTag';
 import { FlagIcon } from '@/components/ui/FlagIcon';
 import { IconCalendar } from '@/components/icons';
-import { formatPrice, formatDateDot } from '@/lib/format';
 function ChannelEmojiBadge({ variant, label }: { variant: string; icon: string; label: string }) {
   return (
     <Badge variant={variant as 'primary' | 'neutral' | 'success' | 'warning'} size="sm">
@@ -118,7 +117,7 @@ export function TodayReservationCard({
   const [alertTags, setAlertTags] = useState<CustomerTag[]>([]);
   const [linkGenBooking, setLinkGenBooking] = useState<BookingRequest | null>(null);
   const [previewBooking, setPreviewBooking] = useState<BookingRequest | null>(null);
-  const [expandedBookingId, setExpandedBookingId] = useState<string | null>(null);
+  const [zoomImageSrc, setZoomImageSrc] = useState<string | null>(null);
 
   const handleStartClick = (booking: BookingRequest): void => {
     if (booking.customerId) {
@@ -217,9 +216,7 @@ export function TodayReservationCard({
 
             const handleCardClick = (): void => {
               if (stage === 'completed') return;
-              if (booking.customerId) {
-                setExpandedBookingId((prev) => (prev === booking.id ? null : booking.id));
-              } else if (stage === 'just_registered') {
+              if (stage === 'just_registered') {
                 setLinkGenBooking(booking);
               } else {
                 handleStartClick(booking);
@@ -310,9 +307,10 @@ export function TodayReservationCard({
                     {thumbnailItems.length > 0 && (
                       <div className="flex gap-1.5 overflow-x-auto pb-0.5 max-w-[120px] md:max-w-none">
                         {thumbnailItems.map((item, thumbIdx) => (
-                          <div
+                          <button
                             key={`${item.label}-${thumbIdx}-${item.src}`}
-                            className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-alt"
+                            onClick={(e) => { e.stopPropagation(); setZoomImageSrc(item.src); }}
+                            className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border bg-surface-alt cursor-pointer hover:ring-2 hover:ring-primary/40 transition-all"
                           >
                             <Image
                               src={item.src}
@@ -325,7 +323,7 @@ export function TodayReservationCard({
                             <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 py-0.5 text-[8px] font-semibold leading-none text-white">
                               {item.label}
                             </span>
-                          </div>
+                          </button>
                         ))}
                       </div>
                     )}
@@ -419,47 +417,6 @@ export function TodayReservationCard({
                   </div>
                 </motion.div>
 
-                {/* 인라인 고객 미리보기 아코디언 (기존 고객 전용) */}
-                <AnimatePresence>
-                  {expandedBookingId === booking.id && booking.customerId && (() => {
-                    const customer = getById(booking.customerId);
-                    if (!customer) return null;
-                    const recentTreatment = customer.treatmentHistory?.[0];
-                    const latestMemo = customer.smallTalkNotes?.slice(-1)[0];
-                    return (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                        className="overflow-hidden"
-                      >
-                        <div className="px-4 pb-3 pt-1 ml-14 border-t border-border/50">
-                          {/* 세이프티 태그 */}
-                          {pinnedTags.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mb-2">
-                              {pinnedTags.map((tag) => (
-                                <SafetyTag key={tag.id} tag={tag} size="xs" />
-                              ))}
-                            </div>
-                          )}
-                          {/* 최근 시술 */}
-                          {recentTreatment && (
-                            <div className="flex items-center gap-2 text-xs text-text-secondary mb-1.5">
-                              <span className="font-medium">{formatDateDot(recentTreatment.date)}</span>
-                              <span>{recentTreatment.designScope}</span>
-                              <span className="font-semibold text-text">{formatPrice(recentTreatment.price)}원</span>
-                            </div>
-                          )}
-                          {/* 최근 스몰토크 메모 */}
-                          {latestMemo && (
-                            <p className="text-xs text-text-muted line-clamp-1 mb-2">💬 {latestMemo.noteText}</p>
-                          )}
-                        </div>
-                      </motion.div>
-                    );
-                  })()}
-                </AnimatePresence>
               </div>
             );
           })}
@@ -552,6 +509,48 @@ export function TodayReservationCard({
                 <p className="text-sm text-text-muted text-center py-4">사전 상담 내용이 없습니다.</p>
               )}
             </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+
+    {/* 이미지 확대 오버레이 */}
+    <AnimatePresence>
+      {zoomImageSrc && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/80"
+            onClick={() => setZoomImageSrc(null)}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="fixed inset-4 z-50 flex items-center justify-center"
+            onClick={() => setZoomImageSrc(null)}
+          >
+            <div className="relative max-h-full max-w-full overflow-hidden rounded-2xl">
+              <Image
+                src={zoomImageSrc}
+                alt=""
+                width={600}
+                height={600}
+                className="max-h-[80dvh] w-auto object-contain"
+                unoptimized
+              />
+            </div>
+            <button
+              onClick={() => setZoomImageSrc(null)}
+              className="absolute top-2 right-2 flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </motion.div>
         </>
       )}
