@@ -1563,7 +1563,11 @@ export async function dbCompletePreConsultation(
     language,
     service_label: payload.design_category,
     pre_consultation_completed_at: now,
-    pre_consultation_data: payload.data as Database['public']['Tables']['booking_requests']['Insert']['pre_consultation_data'],
+    pre_consultation_data: {
+      ...(payload.data as Record<string, unknown>),
+      referenceImages: payload.reference_image_paths ?? (payload.data as Record<string, unknown> | null)?.['referenceImageUrls'] ?? [],
+    } as unknown as import('@/types/database').Json,
+    reference_image_urls: (payload.reference_image_paths as unknown as import('@/types/database').Json) ?? null,
     created_at: now,
   });
 

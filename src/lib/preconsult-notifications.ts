@@ -1,4 +1,4 @@
-import type { BookingRequest } from '@/types/consultation';
+import type { BookingRequest, ConsultationType } from '@/types/consultation';
 import { getNowInKoreaIso } from '@/lib/format';
 
 const STORAGE_KEY = 'bdx-preconsult-read-v2';
@@ -14,6 +14,8 @@ export interface PreConsultationNotification {
   serviceLabel?: string;
   language?: BookingRequest['language'];
   completedAt: string;
+  preConsultationData?: ConsultationType;
+  referenceImageUrls?: string[];
 }
 
 type ReadState = Record<string, string>;
@@ -80,6 +82,10 @@ export function getPreConsultationNotifications(
       serviceLabel: reservation.serviceLabel,
       language: reservation.language,
       completedAt: reservation.preConsultationCompletedAt!,
+      preConsultationData: reservation.preConsultationData,
+      referenceImageUrls:
+        reservation.referenceImageUrls ??
+        reservation.preConsultationData?.referenceImages,
     }))
     .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
 }

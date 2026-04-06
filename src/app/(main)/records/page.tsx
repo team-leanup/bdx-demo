@@ -465,6 +465,25 @@ export default function RecordsPage() {
     setSelectedDate(targetReservation.reservationDate);
     if (targetEvent) {
       setSelectedEvent(targetEvent);
+    } else {
+      setSelectedEvent({
+        id: `res-${targetReservation.id}`,
+        originalId: targetReservation.id,
+        type: 'reservation',
+        title: targetReservation.customerName,
+        date: targetReservation.reservationDate,
+        startTime: targetReservation.reservationTime,
+        endTime: '',
+        status: targetReservation.status,
+        customerId: targetReservation.customerId,
+        customerPhone: targetReservation.phone,
+        requestNote: targetReservation.requestNote,
+        language: targetReservation.language,
+        serviceLabel: targetReservation.serviceLabel,
+        designerId: targetReservation.designerId,
+        consultationLinkSentAt: targetReservation.consultationLinkSentAt,
+        preConsultationCompletedAt: targetReservation.preConsultationCompletedAt,
+      });
     }
 
     const params = new URLSearchParams(searchParams.toString());

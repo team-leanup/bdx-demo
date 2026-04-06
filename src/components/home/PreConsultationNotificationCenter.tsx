@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { Modal } from '@/components/ui';
 import { FlagIcon } from '@/components/ui/FlagIcon';
 import { formatDateDot, formatDateDotWithTime, formatTime } from '@/lib/format';
+import { DESIGN_SCOPE_LABEL, BODY_PART_LABEL } from '@/lib/labels';
 import {
   getPreConsultationNotifications,
   getUnreadPreConsultationCount,
@@ -114,6 +116,34 @@ export function PreConsultationNotificationCenter({
                       <p className="mt-2 text-xs text-text-muted">
                         제출 시각 {formatDateDotWithTime(notification.completedAt)}
                       </p>
+
+                      {/* 디자인 요약 */}
+                      {notification.preConsultationData && (
+                        <p className="mt-1.5 text-xs text-text-secondary">
+                          {[
+                            BODY_PART_LABEL[notification.preConsultationData.bodyPart],
+                            DESIGN_SCOPE_LABEL[notification.preConsultationData.designScope],
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </p>
+                      )}
+
+                      {/* 참고 이미지 썸네일 */}
+                      {notification.referenceImageUrls && notification.referenceImageUrls.length > 0 && (
+                        <div className="flex gap-1.5 mt-2">
+                          {notification.referenceImageUrls.slice(0, 3).map((url, i) => (
+                            <div key={i} className="h-12 w-12 rounded-lg overflow-hidden border border-border flex-shrink-0">
+                              <Image src={url} alt="" width={48} height={48} className="h-full w-full object-cover" unoptimized />
+                            </div>
+                          ))}
+                          {notification.referenceImageUrls.length > 3 && (
+                            <div className="h-12 w-12 rounded-lg bg-surface-alt border border-border flex items-center justify-center text-xs text-text-muted">
+                              +{notification.referenceImageUrls.length - 3}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="shrink-0 rounded-xl bg-surface-alt px-3 py-2 text-right">
                       <p className="text-[10px] font-semibold text-text-muted">

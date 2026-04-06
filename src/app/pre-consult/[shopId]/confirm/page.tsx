@@ -223,6 +223,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
         ...data,
         customerName: name.trim(),
         customerPhone: phone.trim(),
+        referenceImages: referenceImageUrls,  // ConsultationType 필드명으로 매핑
       } as unknown as import('@/types/consultation').ConsultationType;
       const result = await dbCompletePreconsultationBooking(
         bookingId,
