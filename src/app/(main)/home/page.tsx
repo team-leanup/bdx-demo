@@ -198,6 +198,7 @@ export default function HomePage() {
     // preConsultationData는 JSONB로 저장되어 런타임에 pre-consult 필드를 포함할 수 있음
     const raw = booking.preConsultationData as Record<string, unknown> | undefined;
     hydrateFromBooking({
+      bookingId: booking.id,
       customerName: booking.customerName,
       customerPhone: booking.phone,
       customerId: booking.customerId ?? booking.preConsultationData?.customerId ?? null,

@@ -16,6 +16,8 @@ import { useShopStore } from '@/store/shop-store';
 import type { TreatmentHistory } from '@/types/customer';
 import type { DesignScope } from '@/types/consultation';
 import { getTodayInKorea } from '@/lib/format';
+import { designCategoryToScope } from '@/lib/category-mapping';
+import type { DesignCategory } from '@/types/pre-consultation';
 
 interface RecordsStore {
   records: ConsultationRecord[];
@@ -34,6 +36,7 @@ interface RecordsStore {
     finalPrice: number;
     notes?: string;
     paymentMethod?: import('@/types/consultation').PaymentMethod;
+    bookingId?: string;
   }) => Promise<void>;
   updateRecord: (id: string, patch: Partial<ConsultationRecord>) => void;
   removeRecord: (id: string) => void;
@@ -57,33 +60,37 @@ export const useRecordsStore = create<RecordsStore>()(
         set((state) => ({
           records: [record, ...state.records],
         }));
-        return dbUpsertRecord(record).catch((err: unknown) => {
-          // N-6: DB 실패 시 로컬 롤백
-          set((state) => ({
-            records: state.records.filter((r) => r.id !== record.id),
-          }));
-          console.error(err);
-          throw err;
+        return dbUpsertRecord(record).then((result) => {
+          if (!result.success) {
+            // N-6: DB 실패 시 로컬 롤백
+            set((state) => ({
+              records: state.records.filter((r) => r.id !== record.id),
+            }));
+            throw new Error('[records] DB insert failed for record ' + record.id);
+          }
         });
       },
 
-      addQuickSaleRecord: ({ id, shopId, designerId, customerId, customerName, customerPhone, serviceType, finalPrice, notes, paymentMethod }) => {
+      addQuickSaleRecord: ({ id, shopId, designerId, customerId, customerName, customerPhone, serviceType, finalPrice, notes, paymentMethod, bookingId }) => {
         const now = getNowInKoreaIso();
         const today = getTodayInKorea();
 
-        const SERVICE_TO_DESIGN_SCOPE: Record<string, DesignScope> = {
-          '원컬러': 'solid_tone',
-          '그라데이션': 'solid_point',
-          '프렌치': 'solid_point',
-          '아트': 'full_art',
-          '자석젤': 'solid_tone',
-          '케어': 'solid_tone',
-          '리페어': 'solid_tone',
-          '연장': 'solid_tone',
-          '기타': 'solid_tone',
+        const SERVICE_TO_CATEGORY: Record<string, DesignCategory> = {
+          '원컬러': 'simple',
+          '그라데이션': 'french',
+          '프렌치': 'french',
+          '아트': 'art',
+          '자석젤': 'magnet',
+          '자석': 'magnet',
+          '케어': 'simple',
+          '리페어': 'simple',
+          '연장': 'simple',
+          '기타': 'simple',
+          '심플': 'simple',
         };
-        const designScope: DesignScope =
-          (serviceType ? SERVICE_TO_DESIGN_SCOPE[serviceType] : undefined) ?? 'solid_tone';
+        const category: DesignCategory =
+          (serviceType ? SERVICE_TO_CATEGORY[serviceType] : undefined) ?? 'simple';
+        const designScope: DesignScope = designCategoryToScope(category);
 
         const record: ConsultationRecord = {
           id,
@@ -103,6 +110,7 @@ export const useRecordsStore = create<RecordsStore>()(
             currentStep: ConsultationStep.SUMMARY,
             customerName,
             customerPhone,
+            bookingId,
           },
           totalPrice: finalPrice,
           estimatedMinutes: 0,
@@ -173,13 +181,15 @@ export const useRecordsStore = create<RecordsStore>()(
           }
         }
 
-        return dbUpsertRecord(recordWithEffectiveId).catch((err: unknown) => {
-          console.error(err);
-          throw err;
+        return dbUpsertRecord(recordWithEffectiveId).then((result) => {
+          if (!result.success) {
+            throw new Error('[records] DB insert failed for quick sale record ' + id);
+          }
         });
       },
 
       updateRecord: (id, patch) => {
+        const previous = get().records.find((r) => r.id === id);
         set((state) => {
           const now = getNowInKoreaIso();
           const existing = state.records.find((r) => r.id === id);
@@ -191,7 +201,15 @@ export const useRecordsStore = create<RecordsStore>()(
         });
         const updated = get().records.find((r) => r.id === id);
         if (updated) {
-          dbUpsertRecord(updated).catch(console.error);
+          dbUpsertRecord(updated).then((result) => {
+            if (!result.success && previous) {
+              // Rollback on DB failure
+              set((state) => ({
+                records: state.records.map((r) => (r.id === id ? previous : r)),
+              }));
+              console.warn('[records] DB update failed, rolled back local change for', id);
+            }
+          });
         }
       },
 
@@ -229,6 +247,10 @@ export const useRecordsStore = create<RecordsStore>()(
               removeItem: () => {},
             },
       ),
+      partialize: (state) => {
+        const { _dbReady: _, ...rest } = state;
+        return rest;
+      },
     },
   ),
 );

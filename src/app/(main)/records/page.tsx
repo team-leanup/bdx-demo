@@ -327,6 +327,7 @@ export default function RecordsPage() {
       // field-mode store에도 동일 예약 데이터 반영
       const raw = booking.preConsultationData as Record<string, unknown> | undefined;
       hydrateFromBooking({
+        bookingId: booking.id,
         customerName: booking.customerName,
         customerPhone: booking.phone,
         customerId: booking.customerId ?? booking.preConsultationData?.customerId ?? null,

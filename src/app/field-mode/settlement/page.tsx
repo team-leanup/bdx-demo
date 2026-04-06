@@ -169,6 +169,7 @@ export default function SettlementPage(): React.ReactElement | null {
         customerName: customerName || undefined,
         customerPhone: customerPhone || undefined,
         customerId: customerId || undefined,
+        bookingId: bookingId || undefined,
       });
     } catch {
       // local optimistic update already applied by store; show warning banner but continue
