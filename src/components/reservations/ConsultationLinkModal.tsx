@@ -31,16 +31,17 @@ export function ConsultationLinkContent({
   const url = useMemo(() => {
     if (!booking) return "";
     if (typeof window === "undefined") return "";
+    // 미리 정하기 링크: /pre-consult/[shopId]
+    const shopId = booking.shopId;
+    if (shopId) {
+      const base = `${window.location.origin}/pre-consult/${shopId}`;
+      return booking.id ? `${base}?bookingId=${booking.id}` : base;
+    }
+    // shopId 없으면 기존 상담 경로 폴백
     const params = new URLSearchParams();
+    params.set("entry", "customer-link");
     params.set("name", booking.customerName);
     params.set("phone", booking.phone);
-    if (booking.requestNote) params.set("note", booking.requestNote);
-    params.set("lang", booking.language ?? "ko");
-    params.set("bookingId", booking.id);
-    if (booking.designerId) params.set("designerId", booking.designerId);
-    if (booking.customerId) params.set("customerId", booking.customerId);
-    if (booking.shopId) params.set("shopId", booking.shopId);
-    params.set("entry", "customer-link");
     if (shopName) params.set("shopName", shopName);
     return `${window.location.origin}/consultation?${params.toString()}`;
   }, [booking, shopName]);
@@ -112,7 +113,7 @@ export function ConsultationLinkContent({
 
 export function ConsultationLinkModal({ isOpen, onClose, booking, shopName }: Props) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={"상담 링크 생성"}>
+    <Modal isOpen={isOpen} onClose={onClose} title={"미리 정하기 링크"}>
       <ConsultationLinkContent booking={booking} shopName={shopName} onClose={onClose} />
     </Modal>
   );
