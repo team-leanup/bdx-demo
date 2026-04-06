@@ -68,8 +68,9 @@ const LANGUAGE_FLAG: Record<string, string> = {
 };
 
 function timeToMinutes(time: string): number {
+  if (!time || !time.includes(':')) return 0;
   const [h, m] = time.split(':').map(Number);
-  return h * 60 + m;
+  return (isNaN(h) ? 0 : h) * 60 + (isNaN(m) ? 0 : m);
 }
 
 function getEventColor(designerId?: string): { bg: string; border: string; text: string } {

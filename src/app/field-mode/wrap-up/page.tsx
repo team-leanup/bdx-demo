@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { useShallow } from 'zustand/react/shallow';
 import { useT } from '@/lib/i18n';
 import { useFieldModeStore } from '@/store/field-mode-store';
 import { useCustomerStore } from '@/store/customer-store';
@@ -108,7 +109,7 @@ export default function WrapUpPage(): React.ReactElement {
     [recordId, getRecordById],
   );
   const portfolioPhotos = usePortfolioStore(
-    (s) => s.photos.filter((p) => p.recordId === recordId),
+    useShallow((s) => s.photos.filter((p) => p.recordId === recordId)),
   );
 
   // Redirect guard: if no recordId, we shouldn't be here
