@@ -171,7 +171,7 @@ export default function HomePage() {
     if (searchParams.get('notifications') === 'preconsult') {
       clearHomeQuery('notifications');
     }
-    router.push(`/records?bookingId=${notification.bookingId}`);
+    router.push(`/records/preconsult/${notification.bookingId}`);
   };
 
   const handleStartConsultation = (booking: BookingRequest) => {
