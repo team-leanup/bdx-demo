@@ -22,6 +22,7 @@ export function DesignGallery({ onConfirm, onSkip }: DesignGalleryProps): React.
   const selectedUrl = usePreConsultStore((s) => s.selectedPhotoUrl);
   const setSelectedUrl = usePreConsultStore((s) => s.setSelectedPhotoUrl);
   const [reassurance, setReassurance] = useState<string | null>(null);
+  const [zoomSrc, setZoomSrc] = useState<string | null>(null);
 
   const filteredPhotos = useMemo(() => {
     return photos
@@ -139,6 +140,16 @@ export function DesignGallery({ onConfirm, onSkip }: DesignGalleryProps): React.
                   PICK
                 </div>
               )}
+              {/* 확대 아이콘 */}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setZoomSrc(url); }}
+                className="absolute top-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+              </button>
             </motion.button>
           );
         })}
@@ -168,6 +179,45 @@ export function DesignGallery({ onConfirm, onSkip }: DesignGalleryProps): React.
           </button>
         )}
       </div>
+      {/* 이미지 확대 오버레이 */}
+      <AnimatePresence>
+        {zoomSrc && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/80"
+              onClick={() => setZoomSrc(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed inset-4 z-50 flex items-center justify-center"
+              onClick={() => setZoomSrc(null)}
+            >
+              <Image
+                src={zoomSrc}
+                alt=""
+                width={600}
+                height={600}
+                className="max-h-[80dvh] w-auto rounded-2xl object-contain"
+                unoptimized
+              />
+              <button
+                onClick={() => setZoomSrc(null)}
+                className="absolute top-2 right-2 flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

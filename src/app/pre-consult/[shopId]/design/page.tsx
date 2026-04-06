@@ -9,7 +9,7 @@ import { usePreConsultStore } from '@/store/pre-consult-store';
 import { fetchBookingRequestById } from '@/lib/db';
 import { CategoryPicker } from '@/components/pre-consult/CategoryPicker';
 import { DesignGallery } from '@/components/pre-consult/DesignGallery';
-import { PriceRangeHint } from '@/components/pre-consult/PriceRangeHint';
+
 import type { StyleCategory } from '@/types/portfolio';
 
 const VALID_CATEGORIES: StyleCategory[] = ['simple', 'french', 'magnet', 'art'];
@@ -25,8 +25,8 @@ export default function PreConsultDesignPage(): React.ReactElement {
   const selectedPhotoUrl = usePreConsultStore((s) => s.selectedPhotoUrl);
   const bookingId = usePreConsultStore((s) => s.bookingId);
   const shopId = usePreConsultStore((s) => s.shopId);
-  const [showPrice, setShowPrice] = useState(false);
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
+  const [zoomSrc, setZoomSrc] = useState<string | null>(null);
 
   // 예약의 레퍼런스 이미지 fetch
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function PreConsultDesignPage(): React.ReactElement {
   }, [searchParams, selectedCategory]);
 
   const handleGalleryConfirm = (): void => {
-    setShowPrice(true);
+    handleNext();
   };
 
   const handleNext = (): void => {
@@ -81,13 +81,13 @@ export default function PreConsultDesignPage(): React.ReactElement {
         {/* 예약 레퍼런스 이미지 */}
         {referenceImages.length > 0 && (
           <div className="rounded-2xl border border-border bg-surface-alt p-4">
-            <p className="text-sm font-semibold text-text mb-1">사장님이 보내준 참고 이미지</p>
-            <p className="text-xs text-text-muted mb-3">이런 느낌을 원하시는 거죠? 아래에서 비슷한 디자인을 골라보세요</p>
+            <p className="text-sm font-semibold text-text mb-1">예약 시 첨부한 참고 이미지</p>
+            <p className="text-xs text-text-muted mb-3">이 느낌을 기준으로 아래에서 비슷한 디자인을 골라보세요</p>
             <div className="flex gap-2 overflow-x-auto">
               {referenceImages.map((url, i) => (
-                <div key={i} className="h-24 w-24 flex-shrink-0 rounded-xl overflow-hidden border border-border">
+                <button key={i} onClick={() => setZoomSrc(url)} className="h-24 w-24 flex-shrink-0 rounded-xl overflow-hidden border border-border hover:ring-2 hover:ring-primary/40 transition-all cursor-pointer">
                   <Image src={url} alt="" width={96} height={96} className="h-full w-full object-cover" unoptimized />
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -111,21 +111,47 @@ export default function PreConsultDesignPage(): React.ReactElement {
           )}
         </AnimatePresence>
 
-        {/* Price Range — reveals after photo confirmation */}
-        <AnimatePresence>
-          {showPrice && selectedPhotoUrl && (
-            <motion.div
-              key="price"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <PriceRangeHint onNext={handleNext} />
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
+
+      {/* 이미지 확대 오버레이 */}
+      <AnimatePresence>
+        {zoomSrc && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/80"
+              onClick={() => setZoomSrc(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed inset-4 z-50 flex items-center justify-center"
+              onClick={() => setZoomSrc(null)}
+            >
+              <Image
+                src={zoomSrc}
+                alt=""
+                width={600}
+                height={600}
+                className="max-h-[80dvh] w-auto rounded-2xl object-contain"
+                unoptimized
+              />
+              <button
+                onClick={() => setZoomSrc(null)}
+                className="absolute top-2 right-2 flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
