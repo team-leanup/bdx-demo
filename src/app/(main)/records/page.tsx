@@ -9,6 +9,7 @@ import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Card, Input, Modal } from '@/components/ui';
 import { ConsultationLinkContent } from '@/components/reservations/ConsultationLinkModal';
+import { PreConsultSummaryInline } from '@/components/reservations/PreConsultSummaryInline';
 import { useRecordsStore } from '@/store/records-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useReservationStore } from '@/store/reservation-store';
@@ -139,11 +140,13 @@ export default function RecordsPage() {
   const [showAddReservationModal, setShowAddReservationModal] = useState(false);
   const [reservationPrefill, setReservationPrefill] = useState<{ time?: string; designerId?: string; channel?: BookingChannel } | null>(null);
   const [reservationNaverMode, setReservationNaverMode] = useState(false);
+  const [showPreConsultInline, setShowPreConsultInline] = useState(false);
 
   const closeSelectedEventSheet = (): void => {
     setLinkGenBooking(null);
     setEditMode(false);
     setSelectedEvent(null);
+    setShowPreConsultInline(false);
   };
 
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
@@ -1007,19 +1010,8 @@ export default function RecordsPage() {
                       const handleSheetClick = () => {
                         if (matchedRecord) {
                           router.push(`/consultation/treatment-sheet?consultationId=${matchedRecord.id}&customerId=${matchedRecord.customerId}`);
-                        } else if (booking?.preConsultationData) {
-                          hydrateConsultation({
-                            ...booking.preConsultationData,
-                            bookingId: booking.id,
-                            customerName: booking.customerName,
-                            customerPhone: booking.phone,
-                            customerId: booking.customerId ?? booking.preConsultationData.customerId,
-                            referenceImages: booking.preConsultationData.referenceImages ?? booking.referenceImageUrls ?? [],
-                            entryPoint: 'staff',
-                            currentStep: ConsultationStep.SUMMARY,
-                          });
-                          router.push('/consultation/summary');
                         }
+                        // preConsultationData 분기는 인라인 토글로 대체됨
                       };
 
                       return (
@@ -1071,16 +1063,34 @@ export default function RecordsPage() {
                                 )}
                                 {hasSheet && (
                                   <button
-                                    onClick={handleSheetClick}
+                                    onClick={matchedRecord ? handleSheetClick : () => setShowPreConsultInline((prev) => !prev)}
                                     className="flex-1 rounded-xl border border-primary/30 bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
                                   >
                                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
                                     </svg>
-                                    {matchedRecord ? '시술 확인서' : '사전 상담 내역'}
+                                    {matchedRecord ? '시술 확인서' : (showPreConsultInline ? '상담 내역 닫기' : '사전 상담 내역')}
                                   </button>
                                 )}
                               </div>
+                              {/* 사전 상담 인라인 뷰 */}
+                              <AnimatePresence>
+                                {showPreConsultInline && !matchedRecord && booking?.preConsultationData && (
+                                  <motion.div
+                                    key="pre-consult-inline"
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="overflow-hidden"
+                                  >
+                                    <PreConsultSummaryInline
+                                      data={booking.preConsultationData}
+                                      referenceImageUrls={booking.referenceImageUrls}
+                                    />
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </div>
                           )}
 
