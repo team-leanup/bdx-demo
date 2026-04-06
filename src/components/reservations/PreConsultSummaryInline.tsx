@@ -63,7 +63,7 @@ export function PreConsultSummaryInline({ data, referenceImageUrls }: PreConsult
     ? data.referenceImages
     : (referenceImageUrls ?? []);
 
-  const expressionLabel = data.expressions.length > 0
+  const expressionLabel = data.expressions?.length
     ? data.expressions.map((e) => EXPRESSION_LABEL[e] ?? e).join(', ')
     : '없음';
 
