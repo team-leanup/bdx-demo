@@ -489,6 +489,11 @@ export default function RecordsPage() {
       });
     }
 
+    // 사전상담 완료된 예약이면 인라인 뷰 자동 펼침
+    if (targetReservation.preConsultationCompletedAt) {
+      setShowPreConsultInline(true);
+    }
+
     const params = new URLSearchParams(searchParams.toString());
     params.delete('bookingId');
     const nextQuery = params.toString();

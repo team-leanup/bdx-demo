@@ -25,6 +25,7 @@ import { PretreatmentAlertModal } from '@/components/alerts/PretreatmentAlertMod
 
 import ConsultationLinkModal from '@/components/reservations/ConsultationLinkModal';
 import { getSafetyTagMeta } from '@/lib/tag-safety';
+import { PreConsultSummaryInline } from '@/components/reservations/PreConsultSummaryInline';
 import { getBookingStage } from '@/lib/booking-stage';
 import type { BookingChannel, BookingRequest } from '@/types/consultation';
 import type { CustomerTag } from '@/types/customer';
@@ -390,9 +391,9 @@ export function TodayReservationCard({
                         <>
                           <button
                             onClick={(e) => { e.stopPropagation(); setPreviewBooking(booking); }}
-                            className="rounded-lg bg-emerald-100 px-2.5 py-2.5 text-[11px] font-semibold text-emerald-700 cursor-pointer hover:bg-emerald-200"
+                            className="rounded-lg bg-surface-alt border border-border px-2.5 py-2.5 text-[11px] font-semibold text-text-secondary cursor-pointer hover:bg-border active:scale-95 transition-all"
                           >
-                            사전상담 완료
+                            상담 내용
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleStartClick(booking); }}
@@ -473,39 +474,12 @@ export function TodayReservationCard({
               </button>
             </div>
             <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-5 pb-8">
-              {previewBooking.preConsultationData?.referenceImages && previewBooking.preConsultationData.referenceImages.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-text-secondary mb-2">참고 이미지</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {previewBooking.preConsultationData.referenceImages.map((url, i) => (
-                      <div key={i} className="h-20 w-20 rounded-xl overflow-hidden border border-border flex-shrink-0">
-                        <Image src={url} alt="" width={80} height={80} className="h-full w-full object-cover" unoptimized />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {previewBooking.referenceImageUrls && previewBooking.referenceImageUrls.length > 0 && !previewBooking.preConsultationData?.referenceImages?.length && (
-                <div>
-                  <p className="text-xs font-semibold text-text-secondary mb-2">참고 이미지</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {previewBooking.referenceImageUrls.map((url, i) => (
-                      <div key={i} className="h-20 w-20 rounded-xl overflow-hidden border border-border flex-shrink-0">
-                        <Image src={url} alt="" width={80} height={80} className="h-full w-full object-cover" unoptimized />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {previewBooking.requestNote && (
-                <div>
-                  <p className="text-xs font-semibold text-text-secondary mb-1">요청 메모</p>
-                  <div className="rounded-xl bg-surface-alt p-3">
-                    <p className="text-xs text-text-secondary whitespace-pre-line">{previewBooking.requestNote}</p>
-                  </div>
-                </div>
-              )}
-              {!previewBooking.requestNote && !previewBooking.referenceImageUrls?.length && !previewBooking.preConsultationData?.referenceImages?.length && (
+              {previewBooking.preConsultationData ? (
+                <PreConsultSummaryInline
+                  data={previewBooking.preConsultationData}
+                  referenceImageUrls={previewBooking.referenceImageUrls}
+                />
+              ) : (
                 <p className="text-sm text-text-muted text-center py-4">사전 상담 내용이 없습니다.</p>
               )}
             </div>
