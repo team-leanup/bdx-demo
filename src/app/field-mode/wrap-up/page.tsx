@@ -11,6 +11,9 @@ import { useRecordsStore } from '@/store/records-store';
 import { getTodayInKorea } from '@/lib/format';
 import { PhotoCapture } from '@/components/field-mode/PhotoCapture';
 import { Button } from '@/components/ui/Button';
+import { ShareCardGeneratorModal } from '@/components/share-card/ShareCardGeneratorModal';
+import { useAuthStore } from '@/store/auth-store';
+import { useAppStore } from '@/store/app-store';
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 
@@ -95,6 +98,18 @@ export default function WrapUpPage(): React.ReactElement {
   const [isSaving, setIsSaving] = useState(false);
   const [isGoingHome, setIsGoingHome] = useState(false);
   const [skipped, setSkipped] = useState(false);
+  const [showShareCard, setShowShareCard] = useState(false);
+
+  const shopName = useAppStore((s) => s.shopSettings.shopName);
+  const shopId = useAuthStore((s) => s.currentShopId ?? '');
+  const getRecordById = useRecordsStore((s) => s.getRecordById);
+  const currentRecord = useMemo(
+    () => (recordId ? getRecordById(recordId) : undefined),
+    [recordId, getRecordById],
+  );
+  const portfolioPhotos = usePortfolioStore(
+    (s) => s.photos.filter((p) => p.recordId === recordId),
+  );
 
   // Redirect guard: if no recordId, we shouldn't be here
   // (handled via useEffect would cause flicker; do it inline with a render guard)
@@ -409,7 +424,7 @@ export default function WrapUpPage(): React.ReactElement {
             variant="secondary"
             size="lg"
             fullWidth
-            onClick={() => { reset(); router.push(`/records/${recordId}`); }}
+            onClick={() => setShowShareCard(true)}
             className="min-h-[56px]"
           >
             {t('fieldMode.createShareCard')}
@@ -426,6 +441,24 @@ export default function WrapUpPage(): React.ReactElement {
           {t('fieldMode.backToHome')}
         </Button>
       </motion.div>
+      {currentRecord && (
+        <ShareCardGeneratorModal
+          isOpen={showShareCard}
+          onClose={() => setShowShareCard(false)}
+          record={{
+            id: currentRecord.id,
+            shopId: currentRecord.shopId || shopId,
+            consultation: currentRecord.consultation,
+            shareCardId: currentRecord.shareCardId,
+          }}
+          portfolioPhotos={portfolioPhotos.map((p) => ({
+            id: p.id,
+            imageDataUrl: p.imageDataUrl,
+            imagePath: p.imagePath,
+          }))}
+          shopName={shopName}
+        />
+      )}
     </motion.div>
   );
 }

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useReservationStore } from '@/store/reservation-store';
 import { useConsultationStore } from '@/store/consultation-store';
+import { useFieldModeStore } from '@/store/field-mode-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { Button } from '@/components/ui/Button';
 import { PretreatmentAlertModal } from '@/components/alerts/PretreatmentAlertModal';
@@ -12,6 +13,7 @@ import { LinkCustomerModal } from '@/components/reservations/LinkCustomerModal';
 import { ConsultationLinkModal } from '@/components/reservations/ConsultationLinkModal';
 import { ReservationReadinessBadge } from '@/components/reservations/ReservationReadinessBadge';
 import type { BookingChannel, BookingStatus, BookingRequest } from '@/types/consultation';
+import type { DesignCategory, RemovalPreference, LengthPreference, AddOnOption } from '@/types/pre-consultation';
 import { ConsultationStep } from '@/types/consultation';
 import type { CustomerTag } from '@/types/customer';
 import type { Locale } from '@/store/locale-store';
@@ -269,6 +271,7 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
   const getDesignerNameFromStore = useShopStore((s) => s.getDesignerName);
   const shopName = useShopStore((s) => s.shop?.name) ?? '내 매장';
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
+  const hydrateFromBooking = useFieldModeStore((s) => s.hydrateFromBooking);
   const [showForm, setShowForm] = useState(false);
   const [alertBooking, setAlertBooking] = useState<BookingRequest | null>(null);
   const [alertTags, setAlertTags] = useState<CustomerTag[]>([]);
@@ -317,7 +320,22 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
       entryPoint: 'staff',
       currentStep: ConsultationStep.START,
     });
-    router.push('/consultation');
+    // field-mode store에도 동일 예약 데이터 반영
+    const raw = booking.preConsultationData as Record<string, unknown> | undefined;
+    hydrateFromBooking({
+      bookingId: booking.id,
+      customerName: booking.customerName,
+      customerPhone: booking.phone,
+      customerId: booking.customerId ?? booking.preConsultationData?.customerId ?? null,
+      designerId: booking.designerId ?? booking.preConsultationData?.designerId ?? '',
+      designCategory: (raw?.designCategory ?? null) as DesignCategory | null,
+      removalType: (raw?.removalPreference ?? 'none') as RemovalPreference,
+      lengthType: (raw?.lengthPreference ?? 'keep') as LengthPreference,
+      addOns: (raw?.addOns ?? []) as AddOnOption[],
+      selectedPhotoUrl: (raw?.selectedPhotoUrl as string | undefined) ?? null,
+      selectedPhotoId: (raw?.selectedPhotoId as string | undefined) ?? null,
+    });
+    router.push('/field-mode');
   };
 
   const handleStartConsultation = (booking: BookingRequest): void => {

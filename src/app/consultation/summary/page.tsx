@@ -385,7 +385,11 @@ export default function SummaryPage() {
       return;
     }
 
-    router.push(`/consultation/treatment-sheet?consultationId=${newId}&customerId=${customerId}`);
+    // consultation store를 reset한 후 records/[id]로 직행
+    setTimeout(() => {
+      useConsultationStore.getState().reset();
+    }, 0);
+    router.push(`/records/${newId}`);
     } catch (err) {
       console.error(err);
       pushToast('error', '저장 중 오류가 발생했어요. 다시 시도해주세요');
