@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useT, useKo, useLocale } from '@/lib/i18n';
 import { usePreConsultStore } from '@/store/pre-consult-store';
 import { Button } from '@/components/ui/Button';
+import { serviceTypeToCategory } from '@/lib/category-mapping';
 
 interface DesignGalleryProps {
   onConfirm: () => void;
@@ -24,12 +25,23 @@ export function DesignGallery({ onConfirm, onSkip }: DesignGalleryProps): React.
 
   const filteredPhotos = useMemo(() => {
     return photos
-      .filter((p) => p.styleCategory === selectedCategory || !p.styleCategory)
+      .filter((p) => {
+        // styleCategory 직접 매칭
+        if (p.styleCategory === selectedCategory) return true;
+        // serviceType → styleCategory 간접 매핑
+        const derived = serviceTypeToCategory(p.serviceType);
+        if (derived === selectedCategory) return true;
+        // 둘 다 없으면 모든 카테고리에 표시
+        if (!p.styleCategory && !derived) return true;
+        return false;
+      })
       .sort((a, b) => {
-        // 카테고리 매칭 사진 우선
-        const aMatch = a.styleCategory === selectedCategory ? 0 : 1;
-        const bMatch = b.styleCategory === selectedCategory ? 0 : 1;
-        if (aMatch !== bMatch) return aMatch - bMatch;
+        // 직접 매칭 우선 → 간접 매핑 → 미분류
+        const aScore = a.styleCategory === selectedCategory ? 0
+          : serviceTypeToCategory(a.serviceType) === selectedCategory ? 1 : 2;
+        const bScore = b.styleCategory === selectedCategory ? 0
+          : serviceTypeToCategory(b.serviceType) === selectedCategory ? 1 : 2;
+        if (aScore !== bScore) return aScore - bScore;
         if (a.isFeatured && !b.isFeatured) return -1;
         if (!a.isFeatured && b.isFeatured) return 1;
         return 0;
