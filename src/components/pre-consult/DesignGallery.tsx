@@ -26,22 +26,12 @@ export function DesignGallery({ onConfirm, onSkip }: DesignGalleryProps): React.
   const filteredPhotos = useMemo(() => {
     return photos
       .filter((p) => {
-        // styleCategory 직접 매칭
         if (p.styleCategory === selectedCategory) return true;
-        // serviceType → styleCategory 간접 매핑
         const derived = serviceTypeToCategory(p.serviceType);
         if (derived === selectedCategory) return true;
-        // 둘 다 없으면 모든 카테고리에 표시
-        if (!p.styleCategory && !derived) return true;
         return false;
       })
       .sort((a, b) => {
-        // 직접 매칭 우선 → 간접 매핑 → 미분류
-        const aScore = a.styleCategory === selectedCategory ? 0
-          : serviceTypeToCategory(a.serviceType) === selectedCategory ? 1 : 2;
-        const bScore = b.styleCategory === selectedCategory ? 0
-          : serviceTypeToCategory(b.serviceType) === selectedCategory ? 1 : 2;
-        if (aScore !== bScore) return aScore - bScore;
         if (a.isFeatured && !b.isFeatured) return -1;
         if (!a.isFeatured && b.isFeatured) return 1;
         return 0;
@@ -55,6 +45,10 @@ export function DesignGallery({ onConfirm, onSkip }: DesignGalleryProps): React.
   ];
 
   const handleSelect = (url: string): void => {
+    if (selectedUrl === url) {
+      setSelectedUrl('');
+      return;
+    }
     setSelectedUrl(url);
     const msg = reassurances[Math.floor(Math.random() * reassurances.length)];
     setReassurance(msg);
@@ -98,6 +92,11 @@ export function DesignGallery({ onConfirm, onSkip }: DesignGalleryProps): React.
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* 선택 옵션 안내 */}
+      <p className="text-center text-xs text-text-muted mb-1">
+        선택하지 않아도 다음으로 넘어갈 수 있어요
+      </p>
 
       {/* Photo grid */}
       <div className="grid grid-cols-2 gap-2">
@@ -145,19 +144,30 @@ export function DesignGallery({ onConfirm, onSkip }: DesignGalleryProps): React.
         })}
       </div>
 
-      {/* Confirm button */}
-      <AnimatePresence>
-        {selectedUrl && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
+      {/* Confirm / Skip buttons */}
+      <div className="flex flex-col gap-2">
+        <AnimatePresence>
+          {selectedUrl && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <Button fullWidth onClick={onConfirm}>
+                {t('preConsult.gallerySelect')}
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        {!selectedUrl && onSkip && (
+          <button
+            type="button"
+            onClick={onSkip}
+            className="w-full rounded-xl border border-border bg-surface py-3 text-sm font-semibold text-text-secondary hover:bg-surface-alt transition-colors"
           >
-            <Button fullWidth onClick={onConfirm}>
-              {t('preConsult.gallerySelect')}
-            </Button>
-          </motion.div>
+            {t('preConsult.next')}
+          </button>
         )}
-      </AnimatePresence>
+      </div>
     </div>
   );
 }
