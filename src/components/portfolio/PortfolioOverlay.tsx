@@ -234,7 +234,7 @@ export function PortfolioOverlay({
             shopId: photo.shopId,
             consultation: linkedRecord?.consultation ? {
               ...linkedRecord.consultation,
-              designScope: photo.designType ?? linkedRecord.consultation.designScope,
+              designScope: (photo.designType ?? linkedRecord.consultation.designScope) as import('@/types/consultation').ConsultationType['designScope'],
             } : {
               customerName: customer?.name ?? '고객',
               bodyPart: 'hand',
