@@ -236,7 +236,7 @@ export function PortfolioOverlay({
               customerName: customer?.name ?? '고객',
               bodyPart: 'hand',
               nailShape: 'round',
-              designScope: photo.serviceType ?? 'full_art',
+              designScope: photo.designType ?? photo.serviceType ?? 'full_art',
               expressions: [],
               hasParts: false,
               partsSelections: [],

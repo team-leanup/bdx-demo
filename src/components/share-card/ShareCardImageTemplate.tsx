@@ -22,8 +22,8 @@ function getDesignLabel(scope: string): string {
 export type CardRatio = '9:16' | '3:4';
 
 const RATIO_CONFIG: Record<CardRatio, { width: number; height: number; photoPercent: number }> = {
-  '9:16': { width: 1080, height: 1920, photoPercent: 75 },
-  '3:4':  { width: 1080, height: 1440, photoPercent: 68 },
+  '9:16': { width: 1080, height: 1920, photoPercent: 70 },
+  '3:4':  { width: 1080, height: 1440, photoPercent: 62 },
 };
 
 // BDX 심볼 로고 — 인라인 SVG (html2canvas 호환용)
@@ -116,24 +116,24 @@ export function ShareCardImageTemplate({
         position: 'absolute', left: 0, right: 0, bottom: 0,
         height: `${infoPercent}%`, background: '#FFFFFF',
         display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-        padding: '16px 32px 24px',
+        padding: '20px 36px 28px',
       }}>
         {/* 시술 정보 */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <span style={{ fontSize: 64, fontWeight: 900, color: '#191F28', lineHeight: 1.15, letterSpacing: '-0.02em' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <span style={{ fontSize: 72, fontWeight: 900, color: '#191F28', lineHeight: 1.1, letterSpacing: '-0.03em' }}>
             {designLabel}
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <span style={{
-              display: 'inline-flex', padding: '6px 14px', borderRadius: 999,
-              fontSize: 30, fontWeight: 700, background: '#FFF1F2', color: '#F43F5E',
+              display: 'inline-flex', padding: '8px 18px', borderRadius: 999,
+              fontSize: 32, fontWeight: 700, background: '#FFF1F2', color: '#F43F5E',
             }}>
               {bodyLabel}
             </span>
             {expressionLabels.map((label, i) => (
               <span key={i} style={{
-                display: 'inline-flex', padding: '6px 14px', borderRadius: 999,
-                fontSize: 28, fontWeight: 600, background: '#F3F4F6', color: '#6B7280',
+                display: 'inline-flex', padding: '8px 18px', borderRadius: 999,
+                fontSize: 30, fontWeight: 600, background: '#F3F4F6', color: '#6B7280',
               }}>
                 {label}
               </span>
@@ -141,17 +141,17 @@ export function ShareCardImageTemplate({
           </div>
         </div>
 
-        {/* 샵 이름 + BDX 로고 */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: 44, fontWeight: 900, color: '#191F28', letterSpacing: '-0.01em' }}>
-            {shopName}
+        {/* 샵 이름 */}
+        <span style={{ fontSize: 48, fontWeight: 900, color: '#191F28', letterSpacing: '-0.01em' }}>
+          {shopName}
+        </span>
+
+        {/* BDX 로고 */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+          <BdxLogo size={72} />
+          <span style={{ fontSize: 32, letterSpacing: '0.08em', color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase' as const }}>
+            Beauty Decision
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            <BdxLogo size={40} />
-            <span style={{ fontSize: 20, letterSpacing: '0.1em', color: '#C9CDD2', fontWeight: 500, textTransform: 'uppercase' as const }}>
-              Beauty Decision
-            </span>
-          </div>
         </div>
       </div>
     </div>
