@@ -444,6 +444,7 @@ export const DEMO_RESERVATIONS: BookingRequest[] = [
     language: 'ko',
     designerId: DESIGNERS.민서.id,
     serviceLabel: '아트',
+    requestNote: '아몬드 / 큐티클 예민 / 봄 플라워 아트 원함',
     customerId: 'demo-c-004',
   },
   {
@@ -459,6 +460,7 @@ export const DEMO_RESERVATIONS: BookingRequest[] = [
     language: 'zh',
     designerId: DESIGNERS.원장.id,
     serviceLabel: '자석젤',
+    requestNote: '스퀘오벌 / 캣아이 마그넷 퍼플톤 / 시간 보통',
     customerId: 'demo-c-007',
   },
   {
@@ -474,6 +476,7 @@ export const DEMO_RESERVATIONS: BookingRequest[] = [
     language: 'zh',
     designerId: DESIGNERS.민서.id,
     serviceLabel: '프렌치',
+    requestNote: '오벌 / 화이트 프렌치 / 큐티클 보통 / 시간 짧게',
     customerId: 'demo-c-008',
   },
   {
@@ -489,6 +492,7 @@ export const DEMO_RESERVATIONS: BookingRequest[] = [
     language: 'ko',
     designerId: DESIGNERS.원장.id,
     serviceLabel: '원컬러',
+    requestNote: '라운드 / 누드핑크 원컬러 / 시술 보통',
     customerId: 'demo-c-010',
   },
   {
@@ -504,6 +508,7 @@ export const DEMO_RESERVATIONS: BookingRequest[] = [
     language: 'en',
     designerId: DESIGNERS.하윤.id,
     serviceLabel: '아트',
+    requestNote: '스틸레토 / 글리터 아트 / 큐티클 민감 / 길게',
     customerId: 'demo-c-012',
   },
   {
@@ -519,6 +524,7 @@ export const DEMO_RESERVATIONS: BookingRequest[] = [
     language: 'ko',
     designerId: DESIGNERS.민서.id,
     serviceLabel: '그라데이션',
+    requestNote: '스퀘어 / 핑크-화이트 그라데이션 / 시간 보통',
     customerId: 'demo-c-011',
   },
 
@@ -536,6 +542,7 @@ export const DEMO_RESERVATIONS: BookingRequest[] = [
     language: 'ko',
     designerId: DESIGNERS.민서.id,
     serviceLabel: '이달의 아트',
+    requestNote: '스퀘어 / 이달의 아트 / 시간 보통',
     customerId: 'demo-c-001',
   },
   {
@@ -551,6 +558,7 @@ export const DEMO_RESERVATIONS: BookingRequest[] = [
     language: 'ko',
     designerId: DESIGNERS.하윤.id,
     serviceLabel: '원컬러',
+    requestNote: '오벌 / 크림 원컬러 / 길게',
     customerId: 'demo-c-002',
   },
   {
@@ -566,6 +574,7 @@ export const DEMO_RESERVATIONS: BookingRequest[] = [
     language: 'ko',
     designerId: DESIGNERS.원장.id,
     serviceLabel: '프렌치',
+    requestNote: '아몬드 / 프렌치 / 큐티클 조심',
     customerId: 'demo-c-003',
   },
   {
@@ -581,6 +590,7 @@ export const DEMO_RESERVATIONS: BookingRequest[] = [
     language: 'en',
     designerId: DESIGNERS.원장.id,
     serviceLabel: '풀아트',
+    requestNote: '아몬드 / 풀아트 글리터 / 시간 짧게',
     customerId: 'demo-c-005',
   },
   {
@@ -596,6 +606,7 @@ export const DEMO_RESERVATIONS: BookingRequest[] = [
     language: 'zh',
     designerId: DESIGNERS.원장.id,
     serviceLabel: '자석젤',
+    requestNote: '스퀘오벌 / 캣아이 자석젤 / 보통',
     customerId: 'demo-c-007',
   },
   {
@@ -611,6 +622,7 @@ export const DEMO_RESERVATIONS: BookingRequest[] = [
     language: 'ko',
     designerId: DESIGNERS.민서.id,
     serviceLabel: '그라데이션',
+    requestNote: '아몬드 / 핑크 그라데이션 / 큐티클 예민',
     customerId: 'demo-c-004',
   },
   {
@@ -626,6 +638,7 @@ export const DEMO_RESERVATIONS: BookingRequest[] = [
     language: 'ja',
     designerId: DESIGNERS.하윤.id,
     serviceLabel: '아트',
+    requestNote: '라운드 / 시즌 아트 / 시간 보통',
     customerId: 'demo-c-009',
   },
   {
@@ -641,6 +654,7 @@ export const DEMO_RESERVATIONS: BookingRequest[] = [
     language: 'en',
     designerId: DESIGNERS.하윤.id,
     serviceLabel: '원컬러',
+    requestNote: '라운드 / 베이비핑크 / 길게',
     customerId: 'demo-c-006',
   },
 ];
