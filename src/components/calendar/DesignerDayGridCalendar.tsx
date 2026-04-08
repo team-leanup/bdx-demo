@@ -256,16 +256,12 @@ function DraggableEvent({
       )}
       style={{ top, height, overflow: 'hidden' }}
     >
-      <div className="text-[11px] font-semibold opacity-70 leading-none">
-        {ev.startTime}–{ev.endTime}
-      </div>
-      <div className="text-sm font-semibold leading-snug mt-1">{ev.title}</div>
+      <div className="text-[10px] opacity-70 leading-tight">{ev.startTime}–{ev.endTime}</div>
+      <div className="text-xs font-semibold leading-tight mt-0.5 break-words">{ev.title}</div>
       {showMetaRow && (
-        <div className="mt-1.5 flex flex-wrap items-center gap-1">
+        <div className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-0.5">
           {ev.serviceLabel && (
-            <span className="inline-flex items-center rounded-full bg-white/55 px-2 py-0.5 text-[11px] font-semibold text-text">
-              {ev.serviceLabel}
-            </span>
+            <span className="rounded bg-white/50 px-1 py-px text-[10px] font-medium text-text">{ev.serviceLabel}</span>
           )}
           {ev.type === 'reservation' && (
             <ReservationReadinessBadge
@@ -275,20 +271,20 @@ function DraggableEvent({
             />
           )}
           {ev.channel && CHANNEL_EMOJI[ev.channel] && (
-            <span className="text-[11px]">{CHANNEL_EMOJI[ev.channel]}</span>
+            <span className="text-[10px]">{CHANNEL_EMOJI[ev.channel]}</span>
           )}
           {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
-            <span className="text-[11px]">{LANGUAGE_FLAG[ev.language]}</span>
+            <span className="text-[10px]">{LANGUAGE_FLAG[ev.language]}</span>
           )}
         </div>
       )}
       {showTags && (
-        <div className="mt-1 flex flex-wrap items-center gap-1">
+        <div className="mt-0.5 flex flex-wrap items-center gap-1">
           {displayTags.map((tag) => (
             <CustomerTagChip key={tag.id} tag={tag} size="xs" />
           ))}
           {extraTagCount > 0 && (
-            <span className="text-[10px] text-text-muted">+{extraTagCount}</span>
+            <span className="text-[9px] text-text-muted">+{extraTagCount}</span>
           )}
         </div>
       )}
