@@ -52,12 +52,19 @@ const DESIGNER_COLORS: Record<string, { bg: string; border: string; text: string
 
 const DEFAULT_COLOR = { bg: 'bg-primary/10', border: 'border-primary', text: 'text-primary' };
 
-const CHANNEL_EMOJI: Record<string, string> = {
-  kakao: '💬',
-  naver: 'N',
-  phone: '📞',
-  walk_in: '🚶',
-};
+function ChannelIcon({ channel }: { channel: string }): React.ReactElement | null {
+  if (channel === 'kakao') return (
+    <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#FEE500]">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="#3C1E1E"><path d="M12 3C6.5 3 2 6.58 2 11c0 2.84 1.87 5.33 4.68 6.74l-.96 3.56c-.07.25.2.46.42.33L10.3 18.9c.55.07 1.12.1 1.7.1 5.5 0 10-3.58 10-8s-4.5-8-10-8z"/></svg>
+    </span>
+  );
+  if (channel === 'naver') return (
+    <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#03C75A] text-white text-[8px] font-black leading-none">N</span>
+  );
+  if (channel === 'phone') return <span className="text-[10px]">📞</span>;
+  if (channel === 'walk_in') return <span className="text-[10px]">🚶</span>;
+  return null;
+}
 
 const LANGUAGE_FLAG: Record<string, string> = {
   en: '🇺🇸',
@@ -254,11 +261,11 @@ function DraggableEvent({
         color.border,
         color.text,
       )}
-      style={{ top, height, overflow: 'hidden' }}
+      style={{ top, height }}
     >
-      {/* 상태 뱃지 — 우측 상단 overlay */}
+      {/* 상태 뱃지 — 카드 외부 우측 상단 overlay */}
       {ev.type === 'reservation' && (
-        <div className="absolute top-1 right-1 z-[1]">
+        <div className="absolute -top-2 -right-1 z-20">
           <ReservationReadinessBadge
             booking={{ preConsultationCompletedAt: ev.preConsultationCompletedAt, consultationLinkSentAt: ev.consultationLinkSentAt, channel: (ev.channel ?? 'walk_in') as 'kakao' | 'naver' | 'phone' | 'walk_in' }}
             size="xs"
@@ -266,10 +273,12 @@ function DraggableEvent({
           />
         </div>
       )}
+      {/* 내부 콘텐츠 — overflow 클리핑 */}
+      <div className="h-full overflow-hidden">
       {/* 시간 */}
-      <div className="text-[10px] opacity-70 leading-tight pr-12">{ev.startTime}–{ev.endTime}</div>
+      <div className="text-[10px] opacity-70 leading-tight">{ev.startTime}–{ev.endTime}</div>
       {/* 이름 + 국기 */}
-      <div className="flex items-baseline gap-0.5 mt-0.5 pr-12">
+      <div className="flex items-baseline gap-0.5 mt-0.5">
         <span className="text-xs font-semibold leading-tight">{ev.title}</span>
         {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
           <span className="text-[10px] leading-none">{LANGUAGE_FLAG[ev.language]}</span>
@@ -281,9 +290,7 @@ function DraggableEvent({
           {ev.serviceLabel && (
             <span className="rounded bg-white/50 px-1 py-px font-medium text-text">{ev.serviceLabel}</span>
           )}
-          {ev.channel && CHANNEL_EMOJI[ev.channel] && (
-            <span>{CHANNEL_EMOJI[ev.channel]}</span>
-          )}
+          {ev.channel && <ChannelIcon channel={ev.channel} />}
         </div>
       )}
       {/* 고객 선호 */}
@@ -310,6 +317,7 @@ function DraggableEvent({
           )}
         </div>
       )}
+      </div>{/* /overflow wrapper */}
     </motion.button>
   );
 }
