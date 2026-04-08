@@ -1009,6 +1009,18 @@ function MenuCard({ photo, fallbackIdx, onRemove, onOpenOverlay }: MenuCardProps
               photo.isPopular ? 'bg-amber-500 text-white' : 'bg-surface-alt text-text-muted',
             )}
           >인기</button>
+          {/* 카테고리 이동 */}
+          <select
+            value={photo.styleCategory ?? 'simple'}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => { updatePhoto(photo.id, { styleCategory: e.target.value as 'simple' | 'french' | 'magnet' | 'art' }); }}
+            className="text-[9px] font-medium px-1 py-0.5 rounded-full bg-surface-alt text-text-muted border-0 appearance-none cursor-pointer"
+          >
+            <option value="simple">심플</option>
+            <option value="french">프렌치</option>
+            <option value="magnet">마그넷</option>
+            <option value="art">아트</option>
+          </select>
         </div>
       </div>
     </div>
