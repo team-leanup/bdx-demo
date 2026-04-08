@@ -211,6 +211,61 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
         </div>
       )}
 
+      {/* 시술 리포트 */}
+      <Card className="mx-4">
+        <h2 className="mb-3 text-sm font-semibold text-text-secondary">시술 리포트</h2>
+        {/* 시술 종류 태그 */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          <Badge variant="neutral" size="sm">{BODY_PART_LABEL[c.bodyPart]}</Badge>
+          <Badge variant="primary" size="sm">
+            {DESIGN_SCOPE_LABEL[c.designScope] ?? c.designScope}
+          </Badge>
+          {c.expressions.map((exp) => (
+            <Badge key={exp} variant="neutral" size="sm">
+              {EXPRESSION_LABEL[exp] ?? exp}
+            </Badge>
+          ))}
+        </div>
+        {/* 네일 쉐잎 · 길이 · 두께감 · 큐티클 민감도 — 한줄 */}
+        {checklistData && (checklistData.shape || checklistData.length || checklistData.thickness || checklistData.cuticleSensitivity) && (
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mb-3 text-sm">
+            {checklistData.shape && (
+              <span className="text-text-secondary">쉐잎 <span className="font-semibold text-text">{t('checklist.shape_' + checklistData.shape)}</span></span>
+            )}
+            {checklistData.length && (
+              <span className="text-text-secondary">길이 <span className="font-semibold text-text">{t('checklist.length_' + checklistData.length)}</span></span>
+            )}
+            {checklistData.thickness && (
+              <span className="text-text-secondary">두께감 <span className="font-semibold text-text">{t('checklist.thickness_' + checklistData.thickness)}</span></span>
+            )}
+            {checklistData.cuticleSensitivity && (
+              <span className="text-text-secondary">민감도 <span className="font-semibold text-text">{t('checklist.cuticle_' + checklistData.cuticleSensitivity)}</span></span>
+            )}
+          </div>
+        )}
+        {/* 파츠 */}
+        {c.hasParts && c.partsSelections.length > 0 && (
+          <p className="text-sm text-text-secondary mb-1.5">
+            <span className="font-medium text-text-secondary">파츠: </span>
+            {c.partsSelections.map((p, i) => (
+              <span key={i} className="text-sm font-medium text-text">
+                {i > 0 && ', '}
+                {t('recordDetail.partsGradeUnit').replace('{grade}', p.grade).replace('{count}', String(p.quantity))}
+              </span>
+            ))}
+          </p>
+        )}
+        {/* 추가컬러 */}
+        {c.extraColorCount > 0 && (
+          <p className="text-sm text-text-secondary">
+            <span className="font-medium text-text-secondary">추가컬러: </span>
+            <span className="font-medium text-text">
+              {t('recordDetail.extraColorUnit').replace('{count}', String(c.extraColorCount))}
+            </span>
+          </p>
+        )}
+      </Card>
+
       {/* 고객 정보 */}
       <Card className="mx-4">
         <h2 className="mb-3 text-sm font-semibold text-text-secondary">{t('recordDetail.sectionCustomer')}</h2>
@@ -230,44 +285,6 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
             </span>
           </div>
         </div>
-      </Card>
-
-      {/* 시술 리포트 */}
-      <Card className="mx-4">
-        <h2 className="mb-3 text-sm font-semibold text-text-secondary">시술 리포트</h2>
-        {/* Row 1: 부위 + 디자인 + 표현기법 tags */}
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          <Badge variant="neutral" size="sm">{BODY_PART_LABEL[c.bodyPart]}</Badge>
-          <Badge variant="primary" size="sm">
-            {DESIGN_SCOPE_LABEL[c.designScope] ?? c.designScope}
-          </Badge>
-          {c.expressions.map((exp) => (
-            <Badge key={exp} variant="neutral" size="sm">
-              {EXPRESSION_LABEL[exp] ?? exp}
-            </Badge>
-          ))}
-        </div>
-        {/* Row 3: 파츠 */}
-        {c.hasParts && c.partsSelections.length > 0 && (
-          <p className="text-sm text-text-secondary mb-1.5">
-            <span className="font-medium text-text-secondary">파츠: </span>
-            {c.partsSelections.map((p, i) => (
-              <span key={i} className="text-sm font-medium text-text">
-                {i > 0 && ', '}
-                {t('recordDetail.partsGradeUnit').replace('{grade}', p.grade).replace('{count}', String(p.quantity))}
-              </span>
-            ))}
-          </p>
-        )}
-        {/* Row 4: 추가컬러 */}
-        {c.extraColorCount > 0 && (
-          <p className="text-sm text-text-secondary">
-            <span className="font-medium text-text-secondary">추가컬러: </span>
-            <span className="font-medium text-text">
-              {t('recordDetail.extraColorUnit').replace('{count}', String(c.extraColorCount))}
-            </span>
-          </p>
-        )}
       </Card>
 
       {/* 가격 상세 */}
