@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -447,6 +447,25 @@ export default function PortfolioPage(): React.ReactElement {
     setPickerCategory(null);
   };
 
+  const addPhoto = usePortfolioStore((s) => s.addPhoto);
+  const handleUploadPhoto = (file: File): void => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      const cat = pickerCategory ?? 'simple';
+      void addPhoto({
+        customerId: '',
+        kind: 'treatment',
+        imageDataUrl: dataUrl,
+        styleCategory: cat as 'simple' | 'french' | 'magnet' | 'art',
+        isFeatured: true,
+        isPublic: true,
+      });
+      setPickerCategory(null);
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Derived counts for header
   const menuCount = menuPhotos.length;
   const recordsCount = treatmentPhotos.length;
@@ -555,6 +574,7 @@ export default function PortfolioPage(): React.ReactElement {
                   onOpenPicker={() => setPickerCategory(cat)}
                   onClosePicker={() => setPickerCategory(null)}
                   onAddToMenu={handleAddToMenu}
+                  onUploadPhoto={handleUploadPhoto}
                   onRemoveFromMenu={(id) => toggleMenu(id)}
                   onOpenOverlay={(id) => setOverlayPhotoId(id)}
                 />
@@ -578,6 +598,7 @@ export default function PortfolioPage(): React.ReactElement {
                 onOpenPicker={() => setPickerCategory(cat)}
                 onClosePicker={() => setPickerCategory(null)}
                 onAddToMenu={handleAddToMenu}
+                onUploadPhoto={handleUploadPhoto}
                 onRemoveFromMenu={(id) => toggleMenu(id)}
                 onOpenOverlay={(id) => setOverlayPhotoId(id)}
               />
@@ -827,6 +848,7 @@ interface CategorySectionProps {
   onOpenPicker: () => void;
   onClosePicker: () => void;
   onAddToMenu: (photo: PortfolioPhoto) => void;
+  onUploadPhoto: (file: File) => void;
   onRemoveFromMenu: (id: string) => void;
   onOpenOverlay: (id: string) => void;
 }
@@ -839,9 +861,11 @@ function CategorySection({
   onOpenPicker,
   onClosePicker,
   onAddToMenu,
+  onUploadPhoto,
   onRemoveFromMenu,
   onOpenOverlay,
 }: CategorySectionProps): React.ReactElement {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   return (
     <div className="flex flex-col gap-2">
       {/* Section header */}
@@ -867,58 +891,72 @@ function CategorySection({
       )}
 
       {/* Add to menu button */}
-      {nonMenuItems.length > 0 && (
-        <div>
-          <button
-            onClick={pickerOpen ? onClosePicker : onOpenPicker}
-            className="flex items-center gap-1.5 text-sm text-text-muted hover:text-primary transition-colors py-1"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            메뉴에 추가
-          </button>
+      {/* 메뉴에 추가 */}
+      <div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) onUploadPhoto(file);
+            e.target.value = '';
+          }}
+        />
+        <button
+          onClick={pickerOpen ? onClosePicker : onOpenPicker}
+          className="flex items-center gap-1.5 text-sm text-text-muted hover:text-primary transition-colors py-1"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          메뉴에 추가
+        </button>
 
-          <AnimatePresence>
-            {pickerOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.18 }}
-                className="overflow-hidden"
-              >
-                <div className="pt-2 grid grid-cols-3 sm:grid-cols-4 gap-2">
-                  {nonMenuItems.map((photo, idx) => {
-                    const imgSrc = photo.imageDataUrl || NAIL_FALLBACKS[idx % NAIL_FALLBACKS.length];
-                    return (
-                      <button
-                        key={photo.id}
-                        onClick={() => onAddToMenu(photo)}
-                        className="relative aspect-square rounded-lg overflow-hidden border-2 border-transparent hover:border-primary transition-colors group"
-                      >
-                        <Image
-                          src={imgSrc}
-                          alt={photo.designType ?? '사진'}
-                          fill
-                          unoptimized={imgSrc.startsWith('data:')}
-                          className="object-cover group-hover:scale-105 transition-transform"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                      </button>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
-
-      {/* Empty category */}
-      {items.length === 0 && nonMenuItems.length === 0 && (
-        <p className="text-xs text-text-muted py-1">이 카테고리에 시술 사진이 없습니다</p>
-      )}
+        <AnimatePresence>
+          {pickerOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className="overflow-hidden"
+            >
+              <div className="pt-2 grid grid-cols-3 sm:grid-cols-4 gap-2">
+                {/* 사진 업로드 버튼 */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="aspect-square rounded-lg border-2 border-dashed border-primary/40 bg-primary/5 flex flex-col items-center justify-center gap-1 hover:bg-primary/10 transition-colors"
+                >
+                  <svg className="w-6 h-6 text-primary/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                  </svg>
+                  <span className="text-[10px] text-primary/60 font-medium">사진 올리기</span>
+                </button>
+                {nonMenuItems.map((photo, idx) => {
+                  const imgSrc = photo.imageDataUrl || NAIL_FALLBACKS[idx % NAIL_FALLBACKS.length];
+                  return (
+                    <button
+                      key={photo.id}
+                      onClick={() => onAddToMenu(photo)}
+                      className="relative aspect-square rounded-lg overflow-hidden border-2 border-transparent hover:border-primary transition-colors group"
+                    >
+                      <Image
+                        src={imgSrc}
+                        alt={photo.designType ?? '사진'}
+                        fill
+                        unoptimized={imgSrc.startsWith('data:')}
+                        className="object-cover group-hover:scale-105 transition-transform"
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
@@ -936,70 +974,43 @@ function MenuCard({ photo, fallbackIdx, onRemove, onOpenOverlay }: MenuCardProps
   const updatePhoto = usePortfolioStore((s) => s.updatePhoto);
 
   return (
-    <div className="flex gap-3 bg-surface rounded-xl p-3 shadow-sm border border-border/60">
-      {/* Thumbnail */}
-      <button
-        onClick={onOpenOverlay}
-        className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 hover:opacity-90 transition-opacity"
-      >
-        <Image
-          src={imgSrc}
-          alt={photo.designType ?? '메뉴 사진'}
-          fill
-          unoptimized={imgSrc.startsWith('data:')}
-          className="object-cover"
-        />
-        {/* 뱃지 오버레이 */}
-        {photo.isStaffPick && (
-          <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-primary text-white text-[8px] font-bold">추천</span>
-        )}
-        {photo.isPopular && (
-          <span className={cn('absolute top-1 right-1 px-1.5 py-0.5 rounded bg-amber-500 text-white text-[8px] font-bold', photo.isStaffPick ? '' : 'left-1')}>인기</span>
+    <div className="flex items-start gap-3 bg-surface rounded-xl p-2.5 border border-border/50">
+      {/* 썸네일 */}
+      <button onClick={onOpenOverlay} className="relative w-16 h-16 rounded-lg overflow-hidden shrink-0">
+        <Image src={imgSrc} alt={photo.designType ?? ''} fill unoptimized={imgSrc.startsWith('data:')} className="object-cover" />
+        {(photo.isStaffPick || photo.isPopular) && (
+          <div className="absolute top-0.5 left-0.5 flex gap-0.5">
+            {photo.isStaffPick && <span className="px-1 py-px rounded bg-primary text-white text-[7px] font-bold">추천</span>}
+            {photo.isPopular && <span className="px-1 py-px rounded bg-amber-500 text-white text-[7px] font-bold">인기</span>}
+          </div>
         )}
       </button>
 
-      {/* Info */}
-      <div className="flex-1 min-w-0 flex flex-col gap-1">
-        <p className="text-sm font-semibold text-text truncate">
-          {photo.designType ?? '디자인 미지정'}
-        </p>
-        {photo.serviceType && (
-          <span className="inline-flex self-start px-2 py-0.5 rounded border border-border bg-surface-alt text-[10px] font-medium text-text-secondary">
-            {photo.serviceType}
-          </span>
-        )}
-        <MenuCardPrice photoId={photo.id} price={photo.price} />
-        {/* 직원추천 / 인기 토글 */}
-        <div className="flex items-center gap-2 mt-0.5">
+      {/* 정보 */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-1">
+          <p className="text-sm font-semibold text-text truncate">{photo.designType ?? '미지정'}</p>
+          <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className="shrink-0 text-[10px] text-text-muted hover:text-red-500">해제</button>
+        </div>
+        <div className="flex items-center gap-1.5 mt-0.5">
+          {photo.serviceType && <span className="text-[10px] text-text-secondary">{photo.serviceType}</span>}
+          <MenuCardPrice photoId={photo.id} price={photo.price} />
+        </div>
+        <div className="flex items-center gap-1 mt-1">
           <button
             onClick={(e) => { e.stopPropagation(); updatePhoto(photo.id, { isStaffPick: !photo.isStaffPick }); }}
-            className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full border transition-colors',
-              photo.isStaffPick ? 'bg-primary/10 text-primary border-primary/30' : 'text-text-muted border-border hover:border-primary/30',
+            className={cn('text-[9px] font-medium px-1.5 py-0.5 rounded-full transition-colors',
+              photo.isStaffPick ? 'bg-primary text-white' : 'bg-surface-alt text-text-muted',
             )}
-          >
-            {photo.isStaffPick ? '✓ 직원추천' : '직원추천'}
-          </button>
+          >추천</button>
           <button
             onClick={(e) => { e.stopPropagation(); updatePhoto(photo.id, { isPopular: !photo.isPopular }); }}
-            className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full border transition-colors',
-              photo.isPopular ? 'bg-amber-50 text-amber-600 border-amber-200' : 'text-text-muted border-border hover:border-amber-200',
+            className={cn('text-[9px] font-medium px-1.5 py-0.5 rounded-full transition-colors',
+              photo.isPopular ? 'bg-amber-500 text-white' : 'bg-surface-alt text-text-muted',
             )}
-          >
-            {photo.isPopular ? '✓ 인기' : '인기'}
-          </button>
+          >인기</button>
         </div>
       </div>
-
-      {/* Remove button */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove();
-        }}
-        className="shrink-0 self-start text-xs text-text-muted hover:text-destructive transition-colors px-2 py-1 rounded-lg hover:bg-surface-alt"
-      >
-        해제
-      </button>
     </div>
   );
 }
