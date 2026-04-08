@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, useAnimationControls } from 'framer-motion';
 import { CustomerTagChip } from '@/components/customer/CustomerTagChip';
-import { ReservationReadinessBadge } from '@/components/reservations/ReservationReadinessBadge';
+
 import { DragConfirmModal } from '@/components/calendar/DragConfirmModal';
 import { useLongPress } from '@/lib/hooks/useLongPress';
 import { cn } from '@/lib/cn';
@@ -263,6 +263,15 @@ function DraggableEvent({
       )}
       style={{ top, height }}
     >
+      {/* 상태 dot — 우측 상단 overlay (작은 점) */}
+      {ev.type === 'reservation' && (
+        <div className={cn(
+          'absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white z-20',
+          ev.preConsultationCompletedAt ? 'bg-emerald-500'
+            : ev.consultationLinkSentAt ? 'bg-amber-400'
+            : 'bg-slate-300',
+        )} />
+      )}
       {/* 내부 콘텐츠 */}
       <div className="h-full overflow-hidden">
       {/* 이름 + 국기 */}
@@ -272,16 +281,6 @@ function DraggableEvent({
           <span className="ml-0.5 text-[10px]">{LANGUAGE_FLAG[ev.language]}</span>
         )}
       </div>
-      {/* 상태 */}
-      {ev.type === 'reservation' && (
-        <div className="mt-0.5">
-          <ReservationReadinessBadge
-            booking={{ preConsultationCompletedAt: ev.preConsultationCompletedAt, consultationLinkSentAt: ev.consultationLinkSentAt, channel: (ev.channel ?? 'walk_in') as 'kakao' | 'naver' | 'phone' | 'walk_in' }}
-            size="xs"
-            compact
-          />
-        </div>
-      )}
       {/* 시간 */}
       <div className="text-[10px] opacity-60 leading-tight">{ev.startTime}–{ev.endTime}</div>
       {/* 서비스 + 채널 */}
