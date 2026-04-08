@@ -16,7 +16,6 @@ import { calculatePrice } from '@/lib/price-calculator';
 import { useT } from '@/lib/i18n';
 import { getSafetyTagMeta } from '@/lib/tag-safety';
 import { SafetyTag } from '@/components/ui/SafetyTag';
-import { ChecklistSummaryRow } from '@/components/records/ChecklistSummaryRow';
 import type { DailyChecklist as DailyChecklistType } from '@/types/consultation';
 import { ConsultationStep } from '@/types/consultation';
 import { useLocaleStore } from '@/store/locale-store';
@@ -123,9 +122,18 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <div>
-          <h1 className="text-lg font-bold text-text">{t('recordDetail.title')}</h1>
-          <p className="text-xs text-text-secondary">{formatDateDotWithTime(record.createdAt)}</p>
+        <div className="flex flex-1 items-center justify-between">
+          <div>
+            <h1 className="text-lg font-bold text-text">{t('recordDetail.title')}</h1>
+            <p className="text-xs text-text-secondary">{formatDateDotWithTime(record.createdAt)}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => router.push(`/records/${id}?edit=checklist`)}
+            className="text-xs font-medium text-primary"
+          >
+            수정하기
+          </button>
         </div>
       </div>
 
@@ -189,7 +197,21 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
         </div>
       )}
 
-      {/* 고객 정보 + 체크리스트 서머리 */}
+      {/* 특이사항 */}
+      {(checklistData?.memo || record.notes) && (
+        <div className="mx-4 rounded-xl bg-amber-50 border border-amber-200 p-3">
+          <p className="mb-1.5 text-xs font-semibold text-amber-800">📝 특이사항</p>
+          {checklistData?.memo && (
+            <p className="text-sm text-amber-900">{checklistData.memo}</p>
+          )}
+          {checklistData?.memo && record.notes && <div className="my-1" />}
+          {record.notes && (
+            <p className="text-sm text-amber-900">{record.notes}</p>
+          )}
+        </div>
+      )}
+
+      {/* 고객 정보 */}
       <Card className="mx-4">
         <h2 className="mb-3 text-sm font-semibold text-text-secondary">{t('recordDetail.sectionCustomer')}</h2>
         <div className="flex flex-col gap-2">
@@ -208,67 +230,43 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
             </span>
           </div>
         </div>
-        <div className="mt-3 border-t border-border pt-3">
-          <p className="mb-1.5 text-xs font-semibold text-text-secondary">시술 체크리스트</p>
-          <ChecklistSummaryRow checklist={checklistData} />
-        </div>
       </Card>
 
-      {/* 시술 내용 (간소화) */}
+      {/* 시술 리포트 */}
       <Card className="mx-4">
-        <h2 className="mb-3 text-sm font-semibold text-text-secondary">{t('recordDetail.sectionTreatment')}</h2>
-        <div className="flex flex-col gap-2">
-          <div className="flex justify-between">
-            <span className="text-sm text-text-secondary">{t('recordDetail.fieldBodyPart')}</span>
-            <Badge variant="neutral" size="sm">{BODY_PART_LABEL[c.bodyPart]}</Badge>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-text-secondary">{t('recordDetail.fieldShape')}</span>
-            <span className="text-sm font-medium text-text">
-              {t('shape.' + c.nailShape)}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-text-secondary">{t('recordDetail.fieldDesign')}</span>
-            <Badge variant="primary" size="sm">
-              {DESIGN_SCOPE_LABEL[c.designScope] ?? c.designScope}
+        <h2 className="mb-3 text-sm font-semibold text-text-secondary">시술 리포트</h2>
+        {/* Row 1: 부위 + 디자인 + 표현기법 tags */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          <Badge variant="neutral" size="sm">{BODY_PART_LABEL[c.bodyPart]}</Badge>
+          <Badge variant="primary" size="sm">
+            {DESIGN_SCOPE_LABEL[c.designScope] ?? c.designScope}
+          </Badge>
+          {c.expressions.map((exp) => (
+            <Badge key={exp} variant="neutral" size="sm">
+              {EXPRESSION_LABEL[exp] ?? exp}
             </Badge>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-sm text-text-secondary">{t('recordDetail.fieldExpression')}</span>
-            <div className="flex flex-wrap justify-end gap-1">
-              {c.expressions.map((exp) => (
-                <Badge key={exp} variant="neutral" size="sm">
-                  {EXPRESSION_LABEL[exp] ?? exp}
-                </Badge>
-              ))}
-            </div>
-          </div>
-          {c.hasParts && c.partsSelections.length > 0 && (
-            <div className="flex justify-between">
-              <span className="text-sm text-text-secondary">{t('recordDetail.fieldParts')}</span>
-              <div className="flex flex-col items-end gap-1">
-                {c.partsSelections.map((p, i) => (
-                  <span key={i} className="text-sm font-medium text-text">
-                    {t('recordDetail.partsGradeUnit').replace('{grade}', p.grade).replace('{count}', String(p.quantity))}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-          {c.extraColorCount > 0 && (
-            <div className="flex justify-between">
-              <span className="text-sm text-text-secondary">{t('recordDetail.fieldExtraColor')}</span>
-              <span className="text-sm font-medium text-text">
-                {t('recordDetail.extraColorUnit').replace('{count}', String(c.extraColorCount))}
-              </span>
-            </div>
-          )}
+          ))}
         </div>
-        {record.notes && (
-          <div className="mt-3 rounded-xl bg-surface-alt p-3">
-            <p className="text-xs text-text-secondary">{record.notes}</p>
-          </div>
+        {/* Row 3: 파츠 */}
+        {c.hasParts && c.partsSelections.length > 0 && (
+          <p className="text-sm text-text-secondary mb-1.5">
+            <span className="font-medium text-text-secondary">파츠: </span>
+            {c.partsSelections.map((p, i) => (
+              <span key={i} className="text-sm font-medium text-text">
+                {i > 0 && ', '}
+                {t('recordDetail.partsGradeUnit').replace('{grade}', p.grade).replace('{count}', String(p.quantity))}
+              </span>
+            ))}
+          </p>
+        )}
+        {/* Row 4: 추가컬러 */}
+        {c.extraColorCount > 0 && (
+          <p className="text-sm text-text-secondary">
+            <span className="font-medium text-text-secondary">추가컬러: </span>
+            <span className="font-medium text-text">
+              {t('recordDetail.extraColorUnit').replace('{count}', String(c.extraColorCount))}
+            </span>
+          </p>
         )}
       </Card>
 
@@ -341,15 +339,15 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
             {editingFinalPrice ? (
               <div className="flex flex-col gap-3">
                 <span className="text-sm font-bold text-primary">최종 결제 금액 설정</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-primary">₩</span>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-sm font-semibold text-primary shrink-0">₩</span>
                   <input
                     ref={priceInputRef}
                     type="number"
                     value={finalPriceValue || ''}
                     onChange={(e) => setFinalPriceValue(Number(e.target.value))}
                     onKeyDown={(e) => { if (e.key === 'Enter') handleSaveFinalPrice(); }}
-                    className="flex-1 rounded-xl border-2 border-primary/30 bg-white px-3 py-2 text-right text-lg font-bold text-primary focus:border-primary focus:outline-none"
+                    className="min-w-0 flex-1 rounded-xl border-2 border-primary/30 bg-white px-3 py-2 text-right text-base font-bold text-primary focus:border-primary focus:outline-none"
                     min={0}
                     placeholder={String(breakdown.finalPrice)}
                   />
@@ -392,45 +390,6 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
           </div>
         </div>
       </Card>
-
-      {/* 시술 체크리스트 — 읽기 전용 요약 */}
-      {checklistData && (checklistData.shape || checklistData.length || checklistData.thickness || checklistData.cuticleSensitivity) && (
-        <Card className="mx-4">
-          <h3 className="text-sm font-semibold text-text-secondary mb-3">시술 체크리스트</h3>
-          <div className="grid grid-cols-2 gap-2">
-            {checklistData.shape && (
-              <div className="rounded-xl bg-surface-alt px-3 py-2.5">
-                <p className="text-[10px] text-text-muted mb-0.5">네일 쉐잎</p>
-                <p className="text-sm font-semibold text-text">{t('checklist.shape_' + checklistData.shape)}</p>
-              </div>
-            )}
-            {checklistData.length && (
-              <div className="rounded-xl bg-surface-alt px-3 py-2.5">
-                <p className="text-[10px] text-text-muted mb-0.5">길이</p>
-                <p className="text-sm font-semibold text-text">{t('checklist.length_' + checklistData.length)}</p>
-              </div>
-            )}
-            {checklistData.thickness && (
-              <div className="rounded-xl bg-surface-alt px-3 py-2.5">
-                <p className="text-[10px] text-text-muted mb-0.5">두께감</p>
-                <p className="text-sm font-semibold text-text">{t('checklist.thickness_' + checklistData.thickness)}</p>
-              </div>
-            )}
-            {checklistData.cuticleSensitivity && (
-              <div className="rounded-xl bg-surface-alt px-3 py-2.5">
-                <p className="text-[10px] text-text-muted mb-0.5">큐티클 민감도</p>
-                <p className="text-sm font-semibold text-text">{t('checklist.cuticle_' + checklistData.cuticleSensitivity)}</p>
-              </div>
-            )}
-          </div>
-          {checklistData.memo && (
-            <div className="mt-2 rounded-xl bg-surface-alt px-3 py-2.5">
-              <p className="text-[10px] text-text-muted mb-0.5">특이사항</p>
-              <p className="text-sm text-text">{checklistData.memo}</p>
-            </div>
-          )}
-        </Card>
-      )}
 
       {/* 액션 바 (fixed bottom) */}
       <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background px-4 py-3">
