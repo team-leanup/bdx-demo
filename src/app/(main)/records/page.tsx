@@ -545,6 +545,11 @@ export default function RecordsPage() {
                 onEventClick={handleEventClick}
                 onEventMove={handleEventMove}
                 onSlotLongPress={handleSlotLongPress}
+                onAddReservation={() => {
+                  setReservationPrefill({ time: undefined, designerId: undefined });
+                  setReservationNaverMode(false);
+                  setShowAddReservationModal(true);
+                }}
                 role={role}
                 activeDesignerId={activeDesignerId}
               />

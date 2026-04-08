@@ -30,6 +30,7 @@ interface DesignerDayGridCalendarProps {
   onEventClick?: (event: TimeGridEvent) => void;
   onEventMove?: (reservationId: string, updates: { reservationTime: string; designerId?: string }) => void;
   onSlotLongPress?: (time: string, designerId: string) => void;
+  onAddReservation?: () => void;
   role: UserRole;
   activeDesignerId: string | null;
 }
@@ -442,6 +443,7 @@ export function DesignerDayGridCalendar({
   onEventClick,
   onEventMove,
   onSlotLongPress,
+  onAddReservation,
 }: DesignerDayGridCalendarProps) {
   const [currentTime, setCurrentTime] = useState(getCurrentTimeInKorea());
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
@@ -507,7 +509,21 @@ export function DesignerDayGridCalendar({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="text-lg font-semibold text-text">{formatDayLabelKo(date)}</div>
+      <div className="flex items-center justify-between">
+        <div className="text-lg font-semibold text-text">{formatDayLabelKo(date)}</div>
+        {onAddReservation && (
+          <button
+            type="button"
+            onClick={onAddReservation}
+            className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-primary-dark active:scale-95 transition-all"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            예약 추가
+          </button>
+        )}
+      </div>
 
       <div className="rounded-xl border border-border bg-surface overflow-hidden">
         <div
@@ -525,13 +541,13 @@ export function DesignerDayGridCalendar({
           ))}
         </div>
 
-        <div className="relative bg-surface" style={{ height: gridHeight + 8, paddingTop: 8 }}>
-          {HOURS.map((hour) => (
+        <div className="relative bg-surface" style={{ height: gridHeight }}>
+          {HOURS.map((hour, idx) => (
             <div
               key={hour}
               className="absolute w-full grid"
               style={{
-                top: (hour - START_HOUR) * hourHeight + 8,
+                top: (hour - START_HOUR) * hourHeight,
                 gridTemplateColumns: `${axisWidth}px repeat(${colCount}, 1fr)`,
               }}
             >
@@ -547,7 +563,7 @@ export function DesignerDayGridCalendar({
           <div
             ref={gridRef}
             className="absolute inset-0 grid"
-            style={{ gridTemplateColumns: `${axisWidth}px repeat(${colCount}, 1fr)`, top: 8 }}
+            style={{ gridTemplateColumns: `${axisWidth}px repeat(${colCount}, 1fr)` }}
           >
             <div />
             {columns.map((col) => (
@@ -577,7 +593,7 @@ export function DesignerDayGridCalendar({
           {isToday && currentTimeTop !== null && (
             <div
               className="absolute flex items-center z-10 pointer-events-none"
-              style={{ top: (currentTimeTop ?? 0) + 8, left: axisWidth, right: 0 }}
+              style={{ top: currentTimeTop ?? 0, left: axisWidth, right: 0 }}
             >
               <div className="w-2.5 h-2.5 rounded-full bg-error -ml-1.5 flex-shrink-0" />
               <div className="flex-1 h-0.5 bg-error" />
