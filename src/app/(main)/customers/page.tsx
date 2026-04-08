@@ -2,8 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Input, BentoGrid, BentoCard, Modal } from '@/components/ui';
-import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
+import { Input, Modal } from '@/components/ui';
 import { formatPrice, getNowInKoreaIso } from '@/lib/format';
 import { useCustomerStore } from '@/store/customer-store';
 import { normalizePhone } from '@/lib/phone';
@@ -12,11 +11,9 @@ import { FlagIcon } from '@/components/ui/FlagIcon';
 import { cn } from '@/lib/cn';
 import { getSafetyTagMeta } from '@/lib/tag-safety';
 
-// stats will be derived from store inside component (hooks cannot be used at module scope)
-
 type FilterTab = 'all' | 'vip' | 'regular';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 12;
 
 export default function CustomersPage() {
   const router = useRouter();
@@ -33,30 +30,6 @@ export default function CustomersPage() {
   const createCustomer = useCustomerStore((s) => s.createCustomer);
   const appendSmallTalkNote = useCustomerStore((s) => s.appendSmallTalkNote);
   const findByPhoneNormalized = useCustomerStore((s) => s.findByPhoneNormalized);
-
-  const { thisMonth, thisYear } = useMemo(() => {
-    const now = new Date();
-    return { thisMonth: now.getMonth(), thisYear: now.getFullYear() };
-  }, []);
-
-  // derive stats from store
-  const newThisMonth = useMemo(() => {
-    return customers.filter((c) => {
-      if (!c?.createdAt) return false;
-      const d = new Date(c.createdAt);
-      return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
-    }).length;
-  }, [customers, thisMonth, thisYear]);
-
-  const avgSpend = useMemo(() => {
-    if (customers.length === 0) return 0;
-    const sum = customers.reduce((acc, c) => acc + (Number(c.totalSpend) || 0), 0);
-    return Math.round(sum / customers.length);
-  }, [customers]);
-
-  const regularCount = useMemo(() => {
-    return customers.filter((c) => c.isRegular || (c.visitCount ?? 0) >= 5).length;
-  }, [customers]);
 
   const duplicateCustomer = phone.trim().length >= 8 ? findByPhoneNormalized(phone.trim()) : undefined;
 
@@ -127,20 +100,17 @@ export default function CustomersPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-4 pb-6">
-      <FeatureDiscovery
-        featureId="customers-intro"
-        icon="👥"
-        title="고객 관리"
-        description={"고객의 시술 이력, 선호도, 연락처를 관리하고\n단골 고객을 한눈에 파악하세요."}
-      />
+    <div className="flex flex-col gap-2 pb-6">
       {/* 헤더 */}
       <div className="px-4 md:px-0 pt-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-text">고객 목록</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-text">고객 목록</h1>
+          <span className="text-sm text-text-secondary tabular-nums">{customers.length}명</span>
+        </div>
         <button
           type="button"
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary-dark active:scale-[0.97] transition-all"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary-dark active:scale-[0.97] transition-all"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -149,44 +119,8 @@ export default function CustomersPage() {
         </button>
       </div>
 
-      {/* Stats Bento Strip */}
-      <BentoGrid cols={4} className="px-4 md:px-0">
-        <BentoCard span="1x1" variant="accent">
-          <div className="p-4 flex flex-col items-center justify-center h-full">
-            <span className="text-xl font-extrabold text-primary sm:text-2xl" style={{ fontVariantNumeric: 'tabular-nums' }}>
-              {customers.length}
-            </span>
-            <span className="text-xs text-text-secondary mt-1">총 고객</span>
-          </div>
-        </BentoCard>
-        <BentoCard span="1x1" variant="accent">
-          <div className="p-4 flex flex-col items-center justify-center h-full">
-            <span className="text-xl font-extrabold text-primary sm:text-2xl" style={{ fontVariantNumeric: 'tabular-nums' }}>
-              {newThisMonth}
-            </span>
-            <span className="text-xs text-text-secondary mt-1">이번달 신규</span>
-          </div>
-        </BentoCard>
-        <BentoCard span="1x1" variant="accent">
-          <div className="p-4 flex flex-col items-center justify-center h-full">
-            <span className="text-xl font-extrabold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
-              {formatPrice(avgSpend)}
-            </span>
-            <span className="text-xs text-text-secondary mt-1">평균 시술 총액</span>
-          </div>
-        </BentoCard>
-        <BentoCard span="1x1" variant="accent">
-          <div className="p-4 flex flex-col items-center justify-center h-full">
-            <span className="text-xl font-extrabold text-primary sm:text-2xl" style={{ fontVariantNumeric: 'tabular-nums' }}>
-              {regularCount}
-            </span>
-            <span className="text-xs text-text-secondary mt-1">단골 고객</span>
-          </div>
-        </BentoCard>
-      </BentoGrid>
-
       {/* 검색 + 필터 탭 */}
-      <div className="px-4 md:px-0 flex flex-col gap-3">
+      <div className="px-4 md:px-0 flex flex-col gap-2">
         <Input
           placeholder="이름, 전화번호, 담당자, 고객 ID로 검색"
           value={search}
@@ -198,7 +132,7 @@ export default function CustomersPage() {
               key={key}
               onClick={() => setFilterTab(key)}
               className={cn(
-                'px-5 py-1.5 rounded-full text-xs font-semibold transition-all',
+                'px-5 py-1.5 rounded-full text-xs font-medium transition-all',
                 filterTab === key
                   ? 'bg-primary text-white shadow-sm'
                   : 'text-text-secondary hover:text-text',
@@ -210,8 +144,8 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      {/* 단일 컬럼 리스트 */}
-      <div className="flex flex-col px-4 md:px-0">
+      {/* 2열 카드 그리드 */}
+      <div className="px-4 md:px-0">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <svg className="mb-3 h-10 w-10 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -221,90 +155,82 @@ export default function CustomersPage() {
             <p className="mt-1 text-sm text-text-muted">다른 검색어를 시도해보세요</p>
           </div>
         ) : (
-          <div className="rounded-xl border border-border overflow-hidden">
-            <div className="flex flex-col divide-y divide-border bg-surface">
-              {paginatedCustomers.map((customer) => {
-                const isVip = customer.isRegular || customer.visitCount >= 5;
-                return (
-                  <button
-                    key={customer.id}
-                    onClick={() => router.push(`/customers/${customer.id}`)}
-                    className="flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-alt active:bg-surface-alt transition-colors"
-                  >
-                    {/* 아바타 원 */}
-                    <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary">
-                      {customer.name.charAt(0)}
-                      {/* etc 카테고리 high 레벨 태그 아이콘 뱃지 */}
-                      {(() => {
-                        const highEtcTag = (customer.tags ?? []).find((t) => t.category === 'etc' && getSafetyTagMeta(t).level === 'high');
-                        return highEtcTag ? (
-                          <span className="absolute -top-0.5 -right-0.5 text-[10px] leading-none">
-                            {getSafetyTagMeta(highEtcTag).icon}
-                          </span>
-                        ) : null;
-                      })()}
-                    </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+            {paginatedCustomers.map((customer) => {
+              const isVip = customer.isRegular || customer.visitCount >= 5;
+              const highEtcTag = (customer.tags ?? []).find((t) => t.category === 'etc' && getSafetyTagMeta(t).level === 'high');
+              const recentTag = (customer.tags ?? []).find((t) => t.category === 'design');
 
-                    <div className="flex flex-1 min-w-0 items-center gap-2">
-                      <span className="truncate text-sm font-semibold text-text">{customer.name}</span>
-                      {customer.preferredLanguage && customer.preferredLanguage !== 'ko' && (
-                        <FlagIcon language={customer.preferredLanguage} size="sm" />
-                      )}
-                      {isVip && (
-                        <span
-                          className="flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
-                          style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary-dark)' }}
-                        >
-                          단골
-                        </span>
-                      )}
-                    </div>
+              return (
+                <button
+                  key={customer.id}
+                  onClick={() => router.push(`/customers/${customer.id}`)}
+                  className="flex flex-col items-center gap-2 rounded-xl border border-border bg-surface p-3 text-center hover:shadow-md active:bg-surface-alt transition-all"
+                >
+                  {/* 아바타 */}
+                  <div className="relative flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-base font-medium text-primary">
+                    {customer.name.charAt(0)}
+                    {highEtcTag && (
+                      <span className="absolute -top-0.5 -right-0.5 text-[10px] leading-none">
+                        {getSafetyTagMeta(highEtcTag).icon}
+                      </span>
+                    )}
+                  </div>
 
-                    {/* 방문 횟수 */}
-                    <div className="flex-shrink-0 text-right">
-                      <p className="text-xs text-text-muted">{customer.visitCount}회</p>
-                    </div>
+                  {/* 이름 + 뱃지 */}
+                  <div className="flex items-center gap-1 min-w-0 max-w-full">
+                    <span className="truncate text-sm font-semibold text-text">{customer.name}</span>
+                    {customer.preferredLanguage && customer.preferredLanguage !== 'ko' && (
+                      <FlagIcon language={customer.preferredLanguage} size="sm" />
+                    )}
+                    {isVip && (
+                      <span
+                        className="flex-shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium"
+                        style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary-dark)' }}
+                      >
+                        단골
+                      </span>
+                    )}
+                  </div>
 
-                    {/* 총 지출 */}
-                    <div className="flex-shrink-0 min-w-[70px] sm:min-w-[80px] text-right">
-                      <p className="text-xs font-semibold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                        {formatPrice(customer.totalSpend)}
-                      </p>
-                    </div>
+                  {/* 최근 시술 */}
+                  {recentTag && (
+                    <span className="text-[10px] text-text-muted truncate max-w-full">{recentTag.value}</span>
+                  )}
 
-                    {/* 화살표 */}
-                    <svg className="h-4 w-4 flex-shrink-0 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                );
-              })}
-            </div>
+                  {/* 방문 + 금액 */}
+                  <div className="flex items-center gap-2 text-[11px]">
+                    <span className="text-text-muted">{customer.visitCount}회</span>
+                    <span className="font-semibold text-primary tabular-nums">{formatPrice(customer.totalSpend)}</span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         )}
 
         {filtered.length > 0 && totalPages > 1 && (
-          <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
+          <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-border bg-surface px-3 py-2">
             <div className="text-xs text-text-secondary">
-              총 {filtered.length}명 중 {(currentPage - 1) * PAGE_SIZE + 1}-{Math.min(currentPage * PAGE_SIZE, filtered.length)}명
+              {filtered.length}명 중 {(currentPage - 1) * PAGE_SIZE + 1}-{Math.min(currentPage * PAGE_SIZE, filtered.length)}명
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                 disabled={currentPage === 1}
-                className="min-h-[44px] min-w-[44px] rounded-xl border border-border px-3 py-1.5 text-xs font-semibold text-text-secondary disabled:cursor-not-allowed disabled:opacity-40"
+                className="min-h-[36px] min-w-[36px] rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-text-secondary disabled:cursor-not-allowed disabled:opacity-40"
               >
                 이전
               </button>
-              <span className="min-w-16 text-center text-xs font-semibold text-text">
+              <span className="min-w-12 text-center text-xs font-medium text-text">
                 {currentPage} / {totalPages}
               </span>
               <button
                 type="button"
                 onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
                 disabled={currentPage === totalPages}
-                className="min-h-[44px] min-w-[44px] rounded-xl border border-border px-3 py-1.5 text-xs font-semibold text-text-secondary disabled:cursor-not-allowed disabled:opacity-40"
+                className="min-h-[36px] min-w-[36px] rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-text-secondary disabled:cursor-not-allowed disabled:opacity-40"
               >
                 다음
               </button>
@@ -316,7 +242,7 @@ export default function CustomersPage() {
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="새 고객 등록">
         <div className="px-5 py-4 flex flex-col gap-4">
           <div>
-            <label className="text-xs font-semibold text-text-secondary mb-1 block">이름 *</label>
+            <label className="text-xs font-medium text-text-secondary mb-1 block">이름 *</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -325,7 +251,7 @@ export default function CustomersPage() {
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-text-secondary mb-1 block">전화번호</label>
+            <label className="text-xs font-medium text-text-secondary mb-1 block">전화번호</label>
             <input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
@@ -346,7 +272,7 @@ export default function CustomersPage() {
             )}
           </div>
           <div>
-            <label className="text-xs font-semibold text-text-secondary mb-1 block">메모</label>
+            <label className="text-xs font-medium text-text-secondary mb-1 block">메모</label>
             <textarea
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
@@ -359,7 +285,7 @@ export default function CustomersPage() {
             <button
               type="button"
               onClick={() => setShowAddModal(false)}
-              className="flex-1 rounded-xl border border-border py-3 text-sm font-semibold text-text-secondary"
+              className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-text-secondary"
             >
               취소
             </button>
@@ -367,7 +293,7 @@ export default function CustomersPage() {
               type="button"
               onClick={handleCreateCustomer}
               disabled={!name.trim()}
-              className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-white disabled:opacity-40"
+              className="flex-1 rounded-xl bg-primary py-3 text-sm font-medium text-white disabled:opacity-40"
             >
               등록
             </button>

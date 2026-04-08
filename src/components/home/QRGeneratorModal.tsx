@@ -77,7 +77,7 @@ export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGenera
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-border">
               <div>
-                <h2 className="text-base font-bold text-text">미리 정하기 QR</h2>
+                <h2 className="text-base font-semibold text-text">미리 정하기 QR</h2>
                 <p className="text-xs text-text-muted mt-0.5">고객이 스캔하면 디자인을 미리 선택할 수 있어요</p>
               </div>
               <button
@@ -119,7 +119,7 @@ export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGenera
               <button
                 type="button"
                 onClick={handleCopy}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm transition-all active:scale-[0.98]"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-medium text-sm transition-all active:scale-[0.98]"
                 style={{
                   background: copied ? 'color-mix(in srgb, var(--color-success) 15%, var(--color-surface))' : 'var(--color-primary)',
                   color: copied ? 'var(--color-success)' : 'white',

@@ -76,7 +76,7 @@ export function ConsultationAlertBanner(): React.ReactElement | null {
 
         {/* Text */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-text leading-snug">
+          <p className="text-sm font-medium text-text leading-snug">
             {pending.customerName}
             <span className="font-normal text-text-secondary"> 님이 사전 상담을 제출했어요</span>
           </p>
@@ -88,7 +88,7 @@ export function ConsultationAlertBanner(): React.ReactElement | null {
           <button
             type="button"
             onClick={handleView}
-            className="px-3 py-1.5 rounded-xl text-xs font-bold text-white transition-all active:scale-[0.97]"
+            className="px-3 py-1.5 rounded-xl text-xs font-medium text-white transition-all active:scale-[0.97]"
             style={{ background: 'var(--color-primary)' }}
           >
             확인

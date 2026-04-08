@@ -34,7 +34,7 @@ export default function OnboardingLayout({
 
   const currentIndex = STEPS.findIndex((s) => s.path === pathname);
   const isFirst = currentIndex <= 0;
-  const showProgress = currentIndex >= 0;
+  const showProgress = currentIndex > 0;
   // 시작(index 0)은 step 0, 이후 index 1~7은 step 1~7
   const currentStep = currentIndex > 0 ? currentIndex : 0;
 

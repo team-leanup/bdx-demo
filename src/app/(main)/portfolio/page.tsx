@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-import { Input, BentoGrid, BentoCard, Button, ToastContainer } from '@/components/ui';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Input, Button, ToastContainer } from '@/components/ui';
 import type { ToastData } from '@/components/ui';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useCustomerStore } from '@/store/customer-store';
@@ -51,6 +52,7 @@ export default function PortfolioPage(): React.ReactElement {
   const [moodFilter, setMoodFilter] = useState<string | null>(null);
   const [globalBestFilter, setGlobalBestFilter] = useState(false);
   const [overlayPhotoId, setOverlayPhotoId] = useState<string | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
   const records = getAllRecords();
   const reservations = useReservationStore((s) => s.reservations);
 
@@ -255,7 +257,10 @@ export default function PortfolioPage(): React.ReactElement {
         />
       )}
       <div className="px-4 md:px-0 pt-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-text">포트폴리오</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-text">포트폴리오</h1>
+          <span className="text-sm text-text-secondary tabular-nums">{stats.total}장</span>
+        </div>
         <Button
           variant="primary"
           size="sm"
@@ -270,79 +275,42 @@ export default function PortfolioPage(): React.ReactElement {
         </Button>
       </div>
 
-      <BentoGrid cols={3} className="px-4 md:px-0">
-        <BentoCard span="1x1" variant="accent">
-          <div className="p-4 flex flex-col items-center justify-center h-full">
-            <span className="text-xl font-extrabold text-primary sm:text-2xl" style={{ fontVariantNumeric: 'tabular-nums' }}>
-              {stats.total}
-            </span>
-            <span className="text-xs text-text-secondary mt-1">전체 사진</span>
-          </div>
-        </BentoCard>
-        <BentoCard span="1x1" variant="accent">
-          <div className="p-4 flex flex-col items-center justify-center h-full">
-            <span className="text-xl font-extrabold text-primary sm:text-2xl" style={{ fontVariantNumeric: 'tabular-nums' }}>
-              {stats.referenceCount}
-            </span>
-            <span className="text-xs text-text-secondary mt-1">레퍼런스</span>
-          </div>
-        </BentoCard>
-        <BentoCard span="1x1" variant="accent">
-          <div className="p-4 flex flex-col items-center justify-center h-full">
-            <span className="text-xl font-extrabold text-primary sm:text-2xl" style={{ fontVariantNumeric: 'tabular-nums' }}>
-              {stats.treatmentCount}
-            </span>
-            <span className="text-xs text-text-secondary mt-1">시술 사진</span>
-          </div>
-        </BentoCard>
-      </BentoGrid>
-
-      <div className="px-4 md:px-0 flex flex-col gap-3">
-        <Input
-          placeholder="고객명, 태그, 컬러, 디자인 타입 검색"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        {/* PF-2: 분위기 필터 + 글로벌 베스트 */}
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {dynamicMoodTags.map((mood) => (
-            <button
-              key={mood}
-              onClick={() => setMoodFilter(moodFilter === mood ? null : mood)}
-              className={cn(
-                'flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors border',
-                moodFilter === mood
-                  ? 'bg-primary text-white border-primary'
-                  : 'border-border text-text-secondary hover:border-primary/40 hover:text-primary bg-surface',
-              )}
-            >
-              {mood}
-            </button>
-          ))}
+      <div className="px-4 md:px-0 flex flex-col gap-2">
+        {/* 검색바 + 필터 버튼 한 행 */}
+        <div className="flex gap-2">
+          <Input
+            placeholder="고객명, 태그, 컬러, 디자인 타입 검색"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1"
+          />
           <button
-            onClick={() => setGlobalBestFilter((v) => !v)}
+            onClick={() => setFilterOpen((v) => !v)}
             className={cn(
-              'flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors border inline-flex items-center gap-1',
-              globalBestFilter
-                ? 'bg-primary text-white border-primary'
-                : 'border-border text-text-secondary hover:border-primary/40 hover:text-primary bg-surface',
+              'relative flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-colors shrink-0',
+              filterOpen
+                ? 'border-primary bg-primary/5 text-primary'
+                : 'border-border bg-surface text-text-secondary hover:border-primary/40',
             )}
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.6 9h16.8M3.6 15h16.8" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3a15.3 15.3 0 014 9 15.3 15.3 0 01-4 9 15.3 15.3 0 01-4-9 15.3 15.3 0 014-9z" />
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
             </svg>
-            글로벌 베스트
+            필터
+            {(moodFilter || globalBestFilter || serviceFilter !== 'all' || dateFilter !== 'all' || priceFilter !== 'all') && (
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-primary" />
+            )}
           </button>
         </div>
+
+        {/* kind 탭 — 항상 보임 */}
         <div className="flex gap-0.5 p-1 rounded-full bg-surface-alt border border-border self-start">
           {FILTER_TABS.map(({ key, label }) => (
             <button
               key={key}
               onClick={() => setFilterKind(key)}
               className={cn(
-                'px-5 py-1.5 rounded-full text-xs font-semibold transition-all',
+                'px-5 py-1.5 rounded-full text-xs font-medium transition-all',
                 filterKind === key
                   ? 'bg-primary text-white shadow-sm'
                   : 'text-text-secondary hover:text-text',
@@ -350,49 +318,116 @@ export default function PortfolioPage(): React.ReactElement {
             >
               {label}
             </button>
-            ))}
-          </div>
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_auto_auto] md:items-center md:gap-3">
-          <select
-            value={serviceFilter}
-            onChange={(e) => setServiceFilter(e.target.value)}
-            className="h-9 md:h-10 w-full rounded-xl border border-border bg-surface px-4 pr-8 text-xs md:text-sm text-text appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22%236b7280%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M5.23%207.21a.75.75%200%20011.06.02L10%2011.168l3.71-3.938a.75.75%200%20111.08%201.04l-4.25%204.5a.75.75%200%2001-1.08%200l-4.25-4.5a.75.75%200%2001.02-1.06z%22%20clip-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[right_8px_center] bg-no-repeat"
-          >
-            {serviceOptions.map((option) => (
-              <option key={option} value={option}>
-                {option === 'all' ? '시술 종류 전체' : option}
-              </option>
-            ))}
-          </select>
-          <div className="flex flex-wrap items-center justify-center gap-0.5 rounded-xl md:rounded-2xl border border-border bg-surface p-0.5 md:p-1">
-            {dateOptions.map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => setDateFilter(key)}
-                className={cn(
-                  'rounded-full px-2.5 py-1 text-[11px] md:px-3 md:py-1.5 md:text-xs font-semibold transition-colors',
-                  dateFilter === key ? 'bg-primary text-white' : 'text-text-secondary hover:bg-surface-alt',
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-0.5 rounded-xl md:rounded-2xl border border-border bg-surface p-0.5 md:p-1">
-            {priceOptions.map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => setPriceFilter(key)}
-                className={cn(
-                  'rounded-full px-2.5 py-1 text-[11px] md:px-3 md:py-1.5 md:text-xs font-semibold transition-colors',
-                  priceFilter === key ? 'bg-primary text-white' : 'text-text-secondary hover:bg-surface-alt',
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          ))}
         </div>
+
+        {/* 접이식 필터 */}
+        <AnimatePresence>
+          {filterOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="flex flex-col gap-2 pt-1">
+                {/* 해시태그 + 글로벌 베스트 */}
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {dynamicMoodTags.map((mood) => (
+                    <button
+                      key={mood}
+                      onClick={() => setMoodFilter(moodFilter === mood ? null : mood)}
+                      className={cn(
+                        'flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border',
+                        moodFilter === mood
+                          ? 'bg-primary text-white border-primary'
+                          : 'border-border text-text-secondary hover:border-primary/40 hover:text-primary bg-surface',
+                      )}
+                    >
+                      {mood}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setGlobalBestFilter((v) => !v)}
+                    className={cn(
+                      'flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors border inline-flex items-center gap-1',
+                      globalBestFilter
+                        ? 'bg-primary text-white border-primary'
+                        : 'border-border text-text-secondary hover:border-primary/40 hover:text-primary bg-surface',
+                    )}
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.6 9h16.8M3.6 15h16.8" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3a15.3 15.3 0 014 9 15.3 15.3 0 01-4 9 15.3 15.3 0 01-4-9 15.3 15.3 0 014-9z" />
+                    </svg>
+                    글로벌 베스트
+                  </button>
+                </div>
+
+                {/* 시술종류 + 날짜 + 가격 */}
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_auto_auto] md:items-center md:gap-3">
+                  <select
+                    value={serviceFilter}
+                    onChange={(e) => setServiceFilter(e.target.value)}
+                    className="h-9 md:h-10 w-full rounded-xl border border-border bg-surface px-4 pr-8 text-xs md:text-sm text-text appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22%236b7280%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M5.23%207.21a.75.75%200%20011.06.02L10%2011.168l3.71-3.938a.75.75%200%20111.08%201.04l-4.25%204.5a.75.75%200%2001-1.08%200l-4.25-4.5a.75.75%200%2001.02-1.06z%22%20clip-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px] bg-[right_8px_center] bg-no-repeat"
+                  >
+                    {serviceOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option === 'all' ? '시술 종류 전체' : option}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="flex flex-wrap items-center justify-center gap-0.5 rounded-xl md:rounded-2xl border border-border bg-surface p-0.5 md:p-1">
+                    {dateOptions.map(({ key, label }) => (
+                      <button
+                        key={key}
+                        onClick={() => setDateFilter(key)}
+                        className={cn(
+                          'rounded-full px-2.5 py-1 text-[11px] md:px-3 md:py-1.5 md:text-xs font-medium transition-colors',
+                          dateFilter === key ? 'bg-primary text-white' : 'text-text-secondary hover:bg-surface-alt',
+                        )}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap items-center justify-center gap-0.5 rounded-xl md:rounded-2xl border border-border bg-surface p-0.5 md:p-1">
+                    {priceOptions.map(({ key, label }) => (
+                      <button
+                        key={key}
+                        onClick={() => setPriceFilter(key)}
+                        className={cn(
+                          'rounded-full px-2.5 py-1 text-[11px] md:px-3 md:py-1.5 md:text-xs font-medium transition-colors',
+                          priceFilter === key ? 'bg-primary text-white' : 'text-text-secondary hover:bg-surface-alt',
+                        )}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 필터 초기화 */}
+                {(moodFilter || globalBestFilter || serviceFilter !== 'all' || dateFilter !== 'all' || priceFilter !== 'all') && (
+                  <button
+                    onClick={() => {
+                      setMoodFilter(null);
+                      setGlobalBestFilter(false);
+                      setServiceFilter('all');
+                      setDateFilter('all');
+                      setPriceFilter('all');
+                    }}
+                    className="self-start text-xs text-text-muted hover:text-primary transition-colors"
+                  >
+                    필터 초기화
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <div className="px-4 md:px-0">
@@ -446,7 +481,7 @@ export default function PortfolioPage(): React.ReactElement {
                       src={imgSrc}
                       alt={customer?.name ?? '포트폴리오'}
                       fill
-                      unoptimized
+                      unoptimized={imgSrc.startsWith('data:')}
                       className="object-cover transition-transform group-hover:scale-105"
                     />
                   </div>

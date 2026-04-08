@@ -35,7 +35,7 @@ export function GreetingHeader({
       </div>
       {/* 알림 / 아바타 자리 */}
       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-        <span className="text-sm font-bold text-primary">
+        <span className="text-sm font-semibold text-primary">
           {activeDesignerName?.slice(0, 1) ?? shopName.slice(0, 1)}
         </span>
       </div>

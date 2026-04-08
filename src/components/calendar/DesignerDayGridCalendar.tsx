@@ -43,9 +43,6 @@ interface PendingMove {
   toDesigner: string | undefined;
 }
 
-const HOUR_HEIGHT = 84;
-const AXIS_WIDTH = 60;
-
 const DESIGNER_COLORS: Record<string, { bg: string; border: string; text: string }> = {
   'designer-001': { bg: 'bg-rose-100', border: 'border-rose-500', text: 'text-rose-800' },
   'designer-002': { bg: 'bg-emerald-100', border: 'border-emerald-500', text: 'text-emerald-800' },
@@ -80,6 +77,17 @@ function getEventColor(designerId?: string): { bg: string; border: string; text:
   return DEFAULT_COLOR;
 }
 
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = (): void => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+  return isMobile;
+}
+
 interface DraggableEventProps {
   ev: TimeGridEvent;
   top: number;
@@ -93,6 +101,8 @@ interface DraggableEventProps {
   endHour: number;
   role: UserRole;
   activeDesignerId: string | null;
+  hourHeight: number;
+  axisWidth: number;
   onEventClick?: (event: TimeGridEvent) => void;
   onEventMove?: (reservationId: string, updates: { reservationTime: string; designerId?: string }) => void;
   onRequestMove?: (pending: PendingMove) => void;
@@ -111,6 +121,8 @@ function DraggableEvent({
   endHour,
   role,
   activeDesignerId,
+  hourHeight,
+  axisWidth,
   onEventClick,
   onEventMove,
   onRequestMove,
@@ -120,8 +132,8 @@ function DraggableEvent({
 
   const displayTags = customerTags.slice(0, 2);
   const extraTagCount = customerTags.length - 2;
-  const showMetaRow = height >= 64;
-  const showTags = height >= 80 && displayTags.length > 0;
+  const showMetaRow = height >= 48;
+  const showTags = height >= 60 && displayTags.length > 0;
 
   const isCancelledOrCompleted = ev.status === 'cancelled' || ev.status === 'completed';
   const canDrag = role !== null && !isCancelledOrCompleted;
@@ -142,13 +154,13 @@ function DraggableEvent({
     const dropY = (info.point.y - rect.top) + gridRef.current.scrollTop;
 
     const columnCount = columns.length;
-    const dropXCols = dropX - AXIS_WIDTH;
-    const colWidth = (rect.width - AXIS_WIDTH) / columnCount;
+    const dropXCols = dropX - axisWidth;
+    const colWidth = (rect.width - axisWidth) / columnCount;
     const colIndex = Math.max(0, Math.min(Math.floor(dropXCols / colWidth), columnCount - 1));
 
     const targetDesignerId = colIndex === 0 ? undefined : columns[colIndex].id;
 
-    const minuteFromTop = (dropY / HOUR_HEIGHT) * 60 + startHour * 60;
+    const minuteFromTop = (dropY / hourHeight) * 60 + startHour * 60;
     const snapped = snapToInterval(minuteFromTop, 30);
     const eventDuration = timeStrToMinutes(ev.endTime) - timeStrToMinutes(ev.startTime);
     const clamped = clampStartMinutes({
@@ -243,14 +255,14 @@ function DraggableEvent({
       )}
       style={{ top, height }}
     >
-      <div className="text-[10px] font-semibold opacity-70 truncate leading-none">
+      <div className="text-[10px] sm:text-xs font-semibold opacity-70 truncate leading-none">
         {ev.startTime}–{ev.endTime}
       </div>
-      <div className="text-xs font-bold leading-tight truncate mt-0.5">{ev.title}</div>
+      <div className="text-[10px] sm:text-xs font-medium leading-tight truncate mt-0.5">{ev.title}</div>
       {showMetaRow && (
         <div className="mt-1 flex items-center gap-1 overflow-hidden" style={{ flexWrap: 'nowrap' }}>
           {ev.serviceLabel && (
-            <span className="inline-flex items-center rounded-full bg-white/55 px-1.5 py-0.5 text-[9px] font-semibold text-text flex-shrink-0 truncate max-w-[60px]">
+            <span className="inline-flex items-center rounded-full bg-white/55 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold text-text flex-shrink-0 truncate max-w-[60px]">
               {ev.serviceLabel}
             </span>
           )}
@@ -298,6 +310,8 @@ interface SlotColumnProps {
   allEvents: TimeGridEvent[];
   role: UserRole;
   activeDesignerId: string | null;
+  hourHeight: number;
+  axisWidth: number;
   getPrimaryTags: (customerId: string) => CustomerTag[];
   onEventClick?: (event: TimeGridEvent) => void;
   onEventMove?: (reservationId: string, updates: { reservationTime: string; designerId?: string }) => void;
@@ -316,6 +330,8 @@ function SlotColumn({
   allEvents,
   role,
   activeDesignerId,
+  hourHeight,
+  axisWidth,
   getPrimaryTags,
   onEventClick,
   onEventMove,
@@ -337,7 +353,7 @@ function SlotColumn({
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const y = e.clientY - rect.top;
-    const minuteFromTop = (y / HOUR_HEIGHT) * 60 + startHour * 60;
+    const minuteFromTop = (y / hourHeight) * 60 + startHour * 60;
     const snapped = snapToInterval(minuteFromTop, 30);
     longPressTimeRef.current = minutesToTimeStr(
       clampStartMinutes({ startMinutes: snapped, startHour, endHour, durationMinutes: 30 }),
@@ -367,7 +383,7 @@ function SlotColumn({
         const rect = e.currentTarget.getBoundingClientRect();
         const touch = e.touches[0];
         const y = touch.clientY - rect.top;
-        const minuteFromTop = (y / HOUR_HEIGHT) * 60 + startHour * 60;
+        const minuteFromTop = (y / hourHeight) * 60 + startHour * 60;
         const snapped = snapToInterval(minuteFromTop, 30);
         longPressTimeRef.current = minutesToTimeStr(
           clampStartMinutes({ startMinutes: snapped, startHour, endHour, durationMinutes: 30 }),
@@ -381,10 +397,10 @@ function SlotColumn({
       {events.map((ev) => {
         const startMin = timeToMinutes(ev.startTime);
         const endMin = timeToMinutes(ev.endTime);
-        const rawTop = ((startMin - startHour * 60) / 60) * HOUR_HEIGHT;
-        const rawHeight = Math.max(((endMin - startMin) / 60) * HOUR_HEIGHT, 40);
-        const top = Math.max(0, Math.min(rawTop, gridHeight - rawHeight));
-        const height = rawHeight;
+        const rawTop = ((startMin - startHour * 60) / 60) * hourHeight;
+        const rawHeight = Math.max(((endMin - startMin) / 60) * hourHeight, 40);
+        const evTop = Math.max(0, Math.min(rawTop, gridHeight - rawHeight));
+        const evHeight = rawHeight;
         const color = getEventColor(ev.designerId);
         const customerTags = ev.customerId ? getPrimaryTags(ev.customerId) : [];
 
@@ -392,8 +408,8 @@ function SlotColumn({
           <DraggableEvent
             key={ev.id}
             ev={ev}
-            top={top}
-            height={height}
+            top={evTop}
+            height={evHeight}
             color={color}
             customerTags={customerTags}
             gridRef={gridRef}
@@ -403,6 +419,8 @@ function SlotColumn({
             endHour={endHour}
             role={role}
             activeDesignerId={activeDesignerId}
+            hourHeight={hourHeight}
+            axisWidth={axisWidth}
             onEventClick={onEventClick}
             onEventMove={onEventMove}
             onRequestMove={onRequestMove}
@@ -429,11 +447,15 @@ export function DesignerDayGridCalendar({
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
   const getPrimaryTags = useCustomerStore((s) => s.getPrimaryTags);
   const gridRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+
+  const hourHeight = isMobile ? 64 : 84;
+  const axisWidth = isMobile ? 40 : 60;
 
   const START_HOUR = propStartHour ?? 10;
   const END_HOUR = propEndHour ?? 20;
   const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i);
-  const gridHeight = HOURS.length * HOUR_HEIGHT;
+  const gridHeight = HOURS.length * hourHeight;
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(getCurrentTimeInKorea()), 60000);
@@ -447,12 +469,22 @@ export function DesignerDayGridCalendar({
     if (!isToday) return null;
     const { hour: h, minute: m } = currentTime;
     if (h < START_HOUR || h > END_HOUR) return null;
-    return ((h * 60 + m) - START_HOUR * 60) / 60 * HOUR_HEIGHT;
-  }, [currentTime, START_HOUR, END_HOUR, isToday]);
+    return ((h * 60 + m) - START_HOUR * 60) / 60 * hourHeight;
+  }, [currentTime, START_HOUR, END_HOUR, isToday, hourHeight]);
+
+  // 디자이너 1명 + 미지정 이벤트 없으면 __unassigned__ 컬럼 숨김
+  const hasUnassignedEvents = useMemo(
+    () => events.some((ev) => ev.date === date && !ev.designerId),
+    [events, date],
+  );
 
   const columns = useMemo(() => {
-    return [...designers, { id: '__unassigned__', name: '미지정' }];
-  }, [designers]);
+    const cols = [...designers];
+    if (designers.length !== 1 || hasUnassignedEvents) {
+      cols.push({ id: '__unassigned__', name: '미지정' });
+    }
+    return cols;
+  }, [designers, hasUnassignedEvents]);
 
   const eventsByColumn = useMemo(() => {
     const map: Record<string, TimeGridEvent[]> = {};
@@ -464,7 +496,7 @@ export function DesignerDayGridCalendar({
       const colId = ev.designerId ?? '__unassigned__';
       if (map[colId]) {
         map[colId].push(ev);
-      } else {
+      } else if (map['__unassigned__']) {
         map['__unassigned__'].push(ev);
       }
     }
@@ -475,82 +507,82 @@ export function DesignerDayGridCalendar({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="text-lg font-bold text-text">{formatDayLabelKo(date)}</div>
+      <div className="text-lg font-semibold text-text">{formatDayLabelKo(date)}</div>
 
-      <div className="overflow-x-auto rounded-xl border border-border bg-surface">
-        <div className="min-w-[500px] lg:min-w-0">
-          <div
-            className="grid border-b border-border bg-surface"
-            style={{ gridTemplateColumns: `${AXIS_WIDTH}px repeat(${colCount}, 1fr)` }}
-          >
-            <div className="p-2" />
-            {columns.map((col) => (
-              <div
-                key={col.id}
-                className="p-2 text-center border-l border-border bg-surface"
-              >
-                <div className="text-xs font-semibold text-text">{col.name}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="relative bg-surface" style={{ height: gridHeight }}>
-            {HOURS.map((hour) => (
-              <div
-                key={hour}
-                className="absolute w-full grid"
-                style={{
-                  top: (hour - START_HOUR) * HOUR_HEIGHT,
-                  gridTemplateColumns: `${AXIS_WIDTH}px repeat(${colCount}, 1fr)`,
-                }}
-              >
-                <div className="text-[10px] text-text-muted text-right pr-2 -translate-y-1/2">
-                  {`${String(hour).padStart(2, '0')}:00`}
-                </div>
-                {columns.map((col) => (
-                  <div key={col.id} className="border-l border-t border-border" style={{ height: HOUR_HEIGHT }} />
-                ))}
-              </div>
-            ))}
-
+      <div className="rounded-xl border border-border bg-surface overflow-hidden">
+        <div
+          className="grid border-b border-border bg-surface"
+          style={{ gridTemplateColumns: `${axisWidth}px repeat(${colCount}, 1fr)` }}
+        >
+          <div className="p-1 sm:p-2" />
+          {columns.map((col) => (
             <div
-              ref={gridRef}
-              className="absolute inset-0 grid"
-              style={{ gridTemplateColumns: `${AXIS_WIDTH}px repeat(${colCount}, 1fr)` }}
+              key={col.id}
+              className="p-1 sm:p-2 text-center border-l border-border bg-surface"
             >
-              <div />
+              <div className="text-[10px] sm:text-xs font-semibold text-text truncate">{col.name}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="relative bg-surface" style={{ height: gridHeight }}>
+          {HOURS.map((hour) => (
+            <div
+              key={hour}
+              className="absolute w-full grid"
+              style={{
+                top: (hour - START_HOUR) * hourHeight,
+                gridTemplateColumns: `${axisWidth}px repeat(${colCount}, 1fr)`,
+              }}
+            >
+              <div className="text-[9px] sm:text-[10px] text-text-muted text-right pr-1 sm:pr-2 -translate-y-1/2">
+                {`${String(hour).padStart(2, '0')}:00`}
+              </div>
               {columns.map((col) => (
-                <SlotColumn
-                  key={col.id}
-                  col={col}
-                  events={eventsByColumn[col.id] || []}
-                  gridHeight={gridHeight}
-                  startHour={START_HOUR}
-                  endHour={END_HOUR}
-                  gridRef={gridRef}
-                  columns={columns}
-                  allEvents={events}
-                  role={role}
-                  activeDesignerId={activeDesignerId}
-                  getPrimaryTags={getPrimaryTags}
-                  onEventClick={onEventClick}
-                  onEventMove={onEventMove}
-                  onRequestMove={setPendingMove}
-                  onSlotLongPress={onSlotLongPress}
-                />
+                <div key={col.id} className="border-l border-t border-border" style={{ height: hourHeight }} />
               ))}
             </div>
+          ))}
 
-            {isToday && currentTimeTop !== null && (
-              <div
-                className="absolute flex items-center z-10 pointer-events-none"
-                style={{ top: currentTimeTop, left: AXIS_WIDTH, right: 0 }}
-              >
-                <div className="w-2.5 h-2.5 rounded-full bg-error -ml-1.5 flex-shrink-0" />
-                <div className="flex-1 h-0.5 bg-error" />
-              </div>
-            )}
+          <div
+            ref={gridRef}
+            className="absolute inset-0 grid"
+            style={{ gridTemplateColumns: `${axisWidth}px repeat(${colCount}, 1fr)` }}
+          >
+            <div />
+            {columns.map((col) => (
+              <SlotColumn
+                key={col.id}
+                col={col}
+                events={eventsByColumn[col.id] || []}
+                gridHeight={gridHeight}
+                startHour={START_HOUR}
+                endHour={END_HOUR}
+                gridRef={gridRef}
+                columns={columns}
+                allEvents={events}
+                role={role}
+                activeDesignerId={activeDesignerId}
+                hourHeight={hourHeight}
+                axisWidth={axisWidth}
+                getPrimaryTags={getPrimaryTags}
+                onEventClick={onEventClick}
+                onEventMove={onEventMove}
+                onRequestMove={setPendingMove}
+                onSlotLongPress={onSlotLongPress}
+              />
+            ))}
           </div>
+
+          {isToday && currentTimeTop !== null && (
+            <div
+              className="absolute flex items-center z-10 pointer-events-none"
+              style={{ top: currentTimeTop, left: axisWidth, right: 0 }}
+            >
+              <div className="w-2.5 h-2.5 rounded-full bg-error -ml-1.5 flex-shrink-0" />
+              <div className="flex-1 h-0.5 bg-error" />
+            </div>
+          )}
         </div>
       </div>
 

@@ -63,7 +63,7 @@ export function PreConsultationNotificationCenter({
         <div className="rounded-2xl border border-border bg-surface-alt px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-bold text-text">새로 확인할 사전상담</p>
+              <p className="text-sm font-semibold text-text">새로 확인할 사전상담</p>
               <p className="mt-1 text-xs text-text-muted">
                 고객이 미리 보낸 디자인 요청과 참고 이미지를 바로 확인할 수 있어요.
               </p>
@@ -102,7 +102,7 @@ export function PreConsultationNotificationCenter({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         {!isRead && <span className="mt-0.5 h-2.5 w-2.5 rounded-full bg-primary" />}
-                        <span className="truncate text-sm font-bold text-text">{notification.customerName}</span>
+                        <span className="truncate text-sm font-medium text-text">{notification.customerName}</span>
                         {isForeign && <FlagIcon language={notification.language!} size="sm" />}
                         {notification.serviceLabel && (
                           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
@@ -149,7 +149,7 @@ export function PreConsultationNotificationCenter({
                       <p className="text-[10px] font-semibold text-text-muted">
                         {isRead ? '확인 완료' : '새 알림'}
                       </p>
-                      <p className="mt-0.5 text-xs font-bold text-text">예약 상세 보기</p>
+                      <p className="mt-0.5 text-xs font-medium text-text">예약 상세 보기</p>
                     </div>
                   </div>
                 </button>

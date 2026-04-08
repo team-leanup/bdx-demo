@@ -21,23 +21,21 @@ export function ViewModeToggle({
   ];
 
   return (
-    <div className="flex items-center justify-between px-4 md:px-0">
-      <div className="flex gap-0.5 p-1 rounded-full bg-surface-alt border border-border">
-        {VIEW_OPTIONS.map((opt) => (
-          <button
-            key={opt.key}
-            onClick={() => onViewModeChange(opt.key)}
-            className={cn(
-              'px-4 py-1.5 rounded-full text-xs font-semibold transition-all',
-              viewMode === opt.key
-                ? 'bg-primary text-white shadow-sm'
-                : 'text-text-secondary hover:text-text',
-            )}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
+    <div className="flex gap-0.5 p-1 rounded-full bg-surface-alt border border-border w-fit">
+      {VIEW_OPTIONS.map((opt) => (
+        <button
+          key={opt.key}
+          onClick={() => onViewModeChange(opt.key)}
+          className={cn(
+            'px-4 py-1.5 rounded-full text-xs font-medium transition-all',
+            viewMode === opt.key
+              ? 'bg-primary text-white shadow-sm'
+              : 'text-text-secondary hover:text-text',
+          )}
+        >
+          {opt.label}
+        </button>
+      ))}
     </div>
   );
 }

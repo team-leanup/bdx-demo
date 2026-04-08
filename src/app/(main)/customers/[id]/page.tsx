@@ -419,6 +419,22 @@ function CustomerDetailContent({ id }: { id: string }) {
         <h1 className="text-lg font-bold text-text">고객 상세</h1>
       </div>
 
+      {/* 매출 등록 — 상단 primary CTA */}
+      <div className="px-4">
+        <Button
+          variant="primary"
+          fullWidth
+          onClick={() => {
+            const params = new URLSearchParams();
+            params.set('customerId', customer.id);
+            params.set('customerName', customer.name);
+            router.push(`/quick-sale?${params.toString()}`);
+          }}
+        >
+          매출 등록
+        </Button>
+      </div>
+
       {/* ─────────────────────────────── */}
       {/* 1. 기본 정보 카드 */}
       {/* ─────────────────────────────── */}
@@ -612,17 +628,6 @@ function CustomerDetailContent({ id }: { id: string }) {
           </div>
         </div>
 
-        {/* 매출 등록 버튼 */}
-        <button
-          type="button"
-          onClick={() => router.push(`/quick-sale?customerId=${id}`)}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-primary/30 bg-primary/5 py-2.5 text-sm font-semibold text-primary hover:bg-primary/10 transition-colors"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          매출 등록
-        </button>
         </Card>
       </div>
 
@@ -1260,23 +1265,8 @@ function CustomerDetailContent({ id }: { id: string }) {
         );
       })()}
 
-      {/* 구분선 */}
-      <div className="mx-4 h-px" style={{ background: 'var(--color-border)' }} />
-
       {/* CTA 버튼 */}
       <div className="px-4 flex flex-col gap-2">
-        <Button
-          variant="primary"
-          fullWidth
-          onClick={() => {
-            const params = new URLSearchParams();
-            params.set('customerId', customer.id);
-            params.set('customerName', customer.name);
-            router.push(`/quick-sale?${params.toString()}`);
-          }}
-        >
-          매출 등록
-        </Button>
         <Button
           variant="secondary"
           fullWidth

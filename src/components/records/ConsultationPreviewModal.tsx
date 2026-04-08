@@ -55,7 +55,7 @@ export function ConsultationPreviewModal({
             <div className="mb-4 flex flex-shrink-0 items-start justify-between gap-2 px-5">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-base font-bold text-text">{record.consultation.customerName ?? '고객'}</h3>
+                  <h3 className="text-base font-semibold text-text">{record.consultation.customerName ?? '고객'}</h3>
                   {record.language && record.language !== 'ko' && (
                     <FlagIcon language={record.language} size="sm" showLabel />
                   )}
@@ -125,7 +125,7 @@ export function ConsultationPreviewModal({
               {/* 가격 */}
               <div className="flex items-center justify-between rounded-xl bg-surface-alt px-4 py-3">
                 <span className="text-sm text-text-secondary">최종 금액</span>
-                <span className="text-base font-bold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                <span className="text-base font-semibold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
                   {formatPrice(record.finalPrice)}
                 </span>
               </div>
@@ -133,7 +133,7 @@ export function ConsultationPreviewModal({
               {/* 상세 보기 버튼 */}
               <button
                 onClick={() => { onClose(); onViewDetail(); }}
-                className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
+                className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-medium text-white active:scale-[0.98] transition-transform"
               >
                 기록 상세보기
               </button>

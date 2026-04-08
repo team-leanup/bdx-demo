@@ -45,8 +45,8 @@ export function RevisitReminderCard({
     <motion.div variants={itemVariants} className="rounded-2xl bg-surface border border-border overflow-hidden">
       {/* 헤더 */}
       <div className="flex items-center gap-2 px-4 pt-4 pb-3">
-        <span className="text-sm font-bold text-text">재방문 알림</span>
-        <span className="flex h-5 min-w-5 items-center justify-center rounded-md bg-primary px-1.5 text-[10px] font-bold text-white">
+        <span className="text-sm font-semibold text-text">재방문 알림</span>
+        <span className="flex h-5 min-w-5 items-center justify-center rounded-md bg-primary px-1.5 text-[10px] font-medium text-white">
           {overdueCustomers.length}
         </span>
         <span className="text-xs text-text-muted">· 4주 이상 미방문 단골</span>
@@ -62,7 +62,7 @@ export function RevisitReminderCard({
             className="flex items-center gap-3 px-4 py-3 border-t border-border"
           >
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 border border-primary/20">
-              <span className="text-sm font-bold text-primary">{customer.name.slice(0, 1)}</span>
+              <span className="text-sm font-medium text-primary">{customer.name.slice(0, 1)}</span>
             </div>
             <div className="flex flex-1 flex-col min-w-0">
               <span className="text-sm font-semibold text-text">{customer.name}</span>

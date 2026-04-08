@@ -21,7 +21,7 @@ function HomeScreenVisual() {
       >
         <span className="text-2xl">✨</span>
         <div>
-          <p className="text-sm font-bold text-white">새 상담 시작</p>
+          <p className="text-sm font-medium text-white">새 상담 시작</p>
           <p className="text-xs text-white/70">고객과 바로 시작하기</p>
         </div>
       </div>
@@ -61,7 +61,7 @@ function ConsultationFlowVisual() {
           <div key={step.num} className="flex items-center">
             <div className="flex flex-col items-center gap-1">
               <div
-                className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium"
                 style={{
                   background: step.active ? 'var(--color-primary)' : 'var(--color-surface-alt)',
                   color: step.active ? 'white' : 'var(--color-text-muted)',
@@ -110,7 +110,7 @@ function CustomerManagementVisual() {
           style={{ background: 'var(--color-surface)' }}
         >
           <div
-            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full font-bold text-white text-sm"
+            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full font-medium text-white text-sm"
             style={{ background: 'var(--color-primary)' }}
           >
             {c.name.charAt(0)}
@@ -315,7 +315,7 @@ export default function GuidePage() {
         {/* 다음/시작 버튼 */}
         <button
           onClick={goNext}
-          className="w-full max-w-sm rounded-2xl py-4 text-base font-bold text-white shadow-md transition-opacity hover:opacity-90 active:scale-95"
+          className="w-full max-w-sm rounded-2xl py-4 text-base font-medium text-white shadow-md transition-opacity hover:opacity-90 active:scale-95"
           style={{ background: 'var(--color-primary)' }}
         >
           {isLast ? '시작하기' : '다음'}

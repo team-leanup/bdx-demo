@@ -240,12 +240,24 @@ function mergeDemoGoldenTimeCustomers(customers: Customer[], shopId: string | nu
   return [...customers, ...missingDemoCustomers];
 }
 
+function deduplicateByName(customers: Customer[]): Customer[] {
+  const map = new Map<string, Customer>();
+  for (const c of customers) {
+    const key = c.name.trim().toLowerCase();
+    const existing = map.get(key);
+    if (!existing || (c.visitCount ?? 0) > (existing.visitCount ?? 0)) {
+      map.set(key, c);
+    }
+  }
+  return Array.from(map.values());
+}
+
 async function loadDemoCustomers(customers: Customer[], shopId: string | null): Promise<Customer[]> {
   if (shopId !== 'shop-demo') return customers;
   const { DEMO_CUSTOMERS } = await import('@/data/mock-demo-data');
   const existingIds = new Set(customers.map((c) => c.id));
   const missing = DEMO_CUSTOMERS.filter((c) => !existingIds.has(c.id));
-  return [...customers, ...missing];
+  return deduplicateByName([...customers, ...missing]);
 }
 
 export const useCustomerStore = create<CustomerStore>()(

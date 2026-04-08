@@ -208,7 +208,7 @@ export default function CompletePage() {
 
             {/* Text */}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-text">{feature.title}</p>
+              <p className="text-sm font-medium text-text">{feature.title}</p>
               <p className="text-xs text-text-secondary mt-0.5">{feature.description}</p>
             </div>
 

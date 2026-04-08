@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CustomerTagChip } from '@/components/customer/CustomerTagChip';
 import { ReservationReadinessBadge } from '@/components/reservations/ReservationReadinessBadge';
-import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Card, Input, Modal } from '@/components/ui';
 import { ConsultationLinkContent } from '@/components/reservations/ConsultationLinkModal';
@@ -34,7 +33,6 @@ import { useShopStore } from '@/store/shop-store';
 import { useLocaleStore } from '@/store/locale-store';
 import {
   MainTabBar,
-  StatsCards,
   ViewModeToggle,
   ConsultationList,
   PeriodFilter,
@@ -226,10 +224,6 @@ export default function RecordsPage() {
     return { weekCount: thisWeek.length, todayRemainingCount: todayRemaining.length };
   }, [allReservations]);
 
-  const todayConsultations = useMemo(() => {
-    const today = getTodayStr();
-    return allConsultations.filter((c) => c.createdAt.split('T')[0] === today).length;
-  }, [allConsultations]);
 
   const timeGridEvents = useMemo(
     () => toTimeGridEvents(allReservations),
@@ -503,14 +497,7 @@ export default function RecordsPage() {
   }, [searchParams, timeGridEvents, allReservations, router]);
 
   return (
-    <div className="flex flex-col gap-4 pb-6">
-      <FeatureDiscovery
-        featureId="records-views"
-        icon="🗂️"
-        title="기록 관리"
-        description={"스케줄과 시술 기록을\n탭으로 나누어 편리하게 관리하세요."}
-      />
-
+    <div className="flex flex-col gap-2 pb-6">
       <div className="px-4 md:px-0 pt-4">
         <h1 className="text-2xl font-bold text-text">{t('nav.records')}</h1>
       </div>
@@ -519,24 +506,21 @@ export default function RecordsPage() {
 
       {mainTab === 'reservations' && (
         <>
-          <StatsCards
-            primaryValue={weekStats.weekCount}
-            primaryLabel="이번 주 예약"
-            secondaryValue={weekStats.todayRemainingCount}
-            secondaryLabel="오늘 남은 예약"
-          />
-
-          <ViewModeToggle
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-          />
+          <div className="flex items-center justify-between px-4 md:px-0">
+            <ViewModeToggle
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+            />
+            <span className="text-xs text-text-secondary tabular-nums">
+              이번주 {weekStats.weekCount}건 · 오늘 남은 {weekStats.todayRemainingCount}건
+            </span>
+          </div>
 
           <div className="px-4 md:px-0">
-            <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3 text-xs text-text-secondary">
-              <span className="font-semibold text-text">사전 상담 상태</span>
+            <div className="flex items-center gap-3 text-xs text-text-secondary">
               {READINESS_LEGEND.map((item) => (
-                <span key={item.label} className="inline-flex items-center gap-1.5">
-                  <span className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
+                <span key={item.label} className="inline-flex items-center gap-1">
+                  <span className={`h-2 w-2 rounded-full ${item.color}`} />
                   <span>{item.label}</span>
                 </span>
               ))}
@@ -544,7 +528,7 @@ export default function RecordsPage() {
           </div>
 
           {viewMode === 'day' && (
-            <div className="flex flex-col gap-4 px-4 md:px-0">
+            <div className="flex flex-col gap-2 px-4 md:px-0">
               <Card className="p-3">
                 <WeekCalendar
                   selectedDate={selectedDate}
@@ -552,12 +536,6 @@ export default function RecordsPage() {
                   reservations={allReservations}
                 />
               </Card>
-              <p className="flex items-center gap-1 text-[11px] text-text-muted sm:hidden">
-                <svg className="h-3 w-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 16l-4-4m0 0l4-4m-4 4h18" />
-                </svg>
-                좌우로 스크롤하여 전체 일정을 확인할 수 있어요
-              </p>
               <DesignerDayGridCalendar
                 date={selectedDate}
                 events={timeGridEvents}
@@ -574,7 +552,7 @@ export default function RecordsPage() {
           )}
 
           {viewMode === 'month' && (
-            <div className="flex flex-col gap-4 px-4 md:px-0">
+            <div className="flex flex-col gap-2 px-4 md:px-0">
               <Card className="p-4">
                 <MonthCalendar
                   selectedDate={selectedDate}
@@ -590,13 +568,6 @@ export default function RecordsPage() {
 
       {mainTab === 'consultations' && (
         <>
-          <StatsCards
-            primaryValue={allConsultations.length}
-            primaryLabel="총 시술 기록"
-            secondaryValue={`${todayConsultations}건`}
-            secondaryLabel="오늘 시술"
-          />
-
           <div className="px-4 md:px-0">
             <Input
               placeholder={t('records.searchPlaceholder')}
@@ -717,7 +688,7 @@ export default function RecordsPage() {
               className="fixed bottom-0 left-0 right-0 z-50 flex max-h-[88dvh] flex-col overflow-hidden rounded-t-2xl bg-background pt-5 pb-safe md:bottom-auto md:top-1/2 md:left-1/2 md:right-auto md:w-full md:max-h-[85vh] md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl"
             >
               <div className="mb-4 flex flex-shrink-0 items-center justify-between px-5">
-                <h3 className="text-base font-bold text-text">
+                <h3 className="text-base font-semibold text-text">
                   {linkGenBooking
                     ? '상담 링크 생성'
                     : editMode
@@ -857,7 +828,7 @@ export default function RecordsPage() {
                     <div className="mt-3 flex gap-2">
                       <button
                         onClick={handleSaveReservation}
-                        className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
+                        className="flex-1 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-white active:scale-[0.98] transition-transform"
                       >
                         저장
                       </button>
@@ -946,7 +917,7 @@ export default function RecordsPage() {
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 text-red-600 flex-shrink-0">
                                   <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                                 </svg>
-                                <span className="text-[10px] font-bold text-red-700">주의사항</span>
+                                <span className="text-[10px] font-medium text-red-700">주의사항</span>
                                 <span className="ml-auto text-[9px] bg-red-200 text-red-700 rounded-full px-1.5 py-0.5 font-semibold">{dangerTags.length}</span>
                               </div>
                               <div className="flex flex-col gap-2">
@@ -974,7 +945,7 @@ export default function RecordsPage() {
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 text-amber-600 flex-shrink-0">
                                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
                                 </svg>
-                                <span className="text-[10px] font-bold text-amber-700">참고사항</span>
+                                <span className="text-[10px] font-medium text-amber-700">참고사항</span>
                                 <span className="ml-auto text-[9px] bg-amber-200 text-amber-700 rounded-full px-1.5 py-0.5 font-semibold">{infoTags.length}</span>
                               </div>
                               <div className="flex flex-col gap-2">
@@ -1046,7 +1017,7 @@ export default function RecordsPage() {
                                       });
                                     }
                                   }}
-                                  className="w-full rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary-dark active:scale-[0.98] transition-all"
+                                  className="w-full rounded-xl bg-primary px-4 py-2.5 text-xs font-medium text-white hover:bg-primary-dark active:scale-[0.98] transition-all"
                                 >
                                   결제 완료
                                 </button>
@@ -1071,7 +1042,7 @@ export default function RecordsPage() {
                                 {matchedRecord && (
                                   <button
                                     onClick={handleSheetClick}
-                                    className="flex-1 rounded-xl border border-primary/30 bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary/90 active:scale-[0.98] transition-all"
+                                    className="flex-1 rounded-xl border border-primary/30 bg-primary px-4 py-2.5 text-xs font-medium text-white hover:bg-primary/90 active:scale-[0.98] transition-all"
                                   >
                                     시술 확인서
                                   </button>
@@ -1079,7 +1050,7 @@ export default function RecordsPage() {
                                 {!matchedRecord && booking?.preConsultationData && (
                                   <button
                                     onClick={() => { closeSelectedEventSheet(); router.push(`/records/preconsult/${booking.id}`); }}
-                                    className="flex-1 rounded-xl border border-primary/30 bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary/90 active:scale-[0.98] transition-all"
+                                    className="flex-1 rounded-xl border border-primary/30 bg-primary px-4 py-2.5 text-xs font-medium text-white hover:bg-primary/90 active:scale-[0.98] transition-all"
                                   >
                                     사전 상담 보기
                                   </button>
@@ -1093,7 +1064,7 @@ export default function RecordsPage() {
                             <div className="mt-3 flex flex-col gap-2">
                               <button
                                 onClick={() => booking && setLinkGenBooking(booking)}
-                                className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
+                                className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-medium text-white active:scale-[0.98] transition-transform"
                               >
                                 상담 링크 보내기
                               </button>
@@ -1123,7 +1094,7 @@ export default function RecordsPage() {
                             <div className="mt-3 flex flex-col gap-2">
                               <button
                                 onClick={handleStartConsultation}
-                                className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
+                                className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-medium text-white active:scale-[0.98] transition-transform"
                               >
                                 상담 시작
                               </button>
@@ -1153,7 +1124,7 @@ export default function RecordsPage() {
                             <div className="mt-3 flex flex-col gap-2">
                               <button
                                 onClick={handleStartConsultation}
-                                className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
+                                className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-medium text-white active:scale-[0.98] transition-transform"
                               >
                                 상담 시작
                               </button>

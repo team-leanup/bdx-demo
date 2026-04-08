@@ -165,9 +165,9 @@ export function TodayReservationCard({
       {/* 헤더 */}
       <div className="flex items-center justify-between px-4 pt-4 pb-3">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-text">{sectionTitle}</span>
+          <span className="text-sm font-semibold text-text">{sectionTitle}</span>
           {reservations.length > 0 && (
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-md bg-primary px-1.5 text-[10px] font-bold text-white">
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-md bg-primary px-1.5 text-[10px] font-medium text-white">
               {reservations.length}
             </span>
           )}
@@ -245,7 +245,7 @@ export function TodayReservationCard({
                   <div className="flex min-w-0 items-start gap-3 md:flex-1 md:items-center">
                     {/* 시간 라벨 */}
                     <div className="flex w-11 shrink-0 flex-col items-center">
-                      <span className="text-xs font-bold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                      <span className="text-xs font-semibold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
                         {booking.reservationTime}
                       </span>
                       <div className="mt-1 h-1 w-1 rounded-full bg-primary/40" />
@@ -341,7 +341,7 @@ export function TodayReservationCard({
                       </div>
                     ) : !booking.customerId ? (
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-alt border border-border">
-                        <span className="text-[8px] font-bold text-text-muted">신규</span>
+                        <span className="text-[8px] font-medium text-text-muted">신규</span>
                       </div>
                     ) : null}
                     <div className="ml-auto flex shrink-0 items-center gap-1.5">
@@ -461,7 +461,7 @@ export function TodayReservationCard({
           >
             <div className="mb-4 flex flex-shrink-0 items-center justify-between px-5">
               <div>
-                <h3 className="text-base font-bold text-text">사전 상담 내용</h3>
+                <h3 className="text-base font-semibold text-text">사전 상담 내용</h3>
                 <p className="text-xs text-text-muted">{previewBooking.customerName} · {previewBooking.reservationTime}</p>
               </div>
               <button

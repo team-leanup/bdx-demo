@@ -31,7 +31,7 @@ export function RecentConsultationCard({
       {/* 헤더 */}
       <div className="flex items-center justify-between px-4 pt-4 pb-3">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-text">{sectionTitle}</span>
+          <span className="text-sm font-semibold text-text">{sectionTitle}</span>
         </div>
         <button
           onClick={onViewAll}
@@ -53,7 +53,7 @@ export function RecentConsultationCard({
           >
             {/* 이니셜 아바타 */}
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-              <span className="text-sm font-bold text-primary">
+              <span className="text-sm font-semibold text-primary">
                 {(record.consultation.customerName ?? '?').slice(0, 1)}
               </span>
             </div>
@@ -78,7 +78,7 @@ export function RecentConsultationCard({
             <div className="shrink-0 text-right">
               {record.finalizedAt ? (
                 <span
-                  className="text-sm font-bold text-primary"
+                  className="text-sm font-semibold text-primary"
                   style={{ fontVariantNumeric: 'tabular-nums' }}
                 >
                   {formatPrice(record.finalPrice)}
@@ -87,7 +87,7 @@ export function RecentConsultationCard({
                 <div className="flex flex-col items-end gap-0.5">
                   <span className="text-[10px] font-semibold text-text-muted">미확정</span>
                   <span
-                    className="text-sm font-bold text-text-muted"
+                    className="text-sm font-semibold text-text-muted"
                     style={{ fontVariantNumeric: 'tabular-nums' }}
                   >
                     {formatPrice(record.finalPrice)}

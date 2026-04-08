@@ -24,7 +24,7 @@ export function MainTabBar({
         <button
           onClick={() => onTabChange('reservations')}
           className={cn(
-            'flex-1 py-3 text-sm font-semibold text-center transition-colors relative',
+            'flex-1 py-3 text-sm font-medium text-center transition-colors relative',
             activeTab === 'reservations' ? 'text-primary' : 'text-text-secondary hover:text-text',
           )}
         >
@@ -36,7 +36,7 @@ export function MainTabBar({
         <button
           onClick={() => onTabChange('consultations')}
           className={cn(
-            'flex-1 py-3 text-sm font-semibold text-center transition-colors relative',
+            'flex-1 py-3 text-sm font-medium text-center transition-colors relative',
             activeTab === 'consultations' ? 'text-primary' : 'text-text-secondary hover:text-text',
           )}
         >

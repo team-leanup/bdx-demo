@@ -42,7 +42,7 @@ export function TodayStatsCard({
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
             <IconScissors className="h-3.5 w-3.5 text-primary" />
           </div>
-          <span className="text-base md:text-lg font-bold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
+          <span className="text-base md:text-lg font-semibold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
             {consultationCount}
           </span>
           <span className="text-[11px] text-text-muted text-center leading-tight">{consultationLabel}</span>
@@ -52,7 +52,7 @@ export function TodayStatsCard({
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
             <IconCalendar className="h-3.5 w-3.5 text-primary" />
           </div>
-          <span className="text-base md:text-lg font-bold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
+          <span className="text-base md:text-lg font-semibold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
             {reservationCount}
           </span>
           <span className="text-[11px] text-text-muted text-center leading-tight">{reservationLabel}</span>
@@ -62,7 +62,7 @@ export function TodayStatsCard({
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
             <IconWon className="h-3.5 w-3.5 text-primary" />
           </div>
-          <span className="text-sm font-bold text-text truncate w-full text-center" style={{ fontVariantNumeric: 'tabular-nums' }}>
+          <span className="text-sm font-semibold text-text truncate w-full text-center" style={{ fontVariantNumeric: 'tabular-nums' }}>
             {formatPrice(revenue)}
           </span>
           <span className="text-[11px] text-text-muted text-center leading-tight">{revenueLabel}</span>
@@ -72,7 +72,7 @@ export function TodayStatsCard({
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
             <IconGlobe className="h-3.5 w-3.5 text-primary" />
           </div>
-          <span className="text-base md:text-lg font-bold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
+          <span className="text-base md:text-lg font-semibold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
             {foreignCount}
           </span>
           <span className="text-[11px] text-text-muted text-center leading-tight">외국인</span>

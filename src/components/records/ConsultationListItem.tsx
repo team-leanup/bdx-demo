@@ -58,7 +58,7 @@ export function ConsultationListItem({
             </div>
           ) : (
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-              <span className="text-sm font-bold text-primary">
+              <span className="text-sm font-medium text-primary">
                 {(c.customerName ?? '?').slice(0, 1)}
               </span>
             </div>
@@ -73,7 +73,7 @@ export function ConsultationListItem({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="inline-flex shrink-0 items-center rounded bg-primary/10 px-1 py-0.5 text-[9px] font-bold text-primary">상담</span>
+                <span className="inline-flex shrink-0 items-center rounded bg-primary/10 px-1 py-0.5 text-[9px] font-medium text-primary">상담</span>
                 <span className="shrink-0 text-xs font-semibold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>{timeStr}</span>
               </div>
               <div className="mt-1 flex min-w-0 items-center gap-1.5">
@@ -93,7 +93,7 @@ export function ConsultationListItem({
                 <span className="block text-[10px] font-semibold text-text-muted">결제 전</span>
               )}
               <span
-                className={`text-sm font-bold ${record.finalizedAt ? 'text-primary' : 'text-text-muted'}`}
+                className={`text-sm font-semibold ${record.finalizedAt ? 'text-primary' : 'text-text-muted'}`}
                 style={{ fontVariantNumeric: 'tabular-nums' }}
               >
                 {formatPrice(record.finalPrice)}

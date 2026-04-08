@@ -48,7 +48,7 @@ export function HeroCTA({
             <IconCalendar className="h-5 w-5 text-white" />
           </div>
           <p className="text-xs font-medium text-white/70">{reservationLabel}</p>
-          <h2 className="mt-0.5 text-base font-bold text-white">{reservationTitle}</h2>
+          <h2 className="mt-0.5 text-base font-medium text-white">{reservationTitle}</h2>
         </motion.button>
 
         {/* 매출 등록 */}
@@ -63,7 +63,7 @@ export function HeroCTA({
             </svg>
           </div>
           <p className="text-xs font-medium text-white/70">{quickSaleLabel}</p>
-          <h2 className="mt-0.5 text-base font-bold text-white">{quickSaleTitle}</h2>
+          <h2 className="mt-0.5 text-base font-medium text-white">{quickSaleTitle}</h2>
         </motion.button>
       </div>
 
@@ -79,7 +79,7 @@ export function HeroCTA({
           </div>
           <div>
             <p className="text-xs font-medium text-text-muted">{consultationLabel}</p>
-            <h2 className="mt-0.5 text-base font-bold text-text">{consultationTitle}</h2>
+            <h2 className="mt-0.5 text-base font-medium text-text">{consultationTitle}</h2>
             <p className="mt-0.5 text-xs text-text-muted">{consultationSubtitle}</p>
           </div>
         </div>
