@@ -220,10 +220,12 @@ function MenuCardPrice({ photoId, price }: MenuCardPriceProps): React.ReactEleme
   return (
     <button
       onClick={startEdit}
-      className="text-sm font-bold text-primary hover:text-primary/80 transition-colors"
-      title="탭하여 가격 수정"
+      className="flex items-center gap-1 text-sm font-bold text-primary hover:text-primary/80 transition-colors"
     >
       {price != null ? formatPrice(price) : <span className="text-text-muted font-normal text-xs">가격 미설정</span>}
+      <svg className="w-3 h-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+      </svg>
     </button>
   );
 }
@@ -241,6 +243,62 @@ const DESIGN_SCOPE_LABEL: Record<string, string> = {
 
 // 기본 카테고리 (스토어에서 동적으로 관리됨)
 const DEFAULT_categoryOrder = ['simple', 'french', 'magnet', 'art'] as const;
+
+// ── InlineEditText: 탭→인라인 편집→blur/enter로 저장 ──
+function InlineEditText({ value, onSave }: { value: string; onSave: (v: string) => void }): React.ReactElement {
+  const [editing, setEditing] = useState(false);
+  const [input, setInput] = useState(value);
+  const commit = (): void => { if (input.trim()) onSave(input.trim()); setEditing(false); };
+  if (editing) {
+    return (
+      <input autoFocus value={input} onChange={(e) => setInput(e.target.value)}
+        onClick={(e) => e.stopPropagation()}
+        onBlur={commit} onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false); }}
+        className="text-sm font-semibold text-text bg-transparent border-b-2 border-primary outline-none px-0 py-0 w-full min-w-0" />
+    );
+  }
+  return (
+    <button onClick={(e) => { e.stopPropagation(); setInput(value); setEditing(true); }}
+      className="flex items-center gap-1 text-sm font-semibold text-text hover:text-primary transition-colors text-left min-w-0">
+      <span className="truncate">{value}</span>
+      <svg className="w-3 h-3 shrink-0 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+      </svg>
+    </button>
+  );
+}
+
+// ── CategoryHeader: 인라인 이름 편집 ──
+function CategoryHeader({ label, count, onRename }: { label: string; count: number; onRename?: (v: string) => void }): React.ReactElement {
+  const [editing, setEditing] = useState(false);
+  const [input, setInput] = useState(label);
+  const commit = (): void => { if (input.trim() && onRename) onRename(input.trim()); setEditing(false); };
+  if (editing) {
+    return (
+      <div className="flex items-center gap-2">
+        <input autoFocus value={input} onChange={(e) => setInput(e.target.value)}
+          onBlur={commit} onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false); }}
+          className="text-sm font-bold text-text bg-transparent border-b-2 border-primary outline-none px-0 py-0.5 w-32" />
+        <span className="text-xs text-text-muted">{count}개</span>
+        <div className="flex-1 h-px bg-border" />
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-2">
+      <h2 className="text-sm font-bold text-text">{label}</h2>
+      {onRename && (
+        <button onClick={() => { setInput(label); setEditing(true); }} className="text-text-muted hover:text-primary transition-colors">
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+          </svg>
+        </button>
+      )}
+      <span className="text-xs text-text-muted">{count}개</span>
+      <div className="flex-1 h-px bg-border" />
+    </div>
+  );
+}
 
 // ── MenuCategoryMove: 탭하면 이동할 카테고리 옵션 표시 ──
 function MenuCategoryMove({ photoId, currentCategory }: { photoId: string; currentCategory: string }): React.ReactElement {
@@ -668,10 +726,7 @@ export default function PortfolioPage(): React.ReactElement {
                   onUploadPhoto={handleUploadPhoto}
                   onRemoveFromMenu={(id) => toggleMenu(id)}
                   onOpenOverlay={(id) => setOverlayPhotoId(id)}
-                  onRenameCategory={(currentLabel) => setEditPopup({
-                    open: true, title: '카테고리 이름 수정', placeholder: '새 이름', initialValue: currentLabel,
-                    onConfirm: (v) => renameCategory(cat, v),
-                  })}
+                  onRenameCategory={(newLabel) => renameCategory(cat, newLabel)}
                 />
               );
             })
@@ -978,22 +1033,8 @@ function CategorySection({
   const fileInputRef = useRef<HTMLInputElement>(null);
   return (
     <div className="flex flex-col gap-2">
-      {/* Section header */}
-      <div className="flex items-center gap-2">
-        <h2 className="text-sm font-bold text-text">{label}</h2>
-        {onRenameCategory && (
-          <button
-            onClick={() => onRenameCategory(label)}
-            className="text-text-muted hover:text-primary transition-colors"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
-          </button>
-        )}
-        <span className="text-xs text-text-muted">{items.length}개</span>
-        <div className="flex-1 h-px bg-border" />
-      </div>
+      {/* Section header — 인라인 편집 */}
+      <CategoryHeader label={label} count={items.length} onRename={onRenameCategory} />
 
       {/* Menu cards */}
       {items.length > 0 && (
@@ -1110,18 +1151,10 @@ function MenuCard({ photo, fallbackIdx, onRemove, onOpenOverlay, onEditName }: M
       {/* 정보 */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-1">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (onEditName) {
-                onEditName(photo.designType ?? '', (v) => updatePhoto(photo.id, { designType: v }));
-              }
-            }}
-            className="text-sm font-semibold text-text truncate hover:text-primary transition-colors text-left"
-            title="탭하여 이름 수정"
-          >
-            {photo.designType ?? '미지정'}
-          </button>
+          <InlineEditText
+            value={photo.designType ?? '미지정'}
+            onSave={(v) => updatePhoto(photo.id, { designType: v })}
+          />
           <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className="shrink-0 text-[10px] text-text-muted hover:text-red-500">해제</button>
         </div>
         <div className="flex items-center gap-1.5 mt-0.5">
