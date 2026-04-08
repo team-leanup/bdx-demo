@@ -496,21 +496,8 @@ export function DesignerDayGridCalendar({
     return ((h * 60 + m) - START_HOUR * 60) / 60 * hourHeight;
   }, [currentTime, START_HOUR, END_HOUR, isToday, hourHeight]);
 
-  // 디자이너 1명 + 미지정 이벤트 없으면 __unassigned__ 컬럼 숨김
-  const hasUnassignedEvents = useMemo(
-    () => events.some((ev) => ev.date === date && !ev.designerId),
-    [events, date],
-  );
 
-  const columns = useMemo(() => {
-    // 외부에서 __unassigned__가 이미 포함되어 있으면 그대로 사용
-    if (designers.some((d) => d.id === '__unassigned__')) return designers;
-    const cols = [...designers];
-    if (designers.length !== 1 || hasUnassignedEvents) {
-      cols.push({ id: '__unassigned__', name: '미지정' });
-    }
-    return cols;
-  }, [designers, hasUnassignedEvents]);
+  const columns = useMemo(() => [...designers], [designers]);
 
   const eventsByColumn = useMemo(() => {
     const map: Record<string, TimeGridEvent[]> = {};
