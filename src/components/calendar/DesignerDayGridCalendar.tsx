@@ -263,60 +263,45 @@ function DraggableEvent({
       )}
       style={{ top, height }}
     >
-      {/* 상태 dot — 우측 상단 overlay (작은 점) */}
+      {/* 상태 뱃지 — 우측 상단 overlay */}
       {ev.type === 'reservation' && (
         <div className={cn(
-          'absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white z-20',
-          ev.preConsultationCompletedAt ? 'bg-emerald-500'
-            : ev.consultationLinkSentAt ? 'bg-amber-400'
-            : 'bg-slate-300',
-        )} />
+          'absolute -top-2 right-0 z-20 rounded-full px-1.5 py-px text-[8px] font-semibold border border-white shadow-sm',
+          ev.preConsultationCompletedAt ? 'bg-emerald-500 text-white'
+            : ev.consultationLinkSentAt ? 'bg-amber-400 text-amber-900'
+            : 'bg-slate-200 text-slate-600',
+        )}>
+          {ev.preConsultationCompletedAt ? '완료' : ev.consultationLinkSentAt ? '대기' : '미발송'}
+        </div>
       )}
-      {/* 내부 콘텐츠 */}
-      <div className="h-full overflow-hidden">
-      {/* 이름 + 국기 */}
-      <div className="text-xs font-semibold leading-tight">
-        {ev.title}
-        {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
-          <span className="ml-0.5 text-[10px]">{LANGUAGE_FLAG[ev.language]}</span>
-        )}
-      </div>
-      {/* 시간 */}
+      <div className="h-full overflow-hidden flex flex-col gap-0.5">
+      {/* 1) 최상단: 시간 */}
       <div className="text-[10px] opacity-60 leading-tight">{ev.startTime}–{ev.endTime}</div>
-      {/* 서비스 + 채널 */}
+      {/* 2) 중앙 강조: 고객명 + 방문횟수 */}
+      <div className="text-xs font-semibold leading-tight">{ev.title}</div>
+      {/* 3) 시술 메뉴 + 채널 */}
       {showMetaRow && (
-        <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px]">
+        <div className="flex flex-wrap items-center gap-1 text-[10px]">
           {ev.serviceLabel && (
             <span className="rounded bg-white/50 px-1 py-px font-medium text-text">{ev.serviceLabel}</span>
           )}
           {ev.channel && <ChannelIcon channel={ev.channel} />}
         </div>
       )}
-      {/* 고객 선호 */}
-      {(ev.nailShape || ev.cuticleSensitivity || ev.durationPreference) && (
-        <div className="mt-0.5 text-[9px] opacity-60 leading-snug">
-          {[
-            ev.nailShape,
-            ev.cuticleSensitivity && `민감:${ev.cuticleSensitivity}`,
-            ev.durationPreference && `시간:${ev.durationPreference}`,
-          ].filter(Boolean).join(' · ')}
-        </div>
-      )}
-      {/* 메모 */}
+      {/* 4) 하단 좌: 국기 + 언어 */}
+      {/* 4) 하단 우: 선호 스타일 / 메모 */}
+      <div className="flex flex-wrap items-center gap-x-1 gap-y-0 text-[9px] opacity-60 leading-snug mt-auto">
+        {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
+          <span className="text-[11px]">{LANGUAGE_FLAG[ev.language]}</span>
+        )}
+        {ev.nailShape && <span>{ev.nailShape}</span>}
+        {ev.cuticleSensitivity && <span>민감:{ev.cuticleSensitivity}</span>}
+        {ev.durationPreference && <span>시간:{ev.durationPreference}</span>}
+      </div>
       {ev.customerNote && (
-        <div className="mt-0.5 text-[9px] opacity-50 leading-snug">📝 {ev.customerNote}</div>
+        <div className="text-[8px] opacity-50 leading-snug truncate">📝 {ev.customerNote}</div>
       )}
-      {showTags && displayTags.length > 0 && (
-        <div className="mt-0.5 flex flex-wrap items-center gap-0.5">
-          {displayTags.map((tag) => (
-            <CustomerTagChip key={tag.id} tag={tag} size="xs" />
-          ))}
-          {extraTagCount > 0 && (
-            <span className="text-[9px] text-text-muted">+{extraTagCount}</span>
-          )}
-        </div>
-      )}
-      </div>{/* /overflow wrapper */}
+      </div>
     </motion.button>
   );
 }
