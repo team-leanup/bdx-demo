@@ -206,14 +206,6 @@ export function PortfolioOverlay({
                   기록 상세
                 </button>
               )}
-              {customer?.id && (
-                <button
-                  onClick={() => { router.push(`/customers/${customer.id}`); onClose(); }}
-                  className="flex-1 rounded-xl border border-border py-2.5 text-xs font-medium text-text-secondary"
-                >
-                  고객 상세
-                </button>
-              )}
             </div>
           </div>
 
