@@ -275,15 +275,15 @@ function DraggableEvent({
       )}
       {/* 내부 콘텐츠 — overflow 클리핑 */}
       <div className="h-full overflow-hidden">
-      {/* 시간 */}
-      <div className="text-[10px] opacity-70 leading-tight">{ev.startTime}–{ev.endTime}</div>
       {/* 이름 + 국기 */}
-      <div className="flex items-baseline gap-0.5 mt-0.5">
+      <div className="flex items-baseline gap-0.5">
         <span className="text-xs font-semibold leading-tight">{ev.title}</span>
         {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
           <span className="text-[10px] leading-none">{LANGUAGE_FLAG[ev.language]}</span>
         )}
       </div>
+      {/* 시간 */}
+      <div className="text-[10px] opacity-60 leading-tight">{ev.startTime}–{ev.endTime}</div>
       {/* 서비스 + 채널 */}
       {showMetaRow && (
         <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px]">
