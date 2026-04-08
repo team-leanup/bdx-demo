@@ -144,6 +144,34 @@ export default function CustomersPage() {
         </div>
       </div>
 
+      {/* 페이지네이션 */}
+      {filtered.length > 0 && totalPages > 1 && (
+        <div className="flex items-center justify-between gap-3 px-4 md:px-0">
+          <div className="text-xs text-text-secondary">
+            {filtered.length}명 중 {(currentPage - 1) * PAGE_SIZE + 1}-{Math.min(currentPage * PAGE_SIZE, filtered.length)}명
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              disabled={currentPage === 1}
+              className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-text-secondary disabled:opacity-40"
+            >
+              이전
+            </button>
+            <span className="min-w-10 text-center text-xs font-medium text-text">{currentPage}/{totalPages}</span>
+            <button
+              type="button"
+              onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+              disabled={currentPage === totalPages}
+              className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-text-secondary disabled:opacity-40"
+            >
+              다음
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 2열 카드 그리드 */}
       <div className="px-4 md:px-0">
         {filtered.length === 0 ? (
@@ -208,34 +236,6 @@ export default function CustomersPage() {
           </div>
         )}
 
-        {filtered.length > 0 && totalPages > 1 && (
-          <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-border bg-surface px-3 py-2">
-            <div className="text-xs text-text-secondary">
-              {filtered.length}명 중 {(currentPage - 1) * PAGE_SIZE + 1}-{Math.min(currentPage * PAGE_SIZE, filtered.length)}명
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-                disabled={currentPage === 1}
-                className="min-h-[36px] min-w-[36px] rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-text-secondary disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                이전
-              </button>
-              <span className="min-w-12 text-center text-xs font-medium text-text">
-                {currentPage} / {totalPages}
-              </span>
-              <button
-                type="button"
-                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-                disabled={currentPage === totalPages}
-                className="min-h-[36px] min-w-[36px] rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-text-secondary disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                다음
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title="새 고객 등록">
