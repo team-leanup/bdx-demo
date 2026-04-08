@@ -290,16 +290,18 @@ function DraggableEvent({
       )}
       {/* 4) 하단 좌: 국기 + 언어 */}
       {/* 4) 하단 우: 선호 스타일 / 메모 */}
-      <div className="flex flex-wrap items-center gap-x-1 gap-y-0 text-[9px] opacity-60 leading-snug mt-auto">
-        {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
-          <span className="text-[11px]">{LANGUAGE_FLAG[ev.language]}</span>
-        )}
-        {ev.nailShape && <span>{ev.nailShape}</span>}
-        {ev.cuticleSensitivity && <span>민감:{ev.cuticleSensitivity}</span>}
-        {ev.durationPreference && <span>시간:{ev.durationPreference}</span>}
-      </div>
+      {(ev.language !== 'ko' || ev.nailShape || ev.cuticleSensitivity || ev.durationPreference) && (
+        <div className="text-[9px] opacity-60 leading-snug">
+          {[
+            ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language],
+            ev.nailShape,
+            ev.cuticleSensitivity && `민감:${ev.cuticleSensitivity}`,
+            ev.durationPreference && `시간:${ev.durationPreference}`,
+          ].filter(Boolean).join(' · ')}
+        </div>
+      )}
       {ev.customerNote && (
-        <div className="text-[8px] opacity-50 leading-snug truncate">📝 {ev.customerNote}</div>
+        <div className="text-[9px] opacity-50 leading-snug">📝 {ev.customerNote}</div>
       )}
       </div>
     </motion.button>
@@ -457,7 +459,7 @@ export function DesignerDayGridCalendar({
   const gridRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
-  const hourHeight = 140;
+  const hourHeight = 160;
   const axisWidth = isMobile ? 40 : 60;
   const HEADER_H = isMobile ? 28 : 36;
 
