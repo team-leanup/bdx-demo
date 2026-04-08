@@ -13,13 +13,11 @@ import type { ConsultationRecord } from '@/types/consultation';
 interface ConsultationListItemProps {
   record: ConsultationRecord;
   onClick: () => void;
-  onPreview?: () => void;
 }
 
 export function ConsultationListItem({
   record,
   onClick,
-  onPreview,
 }: ConsultationListItemProps): React.ReactElement {
   const c = record.consultation;
   const timeStr = toKoreanTimeString(record.createdAt);
@@ -141,19 +139,16 @@ export function ConsultationListItem({
         </button>
       </div>
 
-      {/* R-3: 미리보기 버튼 */}
-      {onPreview && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onPreview();
-          }}
-          className="rounded-lg border border-border bg-surface-alt px-2.5 py-2 text-[10px] font-semibold text-text-secondary transition-all hover:bg-border active:scale-95 sm:mt-1 sm:shrink-0"
-        >
-          <span className="sm:hidden">미리보기</span>
-          <span className="hidden sm:inline">기록 미리보기</span>
-        </button>
-      )}
+      {/* R-3: 상세보기 버튼 */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick();
+        }}
+        className="rounded-lg border border-border bg-surface-alt px-2.5 py-2 text-[10px] font-medium text-text-secondary transition-all hover:bg-border active:scale-95 sm:mt-1 sm:shrink-0"
+      >
+        상세보기
+      </button>
     </div>
   );
 }

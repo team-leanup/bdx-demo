@@ -36,7 +36,6 @@ import {
   ViewModeToggle,
   ConsultationList,
   PeriodFilter,
-  ConsultationPreviewModal,
 } from '@/components/records';
 import { TAG_PRESETS } from '@/data/tag-presets';
 import { TagIconSvg } from '@/components/ui/TagIconSvg';
@@ -123,7 +122,6 @@ export default function RecordsPage() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterPeriod>('all');
   const [tagFilter, setTagFilter] = useState<string | null>(null);
-  const [previewRecord, setPreviewRecord] = useState<ConsultationRecord | null>(null);
   const [linkGenBooking, setLinkGenBooking] = useState<BookingRequest | null>(null);
 
   const [selectedDate, setSelectedDate] = useState(getTodayStr());
@@ -659,19 +657,10 @@ export default function RecordsPage() {
           <ConsultationList
             records={listFiltered}
             onRecordClick={(id) => router.push(`/records/${id}`)}
-            onRecordPreview={(record) => setPreviewRecord(record)}
             emptyTitle={t('records.noResults')}
             emptyDescription={t('records.noResultsHint')}
           />
 
-          {/* R-3: 미리보기 모달 */}
-          <ConsultationPreviewModal
-            record={previewRecord}
-            onClose={() => setPreviewRecord(null)}
-            onViewDetail={() => {
-              if (previewRecord) router.push(`/records/${previewRecord.id}`);
-            }}
-          />
         </>
       )}
 

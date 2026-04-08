@@ -16,7 +16,6 @@ import { calculatePrice } from '@/lib/price-calculator';
 import { useT } from '@/lib/i18n';
 import { getSafetyTagMeta } from '@/lib/tag-safety';
 import { SafetyTag } from '@/components/ui/SafetyTag';
-import { DailyChecklist } from '@/components/consultation/DailyChecklist';
 import { ChecklistSummaryRow } from '@/components/records/ChecklistSummaryRow';
 import type { DailyChecklist as DailyChecklistType } from '@/types/consultation';
 import { ConsultationStep } from '@/types/consultation';
@@ -394,20 +393,44 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
         </div>
       </Card>
 
-      {/* 체크리스트 */}
-      <div className="mx-4">
-        <DailyChecklist
-          consultationId={id}
-          initialData={checklistData}
-          onSave={(data) => {
-            setChecklistData(data);
-            updateRecord(id, { checklist: data });
-          }}
-          onSaveToPreference={() => {
-            router.push(`/customers/${record.customerId}?tab=preference&fromChecklist=true`);
-          }}
-        />
-      </div>
+      {/* 시술 체크리스트 — 읽기 전용 요약 */}
+      {checklistData && (checklistData.shape || checklistData.length || checklistData.thickness || checklistData.cuticleSensitivity) && (
+        <Card className="mx-4">
+          <h3 className="text-sm font-semibold text-text-secondary mb-3">시술 체크리스트</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {checklistData.shape && (
+              <div className="rounded-xl bg-surface-alt px-3 py-2.5">
+                <p className="text-[10px] text-text-muted mb-0.5">네일 쉐잎</p>
+                <p className="text-sm font-semibold text-text">{t('checklist.shape_' + checklistData.shape)}</p>
+              </div>
+            )}
+            {checklistData.length && (
+              <div className="rounded-xl bg-surface-alt px-3 py-2.5">
+                <p className="text-[10px] text-text-muted mb-0.5">길이</p>
+                <p className="text-sm font-semibold text-text">{t('checklist.length_' + checklistData.length)}</p>
+              </div>
+            )}
+            {checklistData.thickness && (
+              <div className="rounded-xl bg-surface-alt px-3 py-2.5">
+                <p className="text-[10px] text-text-muted mb-0.5">두께감</p>
+                <p className="text-sm font-semibold text-text">{t('checklist.thickness_' + checklistData.thickness)}</p>
+              </div>
+            )}
+            {checklistData.cuticleSensitivity && (
+              <div className="rounded-xl bg-surface-alt px-3 py-2.5">
+                <p className="text-[10px] text-text-muted mb-0.5">큐티클 민감도</p>
+                <p className="text-sm font-semibold text-text">{t('checklist.cuticle_' + checklistData.cuticleSensitivity)}</p>
+              </div>
+            )}
+          </div>
+          {checklistData.memo && (
+            <div className="mt-2 rounded-xl bg-surface-alt px-3 py-2.5">
+              <p className="text-[10px] text-text-muted mb-0.5">특이사항</p>
+              <p className="text-sm text-text">{checklistData.memo}</p>
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* 액션 바 (fixed bottom) */}
       <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background px-4 py-3">
