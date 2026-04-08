@@ -167,12 +167,17 @@ export default function CustomersPage() {
                   onClick={() => router.push(`/customers/${customer.id}`)}
                   className="flex flex-col items-center gap-2 rounded-xl border border-border bg-surface p-3 text-center hover:shadow-md active:bg-surface-alt transition-all"
                 >
-                  {/* 아바타 */}
+                  {/* 아바타 + 국기 overlay */}
                   <div className="relative flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-base font-medium text-primary">
                     {customer.name.charAt(0)}
                     {highEtcTag && (
                       <span className="absolute -top-0.5 -right-0.5 text-[10px] leading-none">
                         {getSafetyTagMeta(highEtcTag).icon}
+                      </span>
+                    )}
+                    {customer.preferredLanguage && customer.preferredLanguage !== 'ko' && (
+                      <span className="absolute -bottom-0.5 -right-0.5 text-[12px] leading-none drop-shadow-sm">
+                        <FlagIcon language={customer.preferredLanguage} size="sm" />
                       </span>
                     )}
                   </div>
@@ -183,9 +188,6 @@ export default function CustomersPage() {
                       {customer.name}
                       {customer.phone && <span className="text-text-muted font-normal text-[10px]"> ({customer.phone.slice(-4)})</span>}
                     </span>
-                    {customer.preferredLanguage && customer.preferredLanguage !== 'ko' && (
-                      <FlagIcon language={customer.preferredLanguage} size="sm" />
-                    )}
                     {isVip && (
                       <span
                         className="flex-shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium"
