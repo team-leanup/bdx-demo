@@ -18,6 +18,7 @@ interface WeekCalendarProps {
   selectedDate: string;
   onSelectDate: (date: string) => void;
   reservations: BookingRequest[];
+  onToggleMonthView?: () => void;
 }
 
 function getTodayStr(): string {
@@ -36,7 +37,7 @@ function formatWeekLabel(startDateStr: string): string {
   return `${start.getUTCFullYear()}년 ${startLabel} – ${endLabel}`;
 }
 
-export function WeekCalendar({ selectedDate, onSelectDate, reservations }: WeekCalendarProps) {
+export function WeekCalendar({ selectedDate, onSelectDate, reservations, onToggleMonthView }: WeekCalendarProps) {
   const today = getTodayStr();
   const [weekStart, setWeekStart] = useState<string>(() => getWeekStart(selectedDate || today));
   const [direction, setDirection] = useState(0);
@@ -91,13 +92,28 @@ export function WeekCalendar({ selectedDate, onSelectDate, reservations }: WeekC
           </svg>
         </button>
 
-        <button
-          type="button"
-          onClick={goToThisWeek}
-          className="text-sm font-bold text-text hover:text-primary transition-colors"
-        >
-          {formatWeekLabel(weekStart)}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={goToThisWeek}
+            className="text-sm font-bold text-text hover:text-primary transition-colors"
+          >
+            {formatWeekLabel(weekStart)}
+          </button>
+          {onToggleMonthView && (
+            <button
+              type="button"
+              onClick={onToggleMonthView}
+              className="flex items-center justify-center w-7 h-7 rounded-lg text-text-muted hover:text-primary hover:bg-primary/10 transition-colors"
+              title="월간 보기"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <path d="M16 2v4M8 2v4M3 10h18" />
+              </svg>
+            </button>
+          )}
+        </div>
 
         <button
           type="button"

@@ -136,6 +136,7 @@ export default function RecordsPage() {
   const [mainTab, setMainTab] = useState<MainTab>('reservations');
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [designerFilter, setDesignerFilter] = useState<string | null>(null);
+  // 디자이너 토글은 단일 선택 (null=전체)
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterPeriod>('all');
   const [tagFilter, setTagFilter] = useState<string | null>(null);
@@ -538,45 +539,41 @@ export default function RecordsPage() {
           </div>
 
           {/* 디자이너 필터 토글 */}
-          <div className="flex gap-1.5 overflow-x-auto px-4 md:px-0 pb-0.5">
-            {[{ id: null as string | null, name: '전체' }, ...activeDesigners.map((d) => ({ id: d.id as string | null, name: d.name })), { id: '__unassigned__' as string | null, name: '미지정' }].map((d) => (
-              <button
-                key={d.id ?? 'all'}
-                type="button"
-                onClick={() => setDesignerFilter(d.id === null ? null : designerFilter === d.id ? null : d.id)}
-                className={cn(
-                  'flex-shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-all',
-                  (d.id === null ? designerFilter === null : designerFilter === d.id)
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'bg-surface-alt text-text-secondary',
-                )}
-              >
-                {d.name}
-              </button>
-            ))}
+          <div className="flex items-center gap-2 overflow-x-auto px-4 md:px-0 pb-0.5">
+            <span className="text-[11px] text-text-muted flex-shrink-0">담당</span>
+            {activeDesigners.map((d) => {
+              const isOn = designerFilter === d.id;
+              return (
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => setDesignerFilter(isOn ? null : d.id)}
+                  className="flex items-center gap-1.5 flex-shrink-0"
+                >
+                  <div className={cn(
+                    'w-8 h-[18px] rounded-full transition-colors relative',
+                    isOn ? 'bg-primary' : 'bg-border',
+                  )}>
+                    <div className={cn(
+                      'absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white shadow-sm transition-transform',
+                      isOn ? 'translate-x-[16px]' : 'translate-x-[2px]',
+                    )} />
+                  </div>
+                  <span className={cn('text-[11px] font-medium', isOn ? 'text-primary' : 'text-text-secondary')}>{d.name}</span>
+                </button>
+              );
+            })}
           </div>
 
           {viewMode === 'day' && (
             <div className="flex flex-col gap-2 px-4 md:px-0">
-              <Card className="p-3 relative">
+              <Card className="p-3">
                 <WeekCalendar
                   selectedDate={selectedDate}
                   onSelectDate={setSelectedDate}
                   reservations={allReservations}
+                  onToggleMonthView={() => setViewMode('month')}
                 />
-                {/* 월간 뷰 전환 아이콘 */}
-                <button
-                  type="button"
-                  onClick={() => setViewMode('month')}
-                  className="absolute top-2 right-2 flex items-center justify-center w-8 h-8 rounded-lg bg-surface-alt text-text-secondary hover:text-primary hover:bg-primary/10 transition-colors"
-                  title="월간 보기"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <rect x="3" y="4" width="18" height="18" rx="2" />
-                    <path d="M16 2v4M8 2v4M3 10h18" />
-                    <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
-                  </svg>
-                </button>
               </Card>
               <DesignerDayGridCalendar
                 date={selectedDate}
