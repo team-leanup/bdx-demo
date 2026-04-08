@@ -135,8 +135,8 @@ export default function RecordsPage() {
   const t = useT();
   const [mainTab, setMainTab] = useState<MainTab>('reservations');
   const [viewMode, setViewMode] = useState<ViewMode>('day');
-  const [designerFilter, setDesignerFilter] = useState<string | null>(null);
-  // 디자이너 토글은 단일 선택 (null=전체)
+  // 디자이너 토글: 로그인 디자이너는 항상 표시, 나머지는 토글
+  const [extraDesignerIds, setExtraDesignerIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterPeriod>('all');
   const [tagFilter, setTagFilter] = useState<string | null>(null);
@@ -203,6 +203,19 @@ export default function RecordsPage() {
     () => designers.filter((designer) => designer.isActive),
     [designers],
   );
+
+  // 표시할 디자이너 목록: 로그인 디자이너(항상) + 토글 선택된 디자이너
+  const visibleDesignerIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (activeDesignerId) ids.add(activeDesignerId);
+    for (const id of extraDesignerIds) ids.add(id);
+    return ids;
+  }, [activeDesignerId, extraDesignerIds]);
+
+  const filteredDesigners = useMemo(() => {
+    if (extraDesignerIds.size === 0 && !activeDesignerId) return activeDesigners;
+    return activeDesigners.filter((d) => visibleDesignerIds.has(d.id));
+  }, [activeDesigners, visibleDesignerIds, extraDesignerIds.size, activeDesignerId]);
 
   const dayReservations = useMemo(
     () =>
@@ -538,16 +551,22 @@ export default function RecordsPage() {
             </span>
           </div>
 
-          {/* 디자이너 필터 토글 */}
+          {/* 디자이너 토글 — 로그인 디자이너 제외, 나머지 다중 선택 */}
           <div className="flex items-center gap-2 overflow-x-auto px-4 md:px-0 pb-0.5">
-            <span className="text-[11px] text-text-muted flex-shrink-0">담당</span>
-            {activeDesigners.map((d) => {
-              const isOn = designerFilter === d.id;
+            <span className="text-[11px] text-text-muted flex-shrink-0">+표시</span>
+            {activeDesigners.filter((d) => d.id !== activeDesignerId).map((d) => {
+              const isOn = extraDesignerIds.has(d.id);
               return (
                 <button
                   key={d.id}
                   type="button"
-                  onClick={() => setDesignerFilter(isOn ? null : d.id)}
+                  onClick={() => {
+                    setExtraDesignerIds((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(d.id)) next.delete(d.id); else next.add(d.id);
+                      return next;
+                    });
+                  }}
                   className="flex items-center gap-1.5 flex-shrink-0"
                 >
                   <div className={cn(
@@ -577,14 +596,10 @@ export default function RecordsPage() {
               </Card>
               <DesignerDayGridCalendar
                 date={selectedDate}
-                events={designerFilter
-                  ? timeGridEvents.filter((e) => designerFilter === '__unassigned__' ? !e.designerId : e.designerId === designerFilter)
-                  : timeGridEvents
-                }
-                designers={designerFilter
-                  ? activeDesigners.filter((d) => d.id === designerFilter).map((d) => ({ id: d.id, name: d.name }))
-                  : activeDesigners.map((d) => ({ id: d.id, name: d.name }))
-                }
+                events={timeGridEvents.filter((e) =>
+                  visibleDesignerIds.size === 0 || visibleDesignerIds.has(e.designerId ?? '__unassigned__')
+                )}
+                designers={filteredDesigners.map((d) => ({ id: d.id, name: d.name }))}
                 startHour={calendarStartHour}
                 endHour={calendarEndHour}
                 onEventClick={handleEventClick}
