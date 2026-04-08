@@ -4,16 +4,12 @@ import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui';
-import { useConsultationStore } from '@/store/consultation-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { formatPrice, formatDateDot } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { downloadForInstagram } from '@/lib/image-utils';
-import { InstagramHashtags } from './InstagramHashtags';
 import type { PortfolioPhoto } from '@/types/portfolio';
 import type { Customer } from '@/types/customer';
-import { ConsultationStep } from '@/types/consultation';
 import type { ConsultationRecord } from '@/types/consultation';
 
 interface PortfolioOverlayProps {
@@ -32,6 +28,13 @@ const DESIGN_SCOPE_LABEL: Record<string, string> = {
   monthly_art: '이달의 아트',
 };
 
+const NAIL_FALLBACKS = [
+  '/images/mock/nail/nail-1.jpg', '/images/mock/nail/nail-2.jpg',
+  '/images/mock/nail/nail-3.jpg', '/images/mock/nail/nail-4.jpg',
+  '/images/mock/nail/nail-5.jpg', '/images/mock/nail/nail-6.jpg',
+  '/images/mock/nail/nail-7.jpg', '/images/mock/nail/nail-8.jpg',
+];
+
 export function PortfolioOverlay({
   photoIds,
   initialPhotoId,
@@ -41,10 +44,8 @@ export function PortfolioOverlay({
   onClose,
 }: PortfolioOverlayProps): React.ReactElement {
   const router = useRouter();
-  const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
-  const togglePhotoVisibility = usePortfolioStore((s) => s.togglePhotoVisibility);
+  const toggleMenu = usePortfolioStore((s) => s.toggleMenu);
   const [currentId, setCurrentId] = useState(initialPhotoId);
-  const [showHashtags, setShowHashtags] = useState(false);
   const [downloadingInsta, setDownloadingInsta] = useState(false);
 
   const currentIndex = photoIds.indexOf(currentId);
@@ -55,7 +56,7 @@ export function PortfolioOverlay({
     ?? (linkedRecord ? DESIGN_SCOPE_LABEL[linkedRecord.consultation.designScope] ?? linkedRecord.consultation.designScope : undefined);
   const effectivePrice = photo?.price ?? linkedRecord?.finalPrice;
   const effectiveDate = photo ? (photo.takenAt ?? photo.createdAt) : undefined;
-  const estimatedMinutes = linkedRecord?.estimatedMinutes;
+  const imgSrc = photo?.imageDataUrl || NAIL_FALLBACKS[currentIndex % NAIL_FALLBACKS.length];
 
   const goPrev = useCallback(() => {
     if (currentIndex > 0) setCurrentId(photoIds[currentIndex - 1]);
@@ -64,18 +65,6 @@ export function PortfolioOverlay({
   const goNext = useCallback(() => {
     if (currentIndex < photoIds.length - 1) setCurrentId(photoIds[currentIndex + 1]);
   }, [currentIndex, photoIds]);
-
-  const NAIL_FALLBACKS = [
-    '/images/mock/nail/nail-1.jpg',
-    '/images/mock/nail/nail-2.jpg',
-    '/images/mock/nail/nail-3.jpg',
-    '/images/mock/nail/nail-4.jpg',
-    '/images/mock/nail/nail-5.jpg',
-    '/images/mock/nail/nail-6.jpg',
-    '/images/mock/nail/nail-7.jpg',
-    '/images/mock/nail/nail-8.jpg',
-  ];
-  const imgSrc = photo?.imageDataUrl || NAIL_FALLBACKS[currentIndex % NAIL_FALLBACKS.length];
 
   if (!photo) return <></>;
 
@@ -86,20 +75,20 @@ export function PortfolioOverlay({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80"
         onClick={onClose}
       >
         <motion.div
           key={`overlay-${currentId}`}
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.95, opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="relative w-full max-w-sm mx-4 flex flex-col gap-0 rounded-3xl overflow-hidden shadow-2xl"
+          initial={{ y: 40, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 40, opacity: 0 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
+          className="relative w-full max-w-sm sm:mx-4 rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl bg-surface"
           onClick={(e) => e.stopPropagation()}
         >
           {/* 사진 */}
-          <div className="relative aspect-square w-full bg-black">
+          <div className="relative aspect-[4/3] w-full bg-black">
             <Image
               src={imgSrc}
               alt={customer?.name ?? '포트폴리오'}
@@ -108,170 +97,112 @@ export function PortfolioOverlay({
               className="object-cover"
             />
 
-            {/* 상단 닫기 */}
-            <div className="absolute top-3 right-3 z-10">
-              <button
-                onClick={onClose}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+            {/* 닫기 */}
+            <button
+              onClick={onClose}
+              className="absolute top-3 right-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
 
-            {/* 네비게이션 */}
+            {/* 좌우 네비 */}
             {currentIndex > 0 && (
-              <button
-                onClick={goPrev}
-                className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
+              <button onClick={goPrev} className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
               </button>
             )}
             {currentIndex < photoIds.length - 1 && (
-              <button
-                onClick={goNext}
-                className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
+              <button onClick={goNext} className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </button>
             )}
 
-          </div>
-
-          {/* 정보 + 액션 */}
-          <div className="bg-surface flex flex-col gap-0">
-            {/* 고객 정보 */}
-            <div className="px-4 pt-3 pb-2">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-bold text-foreground truncate">{customer?.name ?? '알 수 없음'}</p>
-                {effectiveDate && (
-                  <p className="text-xs text-muted-foreground shrink-0">{formatDateDot(effectiveDate)}</p>
-                )}
-              </div>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {effectivePrice != null && (
-                  <span className="rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-bold text-foreground">
-                    {formatPrice(effectivePrice)}
-                  </span>
-                )}
-                {estimatedMinutes != null && (
-                  <span className="rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                    {estimatedMinutes}분
-                  </span>
-                )}
-                {serviceType && (
-                  <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-                    {serviceType}
-                  </span>
-                )}
-              </div>
-              {photo.colorLabels && photo.colorLabels.length > 0 && (
-                <div className="mt-1.5 flex flex-wrap gap-1">
-                  {photo.colorLabels.map((c, i) => (
-                    <span key={i} className="rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-600">
-                      {c}
-                    </span>
-                  ))}
-                </div>
-              )}
+            {/* 뱃지 */}
+            <div className="absolute top-3 left-3 flex gap-1">
+              {photo.isFeatured && <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-white shadow">메뉴</span>}
+              {photo.isStaffPick && <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white shadow">추천</span>}
+              {photo.isPopular && <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white shadow">인기</span>}
             </div>
-            {/* 인스타 해시태그 토글 */}
-            {showHashtags && (
-              <div className="border-t border-border">
-                <InstagramHashtags
-                  tags={photo.tags}
-                  colorLabels={photo.colorLabels}
-                  serviceType={serviceType}
-                  designType={photo.designType}
-                  price={effectivePrice}
-                />
+
+            {/* 가격 오버레이 */}
+            {effectivePrice != null && (
+              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent pt-8 pb-3 px-4">
+                <span className="text-xl font-bold text-white">{formatPrice(effectivePrice)}</span>
               </div>
             )}
+          </div>
 
-            <div className="flex flex-wrap items-center gap-2 p-3 border-t border-border">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowHashtags((v) => !v)}
-                className={cn('flex-shrink-0', showHashtags && 'text-primary')}
-              >
-                #해시태그
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => router.push(`/portfolio/${photo.id}`)}
-              >
-                상세 보기
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={downloadingInsta}
-                onClick={async () => {
-                  if (!photo.imageDataUrl) return;
-                  setDownloadingInsta(true);
-                  try {
-                    await downloadForInstagram(photo.imageDataUrl, '4:5');
-                  } catch {
-                    // 다운로드 실패 시 무시
-                  } finally {
-                    setDownloadingInsta(false);
-                  }
-                }}
-              >
-                {downloadingInsta ? '저장 중...' : '인스타 저장'}
-              </Button>
-              {photo.recordId && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => { router.push(`/records/${photo.recordId}`); onClose(); }}
-                >
-                  공유카드
-                </Button>
-              )}
-              {customer?.id && (
-                <Button
-                  variant="primary"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => {
-                    router.push(`/customers/${customer.id}`);
-                    onClose();
-                  }}
-                >
-                  고객 카드 보기
-                </Button>
-              )}
+          {/* 정보 */}
+          <div className="px-4 pt-3 pb-2">
+            <div className="flex items-center justify-between">
+              <div className="min-w-0">
+                <p className="text-base font-bold text-text truncate">{photo.designType ?? customer?.name ?? '미지정'}</p>
+                <div className="flex items-center gap-2 mt-0.5 text-xs text-text-secondary">
+                  {customer?.name && <span>{customer.name}</span>}
+                  {serviceType && <span className="text-primary font-medium">{serviceType}</span>}
+                  {effectiveDate && <span>{formatDateDot(effectiveDate)}</span>}
+                </div>
+              </div>
             </div>
-
-            {/* 인디케이터 */}
-            {photoIds.length > 1 && (
-              <div className="flex justify-center gap-1 pb-3 pt-1">
-                {photoIds.map((pid) => (
-                  <button
-                    key={pid}
-                    onClick={() => setCurrentId(pid)}
-                    className={cn(
-                      'h-1.5 rounded-full transition-all',
-                      pid === currentId ? 'w-4 bg-primary' : 'w-1.5 bg-border',
-                    )}
-                  />
+            {photo.colorLabels && photo.colorLabels.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {photo.colorLabels.map((c, i) => (
+                  <span key={i} className="rounded-full bg-surface-alt px-2 py-0.5 text-[10px] font-medium text-text-secondary">{c}</span>
                 ))}
               </div>
             )}
           </div>
+
+          {/* 액션 버튼 */}
+          <div className="flex items-center gap-2 px-4 py-3 border-t border-border">
+            {/* 메뉴 토글 */}
+            <button
+              onClick={() => toggleMenu(photo.id, photo.price)}
+              className={cn('rounded-lg px-3 py-2 text-xs font-medium transition-colors',
+                photo.isFeatured ? 'bg-amber-50 text-amber-600 border border-amber-200' : 'bg-surface-alt text-text-secondary',
+              )}
+            >
+              {photo.isFeatured ? '메뉴 해제' : '메뉴 등록'}
+            </button>
+            {/* 인스타 저장 */}
+            <button
+              disabled={downloadingInsta}
+              onClick={async () => {
+                if (!photo.imageDataUrl) return;
+                setDownloadingInsta(true);
+                try { await downloadForInstagram(photo.imageDataUrl, '4:5'); } catch { /* */ } finally { setDownloadingInsta(false); }
+              }}
+              className="rounded-lg bg-surface-alt px-3 py-2 text-xs font-medium text-text-secondary"
+            >
+              {downloadingInsta ? '저장 중...' : '인스타 저장'}
+            </button>
+            {/* 고객 카드 */}
+            {customer?.id && (
+              <button
+                onClick={() => { router.push(`/customers/${customer.id}`); onClose(); }}
+                className="flex-1 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white text-center"
+              >
+                고객 카드
+              </button>
+            )}
+          </div>
+
+          {/* 인디케이터 */}
+          {photoIds.length > 1 && (
+            <div className="flex justify-center gap-1 pb-3">
+              {photoIds.map((pid) => (
+                <button
+                  key={pid}
+                  onClick={() => setCurrentId(pid)}
+                  className={cn('h-1.5 rounded-full transition-all', pid === currentId ? 'w-4 bg-primary' : 'w-1.5 bg-border')}
+                />
+              ))}
+            </div>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>
   );
 }
-
-export default PortfolioOverlay;
