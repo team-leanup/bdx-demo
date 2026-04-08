@@ -41,7 +41,8 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [selectedRecordId, setSelectedRecordId] = useState<string>('');
-  const [selectedKind, setSelectedKind] = useState<PortfolioPhotoKind>('reference');
+  const [selectedKind, setSelectedKind] = useState<PortfolioPhotoKind>('treatment');
+  const [addToMenu, setAddToMenu] = useState(false);
   const [note, setNote] = useState('');
   const [takenAt, setTakenAt] = useState(() => getTodayInKorea());
   const [serviceType, setServiceType] = useState('');
@@ -180,7 +181,8 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
     setPreviewUrl(null);
     setSelectedCustomerId('');
     setSelectedRecordId('');
-    setSelectedKind('reference');
+    setSelectedKind('treatment');
+    setAddToMenu(false);
     setNote('');
     setTakenAt(getTodayInKorea());
     setServiceType('');
@@ -256,6 +258,8 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
         price: Number.isFinite(derivedPrice) ? derivedPrice : undefined,
         tags: selectedTags.length > 0 ? selectedTags : undefined,
         colorLabels: selectedColors.length > 0 ? selectedColors : undefined,
+        isFeatured: addToMenu || undefined,
+        isPublic: addToMenu || undefined,
       });
 
       if (!result.success) {
@@ -277,10 +281,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
     onCancel();
   }, [onCancel, resetForm]);
 
-  const kindOptions: { key: PortfolioPhotoKind; label: string }[] = [
-    { key: 'reference', label: '레퍼런스' },
-    { key: 'treatment', label: '시술' },
-  ];
+  // 레퍼런스 제거 — 시술 사진만 업로드
 
   return (
     <div className="flex flex-col gap-5 px-4 py-5 sm:p-5 md:p-6">
@@ -375,16 +376,16 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-text-secondary">종류</label>
+        <label className="mb-1.5 block text-sm font-medium text-text-secondary">메뉴판 등록</label>
         <div className="flex gap-2">
-          {kindOptions.map(({ key, label }) => (
+          {[{ key: false, label: '시술 기록만' }, { key: true, label: '메뉴판에도 등록' }].map(({ key, label }) => (
             <button
-              key={key}
+              key={String(key)}
               type="button"
-              onClick={() => setSelectedKind(key)}
+              onClick={() => setAddToMenu(key)}
               className={cn(
                 'flex-1 rounded-xl py-2.5 text-sm font-medium transition-all',
-                selectedKind === key
+                addToMenu === key
                   ? 'bg-primary text-white'
                   : 'bg-surface-alt text-text-secondary hover:bg-surface-alt/80',
               )}
