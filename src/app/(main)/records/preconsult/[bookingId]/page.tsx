@@ -78,6 +78,7 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
   const { bookingId } = use(params);
   const router = useRouter();
   const booking = useReservationStore((s) => s.reservations.find((r) => r.id === bookingId));
+  const updateReservation = useReservationStore((s) => s.updateReservation);
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const hydrateFromBooking = useFieldModeStore((s) => s.hydrateFromBooking);
   const setConsultationLocale = useLocaleStore((s) => s.setConsultationLocale);
@@ -118,6 +119,11 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
       })
     : null;
 
+  const handleConfirm = (): void => {
+    updateReservation(booking.id, { status: 'confirmed' });
+    router.push(`/records`);
+  };
+
   const handleStartConsultation = (): void => {
     if (booking.language && ['ko', 'en', 'zh', 'ja'].includes(booking.language)) {
       setConsultationLocale(booking.language);
@@ -135,7 +141,8 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
     if (booking.preConsultationData) {
       hydrateFromBooking(booking.preConsultationData);
     }
-    router.push('/field-mode');
+    // 사전상담 완료 → 옵션 선택 건너뛰고 바로 시술 중으로
+    router.push('/field-mode/treatment');
   };
 
   return (
@@ -262,14 +269,12 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
 
       {/* 하단 CTA */}
       <div className="sticky bottom-0 bg-background border-t border-border px-4 py-3 pb-safe flex gap-2">
-        {booking.customerId && (
-          <button
-            onClick={() => router.push(`/customers/${booking.customerId}`)}
-            className="flex-1 rounded-xl border border-border bg-surface py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
-          >
-            고객 상세
-          </button>
-        )}
+        <button
+          onClick={handleConfirm}
+          className="flex-1 rounded-xl border border-primary bg-primary/5 py-3 text-sm font-bold text-primary active:scale-[0.98] transition-transform"
+        >
+          확정하기
+        </button>
         <button
           onClick={handleStartConsultation}
           className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
