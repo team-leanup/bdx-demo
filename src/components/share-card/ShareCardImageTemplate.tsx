@@ -147,10 +147,10 @@ export function ShareCardImageTemplate({
         </span>
 
         {/* BDX 로고 */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-          <BdxLogo size={72} />
-          <span style={{ fontSize: 32, letterSpacing: '0.08em', color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase' as const }}>
-            Beauty Decision
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+          <BdxLogo size={48} />
+          <span style={{ fontSize: 24, letterSpacing: '0.06em', color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase' as const, whiteSpace: 'nowrap' as const }}>
+            Beauty Decision eXperience
           </span>
         </div>
       </div>
