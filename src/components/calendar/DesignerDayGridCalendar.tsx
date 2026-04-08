@@ -453,6 +453,7 @@ export function DesignerDayGridCalendar({
 
   const hourHeight = isMobile ? 64 : 84;
   const axisWidth = isMobile ? 40 : 60;
+  const HEADER_H = isMobile ? 28 : 36;
 
   const START_HOUR = propStartHour ?? 10;
   const END_HOUR = propEndHour ?? 20;
@@ -525,80 +526,101 @@ export function DesignerDayGridCalendar({
         )}
       </div>
 
-      <div className="rounded-xl border border-border bg-surface">
-        <div
-          className="grid border-b border-border bg-surface"
-          style={{ gridTemplateColumns: `${axisWidth}px repeat(${colCount}, 1fr)` }}
-        >
-          <div className="p-1 sm:p-2" />
-          {columns.map((col) => (
+      {/* 시간축(왼쪽) + 그리드(오른쪽) 분리 레이아웃 */}
+      <div className="flex">
+        {/* 시간축 — border 바깥이라 overflow 문제 없음 */}
+        <div className="flex-shrink-0 relative" style={{ width: axisWidth }}>
+          {HOURS.map((hour) => (
             <div
-              key={col.id}
-              className="p-1 sm:p-2 text-center border-l border-border bg-surface"
+              key={hour}
+              className="absolute w-full text-right pr-1 sm:pr-2 -translate-y-1/2 text-[9px] sm:text-[10px] text-text-muted"
+              style={{ top: HEADER_H + (hour - START_HOUR) * hourHeight }}
             >
-              <div className="text-[10px] sm:text-xs font-semibold text-text truncate">{col.name}</div>
+              {`${String(hour).padStart(2, '0')}:00`}
             </div>
           ))}
         </div>
 
-        <div className="relative bg-surface" style={{ height: gridHeight }}>
-          {HOURS.map((hour) => (
-            <div
-              key={hour}
-              className="absolute w-full grid"
-              style={{
-                top: (hour - START_HOUR) * hourHeight,
-                gridTemplateColumns: `${axisWidth}px repeat(${colCount}, 1fr)`,
-              }}
-            >
-              <div className="text-[9px] sm:text-[10px] text-text-muted text-right pr-1 sm:pr-2 -translate-y-1/2">
-                {`${String(hour).padStart(2, '0')}:00`}
-              </div>
-              {columns.map((col) => (
-                <div key={col.id} className="border-l border-t border-border" style={{ height: hourHeight }} />
-              ))}
-            </div>
-          ))}
-
+        {/* 메인 그리드 */}
+        <div className="flex-1 rounded-xl border border-border bg-surface overflow-hidden">
+          {/* 헤더: 디자이너 이름 */}
           <div
-            ref={gridRef}
-            className="absolute inset-0 grid"
-            style={{ gridTemplateColumns: `${axisWidth}px repeat(${colCount}, 1fr)` }}
+            className="grid border-b border-border bg-surface"
+            style={{ gridTemplateColumns: `repeat(${colCount}, 1fr)`, height: HEADER_H }}
           >
-            <div />
-            {columns.map((col) => (
-              <SlotColumn
+            {columns.map((col, ci) => (
+              <div
                 key={col.id}
-                col={col}
-                events={eventsByColumn[col.id] || []}
-                gridHeight={gridHeight}
-                startHour={START_HOUR}
-                endHour={END_HOUR}
-                gridRef={gridRef}
-                columns={columns}
-                allEvents={events}
-                role={role}
-                activeDesignerId={activeDesignerId}
-                hourHeight={hourHeight}
-                axisWidth={axisWidth}
-                getPrimaryTags={getPrimaryTags}
-                onEventClick={onEventClick}
-                onEventMove={onEventMove}
-                onRequestMove={setPendingMove}
-                onSlotLongPress={onSlotLongPress}
-              />
+                className={cn('flex items-center justify-center px-1', ci > 0 && 'border-l border-border')}
+              >
+                <div className="text-[10px] sm:text-xs font-semibold text-text truncate">{col.name}</div>
+              </div>
             ))}
           </div>
 
-          {isToday && currentTimeTop !== null && (
+          {/* 그리드 셀 + 이벤트 */}
+          <div className="relative bg-surface" style={{ height: gridHeight }}>
+            {/* 가로 격자선 */}
+            {HOURS.map((hour) => (
+              <div
+                key={hour}
+                className="absolute w-full grid"
+                style={{
+                  top: (hour - START_HOUR) * hourHeight,
+                  gridTemplateColumns: `repeat(${colCount}, 1fr)`,
+                }}
+              >
+                {columns.map((col, ci) => (
+                  <div
+                    key={col.id}
+                    className={cn(ci > 0 && 'border-l border-border', hour > START_HOUR && 'border-t border-border')}
+                    style={{ height: hourHeight }}
+                  />
+                ))}
+              </div>
+            ))}
+
+            {/* 이벤트 오버레이 */}
             <div
-              className="absolute flex items-center z-10 pointer-events-none"
-              style={{ top: currentTimeTop ?? 0, left: axisWidth, right: 0 }}
+              ref={gridRef}
+              className="absolute inset-0 grid"
+              style={{ gridTemplateColumns: `repeat(${colCount}, 1fr)` }}
             >
-              <div className="w-2.5 h-2.5 rounded-full bg-error -ml-1.5 flex-shrink-0" />
-              <div className="flex-1 h-0.5 bg-error" />
+              {columns.map((col) => (
+                <SlotColumn
+                  key={col.id}
+                  col={col}
+                  events={eventsByColumn[col.id] || []}
+                  gridHeight={gridHeight}
+                  startHour={START_HOUR}
+                  endHour={END_HOUR}
+                  gridRef={gridRef}
+                  columns={columns}
+                  allEvents={events}
+                  role={role}
+                  activeDesignerId={activeDesignerId}
+                  hourHeight={hourHeight}
+                  axisWidth={0}
+                  getPrimaryTags={getPrimaryTags}
+                  onEventClick={onEventClick}
+                  onEventMove={onEventMove}
+                  onRequestMove={setPendingMove}
+                  onSlotLongPress={onSlotLongPress}
+                />
+              ))}
             </div>
-          )}
+
+            {/* 현재 시간 표시선 */}
+            {isToday && currentTimeTop !== null && (
+              <div
+                className="absolute flex items-center z-10 pointer-events-none"
+                style={{ top: currentTimeTop, left: 0, right: 0 }}
+              >
+                <div className="w-2.5 h-2.5 rounded-full bg-error -ml-1.5 flex-shrink-0" />
+                <div className="flex-1 h-0.5 bg-error" />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
