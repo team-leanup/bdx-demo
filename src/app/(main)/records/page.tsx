@@ -117,6 +117,13 @@ function toTimeGridEvents(
       customerNote: r.requestNote,
       visitCount: customer?.visitCount ?? 0,
       preferredColors: customer?.treatmentHistory?.[0]?.colorLabels ?? [],
+      removalNeeded: (() => {
+        const raw = r.preConsultationData as Record<string, unknown> | undefined;
+        const pref = raw?.removalPreference as string | undefined;
+        if (pref === 'self_shop') return '자샵 제거';
+        if (pref === 'other_shop') return '타샵 제거';
+        return undefined;
+      })(),
     });
   }
 

@@ -296,25 +296,38 @@ function DraggableEvent({
           </div>
         )}
 
-        {/* ── 구분선 ── */}
-        <div className="border-t border-white/30 my-1" />
-
-        {/* ④ 상세 정보 (각 줄 개별 표시) */}
-        <div className="flex flex-col gap-px text-[9px] leading-snug opacity-70">
-          {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
-            <div>{LANGUAGE_FLAG[ev.language]}</div>
-          )}
-          {ev.nailShape && <div>💅 {ev.nailShape}</div>}
-          {ev.cuticleSensitivity && <div>✋ 큐티클 {ev.cuticleSensitivity}</div>}
-          {ev.durationPreference && <div>⏱ 시술시간 {ev.durationPreference}</div>}
-          {ev.preferredColors && ev.preferredColors.length > 0 && (
-            <div>🎨 {ev.preferredColors.join(', ')}</div>
-          )}
-        </div>
-
-        {/* ⑤ 메모 */}
-        {ev.customerNote && (
-          <div className="mt-0.5 text-[9px] opacity-60 leading-snug">📝 {ev.customerNote}</div>
+        {/* ── 상태별 하단 콘텐츠 ── */}
+        {ev.preConsultationCompletedAt ? (
+          <>
+            {/* 사전상담 완료 → 풀 상세 */}
+            <div className="border-t border-white/30 my-1" />
+            <div className="flex flex-col gap-px text-[9px] leading-snug opacity-70">
+              {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
+                <div>{LANGUAGE_FLAG[ev.language]}</div>
+              )}
+              {ev.nailShape && <div>💅 {ev.nailShape}</div>}
+              {ev.cuticleSensitivity && <div>✋ 큐티클 {ev.cuticleSensitivity}</div>}
+              {ev.durationPreference && <div>⏱ 시술시간 {ev.durationPreference}</div>}
+              {ev.removalNeeded && <div>🧴 {ev.removalNeeded}</div>}
+              {ev.preferredColors && ev.preferredColors.length > 0 && (
+                <div>🎨 {ev.preferredColors.join(', ')}</div>
+              )}
+            </div>
+            {ev.customerNote && (
+              <div className="mt-0.5 text-[9px] opacity-60 leading-snug">📝 {ev.customerNote}</div>
+            )}
+          </>
+        ) : ev.consultationLinkSentAt ? (
+          <>
+            {/* 응답 대기 → 발송 시각만 */}
+            <div className="border-t border-white/30 my-1" />
+            <div className="text-[9px] opacity-60 leading-snug">
+              📩 링크 발송: {ev.consultationLinkSentAt.slice(5, 16).replace('T', ' ')}
+            </div>
+          </>
+        ) : (
+          /* 미발송 → 추가 정보 없음 */
+          null
         )}
       </div>
     </motion.button>
