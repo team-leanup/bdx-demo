@@ -378,7 +378,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
       <div>
         <label className="mb-1.5 block text-sm font-medium text-text-secondary">메뉴판 등록</label>
         <div className="flex gap-2">
-          {[{ key: false, label: '시술 기록만' }, { key: true, label: '메뉴판에도 등록' }].map(({ key, label }) => (
+          {[{ key: false, label: '시술 기록' }, { key: true, label: '시술 기록 + 메뉴판' }].map(({ key, label }) => (
             <button
               key={String(key)}
               type="button"
