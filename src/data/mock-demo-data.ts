@@ -344,6 +344,7 @@ export const DEMO_RESERVATIONS: BookingRequest[] = [
     designerId: DESIGNERS.민서.id,
     serviceLabel: '풀아트',
     customerId: 'demo-c-001',
+    requestNote: '스퀘어 / 짧게 / 글리터 그라데이션 원함',
     consultationLinkSentAt: isoKR(addDays(NOW, -2), '14:00:00'),
     preConsultationCompletedAt: isoKR(addDays(NOW, -1), '10:00:00'),
   },
@@ -361,6 +362,7 @@ export const DEMO_RESERVATIONS: BookingRequest[] = [
     designerId: DESIGNERS.원장.id,
     serviceLabel: '아트',
     customerId: 'demo-c-005',
+    requestNote: '아몬드 쉐잎 / 큐티클 민감 / 시술 짧게 선호',
     consultationLinkSentAt: isoKR(addDays(NOW, -1), '09:00:00'),
   },
   {
@@ -377,6 +379,7 @@ export const DEMO_RESERVATIONS: BookingRequest[] = [
     designerId: DESIGNERS.원장.id,
     serviceLabel: '자석젤',
     customerId: 'demo-c-003',
+    requestNote: '오벌 쉐잎 / 큐티클 조심 / 캣아이 자석젤',
   },
   {
     id: 'demo-b-004',
@@ -392,6 +395,7 @@ export const DEMO_RESERVATIONS: BookingRequest[] = [
     designerId: DESIGNERS.하윤.id,
     serviceLabel: '원컬러',
     customerId: 'demo-c-009',
+    requestNote: '라운드 / 시술 보통 / 누드톤 원컬러',
   },
 
   // ── 이번 주 8건 ──
@@ -408,6 +412,7 @@ export const DEMO_RESERVATIONS: BookingRequest[] = [
     language: 'ko',
     designerId: DESIGNERS.하윤.id,
     serviceLabel: '그라데이션',
+    requestNote: '스퀘오벌 / 시술 길게 OK / 핑크 그라데이션',
     customerId: 'demo-c-002',
   },
   {
@@ -424,6 +429,7 @@ export const DEMO_RESERVATIONS: BookingRequest[] = [
     designerId: DESIGNERS.하윤.id,
     serviceLabel: '원컬러',
     customerId: 'demo-c-006',
+    requestNote: '라운드 / 길게 / 베이비핑크 원컬러 / 시간 보통',
   },
   {
     id: 'demo-b-007',

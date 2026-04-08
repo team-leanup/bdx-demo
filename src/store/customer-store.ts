@@ -255,9 +255,20 @@ function deduplicateByName(customers: Customer[]): Customer[] {
 async function loadDemoCustomers(customers: Customer[], shopId: string | null): Promise<Customer[]> {
   if (shopId !== 'shop-demo') return customers;
   const { DEMO_CUSTOMERS } = await import('@/data/mock-demo-data');
-  const existingIds = new Set(customers.map((c) => c.id));
+  const demoMap = new Map(DEMO_CUSTOMERS.map((c) => [c.id, c]));
+  // Merge preference/durationPreference from demo data into existing customers
+  const merged = customers.map((c) => {
+    const demo = demoMap.get(c.id);
+    if (!demo) return c;
+    return {
+      ...c,
+      preference: c.preference ?? demo.preference,
+      durationPreference: c.durationPreference ?? demo.durationPreference,
+    };
+  });
+  const existingIds = new Set(merged.map((c) => c.id));
   const missing = DEMO_CUSTOMERS.filter((c) => !existingIds.has(c.id));
-  return deduplicateByName([...customers, ...missing]);
+  return deduplicateByName([...merged, ...missing]);
 }
 
 export const useCustomerStore = create<CustomerStore>()(
