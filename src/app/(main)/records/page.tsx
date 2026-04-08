@@ -33,7 +33,6 @@ import { useShopStore } from '@/store/shop-store';
 import { useLocaleStore } from '@/store/locale-store';
 import {
   MainTabBar,
-  ViewModeToggle,
   ConsultationList,
   PeriodFilter,
 } from '@/components/records';
@@ -525,17 +524,7 @@ export default function RecordsPage() {
       {mainTab === 'reservations' && (
         <>
           <div className="flex items-center justify-between px-4 md:px-0">
-            <ViewModeToggle
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-            />
-            <span className="text-xs text-text-secondary tabular-nums">
-              이번주 {weekStats.weekCount}건 · 오늘 남은 {weekStats.todayRemainingCount}건
-            </span>
-          </div>
-
-          <div className="px-4 md:px-0 flex flex-col gap-2">
-            <div className="flex items-center gap-3 text-xs text-text-secondary">
+            <div className="flex items-center gap-2 text-xs text-text-secondary">
               {READINESS_LEGEND.map((item) => (
                 <span key={item.label} className="inline-flex items-center gap-1">
                   <span className={`h-2 w-2 rounded-full ${item.color}`} />
@@ -543,46 +532,51 @@ export default function RecordsPage() {
                 </span>
               ))}
             </div>
-            {/* 디자이너 필터 */}
-            <div className="flex gap-1 overflow-x-auto pb-0.5">
+            <span className="text-xs text-text-secondary tabular-nums">
+              이번주 {weekStats.weekCount}건 · 오늘 남은 {weekStats.todayRemainingCount}건
+            </span>
+          </div>
+
+          {/* 디자이너 필터 토글 */}
+          <div className="flex gap-1.5 overflow-x-auto px-4 md:px-0 pb-0.5">
+            {[{ id: null as string | null, name: '전체' }, ...activeDesigners.map((d) => ({ id: d.id as string | null, name: d.name })), { id: '__unassigned__' as string | null, name: '미지정' }].map((d) => (
               <button
+                key={d.id ?? 'all'}
                 type="button"
-                onClick={() => setDesignerFilter(null)}
+                onClick={() => setDesignerFilter(d.id === null ? null : designerFilter === d.id ? null : d.id)}
                 className={cn(
-                  'flex-shrink-0 rounded-full px-3 py-1 text-[11px] font-medium transition-colors border',
-                  designerFilter === null
-                    ? 'bg-primary text-white border-primary'
-                    : 'bg-surface border-border text-text-secondary',
+                  'flex-shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-all',
+                  (d.id === null ? designerFilter === null : designerFilter === d.id)
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'bg-surface-alt text-text-secondary',
                 )}
               >
-                전체
+                {d.name}
               </button>
-              {[...activeDesigners.map((d) => ({ id: d.id, name: d.name })), { id: '__unassigned__', name: '미지정' }].map((d) => (
-                <button
-                  key={d.id}
-                  type="button"
-                  onClick={() => setDesignerFilter(designerFilter === d.id ? null : d.id)}
-                  className={cn(
-                    'flex-shrink-0 rounded-full px-3 py-1 text-[11px] font-medium transition-colors border',
-                    designerFilter === d.id
-                      ? 'bg-primary text-white border-primary'
-                      : 'bg-surface border-border text-text-secondary',
-                  )}
-                >
-                  {d.name}
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
 
           {viewMode === 'day' && (
             <div className="flex flex-col gap-2 px-4 md:px-0">
-              <Card className="p-3">
+              <Card className="p-3 relative">
                 <WeekCalendar
                   selectedDate={selectedDate}
                   onSelectDate={setSelectedDate}
                   reservations={allReservations}
                 />
+                {/* 월간 뷰 전환 아이콘 */}
+                <button
+                  type="button"
+                  onClick={() => setViewMode('month')}
+                  className="absolute top-2 right-2 flex items-center justify-center w-8 h-8 rounded-lg bg-surface-alt text-text-secondary hover:text-primary hover:bg-primary/10 transition-colors"
+                  title="월간 보기"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <path d="M16 2v4M8 2v4M3 10h18" />
+                    <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
+                  </svg>
+                </button>
               </Card>
               <DesignerDayGridCalendar
                 date={selectedDate}
@@ -612,12 +606,23 @@ export default function RecordsPage() {
 
           {viewMode === 'month' && (
             <div className="flex flex-col gap-2 px-4 md:px-0">
-              <Card className="p-4">
+              <Card className="p-4 relative">
                 <MonthCalendar
                   selectedDate={selectedDate}
-                  onSelectDate={setSelectedDate}
+                  onSelectDate={(date) => { setSelectedDate(date); setViewMode('day'); }}
                   reservations={allReservations}
                 />
+                {/* 일간 뷰 전환 아이콘 */}
+                <button
+                  type="button"
+                  onClick={() => setViewMode('day')}
+                  className="absolute top-2 right-2 flex items-center justify-center w-8 h-8 rounded-lg bg-surface-alt text-text-secondary hover:text-primary hover:bg-primary/10 transition-colors"
+                  title="일간 보기"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+                  </svg>
+                </button>
               </Card>
               <DayReservationList date={selectedDate} reservations={dayReservations} />
             </div>
