@@ -525,7 +525,7 @@ export function DesignerDayGridCalendar({
         )}
       </div>
 
-      <div className="rounded-xl border border-border bg-surface overflow-hidden">
+      <div className="rounded-xl border border-border bg-surface">
         <div
           className="grid border-b border-border bg-surface"
           style={{ gridTemplateColumns: `${axisWidth}px repeat(${colCount}, 1fr)` }}
@@ -542,7 +542,7 @@ export function DesignerDayGridCalendar({
         </div>
 
         <div className="relative bg-surface" style={{ height: gridHeight }}>
-          {HOURS.map((hour, idx) => (
+          {HOURS.map((hour) => (
             <div
               key={hour}
               className="absolute w-full grid"
