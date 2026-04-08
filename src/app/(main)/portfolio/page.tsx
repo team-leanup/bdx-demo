@@ -13,6 +13,69 @@ import { useReservationStore } from '@/store/reservation-store';
 import { PortfolioOverlay } from '@/components/portfolio/PortfolioOverlay';
 import { cn } from '@/lib/cn';
 import { formatDateDot, formatPrice } from '@/lib/format';
+
+// ── 텍스트 입력 팝업 ──
+interface EditPopupState {
+  open: boolean;
+  title: string;
+  placeholder: string;
+  initialValue: string;
+  onConfirm: (value: string) => void;
+}
+
+const EDIT_POPUP_INITIAL: EditPopupState = { open: false, title: '', placeholder: '', initialValue: '', onConfirm: () => {} };
+
+function EditPopup({ state, onClose }: { state: EditPopupState; onClose: () => void }): React.ReactElement | null {
+  const [value, setValue] = useState(state.initialValue);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setValue(state.initialValue);
+    if (state.open) setTimeout(() => inputRef.current?.focus(), 100);
+  }, [state.open, state.initialValue]);
+
+  if (!state.open) return null;
+
+  const handleConfirm = (): void => {
+    if (value.trim()) {
+      state.onConfirm(value.trim());
+      onClose();
+    }
+  };
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-40 bg-black/40"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="fixed inset-x-4 top-1/3 z-50 mx-auto max-w-sm rounded-2xl bg-surface shadow-xl p-5 flex flex-col gap-4"
+      >
+        <h3 className="text-base font-bold text-text">{state.title}</h3>
+        <input
+          ref={inputRef}
+          type="text"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleConfirm(); }}
+          placeholder={state.placeholder}
+          className="w-full rounded-xl border border-border bg-surface-alt px-4 py-3 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+        />
+        <div className="flex gap-2">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-border text-sm font-medium text-text-secondary">취소</button>
+          <button onClick={handleConfirm} className="flex-1 py-2.5 rounded-xl bg-primary text-white text-sm font-medium">확인</button>
+        </div>
+      </motion.div>
+    </>
+  );
+}
 import type { PortfolioPhoto } from '@/types/portfolio';
 import type { Customer } from '@/types/customer';
 
@@ -236,6 +299,7 @@ export default function PortfolioPage(): React.ReactElement {
 
   // Top-level tab
   const [activeTab, setActiveTab] = useState<'menu' | 'records'>('menu');
+  const [editPopup, setEditPopup] = useState<EditPopupState>(EDIT_POPUP_INITIAL);
 
   // Records tab filters
   const [search, setSearch] = useState('');
@@ -505,6 +569,9 @@ export default function PortfolioPage(): React.ReactElement {
   return (
     <div className="flex flex-col pb-6">
       <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
+      <AnimatePresence>
+        <EditPopup state={editPopup} onClose={() => setEditPopup(EDIT_POPUP_INITIAL)} />
+      </AnimatePresence>
 
       {overlayPhotoId && (
         <PortfolioOverlay
@@ -601,7 +668,10 @@ export default function PortfolioPage(): React.ReactElement {
                   onUploadPhoto={handleUploadPhoto}
                   onRemoveFromMenu={(id) => toggleMenu(id)}
                   onOpenOverlay={(id) => setOverlayPhotoId(id)}
-                  onRenameCategory={(newLabel) => renameCategory(cat, newLabel)}
+                  onRenameCategory={(currentLabel) => setEditPopup({
+                    open: true, title: '카테고리 이름 수정', placeholder: '새 이름', initialValue: currentLabel,
+                    onConfirm: (v) => renameCategory(cat, v),
+                  })}
                 />
               );
             })
@@ -631,10 +701,10 @@ export default function PortfolioPage(): React.ReactElement {
           })}
           {/* 카테고리 추가 */}
           <button
-            onClick={() => {
-              const name = prompt('새 카테고리 이름');
-              if (name?.trim()) addCategory(name.trim());
-            }}
+            onClick={() => setEditPopup({
+              open: true, title: '새 카테고리 추가', placeholder: '카테고리 이름', initialValue: '',
+              onConfirm: (v) => addCategory(v),
+            })}
             className="flex items-center gap-1.5 text-sm text-text-muted hover:text-primary transition-colors py-2"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -913,10 +983,7 @@ function CategorySection({
         <h2 className="text-sm font-bold text-text">{label}</h2>
         {onRenameCategory && (
           <button
-            onClick={() => {
-              const newName = prompt('카테고리 이름 수정', label);
-              if (newName?.trim()) onRenameCategory(newName.trim());
-            }}
+            onClick={() => onRenameCategory(label)}
             className="text-text-muted hover:text-primary transition-colors"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -1020,9 +1087,10 @@ interface MenuCardProps {
   fallbackIdx: number;
   onRemove: () => void;
   onOpenOverlay: () => void;
+  onEditName?: (currentName: string, onConfirm: (v: string) => void) => void;
 }
 
-function MenuCard({ photo, fallbackIdx, onRemove, onOpenOverlay }: MenuCardProps): React.ReactElement {
+function MenuCard({ photo, fallbackIdx, onRemove, onOpenOverlay, onEditName }: MenuCardProps): React.ReactElement {
   const imgSrc = photo.imageDataUrl || NAIL_FALLBACKS[fallbackIdx % NAIL_FALLBACKS.length];
   const updatePhoto = usePortfolioStore((s) => s.updatePhoto);
 
@@ -1045,8 +1113,9 @@ function MenuCard({ photo, fallbackIdx, onRemove, onOpenOverlay }: MenuCardProps
           <button
             onClick={(e) => {
               e.stopPropagation();
-              const newName = prompt('메뉴 이름 수정', photo.designType ?? '');
-              if (newName?.trim()) updatePhoto(photo.id, { designType: newName.trim() });
+              if (onEditName) {
+                onEditName(photo.designType ?? '', (v) => updatePhoto(photo.id, { designType: v }));
+              }
             }}
             className="text-sm font-semibold text-text truncate hover:text-primary transition-colors text-left"
             title="탭하여 이름 수정"
