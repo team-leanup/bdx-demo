@@ -75,7 +75,10 @@ export function ConsultationListItem({
                 <span className="shrink-0 text-xs font-semibold text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>{timeStr}</span>
               </div>
               <div className="mt-1 flex min-w-0 items-center gap-1.5">
-                <span className="truncate text-sm font-semibold text-text">{c.customerName}</span>
+                <span className="truncate text-sm font-semibold text-text">
+                  {c.customerName}
+                  {c.customerPhone && <span className="text-text-muted font-normal text-[10px]"> ({c.customerPhone.slice(-4)})</span>}
+                </span>
                 {isForeign && (
                   <span className="shrink-0">
                     <FlagIcon language={record.language!} size="sm" showLabel />

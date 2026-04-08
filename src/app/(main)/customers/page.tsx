@@ -179,7 +179,10 @@ export default function CustomersPage() {
 
                   {/* 이름 + 뱃지 */}
                   <div className="flex items-center gap-1 min-w-0 max-w-full">
-                    <span className="truncate text-sm font-semibold text-text">{customer.name}</span>
+                    <span className="truncate text-sm font-semibold text-text">
+                      {customer.name}
+                      {customer.phone && <span className="text-text-muted font-normal text-[10px]"> ({customer.phone.slice(-4)})</span>}
+                    </span>
                     {customer.preferredLanguage && customer.preferredLanguage !== 'ko' && (
                       <FlagIcon language={customer.preferredLanguage} size="sm" />
                     )}

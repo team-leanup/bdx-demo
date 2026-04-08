@@ -146,7 +146,10 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-sm font-medium text-primary">
           {(c.customerName ?? '?').charAt(0)}
         </div>
-        <span className="text-sm font-semibold text-text">{c.customerName ?? '고객'}</span>
+        <span className="text-sm font-semibold text-text">
+          {c.customerName ?? '고객'}
+          {c.customerPhone && <span className="text-text-muted font-normal"> ({c.customerPhone.slice(-4)})</span>}
+        </span>
         <svg className="ml-auto h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>
