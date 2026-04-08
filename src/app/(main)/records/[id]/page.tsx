@@ -127,13 +127,6 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
             <h1 className="text-lg font-bold text-text">{t('recordDetail.title')}</h1>
             <p className="text-xs text-text-secondary">{formatDateDotWithTime(record.createdAt)}</p>
           </div>
-          <button
-            type="button"
-            onClick={() => router.push(`/records/${id}?edit=checklist`)}
-            className="text-xs font-medium text-primary"
-          >
-            수정하기
-          </button>
         </div>
       </div>
 
