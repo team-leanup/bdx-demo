@@ -290,28 +290,17 @@ function DraggableEvent({
       )}
       {/* 4) 하단 좌: 국기 + 언어 */}
       {/* 4) 하단 우: 선호 스타일 / 메모 */}
-      {/* 고객 정보 미니 태그 */}
-      {(ev.nailShape || ev.cuticleSensitivity || ev.durationPreference || (ev.language && ev.language !== 'ko')) && (
-        <div className="flex flex-wrap gap-0.5 mt-0.5">
-          {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
-            <span className="rounded bg-sky-100 text-sky-700 px-1 py-px text-[8px] font-medium">{LANGUAGE_FLAG[ev.language]}</span>
-          )}
-          {ev.nailShape && (
-            <span className="rounded bg-violet-100 text-violet-700 px-1 py-px text-[8px] font-medium">💅{ev.nailShape}</span>
-          )}
-          {ev.cuticleSensitivity && (
-            <span className={cn('rounded px-1 py-px text-[8px] font-medium',
-              ev.cuticleSensitivity === '민감' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
-            )}>⚠️{ev.cuticleSensitivity}</span>
-          )}
-          {ev.durationPreference && (
-            <span className="rounded bg-blue-100 text-blue-700 px-1 py-px text-[8px] font-medium">⏱{ev.durationPreference}</span>
-          )}
-        </div>
-      )}
-      {/* 메모 */}
+      {/* 구분선 + 시술 참고사항 */}
       {ev.customerNote && (
-        <div className="rounded bg-amber-50 text-amber-800 px-1 py-px mt-0.5 text-[8px] leading-snug">📝 {ev.customerNote}</div>
+        <>
+          <div className="border-t border-white/40 my-0.5" />
+          <div className="text-[9px] opacity-70 leading-snug whitespace-pre-line">
+            {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
+              <span className="mr-0.5">{LANGUAGE_FLAG[ev.language]}</span>
+            )}
+            {ev.customerNote}
+          </div>
+        </>
       )}
       </div>
     </motion.button>
