@@ -166,7 +166,7 @@ function DraggableEvent({
     const colWidth = (rect.width - axisWidth) / columnCount;
     const colIndex = Math.max(0, Math.min(Math.floor(dropXCols / colWidth), columnCount - 1));
 
-    const targetDesignerId = colIndex === 0 ? undefined : columns[colIndex].id;
+    const targetDesignerId = columns[colIndex]?.id === '__unassigned__' ? undefined : columns[colIndex]?.id;
 
     const minuteFromTop = (dropY / hourHeight) * 60 + startHour * 60;
     const snapped = snapToInterval(minuteFromTop, 30);
