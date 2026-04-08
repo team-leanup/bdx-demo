@@ -5,10 +5,12 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePortfolioStore } from '@/store/portfolio-store';
+import { useShopStore } from '@/store/shop-store';
 import { formatPrice, formatDateDot } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { downloadForInstagram } from '@/lib/image-utils';
 import { InstagramHashtags } from './InstagramHashtags';
+import { ShareCardGeneratorModal } from '@/components/share-card/ShareCardGeneratorModal';
 import type { PortfolioPhoto } from '@/types/portfolio';
 import type { Customer } from '@/types/customer';
 import type { ConsultationRecord } from '@/types/consultation';
@@ -46,9 +48,11 @@ export function PortfolioOverlay({
 }: PortfolioOverlayProps): React.ReactElement {
   const router = useRouter();
   const toggleMenu = usePortfolioStore((s) => s.toggleMenu);
+  const shopName = useShopStore((s) => s.shop?.name) ?? '네일샵';
   const [currentId, setCurrentId] = useState(initialPhotoId);
   const [downloading, setDownloading] = useState(false);
   const [showHashtags, setShowHashtags] = useState(false);
+  const [showShareCard, setShowShareCard] = useState(false);
 
   const currentIndex = photoIds.indexOf(currentId);
   const photo = photos.find((p) => p.id === currentId);
@@ -174,33 +178,14 @@ export function PortfolioOverlay({
               )}
             </div>
 
-            {/* 저장 + 공유카드 */}
+            {/* 공유카드 / 저장 */}
             <div className="border-t border-border px-4 py-3">
-              <p className="text-[11px] text-text-muted mb-2">이미지 저장</p>
-              <div className="flex gap-2">
-                <button
-                  disabled={downloading}
-                  onClick={() => handleDownload('4:5')}
-                  className="flex-1 rounded-xl border border-border py-2.5 text-xs font-medium text-text-secondary active:bg-surface-alt"
-                >
-                  4:5 피드
-                </button>
-                <button
-                  disabled={downloading}
-                  onClick={() => handleDownload('9:16')}
-                  className="flex-1 rounded-xl border border-border py-2.5 text-xs font-medium text-text-secondary active:bg-surface-alt"
-                >
-                  9:16 스토리
-                </button>
-                {photo.recordId && (
-                  <button
-                    onClick={() => { router.push(`/records/${photo.recordId}`); onClose(); }}
-                    className="flex-1 rounded-xl border border-primary bg-primary/5 py-2.5 text-xs font-medium text-primary"
-                  >
-                    공유카드
-                  </button>
-                )}
-              </div>
+              <button
+                onClick={() => setShowShareCard(true)}
+                className="w-full rounded-xl bg-primary py-2.5 text-xs font-bold text-white"
+              >
+                공유카드 만들기
+              </button>
             </div>
 
             {/* 액션 */}
@@ -218,7 +203,7 @@ export function PortfolioOverlay({
                   onClick={() => { router.push(`/customers/${customer.id}`); onClose(); }}
                   className="flex-1 rounded-xl bg-primary py-2.5 text-xs font-medium text-white"
                 >
-                  고객 카드
+                  고객 상세
                 </button>
               )}
             </div>
@@ -238,6 +223,34 @@ export function PortfolioOverlay({
           )}
         </motion.div>
       </motion.div>
+
+      {/* 공유카드 모달 */}
+      {showShareCard && (
+        <ShareCardGeneratorModal
+          isOpen={showShareCard}
+          onClose={() => setShowShareCard(false)}
+          record={{
+            id: linkedRecord?.id ?? photo.id,
+            shopId: photo.shopId,
+            consultation: linkedRecord?.consultation ?? {
+              customerName: customer?.name ?? '고객',
+              bodyPart: 'hand',
+              nailShape: 'round',
+              designScope: photo.serviceType ?? 'full_art',
+              expressions: [],
+              hasParts: false,
+              partsSelections: [],
+              extraColorCount: 0,
+              offType: 'none',
+              extensionType: 'none',
+              currentStep: 0,
+            } as import('@/types/consultation').ConsultationType,
+            shareCardId: linkedRecord?.shareCardId,
+          }}
+          portfolioPhotos={[{ id: photo.id, imageDataUrl: photo.imageDataUrl }]}
+          shopName={shopName}
+        />
+      )}
     </AnimatePresence>
   );
 }
