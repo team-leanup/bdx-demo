@@ -107,6 +107,9 @@ function toTimeGridEvents(
       serviceLabel: r.serviceLabel,
       consultationLinkSentAt: r.consultationLinkSentAt,
       preConsultationCompletedAt: r.preConsultationCompletedAt,
+      nailShape: (r.preConsultationData as Record<string, unknown> | undefined)?.nailShape as string | undefined,
+      cuticleSensitivity: (r.preConsultationData as Record<string, unknown> | undefined)?.cuticleSensitivity as string | undefined,
+      customerNote: r.requestNote,
     });
   }
 

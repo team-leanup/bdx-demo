@@ -257,7 +257,13 @@ function DraggableEvent({
       style={{ top, height, overflow: 'hidden' }}
     >
       <div className="text-[10px] opacity-70 leading-tight">{ev.startTime}–{ev.endTime}</div>
-      <div className="text-xs font-semibold leading-tight mt-0.5 break-words">{ev.title}</div>
+      {/* 이름 + 국기 (한 줄) */}
+      <div className="flex items-center gap-1 mt-0.5">
+        <span className="text-xs font-semibold leading-tight break-words">{ev.title}</span>
+        {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
+          <span className="text-[10px] flex-shrink-0">{LANGUAGE_FLAG[ev.language]}</span>
+        )}
+      </div>
       {showMetaRow && (
         <div className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-0.5">
           {ev.serviceLabel && (
@@ -273,10 +279,19 @@ function DraggableEvent({
           {ev.channel && CHANNEL_EMOJI[ev.channel] && (
             <span className="text-[10px]">{CHANNEL_EMOJI[ev.channel]}</span>
           )}
-          {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
-            <span className="text-[10px]">{LANGUAGE_FLAG[ev.language]}</span>
-          )}
         </div>
+      )}
+      {/* 체크리스트 요약 (쉐잎, 민감도 등) */}
+      {(ev.nailShape || ev.cuticleSensitivity) && (
+        <div className="mt-0.5 text-[9px] opacity-70 leading-tight">
+          {ev.nailShape && <span>{ev.nailShape}</span>}
+          {ev.nailShape && ev.cuticleSensitivity && <span> · </span>}
+          {ev.cuticleSensitivity && <span>민감도 {ev.cuticleSensitivity}</span>}
+        </div>
+      )}
+      {/* 요청 메모 */}
+      {ev.customerNote && (
+        <div className="mt-0.5 text-[9px] opacity-60 leading-tight truncate">📝 {ev.customerNote}</div>
       )}
       {showTags && (
         <div className="mt-0.5 flex flex-wrap items-center gap-1">

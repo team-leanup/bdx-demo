@@ -35,6 +35,10 @@ export interface TimeGridEvent {
   bodyPart?: string;
   finalPrice?: number;
   expressions?: string[];
+  // Extra info for schedule view
+  nailShape?: string;
+  cuticleSensitivity?: string;
+  customerNote?: string;
 }
 
 interface TimeGridCalendarProps {
