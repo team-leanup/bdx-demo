@@ -503,6 +503,8 @@ export function DesignerDayGridCalendar({
   );
 
   const columns = useMemo(() => {
+    // 외부에서 __unassigned__가 이미 포함되어 있으면 그대로 사용
+    if (designers.some((d) => d.id === '__unassigned__')) return designers;
     const cols = [...designers];
     if (designers.length !== 1 || hasUnassignedEvents) {
       cols.push({ id: '__unassigned__', name: '미지정' });

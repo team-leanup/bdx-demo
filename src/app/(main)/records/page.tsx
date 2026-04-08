@@ -204,7 +204,7 @@ export default function RecordsPage() {
     [designers],
   );
 
-  // 표시할 디자이너 목록: 로그인 디자이너(항상) + 토글 선택된 디자이너
+  // 표시할 디자이너: 로그인 디자이너(항상) + 토글 선택된 디자이너/미지정
   const visibleDesignerIds = useMemo(() => {
     const ids = new Set<string>();
     if (activeDesignerId) ids.add(activeDesignerId);
@@ -212,10 +212,20 @@ export default function RecordsPage() {
     return ids;
   }, [activeDesignerId, extraDesignerIds]);
 
-  const filteredDesigners = useMemo(() => {
-    if (extraDesignerIds.size === 0 && !activeDesignerId) return activeDesigners;
-    return activeDesigners.filter((d) => visibleDesignerIds.has(d.id));
-  }, [activeDesigners, visibleDesignerIds, extraDesignerIds.size, activeDesignerId]);
+  const filteredDesignerList = useMemo(() => {
+    const list = activeDesigners
+      .filter((d) => visibleDesignerIds.has(d.id))
+      .map((d) => ({ id: d.id, name: d.name }));
+    // 미지정 토글이 켜져있으면 미지정 컬럼 추가
+    if (extraDesignerIds.has('__unassigned__')) {
+      list.push({ id: '__unassigned__', name: '미지정' });
+    }
+    // 아무 토글도 없으면 (activeDesigner만) 전체 표시
+    if (!activeDesignerId && extraDesignerIds.size === 0) {
+      return [...activeDesigners.map((d) => ({ id: d.id, name: d.name })), { id: '__unassigned__', name: '미지정' }];
+    }
+    return list;
+  }, [activeDesigners, visibleDesignerIds, extraDesignerIds, activeDesignerId]);
 
   const dayReservations = useMemo(
     () =>
@@ -599,7 +609,7 @@ export default function RecordsPage() {
                 events={timeGridEvents.filter((e) =>
                   visibleDesignerIds.size === 0 || visibleDesignerIds.has(e.designerId ?? '__unassigned__')
                 )}
-                designers={filteredDesigners.map((d) => ({ id: d.id, name: d.name }))}
+                designers={filteredDesignerList}
                 startHour={calendarStartHour}
                 endHour={calendarEndHour}
                 onEventClick={handleEventClick}
