@@ -525,13 +525,13 @@ export function DesignerDayGridCalendar({
           ))}
         </div>
 
-        <div className="relative bg-surface" style={{ height: gridHeight }}>
+        <div className="relative bg-surface" style={{ height: gridHeight + 8, paddingTop: 8 }}>
           {HOURS.map((hour) => (
             <div
               key={hour}
               className="absolute w-full grid"
               style={{
-                top: (hour - START_HOUR) * hourHeight,
+                top: (hour - START_HOUR) * hourHeight + 8,
                 gridTemplateColumns: `${axisWidth}px repeat(${colCount}, 1fr)`,
               }}
             >
@@ -547,7 +547,7 @@ export function DesignerDayGridCalendar({
           <div
             ref={gridRef}
             className="absolute inset-0 grid"
-            style={{ gridTemplateColumns: `${axisWidth}px repeat(${colCount}, 1fr)` }}
+            style={{ gridTemplateColumns: `${axisWidth}px repeat(${colCount}, 1fr)`, top: 8 }}
           >
             <div />
             {columns.map((col) => (
@@ -577,7 +577,7 @@ export function DesignerDayGridCalendar({
           {isToday && currentTimeTop !== null && (
             <div
               className="absolute flex items-center z-10 pointer-events-none"
-              style={{ top: currentTimeTop, left: axisWidth, right: 0 }}
+              style={{ top: (currentTimeTop ?? 0) + 8, left: axisWidth, right: 0 }}
             >
               <div className="w-2.5 h-2.5 rounded-full bg-error -ml-1.5 flex-shrink-0" />
               <div className="flex-1 h-0.5 bg-error" />
