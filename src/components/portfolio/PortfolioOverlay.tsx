@@ -232,7 +232,10 @@ export function PortfolioOverlay({
           record={{
             id: linkedRecord?.id ?? photo.id,
             shopId: photo.shopId,
-            consultation: linkedRecord?.consultation ?? {
+            consultation: linkedRecord?.consultation ? {
+              ...linkedRecord.consultation,
+              designScope: photo.designType ?? linkedRecord.consultation.designScope,
+            } : {
               customerName: customer?.name ?? '고객',
               bodyPart: 'hand',
               nailShape: 'round',
