@@ -9,7 +9,7 @@ import { normalizePhone } from '@/lib/phone';
 import { useAuthStore } from '@/store/auth-store';
 import { FlagIcon } from '@/components/ui/FlagIcon';
 import { cn } from '@/lib/cn';
-import { getSafetyTagMeta } from '@/lib/tag-safety';
+
 
 type FilterTab = 'all' | 'vip' | 'regular';
 
@@ -158,7 +158,6 @@ export default function CustomersPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
             {paginatedCustomers.map((customer) => {
               const isVip = customer.isRegular || customer.visitCount >= 5;
-              const highEtcTag = (customer.tags ?? []).find((t) => t.category === 'etc' && getSafetyTagMeta(t).level === 'high');
               const recentTag = (customer.tags ?? []).find((t) => t.category === 'design');
 
               return (
@@ -170,11 +169,6 @@ export default function CustomersPage() {
                   {/* 아바타 + 국기 overlay */}
                   <div className="relative flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-base font-medium text-primary">
                     {customer.name.charAt(0)}
-                    {highEtcTag && (
-                      <span className="absolute -top-0.5 -right-0.5 text-[10px] leading-none">
-                        {getSafetyTagMeta(highEtcTag).icon}
-                      </span>
-                    )}
                     {customer.preferredLanguage && customer.preferredLanguage !== 'ko' && (
                       <span className="absolute -bottom-0.5 -right-0.5 text-[12px] leading-none drop-shadow-sm">
                         <FlagIcon language={customer.preferredLanguage} size="sm" />
