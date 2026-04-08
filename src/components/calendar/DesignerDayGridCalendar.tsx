@@ -276,10 +276,10 @@ function DraggableEvent({
           {ev.preConsultationCompletedAt ? '완료' : ev.consultationLinkSentAt ? '대기' : '미발송'}
         </div>
       )}
-      <div className="h-full overflow-hidden flex flex-col text-[11px]">
+      <div className="h-full overflow-hidden flex flex-col text-xs">
         {/* ① 시간 + 고객명 */}
         <div className="flex items-baseline gap-1">
-          <span className="text-xs font-bold leading-tight">{ev.title}</span>
+          <span className="text-sm font-bold leading-tight">{ev.title}</span>
           {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
             <span className="text-[11px]">{LANGUAGE_FLAG[ev.language]}</span>
           )}
@@ -299,7 +299,7 @@ function DraggableEvent({
         {ev.preConsultationCompletedAt ? (
           <>
             <div className="border-t border-white/30 mt-1 mb-0.5" />
-            <div className="text-[10px] leading-snug opacity-70 space-y-px">
+            <div className="text-[11px] leading-snug opacity-70 space-y-px">
               {ev.nailShape && <div>{ev.nailShape} {ev.cuticleSensitivity ? `· 큐티클 ${ev.cuticleSensitivity}` : ''}</div>}
               {(ev.durationPreference || ev.removalNeeded) && (
                 <div>{[ev.durationPreference && `시간 ${ev.durationPreference}`, ev.removalNeeded].filter(Boolean).join(' · ')}</div>
@@ -313,7 +313,7 @@ function DraggableEvent({
         ) : ev.consultationLinkSentAt ? (
           <>
             <div className="border-t border-white/30 mt-1 mb-0.5" />
-            <div className="text-[10px] opacity-60">발송 {ev.consultationLinkSentAt.slice(5, 16).replace('T', ' ')}</div>
+            <div className="text-[11px] opacity-60">발송 {ev.consultationLinkSentAt.slice(5, 16).replace('T', ' ')}</div>
           </>
         ) : null}
       </div>
@@ -472,7 +472,7 @@ export function DesignerDayGridCalendar({
   const gridRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
-  const hourHeight = 140;
+  const hourHeight = 100;
   const axisWidth = isMobile ? 40 : 60;
   const HEADER_H = isMobile ? 28 : 36;
 
