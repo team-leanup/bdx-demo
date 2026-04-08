@@ -198,6 +198,14 @@ export function PortfolioOverlay({
               >
                 {photo.isFeatured ? '메뉴 해제' : '메뉴 등록'}
               </button>
+              {photo.recordId && (
+                <button
+                  onClick={() => { router.push(`/records/${photo.recordId}`); onClose(); }}
+                  className="flex-1 rounded-xl border border-border py-2.5 text-xs font-medium text-text-secondary"
+                >
+                  기록 상세
+                </button>
+              )}
               {customer?.id && (
                 <button
                   onClick={() => { router.push(`/customers/${customer.id}`); onClose(); }}
@@ -244,7 +252,7 @@ export function PortfolioOverlay({
               offType: 'none',
               extensionType: 'none',
               currentStep: 0,
-            } as import('@/types/consultation').ConsultationType,
+            } as unknown as import('@/types/consultation').ConsultationType,
             shareCardId: linkedRecord?.shareCardId,
           }}
           portfolioPhotos={[{ id: photo.id, imageDataUrl: photo.imageDataUrl }]}
