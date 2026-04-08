@@ -554,7 +554,7 @@ export default function RecordsPage() {
           {/* 디자이너 토글 — 로그인 디자이너 제외, 나머지 다중 선택 */}
           <div className="flex items-center gap-2 overflow-x-auto px-4 md:px-0 pb-0.5">
             <span className="text-[11px] text-text-muted flex-shrink-0">+표시</span>
-            {activeDesigners.filter((d) => d.id !== activeDesignerId).map((d) => {
+            {[...activeDesigners.filter((d) => d.id !== activeDesignerId), { id: '__unassigned__', name: '미지정', isActive: true }].map((d) => {
               const isOn = extraDesignerIds.has(d.id);
               return (
                 <button
