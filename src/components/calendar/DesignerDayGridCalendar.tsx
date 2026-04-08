@@ -247,7 +247,7 @@ function DraggableEvent({
         if (!isDragging) onEventClick?.(ev);
       }}
       className={cn(
-        'absolute left-0.5 right-0.5 rounded-lg px-1.5 py-1 text-left overflow-hidden transition-opacity hover:opacity-80',
+        'absolute left-0.5 right-0.5 rounded-lg px-2 py-1.5 text-left overflow-hidden transition-opacity hover:opacity-80',
         canDrag ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer',
         color.bg,
         'border-l-3',
@@ -256,14 +256,14 @@ function DraggableEvent({
       )}
       style={{ top, height }}
     >
-      <div className="text-[10px] sm:text-xs font-semibold opacity-70 leading-none">
+      <div className="text-[11px] font-semibold opacity-70 leading-none">
         {ev.startTime}–{ev.endTime}
       </div>
-      <div className="text-xs font-medium leading-tight mt-0.5">{ev.title}</div>
+      <div className="text-sm font-semibold leading-snug mt-1">{ev.title}</div>
       {showMetaRow && (
-        <div className="mt-1 flex items-center gap-1 overflow-hidden" style={{ flexWrap: 'nowrap' }}>
+        <div className="mt-1.5 flex items-center gap-1.5 overflow-hidden" style={{ flexWrap: 'nowrap' }}>
           {ev.serviceLabel && (
-            <span className="inline-flex items-center rounded-full bg-white/55 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold text-text flex-shrink-0 truncate max-w-[60px]">
+            <span className="inline-flex items-center rounded-full bg-white/55 px-2 py-0.5 text-[11px] font-semibold text-text flex-shrink-0">
               {ev.serviceLabel}
             </span>
           )}
@@ -451,7 +451,7 @@ export function DesignerDayGridCalendar({
   const gridRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
-  const hourHeight = isMobile ? 100 : 84;
+  const hourHeight = 120;
   const axisWidth = isMobile ? 40 : 60;
   const HEADER_H = isMobile ? 28 : 36;
 
