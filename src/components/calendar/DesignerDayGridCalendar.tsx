@@ -302,7 +302,7 @@ function DraggableEvent({
         {/* ④ 상세 정보 (각 줄 개별 표시) */}
         <div className="flex flex-col gap-px text-[9px] leading-snug opacity-70">
           {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
-            <div>{LANGUAGE_FLAG[ev.language]} {ev.language === 'en' ? 'English' : ev.language === 'zh' ? '中文' : ev.language === 'ja' ? '日本語' : ''}</div>
+            <div>{LANGUAGE_FLAG[ev.language]}</div>
           )}
           {ev.nailShape && <div>💅 {ev.nailShape}</div>}
           {ev.cuticleSensitivity && <div>✋ 큐티클 {ev.cuticleSensitivity}</div>}
