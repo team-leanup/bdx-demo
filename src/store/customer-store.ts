@@ -262,8 +262,8 @@ async function loadDemoCustomers(customers: Customer[], shopId: string | null): 
     if (!demo) return c;
     return {
       ...c,
-      preference: c.preference ?? demo.preference,
-      durationPreference: c.durationPreference ?? demo.durationPreference,
+      preference: demo.preference ?? c.preference,
+      durationPreference: demo.durationPreference ?? c.durationPreference,
     };
   });
   const existingIds = new Set(merged.map((c) => c.id));
