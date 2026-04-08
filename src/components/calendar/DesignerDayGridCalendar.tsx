@@ -256,34 +256,37 @@ function DraggableEvent({
       )}
       style={{ top, height, overflow: 'hidden' }}
     >
+      {/* 상태 뱃지 — 우측 상단 overlay */}
+      {ev.type === 'reservation' && (
+        <div className="absolute top-1 right-1 z-[1]">
+          <ReservationReadinessBadge
+            booking={{ preConsultationCompletedAt: ev.preConsultationCompletedAt, consultationLinkSentAt: ev.consultationLinkSentAt, channel: (ev.channel ?? 'walk_in') as 'kakao' | 'naver' | 'phone' | 'walk_in' }}
+            size="xs"
+            compact
+          />
+        </div>
+      )}
       {/* 시간 */}
-      <div className="text-[10px] opacity-70 leading-tight">{ev.startTime}–{ev.endTime}</div>
+      <div className="text-[10px] opacity-70 leading-tight pr-12">{ev.startTime}–{ev.endTime}</div>
       {/* 이름 + 국기 */}
-      <div className="text-xs font-semibold leading-tight mt-0.5">
-        {ev.title}
+      <div className="flex items-baseline gap-0.5 mt-0.5 pr-12">
+        <span className="text-xs font-semibold leading-tight">{ev.title}</span>
         {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
-          <span className="ml-0.5">{LANGUAGE_FLAG[ev.language]}</span>
+          <span className="text-[10px] leading-none">{LANGUAGE_FLAG[ev.language]}</span>
         )}
       </div>
-      {/* 서비스 + 상태 */}
+      {/* 서비스 + 채널 */}
       {showMetaRow && (
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[10px]">
+        <div className="mt-1 flex flex-wrap items-center gap-1 text-[10px]">
           {ev.serviceLabel && (
             <span className="rounded bg-white/50 px-1 py-px font-medium text-text">{ev.serviceLabel}</span>
-          )}
-          {ev.type === 'reservation' && (
-            <ReservationReadinessBadge
-              booking={{ preConsultationCompletedAt: ev.preConsultationCompletedAt, consultationLinkSentAt: ev.consultationLinkSentAt, channel: (ev.channel ?? 'walk_in') as 'kakao' | 'naver' | 'phone' | 'walk_in' }}
-              size="xs"
-              compact
-            />
           )}
           {ev.channel && CHANNEL_EMOJI[ev.channel] && (
             <span>{CHANNEL_EMOJI[ev.channel]}</span>
           )}
         </div>
       )}
-      {/* 고객 선호 요약 */}
+      {/* 고객 선호 */}
       {(ev.nailShape || ev.cuticleSensitivity || ev.durationPreference) && (
         <div className="mt-0.5 text-[9px] opacity-60 leading-snug">
           {[
@@ -293,7 +296,7 @@ function DraggableEvent({
           ].filter(Boolean).join(' · ')}
         </div>
       )}
-      {/* 요청 메모 */}
+      {/* 메모 */}
       {ev.customerNote && (
         <div className="mt-0.5 text-[9px] opacity-50 leading-snug">📝 {ev.customerNote}</div>
       )}
@@ -462,7 +465,7 @@ export function DesignerDayGridCalendar({
   const gridRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
-  const hourHeight = 120;
+  const hourHeight = 140;
   const axisWidth = isMobile ? 40 : 60;
   const HEADER_H = isMobile ? 28 : 36;
 
