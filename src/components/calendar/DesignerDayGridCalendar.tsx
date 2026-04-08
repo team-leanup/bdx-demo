@@ -265,7 +265,7 @@ function DraggableEvent({
     >
       {/* 상태 뱃지 — 카드 외부 우측 상단 overlay */}
       {ev.type === 'reservation' && (
-        <div className="absolute -top-3 -right-2 z-20">
+        <div className="absolute -top-3 -left-1 z-20">
           <ReservationReadinessBadge
             booking={{ preConsultationCompletedAt: ev.preConsultationCompletedAt, consultationLinkSentAt: ev.consultationLinkSentAt, channel: (ev.channel ?? 'walk_in') as 'kakao' | 'naver' | 'phone' | 'walk_in' }}
             size="xs"
