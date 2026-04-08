@@ -1306,6 +1306,30 @@ export async function dbDeleteAllPortfolioPhotos(photos: PortfolioPhoto[]): Prom
 
 // ─── Portfolio Visibility ────────────────────────────────────────────────────
 
+export async function dbUpdatePhotoFeatured(
+  photoId: string,
+  shopId: string,
+  isFeatured: boolean,
+  price?: number,
+): Promise<{ success: boolean; error?: string }> {
+  const updatePayload: Record<string, unknown> = { is_featured: isFeatured };
+  if (isFeatured && price !== undefined) {
+    updatePayload.price = price;
+  } else if (!isFeatured) {
+    updatePayload.price = null;
+  }
+  const { error } = await supabase
+    .from('portfolio_photos')
+    .update(updatePayload)
+    .eq('id', photoId)
+    .eq('shop_id', shopId);
+  if (error) {
+    console.error('[db] dbUpdatePhotoFeatured error:', toDbErrorSnapshot(error));
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}
+
 export async function dbTogglePhotoVisibility(
   photoId: string,
   shopId: string,

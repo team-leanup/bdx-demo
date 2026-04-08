@@ -17,6 +17,8 @@ export type LengthPreference = 'keep' | 'shorten' | 'extend';
 
 export type ExtensionLength = 'natural' | 'medium' | 'long';
 
+export type WrappingPreference = 'yes' | 'no';
+
 // ── Design Feel & Style ───────────────────────────────────────────────────────
 
 export type DesignFeel = 'natural' | 'french' | 'trendy' | 'fancy';
@@ -63,6 +65,9 @@ export interface PreConsultationData {
 
   // Shape
   nailShape?: NailShape;
+
+  // Wrapping
+  wrappingPreference?: WrappingPreference;
 
   // Design feel & style
   designFeel?: DesignFeel;

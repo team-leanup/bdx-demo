@@ -19,13 +19,14 @@ interface PriceCalcInput {
   addOns: AddOnOption[];
   categoryPricing: CategoryPricingSettings;
   surcharges: SurchargeSettings;
+  photoBasePrice?: number;
 }
 
 export function calculatePreConsultPrice(input: PriceCalcInput): PreConsultPriceEstimate {
-  const { designCategory, removalPreference, lengthPreference, addOns, categoryPricing, surcharges } = input;
+  const { designCategory, removalPreference, lengthPreference, addOns, categoryPricing, surcharges, photoBasePrice } = input;
 
   // 1. Category base price & time
-  const categoryBase = categoryPricing[designCategory].price;
+  const categoryBase = photoBasePrice ?? categoryPricing[designCategory].price;
   const categoryTime = categoryPricing[designCategory].time;
 
   // 2. Removal surcharge

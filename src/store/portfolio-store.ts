@@ -10,6 +10,7 @@ import {
   dbDeletePortfolioPhoto,
   dbDeleteAllPortfolioPhotos,
   dbTogglePhotoVisibility,
+  dbUpdatePhotoFeatured,
 } from '@/lib/db';
 import { getNowInKoreaIso } from '@/lib/format';
 import { DEMO_PORTFOLIO_PHOTOS } from '@/data/demo-portfolio';
@@ -41,6 +42,8 @@ interface PortfolioStore {
   getByKind: (kind: PortfolioPhotoKind) => PortfolioPhoto[];
 
   togglePhotoVisibility: (id: string) => void;
+  toggleMenu: (id: string, price?: number) => void;
+  getMenuPhotos: () => PortfolioPhoto[];
   updatePhoto: (id: string, updates: Partial<PortfolioPhoto>) => void;
   setPhotos: (photos: PortfolioPhoto[]) => void;
 
@@ -263,6 +266,22 @@ export const usePortfolioStore = create<PortfolioStore>()(
           dbTogglePhotoVisibility(id, currentShopId, newIsPublic).catch(console.error);
         }
       },
+
+      toggleMenu: (id, price) => {
+        const currentShopId = useAuthStore.getState().currentShopId;
+        const current = get().photos.find((p) => p.id === id);
+        if (!current) return;
+        const turningOn = !current.isFeatured;
+        const updates: Partial<PortfolioPhoto> = turningOn
+          ? { isFeatured: true, price }
+          : { isFeatured: false, price: undefined };
+        get().updatePhoto(id, updates);
+        if (currentShopId && currentShopId !== 'shop-demo') {
+          dbUpdatePhotoFeatured(id, currentShopId, turningOn, turningOn ? price : undefined).catch(console.error);
+        }
+      },
+
+      getMenuPhotos: () => get().photos.filter((p) => p.isFeatured === true),
 
       updatePhoto: (id, updates) => {
         set((state) => ({

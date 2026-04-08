@@ -20,13 +20,15 @@ export function DesignGallery({ onConfirm, onSkip }: DesignGalleryProps): React.
   const selectedCategory = usePreConsultStore((s) => s.selectedCategory);
   const photos = usePreConsultStore((s) => s.portfolioPhotos);
   const selectedUrl = usePreConsultStore((s) => s.selectedPhotoUrl);
-  const setSelectedUrl = usePreConsultStore((s) => s.setSelectedPhotoUrl);
+  const selectedPhotoId = usePreConsultStore((s) => s.selectedPhotoId);
+  const setSelectedPhoto = usePreConsultStore((s) => s.setSelectedPhoto);
   const [reassurance, setReassurance] = useState<string | null>(null);
   const [zoomSrc, setZoomSrc] = useState<string | null>(null);
 
   const filteredPhotos = useMemo(() => {
     return photos
       .filter((p) => {
+        if (!p.isFeatured) return false;
         if (p.styleCategory === selectedCategory) return true;
         const derived = serviceTypeToCategory(p.serviceType);
         if (derived === selectedCategory) return true;
@@ -45,12 +47,12 @@ export function DesignGallery({ onConfirm, onSkip }: DesignGalleryProps): React.
     t('preConsult.reassurance3'),
   ];
 
-  const handleSelect = (url: string): void => {
-    if (selectedUrl === url) {
-      setSelectedUrl('');
+  const handleSelect = (photo: (typeof filteredPhotos)[number]): void => {
+    if (selectedPhotoId === photo.id) {
+      setSelectedPhoto(null, null, null);
       return;
     }
-    setSelectedUrl(url);
+    setSelectedPhoto(photo.id, photo.imageDataUrl, photo.price ?? null);
     const msg = reassurances[Math.floor(Math.random() * reassurances.length)];
     setReassurance(msg);
     setTimeout(() => setReassurance(null), 2000);
@@ -103,13 +105,13 @@ export function DesignGallery({ onConfirm, onSkip }: DesignGalleryProps): React.
       <div className="grid grid-cols-2 gap-2">
         {filteredPhotos.map((photo) => {
           const url = photo.imageDataUrl;
-          const isSelected = selectedUrl === url;
+          const isSelected = selectedPhotoId === photo.id;
           return (
             <motion.button
               key={photo.id}
               type="button"
               whileTap={{ scale: 0.97 }}
-              onClick={() => handleSelect(url)}
+              onClick={() => handleSelect(photo)}
               className={[
                 'relative aspect-square rounded-xl overflow-hidden border-2 transition-all',
                 isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-border',
@@ -150,6 +152,14 @@ export function DesignGallery({ onConfirm, onSkip }: DesignGalleryProps): React.
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                 </svg>
               </button>
+              {/* 가격 뱃지 */}
+              {photo.price != null && (
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent pt-4 pb-1.5 px-2">
+                  <span className="text-[11px] font-bold text-white">
+                    {photo.price.toLocaleString('ko-KR')}원
+                  </span>
+                </div>
+              )}
             </motion.button>
           );
         })}

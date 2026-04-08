@@ -9,6 +9,7 @@ import type {
   RemovalPreference,
   LengthPreference,
   ExtensionLength,
+  WrappingPreference,
   DesignFeel,
   StylePreference,
   StyleKeyword,
@@ -33,6 +34,8 @@ interface PreConsultState {
   // STEP 1: Design
   selectedCategory: DesignCategory | null;
   selectedPhotoUrl: string | null;
+  selectedPhotoId: string | null;
+  selectedPhotoPrice: number | null;
 
   // STEP 2: Consult
   referenceImageUrls: string[];
@@ -41,6 +44,7 @@ interface PreConsultState {
   lengthPreference: LengthPreference | null;
   extensionLength: ExtensionLength | null;
   nailShape: NailShape | null;
+  wrappingPreference: WrappingPreference | null;
   designFeel: DesignFeel | null;
   stylePreference: StylePreference | null;
   styleKeywords: StyleKeyword[];
@@ -66,6 +70,7 @@ interface PreConsultActions {
   setCurrentStep: (step: PreConsultStep) => void;
   setSelectedCategory: (cat: DesignCategory) => void;
   setSelectedPhotoUrl: (url: string | null) => void;
+  setSelectedPhoto: (id: string | null, url: string | null, price: number | null) => void;
   addReferenceImageUrl: (url: string) => void;
   removeReferenceImageUrl: (url: string) => void;
   setNailStatus: (status: NailCurrentStatus) => void;
@@ -73,6 +78,7 @@ interface PreConsultActions {
   setLengthPreference: (pref: LengthPreference) => void;
   setExtensionLength: (len: ExtensionLength) => void;
   setNailShape: (shape: NailShape) => void;
+  setWrappingPreference: (pref: WrappingPreference) => void;
   setDesignFeel: (feel: DesignFeel) => void;
   setStylePreference: (pref: StylePreference) => void;
   toggleStyleKeyword: (kw: StyleKeyword) => void;
@@ -101,6 +107,8 @@ const INITIAL_STATE: PreConsultState = {
 
   selectedCategory: null,
   selectedPhotoUrl: null,
+  selectedPhotoId: null,
+  selectedPhotoPrice: null,
 
   referenceImageUrls: [],
   nailStatus: null,
@@ -108,6 +116,7 @@ const INITIAL_STATE: PreConsultState = {
   lengthPreference: null,
   extensionLength: null,
   nailShape: null,
+  wrappingPreference: null,
   designFeel: null,
   stylePreference: null,
   styleKeywords: [],
@@ -141,6 +150,8 @@ export const usePreConsultStore = create<PreConsultStore>()(
 
       setSelectedPhotoUrl: (url) => set({ selectedPhotoUrl: url }),
 
+      setSelectedPhoto: (id, url, price) => set({ selectedPhotoId: id, selectedPhotoUrl: url, selectedPhotoPrice: price }),
+
       addReferenceImageUrl: (url) =>
         set((s) => ({ referenceImageUrls: [...s.referenceImageUrls, url] })),
 
@@ -156,6 +167,8 @@ export const usePreConsultStore = create<PreConsultStore>()(
       setExtensionLength: (len) => set({ extensionLength: len }),
 
       setNailShape: (shape) => set({ nailShape: shape }),
+
+      setWrappingPreference: (pref) => set({ wrappingPreference: pref }),
 
       setDesignFeel: (feel) => set({ designFeel: feel }),
 

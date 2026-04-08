@@ -58,6 +58,10 @@ function useLabelMaps() {
       trendy: t('preConsult.feelTrendy'),
       fancy: t('preConsult.feelFancy'),
     },
+    wrapping: {
+      yes: t('preConsult.wrappingYes'),
+      no: t('preConsult.wrappingNo'),
+    },
     addOn: {
       stone: t('preConsult.addOnStone'),
       parts: t('preConsult.addOnParts'),
@@ -114,6 +118,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
   const labels = useLabelMaps();
 
   const store = usePreConsultStore();
+  const selectedPhotoPrice = usePreConsultStore((s) => s.selectedPhotoPrice);
   const {
     selectedCategory,
     selectedPhotoUrl,
@@ -122,6 +127,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
     lengthPreference,
     extensionLength,
     nailShape,
+    wrappingPreference,
     designFeel,
     addOns,
     referenceImageUrls,
@@ -175,6 +181,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
           addOns: addOns,
           categoryPricing: shopData.categoryPricing,
           surcharges: shopData.surcharges,
+          photoBasePrice: selectedPhotoPrice ?? undefined,
         })
       : null;
 
@@ -209,6 +216,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
       lengthPreference: lengthPreference ?? undefined,
       extensionLength: extensionLength ?? undefined,
       nailShape: nailShape ?? undefined,
+      wrappingPreference: wrappingPreference ?? undefined,
       designFeel: designFeel ?? undefined,
       stylePreference: stylePreference ?? undefined,
       styleKeyword: styleKeywords,
@@ -356,6 +364,12 @@ export default function PreConsultConfirmPage(): React.ReactElement {
               <SummaryRow
                 label={t('preConsult.shapeTitle').split(' ')[0]}
                 value={labels.shape[nailShape] ?? nailShape}
+              />
+            )}
+            {wrappingPreference && (
+              <SummaryRow
+                label={t('preConsult.wrappingTitle').split('을')[0].split(' ')[0]}
+                value={labels.wrapping[wrappingPreference]}
               />
             )}
             {designFeel && (

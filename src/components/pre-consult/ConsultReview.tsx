@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useT, useKo, useLocale } from '@/lib/i18n';
 import { usePreConsultStore } from '@/store/pre-consult-store';
 import { Button } from '@/components/ui/Button';
-import type { NailCurrentStatus, RemovalPreference, LengthPreference, ExtensionLength, DesignFeel, StylePreference, StyleKeyword, AddOnOption } from '@/types/pre-consultation';
+import type { NailCurrentStatus, RemovalPreference, LengthPreference, ExtensionLength, WrappingPreference, DesignFeel, StylePreference, StyleKeyword, AddOnOption } from '@/types/pre-consultation';
 import type { NailShape } from '@/types/consultation';
 
 interface ConsultReviewProps {
@@ -67,6 +67,12 @@ function useLengthLabel(pref: LengthPreference | null, ext: ExtensionLength | nu
     return `${t('preConsult.lengthExtend')}${extLabel ? ` · ${extLabel}` : ''}`;
   }
   return '-';
+}
+
+function useWrappingLabel(pref: WrappingPreference | null, t: (key: string) => string): string {
+  if (!pref) return '-';
+  if (pref === 'yes') return t('preConsult.wrappingYes');
+  return t('preConsult.wrappingNo');
 }
 
 function useShapeLabel(shape: NailShape | null, t: (key: string) => string): string {
@@ -136,6 +142,7 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
   const removalLabel = useRemovalLabel(store.removalPreference, t);
   const lengthLabel = useLengthLabel(store.lengthPreference, store.extensionLength, t);
   const shapeLabel = useShapeLabel(store.nailShape, t);
+  const wrappingLabel = useWrappingLabel(store.wrappingPreference, t);
   const feelLabel = useFeelLabel(store.designFeel, t);
   const styleLabel = useStyleLabel(store.stylePreference, t);
   const keywordsLabel = useKeywordsLabel(store.styleKeywords, t);
@@ -231,6 +238,15 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
           modifyLabel={t('preConsult.modifyBtn')}
           onModify={onModify}
         />
+        {store.wrappingPreference && (
+          <ReviewRow
+            label="랩핑"
+            value={wrappingLabel}
+            section="wrapping"
+            modifyLabel={t('preConsult.modifyBtn')}
+            onModify={onModify}
+          />
+        )}
         <ReviewRow
           label="분위기"
           value={feelLabel}

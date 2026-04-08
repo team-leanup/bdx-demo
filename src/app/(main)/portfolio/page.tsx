@@ -17,6 +17,99 @@ import type { PortfolioPhotoKind } from '@/types/portfolio';
 import type { Customer } from '@/types/customer';
 import type { ConsultationRecord } from '@/types/consultation';
 
+interface MenuToggleRowProps {
+  photoId: string;
+  isFeatured: boolean | undefined;
+  featuredPrice: number | undefined;
+}
+
+function MenuToggleRow({ photoId, isFeatured, featuredPrice }: MenuToggleRowProps): React.ReactElement {
+  const toggleMenu = usePortfolioStore((s) => s.toggleMenu);
+  const [editing, setEditing] = useState(false);
+  const [priceInput, setPriceInput] = useState('');
+
+  const handleRegister = (e: React.MouseEvent): void => {
+    e.stopPropagation();
+    setEditing(true);
+    setPriceInput('');
+  };
+
+  const handleConfirm = (e: React.MouseEvent): void => {
+    e.stopPropagation();
+    const parsed = parseInt(priceInput.replace(/[^0-9]/g, ''), 10);
+    toggleMenu(photoId, isNaN(parsed) ? undefined : parsed);
+    setEditing(false);
+  };
+
+  const handleCancel = (e: React.MouseEvent): void => {
+    e.stopPropagation();
+    setEditing(false);
+  };
+
+  const handleRemove = (e: React.MouseEvent): void => {
+    e.stopPropagation();
+    toggleMenu(photoId);
+  };
+
+  if (isFeatured) {
+    return (
+      <div className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-border/60">
+        <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 truncate">
+          메뉴{featuredPrice != null ? ` ${formatPrice(featuredPrice)}` : ''}
+        </span>
+        <button
+          onClick={handleRemove}
+          className="shrink-0 text-[10px] text-text-muted hover:text-destructive transition-colors"
+        >
+          해제
+        </button>
+      </div>
+    );
+  }
+
+  if (editing) {
+    return (
+      <div
+        className="flex items-center gap-1 pt-1.5 border-t border-border/60"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <input
+          autoFocus
+          type="number"
+          inputMode="numeric"
+          placeholder="가격 (원)"
+          value={priceInput}
+          onChange={(e) => setPriceInput(e.target.value)}
+          className="flex-1 min-w-0 rounded-lg border border-border bg-surface px-2 py-1 text-[10px] text-text focus:outline-none focus:border-primary"
+        />
+        <button
+          onClick={handleConfirm}
+          className="shrink-0 rounded-lg bg-amber-400 px-2 py-1 text-[10px] font-semibold text-white hover:bg-amber-500 transition-colors"
+        >
+          등록
+        </button>
+        <button
+          onClick={handleCancel}
+          className="shrink-0 rounded-lg border border-border px-2 py-1 text-[10px] text-text-secondary hover:bg-surface-alt transition-colors"
+        >
+          취소
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center pt-1.5 border-t border-border/60">
+      <button
+        onClick={handleRegister}
+        className="text-[10px] text-text-muted hover:text-amber-600 transition-colors"
+      >
+        + 메뉴판 등록
+      </button>
+    </div>
+  );
+}
+
 type FilterKind = 'all' | PortfolioPhotoKind;
 type DateFilter = 'all' | '30d' | '90d' | '1y';
 type PriceFilter = 'all' | 'under50000' | '50000to79999' | '80000to119999' | '120000plus';
@@ -471,12 +564,14 @@ export default function PortfolioPage(): React.ReactElement {
               ];
               const imgSrc = photo.imageDataUrl || NAIL_FALLBACKS[idx % NAIL_FALLBACKS.length];
               return (
-                <button
+                <div
                   key={photo.id}
-                  onClick={() => setOverlayPhotoId(photo.id)}
                   className="group rounded-xl overflow-hidden bg-surface-alt shadow-sm hover:shadow-md transition-shadow"
                 >
-                  <div className="relative aspect-square overflow-hidden">
+                  <button
+                    onClick={() => setOverlayPhotoId(photo.id)}
+                    className="relative block w-full aspect-square overflow-hidden"
+                  >
                     <Image
                       src={imgSrc}
                       alt={customer?.name ?? '포트폴리오'}
@@ -484,7 +579,12 @@ export default function PortfolioPage(): React.ReactElement {
                       unoptimized={imgSrc.startsWith('data:')}
                       className="object-cover transition-transform group-hover:scale-105"
                     />
-                  </div>
+                    {photo.isFeatured && (
+                      <span className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full bg-amber-400 text-white text-[9px] font-bold shadow-sm">
+                        메뉴
+                      </span>
+                    )}
+                  </button>
                   <div className="p-2.5 space-y-1.5">
                     <div className="flex items-center justify-between gap-1">
                       <p className="text-xs font-semibold text-foreground truncate">
@@ -519,8 +619,13 @@ export default function PortfolioPage(): React.ReactElement {
                         <p className="text-[11px] font-semibold text-foreground truncate">{formatPrice(price)}</p>
                       )}
                     </div>
+                    <MenuToggleRow
+                      photoId={photo.id}
+                      isFeatured={photo.isFeatured}
+                      featuredPrice={photo.isFeatured ? photo.price : undefined}
+                    />
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>

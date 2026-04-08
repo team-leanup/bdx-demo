@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useT, useKo, useLocale } from '@/lib/i18n';
 import { usePreConsultStore } from '@/store/pre-consult-store';
+import { serviceTypeToCategory } from '@/lib/category-mapping';
 import type { DesignCategory } from '@/types/pre-consultation';
 
 interface CategoryConfig {
@@ -28,8 +29,28 @@ export function CategoryPicker(): React.ReactElement {
   const setSelected = usePreConsultStore((s) => s.setSelectedCategory);
   const setSelectedPhotoUrl = usePreConsultStore((s) => s.setSelectedPhotoUrl);
   const shopData = usePreConsultStore((s) => s.shopData);
+  const portfolioPhotos = usePreConsultStore((s) => s.portfolioPhotos);
+
+  // Minimum price per category from menu (isFeatured) photos
+  const menuMinPrices = useMemo(() => {
+    const result: Partial<Record<DesignCategory, number>> = {};
+    for (const p of portfolioPhotos) {
+      if (!p.isFeatured || p.price == null) continue;
+      const cat: DesignCategory | null =
+        p.styleCategory ?? serviceTypeToCategory(p.serviceType);
+      if (!cat) continue;
+      if (result[cat] == null || p.price < result[cat]!) {
+        result[cat] = p.price;
+      }
+    }
+    return result;
+  }, [portfolioPhotos]);
 
   const getPriceHint = (cat: DesignCategory): string => {
+    const menuMin = menuMinPrices[cat];
+    if (menuMin != null) {
+      return `${menuMin.toLocaleString()}원~`;
+    }
     if (!shopData?.categoryPricing) return '';
     const price = shopData.categoryPricing[cat]?.price;
     if (!price) return '';
@@ -68,7 +89,7 @@ export function CategoryPicker(): React.ReactElement {
               )}
               <p className="text-[11px] text-text-muted mt-0.5">{t(cat.tDescKey)}</p>
             </div>
-            {shopData?.categoryPricing && (
+            {(menuMinPrices[cat.key] != null || shopData?.categoryPricing) && (
               <span className="text-[10px] text-text-muted font-medium">{getPriceHint(cat.key)}</span>
             )}
           </motion.button>
