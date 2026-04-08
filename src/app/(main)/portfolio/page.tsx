@@ -361,7 +361,12 @@ export default function PortfolioPage(): React.ReactElement {
         if (!q) return true;
         return searchSource.includes(q);
       })
-      .sort((a, b) => new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime());
+      .sort((a, b) => {
+        // 메뉴 등록된 사진 상단
+        if (a.photo.isFeatured && !b.photo.isFeatured) return -1;
+        if (!a.photo.isFeatured && b.photo.isFeatured) return 1;
+        return new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime();
+      });
   }, [photoCards, serviceFilter, dateFilter, priceFilter, moodFilter, globalBestFilter, foreignCustomerIds, search]);
 
   const serviceOptions = useMemo(() => {
@@ -928,9 +933,10 @@ interface MenuCardProps {
 
 function MenuCard({ photo, fallbackIdx, onRemove, onOpenOverlay }: MenuCardProps): React.ReactElement {
   const imgSrc = photo.imageDataUrl || NAIL_FALLBACKS[fallbackIdx % NAIL_FALLBACKS.length];
+  const updatePhoto = usePortfolioStore((s) => s.updatePhoto);
 
   return (
-    <div className="flex items-center gap-3 bg-surface rounded-xl p-3 shadow-sm border border-border/60">
+    <div className="flex gap-3 bg-surface rounded-xl p-3 shadow-sm border border-border/60">
       {/* Thumbnail */}
       <button
         onClick={onOpenOverlay}
@@ -943,6 +949,13 @@ function MenuCard({ photo, fallbackIdx, onRemove, onOpenOverlay }: MenuCardProps
           unoptimized={imgSrc.startsWith('data:')}
           className="object-cover"
         />
+        {/* 뱃지 오버레이 */}
+        {photo.isStaffPick && (
+          <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-primary text-white text-[8px] font-bold">추천</span>
+        )}
+        {photo.isPopular && (
+          <span className={cn('absolute top-1 right-1 px-1.5 py-0.5 rounded bg-amber-500 text-white text-[8px] font-bold', photo.isStaffPick ? '' : 'left-1')}>인기</span>
+        )}
       </button>
 
       {/* Info */}
@@ -956,6 +969,25 @@ function MenuCard({ photo, fallbackIdx, onRemove, onOpenOverlay }: MenuCardProps
           </span>
         )}
         <MenuCardPrice photoId={photo.id} price={photo.price} />
+        {/* 직원추천 / 인기 토글 */}
+        <div className="flex items-center gap-2 mt-0.5">
+          <button
+            onClick={(e) => { e.stopPropagation(); updatePhoto(photo.id, { isStaffPick: !photo.isStaffPick }); }}
+            className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full border transition-colors',
+              photo.isStaffPick ? 'bg-primary/10 text-primary border-primary/30' : 'text-text-muted border-border hover:border-primary/30',
+            )}
+          >
+            {photo.isStaffPick ? '✓ 직원추천' : '직원추천'}
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); updatePhoto(photo.id, { isPopular: !photo.isPopular }); }}
+            className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full border transition-colors',
+              photo.isPopular ? 'bg-amber-50 text-amber-600 border-amber-200' : 'text-text-muted border-border hover:border-amber-200',
+            )}
+          >
+            {photo.isPopular ? '✓ 인기' : '인기'}
+          </button>
+        </div>
       </div>
 
       {/* Remove button */}
@@ -964,9 +996,9 @@ function MenuCard({ photo, fallbackIdx, onRemove, onOpenOverlay }: MenuCardProps
           e.stopPropagation();
           onRemove();
         }}
-        className="shrink-0 text-xs text-text-muted hover:text-destructive transition-colors px-2 py-1 rounded-lg hover:bg-surface-alt"
+        className="shrink-0 self-start text-xs text-text-muted hover:text-destructive transition-colors px-2 py-1 rounded-lg hover:bg-surface-alt"
       >
-        메뉴 해제
+        해제
       </button>
     </div>
   );

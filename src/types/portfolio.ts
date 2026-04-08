@@ -24,4 +24,6 @@ export interface PortfolioPhoto {
   price?: number;
   isPublic?: boolean;
   isFeatured?: boolean;
+  isStaffPick?: boolean;
+  isPopular?: boolean;
 }
