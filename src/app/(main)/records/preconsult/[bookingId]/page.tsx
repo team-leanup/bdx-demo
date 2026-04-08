@@ -269,17 +269,19 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
 
       {/* 하단 CTA */}
       <div className="sticky bottom-0 bg-background border-t border-border px-4 py-3 pb-safe flex gap-2">
+        {booking.customerId && (
+          <button
+            onClick={() => router.push(`/customers/${booking.customerId}`)}
+            className="flex-1 rounded-xl border border-border bg-surface py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
+          >
+            고객 카드 보기
+          </button>
+        )}
         <button
           onClick={handleConfirm}
-          className="flex-1 rounded-xl border border-primary bg-primary/5 py-3 text-sm font-bold text-primary active:scale-[0.98] transition-transform"
-        >
-          확정하기
-        </button>
-        <button
-          onClick={handleStartConsultation}
           className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
         >
-          상담 시작
+          확정하기
         </button>
       </div>
 
