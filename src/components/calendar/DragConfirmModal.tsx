@@ -47,7 +47,7 @@ export function DragConfirmModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 16 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="fixed inset-x-4 bottom-8 z-50 mx-auto max-w-sm rounded-2xl bg-surface shadow-elevated p-6 flex flex-col gap-5"
+            className="fixed inset-x-4 bottom-24 z-50 mx-auto max-w-sm rounded-2xl bg-surface shadow-elevated p-6 flex flex-col gap-5"
           >
             {/* Title */}
             <div className="flex flex-col gap-1">

@@ -557,7 +557,7 @@ export default function RecordsPage() {
               >
                 전체
               </button>
-              {activeDesigners.map((d) => (
+              {[...activeDesigners.map((d) => ({ id: d.id, name: d.name })), { id: '__unassigned__', name: '미지정' }].map((d) => (
                 <button
                   key={d.id}
                   type="button"
@@ -586,7 +586,10 @@ export default function RecordsPage() {
               </Card>
               <DesignerDayGridCalendar
                 date={selectedDate}
-                events={timeGridEvents}
+                events={designerFilter
+                  ? timeGridEvents.filter((e) => designerFilter === '__unassigned__' ? !e.designerId : e.designerId === designerFilter)
+                  : timeGridEvents
+                }
                 designers={designerFilter
                   ? activeDesigners.filter((d) => d.id === designerFilter).map((d) => ({ id: d.id, name: d.name }))
                   : activeDesigners.map((d) => ({ id: d.id, name: d.name }))

@@ -169,7 +169,7 @@ function DraggableEvent({
     const targetDesignerId = columns[colIndex]?.id === '__unassigned__' ? undefined : columns[colIndex]?.id;
 
     const minuteFromTop = (dropY / hourHeight) * 60 + startHour * 60;
-    const snapped = snapToInterval(minuteFromTop, 30);
+    const snapped = snapToInterval(minuteFromTop, 15);
     const eventDuration = timeStrToMinutes(ev.endTime) - timeStrToMinutes(ev.startTime);
     const clamped = clampStartMinutes({
       startMinutes: snapped,
@@ -389,7 +389,7 @@ function SlotColumn({
     const rect = e.currentTarget.getBoundingClientRect();
     const y = e.clientY - rect.top;
     const minuteFromTop = (y / hourHeight) * 60 + startHour * 60;
-    const snapped = snapToInterval(minuteFromTop, 30);
+    const snapped = snapToInterval(minuteFromTop, 15);
     longPressTimeRef.current = minutesToTimeStr(
       clampStartMinutes({ startMinutes: snapped, startHour, endHour, durationMinutes: 30 }),
     );
@@ -419,7 +419,7 @@ function SlotColumn({
         const touch = e.touches[0];
         const y = touch.clientY - rect.top;
         const minuteFromTop = (y / hourHeight) * 60 + startHour * 60;
-        const snapped = snapToInterval(minuteFromTop, 30);
+        const snapped = snapToInterval(minuteFromTop, 15);
         longPressTimeRef.current = minutesToTimeStr(
           clampStartMinutes({ startMinutes: snapped, startHour, endHour, durationMinutes: 30 }),
         );
