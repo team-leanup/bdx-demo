@@ -263,9 +263,18 @@ function DraggableEvent({
       )}
       style={{ top, height }}
     >
-      {/* 상태 뱃지 — 카드 외부 우측 상단 overlay */}
+      {/* 내부 콘텐츠 */}
+      <div className="h-full overflow-hidden">
+      {/* 이름 + 국기 */}
+      <div className="text-xs font-semibold leading-tight">
+        {ev.title}
+        {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
+          <span className="ml-0.5 text-[10px]">{LANGUAGE_FLAG[ev.language]}</span>
+        )}
+      </div>
+      {/* 상태 */}
       {ev.type === 'reservation' && (
-        <div className="absolute -top-3 -left-1 z-20">
+        <div className="mt-0.5">
           <ReservationReadinessBadge
             booking={{ preConsultationCompletedAt: ev.preConsultationCompletedAt, consultationLinkSentAt: ev.consultationLinkSentAt, channel: (ev.channel ?? 'walk_in') as 'kakao' | 'naver' | 'phone' | 'walk_in' }}
             size="xs"
@@ -273,15 +282,6 @@ function DraggableEvent({
           />
         </div>
       )}
-      {/* 내부 콘텐츠 — overflow 클리핑 */}
-      <div className="h-full overflow-hidden">
-      {/* 이름 + 국기 */}
-      <div className="flex items-baseline gap-0.5">
-        <span className="text-xs font-semibold leading-tight">{ev.title}</span>
-        {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
-          <span className="text-[10px] leading-none">{LANGUAGE_FLAG[ev.language]}</span>
-        )}
-      </div>
       {/* 시간 */}
       <div className="text-[10px] opacity-60 leading-tight">{ev.startTime}–{ev.endTime}</div>
       {/* 서비스 + 채널 */}

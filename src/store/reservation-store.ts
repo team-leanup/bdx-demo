@@ -38,9 +38,16 @@ export const useReservationStore = create<ReservationStore>()(
         const dbReservations = await fetchBookingRequests(currentShopId);
         if (currentShopId === 'shop-demo') {
           const { DEMO_RESERVATIONS } = await import('@/data/mock-demo-data');
-          const existingIds = new Set(dbReservations.map((r) => r.id));
+          const demoMap = new Map(DEMO_RESERVATIONS.map((r) => [r.id, r]));
+          // Merge requestNote from demo data into existing reservations
+          const updated = dbReservations.map((r) => {
+            const demo = demoMap.get(r.id);
+            if (!demo) return r;
+            return { ...r, requestNote: r.requestNote || demo.requestNote };
+          });
+          const existingIds = new Set(updated.map((r) => r.id));
           const merged = [
-            ...dbReservations,
+            ...updated,
             ...DEMO_RESERVATIONS.filter((r) => !existingIds.has(r.id)),
           ];
           set({ reservations: merged, _dbReady: true });
