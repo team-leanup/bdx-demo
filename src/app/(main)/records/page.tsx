@@ -160,6 +160,7 @@ export default function RecordsPage() {
   const setConsultationLocale = useLocaleStore((s) => s.setConsultationLocale);
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
   const getCustomerById = useCustomerStore((s) => s.getById);
+  const customers = useCustomerStore((s) => s.customers);
 
   const designers = useShopStore((s) => s.designers);
   const shopName = useShopStore((s) => s.shop?.name);
@@ -235,7 +236,8 @@ export default function RecordsPage() {
 
   const timeGridEvents = useMemo(
     () => toTimeGridEvents(allReservations, getCustomerById),
-    [allReservations, getCustomerById],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allReservations, getCustomerById, customers],
   );
 
   const sorted = useMemo(
