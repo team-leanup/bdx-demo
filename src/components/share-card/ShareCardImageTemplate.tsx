@@ -101,56 +101,57 @@ export function ShareCardImageTemplate({
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       }}
     >
-      {/* 사진 — 풀 커버 */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+      {/* 상단: 시술 사진 */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: `${config.photoPercent}%` }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: 100,
+          background: 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,1) 100%)',
+        }} />
       </div>
 
-      {/* 상단 — 샵 이름 + BDX 로고 */}
-      <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0,
-        background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)',
-        padding: '28px 32px 48px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      }}>
-        <span style={{ fontSize: 36, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.01em' }}>
-          {shopName}
-        </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <BdxLogo size={36} />
-          <span style={{ fontSize: 18, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.7)', fontWeight: 500, textTransform: 'uppercase' as const }}>
-            Beauty Decision
-          </span>
-        </div>
-      </div>
-
-      {/* 하단 — 시술 정보 */}
+      {/* 하단: 정보 패널 */}
       <div style={{
         position: 'absolute', left: 0, right: 0, bottom: 0,
-        background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0) 100%)',
-        padding: '80px 32px 32px',
-        display: 'flex', flexDirection: 'column', gap: 8,
+        height: `${infoPercent}%`, background: '#FFFFFF',
+        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+        padding: '16px 32px 24px',
       }}>
-        <span style={{ fontSize: 72, fontWeight: 900, color: '#FFFFFF', lineHeight: 1.1, letterSpacing: '-0.02em', textShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
-          {designLabel}
-        </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <span style={{
-            display: 'inline-flex', padding: '6px 16px', borderRadius: 999,
-            fontSize: 30, fontWeight: 700, background: 'rgba(255,255,255,0.2)', color: '#FFFFFF',
-            backdropFilter: 'blur(4px)',
-          }}>
-            {bodyLabel}
+        {/* 시술 정보 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <span style={{ fontSize: 64, fontWeight: 900, color: '#191F28', lineHeight: 1.15, letterSpacing: '-0.02em' }}>
+            {designLabel}
           </span>
-          {expressionLabels.length > 0 && expressionLabels.map((label, i) => (
-            <span key={i} style={{
-              display: 'inline-flex', padding: '6px 16px', borderRadius: 999,
-              fontSize: 28, fontWeight: 600, background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.9)',
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{
+              display: 'inline-flex', padding: '6px 14px', borderRadius: 999,
+              fontSize: 30, fontWeight: 700, background: '#FFF1F2', color: '#F43F5E',
             }}>
-              {label}
+              {bodyLabel}
             </span>
-          ))}
+            {expressionLabels.map((label, i) => (
+              <span key={i} style={{
+                display: 'inline-flex', padding: '6px 14px', borderRadius: 999,
+                fontSize: 28, fontWeight: 600, background: '#F3F4F6', color: '#6B7280',
+              }}>
+                {label}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* 샵 이름 + BDX 로고 */}
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 44, fontWeight: 900, color: '#191F28', letterSpacing: '-0.01em' }}>
+            {shopName}
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <BdxLogo size={40} />
+            <span style={{ fontSize: 20, letterSpacing: '0.1em', color: '#C9CDD2', fontWeight: 500, textTransform: 'uppercase' as const }}>
+              Beauty Decision
+            </span>
+          </div>
         </div>
       </div>
     </div>
