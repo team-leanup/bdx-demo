@@ -246,10 +246,12 @@ function DraggableEvent({
       dragMomentum={false}
       dragElastic={0}
       dragConstraints={gridRef}
+      dragSnapToOrigin
+      dragTransition={{ bounceStiffness: 300, bounceDamping: 20 }}
       animate={controls}
       onDragStart={() => setIsDragging(true)}
       onDragEnd={handleDragEnd}
-      whileDrag={{ scale: 1.05, zIndex: 50, boxShadow: '0 8px 25px rgba(0,0,0,0.15)' }}
+      whileDrag={{ scale: 1.03, zIndex: 50, boxShadow: '0 4px 16px rgba(0,0,0,0.12)' }}
       onClick={() => {
         if (!isDragging) onEventClick?.(ev);
       }}
@@ -266,7 +268,7 @@ function DraggableEvent({
       {/* 상태 뱃지 — 우측 상단 overlay */}
       {ev.type === 'reservation' && (
         <div className={cn(
-          'absolute -top-2 right-0 z-20 rounded-full px-1.5 py-px text-[8px] font-semibold border border-white shadow-sm',
+          'absolute -top-2 right-0 z-20 rounded-full px-1.5 py-px text-[9px] font-semibold border border-white shadow-sm',
           ev.preConsultationCompletedAt ? 'bg-emerald-500 text-white'
             : ev.consultationLinkSentAt ? 'bg-amber-400 text-amber-900'
             : 'bg-slate-200 text-slate-600',
@@ -274,61 +276,46 @@ function DraggableEvent({
           {ev.preConsultationCompletedAt ? '완료' : ev.consultationLinkSentAt ? '대기' : '미발송'}
         </div>
       )}
-      <div className="h-full overflow-hidden flex flex-col text-[10px]">
-        {/* ① 시간 */}
-        <div className="opacity-60 leading-tight">{ev.startTime}–{ev.endTime}</div>
-
-        {/* ② 고객명 + 방문횟수 */}
-        <div className="text-xs font-semibold leading-tight mt-0.5">
-          {ev.title}
+      <div className="h-full overflow-hidden flex flex-col text-[11px]">
+        {/* ① 시간 + 고객명 */}
+        <div className="flex items-baseline gap-1">
+          <span className="text-xs font-bold leading-tight">{ev.title}</span>
+          {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
+            <span className="text-[11px]">{LANGUAGE_FLAG[ev.language]}</span>
+          )}
           {(ev.visitCount ?? 0) > 0 && (
-            <span className="ml-0.5 text-[9px] font-normal opacity-50">({ev.visitCount}회)</span>
+            <span className="text-[10px] font-normal opacity-50">{ev.visitCount}회</span>
           )}
         </div>
-
-        {/* ③ 시술 메뉴 + 채널 */}
-        {showMetaRow && (
-          <div className="flex flex-wrap items-center gap-1 mt-0.5">
-            {ev.serviceLabel && (
-              <span className="rounded bg-white/50 px-1 py-px font-medium text-text">{ev.serviceLabel}</span>
-            )}
-            {ev.channel && <ChannelIcon channel={ev.channel} />}
-          </div>
-        )}
+        <div className="flex items-center gap-1.5 opacity-60 leading-tight">
+          <span>{ev.startTime}–{ev.endTime}</span>
+          {ev.serviceLabel && (
+            <span className="rounded bg-white/40 px-1 py-px font-medium text-text">{ev.serviceLabel}</span>
+          )}
+          {ev.channel && <ChannelIcon channel={ev.channel} />}
+        </div>
 
         {/* ── 상태별 하단 콘텐츠 ── */}
         {ev.preConsultationCompletedAt ? (
           <>
-            {/* 사전상담 완료 → 풀 상세 */}
-            <div className="border-t border-white/30 my-1" />
-            <div className="flex flex-col gap-px text-[9px] leading-snug opacity-70">
-              {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
-                <div>{LANGUAGE_FLAG[ev.language]}</div>
+            <div className="border-t border-white/30 mt-1 mb-0.5" />
+            <div className="text-[10px] leading-snug opacity-70 space-y-px">
+              {ev.nailShape && <div>{ev.nailShape} {ev.cuticleSensitivity ? `· 큐티클 ${ev.cuticleSensitivity}` : ''}</div>}
+              {(ev.durationPreference || ev.removalNeeded) && (
+                <div>{[ev.durationPreference && `시간 ${ev.durationPreference}`, ev.removalNeeded].filter(Boolean).join(' · ')}</div>
               )}
-              {ev.nailShape && <div>💅 {ev.nailShape}</div>}
-              {ev.cuticleSensitivity && <div>✋ 큐티클 {ev.cuticleSensitivity}</div>}
-              {ev.durationPreference && <div>⏱ 시술시간 {ev.durationPreference}</div>}
-              {ev.removalNeeded && <div>🧴 {ev.removalNeeded}</div>}
               {ev.preferredColors && ev.preferredColors.length > 0 && (
-                <div>🎨 {ev.preferredColors.join(', ')}</div>
+                <div>{ev.preferredColors.join(', ')}</div>
               )}
+              {ev.customerNote && <div className="opacity-60">{ev.customerNote}</div>}
             </div>
-            {ev.customerNote && (
-              <div className="mt-0.5 text-[9px] opacity-60 leading-snug">📝 {ev.customerNote}</div>
-            )}
           </>
         ) : ev.consultationLinkSentAt ? (
           <>
-            {/* 응답 대기 → 발송 시각만 */}
-            <div className="border-t border-white/30 my-1" />
-            <div className="text-[9px] opacity-60 leading-snug">
-              📩 링크 발송: {ev.consultationLinkSentAt.slice(5, 16).replace('T', ' ')}
-            </div>
+            <div className="border-t border-white/30 mt-1 mb-0.5" />
+            <div className="text-[10px] opacity-60">발송 {ev.consultationLinkSentAt.slice(5, 16).replace('T', ' ')}</div>
           </>
-        ) : (
-          /* 미발송 → 추가 정보 없음 */
-          null
-        )}
+        ) : null}
       </div>
     </motion.button>
   );
@@ -485,7 +472,7 @@ export function DesignerDayGridCalendar({
   const gridRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
-  const hourHeight = 200;
+  const hourHeight = 140;
   const axisWidth = isMobile ? 40 : 60;
   const HEADER_H = isMobile ? 28 : 36;
 
