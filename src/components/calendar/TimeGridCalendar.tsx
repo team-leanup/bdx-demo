@@ -40,6 +40,8 @@ export interface TimeGridEvent {
   cuticleSensitivity?: string;
   durationPreference?: string;
   customerNote?: string;
+  visitCount?: number;
+  preferredColors?: string[];
 }
 
 interface TimeGridCalendarProps {

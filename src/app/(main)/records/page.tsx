@@ -115,6 +115,8 @@ function toTimeGridEvents(
       cuticleSensitivity: customer?.preference?.cuticleSensitivity ? sensitivityMap[customer.preference.cuticleSensitivity] : undefined,
       durationPreference: customer?.durationPreference ? durationMap[customer.durationPreference] : undefined,
       customerNote: r.requestNote,
+      visitCount: customer?.visitCount ?? 0,
+      preferredColors: customer?.treatmentHistory?.[0]?.colorLabels ?? [],
     });
   }
 

@@ -274,34 +274,48 @@ function DraggableEvent({
           {ev.preConsultationCompletedAt ? '완료' : ev.consultationLinkSentAt ? '대기' : '미발송'}
         </div>
       )}
-      <div className="h-full overflow-hidden flex flex-col gap-0.5">
-      {/* 1) 최상단: 시간 */}
-      <div className="text-[10px] opacity-60 leading-tight">{ev.startTime}–{ev.endTime}</div>
-      {/* 2) 중앙 강조: 고객명 + 방문횟수 */}
-      <div className="text-xs font-semibold leading-tight">{ev.title}</div>
-      {/* 3) 시술 메뉴 + 채널 */}
-      {showMetaRow && (
-        <div className="flex flex-wrap items-center gap-1 text-[10px]">
-          {ev.serviceLabel && (
-            <span className="rounded bg-white/50 px-1 py-px font-medium text-text">{ev.serviceLabel}</span>
+      <div className="h-full overflow-hidden flex flex-col text-[10px]">
+        {/* ① 시간 */}
+        <div className="opacity-60 leading-tight">{ev.startTime}–{ev.endTime}</div>
+
+        {/* ② 고객명 + 방문횟수 */}
+        <div className="text-xs font-semibold leading-tight mt-0.5">
+          {ev.title}
+          {(ev.visitCount ?? 0) > 0 && (
+            <span className="ml-0.5 text-[9px] font-normal opacity-50">({ev.visitCount}회)</span>
           )}
-          {ev.channel && <ChannelIcon channel={ev.channel} />}
         </div>
-      )}
-      {/* 4) 하단 좌: 국기 + 언어 */}
-      {/* 4) 하단 우: 선호 스타일 / 메모 */}
-      {/* 구분선 + 시술 참고사항 */}
-      {ev.customerNote && (
-        <>
-          <div className="border-t border-white/40 my-0.5" />
-          <div className="text-[9px] opacity-70 leading-snug whitespace-pre-line">
-            {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
-              <span className="mr-0.5">{LANGUAGE_FLAG[ev.language]}</span>
+
+        {/* ③ 시술 메뉴 + 채널 */}
+        {showMetaRow && (
+          <div className="flex flex-wrap items-center gap-1 mt-0.5">
+            {ev.serviceLabel && (
+              <span className="rounded bg-white/50 px-1 py-px font-medium text-text">{ev.serviceLabel}</span>
             )}
-            {ev.customerNote}
+            {ev.channel && <ChannelIcon channel={ev.channel} />}
           </div>
-        </>
-      )}
+        )}
+
+        {/* ── 구분선 ── */}
+        <div className="border-t border-white/30 my-1" />
+
+        {/* ④ 상세 정보 (각 줄 개별 표시) */}
+        <div className="flex flex-col gap-px text-[9px] leading-snug opacity-70">
+          {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
+            <div>{LANGUAGE_FLAG[ev.language]} {ev.language === 'en' ? 'English' : ev.language === 'zh' ? '中文' : ev.language === 'ja' ? '日本語' : ''}</div>
+          )}
+          {ev.nailShape && <div>💅 {ev.nailShape}</div>}
+          {ev.cuticleSensitivity && <div>✋ 큐티클 {ev.cuticleSensitivity}</div>}
+          {ev.durationPreference && <div>⏱ 시술시간 {ev.durationPreference}</div>}
+          {ev.preferredColors && ev.preferredColors.length > 0 && (
+            <div>🎨 {ev.preferredColors.join(', ')}</div>
+          )}
+        </div>
+
+        {/* ⑤ 메모 */}
+        {ev.customerNote && (
+          <div className="mt-0.5 text-[9px] opacity-60 leading-snug">📝 {ev.customerNote}</div>
+        )}
       </div>
     </motion.button>
   );
