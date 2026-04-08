@@ -156,37 +156,60 @@ export function PortfolioOverlay({
           </div>
 
           {/* 액션 버튼 */}
-          <div className="flex items-center gap-2 px-4 py-3 border-t border-border">
-            {/* 메뉴 토글 */}
-            <button
-              onClick={() => toggleMenu(photo.id, photo.price)}
-              className={cn('rounded-lg px-3 py-2 text-xs font-medium transition-colors',
-                photo.isFeatured ? 'bg-amber-50 text-amber-600 border border-amber-200' : 'bg-surface-alt text-text-secondary',
-              )}
-            >
-              {photo.isFeatured ? '메뉴 해제' : '메뉴 등록'}
-            </button>
-            {/* 인스타 저장 */}
-            <button
-              disabled={downloadingInsta}
-              onClick={async () => {
-                if (!photo.imageDataUrl) return;
-                setDownloadingInsta(true);
-                try { await downloadForInstagram(photo.imageDataUrl, '4:5'); } catch { /* */ } finally { setDownloadingInsta(false); }
-              }}
-              className="rounded-lg bg-surface-alt px-3 py-2 text-xs font-medium text-text-secondary"
-            >
-              {downloadingInsta ? '저장 중...' : '인스타 저장'}
-            </button>
-            {/* 고객 카드 */}
-            {customer?.id && (
+          <div className="flex flex-col gap-2 px-4 py-3 border-t border-border">
+            {/* 사진 저장 — 비율 선택 */}
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-text-muted shrink-0">저장</span>
               <button
-                onClick={() => { router.push(`/customers/${customer.id}`); onClose(); }}
-                className="flex-1 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white text-center"
+                disabled={downloadingInsta}
+                onClick={async () => {
+                  if (!photo.imageDataUrl) return;
+                  setDownloadingInsta(true);
+                  try { await downloadForInstagram(photo.imageDataUrl, '4:5'); } catch { /* */ } finally { setDownloadingInsta(false); }
+                }}
+                className="rounded-lg bg-surface-alt px-3 py-2 text-xs font-medium text-text-secondary"
               >
-                고객 카드
+                {downloadingInsta ? '...' : '4:5 피드'}
               </button>
-            )}
+              <button
+                disabled={downloadingInsta}
+                onClick={async () => {
+                  if (!photo.imageDataUrl) return;
+                  setDownloadingInsta(true);
+                  try { await downloadForInstagram(photo.imageDataUrl, '9:16'); } catch { /* */ } finally { setDownloadingInsta(false); }
+                }}
+                className="rounded-lg bg-surface-alt px-3 py-2 text-xs font-medium text-text-secondary"
+              >
+                9:16 스토리
+              </button>
+              {photo.recordId && (
+                <button
+                  onClick={() => { router.push(`/records/${photo.recordId}`); onClose(); }}
+                  className="rounded-lg bg-primary/10 px-3 py-2 text-xs font-medium text-primary"
+                >
+                  공유카드
+                </button>
+              )}
+            </div>
+            {/* 하단 액션 */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => toggleMenu(photo.id, photo.price)}
+                className={cn('rounded-lg px-3 py-2 text-xs font-medium transition-colors',
+                  photo.isFeatured ? 'bg-amber-50 text-amber-600 border border-amber-200' : 'bg-surface-alt text-text-secondary',
+                )}
+              >
+                {photo.isFeatured ? '메뉴 해제' : '메뉴 등록'}
+              </button>
+              {customer?.id && (
+                <button
+                  onClick={() => { router.push(`/customers/${customer.id}`); onClose(); }}
+                  className="flex-1 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white text-center"
+                >
+                  고객 카드
+                </button>
+              )}
+            </div>
           </div>
 
           {/* 인디케이터 */}
