@@ -137,6 +137,21 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
         </div>
       </div>
 
+      {/* 고객 이름 — 클릭 시 고객카드 이동 */}
+      <button
+        type="button"
+        onClick={() => router.push(`/customers/${record.customerId}`)}
+        className="mx-4 flex items-center gap-2 rounded-xl bg-surface-alt px-4 py-3 active:bg-border transition-colors"
+      >
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-sm font-medium text-primary">
+          {c.customerName.charAt(0)}
+        </div>
+        <span className="text-sm font-semibold text-text">{c.customerName}</span>
+        <svg className="ml-auto h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+
       {/* 비주얼 서머리: 참고 이미지 + 시술 사진 */}
       {hasImages && (
         <div className="flex flex-col gap-3 px-4">
