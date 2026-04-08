@@ -136,6 +136,7 @@ export default function RecordsPage() {
   const t = useT();
   const [mainTab, setMainTab] = useState<MainTab>('reservations');
   const [viewMode, setViewMode] = useState<ViewMode>('day');
+  const [designerFilter, setDesignerFilter] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterPeriod>('all');
   const [tagFilter, setTagFilter] = useState<string | null>(null);
@@ -533,13 +534,43 @@ export default function RecordsPage() {
             </span>
           </div>
 
-          <div className="px-4 md:px-0">
+          <div className="px-4 md:px-0 flex flex-col gap-2">
             <div className="flex items-center gap-3 text-xs text-text-secondary">
               {READINESS_LEGEND.map((item) => (
                 <span key={item.label} className="inline-flex items-center gap-1">
                   <span className={`h-2 w-2 rounded-full ${item.color}`} />
                   <span>{item.label}</span>
                 </span>
+              ))}
+            </div>
+            {/* 디자이너 필터 */}
+            <div className="flex gap-1 overflow-x-auto pb-0.5">
+              <button
+                type="button"
+                onClick={() => setDesignerFilter(null)}
+                className={cn(
+                  'flex-shrink-0 rounded-full px-3 py-1 text-[11px] font-medium transition-colors border',
+                  designerFilter === null
+                    ? 'bg-primary text-white border-primary'
+                    : 'bg-surface border-border text-text-secondary',
+                )}
+              >
+                전체
+              </button>
+              {activeDesigners.map((d) => (
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => setDesignerFilter(designerFilter === d.id ? null : d.id)}
+                  className={cn(
+                    'flex-shrink-0 rounded-full px-3 py-1 text-[11px] font-medium transition-colors border',
+                    designerFilter === d.id
+                      ? 'bg-primary text-white border-primary'
+                      : 'bg-surface border-border text-text-secondary',
+                  )}
+                >
+                  {d.name}
+                </button>
               ))}
             </div>
           </div>
@@ -556,7 +587,10 @@ export default function RecordsPage() {
               <DesignerDayGridCalendar
                 date={selectedDate}
                 events={timeGridEvents}
-                designers={activeDesigners.map((d) => ({ id: d.id, name: d.name }))}
+                designers={designerFilter
+                  ? activeDesigners.filter((d) => d.id === designerFilter).map((d) => ({ id: d.id, name: d.name }))
+                  : activeDesigners.map((d) => ({ id: d.id, name: d.name }))
+                }
                 startHour={calendarStartHour}
                 endHour={calendarEndHour}
                 onEventClick={handleEventClick}
