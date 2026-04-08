@@ -256,10 +256,10 @@ function DraggableEvent({
       )}
       style={{ top, height }}
     >
-      <div className="text-[10px] sm:text-xs font-semibold opacity-70 truncate leading-none">
+      <div className="text-[10px] sm:text-xs font-semibold opacity-70 leading-none">
         {ev.startTime}–{ev.endTime}
       </div>
-      <div className="text-[10px] sm:text-xs font-medium leading-tight truncate mt-0.5">{ev.title}</div>
+      <div className="text-xs font-medium leading-tight mt-0.5">{ev.title}</div>
       {showMetaRow && (
         <div className="mt-1 flex items-center gap-1 overflow-hidden" style={{ flexWrap: 'nowrap' }}>
           {ev.serviceLabel && (
@@ -451,7 +451,7 @@ export function DesignerDayGridCalendar({
   const gridRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
-  const hourHeight = isMobile ? 80 : 84;
+  const hourHeight = isMobile ? 100 : 84;
   const axisWidth = isMobile ? 40 : 60;
   const HEADER_H = isMobile ? 28 : 36;
 
