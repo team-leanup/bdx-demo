@@ -130,7 +130,7 @@ export function MonthCalendar({ selectedDate, onSelectDate, reservations }: Mont
         >
           {cells.map((day, idx) => {
             if (day === null) {
-              return <div key={`empty-${idx}`} className="h-10" />;
+              return <div key={`empty-${idx}`} className="h-12" />;
             }
 
             const dateStr = toDateStr(year, month, day);
@@ -142,7 +142,7 @@ export function MonthCalendar({ selectedDate, onSelectDate, reservations }: Mont
             const isSaturday = dayOfWeek === 6;
 
             return (
-              <div key={day} className="flex flex-col items-center">
+              <div key={day} className="flex flex-col items-center gap-0.5">
                 <button
                   type="button"
                   onClick={() => onSelectDate(dateStr)}
@@ -161,15 +161,17 @@ export function MonthCalendar({ selectedDate, onSelectDate, reservations }: Mont
                 >
                   {day}
                 </button>
-                {/* Reservation dot */}
-                {hasReservation && (
-                  <div
-                    className={cn(
-                      'w-1.5 h-1.5 rounded-full -mt-0.5',
-                      isSelected ? 'bg-primary' : 'bg-primary/60',
-                    )}
-                  />
-                )}
+                {/* Reservation dot — 고정 높이로 정렬 유지 */}
+                <div className="h-1.5 flex items-center justify-center">
+                  {hasReservation && (
+                    <div
+                      className={cn(
+                        'w-1.5 h-1.5 rounded-full',
+                        isSelected ? 'bg-primary' : 'bg-primary/60',
+                      )}
+                    />
+                  )}
+                </div>
               </div>
             );
           })}

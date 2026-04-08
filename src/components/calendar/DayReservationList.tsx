@@ -460,14 +460,6 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
                         {booking.requestNote && (
                           <p className="text-xs text-text-muted truncate mt-1">{booking.requestNote}</p>
                         )}
-                        {!booking.customerId && (
-                          <button
-                            onClick={() => setLinkModalBooking(booking)}
-                            className="text-[10px] text-primary font-medium hover:underline mt-1"
-                          >
-                            고객 카드 연결
-                          </button>
-                        )}
                       </div>
 
                       <div className="flex gap-1.5 flex-shrink-0 self-center">
