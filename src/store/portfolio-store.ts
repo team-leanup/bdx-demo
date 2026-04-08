@@ -47,6 +47,12 @@ interface PortfolioStore {
   updatePhoto: (id: string, updates: Partial<PortfolioPhoto>) => void;
   setPhotos: (photos: PortfolioPhoto[]) => void;
 
+  // 카테고리 관리
+  menuCategories: { key: string; label: string }[];
+  addCategory: (label: string) => void;
+  renameCategory: (key: string, label: string) => void;
+  removeCategory: (key: string) => void;
+
   clearAll: () => Promise<{ success: boolean; error?: string }>;
 }
 
@@ -99,6 +105,12 @@ export const usePortfolioStore = create<PortfolioStore>()(
       photos: [],
       _dbReady: false,
       migrationNotice: null,
+      menuCategories: [
+        { key: 'simple', label: '심플 / 원컬러' },
+        { key: 'french', label: '프렌치' },
+        { key: 'magnet', label: '자석 / 마그넷' },
+        { key: 'art', label: '아트' },
+      ],
 
       hydrateFromDB: async () => {
         const currentShopId = useAuthStore.getState().currentShopId;
@@ -291,6 +303,17 @@ export const usePortfolioStore = create<PortfolioStore>()(
 
       setPhotos: (photos) => {
         set({ photos: sortPortfolioPhotos(photos) });
+      },
+
+      addCategory: (label) => {
+        const key = `custom-${Date.now()}`;
+        set((s) => ({ menuCategories: [...s.menuCategories, { key, label }] }));
+      },
+      renameCategory: (key, label) => {
+        set((s) => ({ menuCategories: s.menuCategories.map((c) => c.key === key ? { ...c, label } : c) }));
+      },
+      removeCategory: (key) => {
+        set((s) => ({ menuCategories: s.menuCategories.filter((c) => c.key !== key) }));
       },
 
       clearAll: async () => {

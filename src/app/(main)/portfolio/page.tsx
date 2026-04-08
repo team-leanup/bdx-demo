@@ -176,14 +176,33 @@ const DESIGN_SCOPE_LABEL: Record<string, string> = {
   monthly_art: '이달의 아트',
 };
 
-const CATEGORY_LABEL: Record<string, string> = {
-  simple: '심플 / 원컬러',
-  french: '프렌치',
-  magnet: '자석 / 마그넷',
-  art: '아트',
-};
+// 기본 카테고리 (스토어에서 동적으로 관리됨)
+const DEFAULT_categoryOrder = ['simple', 'french', 'magnet', 'art'] as const;
 
-const CATEGORY_ORDER = ['simple', 'french', 'magnet', 'art'] as const;
+// ── MenuCategoryMove: 탭하면 이동할 카테고리 옵션 표시 ──
+function MenuCategoryMove({ photoId, currentCategory }: { photoId: string; currentCategory: string }): React.ReactElement {
+  const [open, setOpen] = useState(false);
+  const updatePhoto = usePortfolioStore((s) => s.updatePhoto);
+  const cats = usePortfolioStore((s) => s.menuCategories);
+  if (!open) {
+    return (
+      <button onClick={(e) => { e.stopPropagation(); setOpen(true); }} className="text-[9px] text-text-muted px-1.5 py-0.5 rounded-full bg-surface-alt hover:bg-border transition-colors">
+        이동
+      </button>
+    );
+  }
+  return (
+    <div className="flex gap-1 flex-wrap" onClick={(e) => e.stopPropagation()}>
+      {cats.filter((c) => c.key !== currentCategory).map((c) => (
+        <button key={c.key} onClick={() => { updatePhoto(photoId, { styleCategory: c.key as 'simple' | 'french' | 'magnet' | 'art' }); setOpen(false); }}
+          className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+          → {c.label}
+        </button>
+      ))}
+      <button onClick={() => setOpen(false)} className="text-[9px] text-text-muted px-1 py-0.5">✕</button>
+    </div>
+  );
+}
 
 const NAIL_FALLBACKS = [
   '/images/mock/nail/nail-1.jpg',
@@ -206,6 +225,11 @@ export default function PortfolioPage(): React.ReactElement {
   const clearMigrationNotice = usePortfolioStore((s) => s.clearMigrationNotice);
   const getMenuPhotos = usePortfolioStore((s) => s.getMenuPhotos);
   const toggleMenu = usePortfolioStore((s) => s.toggleMenu);
+  const menuCategories = usePortfolioStore((s) => s.menuCategories);
+  const addCategory = usePortfolioStore((s) => s.addCategory);
+  const renameCategory = usePortfolioStore((s) => s.renameCategory);
+  const categoryOrder = menuCategories.map((c) => c.key);
+  const categoryLabelMap = Object.fromEntries(menuCategories.map((c) => [c.key, c.label]));
   const getById = useCustomerStore((s) => s.getById);
   const getAllRecords = useRecordsStore((s) => s.getAllRecords);
   const [toasts, setToasts] = useState<ToastData[]>([]);
@@ -411,7 +435,7 @@ export default function PortfolioPage(): React.ReactElement {
 
   const menuByCategory = useMemo(() => {
     const grouped = new Map<string, PortfolioPhoto[]>();
-    CATEGORY_ORDER.forEach((cat) => grouped.set(cat, []));
+    categoryOrder.forEach((cat) => grouped.set(cat, []));
 
     menuPhotos.forEach((photo) => {
       const cat = photo.styleCategory ?? 'simple';
@@ -426,7 +450,7 @@ export default function PortfolioPage(): React.ReactElement {
   // Non-menu treatment photos grouped by category (for "메뉴에 추가" picker)
   const nonMenuByCategory = useMemo(() => {
     const grouped = new Map<string, PortfolioPhoto[]>();
-    CATEGORY_ORDER.forEach((cat) => grouped.set(cat, []));
+    categoryOrder.forEach((cat) => grouped.set(cat, []));
 
     treatmentPhotos
       .filter((p) => !p.isFeatured)
@@ -560,14 +584,14 @@ export default function PortfolioPage(): React.ReactElement {
               <p className="mt-1 text-sm text-text-muted">포트폴리오에서 사진을 메뉴판에 등록하세요</p>
             </div>
           ) : (
-            CATEGORY_ORDER.map((cat) => {
+            categoryOrder.map((cat) => {
               const items = menuByCategory.get(cat) ?? [];
               if (items.length === 0) return null;
               return (
                 <CategorySection
                   key={cat}
                   category={cat}
-                  label={CATEGORY_LABEL[cat]}
+                  label={categoryLabelMap[cat] ?? cat}
                   items={items}
                   nonMenuItems={nonMenuByCategory.get(cat) ?? []}
                   pickerOpen={pickerCategory === cat}
@@ -577,13 +601,14 @@ export default function PortfolioPage(): React.ReactElement {
                   onUploadPhoto={handleUploadPhoto}
                   onRemoveFromMenu={(id) => toggleMenu(id)}
                   onOpenOverlay={(id) => setOverlayPhotoId(id)}
+                  onRenameCategory={(newLabel) => renameCategory(cat, newLabel)}
                 />
               );
             })
           )}
 
           {/* "메뉴에 추가" sections for categories with no menu items yet */}
-          {CATEGORY_ORDER.map((cat) => {
+          {categoryOrder.map((cat) => {
             const items = menuByCategory.get(cat) ?? [];
             const nonMenuItems = nonMenuByCategory.get(cat) ?? [];
             if (items.length > 0 || nonMenuItems.length === 0) return null;
@@ -591,7 +616,7 @@ export default function PortfolioPage(): React.ReactElement {
               <CategorySection
                 key={`empty-${cat}`}
                 category={cat}
-                label={CATEGORY_LABEL[cat]}
+                label={categoryLabelMap[cat] ?? cat}
                 items={[]}
                 nonMenuItems={nonMenuItems}
                 pickerOpen={pickerCategory === cat}
@@ -604,6 +629,19 @@ export default function PortfolioPage(): React.ReactElement {
               />
             );
           })}
+          {/* 카테고리 추가 */}
+          <button
+            onClick={() => {
+              const name = prompt('새 카테고리 이름');
+              if (name?.trim()) addCategory(name.trim());
+            }}
+            className="flex items-center gap-1.5 text-sm text-text-muted hover:text-primary transition-colors py-2"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            카테고리 추가
+          </button>
         </div>
       )}
 
@@ -851,6 +889,7 @@ interface CategorySectionProps {
   onUploadPhoto: (file: File) => void;
   onRemoveFromMenu: (id: string) => void;
   onOpenOverlay: (id: string) => void;
+  onRenameCategory?: (newLabel: string) => void;
 }
 
 function CategorySection({
@@ -864,6 +903,7 @@ function CategorySection({
   onUploadPhoto,
   onRemoveFromMenu,
   onOpenOverlay,
+  onRenameCategory,
 }: CategorySectionProps): React.ReactElement {
   const fileInputRef = useRef<HTMLInputElement>(null);
   return (
@@ -871,6 +911,19 @@ function CategorySection({
       {/* Section header */}
       <div className="flex items-center gap-2">
         <h2 className="text-sm font-bold text-text">{label}</h2>
+        {onRenameCategory && (
+          <button
+            onClick={() => {
+              const newName = prompt('카테고리 이름 수정', label);
+              if (newName?.trim()) onRenameCategory(newName.trim());
+            }}
+            className="text-text-muted hover:text-primary transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
+        )}
         <span className="text-xs text-text-muted">{items.length}개</span>
         <div className="flex-1 h-px bg-border" />
       </div>
@@ -989,7 +1042,17 @@ function MenuCard({ photo, fallbackIdx, onRemove, onOpenOverlay }: MenuCardProps
       {/* 정보 */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-1">
-          <p className="text-sm font-semibold text-text truncate">{photo.designType ?? '미지정'}</p>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              const newName = prompt('메뉴 이름 수정', photo.designType ?? '');
+              if (newName?.trim()) updatePhoto(photo.id, { designType: newName.trim() });
+            }}
+            className="text-sm font-semibold text-text truncate hover:text-primary transition-colors text-left"
+            title="탭하여 이름 수정"
+          >
+            {photo.designType ?? '미지정'}
+          </button>
           <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className="shrink-0 text-[10px] text-text-muted hover:text-red-500">해제</button>
         </div>
         <div className="flex items-center gap-1.5 mt-0.5">
@@ -1010,17 +1073,7 @@ function MenuCard({ photo, fallbackIdx, onRemove, onOpenOverlay }: MenuCardProps
             )}
           >인기</button>
           {/* 카테고리 이동 */}
-          <select
-            value={photo.styleCategory ?? 'simple'}
-            onClick={(e) => e.stopPropagation()}
-            onChange={(e) => { updatePhoto(photo.id, { styleCategory: e.target.value as 'simple' | 'french' | 'magnet' | 'art' }); }}
-            className="text-[9px] font-medium px-1 py-0.5 rounded-full bg-surface-alt text-text-muted border-0 appearance-none cursor-pointer"
-          >
-            <option value="simple">심플</option>
-            <option value="french">프렌치</option>
-            <option value="magnet">마그넷</option>
-            <option value="art">아트</option>
-          </select>
+          <MenuCategoryMove photoId={photo.id} currentCategory={photo.styleCategory ?? 'simple'} />
         </div>
       </div>
     </div>
