@@ -368,7 +368,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
             )}
             {wrappingPreference && (
               <SummaryRow
-                label={t('preConsult.wrappingTitle').split('을')[0].split(' ')[0]}
+                label={locale === 'ko' ? '랩핑' : locale === 'en' ? 'Wrapping' : locale === 'zh' ? '包边' : 'ラッピング'}
                 value={labels.wrapping[wrappingPreference]}
               />
             )}

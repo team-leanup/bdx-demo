@@ -12,19 +12,17 @@ import { LengthSelector } from '@/components/pre-consult/LengthSelector';
 import { ShapePickerSimple } from '@/components/pre-consult/ShapePickerSimple';
 import { VibeSelector } from '@/components/pre-consult/VibeSelector';
 import { StyleSelector } from '@/components/pre-consult/StyleSelector';
-import { WrappingSelector } from '@/components/pre-consult/WrappingSelector';
 import { AdditionalOptions } from '@/components/pre-consult/AdditionalOptions';
 import { ConsultReview } from '@/components/pre-consult/ConsultReview';
 import { FatigueMessage } from '@/components/pre-consult/FatigueMessage';
 
-type SectionId = 'upload' | 'nailStatus' | 'length' | 'shape' | 'wrapping' | 'vibe' | 'style' | 'addons' | 'review';
+type SectionId = 'upload' | 'nailStatus' | 'length' | 'shape' | 'vibe' | 'style' | 'addons' | 'review';
 
 const SECTION_ORDER: SectionId[] = [
   'upload',
   'nailStatus',
   'length',
   'shape',
-  'wrapping',
   'vibe',
   'style',
   'addons',
@@ -32,11 +30,11 @@ const SECTION_ORDER: SectionId[] = [
 ];
 
 // Show a fatigue message AFTER the section at this index completes (0-based)
-// Index 2 = 'length' (~25%), Index 5 = 'vibe' (~55%), Index 6 = 'style' (~75%)
+// Index 2 = 'length' (~30%), Index 4 = 'vibe' (~60%), Index 5 = 'style' (~80%)
 const FATIGUE_AFTER: Record<number, 'midMsg1' | 'midMsg2' | 'midMsg3'> = {
   2: 'midMsg1',
-  5: 'midMsg2',
-  6: 'midMsg3',
+  4: 'midMsg2',
+  5: 'midMsg3',
 };
 
 export default function PreConsultConsultPage(): React.ReactElement {
@@ -154,9 +152,6 @@ export default function PreConsultConsultPage(): React.ReactElement {
                   )}
                   {sectionId === 'shape' && (
                     <ShapePickerSimple onComplete={() => handleSectionComplete('shape')} />
-                  )}
-                  {sectionId === 'wrapping' && (
-                    <WrappingSelector onComplete={() => handleSectionComplete('wrapping')} />
                   )}
                   {sectionId === 'vibe' && (
                     <VibeSelector onComplete={() => handleSectionComplete('vibe')} />

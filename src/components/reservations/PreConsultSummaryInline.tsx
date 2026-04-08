@@ -28,6 +28,11 @@ const EXTENSION_TYPE_LABEL: Record<string, string> = {
   extension: '연장',
 };
 
+const WRAPPING_LABEL: Record<string, string> = {
+  yes: '랩핑 원함',
+  no: '랩핑 불필요',
+};
+
 const NAIL_SHAPE_LABEL: Record<string, string> = {
   round: '라운드',
   oval: '오벌',
@@ -108,6 +113,11 @@ export function PreConsultSummaryInline({ data, referenceImageUrls }: PreConsult
         <SectionCard title="시술 조건">
           <Row label="오프" value={OFF_TYPE_LABEL[data.offType] ?? data.offType} />
           <Row label="연장 / 리페어" value={EXTENSION_TYPE_LABEL[data.extensionType] ?? data.extensionType} />
+          {(() => {
+            const raw = data as unknown as Record<string, unknown>;
+            const wp = raw.wrappingPreference as string | undefined;
+            return wp ? <Row label="랩핑" value={WRAPPING_LABEL[wp] ?? wp} /> : null;
+          })()}
         </SectionCard>
 
         {/* 추가 옵션 (파츠 또는 추가 컬러가 있을 때만) */}

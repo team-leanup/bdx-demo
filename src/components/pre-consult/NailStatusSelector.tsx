@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useT, useKo, useLocale } from '@/lib/i18n';
 import { usePreConsultStore } from '@/store/pre-consult-store';
 import { SelectCard } from '@/components/ui/SelectCard';
-import type { NailCurrentStatus, RemovalPreference } from '@/types/pre-consultation';
+import type { NailCurrentStatus, RemovalPreference, WrappingPreference } from '@/types/pre-consultation';
 
 interface NailStatusSelectorProps {
   onComplete: () => void;
@@ -17,12 +17,13 @@ export function NailStatusSelector({ onComplete }: NailStatusSelectorProps): Rea
   const locale = useLocale();
   const store = usePreConsultStore();
   const [showRemoval, setShowRemoval] = useState(store.nailStatus === 'existing');
+  const [showWrapping, setShowWrapping] = useState(store.wrappingPreference !== null);
 
   const handleSelect = (status: NailCurrentStatus): void => {
     store.setNailStatus(status);
     if (status === 'none') {
       store.setRemovalPreference('none');
-      onComplete();
+      setShowWrapping(true);
     } else {
       setShowRemoval(true);
     }
@@ -30,6 +31,11 @@ export function NailStatusSelector({ onComplete }: NailStatusSelectorProps): Rea
 
   const handleRemoval = (pref: RemovalPreference): void => {
     store.setRemovalPreference(pref);
+    setShowWrapping(true);
+  };
+
+  const handleWrapping = (pref: WrappingPreference): void => {
+    store.setWrappingPreference(pref);
     onComplete();
   };
 
@@ -100,6 +106,49 @@ export function NailStatusSelector({ onComplete }: NailStatusSelectorProps): Rea
                 icon={<span>🔄</span>}
                 title={t('preConsult.removalOther')}
                 subLabel={locale !== 'ko' ? tKo('preConsult.removalOther') : undefined}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showWrapping && (
+          <motion.div
+            key="wrapping"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.25 }}
+            className="flex flex-col gap-3 pt-2"
+          >
+            <div>
+              <p className="text-sm font-semibold text-text-muted">
+                {t('preConsult.wrappingTitle')}
+              </p>
+              {locale !== 'ko' && (
+                <p className="text-xs text-text-muted opacity-60">
+                  {tKo('preConsult.wrappingTitle')}
+                </p>
+              )}
+              <p className="text-xs text-text-muted mt-0.5">
+                {t('preConsult.wrappingDesc')}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <SelectCard
+                selected={store.wrappingPreference === 'yes'}
+                onSelect={() => handleWrapping('yes')}
+                icon={<span>💅</span>}
+                title={t('preConsult.wrappingYes')}
+                subLabel={locale !== 'ko' ? tKo('preConsult.wrappingYes') : undefined}
+              />
+              <SelectCard
+                selected={store.wrappingPreference === 'no'}
+                onSelect={() => handleWrapping('no')}
+                icon={<span>🙅‍♀️</span>}
+                title={t('preConsult.wrappingNo')}
+                subLabel={locale !== 'ko' ? tKo('preConsult.wrappingNo') : undefined}
               />
             </div>
           </motion.div>

@@ -301,8 +301,8 @@ function DraggableEvent({
             <div className="border-t border-white/30 mt-1 mb-0.5" />
             <div className="text-[11px] leading-snug opacity-70 space-y-px">
               {ev.nailShape && <div>{ev.nailShape} {ev.cuticleSensitivity ? `· 큐티클 ${ev.cuticleSensitivity}` : ''}</div>}
-              {(ev.durationPreference || ev.removalNeeded) && (
-                <div>{[ev.durationPreference && `시간 ${ev.durationPreference}`, ev.removalNeeded].filter(Boolean).join(' · ')}</div>
+              {(ev.durationPreference || ev.removalNeeded || ev.wrappingNeeded) && (
+                <div>{[ev.durationPreference && `시간 ${ev.durationPreference}`, ev.removalNeeded, ev.wrappingNeeded].filter(Boolean).join(' · ')}</div>
               )}
               {ev.preferredColors && ev.preferredColors.length > 0 && (
                 <div>{ev.preferredColors.join(', ')}</div>

@@ -30,6 +30,7 @@ const SHAPE_LABEL: Record<string, string> = {
   round: '라운드', oval: '오벌', square: '스퀘어', squoval: '스퀘오벌',
   almond: '아몬드', stiletto: '스틸레토', coffin: '코핀',
 };
+const WRAPPING_LABEL: Record<string, string> = { yes: '랩핑 원함', no: '랩핑 불필요' };
 const FEEL_LABEL: Record<string, string> = { natural: '내추럴', french: '프렌치', trendy: '트렌디', fancy: '화려한' };
 const STYLE_PREF_LABEL: Record<string, string> = { photo_match: '사진과 동일하게', natural_fit: '자연스럽게', clean_subtle: '깔끔하게' };
 const STYLE_KW_LABEL: Record<string, string> = {
@@ -221,6 +222,9 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
             {raw?.lengthPreference && <InfoRow label="길이 선호" value={LENGTH_PREF_LABEL[raw.lengthPreference]} />}
             {raw?.extensionLength && raw.lengthPreference === 'extend' && (
               <InfoRow label="연장 길이" value={EXTENSION_LEN_LABEL[raw.extensionLength]} />
+            )}
+            {raw?.wrappingPreference && (
+              <InfoRow label="랩핑" value={WRAPPING_LABEL[raw.wrappingPreference]} />
             )}
           </SectionCard>
         )}

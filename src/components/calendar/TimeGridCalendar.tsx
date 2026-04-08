@@ -43,6 +43,7 @@ export interface TimeGridEvent {
   visitCount?: number;
   preferredColors?: string[];
   removalNeeded?: string;
+  wrappingNeeded?: string;
 }
 
 interface TimeGridCalendarProps {

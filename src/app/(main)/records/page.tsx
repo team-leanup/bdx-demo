@@ -123,6 +123,13 @@ function toTimeGridEvents(
         if (pref === 'other_shop') return '타샵 제거';
         return undefined;
       })(),
+      wrappingNeeded: (() => {
+        const raw = r.preConsultationData as Record<string, unknown> | undefined;
+        const pref = raw?.wrappingPreference as string | undefined;
+        if (pref === 'yes') return '랩핑 원함';
+        if (pref === 'no') return '랩핑 불필요';
+        return undefined;
+      })(),
     });
   }
 
