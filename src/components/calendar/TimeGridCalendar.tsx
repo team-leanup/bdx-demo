@@ -38,6 +38,7 @@ export interface TimeGridEvent {
   // Extra info for schedule view
   nailShape?: string;
   cuticleSensitivity?: string;
+  durationPreference?: string;
   customerNote?: string;
 }
 

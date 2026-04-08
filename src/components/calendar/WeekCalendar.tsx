@@ -4,17 +4,15 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/cn';
 import { addDaysInKorea, getKoreanWeekStart, getTodayInKorea, parseKoreanDateString } from '@/lib/format';
-import type { BookingRequest, BookingChannel } from '@/types/consultation';
+import type { BookingRequest } from '@/types/consultation';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
-const CHANNEL_COLORS: Record<BookingChannel, string> = {
-  kakao: 'bg-yellow-400',
-  naver: 'bg-green-500',
-  phone: 'bg-blue-400',
-  walk_in: 'bg-text-muted',
-  pre_consult: 'bg-primary',
-};
+function getReadinessDotColor(r: BookingRequest): string {
+  if (r.preConsultationCompletedAt) return 'bg-emerald-500'; // 응답 완료
+  if (r.consultationLinkSentAt) return 'bg-amber-400';      // 응답 대기
+  return 'bg-slate-300';                                      // 링크 미발송
+}
 
 interface WeekCalendarProps {
   selectedDate: string;
@@ -130,10 +128,8 @@ export function WeekCalendar({ selectedDate, onSelectDate, reservations }: WeekC
             const isSunday = dayOfWeek === 0;
             const isSaturday = dayOfWeek === 6;
 
-            // Unique channels for dots (max 3)
-            const channelDots = dayReservations
-              .slice(0, 3)
-              .map((r) => r.channel);
+            // Readiness dots (max 3)
+            const readinessDots = dayReservations.slice(0, 3);
 
             return (
               <button
@@ -182,13 +178,13 @@ export function WeekCalendar({ selectedDate, onSelectDate, reservations }: WeekC
                   <span className="h-4" />
                 )}
 
-                {/* Channel color dots */}
-                {channelDots.length > 0 && (
+                {/* Readiness dots */}
+                {readinessDots.length > 0 && (
                   <div className="flex gap-0.5">
-                    {channelDots.map((ch, i) => (
+                    {readinessDots.map((r, i) => (
                       <span
                         key={i}
-                        className={cn('w-1.5 h-1.5 rounded-full', CHANNEL_COLORS[ch], isSelected ? 'opacity-80' : '')}
+                        className={cn('w-1.5 h-1.5 rounded-full', getReadinessDotColor(r), isSelected ? 'opacity-80' : '')}
                       />
                     ))}
                   </div>

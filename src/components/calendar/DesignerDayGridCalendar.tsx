@@ -256,18 +256,20 @@ function DraggableEvent({
       )}
       style={{ top, height, overflow: 'hidden' }}
     >
+      {/* 시간 */}
       <div className="text-[10px] opacity-70 leading-tight">{ev.startTime}–{ev.endTime}</div>
-      {/* 이름 + 국기 (한 줄) */}
-      <div className="flex items-center gap-1 mt-0.5">
-        <span className="text-xs font-semibold leading-tight break-words">{ev.title}</span>
+      {/* 이름 + 국기 */}
+      <div className="text-xs font-semibold leading-tight mt-0.5">
+        {ev.title}
         {ev.language && ev.language !== 'ko' && LANGUAGE_FLAG[ev.language] && (
-          <span className="text-[10px] flex-shrink-0">{LANGUAGE_FLAG[ev.language]}</span>
+          <span className="ml-0.5">{LANGUAGE_FLAG[ev.language]}</span>
         )}
       </div>
+      {/* 서비스 + 상태 */}
       {showMetaRow && (
-        <div className="mt-1 flex flex-wrap items-center gap-x-1 gap-y-0.5">
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-1 gap-y-0.5 text-[10px]">
           {ev.serviceLabel && (
-            <span className="rounded bg-white/50 px-1 py-px text-[10px] font-medium text-text">{ev.serviceLabel}</span>
+            <span className="rounded bg-white/50 px-1 py-px font-medium text-text">{ev.serviceLabel}</span>
           )}
           {ev.type === 'reservation' && (
             <ReservationReadinessBadge
@@ -277,24 +279,26 @@ function DraggableEvent({
             />
           )}
           {ev.channel && CHANNEL_EMOJI[ev.channel] && (
-            <span className="text-[10px]">{CHANNEL_EMOJI[ev.channel]}</span>
+            <span>{CHANNEL_EMOJI[ev.channel]}</span>
           )}
         </div>
       )}
-      {/* 체크리스트 요약 (쉐잎, 민감도 등) */}
-      {(ev.nailShape || ev.cuticleSensitivity) && (
-        <div className="mt-0.5 text-[9px] opacity-70 leading-tight">
-          {ev.nailShape && <span>{ev.nailShape}</span>}
-          {ev.nailShape && ev.cuticleSensitivity && <span> · </span>}
-          {ev.cuticleSensitivity && <span>민감도 {ev.cuticleSensitivity}</span>}
+      {/* 고객 선호 요약 */}
+      {(ev.nailShape || ev.cuticleSensitivity || ev.durationPreference) && (
+        <div className="mt-0.5 text-[9px] opacity-60 leading-snug">
+          {[
+            ev.nailShape,
+            ev.cuticleSensitivity && `민감:${ev.cuticleSensitivity}`,
+            ev.durationPreference && `시간:${ev.durationPreference}`,
+          ].filter(Boolean).join(' · ')}
         </div>
       )}
       {/* 요청 메모 */}
       {ev.customerNote && (
-        <div className="mt-0.5 text-[9px] opacity-60 leading-tight truncate">📝 {ev.customerNote}</div>
+        <div className="mt-0.5 text-[9px] opacity-50 leading-snug">📝 {ev.customerNote}</div>
       )}
-      {showTags && (
-        <div className="mt-0.5 flex flex-wrap items-center gap-1">
+      {showTags && displayTags.length > 0 && (
+        <div className="mt-0.5 flex flex-wrap items-center gap-0.5">
           {displayTags.map((tag) => (
             <CustomerTagChip key={tag.id} tag={tag} size="xs" />
           ))}

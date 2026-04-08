@@ -83,12 +83,16 @@ function getTodayStr(): string {
 
 function toTimeGridEvents(
   reservations: import('@/types/consultation').BookingRequest[],
+  getCustomerById: (id: string) => import('@/types/customer').Customer | undefined,
 ): TimeGridEvent[] {
   const events: TimeGridEvent[] = [];
 
   for (const r of reservations) {
     const [h, m] = r.reservationTime.split(':').map(Number);
     const endH = Math.min(h + 1, 23);
+    const customer = r.customerId ? getCustomerById(r.customerId) : undefined;
+    const durationMap: Record<string, string> = { short: '짧음', normal: '보통', long: '김' };
+    const sensitivityMap: Record<string, string> = { normal: '보통', sensitive: '민감' };
     events.push({
       id: `res-${r.id}`,
       title: r.customerName,
@@ -107,8 +111,9 @@ function toTimeGridEvents(
       serviceLabel: r.serviceLabel,
       consultationLinkSentAt: r.consultationLinkSentAt,
       preConsultationCompletedAt: r.preConsultationCompletedAt,
-      nailShape: (r.preConsultationData as Record<string, unknown> | undefined)?.nailShape as string | undefined,
-      cuticleSensitivity: (r.preConsultationData as Record<string, unknown> | undefined)?.cuticleSensitivity as string | undefined,
+      nailShape: customer?.preference?.preferredShape ?? undefined,
+      cuticleSensitivity: customer?.preference?.cuticleSensitivity ? sensitivityMap[customer.preference.cuticleSensitivity] : undefined,
+      durationPreference: customer?.durationPreference ? durationMap[customer.durationPreference] : undefined,
       customerNote: r.requestNote,
     });
   }
@@ -227,8 +232,8 @@ export default function RecordsPage() {
 
 
   const timeGridEvents = useMemo(
-    () => toTimeGridEvents(allReservations),
-    [allReservations],
+    () => toTimeGridEvents(allReservations, getCustomerById),
+    [allReservations, getCustomerById],
   );
 
   const sorted = useMemo(
