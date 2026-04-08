@@ -472,7 +472,7 @@ export function DesignerDayGridCalendar({
   const gridRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
-  const hourHeight = 160;
+  const hourHeight = 200;
   const axisWidth = isMobile ? 40 : 60;
   const HEADER_H = isMobile ? 28 : 36;
 
