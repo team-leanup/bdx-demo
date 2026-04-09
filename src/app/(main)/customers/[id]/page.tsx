@@ -416,23 +416,22 @@ function CustomerDetailContent({ id }: { id: string }) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 className="text-lg font-bold text-text">고객 상세</h1>
-      </div>
-
-      {/* 매출 등록 — 상단 primary CTA */}
-      <div className="px-4">
-        <Button
-          variant="primary"
-          fullWidth
+        <h1 className="flex-1 text-lg font-bold text-text">고객 상세</h1>
+        <button
+          type="button"
           onClick={() => {
             const params = new URLSearchParams();
             params.set('customerId', customer.id);
             params.set('customerName', customer.name);
             router.push(`/quick-sale?${params.toString()}`);
           }}
+          className="flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white"
         >
-          매출 등록
-        </Button>
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          매출
+        </button>
       </div>
 
       {/* ─────────────────────────────── */}
