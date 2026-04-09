@@ -150,7 +150,16 @@ export function QuickOptionsPanel({
         </AnimatePresence>
       </section>
 
-      {/* Section 3: 추가 옵션 */}
+      {/* Section 3: 랩핑 여부 */}
+      <section>
+        <SectionLabel>랩핑</SectionLabel>
+        <div className="grid grid-cols-2 gap-2 mt-3">
+          <OptionBtn active={!addOns.includes('wrapping' as AddOnOption)} label="없음" onClick={() => { /* default */ }} />
+          <OptionBtn active={addOns.includes('wrapping' as AddOnOption)} label="랩핑" sublabel="+₩5,000" onClick={() => onToggleAddOn('wrapping' as AddOnOption)} />
+        </div>
+      </section>
+
+      {/* Section 4: 추가 옵션 */}
       <section>
         <SectionLabel>{t('fieldMode.optionAddOnTitle')}</SectionLabel>
         <div className="flex flex-wrap gap-2 mt-3">
