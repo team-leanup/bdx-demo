@@ -111,7 +111,10 @@ export const DEMO_CUSTOMERS: Customer[] = [
     visitCount: 10,
     averageSpend: 105000,
     totalSpend: 1050000,
-    tags: [],
+    tags: [
+      { id: 'demo-t-c003-1', customerId: 'demo-c-003', category: 'etc', value: '큐티클민감', isCustom: false, createdAt: isoKR(NOW), pinned: true, sortOrder: 0 },
+      { id: 'demo-t-c003-2', customerId: 'demo-c-003', category: 'etc', value: '손톱얇음', isCustom: false, createdAt: isoKR(NOW), pinned: true, sortOrder: 1 },
+    ],
     smallTalkNotes: [],
     treatmentHistory: [
       { recordId: 'demo-r-005', date: addDays(NOW, -8), bodyPart: 'hand', designScope: '시그니처 아트', price: 130000, designerName: DESIGNERS.원장.name, imageUrls: [], colorLabels: ['로즈브라운', '골드'], partsUsed: ['메탈 파츠'] },
@@ -138,7 +141,9 @@ export const DEMO_CUSTOMERS: Customer[] = [
     visitCount: 5,
     averageSpend: 88000,
     totalSpend: 440000,
-    tags: [],
+    tags: [
+      { id: 'demo-t-c004-1', customerId: 'demo-c-004', category: 'etc', value: '큐티클민감', isCustom: false, createdAt: isoKR(NOW), pinned: true, sortOrder: 0 },
+    ],
     smallTalkNotes: [],
     treatmentHistory: [
       { recordId: 'demo-r-007', date: addDays(NOW, -15), bodyPart: 'hand', designScope: '그라데이션', price: 85000, designerName: DESIGNERS.민서.name, imageUrls: [], colorLabels: ['라벤더', '화이트'] },
@@ -166,7 +171,10 @@ export const DEMO_CUSTOMERS: Customer[] = [
     visitCount: 3,
     averageSpend: 95000,
     totalSpend: 285000,
-    tags: [],
+    tags: [
+      { id: 'demo-t-c005-1', customerId: 'demo-c-005', category: 'etc', value: '알러지주의', isCustom: false, createdAt: isoKR(NOW), pinned: true, sortOrder: 0 },
+      { id: 'demo-t-c005-2', customerId: 'demo-c-005', category: 'etc', value: '연장이력있음', isCustom: false, createdAt: isoKR(NOW), pinned: true, sortOrder: 1 },
+    ],
     smallTalkNotes: [],
     treatmentHistory: [
       { recordId: 'demo-r-008', date: addDays(NOW, -20), bodyPart: 'hand', designScope: '풀아트', price: 110000, designerName: DESIGNERS.원장.name, imageUrls: [], colorLabels: ['핑크', '화이트'] },

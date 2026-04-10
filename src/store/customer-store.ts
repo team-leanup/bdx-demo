@@ -256,7 +256,9 @@ async function loadDemoCustomers(customers: Customer[], shopId: string | null): 
   if (shopId !== 'shop-demo') return customers;
   const { DEMO_CUSTOMERS } = await import('@/data/mock-demo-data');
   const demoMap = new Map(DEMO_CUSTOMERS.map((c) => [c.id, c]));
-  // Merge preference/durationPreference from demo data into existing customers
+  // Merge demo data into existing customers.
+  // - preference / durationPreference: demo 값 우선
+  // - tags: 기존 tags가 비어있으면 demo 시드를 채워넣음 (수동 추가한 태그는 유지)
   const merged = customers.map((c) => {
     const demo = demoMap.get(c.id);
     if (!demo) return c;
@@ -264,6 +266,7 @@ async function loadDemoCustomers(customers: Customer[], shopId: string | null): 
       ...c,
       preference: demo.preference ?? c.preference,
       durationPreference: demo.durationPreference ?? c.durationPreference,
+      tags: (c.tags && c.tags.length > 0) ? c.tags : (demo.tags ?? []),
     };
   });
   const existingIds = new Set(merged.map((c) => c.id));
