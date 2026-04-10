@@ -20,6 +20,8 @@ interface QuickSaleSubmitData {
   paymentMethod: PaymentMethod;
   designerId: string;
   memo: string;
+  saleDate: string;
+  saleTime: string;
 }
 
 function QuickSaleContent(): React.ReactElement {
@@ -53,6 +55,8 @@ function QuickSaleContent(): React.ReactElement {
       finalPrice: data.amount,
       notes: data.memo || undefined,
       paymentMethod: data.paymentMethod,
+      saleDate: data.saleDate,
+      saleTime: data.saleTime,
     }).then(() => {
       if (bookingId) {
         updateReservation(bookingId, { status: 'completed' });

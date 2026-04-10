@@ -17,6 +17,8 @@ interface QuickSaleFormValues {
   paymentMethod: PaymentMethod | undefined;
   designerId: string;
   memo: string;
+  saleDate: string;
+  saleTime: string;
 }
 
 interface QuickSaleSubmitData {
@@ -29,6 +31,8 @@ interface QuickSaleSubmitData {
   paymentMethod: PaymentMethod;
   designerId: string;
   memo: string;
+  saleDate: string;
+  saleTime: string;
 }
 
 interface QuickSaleFormProps {
@@ -77,15 +81,25 @@ export function QuickSaleForm({
     return undefined;
   }, [initialCustomerId, customers]);
 
-  const [form, setForm] = useState<QuickSaleFormValues>({
-    customerId: initialCustomerId,
-    customerQuery: resolvedInitialName,
-    customerPhone: resolvedInitialPhone,
-    serviceType: '',
-    amount: '',
-    paymentMethod: undefined,
-    designerId: '',
-    memo: '',
+  const [form, setForm] = useState<QuickSaleFormValues>(() => {
+    const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mi = String(now.getMinutes()).padStart(2, '0');
+    return {
+      customerId: initialCustomerId,
+      customerQuery: resolvedInitialName,
+      customerPhone: resolvedInitialPhone,
+      serviceType: '',
+      amount: '',
+      paymentMethod: undefined,
+      designerId: '',
+      memo: '',
+      saleDate: `${yyyy}-${mm}-${dd}`,
+      saleTime: `${hh}:${mi}`,
+    };
   });
   const [errors, setErrors] = useState<Partial<Record<keyof QuickSaleFormValues, string>>>({});
   const [showDropdown, setShowDropdown] = useState(false);
@@ -146,6 +160,8 @@ export function QuickSaleForm({
         paymentMethod: form.paymentMethod!,
         designerId: form.designerId,
         memo: form.memo,
+        saleDate: form.saleDate,
+        saleTime: form.saleTime,
       });
     },
     [form, onSubmit],
@@ -205,6 +221,28 @@ export function QuickSaleForm({
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
+      </div>
+
+      {/* 날짜 / 시간 */}
+      <div className="flex gap-3">
+        <div className="flex-1 flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-text-secondary">날짜</label>
+          <input
+            type="date"
+            value={form.saleDate}
+            onChange={(e) => set('saleDate', e.target.value)}
+            className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-text text-sm focus:outline-none focus:border-primary transition-colors"
+          />
+        </div>
+        <div className="flex-1 flex flex-col gap-1.5">
+          <label className="text-xs font-semibold text-text-secondary">시간</label>
+          <input
+            type="time"
+            value={form.saleTime}
+            onChange={(e) => set('saleTime', e.target.value)}
+            className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-text text-sm focus:outline-none focus:border-primary transition-colors"
+          />
+        </div>
       </div>
 
       {/* 금액 */}

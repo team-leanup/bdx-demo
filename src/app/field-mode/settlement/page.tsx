@@ -85,6 +85,15 @@ export default function SettlementPage(): React.ReactElement | null {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
 
+  // ── Discount ───────────────────────────────────────────────────────────────
+  const [discountPercent, setDiscountPercent] = useState(0);
+
+  // ── Deposit ────────────────────────────────────────────────────────────────
+  const presetDeposit = shopSettings.depositAmount ?? 0;
+  const [depositApplied, setDepositApplied] = useState(0);
+  const [customDepositInput, setCustomDepositInput] = useState('');
+  const [showCustomDeposit, setShowCustomDeposit] = useState(false);
+
   // Guard: redirect if no design selected
   useEffect(() => {
     if (!selectedCategory) {
@@ -107,7 +116,9 @@ export default function SettlementPage(): React.ReactElement | null {
   }, [selectedCategory, removalType, lengthType, addOns, shopSettings]);
 
   const inTreatmentTotal = inTreatmentAddons.reduce((s, a) => s + a.amount, 0);
-  const finalPrice = (baseEstimate?.minTotal ?? 0) + inTreatmentTotal;
+  const subtotal = (baseEstimate?.minTotal ?? 0) + inTreatmentTotal;
+  const discountAmount = discountPercent > 0 ? Math.round(subtotal * discountPercent / 100) : 0;
+  const finalPrice = Math.max(0, subtotal - discountAmount - depositApplied);
 
   // ── Treatment duration ───────────────────────────────────────────────────────
 
@@ -172,11 +183,9 @@ export default function SettlementPage(): React.ReactElement | null {
         bookingId: bookingId || undefined,
       });
     } catch {
-      // local optimistic update already applied by store; show warning banner but continue
-      console.error('[settlement] record save failed — local data retained, DB sync pending');
+      // local optimistic update already applied by store; show warning but continue
+      console.warn('[settlement] DB save failed — local data retained, continuing to wrap-up');
       setSaveError(true);
-      setIsSaving(false);
-      return;
     }
 
     // 예약과 연결된 경우 예약 status를 completed로 변경
@@ -301,15 +310,121 @@ export default function SettlementPage(): React.ReactElement | null {
           <div className="border-t border-border my-1" />
         </motion.div>
 
+        {/* Discount */}
+        <motion.div variants={itemVariants}>
+          <div className="px-1">
+            <p className="text-sm font-medium text-text-secondary mb-2">할인</p>
+            <div className="flex gap-2">
+              {[0, 5, 10, 15, 20].map((pct) => (
+                <button
+                  key={pct}
+                  type="button"
+                  onClick={() => setDiscountPercent(pct)}
+                  className={cn(
+                    'flex-1 py-2 rounded-xl text-xs font-bold border transition-all duration-150 active:scale-95',
+                    discountPercent === pct
+                      ? 'bg-primary text-white border-primary'
+                      : 'bg-surface-alt text-text-secondary border-border hover:border-primary/40',
+                  )}
+                >
+                  {pct === 0 ? '없음' : `${pct}%`}
+                </button>
+              ))}
+            </div>
+            {discountPercent > 0 && (
+              <p className="text-xs text-error font-semibold mt-2 text-right">
+                -{discountAmount.toLocaleString()}원 할인 적용
+              </p>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Deposit */}
+        <motion.div variants={itemVariants}>
+          <div className="px-1">
+            <p className="text-sm font-medium text-text-secondary mb-2">예약금 차감</p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => { setDepositApplied(0); setShowCustomDeposit(false); setCustomDepositInput(''); }}
+                className={cn(
+                  'flex-1 py-2 rounded-xl text-xs font-bold border transition-all duration-150 active:scale-95',
+                  depositApplied === 0 && !showCustomDeposit
+                    ? 'bg-primary text-white border-primary'
+                    : 'bg-surface-alt text-text-secondary border-border hover:border-primary/40',
+                )}
+              >
+                없음
+              </button>
+              {presetDeposit > 0 && (
+                <button
+                  type="button"
+                  onClick={() => { setDepositApplied(presetDeposit); setShowCustomDeposit(false); setCustomDepositInput(''); }}
+                  className={cn(
+                    'flex-1 py-2 rounded-xl text-xs font-bold border transition-all duration-150 active:scale-95',
+                    depositApplied === presetDeposit && !showCustomDeposit
+                      ? 'bg-primary text-white border-primary'
+                      : 'bg-surface-alt text-text-secondary border-border hover:border-primary/40',
+                  )}
+                >
+                  {presetDeposit.toLocaleString()}원
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => { setShowCustomDeposit(true); setDepositApplied(0); }}
+                className={cn(
+                  'flex-1 py-2 rounded-xl text-xs font-bold border transition-all duration-150 active:scale-95',
+                  showCustomDeposit
+                    ? 'bg-primary text-white border-primary'
+                    : 'bg-surface-alt text-text-secondary border-border hover:border-primary/40',
+                )}
+              >
+                직접 입력
+              </button>
+            </div>
+            {showCustomDeposit && (
+              <div className="flex items-center gap-2 mt-2">
+                <input
+                  type="number"
+                  value={customDepositInput}
+                  onChange={(e) => {
+                    setCustomDepositInput(e.target.value);
+                    const v = parseInt(e.target.value, 10);
+                    setDepositApplied(isNaN(v) || v < 0 ? 0 : v);
+                  }}
+                  placeholder="예약금 금액"
+                  min={0}
+                  step={1000}
+                  className="flex-1 rounded-xl border border-border bg-surface px-3 py-2 text-sm text-right text-text focus:outline-none focus:border-primary transition-colors"
+                />
+                <span className="text-xs text-text-muted">원</span>
+              </div>
+            )}
+            {depositApplied > 0 && (
+              <p className="text-xs text-blue-600 font-semibold mt-2 text-right">
+                -{depositApplied.toLocaleString()}원 예약금 차감
+              </p>
+            )}
+          </div>
+        </motion.div>
+
         {/* Final amount */}
         <motion.div variants={itemVariants}>
           <div className="px-1">
             <p className="text-sm font-medium text-text-secondary mb-1">
               {t('fieldMode.finalTotal')}
             </p>
-            <p className="text-3xl font-black text-primary tracking-tight">
-              ₩{finalPrice.toLocaleString()}
-            </p>
+            <div className="flex items-baseline gap-2">
+              <p className="text-3xl font-black text-primary tracking-tight">
+                ₩{finalPrice.toLocaleString()}
+              </p>
+              {(discountPercent > 0 || depositApplied > 0) && (
+                <p className="text-sm text-text-muted line-through">
+                  ₩{subtotal.toLocaleString()}
+                </p>
+              )}
+            </div>
           </div>
         </motion.div>
 

@@ -68,12 +68,12 @@ export default function FieldModePage() {
     hydrateFromDB();
   }, [hydrateFromDB]);
 
-  // phase 가드: 데이터 없이 후속 phase에 멈춰있으면 portfolio로 리셋
+  // phase 가드: 이 페이지에서 렌더 가능한 phase가 아니면 portfolio로 리셋
   useEffect(() => {
-    if (phase !== 'portfolio' && phase !== 'design-confirm' && !selectedCategory) {
+    if (phase !== 'portfolio' && phase !== 'design-confirm' && phase !== 'options') {
       setPhase('portfolio');
     }
-  }, [phase, selectedCategory, setPhase]);
+  }, [phase, setPhase]);
 
   const publicPhotos = useMemo(
     () => allPhotos.filter((p) => p.isPublic !== false),

@@ -37,6 +37,8 @@ interface RecordsStore {
     notes?: string;
     paymentMethod?: import('@/types/consultation').PaymentMethod;
     bookingId?: string;
+    saleDate?: string;
+    saleTime?: string;
   }) => Promise<void>;
   updateRecord: (id: string, patch: Partial<ConsultationRecord>) => void;
   removeRecord: (id: string) => void;
@@ -81,9 +83,14 @@ export const useRecordsStore = create<RecordsStore>()(
         });
       },
 
-      addQuickSaleRecord: ({ id, shopId, designerId, customerId, customerName, customerPhone, serviceType, finalPrice, notes, paymentMethod, bookingId }) => {
+      addQuickSaleRecord: ({ id, shopId, designerId, customerId, customerName, customerPhone, serviceType, finalPrice, notes, paymentMethod, bookingId, saleDate, saleTime }) => {
         const now = getNowInKoreaIso();
         const today = getTodayInKorea();
+        // 사용자가 날짜/시간을 지정한 경우 해당 값으로 createdAt 생성
+        const effectiveCreatedAt = saleDate
+          ? `${saleDate}T${saleTime || '12:00'}:00+09:00`
+          : now;
+        const effectiveDate = saleDate || today;
 
         const SERVICE_TO_CATEGORY: Record<string, DesignCategory> = {
           '원컬러': 'simple',
@@ -125,9 +132,9 @@ export const useRecordsStore = create<RecordsStore>()(
           totalPrice: finalPrice,
           estimatedMinutes: 0,
           finalPrice,
-          createdAt: now,
+          createdAt: effectiveCreatedAt,
           updatedAt: now,
-          finalizedAt: now,
+          finalizedAt: effectiveCreatedAt,
           isQuickSale: true,
           notes,
           paymentMethod,
@@ -174,7 +181,7 @@ export const useRecordsStore = create<RecordsStore>()(
             const designerName = useShopStore.getState().getDesignerName(designerId);
             const historyEntry: TreatmentHistory = {
               recordId: id,
-              date: today,
+              date: effectiveDate,
               bodyPart: 'hand',
               designScope: serviceType ?? '기타',
               price: finalPrice,
@@ -185,7 +192,7 @@ export const useRecordsStore = create<RecordsStore>()(
               visitCount: newVisitCount,
               totalSpend: newTotalSpend,
               averageSpend: newAverageSpend,
-              lastVisitDate: today,
+              lastVisitDate: effectiveDate,
               treatmentHistory: [...customer.treatmentHistory, historyEntry],
             });
           }

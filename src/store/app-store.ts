@@ -29,6 +29,7 @@ interface ShopSettings {
   timeSettings: TimeSettings;
   customerNotice: string;
   categoryPricing: CategoryPricingSettings;
+  depositAmount: number;
   kakaoTalkUrl: string;
   naverReservationUrl: string;
 }
@@ -56,6 +57,7 @@ const DEFAULT_SHOP_SETTINGS: ShopSettings = {
   selectedServices: [],
   customerNotice: '선택하신 디자인을 기준으로 가격과 시간은 변동될 수 있어요',
   categoryPricing: { ...DEFAULT_CATEGORY_PRICING },
+  depositAmount: 10000,
   kakaoTalkUrl: '',
   naverReservationUrl: '',
   businessHours: [
