@@ -149,7 +149,7 @@ export default function TreatmentPage(): React.ReactElement {
               <p className="text-xs text-text-muted font-medium mb-1">
                 {t('fieldMode.designCard')}
               </p>
-              <p className="text-lg font-black text-text leading-tight">
+              <p className="text-lg font-bold text-text leading-tight">
                 {categoryLabel}
               </p>
               <p className="text-sm font-semibold text-primary mt-1">
@@ -183,7 +183,7 @@ export default function TreatmentPage(): React.ReactElement {
             <span className="text-xs text-text-muted font-medium">
               {t('fieldMode.currentTotal')}
             </span>
-            <span className="text-2xl font-black text-text tabular-nums">
+            <span className="text-2xl font-bold text-text tabular-nums">
               ₩{currentTotal.toLocaleString()}
             </span>
           </div>

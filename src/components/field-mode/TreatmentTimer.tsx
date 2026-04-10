@@ -33,7 +33,7 @@ export function TreatmentTimer({ startedAt }: TreatmentTimerProps): React.ReactE
       <span className="text-[10px] font-medium text-text-muted uppercase tracking-widest leading-none mb-0.5">
         {t('fieldMode.elapsed')}
       </span>
-      <span className="text-4xl font-black tabular-nums tracking-tight leading-none text-text">
+      <span className="text-4xl font-bold tabular-nums tracking-tight leading-none text-text">
         {formatElapsed(elapsed)}
       </span>
     </div>

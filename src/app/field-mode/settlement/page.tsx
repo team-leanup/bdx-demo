@@ -218,7 +218,7 @@ export default function SettlementPage(): React.ReactElement | null {
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
             </svg>
           </button>
-          <h1 className="text-lg font-black text-text tracking-tight">
+          <h1 className="text-lg font-bold text-text tracking-tight">
             {t('fieldMode.settlementTitle')}
           </h1>
         </div>
@@ -416,7 +416,7 @@ export default function SettlementPage(): React.ReactElement | null {
               {t('fieldMode.finalTotal')}
             </p>
             <div className="flex items-baseline gap-2">
-              <p className="text-3xl font-black text-primary tracking-tight">
+              <p className="text-3xl font-bold text-primary tracking-tight">
                 ₩{finalPrice.toLocaleString()}
               </p>
               {(discountPercent > 0 || depositApplied > 0) && (

@@ -358,6 +358,9 @@
 *::before,
 *::after {
   box-sizing: border-box;
+  /* 전역 font smoothing — 모바일 Safari에서 볼드가 과도하게 두껍게 보이는 현상 방지 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html {

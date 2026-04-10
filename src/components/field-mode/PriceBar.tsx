@@ -57,7 +57,7 @@ export function PriceBar({
             <span className="text-xs text-text-muted font-medium whitespace-nowrap">
               {t('fieldMode.estimatedPrice')}
             </span>
-            <span className="text-xl font-black text-text tracking-tight truncate">
+            <span className="text-xl font-bold text-text tracking-tight truncate">
               {priceDisplay}
             </span>
             <span className="text-xs text-text-muted whitespace-nowrap">

@@ -291,7 +291,7 @@ export default function WrapUpPage(): React.ReactElement {
     >
       {/* Header */}
       <motion.div variants={itemVariants}>
-        <h1 className="text-2xl font-black text-text tracking-tight">
+        <h1 className="text-2xl font-bold text-text tracking-tight">
           {t('fieldMode.wrapUpTitle')} ✓
         </h1>
         <p className="text-text-muted text-sm mt-1">
