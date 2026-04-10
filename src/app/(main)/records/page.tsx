@@ -9,6 +9,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Card, Input, Modal } from '@/components/ui';
 import { ConsultationLinkContent } from '@/components/reservations/ConsultationLinkModal';
 import { PreConsultSummaryInline } from '@/components/reservations/PreConsultSummaryInline';
+import { PretreatmentAlertModal } from '@/components/alerts/PretreatmentAlertModal';
+import type { CustomerTag } from '@/types/customer';
 import { useRecordsStore } from '@/store/records-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useReservationStore } from '@/store/reservation-store';
@@ -163,11 +165,18 @@ export default function RecordsPage() {
   const [reservationNaverMode, setReservationNaverMode] = useState(false);
   const [showPreConsultInline, setShowPreConsultInline] = useState(false);
 
+  // 주의사항 자동 리마인드 모달 — 오늘 예약 바텀시트가 열릴 때 pinned 주의 태그가 있으면 자동 표시
+  const [reminderCustomerName, setReminderCustomerName] = useState<string>('');
+  const [reminderTags, setReminderTags] = useState<CustomerTag[]>([]);
+  const [reminderOpen, setReminderOpen] = useState(false);
+  const reminderShownForIdRef = useRef<string | null>(null);
+
   const closeSelectedEventSheet = (): void => {
     setLinkGenBooking(null);
     setEditMode(false);
     setSelectedEvent(null);
     setShowPreConsultInline(false);
+    reminderShownForIdRef.current = null;
   };
 
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
@@ -191,6 +200,37 @@ export default function RecordsPage() {
   const { shopSettings } = useAppStore();
   const getAllRecords = useRecordsStore((s) => s.getAllRecords);
   const allConsultations = useMemo(() => getAllRecords(), [getAllRecords]);
+
+  // 예약 상세 바텀시트가 열릴 때 — 오늘 예약 + 진행 전 상태 + 주의/참고 태그 있음 → 리마인드 모달 자동 표시
+  useEffect(() => {
+    if (!selectedEvent) return;
+    if (selectedEvent.type !== 'reservation') return;
+    if (!selectedEvent.customerId) return;
+    // 같은 예약을 edit/linkGen 모드 등으로 토글해도 중복 표시되지 않도록
+    if (reminderShownForIdRef.current === selectedEvent.originalId) return;
+
+    // 오늘 예약만
+    const today = getTodayInKorea();
+    if (toKoreanDateString(selectedEvent.date) !== today) return;
+
+    // 이미 완료/취소된 예약은 리마인드 불필요
+    const booking = allReservations.find((r) => r.id === selectedEvent.originalId);
+    if (!booking) return;
+    if (booking.status === 'completed' || booking.status === 'cancelled') return;
+
+    // 위험/참고 태그가 있을 때만 표시 (단순 선호는 제외)
+    const pinnedTags = sortSafetyTags(getPinnedTags(selectedEvent.customerId));
+    const relevantTags = pinnedTags.filter((tag) => {
+      const level = getSafetyTagMeta(tag).level;
+      return level === 'high' || level === 'medium' || level === 'reference';
+    });
+    if (relevantTags.length === 0) return;
+
+    reminderShownForIdRef.current = selectedEvent.originalId;
+    setReminderCustomerName(selectedEvent.title);
+    setReminderTags(relevantTags);
+    setReminderOpen(true);
+  }, [selectedEvent, allReservations, getPinnedTags]);
 
   const { calendarStartHour, calendarEndHour } = useMemo(() => {
     const openHours = shopSettings.businessHours
@@ -1318,6 +1358,19 @@ export default function RecordsPage() {
           </div>
         </div>
       </Modal>
+
+      {/* 오늘 예약 주의사항 리마인드 모달 — 바텀시트 위에 자동 표시 */}
+      <PretreatmentAlertModal
+        isOpen={reminderOpen}
+        onClose={() => setReminderOpen(false)}
+        onConfirm={() => setReminderOpen(false)}
+        customerName={reminderCustomerName}
+        pinnedTags={reminderTags}
+        title="오늘 예약 · 주의사항"
+        description="시술 전 아래 주의사항을 다시 한 번 확인해 주세요."
+        confirmLabel="확인했어요"
+        cancelLabel="나중에"
+      />
     </div>
   );
 }
