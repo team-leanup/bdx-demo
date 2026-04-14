@@ -42,6 +42,20 @@ interface CustomerStore {
   addMembership: (customerId: string, membership: Membership) => void;
   useMembershipSession: (customerId: string, recordId?: string) => void;
   updateMembership: (customerId: string, updates: Partial<Membership>) => void;
+
+  recordTreatmentCompletion: (
+    customerId: string,
+    finalPrice: number,
+    historyEntry?: {
+      recordId: string;
+      date: string;
+      bodyPart: string;
+      designScope: string;
+      price: number;
+      designerName?: string;
+      imageUrls?: string[];
+    },
+  ) => void;
 }
 
 function deepClone<T>(v: T): T {
@@ -541,6 +555,47 @@ export const useCustomerStore = create<CustomerStore>()(
         const updated = get().customers.find((c) => c.id === customerId);
         if (updated) {
           dbUpsertCustomer(updated).catch(console.error);
+        }
+      },
+
+      recordTreatmentCompletion: (customerId, finalPrice, historyEntry) => {
+        set((state) => ({
+          customers: state.customers.map((c) => {
+            if (c.id !== customerId) return c;
+            const newVisitCount = c.visitCount + 1;
+            const newTotalSpend = c.totalSpend + finalPrice;
+            const newAverageSpend = Math.round(newTotalSpend / newVisitCount);
+            const today = getTodayInKorea();
+            const nextHistory: import('@/types/customer').TreatmentHistory[] = historyEntry
+              ? [
+                  ...c.treatmentHistory,
+                  {
+                    recordId: historyEntry.recordId,
+                    date: historyEntry.date,
+                    bodyPart: historyEntry.bodyPart,
+                    designScope: historyEntry.designScope,
+                    price: historyEntry.price,
+                    designerName: historyEntry.designerName ?? '',
+                    imageUrls: historyEntry.imageUrls ?? [],
+                  },
+                ]
+              : c.treatmentHistory;
+            return {
+              ...c,
+              visitCount: newVisitCount,
+              totalSpend: newTotalSpend,
+              averageSpend: newAverageSpend,
+              lastVisitDate: today,
+              treatmentHistory: nextHistory,
+              updatedAt: getNowInKoreaIso(),
+            };
+          }),
+        }));
+        const updated = get().customers.find((c) => c.id === customerId);
+        if (updated) {
+          dbUpsertCustomer(updated).catch((err) => {
+            console.error('[customer-store] recordTreatmentCompletion DB sync failed:', err);
+          });
         }
       },
     }),

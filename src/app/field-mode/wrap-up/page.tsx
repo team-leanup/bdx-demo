@@ -9,7 +9,6 @@ import { useFieldModeStore } from '@/store/field-mode-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useRecordsStore } from '@/store/records-store';
-import { getTodayInKorea } from '@/lib/format';
 import { PhotoCapture } from '@/components/field-mode/PhotoCapture';
 import { Button } from '@/components/ui/Button';
 import { ShareCardGeneratorModal } from '@/components/share-card/ShareCardGeneratorModal';
@@ -174,36 +173,10 @@ export default function WrapUpPage(): React.ReactElement {
       }
 
       // Update record with customerId
+      // 통계 갱신은 addQuickSaleRecord에서 이미 처리됨 — 이중 카운팅 방지
       const savedId = existingCustomer?.id ?? (localName.trim() ? useFieldModeStore.getState().customerId : null);
       if (savedId && recordId) {
         useRecordsStore.getState().updateRecord(recordId, { customerId: savedId });
-
-        // Update customer stats
-        const customer = useCustomerStore.getState().getById(savedId);
-        const rec = useRecordsStore.getState().getRecordById(recordId);
-        if (customer && rec) {
-          const newVisitCount = customer.visitCount + 1;
-          const newTotalSpend = customer.totalSpend + rec.finalPrice;
-          const today = getTodayInKorea();
-          useCustomerStore.getState().updateCustomer(savedId, {
-            visitCount: newVisitCount,
-            totalSpend: newTotalSpend,
-            averageSpend: Math.round(newTotalSpend / newVisitCount),
-            lastVisitDate: today,
-            treatmentHistory: [
-              ...customer.treatmentHistory,
-              {
-                recordId,
-                date: today,
-                bodyPart: 'hand',
-                designScope: rec.consultation?.designScope ?? '기타',
-                price: rec.finalPrice,
-                designerName: '',
-                imageUrls: [],
-              },
-            ],
-          });
-        }
       }
     } finally {
       setIsSaving(false);

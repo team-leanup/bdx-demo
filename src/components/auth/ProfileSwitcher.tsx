@@ -60,9 +60,9 @@ export function ProfileSwitcher({ isOpen, onClose }: ProfileSwitcherProps) {
     onClose();
   }, [onClose]);
 
-  const handlePinSubmit = useCallback(() => {
+  const handlePinSubmit = useCallback(async () => {
     if (!pinTarget) return;
-    if (checkPassword(pinTarget.id, pin)) {
+    if (await checkPassword(pinTarget.id, pin)) {
       switchToDesigner?.(pinTarget.id, pinTarget.name, pinTarget.role);
       setPinTarget(null);
       setPin('');

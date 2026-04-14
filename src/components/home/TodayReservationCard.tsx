@@ -217,7 +217,7 @@ export function TodayReservationCard({
         <div className="flex flex-col">
           {reservations.map((booking, idx) => {
             const channelInfo = channelBadge[booking.channel];
-            const isCompleted = booking.status === 'completed';
+            const isCompleted = booking.status === 'completed' || booking.status === 'cancelled';
             const primaryTags = booking.customerId ? getPrimaryTags(booking.customerId).slice(0, 2) : [];
             const pinnedTags = booking.customerId ? getPinnedTags(booking.customerId) : [];
             const safetyTags = pinnedTags.filter((tag) => {
@@ -245,7 +245,7 @@ export function TodayReservationCard({
             const stage = getBookingStage(booking, matchedRecord);
 
             const handleCardClick = (): void => {
-              if (stage === 'completed') return;
+              if (stage === 'completed' || stage === 'cancelled') return;
               if (stage === 'just_registered') {
                 setLinkGenBooking(booking);
               } else {

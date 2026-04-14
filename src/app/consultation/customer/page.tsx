@@ -296,7 +296,10 @@ function CustomerPageInner(): React.ReactElement {
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <p className="text-xs text-amber-700 font-medium">
-            재방문 고객 빠른 등록 모드입니다. 시술 옵션은 기본값으로 설정됩니다.
+            {t('consultation.returnVisit.quickModeBanner')}
+            {locale !== 'ko' && (
+              <span className="block text-[10px] opacity-60 mt-0.5">{tKo('consultation.returnVisit.quickModeBanner')}</span>
+            )}
           </p>
         </div>
       )}

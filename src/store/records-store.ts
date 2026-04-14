@@ -13,7 +13,6 @@ import {
 } from '@/lib/db';
 import { useCustomerStore } from '@/store/customer-store';
 import { useShopStore } from '@/store/shop-store';
-import type { TreatmentHistory } from '@/types/customer';
 import type { DesignScope } from '@/types/consultation';
 import { getTodayInKorea } from '@/lib/format';
 import { designCategoryToScope } from '@/lib/category-mapping';
@@ -173,29 +172,16 @@ export const useRecordsStore = create<RecordsStore>()(
         // 고객 통계 갱신
         if (effectiveCustomerId) {
           const customerStore = useCustomerStore.getState();
-          const customer = customerStore.getById(effectiveCustomerId);
-          if (customer) {
-            const newVisitCount = customer.visitCount + 1;
-            const newTotalSpend = customer.totalSpend + finalPrice;
-            const newAverageSpend = Math.round(newTotalSpend / newVisitCount);
-            const designerName = useShopStore.getState().getDesignerName(designerId);
-            const historyEntry: TreatmentHistory = {
-              recordId: id,
-              date: effectiveDate,
-              bodyPart: 'hand',
-              designScope: serviceType ?? '기타',
-              price: finalPrice,
-              designerName,
-              imageUrls: [],
-            };
-            customerStore.updateCustomer(effectiveCustomerId, {
-              visitCount: newVisitCount,
-              totalSpend: newTotalSpend,
-              averageSpend: newAverageSpend,
-              lastVisitDate: effectiveDate,
-              treatmentHistory: [...customer.treatmentHistory, historyEntry],
-            });
-          }
+          const designerName = useShopStore.getState().getDesignerName(designerId);
+          customerStore.recordTreatmentCompletion(effectiveCustomerId, finalPrice, {
+            recordId: id,
+            date: effectiveDate,
+            bodyPart: 'hand',
+            designScope: serviceType ?? '기타',
+            price: finalPrice,
+            designerName,
+            imageUrls: [],
+          });
         }
 
         return dbUpsertRecord(recordWithEffectiveId).then((result) => {

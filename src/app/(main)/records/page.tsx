@@ -196,7 +196,7 @@ export default function RecordsPage() {
   const removeReservation = useReservationStore((s) => s.removeReservation);
   const removeRecord = useRecordsStore((s) => s.removeRecord);
   const updateRecord = useRecordsStore((s) => s.updateRecord);
-  const updateCustomer = useCustomerStore((s) => s.updateCustomer);
+  const recordTreatmentCompletion = useCustomerStore((s) => s.recordTreatmentCompletion);
   const { shopSettings } = useAppStore();
   const getAllRecords = useRecordsStore((s) => s.getAllRecords);
   const allConsultations = useMemo(() => getAllRecords(), [getAllRecords]);
@@ -1160,8 +1160,8 @@ export default function RecordsPage() {
 
                       return (
                         <>
-                          {/* 영역 1: 고객 상세 + 시술 확인서 (Stage 1 제외) */}
-                          {stage !== 'just_registered' && (
+                          {/* 영역 1: 고객 상세 + 시술 확인서 (Stage 1, cancelled 제외) */}
+                          {stage !== 'just_registered' && stage !== 'cancelled' && (
                             <div className="mt-2 flex flex-col gap-2">
                               {stage === 'in_treatment' && matchedRecord && !matchedRecord.finalizedAt && (
                                 <button
@@ -1171,15 +1171,14 @@ export default function RecordsPage() {
                                     if (selectedEvent?.originalId) {
                                       updateReservation(selectedEvent.originalId, { status: 'completed' });
                                     }
-                                    const customer = getCustomerById(matchedRecord.customerId);
-                                    if (customer) {
-                                      const newVisitCount = customer.visitCount + 1;
-                                      const newTotalSpend = customer.totalSpend + matchedRecord.finalPrice;
-                                      updateCustomer(matchedRecord.customerId, {
-                                        visitCount: newVisitCount,
-                                        totalSpend: newTotalSpend,
-                                        averageSpend: Math.round(newTotalSpend / newVisitCount),
-                                        lastVisitDate: getTodayInKorea(),
+                                    if (matchedRecord.customerId) {
+                                      recordTreatmentCompletion(matchedRecord.customerId, matchedRecord.finalPrice, {
+                                        recordId: matchedRecord.id,
+                                        date: getTodayInKorea(),
+                                        bodyPart: matchedRecord.consultation?.bodyPart ?? 'hand',
+                                        designScope: matchedRecord.consultation?.designScope ?? '기타',
+                                        price: matchedRecord.finalPrice,
+                                        imageUrls: [],
                                       });
                                     }
                                   }}

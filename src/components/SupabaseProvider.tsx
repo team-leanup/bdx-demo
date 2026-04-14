@@ -48,6 +48,8 @@ export default function SupabaseProvider({ children }: { children: React.ReactNo
       return;
     }
 
+    // M6 fix: shopId 스냅샷 캡처 → hydration 완료 후 stale 체크
+    const shopIdSnapshot = currentShopId;
     Promise.all([
       useShopStore.getState().hydrateFromDB(),
       useCustomerStore.getState().hydrateFromDB(),
@@ -56,6 +58,8 @@ export default function SupabaseProvider({ children }: { children: React.ReactNo
       usePortfolioStore.getState().hydrateFromDB(),
     ])
       .then(() => {
+        // hydration 도중 shopId가 변경되었으면 syncShopSettings 스킵 (재실행됨)
+        if (useAuthStore.getState().currentShopId !== shopIdSnapshot) return;
         syncShopSettingsFromShop(useShopStore.getState().shop);
       })
       .catch(console.error);

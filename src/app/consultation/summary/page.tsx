@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useConsultationStore } from '@/store/consultation-store';
@@ -43,6 +43,7 @@ export default function SummaryPage() {
   const restoreLocale = useLocaleStore((s) => s.restoreLocale);
   const [discountOpen, setDiscountOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const [customerMemo, setCustomerMemo] = useState('');
   const [additionalCharge, setAdditionalCharge] = useState(0);
   const [additionalChargeInput, setAdditionalChargeInput] = useState('');
@@ -89,6 +90,8 @@ export default function SummaryPage() {
   }, []);
 
   const handleSave = async () => {
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     try {
     await new Promise((r) => setTimeout(r, 600));
@@ -201,6 +204,7 @@ export default function SummaryPage() {
       );
 
       if (!preconsultationResult.success) {
+        useRecordsStore.getState().removeRecord(newId);
         pushToast('error', '상담 저장에 실패했어요. 다시 시도해주세요');
         setSaving(false);
         return;
@@ -394,6 +398,8 @@ export default function SummaryPage() {
       console.error('[summary]', err);
       pushToast('error', '저장 중 오류가 발생했어요. 다시 시도해주세요');
       setSaving(false);
+    } finally {
+      savingRef.current = false;
     }
   };
 

@@ -21,6 +21,9 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   let response = NextResponse.next({ request });
 
   if (!supabaseUrl || !supabaseAnonKey) {
+    if (!isPublicRoute(pathname)) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
     return response;
   }
 
@@ -64,6 +67,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+  response.headers.set(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com; frame-src https://accounts.google.com;",
+  );
 
   return response;
 }

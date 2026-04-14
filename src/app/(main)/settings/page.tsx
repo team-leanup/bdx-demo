@@ -445,7 +445,7 @@ function StaffSection() {
 
     setPinBusyId(designerId);
     await dbUpdateDesignerPin(currentShopId, designerId, newPin);
-    setPassword(designerId, newPin);
+    await setPassword(designerId, newPin);
     setPinBusyId(null);
     setPinEditingId(null);
     setNewPin('');

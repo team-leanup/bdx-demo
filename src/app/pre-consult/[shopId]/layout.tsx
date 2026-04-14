@@ -37,7 +37,7 @@ export default async function PreConsultLayout({
   let shopData = await fetchShopPublicData(shopId);
 
   if (!shopData) {
-    if (shopId.startsWith('shop-')) {
+    if (shopId === 'shop-demo') {
       shopData = { ...DEMO_SHOP_DATA, id: shopId };
     } else {
       notFound();

@@ -740,6 +740,7 @@ export async function fetchBookingRequests(shopId?: string | null): Promise<Book
     preConsultationData: (row.pre_consultation_data as unknown as BookingRequest['preConsultationData']) ?? undefined,
     preConsultationCompletedAt: row.pre_consultation_completed_at ?? undefined,
     consultationLinkSentAt: row.consultation_link_sent_at ?? undefined,
+    deposit: (row as Record<string, unknown>).deposit as number | undefined,
   }));
 }
 
@@ -748,13 +749,10 @@ export async function fetchBookingRequestById(
   shopId?: string | null,
 ): Promise<BookingRequest | null> {
   if (!shopId) {
-    console.warn('[db] fetchBookingRequestById called without shopId — no shop isolation', { bookingId });
+    console.warn('[db] fetchBookingRequestById called without shopId — returning null for safety');
+    return null;
   }
-  let query = supabase.from('booking_requests').select('*').eq('id', bookingId);
-
-  if (shopId) {
-    query = query.eq('shop_id', shopId);
-  }
+  const query = supabase.from('booking_requests').select('*').eq('id', bookingId).eq('shop_id', shopId);
 
   const { data, error } = await query.maybeSingle();
   if (error || !data) {
@@ -785,6 +783,7 @@ export async function fetchBookingRequestById(
     preConsultationData: (data.pre_consultation_data as unknown as BookingRequest['preConsultationData']) ?? undefined,
     preConsultationCompletedAt: data.pre_consultation_completed_at ?? undefined,
     consultationLinkSentAt: data.consultation_link_sent_at ?? undefined,
+    deposit: (data as Record<string, unknown>).deposit as number | undefined,
   };
 }
 
@@ -841,17 +840,21 @@ export async function dbUpsertCustomer(customer: Customer): Promise<{ success: b
   return { success: true };
 }
 
-export async function dbUpsertCustomerTags(customerId: string, tags: CustomerTag[]): Promise<void> {
+export async function dbUpsertCustomerTags(customerId: string, tags: CustomerTag[], shopId?: string): Promise<void> {
   // Backup existing tags before delete so we can restore on insert failure
-  const { data: existingTags } = await supabase
+  let backupQuery = supabase
     .from('customer_tags')
     .select('*')
     .eq('customer_id', customerId);
+  if (shopId) backupQuery = backupQuery.eq('shop_id', shopId);
+  const { data: existingTags } = await backupQuery;
 
-  const { error: deleteError } = await supabase
+  let deleteQuery = supabase
     .from('customer_tags')
     .delete()
     .eq('customer_id', customerId);
+  if (shopId) deleteQuery = deleteQuery.eq('shop_id', shopId);
+  const { error: deleteError } = await deleteQuery;
   if (deleteError) {
     console.error('[db] dbUpsertCustomerTags delete error:', toDbErrorSnapshot(deleteError));
     return;
@@ -867,6 +870,7 @@ export async function dbUpsertCustomerTags(customerId: string, tags: CustomerTag
     pinned: tag.pinned ?? null,
     accent: tag.accent ?? null,
     sort_order: tag.sortOrder ?? null,
+    ...(shopId ? { shop_id: shopId } : {}),
   }));
   const { error: insertError } = await supabase.from('customer_tags').insert(rows);
   if (insertError) {
@@ -901,7 +905,18 @@ export async function dbInsertSmallTalkNote(note: SmallTalkNote): Promise<void> 
   }
 }
 
+const ALLOWED_CUSTOMER_FIELDS = new Set([
+  'name', 'phone', 'preference', 'profile_image_url', 'is_regular', 'regular_since',
+  'visit_frequency', 'visit_count', 'total_spend', 'average_spend', 'first_visit_date',
+  'last_visit_date', 'treatment_history', 'membership', 'assigned_designer_id',
+  'assigned_designer_name', 'preferred_language', 'duration_preference',
+]);
+
 export async function dbUpdateCustomerField(customerId: string, field: string, value: unknown, shopId?: string): Promise<void> {
+  if (!ALLOWED_CUSTOMER_FIELDS.has(field)) {
+    console.error(`[db] dbUpdateCustomerField blocked — field "${field}" not in allowlist`);
+    return;
+  }
   let query = supabase
     .from('customers')
     .update({ [field]: value, updated_at: getNowInKoreaIso() })

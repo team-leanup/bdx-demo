@@ -89,7 +89,9 @@ export default function SettlementPage(): React.ReactElement | null {
   const [discountPercent, setDiscountPercent] = useState(0);
 
   // ── Deposit ────────────────────────────────────────────────────────────────
-  const presetDeposit = shopSettings.depositAmount ?? 0;
+  // M2 fix: booking별 예약금이 있으면 우선 사용, 없으면 샵 기본값
+  const matchedBooking = useReservationStore((s) => s.reservations.find((r) => r.id === bookingId));
+  const presetDeposit = matchedBooking?.deposit ?? shopSettings.depositAmount ?? 0;
   const [depositApplied, setDepositApplied] = useState(0);
   const [customDepositInput, setCustomDepositInput] = useState('');
   const [showCustomDeposit, setShowCustomDeposit] = useState(false);

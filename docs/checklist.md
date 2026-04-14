@@ -1,6 +1,6 @@
 # BDX 개발 체크리스트
 
-> 클라이언트 피드백 기반. 최종 업데이트: 2026-03-25
+> 클라이언트 피드백 기반. 최종 업데이트: 2026-04-15
 
 **상태**: ⬜ 미착수 · 🟡 진행중 · 🔵 부분완료 · 🟢 완료 · 🔴 블로커
 
@@ -594,6 +594,52 @@
 
 ---
 
+## 24. 전체 심층 QA (2026-04-15) — 보안 + 데이터 정합성 + i18n
+
+> 핵심: UX 개선 33건 커밋 후, Supabase 연동·보안·i18n·비즈니스 로직 전수 검증
+
+### CRITICAL (4건)
+- **QA-C1** 🟢 RLS `demo_open_*` 40개 정책 삭제 → shop-demo 한정 10개 재생성 (Supabase SQL)
+- **QA-C2** 🟢 Ghost session localStorage 복구 로직 제거 (`auth-store.ts`)
+- **QA-C3** 🟢 데모 쿠키 SameSite=Strict;Secure 추가 (`auth-store.ts`)
+- **QA-C4** 🟢 djb2 → PBKDF2 SHA-256 100K iterations + 레거시 자동 마이그레이션 (`auth-store.ts`, `ProfileSwitcher.tsx`, `settings/page.tsx`)
+
+### HIGH (8건)
+- **QA-H1** 🟢 `booking_requests.deposit` DB 컬럼 추가 + db.ts 매핑 (Supabase SQL + `db.ts`)
+- **QA-H2** 🟢 고객 통계 이중 카운팅 → `recordTreatmentCompletion` 통합 (`customer-store.ts` + 5곳 교체)
+- **QA-H3** 🟢 treatmentHistory 3곳 누락 수정 (`records/page.tsx`, `records/[id]/page.tsx`, `payment/page.tsx`)
+- **QA-H4** 🟢 fieldMode 63키 × 3언어 번역 (`i18n.ts`)
+- **QA-H5** 🟢 treatment-sheet 72키 × 4언어 전체 i18n (`treatment-sheet/page.tsx`, `i18n.ts`)
+- **QA-H6** 🟢 consultation/error.tsx i18n + Dual Language (`error.tsx`, `i18n.ts`)
+- **QA-H7** 🟢 fetchBookingRequestById shopId 없으면 null 반환 (`db.ts`)
+- **QA-H8** 🟢 미들웨어 env 미설정 시 보호경로 → /login 리다이렉트 (`middleware.ts`)
+
+### MED (12건)
+- **QA-M1** 🟢 BookingStage cancelled 상태 추가 + UI 반영 (`booking-stage.ts`, `TodayReservationCard.tsx`, `records/page.tsx`)
+- **QA-M2** 🟢 settlement booking별 deposit 우선 사용 (`settlement/page.tsx`)
+- **QA-M3** 🟢 settlement vs consultation 금액 → 별도 워크플로우로 설계 의도 확인 (버그 아님)
+- **QA-M4** 🟢 isExternalCustomerLinkFlow 분기 rollback 추가 (`summary/page.tsx`)
+- **QA-M5** 🟢 save 더블탭 race condition → useRef 즉시 차단 (`summary/page.tsx`)
+- **QA-M6** 🟢 hydration shopId 스냅샷 stale 체크 (`SupabaseProvider.tsx`)
+- **QA-M7** 🟢 dbUpsertCustomerTags shopId 필터 + insert shop_id 포함 (`db.ts`)
+- **QA-M9** 🟢 pre-consult 폴백 shop-demo만 허용 (`pre-consult/layout.tsx`)
+- **QA-M10** 🟢 CSP + HSTS 보안 헤더 추가 (`middleware.ts`)
+- **QA-M12** 🟢 consultation '(선택)' i18n 적용 (`consultation/page.tsx`, `i18n.ts`)
+
+### LOW (6건)
+- **QA-L1** 🟢 dbUpdateCustomerField 필드 화이트리스트 (`db.ts`)
+- **QA-L2** 🟢 PIN 해시 PBKDF2 교체로 해소
+- **QA-L4** 🟢 consultation/loading.tsx 로딩 스피너로 대체 (`loading.tsx`)
+- **QA-L5** 🟢 customer/page.tsx 재방문 배너 i18n (`customer/page.tsx`, `i18n.ts`)
+- **QA-L7** 🟢 미사용 i18n 키 — 향후 사용 가능으로 유지
+
+### DB 변경사항
+- `booking_requests.deposit` integer 컬럼 추가 (default 0)
+- `customer_tags.shop_id` text 컬럼 추가 + 백필
+- RLS: `demo_open_*` 40개 삭제 → `demo_*_write` 10개 (shop-demo 한정)
+
+---
+
 ## 진행 요약
 
 | 영역 | 항목수 | 🟢 | 🟡 | 🔵 | ⬜ |
@@ -620,4 +666,5 @@
 | **종합 QA (N-1~30)** | **30** | **22** | **0** | **0** | **8** |
 | **미리 정하기** | **12** | **12** | **0** | **0** | **0** |
 | **시술 후 결제 UX** | **6** | **6** | **0** | **0** | **0** |
-| **합계** | **147** | **122** | **0** | **2** | **21** |
+| **전체 심층 QA** | **32** | **30** | **0** | **0** | **0** |
+| **합계** | **179** | **152** | **0** | **2** | **21** |

@@ -10,27 +10,32 @@ import {
 } from '@/lib/db';
 import type { UserRole } from '@/types/auth';
 
-const SALT = 'bdx-salt';
-const DEFAULT_PASSWORD_HASH = (() => {
-  let hash = 0;
-  const str = '1234' + SALT;
-  for (let i = 0; i < str.length; i += 1) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash |= 0;
-  }
-  return `h_${Math.abs(hash).toString(36)}`;
-})();
+const PBKDF2_SALT = 'bdx-pin-salt-v2';
+const PBKDF2_ITERATIONS = 100000;
 
-function hashPassword(password: string): string {
-  let hash = 0;
-  const str = password + SALT;
-  for (let i = 0; i < str.length; i += 1) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash |= 0;
-  }
-  return `h_${Math.abs(hash).toString(36)}`;
+let _defaultHash: string | null = null;
+
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(password),
+    'PBKDF2',
+    false,
+    ['deriveBits'],
+  );
+  const derivedBits = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt: encoder.encode(PBKDF2_SALT),
+      iterations: PBKDF2_ITERATIONS,
+      hash: 'SHA-256',
+    },
+    keyMaterial,
+    256,
+  );
+  const hashArray = Array.from(new Uint8Array(derivedBits));
+  return 'pbkdf2_' + hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 function normalizeEmail(email: string): string {
@@ -66,8 +71,8 @@ interface AuthStore {
   }) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   switchToDesigner: (designerId: string, designerName: string, designerRole: 'owner' | 'staff') => void;
-  setPassword: (designerId: string, newPassword: string) => void;
-  checkPassword: (designerId: string, password: string) => boolean;
+  setPassword: (designerId: string, newPassword: string) => Promise<void>;
+  checkPassword: (designerId: string, password: string) => Promise<boolean>;
   resetInitFlag: () => void;
   setCurrentShopOnboardingComplete: (complete: boolean) => void;
   isOwner: () => boolean;
@@ -181,32 +186,7 @@ export const useAuthStore = create<AuthStore>()(
 
         const userId = user?.id;
         if (!userId) {
-          // Supabase auth 세션 없음 — persist에서 복원된 shopId가 있으면 유지
-          const persisted = get();
-          if (persisted.currentShopId && persisted.role) {
-            set({ isInitialized: true, pendingGoogleSignup: null });
-            return;
-          }
-          // persist에도 없으면 bdx-shop localStorage에서 복구 시도
-          if (typeof window !== 'undefined') {
-            try {
-              const shopRaw = window.localStorage.getItem('bdx-shop');
-              const shopState = shopRaw ? (JSON.parse(shopRaw) as { state?: { shop?: { id?: string; name?: string; onboardingCompletedAt?: string } } }) : null;
-              const localShop = shopState?.state?.shop;
-              if (localShop?.id) {
-                set({
-                  isInitialized: true,
-                  pendingGoogleSignup: null,
-                  role: 'owner',
-                  currentShopId: localShop.id,
-                  currentShopOnboardingComplete: Boolean(localShop.onboardingCompletedAt),
-                  activeDesignerId: localShop.id,
-                  activeDesignerName: '원장',
-                });
-                return;
-              }
-            } catch { /* ignore */ }
-          }
+          // C2 fix: Supabase 세션 없으면 무조건 로그아웃 (localStorage 복구 금지)
           set({ isInitialized: true, pendingGoogleSignup: null, ...getLoggedOutState() });
           return;
         }
@@ -305,7 +285,7 @@ export const useAuthStore = create<AuthStore>()(
         // 항상 로컬 데모 모드로 즉시 진입 (Supabase 호출 없음)
         // middleware가 데모 세션을 인식하도록 쿠키 설정
         if (typeof document !== 'undefined') {
-          document.cookie = 'bdx-demo=true;path=/;max-age=86400';
+          document.cookie = 'bdx-demo=true;path=/;max-age=86400;SameSite=Strict;Secure';
         }
 
         set({
@@ -449,20 +429,38 @@ export const useAuthStore = create<AuthStore>()(
           role: designerRole,
         }),
 
-      setPassword: (designerId, newPassword) =>
+      setPassword: async (designerId, newPassword) => {
+        const hashed = await hashPassword(newPassword);
         set((state) => ({
           passwords: {
             ...state.passwords,
-            [designerId]: hashPassword(newPassword),
+            [designerId]: hashed,
           },
-        })),
+        }));
+      },
 
-      checkPassword: (designerId, password) => {
+      checkPassword: async (designerId, password) => {
         const stored = get().passwords[designerId];
+        const inputHash = await hashPassword(password);
+
         if (!stored) {
-          return hashPassword(password) === DEFAULT_PASSWORD_HASH;
+          // 저장된 해시 없음 → 기본 비밀번호 '1234' 비교
+          if (!_defaultHash) {
+            _defaultHash = await hashPassword('1234');
+          }
+          return inputHash === _defaultHash;
         }
-        return stored === hashPassword(password);
+
+        // 레거시 djb2 해시 감지 (h_ 접두사) → 1회 통과 후 새 해시로 마이그레이션
+        if (stored.startsWith('h_')) {
+          const newHash = await hashPassword(password);
+          set((state) => ({
+            passwords: { ...state.passwords, [designerId]: newHash },
+          }));
+          return true;
+        }
+
+        return stored === inputHash;
       },
 
       setCurrentShopOnboardingComplete: (complete) =>

@@ -93,20 +93,19 @@ export default function PaymentPage(): React.ReactElement | null {
 
     // 상담(consultation) 플로우 전용 고객 통계 업데이트
     // field-mode(quickSale)는 addQuickSaleRecord에서 이미 처리됨
-    // records/[id] handleFinalize는 treatment-sheet가 finalizedAt을 설정해 버튼 숨김 → 이중 카운팅 없음
     if (record.customerId && !record.isQuickSale) {
-      const customerStore = useCustomerStore.getState();
-      const customer = customerStore.getById(record.customerId);
-      if (customer) {
-        const newVisitCount = customer.visitCount + 1;
-        const newTotalSpend = customer.totalSpend + record.finalPrice;
-        customerStore.updateCustomer(record.customerId, {
-          visitCount: newVisitCount,
-          totalSpend: newTotalSpend,
-          averageSpend: Math.round(newTotalSpend / newVisitCount),
-          lastVisitDate: getTodayInKorea(),
-        });
-      }
+      useCustomerStore.getState().recordTreatmentCompletion(
+        record.customerId,
+        record.finalPrice,
+        {
+          recordId: record.id,
+          date: getTodayInKorea(),
+          bodyPart: record.consultation?.bodyPart ?? 'hand',
+          designScope: record.consultation?.designScope ?? '기타',
+          price: record.finalPrice,
+          imageUrls: [],
+        },
+      );
     }
 
     if (record.customerId) {

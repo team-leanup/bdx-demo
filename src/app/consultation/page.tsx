@@ -111,12 +111,6 @@ function StepFlowIcon({ type }: { type: 'customer' | 'basic' | 'treatment' | 'tr
   }
 }
 
-function getOptionalLabel(locale: Locale): string {
-  if (locale === 'en') return '(Optional)';
-  if (locale === 'zh') return '（可选）';
-  if (locale === 'ja') return '（任意）';
-  return '(선택)';
-}
 
 export default function ConsultationStartPage() {
   const router = useRouter();
@@ -445,8 +439,8 @@ export default function ConsultationStartPage() {
 
           <div className="flex items-center justify-center gap-2 mb-6">
             <span className="inline-flex items-center gap-1 rounded-full border border-border bg-surface-alt px-3 py-1 text-[11px] font-semibold text-text-muted">
-              {t('consultation.canvasTitle')} {getOptionalLabel(locale)}
-              {locale !== 'ko' && <span className="opacity-60">{tKo('consultation.canvasTitle')} (선택)</span>}
+              {t('consultation.canvasTitle')} {t('consultation.optional')}
+              {locale !== 'ko' && <span className="opacity-60">{tKo('consultation.canvasTitle')} {tKo('consultation.optional')}</span>}
             </span>
           </div>
 

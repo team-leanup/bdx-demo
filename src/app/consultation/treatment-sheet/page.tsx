@@ -16,15 +16,7 @@ import { useCustomerStore } from '@/store/customer-store';
 import type { FingerPosition, FingerSelection } from '@/types/canvas';
 import { useConsultationGuard } from '@/lib/use-consultation-guard';
 import type { DiscountConfig, NailShape } from '@/types/consultation';
-
-const SHAPE_LABELS: Record<string, string> = {
-  round: '라운드', oval: '오벌', square: '스퀘어', squoval: '스퀘오벌',
-  almond: '아몬드', stiletto: '스틸레토', coffin: '코핀',
-};
-
-const LENGTH_LABELS = { short: '짧게', medium: '보통', long: '길게' };
-const THICKNESS_LABELS = { thin: '얇게', medium: '보통', thick: '두껍게' };
-const CUTICLE_LABELS = { low: '예민하지 않음', medium: '보통', high: '예민함' };
+import { useT, useKo, useLocale } from '@/lib/i18n';
 
 type LengthType = 'short' | 'medium' | 'long';
 type ThicknessType = 'thin' | 'medium' | 'thick';
@@ -55,14 +47,6 @@ function hydratePricingExtras(extras?: { label: string; amount: number }[]): Pri
 const FIXED_DISCOUNT_PRESETS = [3000, 5000, 10000, 20000] as const;
 const PERCENT_DISCOUNT_PRESETS = [5, 10, 15, 20] as const;
 const DEPOSIT_PRESETS = [0, 10000, 20000, 30000, 50000] as const;
-
-const QUICK_ADD_PRESETS = [
-  { label: '파츠', amount: 2000 },
-  { label: '글리터', amount: 3000 },
-  { label: '포인트', amount: 5000 },
-  { label: '연장 추가', amount: 10000 },
-  { label: '기타', amount: 0 },
-] as const;
 
 function SegmentControl<T extends string>({
   options,
@@ -209,6 +193,10 @@ export default function TreatmentSheetPage() {
     cuticleSensitivity: null,
     memo: '',
   });
+
+  const t = useT();
+  const tKo = useKo();
+  const locale = useLocale();
 
   const designers = useShopStore((s) => s.designers);
   const designer = designers.find(d => d.id === (consultationData.designerId || activeDesignerId));
@@ -374,13 +362,51 @@ export default function TreatmentSheetPage() {
   const hasCanvas = consultationData.canvasData && consultationData.canvasData.length > 0;
   const hasReferenceImages = consultationData.referenceImages && consultationData.referenceImages.length > 0;
 
+  const lengthLabels: Record<LengthType, string> = {
+    short: t('consultation.treatmentSheet.lengthShort'),
+    medium: t('consultation.treatmentSheet.lengthMedium'),
+    long: t('consultation.treatmentSheet.lengthLong'),
+  };
+  const thicknessLabels: Record<ThicknessType, string> = {
+    thin: t('consultation.treatmentSheet.thicknessThin'),
+    medium: t('consultation.treatmentSheet.thicknessMedium'),
+    thick: t('consultation.treatmentSheet.thicknessThick'),
+  };
+  const cuticleLabels: Record<CuticleType, string> = {
+    low: t('consultation.treatmentSheet.cuticleLow'),
+    medium: t('consultation.treatmentSheet.cuticleMedium'),
+    high: t('consultation.treatmentSheet.cuticleHigh'),
+  };
+
+  const quickAddPresets = [
+    { labelKey: 'consultation.treatmentSheet.quickAddParts', amount: 2000 },
+    { labelKey: 'consultation.treatmentSheet.quickAddGlitter', amount: 3000 },
+    { labelKey: 'consultation.treatmentSheet.quickAddPoint', amount: 5000 },
+    { labelKey: 'consultation.treatmentSheet.quickAddExtension', amount: 10000 },
+    { labelKey: 'consultation.treatmentSheet.quickAddOther', amount: 0 },
+  ] as const;
+
+  const getDesignLabel = () => {
+    if (consultationData.designScope === 'solid_tone') return t('consultation.treatmentSheet.designSolidTone');
+    if (consultationData.designScope === 'solid_point') return t('consultation.treatmentSheet.designSolidPoint');
+    if (consultationData.designScope === 'full_art') return t('consultation.treatmentSheet.designFullArt');
+    return t('consultation.treatmentSheet.designMonthlyArt');
+  };
+
   return (
     <div className="h-dvh bg-background flex flex-col overflow-hidden">
       {/* Header */}
       <div className="px-4 pt-6 pb-4 border-b border-border">
-        <h1 className="text-xl font-bold text-text">시술 확인서</h1>
+        <h1 className="text-xl font-bold text-text">
+          {t('consultation.treatmentSheet.title')}
+        </h1>
+        {locale !== 'ko' && (
+          <p className="text-xs text-text-muted opacity-60">{tKo('consultation.treatmentSheet.title')}</p>
+        )}
         <div className="flex items-center gap-2 mt-1 flex-wrap">
-          <span className="text-sm text-text-secondary">{consultationData.customerName || '고객'}</span>
+          <span className="text-sm text-text-secondary">
+            {consultationData.customerName || t('consultation.treatmentSheet.customer')}
+          </span>
           <span className="text-text-muted">·</span>
           <span className="text-sm text-text-muted">{today}</span>
           {designer && (
@@ -395,32 +421,48 @@ export default function TreatmentSheetPage() {
       <main className="flex-1 overflow-y-auto px-4 md:px-8 py-5 flex flex-col gap-5 max-w-2xl md:max-w-4xl mx-auto w-full">
         {/* Checklist Summary */}
         <div className="rounded-2xl border border-border bg-surface p-4">
-          <h3 className="text-sm font-bold text-text mb-3">체크리스트</h3>
+          <h3 className="text-sm font-bold text-text mb-3">
+            {t('consultation.treatmentSheet.checklistSection')}
+            {locale !== 'ko' && (
+              <span className="ml-1.5 text-xs font-normal text-text-muted opacity-60">{tKo('consultation.treatmentSheet.checklistSection')}</span>
+            )}
+          </h3>
           <div className="grid grid-cols-2 gap-3">
             {consultationData.nailShape && (
               <div className="flex flex-col gap-0.5">
-                <span className="text-[11px] text-text-muted">쉐입</span>
-                <span className="text-sm font-semibold text-text">{SHAPE_LABELS[consultationData.nailShape] || consultationData.nailShape}</span>
+                <span className="text-[11px] text-text-muted">
+                  {t('consultation.treatmentSheet.shapeLabel')}
+                </span>
+                <span className="text-sm font-semibold text-text">{consultationData.nailShape}</span>
               </div>
             )}
             <div className="flex flex-col gap-0.5">
-              <span className="text-[11px] text-text-muted">신체 부위</span>
-              <span className="text-sm font-semibold text-text">{consultationData.bodyPart === 'hand' ? '핸드' : '페디큐어'}</span>
+              <span className="text-[11px] text-text-muted">
+                {t('consultation.treatmentSheet.bodyPartLabel')}
+              </span>
+              <span className="text-sm font-semibold text-text">
+                {consultationData.bodyPart === 'hand'
+                  ? t('consultation.treatmentSheet.bodyPartHand')
+                  : t('consultation.treatmentSheet.bodyPartFoot')}
+              </span>
             </div>
             <div className="flex flex-col gap-0.5">
-              <span className="text-[11px] text-text-muted">디자인</span>
+              <span className="text-[11px] text-text-muted">
+                {t('consultation.treatmentSheet.designLabel')}
+              </span>
               <span className="text-sm font-semibold text-text">
-                {consultationData.designScope === 'solid_tone' ? '원컬러'
-                  : consultationData.designScope === 'solid_point' ? '단색+포인트'
-                  : consultationData.designScope === 'full_art' ? '풀아트'
-                  : '이달의 아트'}
+                {getDesignLabel()}
               </span>
             </div>
             {consultationData.offType !== 'none' && (
               <div className="flex flex-col gap-0.5">
-                <span className="text-[11px] text-text-muted">오프</span>
+                <span className="text-[11px] text-text-muted">
+                  {t('consultation.treatmentSheet.offLabel')}
+                </span>
                 <span className="text-sm font-semibold text-text">
-                  {consultationData.offType === 'same_shop' ? '자샵오프' : '타샵오프'}
+                  {consultationData.offType === 'same_shop'
+                    ? t('consultation.treatmentSheet.offSameShop')
+                    : t('consultation.treatmentSheet.offOtherShop')}
                 </span>
               </div>
             )}
@@ -430,47 +472,72 @@ export default function TreatmentSheetPage() {
         {/* Daily Checklist - 당일 시술 체크 */}
         <div className="rounded-2xl border border-border bg-surface p-4 flex flex-col gap-4">
           <div>
-            <h3 className="text-sm font-bold text-text mb-0.5">당일 시술 체크</h3>
-            <p className="text-xs text-text-muted">시술 시작 전 고객 상태를 확인해주세요</p>
+            <h3 className="text-sm font-bold text-text mb-0.5">
+              {t('consultation.treatmentSheet.dailyCheckSection')}
+              {locale !== 'ko' && (
+                <span className="ml-1.5 text-xs font-normal text-text-muted opacity-60">{tKo('consultation.treatmentSheet.dailyCheckSection')}</span>
+              )}
+            </h3>
+            <p className="text-xs text-text-muted">{t('consultation.treatmentSheet.dailyCheckDesc')}</p>
           </div>
 
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-semibold text-text-secondary">길이</span>
+              <span className="text-sm font-semibold text-text-secondary">
+                {t('consultation.treatmentSheet.lengthLabel')}
+                {locale !== 'ko' && (
+                  <span className="ml-1 text-xs font-normal text-text-muted opacity-60">{tKo('consultation.treatmentSheet.lengthLabel')}</span>
+                )}
+              </span>
               <SegmentControl<LengthType>
                 options={['short', 'medium', 'long']}
                 value={checklist.length}
                 onChange={(v) => setChecklist(prev => ({ ...prev, length: v }))}
-                labels={LENGTH_LABELS}
+                labels={lengthLabels}
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-semibold text-text-secondary">두께감</span>
+              <span className="text-sm font-semibold text-text-secondary">
+                {t('consultation.treatmentSheet.thicknessLabel')}
+                {locale !== 'ko' && (
+                  <span className="ml-1 text-xs font-normal text-text-muted opacity-60">{tKo('consultation.treatmentSheet.thicknessLabel')}</span>
+                )}
+              </span>
               <SegmentControl<ThicknessType>
                 options={['thin', 'medium', 'thick']}
                 value={checklist.thickness}
                 onChange={(v) => setChecklist(prev => ({ ...prev, thickness: v }))}
-                labels={THICKNESS_LABELS}
+                labels={thicknessLabels}
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-semibold text-text-secondary">큐티클 상태</span>
+              <span className="text-sm font-semibold text-text-secondary">
+                {t('consultation.treatmentSheet.cuticleLabel')}
+                {locale !== 'ko' && (
+                  <span className="ml-1 text-xs font-normal text-text-muted opacity-60">{tKo('consultation.treatmentSheet.cuticleLabel')}</span>
+                )}
+              </span>
               <SegmentControl<CuticleType>
                 options={['low', 'medium', 'high']}
                 value={checklist.cuticleSensitivity}
                 onChange={(v) => setChecklist(prev => ({ ...prev, cuticleSensitivity: v }))}
-                labels={CUTICLE_LABELS}
+                labels={cuticleLabels}
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-semibold text-text-secondary">메모</span>
+              <span className="text-sm font-semibold text-text-secondary">
+                {t('consultation.treatmentSheet.memoLabel')}
+                {locale !== 'ko' && (
+                  <span className="ml-1 text-xs font-normal text-text-muted opacity-60">{tKo('consultation.treatmentSheet.memoLabel')}</span>
+                )}
+              </span>
               <textarea
                 value={checklist.memo}
                 onChange={(e) => setChecklist(prev => ({ ...prev, memo: e.target.value }))}
-                placeholder="특이사항 메모 (ex. 손톱이 얇음, 큐티클 주의)"
+                placeholder={t('consultation.treatmentSheet.memoPlaceholder')}
                 rows={2}
                 className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               />
@@ -481,7 +548,12 @@ export default function TreatmentSheetPage() {
         {/* Reference Images */}
         {hasReferenceImages && (
           <div className="rounded-2xl border border-border bg-surface p-4">
-            <h3 className="text-sm font-bold text-text mb-3">참고 이미지</h3>
+            <h3 className="text-sm font-bold text-text mb-3">
+              {t('consultation.treatmentSheet.referenceImages')}
+              {locale !== 'ko' && (
+                <span className="ml-1.5 text-xs font-normal text-text-muted opacity-60">{tKo('consultation.treatmentSheet.referenceImages')}</span>
+              )}
+            </h3>
             <div className="grid grid-cols-2 gap-3">
               {consultationData.referenceImages?.map((url, i) => (
                 <div key={i} className="relative rounded-xl overflow-hidden border border-border aspect-square">
@@ -495,10 +567,17 @@ export default function TreatmentSheetPage() {
         {/* Canvas - Read only */}
         {hasCanvas && (
           <div className="rounded-2xl border border-border bg-surface p-4">
-            <h3 className="text-sm font-bold text-text mb-3">네일 디자인</h3>
+            <h3 className="text-sm font-bold text-text mb-3">
+              {t('consultation.treatmentSheet.nailDesign')}
+              {locale !== 'ko' && (
+                <span className="ml-1.5 text-xs font-normal text-text-muted opacity-60">{tKo('consultation.treatmentSheet.nailDesign')}</span>
+              )}
+            </h3>
             <div className="flex flex-col gap-6">
               <div>
-                <p className="text-xs text-text-muted text-center mb-2">왼손</p>
+                <p className="text-xs text-text-muted text-center mb-2">
+                  {t('consultation.treatmentSheet.leftHand')}
+                </p>
                 <HandIllustration
                   hand="left"
                   selections={buildSelections('left_hand')}
@@ -506,7 +585,9 @@ export default function TreatmentSheetPage() {
                 />
               </div>
               <div>
-                <p className="text-xs text-text-muted text-center mb-2">오른손</p>
+                <p className="text-xs text-text-muted text-center mb-2">
+                  {t('consultation.treatmentSheet.rightHand')}
+                </p>
                 <HandIllustration
                   hand="right"
                   selections={buildSelections('right_hand')}
@@ -519,25 +600,30 @@ export default function TreatmentSheetPage() {
 
         {/* Price & Time Summary */}
         <div className="rounded-2xl border border-border bg-surface p-4">
-          <h3 className="text-sm font-bold text-text mb-3">시술 내역</h3>
+          <h3 className="text-sm font-bold text-text mb-3">
+            {t('consultation.treatmentSheet.serviceBreakdown')}
+            {locale !== 'ko' && (
+              <span className="ml-1.5 text-xs font-normal text-text-muted opacity-60">{tKo('consultation.treatmentSheet.serviceBreakdown')}</span>
+            )}
+          </h3>
           <div className="flex flex-col gap-2">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-text-secondary">기본 금액</span>
+              <span className="text-sm text-text-secondary">{t('consultation.treatmentSheet.baseAmount')}</span>
               <span className="text-lg font-bold text-primary">{formatPrice(basePrice)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-text-secondary">예상 소요 시간</span>
-              <span className="text-sm font-semibold text-text">{estimatedMinutes}분</span>
+              <span className="text-sm text-text-secondary">{t('consultation.treatmentSheet.estimatedTime')}</span>
+              <span className="text-sm font-semibold text-text">{estimatedMinutes}{t('consultation.treatmentSheet.minutes')}</span>
             </div>
             {extrasSum > 0 && (
               <div className="flex justify-between items-center">
-                <span className="text-sm text-text-secondary">추가 항목</span>
+                <span className="text-sm text-text-secondary">{t('consultation.treatmentSheet.additionalItems')}</span>
                 <span className="text-sm font-semibold text-primary">+{formatPrice(extrasSum)}</span>
               </div>
             )}
             {appliedDiscount && (
               <div className="flex justify-between items-center">
-                <span className="text-sm text-text-secondary">할인</span>
+                <span className="text-sm text-text-secondary">{t('consultation.treatmentSheet.discount')}</span>
                 <span className="text-sm font-semibold text-error">
                   -{appliedDiscount.type === 'percent' ? `${appliedDiscount.value}%` : formatPrice(appliedDiscount.value)}
                 </span>
@@ -545,12 +631,12 @@ export default function TreatmentSheetPage() {
             )}
             {depositAmount > 0 && (
               <div className="flex justify-between items-center">
-                <span className="text-sm text-text-secondary">예약금</span>
+                <span className="text-sm text-text-secondary">{t('consultation.treatmentSheet.deposit')}</span>
                 <span className="text-sm font-semibold text-text-secondary">-{formatPrice(depositAmount)}</span>
               </div>
             )}
             <div className="mt-2 pt-2 border-t border-border flex justify-between items-center">
-              <span className="text-sm font-bold text-text">최종 결제</span>
+              <span className="text-sm font-bold text-text">{t('consultation.treatmentSheet.finalPayment')}</span>
               <span className="text-lg font-bold text-text">{formatPrice(calculatedFinalPrice)}</span>
             </div>
           </div>
@@ -559,20 +645,25 @@ export default function TreatmentSheetPage() {
         {/* Price Finalization Editor */}
         <div className="rounded-2xl border border-border bg-surface p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-text">가격 확정</h3>
+            <h3 className="text-sm font-bold text-text">
+              {t('consultation.treatmentSheet.priceFinalization')}
+              {locale !== 'ko' && (
+                <span className="ml-1.5 text-xs font-normal text-text-muted opacity-60">{tKo('consultation.treatmentSheet.priceFinalization')}</span>
+              )}
+            </h3>
             {isPriceFinalized && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
                 <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                확정됨
+                {t('consultation.treatmentSheet.priceFinalized')}
               </span>
             )}
           </div>
 
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-text-secondary">기본 금액</label>
+              <label className="text-sm font-semibold text-text-secondary">{t('consultation.treatmentSheet.basePriceLabel')}</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-muted">₩</span>
                 <input
@@ -587,7 +678,7 @@ export default function TreatmentSheetPage() {
 
              <div className="flex flex-col gap-2">
                <div className="flex items-center justify-between">
-                 <span className="text-sm font-semibold text-text-secondary">추가 항목</span>
+                 <span className="text-sm font-semibold text-text-secondary">{t('consultation.treatmentSheet.additionalItemsLabel')}</span>
                 {!isPriceFinalized && (
                   <button
                     type="button"
@@ -597,37 +688,40 @@ export default function TreatmentSheetPage() {
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
-                    추가 항목 추가
+                    {t('consultation.treatmentSheet.addExtraBtn')}
                   </button>
                 )}
               </div>
 
               {!isPriceFinalized && (
                 <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-                  {QUICK_ADD_PRESETS.map((preset) => (
-                    <button
-                      key={preset.label}
-                      type="button"
-                      onClick={() => {
-                        setExtras(prev => [...prev, {
-                          id: `extra-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-                          label: preset.label === '기타' ? '' : preset.label,
-                          amount: preset.amount,
-                        }]);
-                      }}
-                      className="flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-alt text-text-secondary border border-border hover:border-primary/40 hover:text-primary transition-all active:scale-[0.97]"
-                    >
-                      {preset.label}
-                      {preset.amount > 0 && (
-                        <span className="ml-1 text-primary">+{(preset.amount / 1000).toFixed(0)}k</span>
-                      )}
-                    </button>
-                  ))}
+                  {quickAddPresets.map((preset) => {
+                    const presetLabel = t(preset.labelKey);
+                    return (
+                      <button
+                        key={preset.labelKey}
+                        type="button"
+                        onClick={() => {
+                          setExtras(prev => [...prev, {
+                            id: `extra-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                            label: preset.amount === 0 ? '' : presetLabel,
+                            amount: preset.amount,
+                          }]);
+                        }}
+                        className="flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-surface-alt text-text-secondary border border-border hover:border-primary/40 hover:text-primary transition-all active:scale-[0.97]"
+                      >
+                        {presetLabel}
+                        {preset.amount > 0 && (
+                          <span className="ml-1 text-primary">+{(preset.amount / 1000).toFixed(0)}k</span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
 
               {extras.length === 0 && !isPriceFinalized && (
-                <p className="text-xs text-text-muted py-2">추가 비용이 있으면 항목으로 더해주세요</p>
+                <p className="text-xs text-text-muted py-2">{t('consultation.treatmentSheet.extraEmptyHint')}</p>
               )}
 
               {extras.map((extra) => (
@@ -636,7 +730,7 @@ export default function TreatmentSheetPage() {
                     type="text"
                     value={extra.label}
                     onChange={(e) => handleUpdateExtra(extra.id, 'label', e.target.value)}
-                    placeholder="항목명"
+                    placeholder={t('consultation.treatmentSheet.itemNamePlaceholder')}
                     disabled={isPriceFinalized}
                     className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-60 disabled:bg-surface-alt"
                   />
@@ -669,7 +763,7 @@ export default function TreatmentSheetPage() {
 
             <div className="rounded-2xl border border-border bg-surface-alt/60 p-4 flex flex-col gap-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-text">할인/예약금 적용</span>
+                <span className="text-sm font-bold text-text">{t('consultation.treatmentSheet.discountDeposit')}</span>
                 {(appliedDiscount || depositAmount > 0) && !isPriceFinalized && (
                   <button
                     type="button"
@@ -680,7 +774,7 @@ export default function TreatmentSheetPage() {
                     }}
                     className="text-xs font-semibold text-text-muted hover:text-text"
                   >
-                    초기화
+                    {t('consultation.treatmentSheet.reset')}
                   </button>
                 )}
               </div>
@@ -701,13 +795,17 @@ export default function TreatmentSheetPage() {
                         : 'text-text-muted'
                     }`}
                   >
-                    {type === 'fixed' ? '정액 할인' : '할인율'}
+                    {type === 'fixed'
+                      ? t('consultation.treatmentSheet.discountFixed')
+                      : t('consultation.treatmentSheet.discountPercent')}
                   </button>
                 ))}
               </div>
 
               <NumberPresetPicker
-                label={discountType === 'fixed' ? '할인 금액 선택' : '할인율 선택'}
+                label={discountType === 'fixed'
+                  ? t('consultation.treatmentSheet.discountAmountLabel')
+                  : t('consultation.treatmentSheet.discountRateLabel')}
                 values={discountType === 'fixed' ? FIXED_DISCOUNT_PRESETS : PERCENT_DISCOUNT_PRESETS}
                 selectedValue={discountValue}
                 onSelect={setDiscountValue}
@@ -715,7 +813,9 @@ export default function TreatmentSheetPage() {
               />
 
               <StepValueControl
-                label={discountType === 'fixed' ? '세부 할인 조정' : '세부 할인율 조정'}
+                label={discountType === 'fixed'
+                  ? t('consultation.treatmentSheet.discountDetailFixed')
+                  : t('consultation.treatmentSheet.discountDetailPercent')}
                 value={discountValue}
                 step={discountType === 'fixed' ? 1000 : 1}
                 min={0}
@@ -725,26 +825,26 @@ export default function TreatmentSheetPage() {
               />
 
               <NumberPresetPicker
-                label="예약금 선택"
+                label={t('consultation.treatmentSheet.depositLabel')}
                 values={DEPOSIT_PRESETS}
                 selectedValue={depositAmount}
                 onSelect={setDepositAmount}
-                formatter={(value) => value === 0 ? '없음' : formatPrice(value)}
+                formatter={(value) => value === 0 ? t('consultation.treatmentSheet.depositNone') : formatPrice(value)}
               />
 
               <StepValueControl
-                label="예약금 세부 조정"
+                label={t('consultation.treatmentSheet.depositDetailLabel')}
                 value={depositAmount}
                 step={5000}
                 min={0}
                 onChange={setDepositAmount}
-                formatter={(value) => value === 0 ? '없음' : formatPrice(value)}
+                formatter={(value) => value === 0 ? t('consultation.treatmentSheet.depositNone') : formatPrice(value)}
               />
             </div>
 
             <div className="mt-2 pt-3 border-t border-border">
               <div className="flex justify-between items-center mb-3">
-                <span className="text-sm font-bold text-text">확정 금액</span>
+                <span className="text-sm font-bold text-text">{t('consultation.treatmentSheet.finalAmount')}</span>
                 <span
                   className="text-xl font-bold"
                   style={{ color: calculatedFinalPrice >= 0 ? 'var(--color-primary)' : 'var(--color-error, #ef4444)' }}
@@ -755,17 +855,17 @@ export default function TreatmentSheetPage() {
 
               {extras.length > 0 && (
                 <div className="text-xs text-text-muted mb-3">
-                  기본 {formatPriceNumber(basePrice)}원
+                  {t('consultation.treatmentSheet.basePrefix')}{formatPriceNumber(basePrice)}{t('consultation.treatmentSheet.won')}
                   {extrasSum !== 0 && (
                     <span className={extrasSum > 0 ? 'text-primary' : 'text-error'}>
-                      {extrasSum > 0 ? ` + ${formatPriceNumber(extrasSum)}` : ` - ${formatPriceNumber(Math.abs(extrasSum))}`}원
+                      {extrasSum > 0 ? ` + ${formatPriceNumber(extrasSum)}` : ` - ${formatPriceNumber(Math.abs(extrasSum))}`}{t('consultation.treatmentSheet.won')}
                     </span>
                   )}
                   {discountAmount > 0 && (
-                    <span className="text-error"> - 할인 {formatPriceNumber(discountAmount)}원</span>
+                    <span className="text-error">{t('consultation.treatmentSheet.discountPrefix')}{formatPriceNumber(discountAmount)}{t('consultation.treatmentSheet.won')}</span>
                   )}
                   {depositAmount > 0 && (
-                    <span className="text-text-secondary"> - 예약금 {formatPriceNumber(depositAmount)}원</span>
+                    <span className="text-text-secondary">{t('consultation.treatmentSheet.depositPrefix')}{formatPriceNumber(depositAmount)}{t('consultation.treatmentSheet.won')}</span>
                   )}
                 </div>
               )}
@@ -778,7 +878,9 @@ export default function TreatmentSheetPage() {
                   className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all active:scale-[0.98] disabled:opacity-40"
                   style={{ background: 'var(--color-primary)' }}
                 >
-                  {isFinalizing ? '확정 중...' : '가격 확정'}
+                  {isFinalizing
+                    ? t('consultation.treatmentSheet.finalizingPrice')
+                    : t('consultation.treatmentSheet.finalizeBtn')}
                 </button>
               ) : (
                 <div
@@ -788,7 +890,7 @@ export default function TreatmentSheetPage() {
                   <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  가격이 확정되었습니다
+                  {t('consultation.treatmentSheet.priceConfirmed')}
                 </div>
               )}
             </div>
@@ -797,8 +899,13 @@ export default function TreatmentSheetPage() {
 
         {/* Small Talk Memo */}
         <div className="rounded-2xl border border-border bg-surface p-4">
-          <h3 className="text-sm font-bold text-text mb-1">고객 메모</h3>
-          <p className="text-[11px] text-text-muted mb-3">고객과 나눈 이야기를 기록해두면 다음 방문 때 활용할 수 있어요</p>
+          <h3 className="text-sm font-bold text-text mb-1">
+            {t('consultation.treatmentSheet.customerMemo')}
+            {locale !== 'ko' && (
+              <span className="ml-1.5 text-xs font-normal text-text-muted opacity-60">{tKo('consultation.treatmentSheet.customerMemo')}</span>
+            )}
+          </h3>
+          <p className="text-[11px] text-text-muted mb-3">{t('consultation.treatmentSheet.customerMemoDesc')}</p>
 
           {isSaved && (
             <div
@@ -808,14 +915,14 @@ export default function TreatmentSheetPage() {
               <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-              저장됐어요
+              {t('consultation.treatmentSheet.memoSaved')}
             </div>
           )}
 
           <textarea
             value={smallTalkText}
             onChange={(e) => setSmallTalkText(e.target.value)}
-            placeholder="고객과 나눈 이야기를 메모해두세요 (취미, 관심사 등)"
+            placeholder={t('consultation.treatmentSheet.smallTalkPlaceholder')}
             rows={3}
             className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-text placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           />
@@ -829,7 +936,7 @@ export default function TreatmentSheetPage() {
               color: smallTalkText.trim() ? 'white' : 'var(--color-text-muted)',
             }}
           >
-            메모 저장
+            {t('consultation.treatmentSheet.saveMemo')}
           </button>
         </div>
       </main>
@@ -846,7 +953,7 @@ export default function TreatmentSheetPage() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
             </svg>
-            결제하기 · {formatPrice(calculatedFinalPrice)}
+            {t('consultation.treatmentSheet.pay')} · {formatPrice(calculatedFinalPrice)}
           </button>
         )}
         <button
@@ -855,7 +962,9 @@ export default function TreatmentSheetPage() {
           className="w-full py-3.5 rounded-xl font-bold text-sm text-white transition-all active:scale-[0.98] disabled:opacity-60"
           style={{ background: 'var(--color-primary)' }}
         >
-          {isFinalSaving ? '저장 중...' : '저장하기'}
+          {isFinalSaving
+            ? t('consultation.treatmentSheet.saving')
+            : t('consultation.treatmentSheet.saveComplete')}
         </button>
       </div>
     </div>

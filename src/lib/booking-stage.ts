@@ -1,6 +1,6 @@
 import type { BookingRequest, ConsultationRecord } from '@/types/consultation';
 
-export type BookingStage = 'just_registered' | 'link_sent' | 'pre_consult_done' | 'in_treatment' | 'completed';
+export type BookingStage = 'just_registered' | 'link_sent' | 'pre_consult_done' | 'in_treatment' | 'completed' | 'cancelled';
 
 export const STAGE_LABELS: Record<BookingStage, string> = {
   just_registered: '방금 등록',
@@ -8,12 +8,17 @@ export const STAGE_LABELS: Record<BookingStage, string> = {
   pre_consult_done: '사전 상담 완료',
   in_treatment: '시술 중',
   completed: '완료',
+  cancelled: '취소됨',
 };
 
 export function getBookingStage(
   booking: BookingRequest,
   matchedRecord?: ConsultationRecord | null,
 ): BookingStage {
+  // Stage 0: cancelled
+  if (booking.status === 'cancelled') {
+    return 'cancelled';
+  }
   // Stage 5: completed
   if (booking.status === 'completed' || matchedRecord?.finalizedAt) {
     return 'completed';

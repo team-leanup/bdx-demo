@@ -1,11 +1,17 @@
 'use client';
 
+import { useT, useKo, useLocale } from '@/lib/i18n';
+
 export default function ConsultationError({
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }): React.ReactElement {
+  const t = useT();
+  const tKo = useKo();
+  const locale = useLocale();
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 bg-background">
       <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-error/10">
@@ -14,21 +20,33 @@ export default function ConsultationError({
         </svg>
       </div>
       <div className="text-center">
-        <h2 className="text-lg font-bold text-text">상담 중 오류가 발생했어요</h2>
-        <p className="mt-1 text-sm text-text-muted">입력한 내용은 자동 저장되었어요</p>
+        <h2 className="text-lg font-bold text-text">{t('consultation.error.title')}</h2>
+        {locale !== 'ko' && (
+          <span className="block text-xs text-text-muted opacity-60 mt-0.5">{tKo('consultation.error.title')}</span>
+        )}
+        <p className="mt-1 text-sm text-text-muted">{t('consultation.error.subtitle')}</p>
+        {locale !== 'ko' && (
+          <span className="block text-xs text-text-muted opacity-60 mt-0.5">{tKo('consultation.error.subtitle')}</span>
+        )}
       </div>
       <div className="flex gap-3">
         <button
           onClick={reset}
           className="rounded-xl bg-surface-alt px-5 py-2.5 text-sm font-semibold text-text transition-colors hover:bg-surface-alt/80"
         >
-          다시 시도
+          {t('consultation.error.retry')}
+          {locale !== 'ko' && (
+            <span className="block text-xs text-text-muted opacity-60">{tKo('consultation.error.retry')}</span>
+          )}
         </button>
         <a
           href="/home"
           className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
         >
-          홈으로
+          {t('consultation.error.goHome')}
+          {locale !== 'ko' && (
+            <span className="block text-xs text-white/70">{tKo('consultation.error.goHome')}</span>
+          )}
         </a>
       </div>
     </div>

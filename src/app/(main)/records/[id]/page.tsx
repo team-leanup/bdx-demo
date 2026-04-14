@@ -34,8 +34,7 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
   const updateRecord = useRecordsStore((s) => s.updateRecord);
   const portfolioPhotos = usePortfolioStore(useShallow((s) => s.photos.filter((p) => p.recordId === id)));
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
-  const updateCustomer = useCustomerStore((s) => s.updateCustomer);
-  const getCustomerById = useCustomerStore((s) => s.getById);
+  const recordTreatmentCompletion = useCustomerStore((s) => s.recordTreatmentCompletion);
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const setConsultationLocale = useLocaleStore((s) => s.setConsultationLocale);
   const shopSettings = useAppStore((s) => s.shopSettings);
@@ -77,15 +76,14 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
   const handleFinalize = (): void => {
     const now = getNowInKoreaIso();
     updateRecord(id, { finalizedAt: now });
-    const customer = getCustomerById(record.customerId);
-    if (customer) {
-      const newVisitCount = customer.visitCount + 1;
-      const newTotalSpend = customer.totalSpend + record.finalPrice;
-      updateCustomer(record.customerId, {
-        visitCount: newVisitCount,
-        totalSpend: newTotalSpend,
-        averageSpend: Math.round(newTotalSpend / newVisitCount),
-        lastVisitDate: getTodayInKorea(),
+    if (record.customerId) {
+      recordTreatmentCompletion(record.customerId, record.finalPrice, {
+        recordId: id,
+        date: getTodayInKorea(),
+        bodyPart: record.consultation?.bodyPart ?? 'hand',
+        designScope: record.consultation?.designScope ?? '기타',
+        price: record.finalPrice,
+        imageUrls: [],
       });
     }
   };

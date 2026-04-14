@@ -10,7 +10,7 @@ export default function ConsultationLoading(): React.ReactElement {
             </svg>
           </div>
         </div>
-        <span className="text-sm text-text-muted">상담 준비 중...</span>
+        <span className="sr-only">Loading...</span>
       </div>
     </div>
   );
