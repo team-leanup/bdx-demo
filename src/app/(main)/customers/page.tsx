@@ -9,6 +9,7 @@ import { normalizePhone } from '@/lib/phone';
 import { useAuthStore } from '@/store/auth-store';
 import { FlagIcon } from '@/components/ui/FlagIcon';
 import { cn } from '@/lib/cn';
+import { getSafetyTagMeta } from '@/lib/tag-safety';
 
 
 type FilterTab = 'all' | 'vip' | 'regular';
@@ -187,6 +188,10 @@ export default function CustomersPage() {
             {paginatedCustomers.map((customer) => {
               const isVip = customer.isRegular || customer.visitCount >= 5;
               const recentTag = (customer.tags ?? []).find((t) => t.category === 'design');
+              const highestSafetyTag = (customer.tags ?? [])
+                .map((t) => ({ tag: t, meta: getSafetyTagMeta(t) }))
+                .filter(({ meta }) => meta.level === 'high' || meta.level === 'medium')
+                .sort((a, b) => (a.meta.level === 'high' && b.meta.level !== 'high' ? -1 : 1))[0];
 
               return (
                 <button
@@ -194,12 +199,25 @@ export default function CustomersPage() {
                   onClick={() => router.push(`/customers/${customer.id}`)}
                   className="flex flex-col items-center gap-2 rounded-xl border border-border bg-surface p-3 text-center hover:shadow-md active:bg-surface-alt transition-all"
                 >
-                  {/* 아바타 + 국기 overlay */}
+                  {/* 아바타 + 국기/safety overlay */}
                   <div className="relative flex h-11 w-11 items-center justify-center rounded-full bg-primary/15 text-base font-medium text-primary">
                     {customer.name.charAt(0)}
                     {customer.preferredLanguage && customer.preferredLanguage !== 'ko' && (
                       <span className="absolute -bottom-0.5 -right-0.5 text-[12px] leading-none drop-shadow-sm">
                         <FlagIcon language={customer.preferredLanguage} size="sm" />
+                      </span>
+                    )}
+                    {highestSafetyTag && (
+                      <span
+                        className={cn(
+                          'absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] leading-none shadow-sm border border-white',
+                          highestSafetyTag.meta.level === 'high'
+                            ? 'bg-red-500 text-white'
+                            : 'bg-orange-400 text-white',
+                        )}
+                        title={highestSafetyTag.tag.value}
+                      >
+                        ⚠
                       </span>
                     )}
                   </div>
@@ -228,7 +246,7 @@ export default function CustomersPage() {
                   {/* 방문 + 금액 */}
                   <div className="flex items-center gap-2 text-[11px]">
                     <span className="text-text-muted">{customer.visitCount}회</span>
-                    <span className="font-semibold text-primary tabular-nums">{formatPrice(customer.totalSpend)}</span>
+                    <span className={cn('font-semibold tabular-nums', customer.totalSpend > 0 ? 'text-primary' : 'text-text-muted')}>{formatPrice(customer.totalSpend)}</span>
                   </div>
                 </button>
               );

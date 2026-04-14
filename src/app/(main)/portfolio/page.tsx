@@ -935,24 +935,24 @@ export default function PortfolioPage(): React.ReactElement {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="columns-2 sm:columns-3 lg:columns-4 gap-3">
               {filteredPhotos.map(({ photo, customer, serviceType, price, effectiveDate }, idx) => {
                 const imgSrc = photo.imageDataUrl || NAIL_FALLBACKS[idx % NAIL_FALLBACKS.length];
                 return (
                   <div
                     key={photo.id}
-                    className="group rounded-xl overflow-hidden bg-surface-alt shadow-sm hover:shadow-md transition-shadow"
+                    className="break-inside-avoid mb-3 group rounded-xl overflow-hidden bg-surface-alt shadow-sm hover:shadow-md transition-shadow"
                   >
                     <button
                       onClick={() => setOverlayPhotoId(photo.id)}
-                      className="relative block w-full aspect-square overflow-hidden"
+                      className="relative block w-full overflow-hidden"
                     >
-                      <Image
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
                         src={imgSrc}
                         alt={customer?.name ?? '포트폴리오'}
-                        fill
-                        unoptimized={imgSrc.startsWith('data:')}
-                        className="object-cover transition-transform group-hover:scale-105"
+                        className="w-full h-auto block transition-transform group-hover:scale-105"
+                        loading="lazy"
                       />
                       {photo.isFeatured && (
                         <span className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full bg-amber-400 text-white text-[9px] font-bold shadow-sm">

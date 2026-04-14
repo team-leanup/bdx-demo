@@ -31,6 +31,7 @@ interface DesignerDayGridCalendarProps {
   onEventMove?: (reservationId: string, updates: { reservationTime: string; designerId?: string }) => void;
   onSlotLongPress?: (time: string, designerId: string) => void;
   onAddReservation?: () => void;
+  onToggleMonthView?: () => void;
   role: UserRole;
   activeDesignerId: string | null;
 }
@@ -396,7 +397,7 @@ function SlotColumn({
 
   return (
     <div
-      className={cn('relative border-l border-border overflow-visible transition-colors select-none', isHolding && 'bg-primary/10 animate-pulse')}
+      className={cn('relative border-l-2 border-border overflow-visible transition-colors select-none', isHolding && 'bg-primary/10 animate-pulse')}
       style={{ WebkitUserSelect: 'none', touchAction: 'pan-y' }}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
@@ -465,9 +466,12 @@ export function DesignerDayGridCalendar({
   onEventMove,
   onSlotLongPress,
   onAddReservation,
+  onToggleMonthView,
 }: DesignerDayGridCalendarProps) {
   const [currentTime, setCurrentTime] = useState(getCurrentTimeInKorea());
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
+  // R-6: 스와이프 안내 1회성 툴팁
+  const [showSwipeTip, setShowSwipeTip] = useState(false);
   const getPrimaryTags = useCustomerStore((s) => s.getPrimaryTags);
   const gridRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -485,6 +489,17 @@ export function DesignerDayGridCalendar({
     const interval = setInterval(() => setCurrentTime(getCurrentTimeInKorea()), 60000);
     return () => clearInterval(interval);
   }, []);
+
+  // R-6: 디자이너 2명 이상일 때 첫 방문 시 스와이프 안내 1회 표시
+  useEffect(() => {
+    if (designers.length < 2) return;
+    const KEY = 'bdx_swipe_tip_shown';
+    if (sessionStorage.getItem(KEY)) return;
+    sessionStorage.setItem(KEY, '1');
+    setShowSwipeTip(true);
+    const timer = setTimeout(() => setShowSwipeTip(false), 3000);
+    return () => clearTimeout(timer);
+  }, [designers.length]);
 
   const todayStr = getTodayInKorea();
   const isToday = date === todayStr;
@@ -521,7 +536,21 @@ export function DesignerDayGridCalendar({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <div className="text-lg font-semibold text-text">{formatDayLabelKo(date)}</div>
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-semibold text-text">{formatDayLabelKo(date)}</span>
+          {onToggleMonthView && (
+            <button
+              type="button"
+              onClick={onToggleMonthView}
+              className="flex items-center justify-center w-7 h-7 rounded-lg bg-surface-alt text-text-secondary hover:text-primary hover:bg-primary/10 transition-colors"
+              title="월간 보기로 전환"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+              </svg>
+            </button>
+          )}
+        </div>
         {onAddReservation && (
           <button
             type="button"
@@ -534,6 +563,20 @@ export function DesignerDayGridCalendar({
             예약 추가
           </button>
         )}
+      </div>
+
+      {/* R-6: 스와이프 안내 툴팁 (1회성, 3초 fade) */}
+      <div
+        className={cn(
+          'flex items-center justify-center gap-1.5 rounded-lg bg-text/80 px-3 py-1.5 text-xs text-white transition-opacity duration-500',
+          showSwipeTip ? 'opacity-100' : 'opacity-0 pointer-events-none',
+        )}
+        aria-hidden={!showSwipeTip}
+      >
+        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+        </svg>
+        좌우로 스크롤해서 직원별 일정을 확인하세요
       </div>
 
       {/* 시간축(왼쪽) + 그리드(오른쪽) 분리 레이아웃 */}
@@ -558,14 +601,22 @@ export function DesignerDayGridCalendar({
             className="grid border-b border-border bg-surface"
             style={{ gridTemplateColumns: `repeat(${colCount}, 1fr)`, height: HEADER_H }}
           >
-            {columns.map((col, ci) => (
-              <div
-                key={col.id}
-                className={cn('flex items-center justify-center px-1', ci > 0 && 'border-l border-border')}
-              >
-                <div className="text-[10px] sm:text-xs font-semibold text-text truncate">{col.name}</div>
-              </div>
-            ))}
+            {columns.map((col, ci) => {
+              const colColor = DESIGNER_COLORS[col.id];
+              return (
+                <div
+                  key={col.id}
+                  className={cn(
+                    'flex items-center justify-center px-1',
+                    ci > 0 && 'border-l-2 border-border',
+                    colColor ? colColor.bg : '',
+                  )}
+                  style={colColor ? { opacity: undefined } : undefined}
+                >
+                  <div className={cn('text-[10px] sm:text-xs font-semibold truncate', colColor ? colColor.text : 'text-text')}>{col.name}</div>
+                </div>
+              );
+            })}
           </div>
 
           {/* 그리드 셀 + 이벤트 */}
@@ -583,7 +634,7 @@ export function DesignerDayGridCalendar({
                 {columns.map((col, ci) => (
                   <div
                     key={col.id}
-                    className={cn(ci > 0 && 'border-l border-border', hour > START_HOUR && 'border-t border-border')}
+                    className={cn(ci > 0 && 'border-l-2 border-border', hour > START_HOUR && 'border-t border-border')}
                     style={{ height: hourHeight }}
                   />
                 ))}

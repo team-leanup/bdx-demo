@@ -36,9 +36,19 @@ export function ServiceAnalytics() {
   const topServices = popularTreatments
     .slice(0, 5)
     .map((t) => ({ name: t.name, count: t.count, maxCount }));
+  const topServiceName = topServices[0]?.name ?? null;
 
   return (
     <div className="flex flex-col gap-6 md:gap-8">
+      {/* 인기 서비스 소모품 알림 */}
+      {topServiceName && (
+        <div className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5">
+          <p className="text-xs text-text-secondary">
+            💡 <strong className="font-semibold text-text">{topServiceName}</strong> 고객이 많습니다. 관련 팁/파츠 재고를 확인하세요.
+          </p>
+        </div>
+      )}
+
       {/* 인기 시술 TOP 5 - 프로그레스 바 */}
       <div>
         <p className="mb-3 text-xs font-medium text-text-secondary">인기 시술 TOP 5</p>

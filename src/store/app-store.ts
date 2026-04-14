@@ -32,6 +32,7 @@ interface ShopSettings {
   depositAmount: number;
   kakaoTalkUrl: string;
   naverReservationUrl: string;
+  monthlyTargetRevenue?: number;
 }
 
 const DEFAULT_CATEGORY_PRICING: CategoryPricingSettings = {

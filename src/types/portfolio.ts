@@ -26,4 +26,5 @@ export interface PortfolioPhoto {
   isFeatured?: boolean;
   isStaffPick?: boolean;
   isPopular?: boolean;
+  partsMemo?: string;
 }

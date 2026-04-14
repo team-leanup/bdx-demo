@@ -48,11 +48,14 @@ export function PortfolioOverlay({
 }: PortfolioOverlayProps): React.ReactElement {
   const router = useRouter();
   const toggleMenu = usePortfolioStore((s) => s.toggleMenu);
+  const updatePhoto = usePortfolioStore((s) => s.updatePhoto);
   const shopName = useShopStore((s) => s.shop?.name) ?? '네일샵';
   const [currentId, setCurrentId] = useState(initialPhotoId);
   const [downloading, setDownloading] = useState(false);
   const [showHashtags, setShowHashtags] = useState(false);
   const [showShareCard, setShowShareCard] = useState(false);
+  const [editingPartsMemo, setEditingPartsMemo] = useState(false);
+  const [partsMemoInput, setPartsMemoInput] = useState('');
 
   const currentIndex = photoIds.indexOf(currentId);
   const photo = photos.find((p) => p.id === currentId);
@@ -152,6 +155,54 @@ export function PortfolioOverlay({
                   ))}
                 </div>
               )}
+              {/* 파츠 메모 */}
+              <div className="mt-2">
+                {editingPartsMemo ? (
+                  <div className="flex gap-2">
+                    <input
+                      autoFocus
+                      type="text"
+                      value={partsMemoInput}
+                      onChange={(e) => setPartsMemoInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          updatePhoto(photo.id, { partsMemo: partsMemoInput.trim() || undefined });
+                          setEditingPartsMemo(false);
+                        }
+                        if (e.key === 'Escape') setEditingPartsMemo(false);
+                      }}
+                      placeholder="파츠·컬러 메모 입력"
+                      className="flex-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+                    />
+                    <button
+                      onClick={() => { updatePhoto(photo.id, { partsMemo: partsMemoInput.trim() || undefined }); setEditingPartsMemo(false); }}
+                      className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white"
+                    >
+                      저장
+                    </button>
+                    <button
+                      onClick={() => setEditingPartsMemo(false)}
+                      className="rounded-lg border border-border px-3 py-1.5 text-xs text-text-secondary"
+                    >
+                      취소
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setPartsMemoInput(photo.partsMemo ?? ''); setEditingPartsMemo(true); }}
+                    className="flex items-center gap-1 text-[11px] text-text-secondary hover:text-primary transition-colors"
+                  >
+                    <svg className="w-3 h-3 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    {photo.partsMemo ? (
+                      <span className="text-text">{photo.partsMemo}</span>
+                    ) : (
+                      <span className="text-text-muted">파츠·컬러 메모 추가</span>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* 해시태그 */}
@@ -185,6 +236,16 @@ export function PortfolioOverlay({
                 className="w-full rounded-xl bg-primary py-2.5 text-xs font-bold text-white"
               >
                 공유카드 만들기
+              </button>
+            </div>
+
+            {/* 이 디자인으로 상담 시작 */}
+            <div className="border-t border-border px-4 py-3">
+              <button
+                onClick={() => { router.push(`/field-mode?portfolioId=${photo.id}`); onClose(); }}
+                className="w-full rounded-xl bg-primary py-2.5 text-xs font-bold text-white"
+              >
+                이 디자인으로 상담
               </button>
             </div>
 

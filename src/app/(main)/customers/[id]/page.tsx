@@ -407,7 +407,7 @@ function CustomerDetailContent({ id }: { id: string }) {
     <div className="flex flex-col gap-6 pb-8 md:px-6">
       <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
       {/* 헤더 */}
-      <div className="flex items-center gap-3 px-4 pt-4">
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm flex items-center gap-3 px-4 pt-4 pb-2">
         <button
           onClick={() => router.back()}
           className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-surface-alt text-text-secondary"
@@ -497,9 +497,18 @@ function CustomerDetailContent({ id }: { id: string }) {
               </p>
               <button
                 onClick={() => setShowDesignerPicker((v) => !v)}
-                className="text-[11px] font-medium text-primary hover:underline"
+                className="flex items-center gap-0.5 text-[11px] font-medium text-primary hover:underline"
               >
                 변경
+                <svg
+                  className={cn('h-3 w-3 transition-transform duration-200', showDesignerPicker && 'rotate-180')}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
               </button>
             </div>
             {showDesignerPicker && (
@@ -546,7 +555,7 @@ function CustomerDetailContent({ id }: { id: string }) {
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
             </div>
-            <p className="text-base font-bold mt-0.5" style={{ color: 'var(--color-text)' }}>
+            <p className="text-base font-bold text-primary mt-0.5">
               {customer.visitCount}<span className="text-xs font-normal text-text-muted">회</span>
             </p>
             <p className="text-xs text-text-muted">총 방문</p>
@@ -566,7 +575,7 @@ function CustomerDetailContent({ id }: { id: string }) {
                 <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
               </svg>
             </div>
-            <p className="text-sm font-bold text-text mt-0.5">{customer.averageSpend ? formatPrice(customer.averageSpend) : '–'}</p>
+            <p className="text-sm font-bold text-primary mt-0.5">{customer.averageSpend ? formatPrice(customer.averageSpend) : '–'}</p>
             <p className="text-xs text-text-muted">평균 단가</p>
           </div>
 
@@ -581,7 +590,7 @@ function CustomerDetailContent({ id }: { id: string }) {
             >
               <IconCalendar className="h-4 w-4 text-white" />
             </div>
-            <p className="text-xs font-bold text-text mt-0.5 text-center leading-tight">{formatRelativeDate(customer.lastVisitDate)}</p>
+            <p className="text-xs font-bold text-primary mt-0.5 text-center leading-tight">{formatRelativeDate(customer.lastVisitDate)}</p>
             <p className="text-xs text-text-muted">최근 방문</p>
           </div>
         </div>
@@ -674,7 +683,7 @@ function CustomerDetailContent({ id }: { id: string }) {
             {pinnedTags.map((tag) => {
               const safety = getSafetyTagMeta(tag);
               if (safety.level === 'high' || safety.level === 'medium') {
-                return <SafetyTag key={tag.id} tag={tag} size="sm" />;
+                return <SafetyTag key={tag.id} tag={tag} size="sm" showIcon />;
               }
               return <CustomerTagChip key={tag.id} tag={tag} size="sm" showPin />;
             })}
@@ -1203,6 +1212,7 @@ function CustomerDetailContent({ id }: { id: string }) {
               </svg>
             </div>
             <p className="text-sm text-text-muted">메모를 추가해보세요</p>
+            <p className="text-xs text-text-muted/70">💡 예: 반려동물 이름, 직업, 취미 등 대화 소재</p>
           </div>
         ) : (
           <div className="flex flex-col gap-2.5">

@@ -62,7 +62,10 @@ export function TodayStatsCard({
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
             <IconWon className="h-3.5 w-3.5 text-primary" />
           </div>
-          <span className="text-sm font-semibold text-text truncate w-full text-center" style={{ fontVariantNumeric: 'tabular-nums' }}>
+          <span
+            className={`text-base font-extrabold truncate w-full text-center ${revenue === 0 ? 'text-text-muted' : 'text-primary'}`}
+            style={{ fontVariantNumeric: 'tabular-nums' }}
+          >
             {formatPrice(revenue)}
           </span>
           <span className="text-[11px] text-text-muted text-center leading-tight">{revenueLabel}</span>

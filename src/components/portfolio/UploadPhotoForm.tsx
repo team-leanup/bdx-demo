@@ -52,6 +52,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
   const [customTagInput, setCustomTagInput] = useState('');
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [customColorInput, setCustomColorInput] = useState('');
+  const [partsMemo, setPartsMemo] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [customerSearch, setCustomerSearch] = useState('');
@@ -192,6 +193,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
     setCustomTagInput('');
     setSelectedColors([]);
     setCustomColorInput('');
+    setPartsMemo('');
     setError(null);
     setCustomerSearch('');
     setShowCustomerDropdown(false);
@@ -258,6 +260,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
         price: Number.isFinite(derivedPrice) ? derivedPrice : undefined,
         tags: selectedTags.length > 0 ? selectedTags : undefined,
         colorLabels: selectedColors.length > 0 ? selectedColors : undefined,
+        partsMemo: partsMemo.trim() || undefined,
         isFeatured: addToMenu || undefined,
         isPublic: addToMenu || undefined,
       });
@@ -498,7 +501,8 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
             태그 {selectedTags.length}/3 (최소 3개)
           </span>
         </div>
-        <div className="flex flex-wrap gap-1.5 mb-2">
+        <p className="mb-1.5 text-[11px] font-medium text-text-muted">추천 태그</p>
+        <div className="flex flex-wrap gap-1.5 mb-3">
           {PRESET_TAGS.map((tag) => (
             <button
               key={tag}
@@ -524,6 +528,11 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
               {tag} ×
             </button>
           ))}
+        </div>
+        <div className="flex items-center gap-2 mb-1.5">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-[11px] font-medium text-text-muted shrink-0">직접 입력</span>
+          <div className="flex-1 h-px bg-border" />
         </div>
         <div className="flex gap-2">
           <input
@@ -591,6 +600,18 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
             추가
           </button>
         </div>
+      </div>
+
+      {/* P-3: 파츠·컬러 메모 */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-text-secondary">파츠·컬러 메모 (선택)</label>
+        <input
+          type="text"
+          value={partsMemo}
+          onChange={(e) => setPartsMemo(e.target.value)}
+          placeholder="예: 검지 파츠, 검정 라인 스톤 5개"
+          className="w-full h-10 rounded-xl border border-border bg-surface px-4 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+        />
       </div>
 
       {error && <div className="rounded-xl bg-error/10 px-4 py-3 text-sm text-error">{error}</div>}

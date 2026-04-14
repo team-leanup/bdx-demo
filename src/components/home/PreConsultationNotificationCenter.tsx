@@ -34,6 +34,7 @@ export function PreConsultationNotificationCenter({
     [reservations],
   );
   const [readVersion, setReadVersion] = useState(0);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     const sync = (): void => {
@@ -86,8 +87,9 @@ export function PreConsultationNotificationCenter({
             <p className="mt-1 text-xs text-text-muted">고객이 상담 링크를 제출하면 여기에 쌓입니다.</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3 pb-2">
-            {notifications.map((notification) => {
+          <div className="flex flex-col gap-2 pb-2">
+            {/* H-8: 첫 1건 항상 표시, 나머지는 접기 */}
+            {(expanded ? notifications : notifications.slice(0, 1)).map((notification) => {
               const isRead = isPreConsultationNotificationRead(notification);
               const isForeign = notification.language && notification.language !== 'ko';
 
@@ -96,65 +98,53 @@ export function PreConsultationNotificationCenter({
                   key={notification.key}
                   type="button"
                   onClick={() => handleSelect(notification)}
-                  className="w-full rounded-2xl border border-border bg-surface p-4 text-left transition-colors hover:bg-surface-alt"
+                  className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-left transition-colors hover:bg-surface-alt max-h-16 overflow-hidden"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        {!isRead && <span className="mt-0.5 h-2.5 w-2.5 rounded-full bg-primary" />}
-                        <span className="truncate text-sm font-medium text-text">{notification.customerName}</span>
-                        {isForeign && <FlagIcon language={notification.language!} size="sm" />}
-                        {notification.serviceLabel && (
-                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                            {notification.serviceLabel}
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1 text-xs text-text-secondary">
-                        {formatDateDot(notification.reservationDate)} · {formatTime(notification.reservationTime)} 예약
-                      </p>
-                      <p className="mt-2 text-xs text-text-muted">
-                        제출 시각 {formatDateDotWithTime(notification.completedAt)}
-                      </p>
-
-                      {/* 디자인 요약 */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0 flex-1 flex items-center gap-2">
+                      {!isRead && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />}
+                      <span className="truncate text-xs font-semibold text-text">{notification.customerName}</span>
+                      {isForeign && <FlagIcon language={notification.language!} size="sm" />}
+                      {notification.serviceLabel && (
+                        <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary leading-none">
+                          {notification.serviceLabel}
+                        </span>
+                      )}
+                      <span className="shrink-0 text-[10px] text-text-muted">
+                        {formatDateDot(notification.reservationDate)} · {formatTime(notification.reservationTime)}
+                      </span>
                       {notification.preConsultationData && (
-                        <p className="mt-1.5 text-xs text-text-secondary">
+                        <span className="shrink-0 text-[10px] text-text-secondary">
                           {[
                             BODY_PART_LABEL[notification.preConsultationData.bodyPart],
                             DESIGN_SCOPE_LABEL[notification.preConsultationData.designScope],
                           ]
                             .filter(Boolean)
                             .join(' · ')}
-                        </p>
-                      )}
-
-                      {/* 참고 이미지 썸네일 */}
-                      {notification.referenceImageUrls && notification.referenceImageUrls.length > 0 && (
-                        <div className="flex gap-1.5 mt-2">
-                          {notification.referenceImageUrls.slice(0, 3).map((url, i) => (
-                            <div key={i} className="h-12 w-12 rounded-lg overflow-hidden border border-border flex-shrink-0">
-                              <Image src={url} alt="" width={48} height={48} className="h-full w-full object-cover" unoptimized />
-                            </div>
-                          ))}
-                          {notification.referenceImageUrls.length > 3 && (
-                            <div className="h-12 w-12 rounded-lg bg-surface-alt border border-border flex items-center justify-center text-xs text-text-muted">
-                              +{notification.referenceImageUrls.length - 3}
-                            </div>
-                          )}
-                        </div>
+                        </span>
                       )}
                     </div>
-                    <div className="shrink-0 rounded-xl bg-surface-alt px-3 py-2 text-right">
-                      <p className="text-[10px] font-semibold text-text-muted">
-                        {isRead ? '확인 완료' : '새 알림'}
+                    <div className="shrink-0 rounded-lg bg-surface-alt px-2 py-1 text-right">
+                      <p className="text-[9px] font-semibold text-text-muted leading-none">
+                        {isRead ? '확인완료' : '새 알림'}
                       </p>
-                      <p className="mt-0.5 text-xs font-medium text-text">예약 상세 보기</p>
                     </div>
                   </div>
                 </button>
               );
             })}
+            {/* H-8: "외 N건" 접기/펼치기 버튼 */}
+            {notifications.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setExpanded((prev) => !prev)}
+                className="w-full rounded-xl border border-dashed border-border py-2 text-center text-xs font-semibold text-text-secondary hover:bg-surface-alt transition-colors active:opacity-60"
+              >
+                {expanded
+                  ? '접기'
+                  : `외 ${notifications.length - 1}건 더 보기`}
+              </button>
+            )}
           </div>
         )}
       </div>

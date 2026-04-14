@@ -308,7 +308,26 @@ export default function RecordsPage() {
       return dt >= now;
     });
 
-    return { weekCount: thisWeek.length, todayRemainingCount: todayRemaining.length };
+    // R-1: 다음 예약까지 남은 분 계산
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const upcomingToday = allReservations
+      .filter((r) => {
+        if (r.reservationDate !== today) return false;
+        if (r.status === 'completed' || r.status === 'cancelled') return false;
+        const [h, m] = r.reservationTime.split(':').map(Number);
+        return h * 60 + m > nowMinutes;
+      })
+      .sort((a, b) => a.reservationTime.localeCompare(b.reservationTime));
+    let nextReservationMinutes: number | null = null;
+    if (upcomingToday.length > 0) {
+      const [h, m] = upcomingToday[0].reservationTime.split(':').map(Number);
+      nextReservationMinutes = h * 60 + m - nowMinutes;
+    }
+
+    // R-2: 이번주 취소 건수
+    const cancelCount = thisWeek.filter((r) => r.status === 'cancelled').length;
+
+    return { weekCount: thisWeek.length, todayRemainingCount: todayRemaining.length, nextReservationMinutes, cancelCount };
   }, [allReservations]);
 
 
@@ -603,8 +622,19 @@ export default function RecordsPage() {
                 </span>
               ))}
             </div>
-            <span className="text-xs text-text-secondary tabular-nums">
-              이번주 {weekStats.weekCount}건 · 오늘 남은 {weekStats.todayRemainingCount}건
+            <span className="text-xs text-text-secondary tabular-nums flex items-center gap-1.5">
+              <span>이번주 {weekStats.weekCount}건 · 오늘 남은 {weekStats.todayRemainingCount}건</span>
+              {weekStats.nextReservationMinutes !== null && (
+                <span className="text-primary font-medium">
+                  · 다음 예약{' '}
+                  {weekStats.nextReservationMinutes >= 60
+                    ? `${Math.floor(weekStats.nextReservationMinutes / 60)}시간 후`
+                    : `${weekStats.nextReservationMinutes}분 후`}
+                </span>
+              )}
+              {weekStats.cancelCount > 0 && (
+                <span className="text-error font-medium">· 취소 {weekStats.cancelCount}건</span>
+              )}
             </span>
           </div>
 
@@ -667,6 +697,7 @@ export default function RecordsPage() {
                   setReservationNaverMode(false);
                   setShowAddReservationModal(true);
                 }}
+                onToggleMonthView={() => setViewMode('month')}
                 role={role}
                 activeDesignerId={activeDesignerId}
               />
@@ -985,9 +1016,20 @@ export default function RecordsPage() {
                       </div>
                     )}
                     {selectedEvent.customerPhone && (
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center">
                         <span className="text-sm text-text-secondary">연락처</span>
-                        <span className="text-sm font-medium text-text">{selectedEvent.customerPhone}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-text">{selectedEvent.customerPhone}</span>
+                          <a
+                            href={`tel:${selectedEvent.customerPhone}`}
+                            className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 active:scale-95 transition-all"
+                            title="전화걸기"
+                          >
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.338c0-1.093.9-1.988 1.99-1.988h1.332c.47 0 .896.207 1.196.555l1.74 2.028a1.49 1.49 0 01-.076 2.003l-.813.813a8.982 8.982 0 004.701 4.701l.813-.813a1.49 1.49 0 012.003-.076l2.028 1.74c.348.3.555.726.555 1.196v1.332c0 1.09-.895 1.99-1.988 1.99h-.144C7.033 19.5 4.5 16.967 4.5 10.5v-.144c0-.047.001-.093.004-.14l-.004.022z" />
+                            </svg>
+                          </a>
+                        </div>
                       </div>
                     )}
                     {selectedEvent.type === 'reservation' && (

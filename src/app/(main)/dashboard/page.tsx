@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { BentoGrid, BentoCard, Button, ToastContainer } from '@/components/ui';
 import type { ToastData } from '@/components/ui';
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
@@ -190,6 +191,27 @@ export default function DashboardPage() {
                   {formatPrice(todayRevenue)}
                 </p>
                 <p className="mt-0.5 text-xs text-text-muted">최종 결제 완료 기준</p>
+                {shopSettings.monthlyTargetRevenue != null && shopSettings.monthlyTargetRevenue > 0 && (() => {
+                  const target = shopSettings.monthlyTargetRevenue;
+                  const pct = Math.min(Math.round((monthlyGrowthData.thisMonthRevenue / target) * 100), 100);
+                  return (
+                    <div className="mt-2">
+                      <div className="mb-1 flex items-center justify-between">
+                        <span className="text-[11px] text-text-muted">이번 달 목표 달성률</span>
+                        <span className="text-[11px] font-semibold text-primary">{pct}%</span>
+                      </div>
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-primary/20">
+                        <div
+                          className="h-full rounded-full bg-primary transition-all duration-500"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <p className="mt-0.5 text-[10px] text-text-muted">
+                        {formatPrice(monthlyGrowthData.thisMonthRevenue)} / 목표 {formatPrice(target)}
+                      </p>
+                    </div>
+                  );
+                })()}
               </div>
               <div className="h-px w-full bg-border md:h-16 md:w-px" />
               {/* 전월 대비 매출 성장 */}
@@ -213,6 +235,7 @@ export default function DashboardPage() {
                     {formatPrice(monthlyGrowthData.thisMonthRevenue)}
                   </span>
                 </div>
+                <p className="mt-0.5 text-[11px] text-text-muted">이번 달 전체 vs 지난달 전체</p>
               </div>
               <div className="h-px w-full bg-border md:h-16 md:w-px" />
               {/* 전월 대비 상담 건수 */}
@@ -235,6 +258,7 @@ export default function DashboardPage() {
                     {monthlyGrowthData.prevMonthCount}건 → {monthlyGrowthData.thisMonthCount}건
                   </span>
                 </div>
+                <p className="mt-0.5 text-[11px] text-text-muted">이번 달 전체 vs 지난달 전체</p>
               </div>
             </div>
           </BentoCard>
@@ -281,10 +305,13 @@ export default function DashboardPage() {
                   <h2 className="text-sm font-semibold text-text-secondary">외국인 예약 현황</h2>
                   <p className="mt-1 text-xs text-text-muted">오늘 외국어 예약과 언어별 상담 준비 상태</p>
                 </div>
-                <div className="rounded-2xl bg-primary/10 px-3 py-2 text-right">
+                <Link
+                  href="/records?filter=foreign"
+                  className="rounded-2xl bg-primary/10 px-3 py-2 text-right transition-opacity hover:opacity-80 active:opacity-60"
+                >
                   <p className="text-[10px] text-primary">오늘의 외국인 예약</p>
                   <p className="text-xl font-extrabold text-primary sm:text-2xl">{foreignReservationSummary.foreignerCount}명</p>
-                </div>
+                </Link>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -352,9 +379,19 @@ export default function DashboardPage() {
                           </p>
                           <p className="mt-1 text-[11px] text-text-muted">권장 연락일 {formatDateDot(target.expectedReservationDate)}</p>
                         </div>
-                        <Button size="sm" variant="secondary" className="shrink-0" onClick={() => handleCopyReminder(target.reminderMessage)}>
-                          문구 복사
-                        </Button>
+                        <div className="flex shrink-0 gap-1.5">
+                          <Button size="sm" variant="secondary" onClick={() => handleCopyReminder(target.reminderMessage)}>
+                            문구 복사
+                          </Button>
+                          {target.phone && (
+                            <a
+                              href={`sms:${target.phone}?body=${encodeURIComponent(target.reminderMessage)}`}
+                              className="inline-flex items-center rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-medium text-text-secondary transition-colors hover:bg-surface-alt active:opacity-70"
+                            >
+                              SMS
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}

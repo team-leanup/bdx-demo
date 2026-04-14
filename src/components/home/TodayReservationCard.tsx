@@ -21,6 +21,7 @@ import { useConsultationStore } from '@/store/consultation-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useRecordsStore } from '@/store/records-store';
+import { useAppStore } from '@/store/app-store';
 import { PretreatmentAlertModal } from '@/components/alerts/PretreatmentAlertModal';
 
 import ConsultationLinkModal from '@/components/reservations/ConsultationLinkModal';
@@ -51,6 +52,26 @@ interface TodayReservationCardProps {
     hidden: { opacity: number; y: number };
     visible: { opacity: number; y: number; transition: { duration: number; ease: number[] } };
   };
+}
+
+const LANGUAGE_SHORT_LABEL: Record<'en' | 'zh' | 'ja', string> = {
+  en: 'EN',
+  zh: '中',
+  ja: '日',
+};
+
+function addMinutesToTime(time: string, minutes: number): string {
+  const [h, m] = time.split(':').map(Number);
+  const total = h * 60 + m + minutes;
+  const hh = Math.floor(total / 60) % 24;
+  const mm = total % 60;
+  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
+function calcGapMinutes(timeA: string, timeB: string): number {
+  const [ah, am] = timeA.split(':').map(Number);
+  const [bh, bm] = timeB.split(':').map(Number);
+  return (bh * 60 + bm) - (ah * 60 + am);
 }
 
 interface BookingThumbnailItem {
@@ -113,6 +134,7 @@ export function TodayReservationCard({
   const getByCustomerId = usePortfolioStore((s) => s.getByCustomerId);
   const setEntryPoint = useConsultationStore((s) => s.setEntryPoint);
   const allRecords = useRecordsStore((s) => s.getAllRecords());
+  const defaultDurationMinutes = useAppStore((s) => s.shopSettings.timeSettings.baseHand) ?? 60;
 
   const [alertBooking, setAlertBooking] = useState<BookingRequest | null>(null);
   const [alertTags, setAlertTags] = useState<CustomerTag[]>([]);
@@ -212,6 +234,13 @@ export function TodayReservationCard({
 
             const isExistingCustomer = Boolean(booking.customerId);
 
+            // H-3: 시술 종료 예상 시간 및 다음 예약까지 여유 시간
+            const endTime = addMinutesToTime(booking.reservationTime, defaultDurationMinutes);
+            const nextBooking = reservations[idx + 1];
+            const gapMinutes = nextBooking
+              ? calcGapMinutes(endTime, nextBooking.reservationTime)
+              : null;
+
             const matchedRecord = allRecords.find((r) => r.consultation?.bookingId === booking.id);
             const stage = getBookingStage(booking, matchedRecord);
 
@@ -249,6 +278,14 @@ export function TodayReservationCard({
                         {booking.reservationTime}
                       </span>
                       <div className="mt-1 h-1 w-1 rounded-full bg-primary/40" />
+                      <span className="mt-1 text-[10px] text-text-muted leading-tight" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                        ~{endTime}
+                      </span>
+                      {gapMinutes !== null && gapMinutes > 0 && (
+                        <span className="mt-0.5 text-[9px] text-primary/60 leading-tight text-center">
+                          {gapMinutes}분 여유
+                        </span>
+                      )}
                     </div>
                     {/* 세로 구분선 */}
                     <div className="h-10 w-px shrink-0 bg-border" />
@@ -258,9 +295,14 @@ export function TodayReservationCard({
                         <span className="text-sm font-semibold text-text truncate">
                           {booking.customerName}
                         </span>
-                        {/* H-4: 국기 아이콘 */}
-                        {isForeign && (
-                          <FlagIcon language={booking.language!} size="sm" />
+                        {/* H-2: 국기 아이콘 + 언어 라벨 배지 */}
+                        {isForeign && booking.language && booking.language !== 'ko' && (
+                          <span className="inline-flex items-center gap-0.5">
+                            <FlagIcon language={booking.language} size="sm" />
+                            <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary leading-none">
+                              {LANGUAGE_SHORT_LABEL[booking.language]}
+                            </span>
+                          </span>
                         )}
                         {booking.serviceLabel && (
                           <span className="max-w-[100px] truncate px-2 py-0.5 rounded-full bg-primary/10 text-[11px] text-primary font-semibold">
@@ -383,7 +425,7 @@ export function TodayReservationCard({
                       ) : stage === 'link_sent' ? (
                         <button
                           onClick={(e) => { e.stopPropagation(); handleStartClick(booking); }}
-                          className="rounded-lg bg-primary px-3 py-2.5 text-xs font-semibold text-white active:scale-95 transition-transform"
+                          className="rounded-lg bg-primary px-3 py-2.5 text-xs font-semibold text-white active:scale-95 transition-transform shadow-sm shadow-primary/30 ring-1 ring-primary/20"
                         >
                           상담 시작
                         </button>
@@ -397,7 +439,7 @@ export function TodayReservationCard({
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleStartClick(booking); }}
-                            className="rounded-lg bg-primary px-3 py-2.5 text-xs font-semibold text-white active:scale-95 transition-transform"
+                            className="rounded-lg bg-primary px-3 py-2.5 text-xs font-semibold text-white active:scale-95 transition-transform shadow-sm shadow-primary/30 ring-1 ring-primary/20"
                           >
                             상담 시작
                           </button>
@@ -409,7 +451,7 @@ export function TodayReservationCard({
                       ) : (
                         <button
                           onClick={(e) => { e.stopPropagation(); handleStartClick(booking); }}
-                          className="rounded-lg bg-primary px-3 py-2.5 text-xs font-semibold text-white active:scale-95 transition-transform"
+                          className="rounded-lg bg-primary px-3 py-2.5 text-xs font-semibold text-white active:scale-95 transition-transform shadow-sm shadow-primary/30 ring-1 ring-primary/20"
                         >
                           상담 시작
                         </button>

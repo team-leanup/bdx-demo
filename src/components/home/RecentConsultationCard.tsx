@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui';
 import { formatPrice, formatRelativeDate } from '@/lib/format';
@@ -83,12 +84,25 @@ export function RecentConsultationCard({
                   onClick={() => onRecordClick(record.id)}
                   className="flex items-center gap-3 px-4 py-3 border-t border-border cursor-pointer hover:bg-surface-alt active:bg-surface-alt transition-colors"
                 >
-                  {/* 이니셜 아바타 */}
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                    <span className="text-sm font-semibold text-primary">
-                      {(record.consultation.customerName ?? '?').slice(0, 1)}
-                    </span>
-                  </div>
+                  {/* 썸네일 또는 이니셜 아바타 */}
+                  {record.imageUrls?.[0] ? (
+                    <div className="h-9 w-9 shrink-0 overflow-hidden rounded-xl border border-border">
+                      <Image
+                        src={record.imageUrls[0]}
+                        alt=""
+                        width={36}
+                        height={36}
+                        className="h-full w-full rounded-xl object-cover"
+                        unoptimized
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                      <span className="text-sm font-semibold text-primary">
+                        {(record.consultation.customerName ?? '?').slice(0, 1)}
+                      </span>
+                    </div>
+                  )}
                   {/* 이름 + 배지 */}
                   <div className="flex flex-1 flex-col gap-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">

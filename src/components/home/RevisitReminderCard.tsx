@@ -25,7 +25,12 @@ export function RevisitReminderCard({
     const threshold = Date.now() - FOUR_WEEKS_MS;
     return customers
       .filter((c) => c.lastVisitDate && new Date(c.lastVisitDate).getTime() < threshold)
-      .sort((a, b) => new Date(a.lastVisitDate).getTime() - new Date(b.lastVisitDate).getTime())
+      .sort((a, b) => {
+        // H-7: 단골 우선 정렬, 같은 그룹 내에서는 마지막 방문 오래된 순
+        if (a.isRegular && !b.isRegular) return -1;
+        if (!a.isRegular && b.isRegular) return 1;
+        return new Date(a.lastVisitDate).getTime() - new Date(b.lastVisitDate).getTime();
+      })
       .slice(0, 5);
   }, [customers]);
 
@@ -33,12 +38,21 @@ export function RevisitReminderCard({
 
   if (overdueCustomers.length === 0) return null;
 
+  const buildMessage = (customerName: string): string =>
+    `안녕하세요, ${customerName}님! ${shopName}입니다. 마지막 방문 이후 한 달이 지났네요. 예약을 도와드릴까요?`;
+
   const copyMessage = (customerId: string, customerName: string): void => {
-    const msg = `안녕하세요, ${customerName}님! ${shopName}입니다. 마지막 방문 이후 한 달이 지났네요. 예약을 도와드릴까요?`;
+    const msg = buildMessage(customerName);
     navigator.clipboard.writeText(msg).then(() => {
       setCopiedId(customerId);
       setTimeout(() => setCopiedId(null), 2000);
     }).catch((e) => console.warn('[clipboard] copy failed:', e));
+  };
+
+  const sendSms = (phone: string, customerName: string): void => {
+    const msg = buildMessage(customerName);
+    const cleaned = phone.replace(/\D/g, '');
+    window.open(`sms:${cleaned}?body=${encodeURIComponent(msg)}`, '_blank');
   };
 
   return (
@@ -65,15 +79,35 @@ export function RevisitReminderCard({
               <span className="text-sm font-medium text-primary">{customer.name.slice(0, 1)}</span>
             </div>
             <div className="flex flex-1 flex-col min-w-0">
-              <span className="text-sm font-semibold text-text">{customer.name}</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-semibold text-text truncate">{customer.name}</span>
+                {/* H-7: 단골 배지 */}
+                {customer.isRegular && (
+                  <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 leading-none">
+                    단골
+                  </span>
+                )}
+              </div>
               <span className="text-xs text-text-muted">마지막 방문 {formatRelativeDate(customer.lastVisitDate)}</span>
             </div>
-            <button
-              onClick={() => copyMessage(customer.id, customer.name)}
-              className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold text-white active:scale-95 transition-all ${copiedId === customer.id ? 'bg-green-600' : 'bg-primary'}`}
-            >
-              {copiedId === customer.id ? '복사 완료!' : '메시지 복사'}
-            </button>
+            {/* H-6: SMS 버튼 + 복사 버튼 그룹 */}
+            <div className="flex shrink-0 items-center gap-1.5">
+              <button
+                onClick={() => sendSms(customer.phone, customer.name)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-surface-alt text-text-secondary active:scale-95 transition-all hover:bg-border"
+                title="문자 보내기"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3v-3z" />
+                </svg>
+              </button>
+              <button
+                onClick={() => copyMessage(customer.id, customer.name)}
+                className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold text-white active:scale-95 transition-all ${copiedId === customer.id ? 'bg-green-600' : 'bg-primary'}`}
+              >
+                {copiedId === customer.id ? '복사 완료!' : '복사'}
+              </button>
+            </div>
           </motion.div>
         ))}
       </div>

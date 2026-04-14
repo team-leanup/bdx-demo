@@ -169,6 +169,26 @@ export function DesignerPerformance() {
                   <p className="mt-0.5 font-semibold text-text">{d.completedReservations}/{d.bookings}건</p>
                 </div>
               </div>
+              {/* 배정 vs 완료 비율 수평 바 */}
+              {d.bookings > 0 && (
+                <div className="mt-2">
+                  <div className="mb-1 flex items-center justify-between text-[11px] text-text-muted">
+                    <span>예약 완료율</span>
+                    <span className="font-medium text-text-secondary">
+                      {d.completedReservations}/{d.bookings}건 ({d.consultationCompletionRate}%)
+                    </span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-surface-alt">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${d.consultationCompletionRate}%`,
+                        backgroundColor: DESIGNER_COLORS[i % DESIGNER_COLORS.length],
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
               <div className="mt-2 flex items-center gap-3 text-xs text-text-secondary">
                 <span>인기: {d.topDesign}</span>
                 <span>·</span>

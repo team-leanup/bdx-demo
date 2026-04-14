@@ -1205,6 +1205,7 @@ export default function SettingsPage() {
   const [priceFullArt, setPriceFullArt] = useState(String(shopSettings.baseFullArtPrice ?? DEFAULT_BASE_PRICES.fullArt));
   const [priceMonthlyArt, setPriceMonthlyArt] = useState(String(shopSettings.baseMonthlyArtPrice ?? DEFAULT_BASE_PRICES.monthlyArt));
   const [priceDeposit, setPriceDeposit] = useState(String(shopSettings.depositAmount ?? 10000));
+  const [monthlyTarget, setMonthlyTarget] = useState(String(shopSettings.monthlyTargetRevenue ?? ''));
   const [savedPrices, setSavedPrices] = useState({
     hand: shopSettings.baseHandPrice || DEFAULT_BASE_PRICES.hand,
     foot: shopSettings.baseFootPrice || DEFAULT_BASE_PRICES.foot,
@@ -1231,10 +1232,12 @@ export default function SettingsPage() {
     const fullArt = parseInt(priceFullArt, 10);
     const monthlyArt = parseInt(priceMonthlyArt, 10);
     const deposit = parseInt(priceDeposit, 10) || 0;
+    const targetRevenue = parseInt(monthlyTarget, 10) || 0;
     if ([hand, foot, offSameShop, offOtherShop, repair, extension, solidPoint, fullArt, monthlyArt].some((v) => isNaN(v) || v < 0)) return;
     setSavedPrices({ hand, foot, offSameShop, offOtherShop, repair, extension, solidPoint, fullArt, monthlyArt });
     setShopSettings({
       depositAmount: deposit,
+      monthlyTargetRevenue: targetRevenue > 0 ? targetRevenue : undefined,
       baseHandPrice: hand,
       baseFootPrice: foot,
       baseOffSameShop: offSameShop,
@@ -1262,6 +1265,7 @@ export default function SettingsPage() {
     setPriceFullArt(String(savedPrices.fullArt));
     setPriceMonthlyArt(String(savedPrices.monthlyArt));
     setPriceDeposit(String(shopSettings.depositAmount ?? 10000));
+    setMonthlyTarget(String(shopSettings.monthlyTargetRevenue ?? ''));
     setEditingPrices(false);
   };
 
@@ -1563,6 +1567,15 @@ export default function SettingsPage() {
                   <span className="text-text-secondary">예약금</span>
                   <span className="font-medium text-text">{shopSettings.depositAmount > 0 ? formatPrice(shopSettings.depositAmount) : '없음'}</span>
                 </div>
+                <div className="my-1 border-t border-border/50" />
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary">월 목표 매출</span>
+                  <span className="font-medium text-text">
+                    {shopSettings.monthlyTargetRevenue != null && shopSettings.monthlyTargetRevenue > 0
+                      ? formatPrice(shopSettings.monthlyTargetRevenue)
+                      : '미설정'}
+                  </span>
+                </div>
               </div>
             ) : (
               <div className="flex flex-col gap-2.5">
@@ -1577,6 +1590,7 @@ export default function SettingsPage() {
                   { labelKey: 'service_fullArt', value: priceFullArt, onChange: setPriceFullArt },
                   { labelKey: 'service_monthlyArt', value: priceMonthlyArt, onChange: setPriceMonthlyArt },
                   { label: '예약금', value: priceDeposit, onChange: setPriceDeposit },
+                  { label: '월 목표 매출', value: monthlyTarget, onChange: setMonthlyTarget },
                 ].map(({ labelKey, label, value, onChange }: {
                   labelKey?: string;
                   label?: string;

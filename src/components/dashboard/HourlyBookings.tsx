@@ -86,6 +86,15 @@ export function HourlyBookings() {
       </ResponsiveContainer>
       </div>
 
+      {/* 피크 타임 운영 팁 */}
+      {peakHour && (
+        <div className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5">
+          <p className="text-xs text-text-secondary">
+            💡 <strong className="font-semibold text-text">{peakHour.hour}시</strong>가 가장 바쁩니다. 보조 인력 배치를 고려해보세요.
+          </p>
+        </div>
+      )}
+
       {/* 시간대별 텍스트 리스트 (상위 3개 강조) */}
       <div className="flex flex-col gap-1.5">
         <p className="text-xs font-medium text-text-secondary">상위 예약 시간대</p>
