@@ -410,7 +410,7 @@ function CustomerDetailContent({ id }: { id: string }) {
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm flex items-center gap-3 px-4 pt-4 pb-2">
         <button
           onClick={() => router.back()}
-          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-surface-alt text-text-secondary"
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-surface-alt text-text-secondary"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />

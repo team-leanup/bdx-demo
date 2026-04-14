@@ -72,7 +72,7 @@ export default function OnboardingLayout({
             {!isFirst ? (
               <button
                 onClick={handleBack}
-                className="flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-xl hover:bg-surface-alt transition-colors text-text"
+                className="flex items-center justify-center w-11 h-11 rounded-xl hover:bg-surface-alt transition-colors text-text"
               >
                 <svg
                   width="20"

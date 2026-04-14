@@ -94,7 +94,7 @@ export function RevisitReminderCard({
             <div className="flex shrink-0 items-center gap-1.5">
               <button
                 onClick={() => sendSms(customer.phone, customer.name)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-surface-alt text-text-secondary active:scale-95 transition-all hover:bg-border"
+                className="flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-surface-alt text-text-secondary active:scale-95 transition-all hover:bg-border"
                 title="문자 보내기"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>

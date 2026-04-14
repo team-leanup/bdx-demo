@@ -114,7 +114,7 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
       <div className="flex items-center gap-3 px-4 pt-4">
         <button
           onClick={() => router.back()}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-alt text-text-secondary"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-alt text-text-secondary"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -418,7 +418,7 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
       </Card>
 
       {/* 액션 바 (fixed bottom) */}
-      <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background px-4 py-3">
+      <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background px-4 py-3 safe-bottom">
         <button
           type="button"
           onClick={() => setShowShareCard(true)}

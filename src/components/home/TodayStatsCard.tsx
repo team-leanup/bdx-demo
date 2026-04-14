@@ -36,7 +36,7 @@ export function TodayStatsCard({
 }: TodayStatsCardProps): React.ReactElement {
   return (
     <motion.div data-tour-id="tour-stats" variants={itemVariants} className="rounded-2xl bg-surface border border-border overflow-hidden">
-      <div className="grid grid-cols-4 divide-x divide-border">
+      <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border">
         {/* 오늘 상담 */}
         <div className="flex flex-col items-center gap-1 py-4">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">

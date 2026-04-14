@@ -96,7 +96,7 @@ export function DesignConfirmSheet({
           <div className="w-10 h-1 rounded-full bg-border" />
         </div>
 
-        <div className="px-6 pb-8 flex flex-col gap-5">
+        <div className="px-6 pb-8 safe-bottom flex flex-col gap-5">
           {/* Design image */}
           <div className="w-full max-h-[50vh] rounded-2xl overflow-hidden bg-surface-alt">
             {displayUrl ? (

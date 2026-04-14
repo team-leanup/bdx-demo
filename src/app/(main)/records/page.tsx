@@ -622,7 +622,7 @@ export default function RecordsPage() {
                 </span>
               ))}
             </div>
-            <span className="text-xs text-text-secondary tabular-nums flex items-center gap-1.5">
+            <span className="text-xs text-text-secondary tabular-nums flex items-center gap-1.5 flex-wrap">
               <span>이번주 {weekStats.weekCount}건 · 오늘 남은 {weekStats.todayRemainingCount}건</span>
               {weekStats.nextReservationMinutes !== null && (
                 <span className="text-primary font-medium">

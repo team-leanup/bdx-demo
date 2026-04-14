@@ -149,7 +149,7 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
     <div className="flex flex-col min-h-[100dvh] bg-background">
       {/* 헤더 */}
       <div className="sticky top-0 z-10 flex items-center justify-between bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3">
-        <button onClick={() => router.back()} className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-alt text-text-muted">
+        <button onClick={() => router.back()} className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-alt text-text-muted">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
           </svg>

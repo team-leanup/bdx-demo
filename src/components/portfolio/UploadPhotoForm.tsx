@@ -541,7 +541,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
             onChange={(e) => setCustomTagInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomTag(); } }}
             placeholder="직접 입력 후 Enter"
-            className="flex-1 h-9 rounded-lg border border-border bg-surface px-3 text-sm text-text placeholder:text-text-muted"
+            className="flex-1 h-11 rounded-lg border border-border bg-surface px-3 text-sm text-text placeholder:text-text-muted"
           />
           <button
             type="button"
@@ -590,7 +590,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
             onChange={(e) => setCustomColorInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomColor(); } }}
             placeholder="직접 입력 후 Enter"
-            className="flex-1 h-9 rounded-lg border border-border bg-surface px-3 text-sm text-text placeholder:text-text-muted"
+            className="flex-1 h-11 rounded-lg border border-border bg-surface px-3 text-sm text-text placeholder:text-text-muted"
           />
           <button
             type="button"

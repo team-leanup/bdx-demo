@@ -421,7 +421,7 @@ export default function ConsultationStartPage() {
                   <div className="w-9 h-9 md:w-12 md:h-12 rounded-xl bg-surface border border-border flex items-center justify-center text-primary shadow-sm">
                     {step.icon}
                   </div>
-                  <span className="text-[9px] md:text-xs text-text-muted font-medium leading-tight text-center whitespace-nowrap">
+                  <span className="text-[10px] md:text-xs text-text-muted font-medium leading-tight text-center whitespace-nowrap">
                     {step.label}
                     {locale !== 'ko' && (
                       <span className="block text-[7px] md:text-[9px] opacity-60">{step.koLabel}</span>

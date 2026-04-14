@@ -155,7 +155,7 @@ function StepValueControl({
           type="button"
           onClick={() => updateValue(value - step)}
           disabled={!canDecrease}
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-lg font-bold text-text transition-colors disabled:opacity-40"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface text-lg font-bold text-text transition-colors disabled:opacity-40"
         >
           -
         </button>
@@ -163,7 +163,7 @@ function StepValueControl({
           type="button"
           onClick={() => updateValue(value + step)}
           disabled={!canIncrease}
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface text-lg font-bold text-text transition-colors disabled:opacity-40"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface text-lg font-bold text-text transition-colors disabled:opacity-40"
         >
           +
         </button>
