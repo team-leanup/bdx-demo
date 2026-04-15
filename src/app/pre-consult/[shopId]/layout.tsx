@@ -22,6 +22,8 @@ const DEMO_SHOP_DATA: ShopPublicData = {
     extension: 20000, overlay: 10000,
   },
   customerNotice: '선택하신 디자인을 기준으로 가격과 시간은 변동될 수 있어요',
+  kakaoTalkUrl: 'https://pf.kakao.com/_xBDXdemo',
+  naverReservationUrl: 'https://m.booking.naver.com/booking/13/bizes/1234567',
 };
 
 export default async function PreConsultLayout({

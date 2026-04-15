@@ -18,6 +18,7 @@ interface ShareCardGeneratorModalProps {
     shopId: string;
     consultation: ConsultationType;
     shareCardId?: string;
+    createdAt?: string;
   };
   portfolioPhotos: Array<{
     id: string;
@@ -33,11 +34,15 @@ function ScaledPreview({
   consultation,
   shopName,
   ratio,
+  shopId,
+  createdAt,
 }: {
   imageUrl: string;
   consultation: ConsultationType;
   shopName: string;
   ratio: CardRatio;
+  shopId?: string;
+  createdAt?: string;
 }): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0);
@@ -79,6 +84,8 @@ function ScaledPreview({
             shopName={shopName}
             ratio={ratio}
             templateRef={{ current: null }}
+            shopId={shopId}
+            createdAt={createdAt}
           />
         </div>
       )}
@@ -102,6 +109,7 @@ export function ShareCardGeneratorModal({
   );
   const [downloading, setDownloading] = useState<CardRatio | null>(null);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+  const [shareLinkCopied, setShareLinkCopied] = useState(false);
 
   const captureRef916 = useRef<HTMLDivElement | null>(null);
   const captureRef34 = useRef<HTMLDivElement | null>(null);
@@ -132,6 +140,11 @@ export function ShareCardGeneratorModal({
     [record.consultation.bodyPart],
   );
 
+  // Share card URL
+  const shareUrl = record.shareCardId
+    ? `https://beauty-decision.com/share/${record.shareCardId}`
+    : null;
+
   // ── Download ──────────────────────────────────────────────────────────────
   const handleDownload = useCallback(async (ratio: CardRatio) => {
     const ref = ratio === '9:16' ? captureRef916 : captureRef34;
@@ -143,7 +156,7 @@ export function ShareCardGeneratorModal({
         scale: 2,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#FAF8F5',
         logging: false,
       });
       const url = canvas.toDataURL('image/jpeg', 0.95);
@@ -176,6 +189,25 @@ export function ShareCardGeneratorModal({
     setCopiedUrl(url);
     setTimeout(() => setCopiedUrl(null), 2000);
   }, []);
+
+  // ── Copy Share Link ───────────────────────────────────────────────────────
+  const handleCopyShareLink = useCallback(async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+    } catch {
+      const el = document.createElement('textarea');
+      el.value = shareUrl;
+      el.style.position = 'fixed';
+      el.style.opacity = '0';
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    }
+    setShareLinkCopied(true);
+    setTimeout(() => setShareLinkCopied(false), 2500);
+  }, [shareUrl]);
 
   const hasBookingUrls = !!(kakaoTalkUrl || naverReservationUrl);
 
@@ -261,13 +293,15 @@ export function ShareCardGeneratorModal({
                   consultation={record.consultation}
                   shopName={shopName}
                   ratio="9:16"
+                  shopId={record.shopId}
+                  createdAt={record.createdAt}
                 />
               )}
             </div>
 
             {/* ── Action buttons ── */}
             <div className="flex-shrink-0 flex flex-col gap-2 px-5 pb-safe pt-3 border-t border-border">
-              {/* 2종 다운로드 */}
+              {/* 이미지 다운로드 + 링크 복사 */}
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -300,6 +334,36 @@ export function ShareCardGeneratorModal({
                   3:4 포스트
                 </button>
               </div>
+
+              {/* 공유 링크 복사 */}
+              {shareUrl && (
+                <button
+                  type="button"
+                  onClick={() => { void handleCopyShareLink(); }}
+                  className={[
+                    'flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.98]',
+                    shareLinkCopied
+                      ? 'bg-primary text-white'
+                      : 'bg-primary/10 text-primary border border-primary/20',
+                  ].join(' ')}
+                >
+                  {shareLinkCopied ? (
+                    <>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                      {t('shareCard.shareLinkCopied')}
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.06a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364l1.757 1.757" />
+                      </svg>
+                      {t('shareCard.shareLinkCopy')}
+                    </>
+                  )}
+                </button>
+              )}
 
               {/* 예약 URL 복사 (설정에서 입력한 네이버/카카오) */}
               {hasBookingUrls && (
@@ -344,6 +408,8 @@ export function ShareCardGeneratorModal({
                 shopName={shopName}
                 ratio="9:16"
                 templateRef={captureRef916}
+                shopId={record.shopId}
+                createdAt={record.createdAt}
               />
               <ShareCardImageTemplate
                 imageUrl={resolvedImageUrl}
@@ -351,6 +417,8 @@ export function ShareCardGeneratorModal({
                 shopName={shopName}
                 ratio="3:4"
                 templateRef={captureRef34}
+                shopId={record.shopId}
+                createdAt={record.createdAt}
               />
             </div>
           )}

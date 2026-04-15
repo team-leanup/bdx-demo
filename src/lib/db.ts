@@ -1471,6 +1471,8 @@ export async function fetchShopPublicData(shopId: string): Promise<ShopPublicDat
       ? { ...defaultSurcharges, ...settings.surcharges }
       : defaultSurcharges,
     customerNotice: settings.customerNotice ?? undefined,
+    kakaoTalkUrl: settings.kakaoTalkUrl ?? undefined,
+    naverReservationUrl: settings.naverReservationUrl ?? undefined,
   };
 }
 

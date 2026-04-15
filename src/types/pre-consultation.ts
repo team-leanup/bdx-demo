@@ -114,4 +114,6 @@ export interface ShopPublicData {
   categoryPricing: CategoryPricingSettings;
   surcharges: SurchargeSettings;
   customerNotice?: string;
+  kakaoTalkUrl?: string;
+  naverReservationUrl?: string;
 }
