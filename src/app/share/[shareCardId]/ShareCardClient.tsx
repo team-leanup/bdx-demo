@@ -286,9 +286,6 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
       >
         <ShareCardCTASection
           shopId={data.shopId}
-          shopPhone={data.shopPhone}
-          kakaoTalkUrl={data.kakaoTalkUrl}
-          naverReservationUrl={data.naverReservationUrl}
           shareCardId={shareCardId}
           designScope={data.design.designScope}
         />

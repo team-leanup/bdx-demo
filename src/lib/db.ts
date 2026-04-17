@@ -1655,3 +1655,260 @@ export async function uploadPreConsultImage(
     return { success: false, error: '이미지 업로드 중 오류가 발생했습니다.' };
   }
 }
+
+// ─── Consultation Links (공유 상담 링크) ────────────────────────────────────
+
+import type {
+  ConsultationLink,
+  ConsultationLinkPublicData,
+  ConsultationLinkStatus,
+  CreateConsultationLinkInput,
+} from '@/types/consultation-link';
+
+function toConsultationLink(
+  row: Database['public']['Tables']['consultation_links']['Row'],
+): ConsultationLink {
+  return {
+    id: row.id,
+    shopId: row.shop_id,
+    designerId: row.designer_id ?? undefined,
+    title: row.title ?? undefined,
+    description: row.description ?? undefined,
+    styleCategory: (row.style_category as ConsultationLink['styleCategory']) ?? undefined,
+    validFrom: row.valid_from,
+    validUntil: row.valid_until,
+    estimatedDurationMin: row.estimated_duration_min,
+    slotIntervalMin: row.slot_interval_min,
+    bookingCount: row.booking_count,
+    status: row.status as ConsultationLinkStatus,
+    expiresAt: row.expires_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function dbCreateConsultationLink(
+  input: CreateConsultationLinkInput,
+): Promise<{ success: boolean; link?: ConsultationLink; error?: string }> {
+  const id = createId('cl');
+  const { data, error } = await supabase
+    .from('consultation_links')
+    .insert({
+      id,
+      shop_id: input.shopId,
+      designer_id: input.designerId ?? null,
+      title: input.title ?? null,
+      description: input.description ?? null,
+      style_category: input.styleCategory ?? null,
+      valid_from: input.validFrom,
+      valid_until: input.validUntil,
+      estimated_duration_min: input.estimatedDurationMin ?? 90,
+      slot_interval_min: input.slotIntervalMin ?? 30,
+      expires_at: input.expiresAt ?? undefined,
+    })
+    .select()
+    .single();
+
+  if (error || !data) {
+    console.error('[db] dbCreateConsultationLink error:', toDbErrorSnapshot(error));
+    return { success: false, error: error?.message ?? '공유 상담 링크 생성 실패' };
+  }
+  return { success: true, link: toConsultationLink(data) };
+}
+
+export async function fetchConsultationLinksByShop(shopId: string): Promise<ConsultationLink[]> {
+  const { data, error } = await supabase
+    .from('consultation_links')
+    .select('*')
+    .eq('shop_id', shopId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('[db] fetchConsultationLinksByShop error:', toDbErrorSnapshot(error));
+    return [];
+  }
+  return (data ?? []).map(toConsultationLink);
+}
+
+export async function dbUpdateConsultationLink(
+  id: string,
+  shopId: string,
+  patch: Partial<{
+    title: string;
+    description: string;
+    designerId: string | null;
+    styleCategory: string | null;
+    validFrom: string;
+    validUntil: string;
+    estimatedDurationMin: number;
+    slotIntervalMin: number;
+    status: ConsultationLinkStatus;
+  }>,
+): Promise<{ success: boolean; error?: string }> {
+  const update: Database['public']['Tables']['consultation_links']['Update'] = {};
+  if (patch.title !== undefined) update.title = patch.title;
+  if (patch.description !== undefined) update.description = patch.description;
+  if (patch.designerId !== undefined) update.designer_id = patch.designerId;
+  if (patch.styleCategory !== undefined) update.style_category = patch.styleCategory;
+  if (patch.validFrom !== undefined) update.valid_from = patch.validFrom;
+  if (patch.validUntil !== undefined) update.valid_until = patch.validUntil;
+  if (patch.estimatedDurationMin !== undefined) update.estimated_duration_min = patch.estimatedDurationMin;
+  if (patch.slotIntervalMin !== undefined) update.slot_interval_min = patch.slotIntervalMin;
+  if (patch.status !== undefined) update.status = patch.status;
+
+  const { error } = await supabase
+    .from('consultation_links')
+    .update(update)
+    .eq('id', id)
+    .eq('shop_id', shopId);
+
+  if (error) {
+    console.error('[db] dbUpdateConsultationLink error:', toDbErrorSnapshot(error));
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}
+
+export async function dbDeleteConsultationLink(id: string, shopId: string): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase
+    .from('consultation_links')
+    .delete()
+    .eq('id', id)
+    .eq('shop_id', shopId);
+  if (error) {
+    console.error('[db] dbDeleteConsultationLink error:', toDbErrorSnapshot(error));
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}
+
+export async function fetchConsultationLinkPublic(
+  linkId: string,
+): Promise<ConsultationLinkPublicData | null> {
+  const { data, error } = await supabase.rpc('get_consultation_link_public', {
+    p_link_id: linkId,
+  } as never);
+
+  if (error) {
+    console.error('[db] fetchConsultationLinkPublic error:', toDbErrorSnapshot(error));
+    return null;
+  }
+  if (!data) return null;
+  return data as unknown as ConsultationLinkPublicData;
+}
+
+/**
+ * 샵당 1개 고정 상담 링크 — linkId 없이 shopId만으로 pre-consult 진입 시 사용
+ */
+export async function fetchShopPreConsultLinkData(
+  shopId: string,
+): Promise<ConsultationLinkPublicData | null> {
+  const { data, error } = await supabase.rpc('get_shop_pre_consult_data', {
+    p_shop_id: shopId,
+  } as never);
+
+  if (error) {
+    console.error('[db] fetchShopPreConsultLinkData error:', toDbErrorSnapshot(error));
+    return null;
+  }
+  if (!data) return null;
+  return data as unknown as ConsultationLinkPublicData;
+}
+
+/**
+ * 샵 고정 상담 링크로 들어온 예약 생성 (linkId 없음)
+ */
+export async function dbCreateBookingFromShopLink(input: {
+  shopId: string;
+  customerName: string;
+  customerPhone: string;
+  reservationDate: string;
+  reservationTime: string;
+  language?: string;
+  serviceLabel?: string;
+  preConsultationData: unknown;
+  referenceImageUrls?: string[];
+}): Promise<{ success: boolean; bookingId?: string; error?: string }> {
+  const now = getNowInKoreaIso();
+  const bookingId = createId('bk');
+  const { error } = await supabase.from('booking_requests').insert({
+    id: bookingId,
+    shop_id: input.shopId,
+    customer_name: input.customerName,
+    phone: input.customerPhone,
+    reservation_date: input.reservationDate,
+    reservation_time: input.reservationTime,
+    channel: 'pre_consult',
+    status: 'pending',
+    language: input.language ?? null,
+    service_label: input.serviceLabel ?? null,
+    pre_consultation_completed_at: now,
+    pre_consultation_data: input.preConsultationData as Database['public']['Tables']['booking_requests']['Insert']['pre_consultation_data'],
+    reference_image_urls:
+      (input.referenceImageUrls as unknown as Database['public']['Tables']['booking_requests']['Insert']['reference_image_urls']) ?? null,
+    created_at: now,
+  });
+
+  if (error) {
+    console.error('[db] dbCreateBookingFromShopLink error:', toDbErrorSnapshot(error));
+    return { success: false, error: error.message };
+  }
+  return { success: true, bookingId };
+}
+
+export async function dbIncrementConsultationLinkBooking(linkId: string): Promise<void> {
+  const { error } = await supabase.rpc('increment_consultation_link_booking', {
+    p_link_id: linkId,
+  } as never);
+  if (error) {
+    console.error('[db] dbIncrementConsultationLinkBooking error:', toDbErrorSnapshot(error));
+  }
+}
+
+/**
+ * 공유 상담 링크 제출 시 booking_requests INSERT
+ * 고객이 선택한 날짜/시간을 그대로 사용. 사전상담 data 포함.
+ */
+export async function dbCreateBookingFromConsultationLink(input: {
+  shopId: string;
+  linkId: string;
+  designerId?: string;
+  customerName: string;
+  customerPhone: string;
+  reservationDate: string;
+  reservationTime: string;
+  language?: string;
+  serviceLabel?: string;
+  preConsultationData: unknown;
+  referenceImageUrls?: string[];
+}): Promise<{ success: boolean; bookingId?: string; error?: string }> {
+  const now = getNowInKoreaIso();
+  const bookingId = createId('bk');
+  const { error } = await supabase.from('booking_requests').insert({
+    id: bookingId,
+    shop_id: input.shopId,
+    consultation_link_id: input.linkId,
+    designer_id: input.designerId ?? null,
+    customer_name: input.customerName,
+    phone: input.customerPhone,
+    reservation_date: input.reservationDate,
+    reservation_time: input.reservationTime,
+    channel: 'pre_consult',
+    status: 'pending',
+    language: input.language ?? null,
+    service_label: input.serviceLabel ?? null,
+    pre_consultation_completed_at: now,
+    pre_consultation_data: input.preConsultationData as Database['public']['Tables']['booking_requests']['Insert']['pre_consultation_data'],
+    reference_image_urls:
+      (input.referenceImageUrls as unknown as Database['public']['Tables']['booking_requests']['Insert']['reference_image_urls']) ?? null,
+    created_at: now,
+  });
+
+  if (error) {
+    console.error('[db] dbCreateBookingFromConsultationLink error:', toDbErrorSnapshot(error));
+    return { success: false, error: error.message };
+  }
+
+  await dbIncrementConsultationLinkBooking(input.linkId);
+  return { success: true, bookingId };
+}

@@ -47,7 +47,7 @@ export function BodyPartSelector({ className }: BodyPartSelectorProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} stroke="currentColor" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" />
           </svg>
         </div>
-        <p className="text-lg font-black text-text-secondary tracking-tight">
+        <p className="text-lg font-bold text-text-secondary tracking-tight">
           {t('selector.bodyPart')}
           {locale !== 'ko' && <span className="ml-2 text-xs font-medium text-text-muted opacity-60">{tKo('selector.bodyPart')}</span>}
         </p>
@@ -74,14 +74,14 @@ export function BodyPartSelector({ className }: BodyPartSelectorProps) {
               </span>
               {/* Labels */}
               <div className="flex flex-col items-center gap-1.5">
-                <span className={cn('text-xl font-black tracking-tight', isSelected ? 'text-primary' : 'text-text')}>
+                <span className={cn('text-xl font-bold', isSelected ? 'text-primary' : 'text-text')}>
                   {t(`bodyPart.${opt.value}`)}
                 </span>
                 {locale !== 'ko' && (
                   <span className="text-sm text-text-muted font-bold opacity-60">{tKo(`bodyPart.${opt.value}`)}</span>
                 )}
                 {opt.price && (
-                  <span className={cn('text-sm font-black mt-3 px-5 py-2 rounded-full', isSelected ? 'bg-gray-100 text-primary' : 'bg-surface-alt text-text-muted')}>
+                  <span className={cn('text-sm font-bold mt-3 px-5 py-2 rounded-full', isSelected ? 'bg-gray-100 text-primary' : 'bg-surface-alt text-text-muted')}>
                     {locale !== 'ko' ? formatLocaleCurrency(opt.price, locale) : formatPrice(opt.price)}~
                     {locale !== 'ko' && <span className="text-[9px] opacity-50 ml-0.5">{formatPrice(opt.price)}</span>}
                   </span>

@@ -77,7 +77,7 @@ export function NotificationBellButton({
       className={cn(
         compact
           ? 'relative flex h-6 w-6 items-center justify-center rounded-md text-text-muted/70 hover:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 transition-colors'
-          : 'relative w-8 h-8 rounded-full flex items-center justify-center hover:bg-surface-alt transition-colors',
+          : 'relative w-11 h-11 rounded-full flex items-center justify-center hover:bg-surface-alt transition-colors',
         className,
       )}
       aria-label={unreadCount > 0 ? `알림 ${unreadCount}개` : '알림'}

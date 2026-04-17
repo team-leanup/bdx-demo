@@ -184,7 +184,7 @@ export function QuickSaleForm({
             onFocus={() => setShowDropdown(true)}
             onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
             placeholder="이름 또는 전화번호"
-            className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-text text-sm placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors"
+            className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-text text-base placeholder:text-text-muted focus:outline-none focus:border-primary transition-colors"
           />
           {showDropdown && filteredCustomers.length > 0 && (
             <ul className="absolute top-full left-0 right-0 mt-1 bg-surface border border-border rounded-xl shadow-elevated z-10 overflow-hidden">
@@ -214,7 +214,7 @@ export function QuickSaleForm({
         <select
           value={form.serviceType}
           onChange={(e) => set('serviceType', e.target.value)}
-          className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-text text-sm focus:outline-none focus:border-primary transition-colors appearance-none"
+          className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-text text-base focus:outline-none focus:border-primary transition-colors appearance-none"
         >
           <option value="">선택 (선택사항)</option>
           {SERVICE_OPTIONS.map((s) => (
@@ -231,7 +231,7 @@ export function QuickSaleForm({
             type="date"
             value={form.saleDate}
             onChange={(e) => set('saleDate', e.target.value)}
-            className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-text text-sm focus:outline-none focus:border-primary transition-colors"
+            className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-text text-base focus:outline-none focus:border-primary transition-colors"
           />
         </div>
         <div className="flex-1 flex flex-col gap-1.5">
@@ -240,7 +240,7 @@ export function QuickSaleForm({
             type="time"
             value={form.saleTime}
             onChange={(e) => set('saleTime', e.target.value)}
-            className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-text text-sm focus:outline-none focus:border-primary transition-colors"
+            className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-text text-base focus:outline-none focus:border-primary transition-colors"
           />
         </div>
       </div>
@@ -282,7 +282,7 @@ export function QuickSaleForm({
         <select
           value={form.designerId}
           onChange={(e) => set('designerId', e.target.value)}
-          className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-text text-sm focus:outline-none focus:border-primary transition-colors appearance-none"
+          className="w-full px-3 py-2.5 rounded-xl border border-border bg-surface text-text text-base focus:outline-none focus:border-primary transition-colors appearance-none"
         >
           <option value="">선택 (선택사항)</option>
           {activeDesigners.map((d) => (

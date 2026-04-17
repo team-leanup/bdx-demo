@@ -112,14 +112,14 @@ export function ExtensionSelector({ className }: ExtensionSelectorProps) {
 
               {/* Labels */}
               <div className="flex flex-col items-center gap-0.5">
-                <span className={cn('text-xs font-black', isSelected ? 'text-primary' : 'text-text')}>
+                <span className={cn('text-xs font-bold', isSelected ? 'text-primary' : 'text-text')}>
                   {t(EXT_OPTION_I18N_KEYS[opt.value])}
                 </span>
                 {locale !== 'ko' && (
                   <span className="text-[10px] text-text-muted font-bold opacity-70">{tKo(EXT_OPTION_I18N_KEYS[opt.value])}</span>
                 )}
                 {opt.price !== undefined && opt.price > 0 && (
-                  <span className={cn('text-[10px] font-black mt-1 px-2 py-0.5 rounded-full', isSelected ? 'bg-gray-100 text-primary' : 'bg-surface-alt text-text-muted')}>
+                  <span className={cn('text-[10px] font-bold mt-1 px-2 py-0.5 rounded-full', isSelected ? 'bg-gray-100 text-primary' : 'bg-surface-alt text-text-muted')}>
                     {opt.value === 'repair'
                       ? (
                         <>

@@ -145,10 +145,11 @@ export function DesignGallery({ onConfirm, onSkip }: DesignGalleryProps): React.
               {/* 확대 아이콘 */}
               <button
                 type="button"
+                aria-label="확대"
                 onClick={(e) => { e.stopPropagation(); setZoomSrc(url); }}
-                className="absolute top-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+                className="absolute top-1.5 right-1.5 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                 </svg>
               </button>

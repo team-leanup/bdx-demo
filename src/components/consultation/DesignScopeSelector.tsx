@@ -80,7 +80,7 @@ export function DesignScopeSelector({ className }: DesignScopeSelectorProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} stroke="currentColor" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
           </svg>
         </div>
-        <p className="text-lg font-black text-text-secondary tracking-tight">
+        <p className="text-lg font-bold text-text-secondary tracking-tight">
           {t('selector.designScope')}
           {locale !== 'ko' && <span className="ml-2 text-xs font-medium text-text-muted opacity-60">{tKo('selector.designScope')}</span>}
         </p>
@@ -111,7 +111,7 @@ export function DesignScopeSelector({ className }: DesignScopeSelectorProps) {
               {/* Text labels */}
               <div className="flex flex-col items-center gap-1 w-full">
                 <div className="flex flex-col items-center">
-                  <span className={cn('text-lg font-black tracking-tight text-center', isSelected ? 'text-primary' : 'text-text')}>
+                  <span className={cn('text-lg font-bold text-center', isSelected ? 'text-primary' : 'text-text')}>
                     {t(DESIGN_I18N_KEYS[opt.value])}
                   </span>
                 </div>
@@ -141,7 +141,7 @@ export function DesignScopeSelector({ className }: DesignScopeSelectorProps) {
 
               {/* Price badge */}
               <div className={cn(
-                'px-5 py-2 rounded-full text-sm font-black tracking-tight',
+                'px-5 py-2 rounded-full text-sm font-bold',
                 isSelected
                   ? 'bg-surface-alt border border-primary text-primary'
                   : 'bg-surface-alt text-text-muted',

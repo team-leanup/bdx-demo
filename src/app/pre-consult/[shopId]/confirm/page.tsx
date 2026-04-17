@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useT, useKo, useLocale } from '@/lib/i18n';
 import { usePreConsultStore } from '@/store/pre-consult-store';
 import { calculatePreConsultPrice } from '@/lib/pre-consult-price';
-import { dbCompletePreConsultation, dbCompletePreconsultationBooking, dbCreatePreConsultation, fetchShopPublicData, fetchBookingRequestById } from '@/lib/db';
+import { dbCompletePreConsultation, dbCompletePreconsultationBooking, dbCreatePreConsultation, fetchShopPublicData, fetchBookingRequestById, dbCreateBookingFromConsultationLink, dbCreateBookingFromShopLink } from '@/lib/db';
 import { getNowInKoreaIso } from '@/lib/format';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -120,6 +120,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
   const store = usePreConsultStore();
   const selectedPhotoPrice = usePreConsultStore((s) => s.selectedPhotoPrice);
   const {
+    bodyPart,
     selectedCategory,
     selectedPhotoUrl,
     nailStatus,
@@ -137,6 +138,10 @@ export default function PreConsultConfirmPage(): React.ReactElement {
     customerPhone,
     shopData,
     bookingId,
+    consultationLinkId,
+    selectedSlotDate,
+    selectedSlotTime,
+    linkDesignerId,
     isSubmitting,
   } = store;
 
@@ -192,14 +197,15 @@ export default function PreConsultConfirmPage(): React.ReactElement {
   // ─── Submit ────────────────────────────────────────────────────────────────
 
   const handleSubmit = async (): Promise<void> => {
-    if (usePreConsultStore.getState().isSubmitted) return;
+    const snap = usePreConsultStore.getState();
+    if (snap.isSubmitted || snap.isSubmitting) return;
 
     if (!name.trim() || !phone.trim()) {
       setSubmitError(t('preConsult.nameLabel') + ' / ' + t('preConsult.phoneLabel'));
       return;
     }
     if (!priceEstimate || !selectedCategory) {
-      setSubmitError('상담 정보가 부족합니다');
+      setSubmitError(t('preConsult.errorMissingInfo'));
       return;
     }
 
@@ -209,6 +215,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
     setSubmitError('');
 
     const data: PreConsultationData = {
+      bodyPart,
       designCategory: selectedCategory ?? undefined,
       selectedPhotoUrl: selectedPhotoUrl ?? undefined,
       nailStatus: nailStatus ?? undefined,
@@ -224,14 +231,73 @@ export default function PreConsultConfirmPage(): React.ReactElement {
       referenceImageUrls: referenceImageUrls,
     };
 
-    // 1. Create a pre-consultation record
+    // ─── 경로 A: 공유 상담 링크 (linkId) — 선택한 slot 으로 booking 직접 생성 ───
+    if (consultationLinkId && selectedSlotDate && selectedSlotTime) {
+      const preConsultationData = {
+        ...data,
+        customerName: name.trim(),
+        customerPhone: phone.trim(),
+        referenceImages: referenceImageUrls,
+      };
+      const result = await dbCreateBookingFromConsultationLink({
+        shopId: params.shopId,
+        linkId: consultationLinkId,
+        designerId: linkDesignerId ?? undefined,
+        customerName: name.trim(),
+        customerPhone: phone.trim(),
+        reservationDate: selectedSlotDate,
+        reservationTime: selectedSlotTime,
+        language: locale,
+        serviceLabel: selectedCategory,
+        preConsultationData,
+        referenceImageUrls,
+      });
+      if (result.success && result.bookingId) {
+        store.setSubmitted(result.bookingId);
+        router.push(`/pre-consult/${params.shopId}/complete`);
+      } else {
+        store.setSubmitting(false);
+        setSubmitError(result.error ?? t('preConsult.errorGeneric'));
+      }
+      return;
+    }
+
+    // ─── 경로 A-2: 샵 고정 상담 링크 (linkId 없음 + slot 선택됨) ───
+    if (!consultationLinkId && !bookingId && selectedSlotDate && selectedSlotTime) {
+      const preConsultationData = {
+        ...data,
+        customerName: name.trim(),
+        customerPhone: phone.trim(),
+        referenceImages: referenceImageUrls,
+      };
+      const result = await dbCreateBookingFromShopLink({
+        shopId: params.shopId,
+        customerName: name.trim(),
+        customerPhone: phone.trim(),
+        reservationDate: selectedSlotDate,
+        reservationTime: selectedSlotTime,
+        language: locale,
+        serviceLabel: selectedCategory,
+        preConsultationData,
+        referenceImageUrls,
+      });
+      if (result.success && result.bookingId) {
+        store.setSubmitted(result.bookingId);
+        router.push(`/pre-consult/${params.shopId}/complete`);
+      } else {
+        store.setSubmitting(false);
+        setSubmitError(result.error ?? t('preConsult.errorGeneric'));
+      }
+      return;
+    }
+
+    // ─── 경로 B: 사장님이 발송한 링크 (bookingId) — 기존 booking 업데이트 ───
     if (bookingId) {
-      // bookingId가 있으면 booking_requests만 업데이트 (별도 pre_consultation 불필요)
       const bookingPayload = {
         ...data,
         customerName: name.trim(),
         customerPhone: phone.trim(),
-        referenceImages: referenceImageUrls,  // ConsultationType 필드명으로 매핑
+        referenceImages: referenceImageUrls,
       } as unknown as import('@/types/consultation').ConsultationType;
       const result = await dbCompletePreconsultationBooking(
         bookingId,
@@ -243,37 +309,38 @@ export default function PreConsultConfirmPage(): React.ReactElement {
         router.push(`/pre-consult/${params.shopId}/complete`);
       } else {
         store.setSubmitting(false);
-        setSubmitError(result.error ?? '오류가 발생했어요');
+        setSubmitError(result.error ?? t('preConsult.errorGeneric'));
       }
+      return;
+    }
+
+    // ─── 경로 C: 바로 접근 (bookingId, linkId 모두 없음) — 레거시 ───
+    const createResult = await dbCreatePreConsultation(params.shopId, locale);
+    if (!createResult.success || !createResult.id) {
+      store.setSubmitting(false);
+      setSubmitError(createResult.error ?? t('preConsult.errorGeneric'));
+      return;
+    }
+    const result = await dbCompletePreConsultation(
+      createResult.id,
+      {
+        data,
+        confirmed_price: priceEstimate.minTotal,
+        estimated_minutes: priceEstimate.estimatedMinutes,
+        customer_name: name.trim(),
+        customer_phone: phone.trim(),
+        design_category: selectedCategory,
+        reference_image_paths: referenceImageUrls,
+      },
+      params.shopId,
+      locale,
+    );
+    if (result.success) {
+      store.setSubmitted(createResult.id);
+      router.push(`/pre-consult/${params.shopId}/complete`);
     } else {
-      // bookingId 없으면 기존 플로우: pre_consultations 테이블에 신규 생성
-      const createResult = await dbCreatePreConsultation(params.shopId, locale);
-      if (!createResult.success || !createResult.id) {
-        store.setSubmitting(false);
-        setSubmitError(createResult.error ?? '오류가 발생했어요');
-        return;
-      }
-      const result = await dbCompletePreConsultation(
-        createResult.id,
-        {
-          data,
-          confirmed_price: priceEstimate.minTotal,
-          estimated_minutes: priceEstimate.estimatedMinutes,
-          customer_name: name.trim(),
-          customer_phone: phone.trim(),
-          design_category: selectedCategory,
-          reference_image_paths: referenceImageUrls,
-        },
-        params.shopId,
-        locale,
-      );
-      if (result.success) {
-        store.setSubmitted(createResult.id);
-        router.push(`/pre-consult/${params.shopId}/complete`);
-      } else {
-        store.setSubmitting(false);
-        setSubmitError(result.error ?? '오류가 발생했어요');
-      }
+      store.setSubmitting(false);
+      setSubmitError(result.error ?? t('preConsult.errorGeneric'));
     }
   };
 
@@ -336,6 +403,10 @@ export default function PreConsultConfirmPage(): React.ReactElement {
             <div className="h-px bg-border my-1" />
 
             {/* Summary rows */}
+            <SummaryRow
+              label={t('preConsult.bodyPartTitle')}
+              value={bodyPart === 'foot' ? `🦶 ${t('preConsult.bodyPartFoot')}` : `🖐️ ${t('preConsult.bodyPartHand')}`}
+            />
             {nailStatus && (
               <SummaryRow
                 label={t('preConsult.currentNailTitle')}
@@ -503,14 +574,28 @@ export default function PreConsultConfirmPage(): React.ReactElement {
         >
           <div>
             <h2 className="text-lg font-bold text-text">
-              {bookingId && name && phone ? '예약 정보를 확인해주세요' : t('preConsult.bookingTitle')}
+              {bookingId && name && phone ? t('preConsult.bookingConfirm') : t('preConsult.bookingTitle')}
             </h2>
-            {locale !== 'ko' && !(bookingId && name && phone) && (
+            {locale !== 'ko' && (
               <p className="text-[11px] text-text-muted mt-0.5">
-                {tKo('preConsult.bookingTitle')}
+                {bookingId && name && phone ? tKo('preConsult.bookingConfirm') : tKo('preConsult.bookingTitle')}
               </p>
             )}
           </div>
+
+          {consultationLinkId && selectedSlotDate && selectedSlotTime && (
+            <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
+              <p className="text-[11px] text-text-muted">{t('preConsult.selectedSlotLabel')}</p>
+              <p className="mt-0.5 text-sm font-bold text-primary">
+                {(() => {
+                  const [y, m, d] = selectedSlotDate.split('-').map(Number);
+                  const dt = new Date(Date.UTC(y, m - 1, d, 12));
+                  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+                  return `${m}월 ${d}일 ${weekdays[dt.getUTCDay()]}요일 ${selectedSlotTime}`;
+                })()}
+              </p>
+            </div>
+          )}
 
           {bookingId && name && phone ? (
             <div className="rounded-xl bg-surface-alt border border-border p-4 flex flex-col gap-2">

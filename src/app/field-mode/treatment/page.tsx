@@ -177,7 +177,7 @@ export default function TreatmentPage(): React.ReactElement {
       </main>
 
       {/* ── Fixed bottom bar ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 bg-surface border-t border-border pb-safe-bottom">
+      <div className="fixed bottom-0 left-0 right-0 z-20 bg-surface border-t border-border pb-safe">
         <div className="flex items-center justify-between gap-3 px-4 py-3 max-w-lg mx-auto">
           <div className="flex flex-col min-w-0">
             <span className="text-xs text-text-muted font-medium">
@@ -202,7 +202,7 @@ export default function TreatmentPage(): React.ReactElement {
       <AnimatePresence>
         {showBackConfirm && (
           <div
-            className="fixed inset-0 z-50 flex items-end justify-center bg-backdrop/60 px-4 pb-safe-bottom"
+            className="fixed inset-0 z-50 flex items-end justify-center bg-backdrop/60 px-4 pb-safe"
             onClick={() => setShowBackConfirm(false)}
           >
             <motion.div

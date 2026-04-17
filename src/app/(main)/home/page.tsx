@@ -18,9 +18,9 @@ import {
   HeroCTA,
   TodayReservationCard,
   RecentConsultationCard,
-  TodayStatsCard,
   ReservationForm,
   RevisitReminderCard,
+  ShareLinkCard,
 } from '@/components/home';
 import { PreConsultationNotificationCenter } from '@/components/home/PreConsultationNotificationCenter';
 import { Modal } from '@/components/ui';
@@ -274,20 +274,6 @@ export default function HomePage() {
         itemVariants={itemVariants}
       />
 
-      <TodayStatsCard
-        consultationCount={todayConsultations.length}
-        reservationCount={todayReservations.length}
-        revenue={todayRevenue}
-        foreignCount={foreignCount}
-        onViewDetail={() => router.push('/dashboard')}
-        consultationLabel={t('home.stat_consultation')}
-        reservationLabel={t('home.stat_reservation')}
-        revenueLabel={t('home.stat_revenue')}
-        todayRevenueLabel={t('home.section_todayRevenue')}
-        viewDetailLabel={t('home.section_viewDetail')}
-        itemVariants={itemVariants}
-      />
-
       <Modal
         isOpen={showReservationModal}
         onClose={() => setShowReservationModal(false)}
@@ -318,6 +304,10 @@ export default function HomePage() {
         quickSaleTitle="즉시 매출"
         itemVariants={itemVariants}
       />
+
+      <motion.div variants={itemVariants}>
+        <ShareLinkCard />
+      </motion.div>
 
       <RecentConsultationCard
         records={recentConsultations}

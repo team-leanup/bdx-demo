@@ -398,6 +398,8 @@ footer a { color: var(--rose); text-decoration: none; }
     <a href="#s13" class="toc-link"><span class="tnum">13</span>공유카드</a>
     <a href="#s14" class="toc-link"><span class="tnum">14</span>포트폴리오</a>
     <a href="#s15" class="toc-link"><span class="tnum">15</span>골든타임</a>
+    <a href="#s16" class="toc-link"><span class="tnum">16</span>손님 초대 링크</a>
+    <a href="#s17" class="toc-link"><span class="tnum">17</span>예약 5단계 상태</a>
   </div>
 </div>
 
@@ -422,6 +424,8 @@ footer a { color: var(--rose); text-decoration: none; }
     <a href="#s13" data-sid="s13"><span class="sn">13</span>공유카드</a>
     <a href="#s14" data-sid="s14"><span class="sn">14</span>포트폴리오</a>
     <a href="#s15" data-sid="s15"><span class="sn">15</span>골든타임</a>
+    <a href="#s16" data-sid="s16"><span class="sn">16</span>손님 초대 링크</a>
+    <a href="#s17" data-sid="s17"><span class="sn">17</span>예약 5단계 상태</a>
   </nav>
 </aside>
 
@@ -432,7 +436,7 @@ footer a { color: var(--rose); text-decoration: none; }
     <svg class="cover-symbol" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="a" gradientUnits="userSpaceOnUse" x1="50" y1="100" x2="150" y2="100"><stop offset="0%" stop-color="#FF0066"/><stop offset="50%" stop-color="#FF66AA"/><stop offset="100%" stop-color="#FF0066"/></linearGradient><linearGradient id="b" gradientUnits="userSpaceOnUse" x1="50" y1="50" x2="150" y2="150"><stop offset="0%" stop-color="#FF0066"/><stop offset="50%" stop-color="#FF66AA"/><stop offset="100%" stop-color="#FF0066"/></linearGradient><linearGradient id="c" gradientUnits="userSpaceOnUse" x1="100" y1="50" x2="100" y2="150"><stop offset="0%" stop-color="#FF0066"/><stop offset="50%" stop-color="#FF66AA"/><stop offset="100%" stop-color="#FF0066"/></linearGradient><linearGradient id="d" gradientUnits="userSpaceOnUse" x1="150" y1="50" x2="50" y2="150"><stop offset="0%" stop-color="#FF0066"/><stop offset="50%" stop-color="#FF66AA"/><stop offset="100%" stop-color="#FF0066"/></linearGradient></defs><circle cx="100" cy="100" r="86" fill="none" stroke="#FF0066" stroke-width="1" stroke-opacity=".35"/><path d="M100,14C136,48 136,152 100,186C64,152 64,48 100,14Z" fill="url(#a)" fill-opacity=".25"/><path d="M100,14C136,48 136,152 100,186C64,152 64,48 100,14Z" transform="rotate(45,100,100)" fill="url(#b)" fill-opacity=".25"/><path d="M100,14C136,48 136,152 100,186C64,152 64,48 100,14Z" transform="rotate(90,100,100)" fill="url(#c)" fill-opacity=".25"/><path d="M100,14C136,48 136,152 100,186C64,152 64,48 100,14Z" transform="rotate(135,100,100)" fill="url(#d)" fill-opacity=".25"/></svg>
     <h1>BDX 사용 가이드</h1>
     <p class="sub">네일샵 스케줄 · 고객 · 매출 관리</p>
-    <span class="ver">v2.0 — 2026</span>
+    <span class="ver">v2.1 — 2026.04</span>
   </div>
 
   <!-- Inline TOC (desktop) -->
@@ -454,6 +458,8 @@ footer a { color: var(--rose); text-decoration: none; }
       <li><a href="#s13">공유카드</a></li>
       <li><a href="#s14">포트폴리오</a></li>
       <li><a href="#s15">골든타임</a></li>
+      <li><a href="#s16">손님 초대 링크</a></li>
+      <li><a href="#s17">예약 5단계 상태</a></li>
     </ol>
   </div>
 
@@ -573,12 +579,13 @@ footer a { color: var(--rose); text-decoration: none; }
     </ul>
 
     <h3 class="sub-head">포트폴리오 탭</h3>
-    <p>시술 작품 사진을 모아두는 공간이에요. Wrap-up에서 저장한 사진이 자동으로 쌓여요.</p>
+    <p>시술 작품 사진과 <strong>메뉴판</strong>을 관리하는 공간이에요. Wrap-up에서 저장한 사진이 자동으로 쌓이고, 메뉴판에 등록하면 고객이 손님 초대 링크에서 바로 선택할 수 있어요.</p>
     <ul>
-      <li>스타일 카테고리 태그 (심플/프렌치/자석/아트)로 분류</li>
-      <li>상담 시 포트폴리오에서 디자인을 직접 골라 보여줄 수 있어요</li>
+      <li><strong>메뉴</strong> 탭: 카테고리별(심플/프렌치/자석/아트)로 사진+가격이 정리된 메뉴판</li>
+      <li><strong>시술 기록</strong> 탭: 시술한 모든 사진 (필터·검색 가능)</li>
+      <li>카테고리 헤더의 <strong>수정</strong> 버튼 → 편집 모드 → 연필·해제·추천·인기·이동 표시</li>
     </ul>
-    <div class="note"><b>경로:</b> 설정 → 포트폴리오 탭</div>
+    <div class="note"><b>경로:</b> 하단 탭바 → 포트폴리오</div>
 
     <h3 class="sub-head">설정</h3>
     <p>매장 정보, 가격, 디자이너 관리 (추가/수정/PIN 변경), 테마, 영업시간 등.</p>
@@ -592,7 +599,8 @@ footer a { color: var(--rose); text-decoration: none; }
       <tr><td>예약 잡기</td><td>홈 → "새 예약 등록"</td></tr>
       <tr><td>매출 기록</td><td>예약 카드 → "매출 등록" 또는 홈 → "매출 등록"</td></tr>
       <tr><td>고객 등록</td><td>고객 탭 → "새 고객 등록"</td></tr>
-      <tr><td>외국인 상담</td><td>홈 → "신규 고객 상담"</td></tr>
+      <tr><td>손님에게 링크 보내기</td><td>홈 → 손님 초대 링크 카드 → 기간/디자이너 설정 → 링크 복사/QR</td></tr>
+      <tr><td>외국인 상담</td><td>손님 초대 링크 발송 → 고객이 직접 언어 선택·디자인 입력</td></tr>
       <tr><td>오늘 매출</td><td>홈 하단 "오늘 매출" 카드</td></tr>
       <tr><td>특이사항 확인</td><td>예약 카드 터치 → 프리뷰</td></tr>
       <tr><td>과거 기록 검색</td><td>기록 → 시술 기록 → 검색</td></tr>
@@ -716,7 +724,7 @@ footer a { color: var(--rose); text-decoration: none; }
 
   <!-- 13 -->
   <section class="sec" id="s13">
-    <div class="sec-head"><span class="sec-num">13</span><h2 class="sec-title">공유카드 — 시술 결과 공유</h2><div class="sec-divider"></div></div>
+    <div class="sec-head"><span class="sec-num">13</span><h2 class="sec-title">시술 결과 공유카드</h2><div class="sec-divider"></div></div>
     <p>시술 사진을 SNS에 올리기 좋은 카드 형태로 만들어줘요. 매장 홍보에 활용하세요.</p>
     <div class="steps">
       <div class="stp"><div class="stp-n">1</div><div class="stp-body"><b>시술 사진 선택</b><span>1~3장을 골라요</span></div></div>
@@ -729,15 +737,15 @@ footer a { color: var(--rose); text-decoration: none; }
 
   <!-- 14 -->
   <section class="sec" id="s14">
-    <div class="sec-head"><span class="sec-num">14</span><h2 class="sec-title">포트폴리오 — 시술 작품 관리</h2><div class="sec-divider"></div></div>
-    <p>그동안 한 시술 사진을 한 곳에 모아두는 공간이에요. 상담 때 포트폴리오를 보여주면 고객이 더 쉽게 디자인을 고를 수 있어요.</p>
+    <div class="sec-head"><span class="sec-num">14</span><h2 class="sec-title">포트폴리오 &amp; 메뉴판</h2><div class="sec-divider"></div></div>
+    <p>시술 사진이 쌓이는 곳이자, 고객이 손님 초대 링크에서 고르는 <strong>메뉴판</strong>을 구성하는 공간이에요.</p>
     <div class="concepts">
-      <div class="concept"><div class="concept-name"><span class="dot"></span>자동 수집</div><div class="concept-desc">Wrap-up에서 사진을 저장하면 자동으로 포트폴리오에 추가돼요.</div></div>
-      <div class="concept"><div class="concept-name"><span class="dot"></span>수동 업로드</div><div class="concept-desc">기존 사진을 직접 올릴 수도 있어요.</div></div>
-      <div class="concept"><div class="concept-name"><span class="dot"></span>카테고리 태그</div><div class="concept-desc">심플 / 프렌치 / 자석 / 아트로 분류해 찾기 쉽게 관리해요.</div></div>
-      <div class="concept"><div class="concept-name"><span class="dot"></span>공개/비공개</div><div class="concept-desc">외부에 보여줄 사진만 공개로 설정할 수 있어요.</div></div>
+      <div class="concept"><div class="concept-name"><span class="dot"></span>메뉴 탭</div><div class="concept-desc">카테고리별(심플/프렌치/자석/아트)로 사진+이름+가격이 정리된 메뉴판. 고객이 손님 초대 링크에서 이 메뉴를 보고 골라요.</div></div>
+      <div class="concept"><div class="concept-name"><span class="dot"></span>시술 기록 탭</div><div class="concept-desc">모든 시술 사진 보관 — 필터(기간/가격/분위기), 검색, 글로벌 베스트 기능</div></div>
+      <div class="concept"><div class="concept-name"><span class="dot"></span>수정 모드</div><div class="concept-desc">카테고리 헤더의 "수정" 버튼을 누르면 연필·해제·추천·인기·이동 버튼이 나타나요. 평소에는 깔끔한 메뉴판으로 보여요.</div></div>
+      <div class="concept"><div class="concept-name"><span class="dot"></span>자동/수동</div><div class="concept-desc">Wrap-up 저장 사진 자동 수집 + 직접 업로드 지원</div></div>
     </div>
-    <div class="note"><b>경로:</b> 설정 → 포트폴리오 탭</div>
+    <div class="note"><b>경로:</b> 하단 탭바 → 포트폴리오</div>
   </section>
 
   <!-- 15 -->
@@ -751,6 +759,35 @@ footer a { color: var(--rose); text-decoration: none; }
       <div class="fl"><div class="fl-dot ok">✓</div><div class="fl-body"><strong>카드 사라짐</strong><span>리마인더 발송 후 카드가 사라져요</span></div></div>
     </div>
     <div class="note"><b>경로:</b> 홈 대시보드 → 골든타임 알림 카드</div>
+  </section>
+
+  <!-- 16 -->
+  <section class="sec" id="s16">
+    <div class="sec-head"><span class="sec-num">16</span><h2 class="sec-title">손님 초대 링크 — 방문 전 디자인 선택</h2><div class="sec-divider"></div></div>
+    <p>카카오톡·문자로 링크 하나만 보내면, 고객이 방문 전에 <strong>날짜·시간·디자인</strong>을 직접 골라와요. 현장 상담 시간이 3분 이내로 줄어들고, 외국인도 한국어·영어·중국어·일본어로 스스로 작성해요.</p>
+    <div class="flow">
+      <div class="fl"><div class="fl-dot">1</div><div class="fl-body"><strong>링크 생성</strong><span>홈 → 손님 초대 링크 카드 → 기간, 디자이너, 시술 시간, 슬롯 간격 설정</span></div></div>
+      <div class="fl"><div class="fl-dot">2</div><div class="fl-body"><strong>자동 슬롯 계산</strong><span>매장 영업시간과 기존 예약을 반영해 예약 가능한 슬롯을 자동 생성</span></div></div>
+      <div class="fl"><div class="fl-dot">3</div><div class="fl-body"><strong>링크 전달</strong><span>URL 복사 또는 QR 코드로 카톡·문자에 전달</span></div></div>
+      <div class="fl"><div class="fl-dot">4</div><div class="fl-body"><strong>고객이 직접 선택</strong><span>① 날짜·시간 선택 → ② 손/발 선택 → ③ 디자인 카테고리 → ④ 네일 상태·옵션 입력 → ⑤ 이름·전화번호 입력</span></div></div>
+      <div class="fl"><div class="fl-dot ok">✓</div><div class="fl-body"><strong>예약 자동 등록</strong><span>고객 완료 시 예약이 자동으로 등록되고 "사전상담 완료" 배지가 생겨요</span></div></div>
+    </div>
+    <div class="note note-blue"><b>기존 "사전 상담" 과 다른 점:</b> 기존에는 이미 등록된 예약에만 링크를 보낼 수 있었다면, 손님 초대 링크는 <strong>예약 없이도</strong> 고객이 스스로 날짜·시간까지 고를 수 있어요.</div>
+    <div class="note"><b>경로:</b> 홈 → 손님 초대 링크 카드</div>
+  </section>
+
+  <!-- 17 -->
+  <section class="sec" id="s17">
+    <div class="sec-head"><span class="sec-num">17</span><h2 class="sec-title">예약 5단계 상태</h2><div class="sec-divider"></div></div>
+    <p>예약은 아래 5단계를 거쳐요. 기록 탭과 홈 대시보드의 예약 카드에 현재 단계가 뱃지로 표시돼요.</p>
+    <div class="flow">
+      <div class="fl"><div class="fl-dot">1</div><div class="fl-body"><strong>방금 등록됨 (just_registered)</strong><span>예약이 막 등록된 상태 — 아직 고객에게 링크를 보내지 않음</span></div></div>
+      <div class="fl"><div class="fl-dot">2</div><div class="fl-body"><strong>링크 발송됨 (link_sent)</strong><span>사전상담 링크를 발송했으나 고객이 아직 작성 중</span></div></div>
+      <div class="fl"><div class="fl-dot">3</div><div class="fl-body"><strong>사전상담 완료 (pre_consult_done)</strong><span>고객이 사전상담을 제출 — 원장님 확인 대기</span></div></div>
+      <div class="fl"><div class="fl-dot">4</div><div class="fl-body"><strong>시술 중 (in_treatment)</strong><span>현장 시술이 진행 중</span></div></div>
+      <div class="fl"><div class="fl-dot ok">✓</div><div class="fl-body"><strong>완료 (completed)</strong><span>결제까지 완료되고 포트폴리오에 저장됨</span></div></div>
+    </div>
+    <div class="note"><b>각 단계마다 다른 CTA:</b> 예약 카드 우측 버튼이 현재 단계에 따라 자동 바뀌어요 (예: "링크 보내기" → "사전상담 보기" → "시술 시작" → "결제"). 생각할 필요 없이 다음 버튼만 누르면 돼요.</div>
   </section>
 
   <footer>

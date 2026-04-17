@@ -51,7 +51,7 @@ export function MembershipCard({
     <div className="rounded-2xl border border-border bg-surface p-4 flex flex-col gap-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <span className="text-sm font-black text-text">회원권</span>
+        <span className="text-sm font-bold text-text">회원권</span>
         <span
           className={cn(
             'px-2.5 py-0.5 rounded-full text-[11px] font-bold border',

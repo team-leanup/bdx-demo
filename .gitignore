@@ -46,3 +46,4 @@ qa-*.png
 # agent-browser QA artifacts
 .qa/
 *.auth-state.json
+.playwright-mcp/

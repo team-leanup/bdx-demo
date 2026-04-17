@@ -71,7 +71,7 @@ export function PreConsultationNotificationCenter({
             </div>
             <div className="rounded-xl bg-primary/10 px-3 py-2 text-right">
               <p className="text-[10px] font-semibold text-primary/80">미확인</p>
-              <p className="text-lg font-black text-primary">{unreadCount}</p>
+              <p className="text-lg font-bold text-primary">{unreadCount}</p>
             </div>
           </div>
         </div>

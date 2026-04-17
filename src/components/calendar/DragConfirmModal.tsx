@@ -52,7 +52,7 @@ export function DragConfirmModal({
             {/* Title */}
             <div className="flex flex-col gap-1">
               <span className="text-xs font-semibold text-text-muted tracking-widest uppercase">일정 변경 확인</span>
-              <span className="text-base font-black text-text truncate">{eventTitle}</span>
+              <span className="text-base font-bold text-text truncate">{eventTitle}</span>
             </div>
 
             {/* Time change visualization */}

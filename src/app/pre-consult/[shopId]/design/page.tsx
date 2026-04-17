@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useT, useKo, useLocale } from '@/lib/i18n';
 import { usePreConsultStore } from '@/store/pre-consult-store';
 import { fetchBookingRequestById } from '@/lib/db';
+import { BodyPartToggle } from '@/components/pre-consult/BodyPartToggle';
 import { CategoryPicker } from '@/components/pre-consult/CategoryPicker';
 import { DesignGallery } from '@/components/pre-consult/DesignGallery';
 
@@ -62,6 +63,9 @@ export default function PreConsultDesignPage(): React.ReactElement {
       className="flex-1 px-4 pt-5 pb-8"
     >
       <div className="max-w-lg mx-auto flex flex-col gap-6">
+        {/* 손/발 우선 선택 — 디자인 선택 전 필수 */}
+        <BodyPartToggle />
+
         {/* Title */}
         <div className="text-center">
           <h2 className="text-xl font-bold text-text">

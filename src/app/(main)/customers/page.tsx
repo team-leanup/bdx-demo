@@ -9,7 +9,6 @@ import { normalizePhone } from '@/lib/phone';
 import { useAuthStore } from '@/store/auth-store';
 import { FlagIcon } from '@/components/ui/FlagIcon';
 import { cn } from '@/lib/cn';
-import { getSafetyTagMeta } from '@/lib/tag-safety';
 
 
 type FilterTab = 'all' | 'vip' | 'regular';
@@ -188,10 +187,6 @@ export default function CustomersPage() {
             {paginatedCustomers.map((customer) => {
               const isVip = customer.isRegular || customer.visitCount >= 5;
               const recentTag = (customer.tags ?? []).find((t) => t.category === 'design');
-              const highestSafetyTag = (customer.tags ?? [])
-                .map((t) => ({ tag: t, meta: getSafetyTagMeta(t) }))
-                .filter(({ meta }) => meta.level === 'high' || meta.level === 'medium')
-                .sort((a, b) => (a.meta.level === 'high' && b.meta.level !== 'high' ? -1 : 1))[0];
 
               return (
                 <button
@@ -205,19 +200,6 @@ export default function CustomersPage() {
                     {customer.preferredLanguage && customer.preferredLanguage !== 'ko' && (
                       <span className="absolute -bottom-0.5 -right-0.5 text-[12px] leading-none drop-shadow-sm">
                         <FlagIcon language={customer.preferredLanguage} size="sm" />
-                      </span>
-                    )}
-                    {highestSafetyTag && (
-                      <span
-                        className={cn(
-                          'absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] leading-none shadow-sm border border-white',
-                          highestSafetyTag.meta.level === 'high'
-                            ? 'bg-red-500 text-white'
-                            : 'bg-orange-400 text-white',
-                        )}
-                        title={highestSafetyTag.tag.value}
-                      >
-                        ⚠
                       </span>
                     )}
                   </div>

@@ -139,11 +139,12 @@ export default function IntroPage(): React.ReactElement {
                 {/* Notch */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-5 bg-gray-800 rounded-b-2xl z-10" />
                 {/* Screen */}
-                <div className="w-full h-full rounded-[22px] overflow-hidden bg-white">
+                <div className="relative w-full h-full rounded-[22px] overflow-hidden bg-white">
                   <Image
                     src={slide.screenshot}
                     alt={slide.screenshotAlt}
                     fill
+                    sizes="(max-width: 768px) 200px, 240px"
                     className="object-cover object-top"
                     priority
                   />

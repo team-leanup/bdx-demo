@@ -7,7 +7,7 @@ import usePortfolioStore from '@/store/portfolio-store';
 import { useRecordsStore } from '@/store/records-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { useShopStore } from '@/store/shop-store';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore, isAuthenticatingNow } from '@/store/auth-store';
 import { useAppStore } from '@/store/app-store';
 
 export default function SupabaseProvider({ children }: { children: React.ReactNode }) {
@@ -22,6 +22,8 @@ export default function SupabaseProvider({ children }: { children: React.ReactNo
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event: string) => {
+      // signup/login 진행 중이면 재초기화 스킵 — setSession 으로 트리거되는 SIGNED_IN race 방지
+      if (isAuthenticatingNow()) return;
       if (event === 'SIGNED_OUT' || (event === 'SIGNED_IN' && !useAuthStore.getState().currentShopId)) {
         // OAuth 콜백 후 SIGNED_IN 이벤트가 올 때 _initDone 리셋하여 재초기화 보장
         useAuthStore.getState().resetInitFlag();

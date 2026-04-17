@@ -141,6 +141,13 @@ function getGoogleOwnerName(user: { user_metadata?: Record<string, unknown> } | 
 
 let _initPromise: Promise<void> | null = null;
 let _initDone = false;
+// signup/login이 진행 중임을 나타내는 플래그 — SupabaseProvider 의 onAuthStateChange
+// 에서 setSession 직후 SIGNED_IN race 로 initializeAuth 가 재진입하면
+// 아직 shop 이 생성되지 않은 상태에서 signOut 되는 버그 방지.
+let _isAuthenticating = false;
+export function isAuthenticatingNow(): boolean {
+  return _isAuthenticating;
+}
 
 export const useAuthStore = create<AuthStore>()(
   persist(
@@ -236,29 +243,35 @@ export const useAuthStore = create<AuthStore>()(
           return { success: false, error: supabaseConfigErrorMessage };
         }
 
-        const normalizedEmail = normalizeEmail(email);
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: normalizedEmail,
-          password,
-        });
+        _isAuthenticating = true;
+        try {
+          const normalizedEmail = normalizeEmail(email);
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: normalizedEmail,
+            password,
+          });
 
-        if (error || !data.user) {
-          return { success: false, error: error?.message ?? '로그인에 실패했습니다.' };
+          if (error || !data.user) {
+            return { success: false, error: error?.message ?? '로그인에 실패했습니다.' };
+          }
+
+          const context = await resolveAuthContext(data.user.id);
+          if (!context) {
+            await supabase.auth.signOut();
+            return { success: false, error: '이 계정에 연결된 샵을 찾을 수 없습니다.' };
+          }
+
+          set({
+            isInitialized: true,
+            pendingGoogleSignup: null,
+            ...context,
+          });
+          _initDone = true;
+
+          return { success: true };
+        } finally {
+          _isAuthenticating = false;
         }
-
-        const context = await resolveAuthContext(data.user.id);
-        if (!context) {
-          await supabase.auth.signOut();
-          return { success: false, error: '이 계정에 연결된 샵을 찾을 수 없습니다.' };
-        }
-
-        set({
-          isInitialized: true,
-          pendingGoogleSignup: null,
-          ...context,
-        });
-
-        return { success: true };
       },
 
       loginWithGoogle: async (intent = 'login') => {
@@ -283,23 +296,29 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       loginAsDemo: async () => {
-        // 항상 로컬 데모 모드로 즉시 진입 (Supabase 호출 없음)
-        // middleware가 데모 세션을 인식하도록 쿠키 설정
-        if (typeof document !== 'undefined') {
-          document.cookie = 'bdx-demo=true;path=/;max-age=86400;SameSite=Strict;Secure';
+        _isAuthenticating = true;
+        try {
+          // 항상 로컬 데모 모드로 즉시 진입 (Supabase 호출 없음)
+          // middleware가 데모 세션을 인식하도록 쿠키 설정
+          if (typeof document !== 'undefined') {
+            document.cookie = 'bdx-demo=true;path=/;max-age=86400;SameSite=Strict;Secure';
+          }
+
+          set({
+            isInitialized: true,
+            pendingGoogleSignup: null,
+            role: 'owner',
+            currentShopId: 'shop-demo',
+            currentShopOnboardingComplete: true,
+            activeDesignerId: '9a0ce791-7906-4476-811b-be48f7dee2c8',
+            activeDesignerName: '데모 원장',
+          });
+          _initDone = true;
+
+          return { success: true };
+        } finally {
+          _isAuthenticating = false;
         }
-
-        set({
-          isInitialized: true,
-          pendingGoogleSignup: null,
-          role: 'owner',
-          currentShopId: 'shop-demo',
-          currentShopOnboardingComplete: true,
-          activeDesignerId: '9a0ce791-7906-4476-811b-be48f7dee2c8',
-          activeDesignerName: '데모 원장',
-        });
-
-        return { success: true };
       },
 
       completePendingGoogleSignup: async ({ shopName, ownerName }) => {
@@ -340,53 +359,59 @@ export const useAuthStore = create<AuthStore>()(
           return { success: false, error: supabaseConfigErrorMessage };
         }
 
-        const normalizedEmail = normalizeEmail(email);
-        const { data, error } = await supabase.auth.signUp({
-          email: normalizedEmail,
-          password,
-          options: {
-            data: {
-              shop_name: shopName,
-              owner_name: ownerName,
+        _isAuthenticating = true;
+        try {
+          const normalizedEmail = normalizeEmail(email);
+          const { data, error } = await supabase.auth.signUp({
+            email: normalizedEmail,
+            password,
+            options: {
+              data: {
+                shop_name: shopName,
+                owner_name: ownerName,
+              },
             },
-          },
-        });
+          });
 
-        if (error || !data.user) {
-          return { success: false, error: error?.message ?? '회원가입에 실패했습니다.' };
+          if (error || !data.user) {
+            return { success: false, error: error?.message ?? '회원가입에 실패했습니다.' };
+          }
+
+          if (!data.session) {
+            return { success: false, error: '이미 등록된 이메일입니다. 로그인을 이용해 주세요.' };
+          }
+
+          // Explicitly set session so auth.uid() is available for subsequent RPC calls.
+          // @supabase/ssr cookie-based storage may not apply immediately after signUp.
+          await supabase.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+          });
+
+          const userId = data.user.id;
+
+          const createdAccount = await dbCreateShopAccount(userId, shopName, ownerName);
+          if (!createdAccount.success) {
+            console.error('[auth] Shop creation failed for user:', userId, createdAccount.error);
+            await supabase.auth.signOut();
+            return { success: false, error: createdAccount.error ?? '샵 생성에 실패했습니다. 다시 시도해 주세요.' };
+          }
+
+          set({
+            isInitialized: true,
+            pendingGoogleSignup: null,
+            role: 'owner',
+            currentShopId: createdAccount.shop!.id,
+            currentShopOnboardingComplete: false,
+            activeDesignerId: createdAccount.owner!.id,
+            activeDesignerName: createdAccount.owner!.name,
+          });
+          _initDone = true;
+
+          return { success: true };
+        } finally {
+          _isAuthenticating = false;
         }
-
-        if (!data.session) {
-          return { success: false, error: '이미 등록된 이메일입니다. 로그인을 이용해 주세요.' };
-        }
-
-        // Explicitly set session so auth.uid() is available for subsequent RPC calls.
-        // @supabase/ssr cookie-based storage may not apply immediately after signUp.
-        await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        });
-
-        const userId = data.user.id;
-
-        const createdAccount = await dbCreateShopAccount(userId, shopName, ownerName);
-        if (!createdAccount.success) {
-          console.error('[auth] Shop creation failed for user:', userId, createdAccount.error);
-          await supabase.auth.signOut();
-          return { success: false, error: createdAccount.error ?? '샵 생성에 실패했습니다. 다시 시도해 주세요.' };
-        }
-
-        set({
-          isInitialized: true,
-          pendingGoogleSignup: null,
-          role: 'owner',
-          currentShopId: createdAccount.shop!.id,
-          currentShopOnboardingComplete: false,
-          activeDesignerId: createdAccount.owner!.id,
-          activeDesignerName: createdAccount.owner!.name,
-        });
-
-        return { success: true };
       },
 
       logout: async () => {

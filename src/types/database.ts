@@ -17,10 +17,12 @@ export type Database = {
       booking_requests: {
         Row: {
           channel: string | null
+          consultation_link_id: string | null
           consultation_link_sent_at: string | null
           created_at: string | null
           customer_id: string | null
           customer_name: string
+          deposit: number | null
           designer_id: string | null
           id: string
           language: string | null
@@ -37,10 +39,12 @@ export type Database = {
         }
         Insert: {
           channel?: string | null
+          consultation_link_id?: string | null
           consultation_link_sent_at?: string | null
           created_at?: string | null
           customer_id?: string | null
           customer_name: string
+          deposit?: number | null
           designer_id?: string | null
           id: string
           language?: string | null
@@ -57,10 +61,12 @@ export type Database = {
         }
         Update: {
           channel?: string | null
+          consultation_link_id?: string | null
           consultation_link_sent_at?: string | null
           created_at?: string | null
           customer_id?: string | null
           customer_name?: string
+          deposit?: number | null
           designer_id?: string | null
           id?: string
           language?: string | null
@@ -77,6 +83,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "booking_requests_consultation_link_id_fkey"
+            columns: ["consultation_link_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_links"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "booking_requests_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -92,6 +105,75 @@ export type Database = {
           },
           {
             foreignKeyName: "booking_requests_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consultation_links: {
+        Row: {
+          booking_count: number
+          created_at: string
+          description: string | null
+          designer_id: string | null
+          estimated_duration_min: number
+          expires_at: string
+          id: string
+          shop_id: string
+          slot_interval_min: number
+          status: string
+          style_category: string | null
+          title: string | null
+          updated_at: string
+          valid_from: string
+          valid_until: string
+        }
+        Insert: {
+          booking_count?: number
+          created_at?: string
+          description?: string | null
+          designer_id?: string | null
+          estimated_duration_min?: number
+          expires_at?: string
+          id: string
+          shop_id: string
+          slot_interval_min?: number
+          status?: string
+          style_category?: string | null
+          title?: string | null
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string
+        }
+        Update: {
+          booking_count?: number
+          created_at?: string
+          description?: string | null
+          designer_id?: string | null
+          estimated_duration_min?: number
+          expires_at?: string
+          id?: string
+          shop_id?: string
+          slot_interval_min?: number
+          status?: string
+          style_category?: string | null
+          title?: string | null
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_links_designer_id_fkey"
+            columns: ["designer_id"]
+            isOneToOne: false
+            referencedRelation: "designers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultation_links_shop_id_fkey"
             columns: ["shop_id"]
             isOneToOne: false
             referencedRelation: "shops"
@@ -698,6 +780,18 @@ export type Database = {
         Returns: undefined
       }
       get_my_shop_id: { Args: never; Returns: string }
+      get_consultation_link_public: {
+        Args: { p_link_id: string }
+        Returns: Json
+      }
+      get_shop_pre_consult_data: {
+        Args: { p_shop_id: string }
+        Returns: Json
+      }
+      increment_consultation_link_booking: {
+        Args: { p_link_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

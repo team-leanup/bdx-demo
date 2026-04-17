@@ -159,7 +159,7 @@ export function ExpressionSelector({ className }: ExpressionSelectorProps) {
             {locale !== 'ko' && <span className="ml-2 text-xs font-medium text-text-muted opacity-60">{tKo('selector.expression')}</span>}
           </p>
         </div>
-        <span className="text-[10px] font-black text-text-muted bg-surface-alt px-3 py-1 rounded-full border border-border uppercase tracking-widest text-center">
+        <span className="text-[10px] font-bold text-text-muted bg-surface-alt px-3 py-1 rounded-full border border-border uppercase tracking-widest text-center">
           {t('selector.multiSelect')}
           {locale !== 'ko' && (
             <span className="block text-[8px] opacity-60 normal-case tracking-normal mt-0.5">{tKo('selector.multiSelect')}</span>
@@ -198,7 +198,7 @@ export function ExpressionSelector({ className }: ExpressionSelectorProps) {
 
               {/* Labels */}
               <div className="flex flex-col items-center gap-1">
-                <span className={cn('text-base font-black tracking-tight', isSelected ? 'text-primary' : 'text-text')}>
+                <span className={cn('text-base font-bold', isSelected ? 'text-primary' : 'text-text')}>
                   {t(EXPR_I18N_KEYS[opt.value])}
                 </span>
                 {locale !== 'ko' && (
@@ -208,7 +208,7 @@ export function ExpressionSelector({ className }: ExpressionSelectorProps) {
 
               {/* Price chip */}
               <span className={cn(
-                'text-xs font-black px-4 py-1.5 rounded-full tracking-tight',
+                'text-xs font-bold px-4 py-1.5 rounded-full tracking-tight',
                 isSelected
                   ? 'bg-surface-alt border border-primary text-primary'
                   : 'bg-surface-alt text-text-muted',

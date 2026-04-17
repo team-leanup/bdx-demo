@@ -7,6 +7,8 @@ export type PreConsultStep = 'start' | 'design' | 'consult' | 'confirm' | 'compl
 
 export type DesignCategory = 'simple' | 'french' | 'magnet' | 'art';
 
+export type BodyPart = 'hand' | 'foot';
+
 // ── Nail Status & Preferences ────────────────────────────────────────────────
 
 export type NailCurrentStatus = 'none' | 'existing';
@@ -51,6 +53,9 @@ export interface PreConsultPriceEstimate {
 // ── Core Data ─────────────────────────────────────────────────────────────────
 
 export interface PreConsultationData {
+  // 시술 부위 (손/발)
+  bodyPart?: BodyPart;
+
   // Design selection
   designCategory?: DesignCategory;
   selectedPhotoUrl?: string;

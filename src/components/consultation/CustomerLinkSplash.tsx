@@ -57,7 +57,7 @@ export function CustomerLinkSplash({
           transition={{ duration: 0.45, delay: 0.2, ease: 'easeOut' }}
           className="mt-6"
         >
-          <p className="text-lg font-black text-text">{title}</p>
+          <p className="text-lg font-bold text-text">{title}</p>
           {titleKo !== title && (
             <p className="mt-1 text-xs font-semibold text-text-muted opacity-70">{titleKo}</p>
           )}

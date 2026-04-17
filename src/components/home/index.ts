@@ -6,3 +6,4 @@ export { TodayStatsCard } from './TodayStatsCard';
 export { QuickActions } from './QuickActions';
 export { ReservationForm } from './ReservationForm';
 export { RevisitReminderCard } from './RevisitReminderCard';
+export { ShareLinkCard } from './ShareLinkCard';

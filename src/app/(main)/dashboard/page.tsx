@@ -31,6 +31,30 @@ import {
   computeChangeRate,
 } from '@/lib/analytics';
 
+function getRevenueAdvice(change: number, thisMonth: number, prevMonth: number): string {
+  if (prevMonth === 0 && thisMonth === 0) return '이번 달과 지난달 모두 매출 기록이 아직 없어요.';
+  if (prevMonth === 0) return '이번 달부터 매출이 집계되고 있어요.';
+  if (change >= 30) return '매출이 크게 늘었어요. 상승 흐름을 이어가보세요.';
+  if (change >= 10) return '꾸준히 성장 중이에요. 이 페이스를 유지해보세요.';
+  if (change > 0) return '지난달보다 소폭 증가했어요.';
+  if (change === 0) return '지난달과 비슷한 수준을 유지 중이에요.';
+  if (change >= -10) return '약간 감소했어요. 재방문 리마인더를 점검해보세요.';
+  if (change >= -30) return '감소 폭이 커지고 있어요. 단골 고객 연락을 권장해요.';
+  return '매출이 많이 줄었어요. 골든타임 대상에게 리마인더를 보내보세요.';
+}
+
+function getCountAdvice(change: number, thisMonth: number, prevMonth: number): string {
+  if (prevMonth === 0 && thisMonth === 0) return '상담 기록이 아직 쌓이지 않았어요.';
+  if (prevMonth === 0) return '이번 달부터 상담이 집계되고 있어요.';
+  if (change >= 30) return '상담이 활발해졌어요. 예약 관리에 여유를 두세요.';
+  if (change >= 10) return '상담 건수가 순조롭게 늘고 있어요.';
+  if (change > 0) return '지난달보다 상담이 소폭 늘었어요.';
+  if (change === 0) return '지난달과 비슷한 상담 흐름이에요.';
+  if (change >= -10) return '상담이 약간 줄었어요. 신규 유입 채널을 점검해보세요.';
+  if (change >= -30) return '상담이 줄고 있어요. 포트폴리오 노출을 늘려보세요.';
+  return '상담이 많이 줄었어요. 공유카드·리마인더로 재유입을 유도해보세요.';
+}
+
 export default function DashboardPage() {
   const today = formatNowInKorea('ko-KR', {
     year: 'numeric',
@@ -217,18 +241,21 @@ export default function DashboardPage() {
               {/* 전월 대비 매출 성장 */}
               <div className="flex-1">
                 <p className="text-xs font-semibold text-text-secondary">전월 대비 매출 성장</p>
-                <div className="mt-1 flex items-center gap-1.5">
+                <div className="mt-1 flex flex-wrap items-center gap-1.5">
                   <span
-                    className={`text-xl font-extrabold sm:text-2xl ${
+                    className={`inline-flex items-center gap-0.5 text-xl font-extrabold sm:text-2xl tabular-nums ${
                       monthlyGrowthData.revenueChange > 0
                         ? 'text-success'
                         : monthlyGrowthData.revenueChange < 0
-                          ? 'text-error'
+                          ? 'text-rose-500'
                           : 'text-text'
                     }`}
                   >
+                    <span aria-hidden className="text-base sm:text-lg">
+                      {monthlyGrowthData.revenueChange > 0 ? '↗' : monthlyGrowthData.revenueChange < 0 ? '↘' : '·'}
+                    </span>
                     {monthlyGrowthData.revenueChange > 0 ? '+' : ''}
-                    {monthlyGrowthData.revenueChange}%
+                    {Math.abs(monthlyGrowthData.revenueChange)}%
                   </span>
                   <span className="text-xs text-text-muted">
                     {formatPrice(monthlyGrowthData.prevMonthRevenue)} →{' '}
@@ -236,29 +263,48 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <p className="mt-0.5 text-[11px] text-text-muted">이번 달 전체 vs 지난달 전체</p>
+                <div className="mt-2 rounded-xl border border-primary/20 bg-primary/5 px-2.5 py-2">
+                  <p className="flex items-start gap-1.5 text-[11px] leading-snug text-text-secondary">
+                    <svg aria-hidden className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 7a5 5 0 00-3 9v1a1 1 0 001 1h4a1 1 0 001-1v-1a5 5 0 00-3-9z" />
+                    </svg>
+                    <span>{getRevenueAdvice(monthlyGrowthData.revenueChange, monthlyGrowthData.thisMonthRevenue, monthlyGrowthData.prevMonthRevenue)}</span>
+                  </p>
+                </div>
               </div>
               <div className="h-px w-full bg-border md:h-16 md:w-px" />
               {/* 전월 대비 상담 건수 */}
               <div className="flex-1">
                 <p className="text-xs font-semibold text-text-secondary">전월 대비 상담 건수</p>
-                <div className="mt-1 flex items-center gap-1.5">
+                <div className="mt-1 flex flex-wrap items-center gap-1.5">
                   <span
-                    className={`text-xl font-extrabold sm:text-2xl ${
+                    className={`inline-flex items-center gap-0.5 text-xl font-extrabold sm:text-2xl tabular-nums ${
                       monthlyGrowthData.countChange > 0
                         ? 'text-success'
                         : monthlyGrowthData.countChange < 0
-                          ? 'text-error'
+                          ? 'text-rose-500'
                           : 'text-text'
                     }`}
                   >
+                    <span aria-hidden className="text-base sm:text-lg">
+                      {monthlyGrowthData.countChange > 0 ? '↗' : monthlyGrowthData.countChange < 0 ? '↘' : '·'}
+                    </span>
                     {monthlyGrowthData.countChange > 0 ? '+' : ''}
-                    {monthlyGrowthData.countChange}%
+                    {Math.abs(monthlyGrowthData.countChange)}%
                   </span>
                   <span className="text-xs text-text-muted">
                     {monthlyGrowthData.prevMonthCount}건 → {monthlyGrowthData.thisMonthCount}건
                   </span>
                 </div>
                 <p className="mt-0.5 text-[11px] text-text-muted">이번 달 전체 vs 지난달 전체</p>
+                <div className="mt-2 rounded-xl border border-primary/20 bg-primary/5 px-2.5 py-2">
+                  <p className="flex items-start gap-1.5 text-[11px] leading-snug text-text-secondary">
+                    <svg aria-hidden className="h-3.5 w-3.5 shrink-0 mt-0.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 7a5 5 0 00-3 9v1a1 1 0 001 1h4a1 1 0 001-1v-1a5 5 0 00-3-9z" />
+                    </svg>
+                    <span>{getCountAdvice(monthlyGrowthData.countChange, monthlyGrowthData.thisMonthCount, monthlyGrowthData.prevMonthCount)}</span>
+                  </p>
+                </div>
               </div>
             </div>
           </BentoCard>

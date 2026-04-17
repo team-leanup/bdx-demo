@@ -142,7 +142,7 @@ export function PortfolioBrowser({
       <div className={cn('flex flex-col gap-3', className)}>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-black text-text">
+            <p className="text-sm font-bold text-text">
               {t('consultation.portfolioTitle')}
               {locale !== 'ko' && (
                 <span className="ml-2 text-xs font-medium text-text-muted opacity-60">{tKo('consultation.portfolioTitle')}</span>

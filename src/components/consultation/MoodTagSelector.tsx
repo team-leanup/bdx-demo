@@ -56,7 +56,7 @@ export function MoodTagSelector({ selected, onToggle, className }: MoodTagSelect
   return (
     <div className={cn('flex flex-col gap-3', className)}>
       <div>
-        <p className="text-sm font-black text-text">
+        <p className="text-sm font-bold text-text">
           {t('consultation.moodTitle')}
           {locale !== 'ko' && (
             <span className="ml-2 text-xs font-medium text-text-muted opacity-60">{tKo('consultation.moodTitle')}</span>

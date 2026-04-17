@@ -176,9 +176,10 @@ function MenuToggleRow({ photoId, isFeatured, featuredPrice }: MenuToggleRowProp
 interface MenuCardPriceProps {
   photoId: string;
   price: number | undefined;
+  readOnly?: boolean;
 }
 
-function MenuCardPrice({ photoId, price }: MenuCardPriceProps): React.ReactElement {
+function MenuCardPrice({ photoId, price, readOnly }: MenuCardPriceProps): React.ReactElement {
   const updatePhoto = usePortfolioStore((s) => s.updatePhoto);
   const [editing, setEditing] = useState(false);
   const [input, setInput] = useState('');
@@ -200,6 +201,14 @@ function MenuCardPrice({ photoId, price }: MenuCardPriceProps): React.ReactEleme
     if (e.key === 'Escape') setEditing(false);
   };
 
+  if (readOnly) {
+    return (
+      <span className="text-base font-bold text-primary tabular-nums">
+        {price != null ? formatPrice(price) : <span className="text-text-muted font-normal text-xs">-</span>}
+      </span>
+    );
+  }
+
   if (editing) {
     return (
       <input
@@ -212,7 +221,7 @@ function MenuCardPrice({ photoId, price }: MenuCardPriceProps): React.ReactEleme
         onBlur={commit}
         onKeyDown={handleKeyDown}
         onClick={(e) => e.stopPropagation()}
-        className="w-28 rounded-lg border border-primary bg-surface px-2 py-1 text-sm font-semibold text-primary focus:outline-none"
+        className="w-28 rounded-lg border border-primary bg-surface px-2 py-1 text-base font-semibold text-primary focus:outline-none"
       />
     );
   }
@@ -220,7 +229,7 @@ function MenuCardPrice({ photoId, price }: MenuCardPriceProps): React.ReactEleme
   return (
     <button
       onClick={startEdit}
-      className="flex items-center gap-1 text-sm font-bold text-primary hover:text-primary/80 transition-colors"
+      className="flex items-center gap-1 text-base font-bold text-primary hover:text-primary/80 transition-colors tabular-nums"
     >
       {price != null ? formatPrice(price) : <span className="text-text-muted font-normal text-xs">가격 미설정</span>}
       <svg className="w-3 h-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -245,31 +254,36 @@ const DESIGN_SCOPE_LABEL: Record<string, string> = {
 const DEFAULT_categoryOrder = ['simple', 'french', 'magnet', 'art'] as const;
 
 // ── InlineEditText: 탭→인라인 편집→blur/enter로 저장 ──
-function InlineEditText({ value, onSave }: { value: string; onSave: (v: string) => void }): React.ReactElement {
+function InlineEditText({ value, onSave, readOnly }: { value: string; onSave: (v: string) => void; readOnly?: boolean }): React.ReactElement {
   const [editing, setEditing] = useState(false);
   const [input, setInput] = useState(value);
   const commit = (): void => { if (input.trim()) onSave(input.trim()); setEditing(false); };
+  if (readOnly) {
+    return (
+      <span className="block text-base font-semibold text-text truncate min-w-0">{value}</span>
+    );
+  }
   if (editing) {
     return (
       <input autoFocus value={input} onChange={(e) => setInput(e.target.value)}
         onClick={(e) => e.stopPropagation()}
         onBlur={commit} onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false); }}
-        className="text-sm font-semibold text-text bg-transparent border-b-2 border-primary outline-none px-0 py-0 w-full min-w-0" />
+        className="text-base font-semibold text-text bg-transparent border-b-2 border-primary outline-none px-0 py-0 w-full min-w-0" />
     );
   }
   return (
     <button onClick={(e) => { e.stopPropagation(); setInput(value); setEditing(true); }}
-      className="flex items-center gap-1 text-sm font-semibold text-text hover:text-primary transition-colors text-left min-w-0">
+      className="flex items-center gap-1 text-base font-semibold text-text hover:text-primary transition-colors text-left min-w-0">
       <span className="truncate">{value}</span>
-      <svg className="w-3 h-3 shrink-0 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <svg className="w-3.5 h-3.5 shrink-0 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
       </svg>
     </button>
   );
 }
 
-// ── CategoryHeader: 인라인 이름 편집 ──
-function CategoryHeader({ label, count, onRename }: { label: string; count: number; onRename?: (v: string) => void }): React.ReactElement {
+// ── CategoryHeader: 인라인 이름 편집 + 수정 모드 토글 ──
+function CategoryHeader({ label, count, editMode, onToggleEditMode, onRename }: { label: string; count: number; editMode: boolean; onToggleEditMode?: () => void; onRename?: (v: string) => void }): React.ReactElement {
   const [editing, setEditing] = useState(false);
   const [input, setInput] = useState(label);
   const commit = (): void => { if (input.trim() && onRename) onRename(input.trim()); setEditing(false); };
@@ -278,7 +292,7 @@ function CategoryHeader({ label, count, onRename }: { label: string; count: numb
       <div className="flex items-center gap-2">
         <input autoFocus value={input} onChange={(e) => setInput(e.target.value)}
           onBlur={commit} onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false); }}
-          className="text-sm font-bold text-text bg-transparent border-b-2 border-primary outline-none px-0 py-0.5 w-32" />
+          className="text-base font-bold text-text bg-transparent border-b-2 border-primary outline-none px-0 py-0.5 w-32" />
         <span className="text-xs text-text-muted">{count}개</span>
         <div className="flex-1 h-px bg-border" />
       </div>
@@ -286,16 +300,29 @@ function CategoryHeader({ label, count, onRename }: { label: string; count: numb
   }
   return (
     <div className="flex items-center gap-2">
-      <h2 className="text-sm font-bold text-text">{label}</h2>
-      {onRename && (
+      <h2 className="text-base font-bold text-text tracking-tight">{label}</h2>
+      {editMode && onRename && (
         <button onClick={() => { setInput(label); setEditing(true); }} className="text-text-muted hover:text-primary transition-colors">
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
           </svg>
         </button>
       )}
-      <span className="text-xs text-text-muted">{count}개</span>
+      <span className="text-xs text-text-muted tabular-nums">{count}개</span>
       <div className="flex-1 h-px bg-border" />
+      {onToggleEditMode && (
+        <button
+          onClick={onToggleEditMode}
+          className={cn(
+            'shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors',
+            editMode
+              ? 'bg-primary text-white'
+              : 'border border-border text-text-secondary hover:border-primary/40 hover:text-primary',
+          )}
+        >
+          {editMode ? '완료' : '수정'}
+        </button>
+      )}
     </div>
   );
 }
@@ -567,7 +594,8 @@ export default function PortfolioPage(): React.ReactElement {
 
     // Also handle unknown categories by bucketing to 'simple'
     return grouped;
-  }, [menuPhotos]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [menuPhotos, categoryOrder.join(',')]);
 
   // Non-menu treatment photos grouped by category (for "메뉴에 추가" picker)
   const nonMenuByCategory = useMemo(() => {
@@ -583,7 +611,8 @@ export default function PortfolioPage(): React.ReactElement {
       });
 
     return grouped;
-  }, [treatmentPhotos]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [treatmentPhotos, categoryOrder.join(',')]);
 
   // Picker state: which category is open
   const [pickerCategory, setPickerCategory] = useState<string | null>(null);
@@ -1031,10 +1060,17 @@ function CategorySection({
   onRenameCategory,
 }: CategorySectionProps): React.ReactElement {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [editMode, setEditMode] = useState(false);
   return (
-    <div className="flex flex-col gap-2">
-      {/* Section header — 인라인 편집 */}
-      <CategoryHeader label={label} count={items.length} onRename={onRenameCategory} />
+    <div className="flex flex-col gap-3">
+      {/* Section header — 인라인 편집 + 수정 모드 토글 */}
+      <CategoryHeader
+        label={label}
+        count={items.length}
+        editMode={editMode}
+        onToggleEditMode={() => setEditMode((v) => !v)}
+        onRename={onRenameCategory}
+      />
 
       {/* Menu cards */}
       {items.length > 0 && (
@@ -1044,6 +1080,7 @@ function CategorySection({
               key={photo.id}
               photo={photo}
               fallbackIdx={idx}
+              editMode={editMode}
               onRemove={() => onRemoveFromMenu(photo.id)}
               onOpenOverlay={() => onOpenOverlay(photo.id)}
             />
@@ -1051,8 +1088,8 @@ function CategorySection({
         </div>
       )}
 
-      {/* Add to menu button */}
-      {/* 메뉴에 추가 */}
+      {/* Add to menu button — 편집 모드일 때만 노출 */}
+      {editMode && (
       <div>
         <input
           ref={fileInputRef}
@@ -1118,6 +1155,7 @@ function CategorySection({
           )}
         </AnimatePresence>
       </div>
+      )}
     </div>
   );
 }
@@ -1126,57 +1164,71 @@ function CategorySection({
 interface MenuCardProps {
   photo: PortfolioPhoto;
   fallbackIdx: number;
+  editMode: boolean;
   onRemove: () => void;
   onOpenOverlay: () => void;
-  onEditName?: (currentName: string, onConfirm: (v: string) => void) => void;
 }
 
-function MenuCard({ photo, fallbackIdx, onRemove, onOpenOverlay, onEditName }: MenuCardProps): React.ReactElement {
+function MenuCard({ photo, fallbackIdx, editMode, onRemove, onOpenOverlay }: MenuCardProps): React.ReactElement {
   const imgSrc = photo.imageDataUrl || NAIL_FALLBACKS[fallbackIdx % NAIL_FALLBACKS.length];
   const updatePhoto = usePortfolioStore((s) => s.updatePhoto);
 
   return (
-    <div className="flex items-start gap-3 bg-surface rounded-xl p-2.5 border border-border/50">
-      {/* 썸네일 */}
-      <button onClick={onOpenOverlay} className="relative w-16 h-16 rounded-lg overflow-hidden shrink-0">
+    <div className="flex items-center gap-3.5 bg-surface rounded-2xl p-3 border border-border/60 shadow-sm">
+      {/* 썸네일 — 메뉴판 느낌으로 크게 */}
+      <button onClick={onOpenOverlay} className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden shrink-0">
         <Image src={imgSrc} alt={photo.designType ?? ''} fill unoptimized={imgSrc.startsWith('data:')} className="object-cover" />
         {(photo.isStaffPick || photo.isPopular) && (
-          <div className="absolute top-0.5 left-0.5 flex gap-0.5">
-            {photo.isStaffPick && <span className="px-1 py-px rounded bg-primary text-white text-[7px] font-bold">추천</span>}
-            {photo.isPopular && <span className="px-1 py-px rounded bg-amber-500 text-white text-[7px] font-bold">인기</span>}
+          <div className="absolute top-1 left-1 flex gap-0.5">
+            {photo.isStaffPick && <span className="px-1.5 py-0.5 rounded bg-primary text-white text-[9px] font-bold shadow-sm">추천</span>}
+            {photo.isPopular && <span className="px-1.5 py-0.5 rounded bg-amber-500 text-white text-[9px] font-bold shadow-sm">인기</span>}
           </div>
         )}
       </button>
 
       {/* 정보 */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-1">
-          <InlineEditText
-            value={photo.designType ?? '미지정'}
-            onSave={(v) => updatePhoto(photo.id, { designType: v })}
-          />
-          <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className="shrink-0 text-[10px] text-text-muted hover:text-red-500">해제</button>
+      <div className="flex-1 min-w-0 flex flex-col gap-1">
+        {/* 제목 + 가격 (메뉴판 스타일) */}
+        <div className="flex items-baseline justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <InlineEditText
+              value={photo.designType ?? '미지정'}
+              onSave={(v) => updatePhoto(photo.id, { designType: v })}
+              readOnly={!editMode}
+            />
+          </div>
+          <MenuCardPrice photoId={photo.id} price={photo.price} readOnly={!editMode} />
         </div>
-        <div className="flex items-center gap-1.5 mt-0.5">
-          {photo.serviceType && <span className="text-[10px] text-text-secondary">{photo.serviceType}</span>}
-          <MenuCardPrice photoId={photo.id} price={photo.price} />
-        </div>
-        <div className="flex items-center gap-1 mt-1">
-          <button
-            onClick={(e) => { e.stopPropagation(); updatePhoto(photo.id, { isStaffPick: !photo.isStaffPick }); }}
-            className={cn('text-[9px] font-medium px-1.5 py-0.5 rounded-full transition-colors',
-              photo.isStaffPick ? 'bg-primary text-white' : 'bg-surface-alt text-text-muted',
-            )}
-          >추천</button>
-          <button
-            onClick={(e) => { e.stopPropagation(); updatePhoto(photo.id, { isPopular: !photo.isPopular }); }}
-            className={cn('text-[9px] font-medium px-1.5 py-0.5 rounded-full transition-colors',
-              photo.isPopular ? 'bg-amber-500 text-white' : 'bg-surface-alt text-text-muted',
-            )}
-          >인기</button>
-          {/* 카테고리 이동 */}
-          <MenuCategoryMove photoId={photo.id} currentCategory={photo.styleCategory ?? 'simple'} />
-        </div>
+
+        {/* 서비스 타입 부제 */}
+        {photo.serviceType && (
+          <span className="text-xs text-text-secondary truncate">{photo.serviceType}</span>
+        )}
+
+        {/* 편집 모드일 때만: 추천/인기 토글 + 이동 + 해제 */}
+        {editMode && (
+          <div className="flex items-center gap-1 flex-wrap mt-1">
+            <button
+              onClick={(e) => { e.stopPropagation(); updatePhoto(photo.id, { isStaffPick: !photo.isStaffPick }); }}
+              className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full transition-colors',
+                photo.isStaffPick ? 'bg-primary text-white' : 'bg-surface-alt text-text-muted',
+              )}
+            >추천</button>
+            <button
+              onClick={(e) => { e.stopPropagation(); updatePhoto(photo.id, { isPopular: !photo.isPopular }); }}
+              className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full transition-colors',
+                photo.isPopular ? 'bg-amber-500 text-white' : 'bg-surface-alt text-text-muted',
+              )}
+            >인기</button>
+            <MenuCategoryMove photoId={photo.id} currentCategory={photo.styleCategory ?? 'simple'} />
+            <button
+              onClick={(e) => { e.stopPropagation(); onRemove(); }}
+              className="ml-auto text-[10px] text-text-muted hover:text-red-500 transition-colors"
+            >
+              해제
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

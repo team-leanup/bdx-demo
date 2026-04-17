@@ -5,6 +5,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import type {
   PreConsultStep,
   DesignCategory,
+  BodyPart,
   NailCurrentStatus,
   RemovalPreference,
   LengthPreference,
@@ -32,6 +33,7 @@ interface PreConsultState {
   currentStep: PreConsultStep;
 
   // STEP 1: Design
+  bodyPart: BodyPart;
   selectedCategory: DesignCategory | null;
   selectedPhotoUrl: string | null;
   selectedPhotoId: string | null;
@@ -57,6 +59,12 @@ interface PreConsultState {
   // Booking link
   bookingId: string | null;
 
+  // Shared consultation link (홈에서 사장님이 만든 링크)
+  consultationLinkId: string | null;
+  selectedSlotDate: string | null;
+  selectedSlotTime: string | null;
+  linkDesignerId: string | null;
+
   // Submission
   isSubmitting: boolean;
   isSubmitted: boolean;
@@ -68,6 +76,7 @@ interface PreConsultActions {
   setShopId: (id: string) => void;
   setShopData: (data: ShopPublicData, photos: PortfolioPhoto[]) => void;
   setCurrentStep: (step: PreConsultStep) => void;
+  setBodyPart: (part: BodyPart) => void;
   setSelectedCategory: (cat: DesignCategory) => void;
   setSelectedPhotoUrl: (url: string | null) => void;
   setSelectedPhoto: (id: string | null, url: string | null, price: number | null) => void;
@@ -86,6 +95,9 @@ interface PreConsultActions {
   setCustomerName: (name: string) => void;
   setCustomerPhone: (phone: string) => void;
   setBookingId: (id: string | null) => void;
+  setConsultationLinkId: (id: string | null) => void;
+  setSelectedSlot: (date: string | null, time: string | null) => void;
+  setLinkDesignerId: (id: string | null) => void;
 
   // Actions
   setSubmitting: (v: boolean) => void;
@@ -105,6 +117,7 @@ const INITIAL_STATE: PreConsultState = {
 
   currentStep: 'start',
 
+  bodyPart: 'hand',
   selectedCategory: null,
   selectedPhotoUrl: null,
   selectedPhotoId: null,
@@ -127,6 +140,11 @@ const INITIAL_STATE: PreConsultState = {
 
   bookingId: null,
 
+  consultationLinkId: null,
+  selectedSlotDate: null,
+  selectedSlotTime: null,
+  linkDesignerId: null,
+
   isSubmitting: false,
   isSubmitted: false,
   submittedId: null,
@@ -145,6 +163,8 @@ export const usePreConsultStore = create<PreConsultStore>()(
         set({ shopData: data, shopName: data.name, portfolioPhotos: photos }),
 
       setCurrentStep: (step) => set({ currentStep: step }),
+
+      setBodyPart: (part) => set({ bodyPart: part }),
 
       setSelectedCategory: (cat) => set({ selectedCategory: cat }),
 
@@ -193,6 +213,12 @@ export const usePreConsultStore = create<PreConsultStore>()(
       setCustomerPhone: (phone) => set({ customerPhone: phone }),
 
       setBookingId: (id) => set({ bookingId: id }),
+
+      setConsultationLinkId: (id) => set({ consultationLinkId: id }),
+
+      setSelectedSlot: (date, time) => set({ selectedSlotDate: date, selectedSlotTime: time }),
+
+      setLinkDesignerId: (id) => set({ linkDesignerId: id }),
 
       setSubmitting: (v) => set({ isSubmitting: v }),
 
