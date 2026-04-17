@@ -31,60 +31,31 @@ const SCOPE_HASHTAG: Record<string, string> = {
   full_art: '#FullArt',
 };
 
-// ── Design scope → color palette presets ────────────────────────────────────
-const COLOR_PALETTE: Record<string, Array<{ color: string; name: string }>> = {
-  solid_tone: [
-    { color: '#E8D5C4', name: 'Nude Beige' },
-    { color: '#F5E6D3', name: 'Soft Cream' },
-    { color: '#D4B8A0', name: 'Warm Taupe' },
-  ],
-  gradient: [
-    { color: '#FFD1DC', name: 'Blush Pink' },
-    { color: '#FFECD2', name: 'Peach Glow' },
-    { color: '#E8D5E0', name: 'Mauve Mist' },
-  ],
-  french: [
-    { color: '#E8D5C4', name: 'Nude Beige' },
-    { color: '#F7F3EE', name: 'Pearl White' },
-    { color: '#C4AFA0', name: 'Soft Taupe' },
-  ],
-  art: [
-    { color: '#F08080', name: 'Coral Pink' },
-    { color: '#D4A0A0', name: 'Dusty Rose' },
-    { color: '#F5DEB3', name: 'Champagne' },
-  ],
-  magnet: [
-    { color: '#B8A9C9', name: 'Lavender' },
-    { color: '#A0C4B8', name: 'Sage Green' },
-    { color: '#C9B8A9', name: 'Warm Sand' },
-  ],
-  magnet_art: [
-    { color: '#C9A0C4', name: 'Orchid' },
-    { color: '#A0B8C4', name: 'Steel Blue' },
-    { color: '#D4C4A0', name: 'Gold Dust' },
-  ],
-  monthly_art: [
-    { color: '#E8C4C4', name: 'Rose Quartz' },
-    { color: '#C4D4E8', name: 'Serenity' },
-    { color: '#D4E8C4', name: 'Mint Leaf' },
-  ],
-  solid_point: [
-    { color: '#F0E0D0', name: 'Vanilla' },
-    { color: '#E0D0C0', name: 'Latte' },
-    { color: '#D0C0B0', name: 'Camel' },
-  ],
-  full_art: [
-    { color: '#E8A0A0', name: 'Peony' },
-    { color: '#A0C8E8', name: 'Sky Blue' },
-    { color: '#E8D0A0', name: 'Honey' },
-  ],
+// ── Nail shape → 한글 라벨 ──────────────────────────────────────────────────
+const SHAPE_LABEL: Record<string, string> = {
+  round: '라운드',
+  oval: '오벌',
+  square: '스퀘어',
+  squoval: '스퀘발',
+  almond: '아몬드',
+  stiletto: '스틸레토',
+  coffin: '코핀',
 };
 
-const DEFAULT_PALETTE = [
-  { color: '#E8D5C4', name: 'Nude Beige' },
-  { color: '#F5E6D3', name: 'Soft Cream' },
-  { color: '#D4B8A0', name: 'Warm Taupe' },
-];
+// ── Off type → 한글 라벨 ────────────────────────────────────────────────────
+const OFF_LABEL_SHORT: Record<string, string> = {
+  same_shop: '자샵 오프',
+  other_shop: '타샵 오프',
+};
+
+// ── Extension type → 한글 라벨 ──────────────────────────────────────────────
+const EXTENSION_LABEL_SHORT: Record<string, string> = {
+  none: '',
+  natural: '내추럴 연장',
+  short: '쇼트 연장',
+  medium: '미디엄 연장',
+  long: '롱 연장',
+};
 
 // ── Expression → English hashtag ────────────────────────────────────────────
 const EXPRESSION_HASHTAG: Record<string, string> = {
@@ -185,7 +156,28 @@ export function ShareCardImageTemplate({
 
   const moodTitle = MOOD_TITLE[consultation.designScope] ?? 'Nail Design';
   const hashtag = SCOPE_HASHTAG[consultation.designScope] ?? '#Nail';
-  const palette = COLOR_PALETTE[consultation.designScope] ?? DEFAULT_PALETTE;
+
+  // ── TREATMENT 섹션용 시술 정보 수집 ────────────────────────────────────────
+  const shapeLabel = consultation.nailShape ? SHAPE_LABEL[consultation.nailShape] : null;
+  const offLabel = OFF_LABEL_SHORT[consultation.offType] ?? null;
+  const extensionLabel = consultation.extensionType
+    ? EXTENSION_LABEL_SHORT[consultation.extensionType] ?? null
+    : null;
+  const partsCount = (consultation.partsSelections ?? []).reduce(
+    (sum, p) => sum + (p.quantity ?? 0),
+    0,
+  );
+  const extraColorCount = consultation.extraColorCount ?? 0;
+  const repairCount = consultation.repairCount ?? 0;
+
+  // 2열 좌/우로 나눠서 밀도 있는 레이아웃 구성
+  const treatmentRows: Array<{ label: string; value: string }> = [];
+  if (shapeLabel) treatmentRows.push({ label: 'SHAPE', value: shapeLabel });
+  if (offLabel) treatmentRows.push({ label: 'OFF', value: offLabel });
+  if (extensionLabel) treatmentRows.push({ label: 'EXTENSION', value: extensionLabel });
+  if (partsCount > 0) treatmentRows.push({ label: 'PARTS', value: `${partsCount}개` });
+  if (extraColorCount > 0) treatmentRows.push({ label: 'COLOR', value: `+${extraColorCount}` });
+  if (repairCount > 0) treatmentRows.push({ label: 'REPAIR', value: `${repairCount}개` });
 
   const dateStr = createdAt
     ? new Date(createdAt).toLocaleDateString('en-CA').replace(/-/g, '.')
@@ -271,40 +263,50 @@ export function ShareCardImageTemplate({
         padding: '16px 36px 28px',
       }}>
         {/* Upper section: Design info */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {/* DAILY MOOD label */}
-          <span style={{
-            fontSize: 22, fontWeight: 600, letterSpacing: '0.15em',
-            color: '#9CA3AF', textTransform: 'uppercase' as const,
-          }}>
-            DAILY MOOD
-          </span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {/* DAILY MOOD label with accent line */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{
+              width: 28, height: 2, background: '#F43F5E', borderRadius: 2,
+            }} />
+            <span style={{
+              fontSize: 20, fontWeight: 700, letterSpacing: '0.18em',
+              color: '#F43F5E', textTransform: 'uppercase' as const,
+            }}>
+              DAILY MOOD
+            </span>
+          </div>
 
-          {/* Mood title */}
+          {/* Mood title (English, display) */}
           <span style={{
-            fontSize: 64, fontWeight: 900, color: '#191F28',
-            lineHeight: 1.05, letterSpacing: '-0.03em',
+            fontSize: 68, fontWeight: 900, color: '#191F28',
+            lineHeight: 1.02, letterSpacing: '-0.035em',
           }}>
             {moodTitle}
           </span>
 
-          {/* Design label (Korean) */}
-          <span style={{ fontSize: 36, fontWeight: 700, color: '#6B7280', lineHeight: 1.2 }}>
+          {/* Design label (Korean subtitle) */}
+          <span style={{
+            fontSize: 32, fontWeight: 600, color: '#6B7280',
+            lineHeight: 1.25, letterSpacing: '-0.015em',
+          }}>
             {designLabel}
           </span>
 
           {/* Body part + expression badges */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
             <span style={{
               display: 'inline-flex', padding: '8px 18px', borderRadius: 999,
-              fontSize: 28, fontWeight: 700, background: '#FFF1F2', color: '#F43F5E',
+              fontSize: 24, fontWeight: 700, background: '#FFF1F2', color: '#F43F5E',
+              letterSpacing: '-0.01em',
             }}>
               {bodyLabel}
             </span>
             {expressionLabels.map((label, i) => (
               <span key={i} style={{
                 display: 'inline-flex', padding: '8px 18px', borderRadius: 999,
-                fontSize: 26, fontWeight: 600, background: '#F0EDE8', color: '#6B7280',
+                fontSize: 22, fontWeight: 600, background: '#F0EDE8', color: '#6B7280',
+                letterSpacing: '-0.01em',
               }}>
                 {label}
               </span>
@@ -312,60 +314,103 @@ export function ShareCardImageTemplate({
           </div>
         </div>
 
-        {/* Middle: COLOR PALETTE */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <span style={{
-            fontSize: 20, fontWeight: 600, letterSpacing: '0.15em',
-            color: '#9CA3AF', textTransform: 'uppercase' as const,
+        {/* Middle: TREATMENT DETAILS — 실제 시술 정보 */}
+        {treatmentRows.length > 0 && (
+          <div style={{
+            display: 'flex', flexDirection: 'column', gap: 14,
+            padding: '20px 24px',
+            background: '#FFFFFF',
+            borderRadius: 20,
+            border: '1px solid #EEE8E0',
           }}>
-            COLOR PALETTE
-          </span>
-          <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-            {palette.map((p, i) => (
-              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                <div style={{
-                  width: 64, height: 64, borderRadius: '50%',
-                  background: p.color,
-                  border: '2px solid rgba(0,0,0,0.06)',
-                }} />
-                <span style={{ fontSize: 18, fontWeight: 500, color: '#9CA3AF', whiteSpace: 'nowrap' as const }}>
-                  {p.name}
-                </span>
-              </div>
-            ))}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{
+                width: 4, height: 18, borderRadius: 2, background: '#F43F5E',
+              }} />
+              <span style={{
+                fontSize: 20, fontWeight: 700, letterSpacing: '0.18em',
+                color: '#6B7280', textTransform: 'uppercase' as const,
+              }}>
+                TREATMENT
+              </span>
+            </div>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              columnGap: 32,
+              rowGap: 10,
+            }}>
+              {treatmentRows.map((row, i) => (
+                <div key={i} style={{
+                  display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+                  gap: 12,
+                  borderBottom: '1px dashed #EEE8E0',
+                  paddingBottom: 8,
+                }}>
+                  <span style={{
+                    fontSize: 18, fontWeight: 700, letterSpacing: '0.12em',
+                    color: '#B0A8A0', textTransform: 'uppercase' as const,
+                  }}>
+                    {row.label}
+                  </span>
+                  <span style={{
+                    fontSize: 26, fontWeight: 700, color: '#191F28',
+                    letterSpacing: '-0.01em',
+                  }}>
+                    {row.value}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Bottom: Shop name + Date + QR + BDX logo */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
+          paddingTop: 18, borderTop: '1px solid #EEE8E0',
+        }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {/* Shop name */}
-            <span style={{ fontSize: 42, fontWeight: 900, color: '#191F28', letterSpacing: '-0.01em' }}>
+            <span style={{
+              fontSize: 44, fontWeight: 900, color: '#191F28',
+              letterSpacing: '-0.02em', lineHeight: 1.1,
+            }}>
               {shopName}
             </span>
             {/* Date */}
-            <span style={{ fontSize: 20, fontWeight: 600, letterSpacing: '0.1em', color: '#9CA3AF' }}>
-              DATE: {dateStr}
+            <span style={{
+              fontSize: 20, fontWeight: 600, letterSpacing: '0.1em', color: '#9CA3AF',
+              fontVariantNumeric: 'tabular-nums' as const,
+            }}>
+              {dateStr}
             </span>
             {/* BDX branding */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-              <BdxLogo size={36} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
+              <BdxLogo size={32} />
               <span style={{
-                fontSize: 18, letterSpacing: '0.06em', color: '#B0A8A0',
-                fontWeight: 600, textTransform: 'uppercase' as const,
+                fontSize: 16, letterSpacing: '0.08em', color: '#B0A8A0',
+                fontWeight: 700, textTransform: 'uppercase' as const,
               }}>
                 Beauty Decision eXperience
               </span>
             </div>
           </div>
 
-          {/* QR Code */}
+          {/* QR Code — 링크 안내 */}
           {qrDataUrl && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+            <div style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+              padding: 12, borderRadius: 14, background: '#FFFFFF',
+              border: '1px solid #EEE8E0',
+            }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={qrDataUrl} alt="QR" style={{ width: 100, height: 100 }} />
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#B0A8A0', letterSpacing: '0.08em' }}>
-                BDX
+              <img src={qrDataUrl} alt="QR" style={{ width: 96, height: 96, display: 'block' }} />
+              <span style={{
+                fontSize: 13, fontWeight: 700, color: '#191F28',
+                letterSpacing: '0.14em', textTransform: 'uppercase' as const,
+              }}>
+                예약하기
               </span>
             </div>
           )}

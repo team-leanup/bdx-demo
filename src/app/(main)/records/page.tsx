@@ -615,19 +615,19 @@ export default function RecordsPage() {
 
       {mainTab === 'reservations' && (
         <>
-          <div className="flex items-center justify-between px-4 md:px-0">
-            <div className="flex items-center gap-2 text-xs text-text-secondary">
+          <div className="flex flex-col gap-1.5 px-4 md:flex-row md:items-center md:justify-between md:gap-2 md:px-0">
+            <div className="flex items-center gap-3 text-xs text-text-secondary overflow-x-auto">
               {READINESS_LEGEND.map((item) => (
-                <span key={item.label} className="inline-flex items-center gap-1">
-                  <span className={`h-2 w-2 rounded-full ${item.color}`} />
+                <span key={item.label} className="inline-flex items-center gap-1 whitespace-nowrap">
+                  <span className={`h-2 w-2 rounded-full shrink-0 ${item.color}`} />
                   <span>{item.label}</span>
                 </span>
               ))}
             </div>
-            <span className="text-xs text-text-secondary tabular-nums flex items-center gap-1.5 flex-wrap">
-              <span>이번주 {weekStats.weekCount}건 · 오늘 남은 {weekStats.todayRemainingCount}건</span>
+            <span className="text-xs text-text-secondary tabular-nums flex items-center gap-x-1.5 gap-y-0.5 flex-wrap">
+              <span className="whitespace-nowrap">이번주 {weekStats.weekCount}건 · 오늘 남은 {weekStats.todayRemainingCount}건</span>
               {weekStats.nextReservationMinutes !== null && (
-                <span className="text-primary font-medium">
+                <span className="text-primary font-medium whitespace-nowrap">
                   · 다음 예약{' '}
                   {weekStats.nextReservationMinutes >= 60
                     ? `${Math.floor(weekStats.nextReservationMinutes / 60)}시간 후`
@@ -641,8 +641,8 @@ export default function RecordsPage() {
           </div>
 
           {/* 디자이너 토글 — 로그인 디자이너 제외, 나머지 다중 선택 */}
-          <div className="flex items-center gap-2 overflow-x-auto px-4 md:px-0 pb-0.5">
-            <span className="text-[11px] text-text-muted flex-shrink-0">+표시</span>
+          <div className="flex items-center gap-2.5 overflow-x-auto px-4 md:px-0 pb-0.5">
+            <span className="text-[11px] font-medium text-text-muted flex-shrink-0 whitespace-nowrap">함께 보기</span>
             {[...activeDesigners.filter((d) => d.id !== activeDesignerId), { id: '__unassigned__', name: '미지정', isActive: true }].map((d) => {
               const isOn = extraDesignerIds.has(d.id);
               return (

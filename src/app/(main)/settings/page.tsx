@@ -21,7 +21,6 @@ import { cn } from '@/lib/cn';
 import { useShopStore } from '@/store/shop-store';
 import { DEFAULT_BASE_PRICES } from '@/data/service-options';
 import { formatPrice } from '@/lib/format';
-import { DesignPresetsManager } from '@/components/settings/DesignPresetsManager';
 import { resizeImageToBase64 } from '@/lib/image-utils';
 import { dbUpdateDesignerPin } from '@/lib/db';
 import type { ServiceStructure } from '@/types/shop';
@@ -1705,10 +1704,6 @@ export default function SettingsPage() {
               <p className="text-[11px] text-text-muted mt-0.5">{t('settings.service_customPartsDesc')}</p>
             </div>
             <CustomPartsManager />
-
-            <div className="my-3 border-t border-border" />
-
-            <DesignPresetsManager />
 
             <Card className="mx-4 md:mx-0">
               <div className="mb-3">

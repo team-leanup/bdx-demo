@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const PUBLIC_ROUTES = ['/', '/splash', '/intro', '/login', '/signup', '/signup/google', '/intro-demo', '/terms', '/privacy', '/auth/callback'];
+const PUBLIC_ROUTES = ['/', '/splash', '/intro', '/login', '/signup', '/signup/google', '/intro-demo', '/terms', '/privacy', '/auth/callback', '/qr'];
 const PUBLIC_PREFIXES = ['/onboarding', '/consultation', '/pre-consult', '/share', '/_next', '/api', '/auth'];
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
