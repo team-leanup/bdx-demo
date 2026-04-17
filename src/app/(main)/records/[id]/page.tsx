@@ -74,6 +74,7 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
   };
 
   const handleFinalize = (): void => {
+    if (record.finalizedAt) return;
     const now = getNowInKoreaIso();
     updateRecord(id, { finalizedAt: now });
     if (record.customerId) {
@@ -419,13 +420,19 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
 
       {/* 액션 바 (fixed bottom) */}
       <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background px-4 py-3 safe-bottom">
-        <button
-          type="button"
-          onClick={() => setShowShareCard(true)}
-          className="mb-2 w-full rounded-2xl border border-primary bg-primary/5 py-2.5 text-sm font-semibold text-primary"
-        >
-          공유카드 만들기
-        </button>
+        {record.finalizedAt ? (
+          <button
+            type="button"
+            onClick={() => setShowShareCard(true)}
+            className="mb-2 w-full rounded-2xl border border-primary bg-primary/5 py-2.5 text-sm font-semibold text-primary"
+          >
+            공유카드 만들기
+          </button>
+        ) : (
+          <div className="mb-2 w-full rounded-2xl border border-border bg-surface-alt py-2.5 text-center text-sm text-text-muted">
+            결제 완료 후 공유카드를 만들 수 있어요
+          </div>
+        )}
       </div>
 
       {record && (

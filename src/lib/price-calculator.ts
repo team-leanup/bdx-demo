@@ -200,12 +200,10 @@ export function calculatePrice(
   let discountAmount = 0;
   if (consultation.discount) {
     if (consultation.discount.type === 'fixed') {
-      discountAmount = consultation.discount.value;
+      discountAmount = Math.min(consultation.discount.value, subtotal);
     } else {
-      discountAmount = Math.round(subtotal * (consultation.discount.value / 100));
+      discountAmount = Math.min(Math.round(subtotal * (consultation.discount.value / 100)), subtotal);
     }
-    // L-7: percent 할인이 소계를 초과하지 않도록 cap
-    discountAmount = Math.min(discountAmount, subtotal);
     if (discountAmount > 0) {
       items.push({
         label: consultation.discount.type === 'percent'

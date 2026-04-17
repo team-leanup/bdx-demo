@@ -1606,18 +1606,19 @@ export async function dbCompletePreConsultation(
     pre_consultation_completed_at: now,
     pre_consultation_data: {
       ...(payload.data as Record<string, unknown>),
-      referenceImages: payload.reference_image_paths ?? (payload.data as Record<string, unknown> | null)?.['referenceImageUrls'] ?? [],
+      referenceImageUrls: payload.reference_image_paths ?? (payload.data as Record<string, unknown> | null)?.['referenceImageUrls'] ?? [],
     } as unknown as import('@/types/database').Json,
     reference_image_urls: (payload.reference_image_paths as unknown as import('@/types/database').Json) ?? null,
     created_at: now,
   });
 
   if (bookingError) {
-    console.warn('[db] dbCompletePreConsultation: booking_requests insert failed (non-critical):', {
+    console.error('[db] dbCompletePreConsultation: booking_requests insert failed:', {
       ...toDbErrorSnapshot(bookingError),
       preConsultationId: id,
       shopId,
     });
+    return { success: false, error: 'booking_insert_failed' };
   }
 
   return { success: true };

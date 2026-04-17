@@ -222,13 +222,15 @@ export const usePreConsultStore = create<PreConsultStore>()(
         const {
           shopData: _shopData,
           portfolioPhotos: _portfolioPhotos,
-          referenceImageUrls: _referenceImageUrls,
           isSubmitting: _isSubmitting,
           isSubmitted: _isSubmitted,
           submittedId: _submittedId,
           ...persistedState
         } = state;
-        return persistedState;
+        return {
+          ...persistedState,
+          referenceImageUrls: state.referenceImageUrls.filter((url) => url.startsWith('http')),
+        };
       },
     },
   ),

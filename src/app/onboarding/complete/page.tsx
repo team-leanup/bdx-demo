@@ -70,6 +70,11 @@ export default function CompletePage() {
     try {
       const onboardingCompletedAt = getNowInKoreaIso();
 
+      // 0. shop-store hydration 경쟁 조건 방어
+      if (!useShopStore.getState().shop) {
+        await useShopStore.getState().hydrateFromDB();
+      }
+
       // 1. Shop 기본 정보 + 설정 저장
       await updateShop({
         name: shopName || '우리 샵',

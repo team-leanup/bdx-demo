@@ -14,7 +14,6 @@ function designScopeToCategory(scope: DesignScope): StyleCategory {
     case 'solid_point': return 'french';
     case 'full_art': return 'art';
     case 'monthly_art': return 'art';
-    default: return 'simple';
   }
 }
 

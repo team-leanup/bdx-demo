@@ -139,7 +139,14 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
       currentStep: ConsultationStep.START,
     });
     if (booking.preConsultationData) {
-      hydrateFromBooking(booking.preConsultationData);
+      hydrateFromBooking({
+        ...booking.preConsultationData,
+        bookingId: booking.id,
+        designerId: booking.designerId,
+        customerName: booking.customerName,
+        customerPhone: booking.phone,
+        customerId: booking.customerId ?? booking.preConsultationData?.customerId,
+      });
     }
     // 사전상담 완료 → 옵션 선택 건너뛰고 바로 시술 중으로
     router.push('/field-mode/treatment');

@@ -15,6 +15,18 @@ function isPublicRoute(pathname: string): boolean {
   return false;
 }
 
+function applySecurityHeaders(response: NextResponse): NextResponse {
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
+  response.headers.set(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com; frame-src https://accounts.google.com;",
+  );
+  return response;
+}
+
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
@@ -24,7 +36,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     if (!isPublicRoute(pathname)) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
-    return response;
+    return applySecurityHeaders(response);
   }
 
   // Auth callback은 PKCE code verifier 쿠키를 보존해야 하므로 건너뜀
@@ -34,12 +46,12 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
   // Public 경로는 세션 체크 불필요
   if (isPublicRoute(pathname)) {
-    return response;
+    return applySecurityHeaders(response);
   }
 
   // 데모 모드 (Supabase 세션 없이 로컬 상태로 동작)
   if (request.cookies.get('bdx-demo')?.value === 'true') {
-    return response;
+    return applySecurityHeaders(response);
   }
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -64,14 +76,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(loginUrl);
   }
 
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
-  response.headers.set(
-    'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com; frame-src https://accounts.google.com;",
-  );
+  applySecurityHeaders(response);
 
   return response;
 }

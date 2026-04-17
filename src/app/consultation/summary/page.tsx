@@ -265,6 +265,8 @@ export default function SummaryPage() {
           });
         }));
       }
+    } else if (isCustomerLinkFlow && !bookingId) {
+      await addRecord(savedRecord);
     } else {
       await addRecord(savedRecord);
 
@@ -385,7 +387,10 @@ export default function SummaryPage() {
     restoreLocale();
 
     if (isCustomerLinkFlow) {
-      router.push(`/consultation/save-complete?consultationId=${newId}&customerId=${customerId}&mode=preconsultation`);
+      setTimeout(() => {
+        useConsultationStore.getState().reset();
+      }, 0);
+      router.push(`/consultation/save-complete?mode=consultation`);
       return;
     }
 

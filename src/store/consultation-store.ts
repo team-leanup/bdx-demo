@@ -90,7 +90,7 @@ export const STEP_ORDER: ConsultationStep[] = [
   ConsultationStep.SUMMARY,
 ];
 
-const RETURN_VISIT_STEP_ORDER: ConsultationStep[] = [
+export const RETURN_VISIT_STEP_ORDER: ConsultationStep[] = [
   ConsultationStep.START,
   ConsultationStep.CUSTOMER_INFO,
   ConsultationStep.SUMMARY,

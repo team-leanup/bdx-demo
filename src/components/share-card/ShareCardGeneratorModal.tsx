@@ -9,6 +9,7 @@ import { DESIGN_SCOPE_LABEL, BODY_PART_LABEL } from '@/lib/labels';
 import { ShareCardImageTemplate } from '@/components/share-card/ShareCardImageTemplate';
 import type { CardRatio } from '@/components/share-card/ShareCardImageTemplate';
 import type { ConsultationType } from '@/types/consultation';
+import { dbCreateShareCard } from '@/lib/db';
 
 interface ShareCardGeneratorModalProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ interface ShareCardGeneratorModalProps {
     imagePath?: string | null;
   }>;
   shopName: string;
+  onShareCardCreated?: (shareCardId: string) => void;
 }
 
 // ─── Scaled preview: renders the fixed-pixel template scaled to fit container ───
@@ -99,6 +101,7 @@ export function ShareCardGeneratorModal({
   record,
   portfolioPhotos,
   shopName,
+  onShareCardCreated,
 }: ShareCardGeneratorModalProps): React.ReactElement | null {
   const t = useT();
   const kakaoTalkUrl = useAppStore((s) => s.shopSettings.kakaoTalkUrl);
@@ -110,6 +113,9 @@ export function ShareCardGeneratorModal({
   const [downloading, setDownloading] = useState<CardRatio | null>(null);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
+  const [resolvedShareCardId, setResolvedShareCardId] = useState<string | undefined>(record.shareCardId);
+  const [shareCardError, setShareCardError] = useState<string | null>(null);
+  const shareCardCreating = useRef(false);
 
   const captureRef916 = useRef<HTMLDivElement | null>(null);
   const captureRef34 = useRef<HTMLDivElement | null>(null);
@@ -128,6 +134,30 @@ export function ShareCardGeneratorModal({
     return () => document.removeEventListener('keydown', handleEsc);
   }, [isOpen, onClose]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    if (resolvedShareCardId) return;
+    if (shareCardCreating.current) return;
+    shareCardCreating.current = true;
+    setShareCardError(null);
+    const newId = crypto.randomUUID();
+    dbCreateShareCard(record.id, newId, record.shopId)
+      .then((result) => {
+        if (result.success) {
+          setResolvedShareCardId(newId);
+          onShareCardCreated?.(newId);
+        } else {
+          setShareCardError(result.error ?? '공유카드 생성 실패');
+        }
+      })
+      .catch(() => {
+        setShareCardError('공유카드 생성 중 오류가 발생했습니다.');
+      })
+      .finally(() => {
+        shareCardCreating.current = false;
+      });
+  }, [isOpen, resolvedShareCardId, record.id, record.shopId, onShareCardCreated]);
+
   const selectedPhoto = portfolioPhotos.find((p) => p.id === selectedPhotoId);
   const resolvedImageUrl = selectedPhoto?.imageDataUrl ?? selectedPhoto?.imagePath ?? null;
 
@@ -141,8 +171,8 @@ export function ShareCardGeneratorModal({
   );
 
   // Share card URL
-  const shareUrl = record.shareCardId
-    ? `https://beauty-decision.com/share/${record.shareCardId}`
+  const shareUrl = resolvedShareCardId
+    ? `https://beauty-decision.com/share/${resolvedShareCardId}`
     : null;
 
   // ── Download ──────────────────────────────────────────────────────────────
@@ -301,6 +331,9 @@ export function ShareCardGeneratorModal({
 
             {/* ── Action buttons ── */}
             <div className="flex-shrink-0 flex flex-col gap-2 px-5 pb-safe pt-3 border-t border-border">
+              {shareCardError && (
+                <p className="text-xs text-error text-center py-1">{shareCardError}</p>
+              )}
               {/* 이미지 다운로드 + 링크 복사 */}
               <div className="flex gap-2">
                 <button

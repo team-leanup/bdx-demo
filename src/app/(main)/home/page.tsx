@@ -303,7 +303,10 @@ export default function HomePage() {
       </Modal>
 
       <HeroCTA
-        onStartConsultation={() => router.push('/field-mode')}
+        onStartConsultation={() => {
+          useFieldModeStore.getState().reset();
+          router.push('/field-mode');
+        }}
         onNewReservation={() => setShowReservationModal(true)}
         onQuickSale={() => router.push('/quick-sale')}
         consultationLabel="현장 시술"

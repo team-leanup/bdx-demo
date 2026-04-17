@@ -562,6 +562,12 @@ export const useCustomerStore = create<CustomerStore>()(
         set((state) => ({
           customers: state.customers.map((c) => {
             if (c.id !== customerId) return c;
+            if (historyEntry?.recordId) {
+              const existing = c.treatmentHistory || [];
+              if (existing.some((h) => h.recordId === historyEntry.recordId)) {
+                return c;
+              }
+            }
             const newVisitCount = c.visitCount + 1;
             const newTotalSpend = c.totalSpend + finalPrice;
             const newAverageSpend = Math.round(newTotalSpend / newVisitCount);

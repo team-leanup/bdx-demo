@@ -89,7 +89,9 @@ function toTimeGridEvents(
   const events: TimeGridEvent[] = [];
 
   for (const r of reservations) {
+    if (!r.reservationTime || !r.reservationTime.includes(':')) continue;
     const [h, m] = r.reservationTime.split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) continue;
     const endH = Math.min(h + 1, 23);
     const customer = r.customerId ? getCustomerById(r.customerId) : undefined;
     const durationMap: Record<string, string> = { short: '짧음', normal: '보통', long: '김' };
@@ -1166,6 +1168,7 @@ export default function RecordsPage() {
                               {stage === 'in_treatment' && matchedRecord && !matchedRecord.finalizedAt && (
                                 <button
                                   onClick={() => {
+                                    if (matchedRecord.finalizedAt) return;
                                     const now = getNowInKoreaIso();
                                     updateRecord(matchedRecord.id, { finalizedAt: now });
                                     if (selectedEvent?.originalId) {

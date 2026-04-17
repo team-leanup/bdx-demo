@@ -15,8 +15,9 @@ const PBKDF2_ITERATIONS = 100000;
 
 let _defaultHash: string | null = null;
 
-async function hashPassword(password: string): Promise<string> {
+async function hashPassword(password: string, designerId?: string): Promise<string> {
   const encoder = new TextEncoder();
+  const saltStr = designerId ? `${PBKDF2_SALT}:${designerId}` : PBKDF2_SALT;
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
     encoder.encode(password),
@@ -27,7 +28,7 @@ async function hashPassword(password: string): Promise<string> {
   const derivedBits = await crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
-      salt: encoder.encode(PBKDF2_SALT),
+      salt: encoder.encode(saltStr),
       iterations: PBKDF2_ITERATIONS,
       hash: 'SHA-256',
     },
@@ -389,17 +390,18 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       logout: async () => {
-        // M-9: _initDone 리셋 (재로그인 시 initializeAuth 재실행 보장)
         _initDone = false;
 
-        // 데모 쿠키 제거
         if (typeof document !== 'undefined') {
           document.cookie = 'bdx-demo=;path=/;max-age=0';
         }
 
         if (!hasSupabaseEnv) {
+          ['bdx-customers','bdx-shop','bdx-records','bdx-reservations','bdx-portfolio','bdx-app','bdx-parts','bdx-shop-settings','bdx-pre-consult'].forEach(k => localStorage.removeItem(k));
+          sessionStorage.removeItem('bdx-consultation');
           set({
             isInitialized: true,
+            passwords: {},
             ...getLoggedOutState(),
           });
           return;
@@ -410,9 +412,14 @@ export const useAuthStore = create<AuthStore>()(
           console.error('[auth] signOut error:', error);
         }
 
+        ['bdx-customers','bdx-shop','bdx-records','bdx-reservations','bdx-portfolio','bdx-app','bdx-parts','bdx-shop-settings','bdx-pre-consult'].forEach(k => localStorage.removeItem(k));
+        sessionStorage.removeItem('bdx-consultation');
+        sessionStorage.removeItem('bdx-field-mode');
+
         set({
           isInitialized: true,
           pendingGoogleSignup: null,
+          passwords: {},
           ...getLoggedOutState(),
         });
       },
@@ -430,7 +437,7 @@ export const useAuthStore = create<AuthStore>()(
         }),
 
       setPassword: async (designerId, newPassword) => {
-        const hashed = await hashPassword(newPassword);
+        const hashed = await hashPassword(newPassword, designerId);
         set((state) => ({
           passwords: {
             ...state.passwords,
@@ -441,23 +448,17 @@ export const useAuthStore = create<AuthStore>()(
 
       checkPassword: async (designerId, password) => {
         const stored = get().passwords[designerId];
-        const inputHash = await hashPassword(password);
+        const inputHash = await hashPassword(password, designerId);
 
         if (!stored) {
-          // 저장된 해시 없음 → 기본 비밀번호 '1234' 비교
           if (!_defaultHash) {
             _defaultHash = await hashPassword('1234');
           }
           return inputHash === _defaultHash;
         }
 
-        // 레거시 djb2 해시 감지 (h_ 접두사) → 1회 통과 후 새 해시로 마이그레이션
         if (stored.startsWith('h_')) {
-          const newHash = await hashPassword(password);
-          set((state) => ({
-            passwords: { ...state.passwords, [designerId]: newHash },
-          }));
-          return true;
+          return false;
         }
 
         return stored === inputHash;

@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useConsultationStore, STEP_ORDER } from '@/store/consultation-store';
+import { useConsultationStore, STEP_ORDER, RETURN_VISIT_STEP_ORDER } from '@/store/consultation-store';
 import type { ConsultationStep } from '@/types/consultation';
 
 /**
@@ -25,8 +25,9 @@ export function useConsultationGuard(isEnabled = true, requiredStep?: Consultati
     }
     // M-3: requiredStep이 지정된 경우 이전 스텝이면 상담 시작으로 리다이렉트
     if (requiredStep !== undefined) {
-      const currentIndex = STEP_ORDER.indexOf(currentStep);
-      const requiredIndex = STEP_ORDER.indexOf(requiredStep);
+      const stepOrder = entryPoint === 'return_visit' ? RETURN_VISIT_STEP_ORDER : STEP_ORDER;
+      const currentIndex = stepOrder.indexOf(currentStep);
+      const requiredIndex = stepOrder.indexOf(requiredStep);
       if (currentIndex !== -1 && requiredIndex !== -1 && currentIndex < requiredIndex) {
         router.replace('/consultation');
       }

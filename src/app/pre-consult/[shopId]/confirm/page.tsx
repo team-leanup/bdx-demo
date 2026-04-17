@@ -298,7 +298,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
             {t('preConsult.summaryTitle')}
           </h2>
           {locale !== 'ko' && (
-            <p className="text-xs text-text-muted opacity-60 -mt-2">
+            <p className="text-[11px] text-text-muted -mt-2">
               {tKo('preConsult.summaryTitle')}
             </p>
           )}
@@ -338,49 +338,49 @@ export default function PreConsultConfirmPage(): React.ReactElement {
             {/* Summary rows */}
             {nailStatus && (
               <SummaryRow
-                label={t('preConsult.currentNailTitle').replace('을 알려주세요', '').replace('Tell us about your ', '').replace('请告诉我们您的', '').replace('現在のネイルの状態を', '')}
+                label={t('preConsult.currentNailTitle')}
                 value={labels.nailStatus[nailStatus] ?? nailStatus}
               />
             )}
             {removalPreference && removalPreference !== 'none' && (
               <SummaryRow
-                label={t('preConsult.removalTitle').replace('어디서 받으셨나요?', '제거').replace('Where did you get them done?', 'Removal').replace('在哪里做的？', '去除').replace('どこでされましたか？', '除去')}
+                label={t('preConsult.removalTitle')}
                 value={labels.removal[removalPreference]}
               />
             )}
             {lengthPreference && (
               <SummaryRow
-                label={t('preConsult.lengthTitle').split(' ').slice(0, 2).join(' ')}
+                label={t('preConsult.lengthTitle')}
                 value={labels.length[lengthPreference] ?? lengthPreference}
               />
             )}
             {extensionLength && lengthPreference === 'extend' && (
               <SummaryRow
-                label={t('preConsult.extensionNatural').split(' ')[0]}
+                label={t('preConsult.extensionNatural')}
                 value={labels.extensionLength[extensionLength] ?? extensionLength}
               />
             )}
             {nailShape && (
               <SummaryRow
-                label={t('preConsult.shapeTitle').split(' ')[0]}
+                label={t('preConsult.shapeTitle')}
                 value={labels.shape[nailShape] ?? nailShape}
               />
             )}
             {wrappingPreference && (
               <SummaryRow
-                label={locale === 'ko' ? '랩핑' : locale === 'en' ? 'Wrapping' : locale === 'zh' ? '包边' : 'ラッピング'}
+                label={t('preConsult.wrappingLabel')}
                 value={labels.wrapping[wrappingPreference]}
               />
             )}
             {designFeel && (
               <SummaryRow
-                label={t('preConsult.feelTitle').split(' ')[0]}
+                label={t('preConsult.feelTitle')}
                 value={labels.feel[designFeel] ?? designFeel}
               />
             )}
             {addOns.length > 0 && (
               <SummaryRow
-                label={t('preConsult.addOnTitle').split(' ')[0]}
+                label={t('preConsult.addOnTitle')}
                 value={addOns.map((a) => labels.addOn[a] ?? a).join(', ')}
               />
             )}
@@ -399,7 +399,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
               {t('preConsult.priceTitle')}
             </h2>
             {locale !== 'ko' && (
-              <p className="text-xs text-text-muted opacity-60 -mt-2">
+              <p className="text-[11px] text-text-muted -mt-2">
                 {tKo('preConsult.priceTitle')}
               </p>
             )}
@@ -488,7 +488,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
             {t('preConsult.visitGuide')}
           </p>
           {locale !== 'ko' && (
-            <p className="text-[10px] text-text-muted opacity-60 mt-0.5">
+            <p className="text-[10px] text-text-muted mt-0.5">
               {tKo('preConsult.visitGuide')}
             </p>
           )}
@@ -506,7 +506,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
               {bookingId && name && phone ? '예약 정보를 확인해주세요' : t('preConsult.bookingTitle')}
             </h2>
             {locale !== 'ko' && !(bookingId && name && phone) && (
-              <p className="text-xs text-text-muted opacity-60 mt-0.5">
+              <p className="text-[11px] text-text-muted mt-0.5">
                 {tKo('preConsult.bookingTitle')}
               </p>
             )}

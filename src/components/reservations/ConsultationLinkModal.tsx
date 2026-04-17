@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { useReservationStore } from "@/store/reservation-store";
 import { getNowInKoreaIso } from "@/lib/format";
@@ -72,6 +72,17 @@ export function ConsultationLinkContent({
       });
     }
   };
+
+  const linkSentRef = useRef(false);
+
+  useEffect(() => {
+    if (booking && !booking.consultationLinkSentAt && !linkSentRef.current) {
+      linkSentRef.current = true;
+      useReservationStore.getState().updateReservation(booking.id, {
+        consultationLinkSentAt: getNowInKoreaIso(),
+      });
+    }
+  }, [booking]);
 
   return (
     <div className="p-5">

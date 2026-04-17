@@ -76,7 +76,7 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
     .filter(Boolean);
 
   return (
-    <div className="min-h-dvh bg-[#F2F2F2] flex flex-col items-center justify-start py-10 px-4">
+    <div className="min-h-dvh bg-background flex flex-col items-center justify-start py-10 px-4">
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
           캡처 대상 카드 영역 (4:5 비율)
@@ -202,7 +202,7 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
               onClick={() => setActiveIndex(i)}
               className={`relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 transition-all ${
                 i === activeIndex
-                  ? 'ring-2 ring-[#F472B6] ring-offset-1'
+                  ? 'ring-2 ring-primary ring-offset-1'
                   : 'opacity-50 hover:opacity-80'
               }`}
             >
@@ -228,7 +228,7 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
         <button
           onClick={handleDownload}
           disabled={isDownloading}
-          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-[#191F28] text-white text-[15px] font-bold tracking-tight transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-text text-white text-[15px] font-bold tracking-tight transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isDownloading ? (
             <>
@@ -251,7 +251,7 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                 />
               </svg>
-              <span>저장 중...</span>
+              <span>{t('shareCard.saving')}</span>
             </>
           ) : (
             <>
@@ -273,7 +273,7 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
           )}
         </button>
 
-        <p className="text-center text-[11px] text-[#8B95A1] mt-2.5">
+        <p className="text-center text-[11px] text-text-muted mt-2.5">
           인스타그램 업로드용 · JPG 고화질
         </p>
       </motion.div>

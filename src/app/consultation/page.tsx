@@ -276,12 +276,12 @@ export default function ConsultationStartPage() {
     { icon: <StepFlowIcon type="customer" />, label: t('consultation.customerInfo'), koLabel: tKo('consultation.customerInfo') },
   ];
 
-  const handleStartWithEntry = (ep: 'staff' | 'return_visit') => {
+  const handleStart = () => {
     const nextDesignerId = selectedDesignerId || consultation.designerId;
     const nextConsultation = {
       ...consultation,
       designerId: nextDesignerId,
-      entryPoint: ep,
+      entryPoint: 'staff' as const,
       currentStep: ConsultationStep.STEP1_BASIC,
     };
 
@@ -571,7 +571,7 @@ export default function ConsultationStartPage() {
             variant="primary"
             size="lg"
             fullWidth
-            onClick={() => handleStartWithEntry('staff')}
+            onClick={() => handleStart()}
             disabled={!selectedDesignerId}
             className="shadow-sm"
           >
