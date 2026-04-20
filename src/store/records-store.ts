@@ -56,9 +56,12 @@ export const useRecordsStore = create<RecordsStore>()(
         const dbRecords = await fetchConsultationRecords(currentShopId);
         if (currentShopId === 'shop-demo') {
           const { DEMO_RECORDS } = await import('@/data/mock-demo-data');
-          const existingIds = new Set(dbRecords.map((r) => r.id));
+          const demoMap = new Map(DEMO_RECORDS.map((r) => [r.id, r]));
+          // demo-* IDs: DEMO_RECORDS canonical (매번 today 기준 재계산된 날짜 적용)
+          const updated = dbRecords.map((r) => demoMap.get(r.id) ?? r);
+          const existingIds = new Set(updated.map((r) => r.id));
           const merged = [
-            ...dbRecords,
+            ...updated,
             ...DEMO_RECORDS.filter((r) => !existingIds.has(r.id)),
           ];
           set({ records: merged, _dbReady: true });

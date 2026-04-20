@@ -39,20 +39,9 @@ export const useReservationStore = create<ReservationStore>()(
         if (currentShopId === 'shop-demo') {
           const { DEMO_RESERVATIONS } = await import('@/data/mock-demo-data');
           const demoMap = new Map(DEMO_RESERVATIONS.map((r) => [r.id, r]));
-          // Demo data always wins for key fields
-          const updated = dbReservations.map((r) => {
-            const demo = demoMap.get(r.id);
-            if (!demo) return r;
-            return {
-              ...r,
-              requestNote: demo.requestNote ?? r.requestNote,
-              serviceLabel: demo.serviceLabel ?? r.serviceLabel,
-              customerId: demo.customerId ?? r.customerId,
-              language: demo.language ?? r.language,
-              consultationLinkSentAt: demo.consultationLinkSentAt ?? r.consultationLinkSentAt,
-              preConsultationCompletedAt: demo.preConsultationCompletedAt ?? r.preConsultationCompletedAt,
-            };
-          });
+          // demo-* IDs: DEMO_RESERVATIONS is canonical (날짜·상태·디자이너 전부 최신화)
+          // 사용자가 만든 booking-* ID는 DB 그대로 유지
+          const updated = dbReservations.map((r) => demoMap.get(r.id) ?? r);
           const existingIds = new Set(updated.map((r) => r.id));
           const merged = [
             ...updated,

@@ -274,6 +274,7 @@ async function loadDemoCustomers(customers: Customer[], shopId: string | null): 
   // Merge demo data into existing customers.
   // - preference / durationPreference: demo 값 우선
   // - tags: 기존 tags가 비어있으면 demo 시드를 채워넣음 (수동 추가한 태그는 유지)
+  // - membership: 기존 membership이 없으면 demo 시드를 채워넣음 (데모 회원권 체험용)
   const merged = customers.map((c) => {
     const demo = demoMap.get(c.id);
     if (!demo) return c;
@@ -282,6 +283,7 @@ async function loadDemoCustomers(customers: Customer[], shopId: string | null): 
       preference: demo.preference ?? c.preference,
       durationPreference: demo.durationPreference ?? c.durationPreference,
       tags: (c.tags && c.tags.length > 0) ? c.tags : (demo.tags ?? []),
+      membership: c.membership ?? demo.membership,
     };
   });
   const existingIds = new Set(merged.map((c) => c.id));
@@ -477,7 +479,7 @@ export const useCustomerStore = create<CustomerStore>()(
         if (updated) {
           dbUpsertCustomer(updated).catch(console.error);
           const shopId = useAuthStore.getState().currentShopId;
-          if (shopId && shopId !== 'shop-demo') {
+          if (shopId) {
             dbInsertMembershipTransaction({
               id: generateId('txn'),
               customerId,
@@ -527,7 +529,7 @@ export const useCustomerStore = create<CustomerStore>()(
         if (updated) {
           dbUpsertCustomer(updated).catch(console.error);
           const shopId = useAuthStore.getState().currentShopId;
-          if (shopId && shopId !== 'shop-demo') {
+          if (shopId) {
             dbInsertMembershipTransaction({
               id: txnId,
               customerId,

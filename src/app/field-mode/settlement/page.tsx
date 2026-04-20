@@ -11,6 +11,7 @@ import { calculatePreConsultPrice, ADDON_FIXED_PRICES } from '@/lib/pre-consult-
 import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/cn';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { SettlementCard } from '@/components/field-mode/SettlementCard';
 import { CATEGORY_LABELS } from '@/lib/labels';
 import { useReservationStore } from '@/store/reservation-store';
@@ -76,9 +77,14 @@ export default function SettlementPage(): React.ReactElement | null {
     customerId,
     bookingId,
     setPaymentMethod,
+    setCustomerInfo,
     setRecordId,
     setPhase,
   } = useFieldModeStore();
+
+  const customers = useCustomerStore((s) => s.customers);
+  const [showCustomerPicker, setShowCustomerPicker] = useState(false);
+  const [customerQuery, setCustomerQuery] = useState('');
 
   const addQuickSaleRecord = useRecordsStore((s) => s.addQuickSaleRecord);
   const { activeDesignerId, currentShopId } = useAuthStore();
@@ -112,6 +118,22 @@ export default function SettlementPage(): React.ReactElement | null {
     }
   }, [selectedCategory, router]);
 
+  // 데모 모드에서 예약 없이 진입한 경우, 체험용으로 회원권 있는 데모 고객 자동 연결
+  useEffect(() => {
+    if (currentShopId !== 'shop-demo') return;
+    if (customerId) return;
+    const demoCustomer = customers.find(
+      (c) =>
+        c.shopId === 'shop-demo' &&
+        c.membership &&
+        c.membership.status === 'active' &&
+        c.membership.remainingSessions > 0,
+    );
+    if (demoCustomer) {
+      setCustomerInfo(demoCustomer.name, demoCustomer.phone, demoCustomer.id);
+    }
+  }, [currentShopId, customerId, customers, setCustomerInfo]);
+
   // ── Price calculation ────────────────────────────────────────────────────────
 
   const baseEstimate = useMemo(() => {
@@ -129,7 +151,10 @@ export default function SettlementPage(): React.ReactElement | null {
   const inTreatmentTotal = inTreatmentAddons.reduce((s, a) => s + a.amount, 0);
   const subtotal = (baseEstimate?.minTotal ?? 0) + inTreatmentTotal;
   const discountAmount = discountPercent > 0 ? Math.round(subtotal * discountPercent / 100) : 0;
-  const finalPrice = Math.max(0, subtotal - discountAmount - depositApplied);
+  const isMembershipPayment = paymentMethod === 'membership' && canUseMembership;
+  const finalPrice = isMembershipPayment
+    ? 0
+    : Math.max(0, subtotal - discountAmount - depositApplied);
 
   // ── Treatment duration ───────────────────────────────────────────────────────
 
@@ -433,14 +458,25 @@ export default function SettlementPage(): React.ReactElement | null {
             <p className="text-sm font-medium text-text-secondary mb-1">
               {t('fieldMode.finalTotal')}
             </p>
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-baseline gap-2 flex-wrap">
               <p className="text-3xl font-bold text-primary tracking-tight">
                 ₩{finalPrice.toLocaleString()}
               </p>
-              {(discountPercent > 0 || depositApplied > 0) && (
-                <p className="text-sm text-text-muted line-through">
-                  ₩{subtotal.toLocaleString()}
-                </p>
+              {isMembershipPayment ? (
+                <>
+                  <p className="text-sm text-text-muted line-through">
+                    ₩{subtotal.toLocaleString()}
+                  </p>
+                  <span className="rounded-full bg-success/10 text-success text-[10px] font-bold px-2 py-0.5 border border-success/20">
+                    회원권 1회 차감
+                  </span>
+                </>
+              ) : (
+                (discountPercent > 0 || depositApplied > 0) && (
+                  <p className="text-sm text-text-muted line-through">
+                    ₩{subtotal.toLocaleString()}
+                  </p>
+                )
               )}
             </div>
           </div>
@@ -512,14 +548,37 @@ export default function SettlementPage(): React.ReactElement | null {
             </div>
             {/* 회원권 비활성 안내 */}
             {!canUseMembership && (
+              <div className="mt-2 px-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                <p className="text-[11px] text-text-muted">
+                  {!customerId
+                    ? '회원권 결제를 사용하려면 고객을 연결해 주세요'
+                    : !customerMembership
+                      ? '이 고객은 등록된 회원권이 없어요 · 고객 카드에서 회원권을 등록해보세요'
+                      : customerMembership.status !== 'active'
+                        ? '이 고객의 회원권은 만료되었거나 소진되었어요'
+                        : '이 고객의 회원권 잔여 횟수가 없어요'}
+                </p>
+                {!customerId && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomerPicker(true)}
+                    className="text-[11px] font-semibold text-primary hover:underline"
+                  >
+                    고객 연결하기
+                  </button>
+                )}
+              </div>
+            )}
+            {customerId && customerName && (
               <p className="mt-2 px-1 text-[11px] text-text-muted">
-                {!customerId
-                  ? '회원권 결제는 고객 정보가 등록된 예약에서만 가능해요'
-                  : !customerMembership
-                    ? '이 고객은 등록된 회원권이 없어요 · 고객 카드에서 회원권을 등록해보세요'
-                    : customerMembership.status !== 'active'
-                      ? '이 고객의 회원권은 만료되었거나 소진되었어요'
-                      : '이 고객의 회원권 잔여 횟수가 없어요'}
+                현재 고객: <span className="font-semibold text-text">{customerName}</span>{' '}
+                <button
+                  type="button"
+                  onClick={() => setShowCustomerPicker(true)}
+                  className="text-primary hover:underline font-medium"
+                >
+                  변경
+                </button>
               </p>
             )}
           </div>
@@ -560,6 +619,73 @@ export default function SettlementPage(): React.ReactElement | null {
           {t('fieldMode.paymentComplete')}
         </Button>
       </div>
+
+      {/* Customer picker modal */}
+      <Modal
+        isOpen={showCustomerPicker}
+        onClose={() => {
+          setShowCustomerPicker(false);
+          setCustomerQuery('');
+        }}
+        title="고객 연결"
+      >
+        <div className="px-5 py-4 flex flex-col gap-3">
+          <input
+            type="text"
+            value={customerQuery}
+            onChange={(e) => setCustomerQuery(e.target.value)}
+            placeholder="이름 또는 전화번호로 검색"
+            className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+            autoFocus
+          />
+          <div className="flex flex-col gap-1 max-h-80 overflow-y-auto">
+            {(() => {
+              const q = customerQuery.trim().toLowerCase();
+              const list = q
+                ? customers.filter(
+                    (c) =>
+                      c.name.toLowerCase().includes(q) ||
+                      c.phone.replace(/[^0-9]/g, '').includes(q.replace(/[^0-9]/g, '')),
+                  )
+                : customers;
+              const sorted = [...list].sort((a, b) => {
+                const aHas = a.membership && a.membership.status === 'active' && a.membership.remainingSessions > 0;
+                const bHas = b.membership && b.membership.status === 'active' && b.membership.remainingSessions > 0;
+                if (aHas !== bHas) return aHas ? -1 : 1;
+                return a.name.localeCompare(b.name, 'ko');
+              });
+              if (sorted.length === 0) {
+                return <p className="text-sm text-text-muted py-6 text-center">일치하는 고객이 없어요</p>;
+              }
+              return sorted.slice(0, 30).map((c) => {
+                const activeMb = c.membership && c.membership.status === 'active' && c.membership.remainingSessions > 0;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => {
+                      setCustomerInfo(c.name, c.phone, c.id);
+                      setShowCustomerPicker(false);
+                      setCustomerQuery('');
+                    }}
+                    className="flex items-center justify-between rounded-xl border border-border bg-surface px-3 py-2.5 hover:bg-surface-alt text-left transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-text truncate">{c.name}</p>
+                      <p className="text-[11px] text-text-muted">{c.phone}</p>
+                    </div>
+                    {activeMb && c.membership && (
+                      <span className="rounded-full bg-success/10 text-success text-[10px] font-bold px-2 py-0.5 border border-success/20 tabular-nums flex-shrink-0 ml-2">
+                        회원권 {c.membership.remainingSessions}/{c.membership.totalSessions}
+                      </span>
+                    )}
+                  </button>
+                );
+              });
+            })()}
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
