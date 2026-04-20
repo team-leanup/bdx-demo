@@ -6,6 +6,7 @@ import { useCustomerStore } from '@/store/customer-store';
 import { useRecordsStore } from '@/store/records-store';
 import { cn } from '@/lib/cn';
 import { getRelativeDayDiffInKorea } from '@/lib/format';
+import { formatPhoneInput } from '@/lib/phone';
 import { useT, useKo, useLocale } from '@/lib/i18n';
 import type { Customer } from '@/types/customer';
 import type { ConsultationRecord } from '@/types/consultation';
@@ -135,8 +136,9 @@ export function CustomerInfoForm({
                 label={<>{t('customerForm.phoneLabel')}{locale !== 'ko' && <span className="ml-1 text-[10px] text-text-muted opacity-60">{tKo('customerForm.phoneLabel')}</span>}</>}
                 placeholder="010-0000-0000"
                 type="tel"
+                inputMode="tel"
                 value={phone}
-                onChange={(e) => onPhoneChange(e.target.value)}
+                onChange={(e) => onPhoneChange(formatPhoneInput(e.target.value))}
               />
             </div>
           </div>

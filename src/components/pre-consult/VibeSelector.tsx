@@ -68,7 +68,7 @@ export function VibeSelector({ onComplete }: VibeSelectorProps): React.ReactElem
                   {t(vibe.tKey)}
                 </p>
                 {locale !== 'ko' && (
-                  <p className="text-[10px] text-text-muted opacity-60 mt-0.5">
+                  <p className="text-xs text-text-muted opacity-60 mt-0.5">
                     {tKo(vibe.tKey)}
                   </p>
                 )}

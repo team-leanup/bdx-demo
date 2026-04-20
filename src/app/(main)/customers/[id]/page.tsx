@@ -22,6 +22,8 @@ import { useShopStore } from '@/store/shop-store';
 import type { CustomerTag, TagCategory } from '@/types/customer';
 import { PreferenceEditor } from '@/components/customer/PreferenceEditor';
 import { useCustomerStore } from '@/store/customer-store';
+import { useMembershipPlanStore } from '@/store/membership-plan-store';
+import { generateId } from '@/lib/generate-id';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useReservationStore } from '@/store/reservation-store';
@@ -122,6 +124,7 @@ function CustomerDetailContent({ id }: { id: string }) {
   const updateCustomer = useCustomerStore((s) => s.updateCustomer);
   const updateTagsInStore = useCustomerStore((s) => s.updateTags);
   const appendSmallTalkNote = useCustomerStore((s) => s.appendSmallTalkNote);
+  const addMembership = useCustomerStore((s) => s.addMembership);
   const designers = useShopStore((s) => s.designers);
 
   const [isVip, setIsVip] = useState(() => useCustomerStore.getState().getById(id)?.isRegular ?? false);
@@ -141,6 +144,19 @@ function CustomerDetailContent({ id }: { id: string }) {
   const consultFileRef = useRef<HTMLInputElement>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [toasts, setToasts] = useState<ToastData[]>([]);
+  const [showMembershipModal, setShowMembershipModal] = useState(false);
+  const [mbPurchaseAmount, setMbPurchaseAmount] = useState('');
+  const [mbTotalSessions, setMbTotalSessions] = useState('');
+  const [mbExpiryDate, setMbExpiryDate] = useState('');
+  const [mbSelectedPlanId, setMbSelectedPlanId] = useState<string>('');
+
+  const membershipPlans = useMembershipPlanStore((s) => s.plans);
+  const hydratePlans = useMembershipPlanStore((s) => s.hydrateFromDB);
+  const plansReady = useMembershipPlanStore((s) => s._dbReady);
+  const activePlans = membershipPlans.filter((p) => p.isActive);
+  useEffect(() => {
+    if (!plansReady) void hydratePlans();
+  }, [plansReady, hydratePlans]);
 
   const addPhoto = usePortfolioStore((s) => s.addPhoto);
   const removePhoto = usePortfolioStore((s) => s.removePhoto);
@@ -970,12 +986,34 @@ function CustomerDetailContent({ id }: { id: string }) {
       {/* ─────────────────────────────── */}
       {/* 2.5 회원권 */}
       {/* ─────────────────────────────── */}
-      {customer.membership && (
-        <div className="mx-4">
-          <h2 className="mb-2 text-sm font-semibold text-text-secondary">회원권</h2>
-          <MembershipCard membership={customer.membership} />
+      <div className="mx-4">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm font-semibold text-text-secondary">회원권</h2>
+          {customer.membership && (
+            <button
+              type="button"
+              onClick={() => setShowMembershipModal(true)}
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              수정
+            </button>
+          )}
         </div>
-      )}
+        {customer.membership ? (
+          <MembershipCard membership={customer.membership} />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowMembershipModal(true)}
+            className="w-full rounded-2xl border border-dashed border-border bg-surface px-4 py-5 text-sm text-text-muted hover:border-primary/50 hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m6-6H6" />
+            </svg>
+            회원권 등록
+          </button>
+        )}
+      </div>
 
       {/* ─────────────────────────────── */}
       {/* 3. 이미지 갤러리 (real upload) */}
@@ -1284,6 +1322,143 @@ function CustomerDetailContent({ id }: { id: string }) {
           시술 기록 보기
         </Button>
       </div>
+
+      {/* 회원권 등록 모달 */}
+      <Modal
+        isOpen={showMembershipModal}
+        onClose={() => {
+          setShowMembershipModal(false);
+          setMbSelectedPlanId('');
+        }}
+        title={customer.membership ? '회원권 수정' : '회원권 등록'}
+      >
+        <div className="px-5 py-4 flex flex-col gap-4">
+          {/* 상품 선택 드롭다운 (설정 탭에 등록된 상품이 있을 때만 노출) */}
+          {activePlans.length > 0 && !customer.membership && (
+            <div>
+              <label className="text-xs font-medium text-text-secondary mb-1 block">상품 선택 (선택)</label>
+              <select
+                value={mbSelectedPlanId}
+                onChange={(e) => {
+                  const planId = e.target.value;
+                  setMbSelectedPlanId(planId);
+                  const plan = activePlans.find((p) => p.id === planId);
+                  if (plan) {
+                    setMbPurchaseAmount(String(plan.price));
+                    setMbTotalSessions(String(plan.totalSessions));
+                    if (plan.validDays != null) {
+                      const d = new Date();
+                      d.setDate(d.getDate() + plan.validDays);
+                      setMbExpiryDate(d.toISOString().slice(0, 10));
+                    } else {
+                      setMbExpiryDate('');
+                    }
+                  }
+                }}
+                className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-base text-text focus:border-primary focus:outline-none"
+              >
+                <option value="">직접 입력</option>
+                {activePlans.map((plan) => (
+                  <option key={plan.id} value={plan.id}>
+                    {plan.name} · {plan.price.toLocaleString('ko-KR')}원 · {plan.totalSessions}회
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-[11px] text-text-muted">
+                설정 → 회원권에 등록한 상품을 선택하면 아래가 자동으로 채워져요
+              </p>
+            </div>
+          )}
+          <div>
+            <label className="text-xs font-medium text-text-secondary mb-1 block">구매 금액 *</label>
+            <input
+              value={mbPurchaseAmount}
+              onChange={(e) => {
+                setMbPurchaseAmount(e.target.value.replace(/[^0-9]/g, ''));
+                setMbSelectedPlanId('');
+              }}
+              inputMode="numeric"
+              placeholder="예: 100000"
+              className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-base text-text placeholder:text-text-muted focus:border-primary focus:outline-none tabular-nums"
+            />
+            {mbPurchaseAmount && (
+              <p className="mt-1 text-[11px] text-text-muted">
+                {Number(mbPurchaseAmount).toLocaleString('ko-KR')}원
+              </p>
+            )}
+          </div>
+          <div>
+            <label className="text-xs font-medium text-text-secondary mb-1 block">총 횟수 *</label>
+            <input
+              value={mbTotalSessions}
+              onChange={(e) => {
+                setMbTotalSessions(e.target.value.replace(/[^0-9]/g, ''));
+                setMbSelectedPlanId('');
+              }}
+              inputMode="numeric"
+              placeholder="예: 5"
+              className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-base text-text placeholder:text-text-muted focus:border-primary focus:outline-none tabular-nums"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-text-secondary mb-1 block">만료일 (선택)</label>
+            <input
+              type="date"
+              value={mbExpiryDate}
+              onChange={(e) => setMbExpiryDate(e.target.value)}
+              className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-base text-text focus:border-primary focus:outline-none"
+            />
+            <p className="mt-1 text-[11px] text-text-muted">비워두면 1년 후로 자동 설정</p>
+          </div>
+          <div className="flex gap-3 pt-2 pb-2">
+            <button
+              type="button"
+              onClick={() => {
+                setShowMembershipModal(false);
+                setMbSelectedPlanId('');
+              }}
+              className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-text-secondary"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              disabled={!mbPurchaseAmount || !mbTotalSessions || Number(mbTotalSessions) <= 0}
+              onClick={() => {
+                const total = Number(mbTotalSessions);
+                const amount = Number(mbPurchaseAmount);
+                const today = new Date();
+                const defaultExpiry = new Date(today);
+                defaultExpiry.setFullYear(today.getFullYear() + 1);
+                const expiryDate = mbExpiryDate || defaultExpiry.toISOString().slice(0, 10);
+                const existing = customer.membership;
+                const selectedPlan = activePlans.find((p) => p.id === mbSelectedPlanId);
+                addMembership(id, {
+                  id: existing?.id ?? generateId('mb'),
+                  totalSessions: total,
+                  usedSessions: existing?.usedSessions ?? 0,
+                  remainingSessions: existing ? total - existing.usedSessions : total,
+                  purchaseAmount: amount,
+                  purchaseDate: existing?.purchaseDate ?? today.toISOString().slice(0, 10),
+                  expiryDate,
+                  status: 'active',
+                  transactions: existing?.transactions ?? [],
+                  planId: selectedPlan?.id ?? existing?.planId,
+                  planName: selectedPlan?.name ?? existing?.planName,
+                });
+                setShowMembershipModal(false);
+                setMbPurchaseAmount('');
+                setMbTotalSessions('');
+                setMbExpiryDate('');
+                setMbSelectedPlanId('');
+              }}
+              className="flex-1 rounded-xl bg-primary py-3 text-sm font-medium text-white disabled:opacity-40"
+            >
+              {customer.membership ? '저장' : '등록'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

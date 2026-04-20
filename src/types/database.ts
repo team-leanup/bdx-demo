@@ -505,6 +505,53 @@ export type Database = {
           },
         ]
       }
+      membership_plans: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          shop_id: string
+          sort_order: number
+          total_sessions: number
+          updated_at: string
+          valid_days: number | null
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          is_active?: boolean
+          name: string
+          price: number
+          shop_id: string
+          sort_order?: number
+          total_sessions: number
+          updated_at?: string
+          valid_days?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+          shop_id?: string
+          sort_order?: number
+          total_sessions?: number
+          updated_at?: string
+          valid_days?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_plans_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portfolio_photos: {
         Row: {
           color_labels: Json
@@ -767,7 +814,7 @@ export type Database = {
     }
     Functions: {
       create_shop_account: {
-        Args: { p_shop_id: string; p_shop_name: string; p_owner_name: string; p_user_id?: string }
+        Args: { p_shop_id: string; p_shop_name: string; p_owner_name: string }
         Returns: Json
       }
       complete_preconsultation_for_booking: {
@@ -785,6 +832,10 @@ export type Database = {
         Returns: Json
       }
       get_shop_pre_consult_data: {
+        Args: { p_shop_id: string }
+        Returns: Json
+      }
+      get_shop_public_data: {
         Args: { p_shop_id: string }
         Returns: Json
       }

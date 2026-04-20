@@ -243,14 +243,13 @@ export const usePreConsultStore = create<PreConsultStore>()(
             },
       ),
       // shopData and portfolioPhotos are runtime-loaded; don't persist them
-      // isSubmitting, isSubmitted and submittedId are session-only; don't persist them
+      // isSubmitting은 network fail 복구 여지 위해 제외
+      // isSubmitted/submittedId는 sessionStorage에 보존 → 새로고침 후 재제출 차단
       partialize: (state) => {
         const {
           shopData: _shopData,
           portfolioPhotos: _portfolioPhotos,
           isSubmitting: _isSubmitting,
-          isSubmitted: _isSubmitted,
-          submittedId: _submittedId,
           ...persistedState
         } = state;
         return {

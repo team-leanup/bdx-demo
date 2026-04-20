@@ -9,6 +9,7 @@ import { useConsultationStore } from '@/store/consultation-store';
 import { PaymentMethodSelector } from '@/components/payment/PaymentMethodSelector';
 import { PaymentSummary } from '@/components/payment/PaymentSummary';
 import { buildBreakdownFromRecord } from '@/lib/price-utils';
+import { generateId } from '@/lib/generate-id';
 import { getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
 import { DESIGN_SCOPE_LABEL, OFF_TYPE_LABEL } from '@/lib/labels';
 import type { PaymentMethod } from '@/types/consultation';
@@ -169,7 +170,7 @@ export default function PaymentPage(): React.ReactElement | null {
         if (typeof dataUrl === 'string') {
           setPhotos((prev) => [
             ...prev,
-            { id: `photo-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, dataUrl },
+            { id: generateId('photo'), dataUrl },
           ]);
         }
       };

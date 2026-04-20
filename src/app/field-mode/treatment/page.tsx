@@ -79,6 +79,17 @@ export default function TreatmentPage(): React.ReactElement {
     router.push('/field-mode/settlement');
   };
 
+  // 사전 상담 링크에서 넘어왔는지 확인 (records 페이지 fast-path 배너 표시용)
+  const [fromPreConsult, setFromPreConsult] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const flag = sessionStorage.getItem('field-mode:from-pre-consult');
+    if (flag) {
+      setFromPreConsult(true);
+      sessionStorage.removeItem('field-mode:from-pre-consult');
+    }
+  }, []);
+
   const handleBackConfirm = (): void => {
     setShowBackConfirm(false);
     router.back();
@@ -122,6 +133,25 @@ export default function TreatmentPage(): React.ReactElement {
       {/* ── Scrollable content ── */}
       <main className="flex-1 overflow-y-auto pb-32">
         <div className="px-4 pt-4 flex flex-col gap-5 max-w-lg mx-auto">
+
+          {/* 사전 상담 제출 고객 fast-path 배너 */}
+          {fromPreConsult && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl border border-primary/25 bg-primary/5 px-4 py-3 flex items-start gap-2.5"
+            >
+              <svg className="w-4 h-4 shrink-0 mt-0.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-text">사전 상담에서 받은 정보를 불러왔어요</p>
+                <p className="mt-0.5 text-xs text-text-secondary">
+                  디자인·옵션이 이미 설정되어 있어요. 바로 시술을 시작할 수 있습니다.
+                </p>
+              </div>
+            </motion.div>
+          )}
 
           {/* Design card */}
           <motion.div

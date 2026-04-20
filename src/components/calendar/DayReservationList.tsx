@@ -13,7 +13,8 @@ import { LinkCustomerModal } from '@/components/reservations/LinkCustomerModal';
 import { ConsultationLinkModal } from '@/components/reservations/ConsultationLinkModal';
 import { ReservationReadinessBadge } from '@/components/reservations/ReservationReadinessBadge';
 import type { BookingChannel, BookingStatus, BookingRequest } from '@/types/consultation';
-import type { DesignCategory, RemovalPreference, LengthPreference, AddOnOption } from '@/types/pre-consultation';
+import type { RemovalPreference, LengthPreference, AddOnOption } from '@/types/pre-consultation';
+import { asDesignCategory } from '@/lib/design-category-guard';
 import { ConsultationStep } from '@/types/consultation';
 import type { CustomerTag } from '@/types/customer';
 import type { Locale } from '@/store/locale-store';
@@ -328,7 +329,7 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
       customerPhone: booking.phone,
       customerId: booking.customerId ?? booking.preConsultationData?.customerId ?? null,
       designerId: booking.designerId ?? booking.preConsultationData?.designerId ?? '',
-      designCategory: (raw?.designCategory ?? null) as DesignCategory | null,
+      designCategory: asDesignCategory(raw?.designCategory),
       removalType: (raw?.removalPreference ?? 'none') as RemovalPreference,
       lengthType: (raw?.lengthPreference ?? 'keep') as LengthPreference,
       addOns: (raw?.addOns ?? []) as AddOnOption[],

@@ -14,8 +14,10 @@ import { Button } from '@/components/ui/Button';
 import { SettlementCard } from '@/components/field-mode/SettlementCard';
 import { CATEGORY_LABELS } from '@/lib/labels';
 import { useReservationStore } from '@/store/reservation-store';
+import { useCustomerStore } from '@/store/customer-store';
 import type { PaymentMethod } from '@/types/consultation';
 import type { AddOnOption } from '@/types/pre-consultation';
+import { generateId } from '@/lib/generate-id';
 
 const ADD_ON_LABELS: Record<string, string> = {
   stone: '스톤',
@@ -81,6 +83,13 @@ export default function SettlementPage(): React.ReactElement | null {
   const addQuickSaleRecord = useRecordsStore((s) => s.addQuickSaleRecord);
   const { activeDesignerId, currentShopId } = useAuthStore();
   const shopSettings = useAppStore((s) => s.shopSettings);
+
+  // 회원권 결제용 — 현재 고객의 회원권 상태
+  const customerMembership = useCustomerStore((s) =>
+    customerId ? s.customers.find((c) => c.id === customerId)?.membership : undefined,
+  );
+  const canUseMembership =
+    !!customerId && !!customerMembership && customerMembership.status === 'active' && customerMembership.remainingSessions > 0;
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
@@ -166,10 +175,12 @@ export default function SettlementPage(): React.ReactElement | null {
     if (!paymentMethod || !selectedCategory || isSaving) return;
     setIsSaving(true);
 
-    const recordId = `fm-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const recordId = generateId('fm');
     const effectiveDesignerId = designerId || activeDesignerId || '';
     const effectiveShopId = currentShopId ?? 'shop-demo';
 
+    // 1) 시술 기록 저장 — 실패 시 회원권 차감 skip (2026-04-20 R3: 데이터 정합성)
+    let recordSaved = true;
     try {
       await addQuickSaleRecord({
         id: recordId,
@@ -185,14 +196,19 @@ export default function SettlementPage(): React.ReactElement | null {
         bookingId: bookingId || undefined,
       });
     } catch {
-      // local optimistic update already applied by store; show warning but continue
-      console.warn('[settlement] DB save failed — local data retained, continuing to wrap-up');
+      console.warn('[settlement] DB save failed — skipping membership deduction');
       setSaveError(true);
+      recordSaved = false;
     }
 
-    // 예약과 연결된 경우 예약 status를 completed로 변경
+    // 2) 예약 → completed
     if (bookingId) {
       useReservationStore.getState().updateReservation(bookingId, { status: 'completed' });
+    }
+
+    // 3) 회원권 자동 차감 — 시술 기록이 정상 저장된 경우에만 (2026-04-20 R3)
+    if (recordSaved && paymentMethod === 'membership' && customerId) {
+      useCustomerStore.getState().useMembershipSession(customerId, recordId);
     }
 
     setRecordId(recordId);
@@ -455,24 +471,57 @@ export default function SettlementPage(): React.ReactElement | null {
                   { method: 'card' as PaymentMethod, label: t('fieldMode.paymentCard') },
                   { method: 'membership' as PaymentMethod, label: t('fieldMode.paymentMembership') },
                 ] as const
-              ).map(({ method, label }) => (
-                <button
-                  key={method}
-                  type="button"
-                  role="radio"
-                  aria-checked={paymentMethod === method}
-                  onClick={() => setPaymentMethod(method)}
-                  className={cn(
-                    'min-h-[52px] rounded-xl text-sm font-bold border transition-all duration-150 active:scale-95',
-                    paymentMethod === method
-                      ? 'bg-primary text-white border-primary shadow-sm'
-                      : 'bg-surface-alt text-text-secondary border-border hover:border-primary/40 hover:text-text',
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
+              ).map(({ method, label }) => {
+                const isMembership = method === 'membership';
+                const disabled = isMembership && !canUseMembership;
+                return (
+                  <button
+                    key={method}
+                    type="button"
+                    role="radio"
+                    aria-checked={paymentMethod === method}
+                    aria-disabled={disabled}
+                    disabled={disabled}
+                    onClick={() => {
+                      if (disabled) return;
+                      setPaymentMethod(method);
+                    }}
+                    className={cn(
+                      'min-h-[52px] rounded-xl text-sm font-bold border transition-all duration-150 flex flex-col items-center justify-center gap-0.5 px-2',
+                      disabled
+                        ? 'bg-surface-alt/50 text-text-muted border-border/50 cursor-not-allowed opacity-60'
+                        : paymentMethod === method
+                          ? 'bg-primary text-white border-primary shadow-sm active:scale-95'
+                          : 'bg-surface-alt text-text-secondary border-border hover:border-primary/40 hover:text-text active:scale-95',
+                    )}
+                  >
+                    <span>{label}</span>
+                    {isMembership && customerMembership && canUseMembership && (
+                      <span
+                        className={cn(
+                          'text-[10px] font-semibold tabular-nums leading-tight',
+                          paymentMethod === 'membership' ? 'text-white/90' : 'text-primary',
+                        )}
+                      >
+                        잔여 {customerMembership.remainingSessions}/{customerMembership.totalSessions}회
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
+            {/* 회원권 비활성 안내 */}
+            {!canUseMembership && (
+              <p className="mt-2 px-1 text-[11px] text-text-muted">
+                {!customerId
+                  ? '회원권 결제는 고객 정보가 등록된 예약에서만 가능해요'
+                  : !customerMembership
+                    ? '이 고객은 등록된 회원권이 없어요 · 고객 카드에서 회원권을 등록해보세요'
+                    : customerMembership.status !== 'active'
+                      ? '이 고객의 회원권은 만료되었거나 소진되었어요'
+                      : '이 고객의 회원권 잔여 횟수가 없어요'}
+              </p>
+            )}
           </div>
         </motion.div>
 

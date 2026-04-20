@@ -12,6 +12,7 @@ import {
   dbInsertSmallTalkNote,
   dbInsertMembershipTransaction,
 } from '@/lib/db';
+import { generateId } from '@/lib/generate-id';
 
 interface LegacyCustomerTagAccent {
   accentColor?: TagAccent;
@@ -478,7 +479,7 @@ export const useCustomerStore = create<CustomerStore>()(
           const shopId = useAuthStore.getState().currentShopId;
           if (shopId && shopId !== 'shop-demo') {
             dbInsertMembershipTransaction({
-              id: `txn-${Date.now()}`,
+              id: generateId('txn'),
               customerId,
               shopId,
               date: getTodayInKorea(),
@@ -491,7 +492,7 @@ export const useCustomerStore = create<CustomerStore>()(
 
       useMembershipSession: (customerId, recordId) => {
         // M-8: txnId를 한 번만 생성하여 로컬/DB 트랜잭션 ID 통일
-        const txnId = `txn-${Date.now()}`;
+        const txnId = generateId('txn');
         set((state) => ({
           customers: state.customers.map((c) => {
             if (c.id !== customerId) return c;

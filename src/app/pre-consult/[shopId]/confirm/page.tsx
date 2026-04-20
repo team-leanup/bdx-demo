@@ -9,6 +9,8 @@ import { usePreConsultStore } from '@/store/pre-consult-store';
 import { calculatePreConsultPrice } from '@/lib/pre-consult-price';
 import { dbCompletePreConsultation, dbCompletePreconsultationBooking, dbCreatePreConsultation, fetchShopPublicData, fetchBookingRequestById, dbCreateBookingFromConsultationLink, dbCreateBookingFromShopLink } from '@/lib/db';
 import { getNowInKoreaIso } from '@/lib/format';
+import { formatPhoneInput } from '@/lib/phone';
+import { consumeClientRateLimit } from '@/lib/client-rate-limit';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import type { PreConsultationData, DesignCategory } from '@/types/pre-consultation';
@@ -164,16 +166,31 @@ export default function PreConsultConfirmPage(): React.ReactElement {
   const [phone, setPhone] = useState(customerPhone);
   const [submitError, setSubmitError] = useState('');
 
-  // bookingId로 예약 정보 자동 채우기
+  // 🔒 재제출 차단 Gate 1: 이미 제출된 세션이면 (sessionStorage isSubmitted) 즉시 complete로 이동
   useEffect(() => {
-    if (!bookingId || (name && phone)) return;
+    const snap = usePreConsultStore.getState();
+    if (snap.isSubmitted) {
+      router.replace(`/pre-consult/${params.shopId}/complete`);
+    }
+  }, [params.shopId, router]);
+
+  // 🔒 재제출 차단 Gate 2 + bookingId로 예약 정보 자동 채우기
+  // bookingId가 있고 서버에 preConsultationCompletedAt이 이미 있으면 complete로 redirect
+  useEffect(() => {
+    if (!bookingId) return;
     fetchBookingRequestById(bookingId, params.shopId as string).then((booking) => {
-      if (booking) {
-        if (!name && booking.customerName) setName(booking.customerName);
-        if (!phone && booking.phone) setPhone(booking.phone);
+      if (!booking) return;
+      // 이미 사전 상담이 완료된 예약이면 재제출 방지
+      if (booking.preConsultationCompletedAt) {
+        usePreConsultStore.getState().setSubmitted(bookingId);
+        router.replace(`/pre-consult/${params.shopId}/complete`);
+        return;
       }
+      // 정상 케이스: 비어있는 필드만 자동 채우기
+      if (!name && booking.customerName) setName(booking.customerName);
+      if (!phone && booking.phone) setPhone(booking.phone);
     });
-  }, [bookingId, params.shopId, name, phone]);
+  }, [bookingId, params.shopId, name, phone, router]);
 
   // ─── Price calculation ─────────────────────────────────────────────────────
 
@@ -206,6 +223,18 @@ export default function PreConsultConfirmPage(): React.ReactElement {
     }
     if (!priceEstimate || !selectedCategory) {
       setSubmitError(t('preConsult.errorMissingInfo'));
+      return;
+    }
+
+    // 2026-04-20 R11: 클라이언트 rate limit (같은 브라우저에서 과도한 제출 방지)
+    const rl = consumeClientRateLimit({
+      key: `pre-consult:${params.shopId}`,
+      windowMs: 60_000,
+      max: 3,
+    });
+    if (!rl.allowed) {
+      const seconds = Math.ceil(rl.retryAfterMs / 1000);
+      setSubmitError(`잠시 후 다시 시도해 주세요 (${seconds}초)`);
       return;
     }
 
@@ -365,7 +394,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
             {t('preConsult.summaryTitle')}
           </h2>
           {locale !== 'ko' && (
-            <p className="text-[11px] text-text-muted -mt-2">
+            <p className="text-xs text-text-muted -mt-2">
               {tKo('preConsult.summaryTitle')}
             </p>
           )}
@@ -392,7 +421,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                   </span>
                 )}
                 {referenceImageUrls.length > 0 && (
-                  <span className="text-[11px] text-text-muted">
+                  <span className="text-xs text-text-muted">
                     📎 {t('preConsult.uploadTitle').split(' ')[0]} {referenceImageUrls.length}
                   </span>
                 )}
@@ -470,7 +499,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
               {t('preConsult.priceTitle')}
             </h2>
             {locale !== 'ko' && (
-              <p className="text-[11px] text-text-muted -mt-2">
+              <p className="text-xs text-text-muted -mt-2">
                 {tKo('preConsult.priceTitle')}
               </p>
             )}
@@ -532,7 +561,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
 
               {/* Reassurance */}
               <p className="text-xs text-primary font-medium mt-2">{t('preConsult.priceNotice')}</p>
-              <p className="text-[10px] text-text-muted">{t('preConsult.priceDisclaimer')}</p>
+              <p className="text-xs text-text-muted">{t('preConsult.priceDisclaimer')}</p>
 
               {/* 샵 안내 문구 (온보딩에서 설정) */}
               {shopData?.customerNotice && (
@@ -559,7 +588,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
             {t('preConsult.visitGuide')}
           </p>
           {locale !== 'ko' && (
-            <p className="text-[10px] text-text-muted mt-0.5">
+            <p className="text-xs text-text-muted mt-0.5">
               {tKo('preConsult.visitGuide')}
             </p>
           )}
@@ -577,7 +606,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
               {bookingId && name && phone ? t('preConsult.bookingConfirm') : t('preConsult.bookingTitle')}
             </h2>
             {locale !== 'ko' && (
-              <p className="text-[11px] text-text-muted mt-0.5">
+              <p className="text-xs text-text-muted mt-0.5">
                 {bookingId && name && phone ? tKo('preConsult.bookingConfirm') : tKo('preConsult.bookingTitle')}
               </p>
             )}
@@ -585,7 +614,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
 
           {consultationLinkId && selectedSlotDate && selectedSlotTime && (
             <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
-              <p className="text-[11px] text-text-muted">{t('preConsult.selectedSlotLabel')}</p>
+              <p className="text-xs text-text-muted">{t('preConsult.selectedSlotLabel')}</p>
               <p className="mt-0.5 text-sm font-bold text-primary">
                 {(() => {
                   const [y, m, d] = selectedSlotDate.split('-').map(Number);
@@ -621,8 +650,9 @@ export default function PreConsultConfirmPage(): React.ReactElement {
               <Input
                 label={t('preConsult.phoneLabel')}
                 type="tel"
+                inputMode="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
                 placeholder="010-0000-0000"
                 autoComplete="tel"
               />
@@ -642,7 +672,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
           >
             {t('preConsult.bookingBtn')}
             {locale !== 'ko' && (
-              <span className="block text-[10px] opacity-70 font-normal leading-none mt-0.5">
+              <span className="block text-xs opacity-70 font-normal leading-none mt-0.5">
                 {tKo('preConsult.bookingBtn')}
               </span>
             )}

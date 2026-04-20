@@ -90,7 +90,7 @@ export function ShapePickerSimple({ onComplete }: ShapePickerSimpleProps): React
                   {t(shape.tKey)}
                 </p>
                 {locale !== 'ko' && (
-                  <p className="text-[9px] text-text-muted opacity-60 leading-tight mt-0.5">
+                  <p className="text-xs text-text-muted opacity-60 leading-tight mt-0.5">
                     {tKo(shape.tKey)}
                   </p>
                 )}

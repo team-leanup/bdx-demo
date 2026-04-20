@@ -1,7 +1,7 @@
 import { getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database';
-import type { Customer, CustomerTag, SmallTalkNote, VisitFrequency, TagCategory, TagAccent } from '@/types/customer';
+import type { Customer, CustomerTag, MembershipPlan, SmallTalkNote, VisitFrequency, TagCategory, TagAccent } from '@/types/customer';
 import type { ConsultationRecord, ConsultationType, BookingRequest, BookingChannel, BookingStatus, DailyChecklist } from '@/types/consultation';
 import type { PortfolioPhoto } from '@/types/portfolio';
 import type { Shop, Designer, BusinessHours, ShopExtendedSettings, CategoryPricingSettings, SurchargeSettings } from '@/types/shop';
@@ -44,7 +44,20 @@ interface DbErrorSnapshot {
 }
 
 function createId(prefix: string): string {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  // 2026-04-20: Math.random 예측 가능성 제거 — crypto.randomUUID() 사용 (IDOR 방지)
+  // fallback: crypto.randomUUID 미지원 환경 (Node <19, 일부 구형 브라우저)
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `${prefix}-${crypto.randomUUID()}`;
+  }
+  // Web Crypto API fallback
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    const hex = Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('');
+    return `${prefix}-${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+  }
+  // 최후 수단 (개발 환경만 도달 가능)
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function toShop(row: Database['public']['Tables']['shops']['Row']): Shop {
@@ -102,6 +115,45 @@ function getDesignerAvatarStoragePath(rawValue: string | null | undefined): stri
   return rawValue.startsWith('http') ? null : rawValue;
 }
 
+// 허용되는 이미지 MIME 타입 화이트리스트
+// SVG/HTML은 XSS 벡터이므로 제외
+const ALLOWED_IMAGE_MIME_TYPES = new Set<string>([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/heic',
+  'image/heif',
+]);
+
+/**
+ * 매직 바이트 기반으로 실제 이미지 포맷을 검증한다.
+ * data URL 헤더의 MIME은 신뢰할 수 없으므로 바이트로 크로스체크.
+ */
+function detectImageMimeFromBytes(bytes: Uint8Array): string | null {
+  if (bytes.length < 12) return null;
+  // JPEG: FF D8 FF
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'image/jpeg';
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (
+    bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47 &&
+    bytes[4] === 0x0d && bytes[5] === 0x0a && bytes[6] === 0x1a && bytes[7] === 0x0a
+  ) return 'image/png';
+  // GIF: 47 49 46 38 (GIF8)
+  if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x38) return 'image/gif';
+  // WebP: 52 49 46 46 ... 57 45 42 50 (RIFF....WEBP)
+  if (
+    bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+    bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
+  ) return 'image/webp';
+  // HEIC/HEIF: ftyp 박스 (offset 4~7 = "ftyp", offset 8~11 중 하나가 heic/heix/mif1/msf1)
+  if (bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
+    return 'image/heic';
+  }
+  return null;
+}
+
 function dataUrlToBlob(dataUrl: string): { blob: Blob; mimeType: string } {
   const [header, encoded] = dataUrl.split(',', 2);
   if (!header || !encoded) {
@@ -109,17 +161,31 @@ function dataUrlToBlob(dataUrl: string): { blob: Blob; mimeType: string } {
   }
 
   const mimeMatch = header.match(/data:(.*?);base64/);
-  const mimeType = mimeMatch?.[1] ?? 'image/jpeg';
+  const declaredMime = (mimeMatch?.[1] ?? 'image/jpeg').toLowerCase();
+
+  // 1) 선언된 MIME이 화이트리스트에 있는지 확인
+  if (!ALLOWED_IMAGE_MIME_TYPES.has(declaredMime)) {
+    throw new Error(
+      `지원하지 않는 이미지 형식입니다 (${declaredMime}). JPEG·PNG·WebP·GIF·HEIC만 업로드할 수 있어요.`,
+    );
+  }
+
   const decoded = atob(encoded);
   const bytes = new Uint8Array(decoded.length);
-
   for (let i = 0; i < decoded.length; i += 1) {
     bytes[i] = decoded.charCodeAt(i);
   }
 
+  // 2) 매직 바이트로 실제 포맷 교차 검증
+  const actualMime = detectImageMimeFromBytes(bytes);
+  if (!actualMime) {
+    throw new Error('이미지 파일이 아니거나 손상된 파일이에요. 다시 선택해주세요.');
+  }
+
+  // 3) 최종 MIME은 바이트 기반으로 결정 (선언된 MIME 무시 — 위장 차단)
   return {
-    blob: new Blob([bytes], { type: mimeType }),
-    mimeType,
+    blob: new Blob([bytes], { type: actualMime }),
+    mimeType: actualMime,
   };
 }
 
@@ -221,11 +287,11 @@ export async function dbCreateShopAccount(
   // Use SECURITY DEFINER RPC to bypass RLS chicken-and-egg problem
   const shopId = createId('shop');
 
+  // 2026-04-20 R9: p_user_id 전달 제거 — 서버가 auth.uid()로 강제 확인 (주입 방지)
   const { data: rpcResult, error: rpcError } = await supabase.rpc('create_shop_account', {
     p_shop_id: shopId,
     p_shop_name: shopName,
     p_owner_name: ownerName,
-    p_user_id: ownerUserId,
   });
 
   if (rpcError) {
@@ -572,19 +638,52 @@ export async function dbDeleteDesignerProfileImage(
   return { success: true, designer: toDesigner(data) };
 }
 
+/**
+ * designers.pin 컬럼에 해시 값(pbkdf2_...)을 저장한다.
+ * 호출자는 반드시 해시된 값만 전달해야 한다. 평문 금지.
+ */
 export async function dbUpdateDesignerPin(
   shopId: string,
   designerId: string,
-  pin: string,
-): Promise<void> {
+  pinHash: string,
+): Promise<{ success: boolean; error?: string }> {
+  // 해시 포맷 검증: pbkdf2_로 시작해야 함 (실수 방지)
+  if (!pinHash.startsWith('pbkdf2_')) {
+    console.error('[db] dbUpdateDesignerPin: 평문 PIN 저장 시도 차단');
+    return { success: false, error: '잘못된 PIN 해시 형식' };
+  }
   const { error } = await supabase
     .from('designers')
-    .update({ pin })
+    .update({ pin: pinHash })
     .eq('id', designerId)
     .eq('shop_id', shopId);
   if (error) {
     console.error('[db] dbUpdateDesignerPin error:', toDbErrorSnapshot(error));
+    return { success: false, error: error.message };
   }
+  return { success: true };
+}
+
+/**
+ * 현재 저장된 PIN 값(해시 또는 레거시 평문)을 반환한다.
+ * - `pbkdf2_` 접두사가 있으면 이미 해시됨
+ * - 없으면 레거시 평문. auth-store 가 자동 마이그레이션 처리.
+ */
+export async function dbFetchDesignerPin(
+  shopId: string,
+  designerId: string,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('designers')
+    .select('pin')
+    .eq('id', designerId)
+    .eq('shop_id', shopId)
+    .maybeSingle();
+  if (error) {
+    console.error('[db] dbFetchDesignerPin error:', toDbErrorSnapshot(error));
+    return null;
+  }
+  return data?.pin ?? null;
 }
 
 export async function fetchCustomers(shopId?: string | null): Promise<Customer[]> {
@@ -1417,19 +1516,81 @@ export async function dbFetchMembershipTransactions(
   }));
 }
 
+// ─── Membership Plans ────────────────────────────────────────────────────────
+
+export async function dbFetchMembershipPlans(shopId: string): Promise<MembershipPlan[]> {
+  const { data, error } = await supabase
+    .from('membership_plans')
+    .select('*')
+    .eq('shop_id', shopId)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
+
+  if (error || !data) {
+    console.error('[db] dbFetchMembershipPlans error:', toDbErrorSnapshot(error));
+    return [];
+  }
+  return data.map((row) => ({
+    id: row.id,
+    shopId: row.shop_id,
+    name: row.name,
+    price: row.price,
+    totalSessions: row.total_sessions,
+    validDays: row.valid_days,
+    isActive: row.is_active,
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
+}
+
+export async function dbUpsertMembershipPlan(plan: MembershipPlan): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase.from('membership_plans').upsert({
+    id: plan.id,
+    shop_id: plan.shopId,
+    name: plan.name,
+    price: plan.price,
+    total_sessions: plan.totalSessions,
+    valid_days: plan.validDays,
+    is_active: plan.isActive,
+    sort_order: plan.sortOrder,
+  });
+  if (error) {
+    console.error('[db] dbUpsertMembershipPlan error:', toDbErrorSnapshot(error));
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}
+
+export async function dbDeleteMembershipPlan(planId: string): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase.from('membership_plans').delete().eq('id', planId);
+  if (error) {
+    console.error('[db] dbDeleteMembershipPlan error:', toDbErrorSnapshot(error));
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}
+
 // ─── Pre-Consult ──────────────────────────────────────────────────────────────
 
 export async function fetchShopPublicData(shopId: string): Promise<ShopPublicData | null> {
-  const { data, error } = await supabase
-    .from('shops')
-    .select('id, name, phone, address, logo_url, settings')
-    .eq('id', shopId)
-    .single();
+  // 2026-04-20: shops_anon_select 정책 DROP 후 get_shop_public_data RPC 경유
+  // SECURITY DEFINER 함수가 필요한 공개 필드만 반환
+  const { data: rpcData, error } = await supabase.rpc('get_shop_public_data', { p_shop_id: shopId });
 
-  if (error || !data) {
+  if (error || !rpcData) {
     console.error('[db] fetchShopPublicData error:', toDbErrorSnapshot(error));
     return null;
   }
+
+  const data = rpcData as unknown as {
+    id: string;
+    name: string;
+    phone: string | null;
+    address: string | null;
+    logo_url: string | null;
+    settings: unknown;
+  };
 
   const settings = (data.settings as unknown as ShopExtendedSettings) ?? {};
 

@@ -41,8 +41,6 @@ export function ShareLinkCard(): React.ReactElement | null {
     }
   };
 
-  const displayUrl = url.replace(/^https?:\/\//, '');
-
   return (
     <motion.div
       className="relative overflow-hidden rounded-2xl bg-surface border border-border px-4 py-5"
@@ -58,43 +56,35 @@ export function ShareLinkCard(): React.ReactElement | null {
         </div>
       </div>
 
-      <div className="mt-3 flex items-center gap-2">
-        <input
-          readOnly
-          value={displayUrl}
-          onFocus={(e) => e.currentTarget.select()}
-          className="flex-1 min-w-0 rounded-lg border border-border bg-background px-3 py-2 text-xs font-mono text-text-secondary truncate"
-        />
-        <button
-          type="button"
-          onClick={() => void handleCopy()}
-          className="shrink-0 flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white active:scale-[0.97] transition-transform"
-        >
-          <AnimatePresence mode="wait" initial={false}>
-            {copied ? (
-              <motion.span
-                key="copied"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="flex items-center gap-1"
-              >
-                <CheckIcon className="w-3.5 h-3.5" /> 복사됨
-              </motion.span>
-            ) : (
-              <motion.span
-                key="copy"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="flex items-center gap-1"
-              >
-                <CopyIcon className="w-3.5 h-3.5" /> 복사
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => void handleCopy()}
+        className="mt-3 w-full flex items-center justify-center gap-1.5 rounded-xl bg-primary py-3 text-sm font-semibold text-white active:scale-[0.98] transition-transform"
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          {copied ? (
+            <motion.span
+              key="copied"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="flex items-center gap-1.5"
+            >
+              <CheckIcon className="w-4 h-4" /> 복사됨
+            </motion.span>
+          ) : (
+            <motion.span
+              key="copy"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="flex items-center gap-1.5"
+            >
+              <CopyIcon className="w-4 h-4" /> 상담 링크 복사
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </button>
     </motion.div>
   );
 }

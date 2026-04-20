@@ -55,7 +55,7 @@ export function PriceRangeHint({ onNext }: PriceRangeHintProps): React.ReactElem
       <p className="text-xs text-text-muted text-center">
         {t('preConsult.guideSuffix')}
         {locale !== 'ko' && (
-          <span className="block text-[10px] opacity-60 mt-0.5">
+          <span className="block text-xs opacity-60 mt-0.5">
             {tKo('preConsult.guideSuffix')}
           </span>
         )}

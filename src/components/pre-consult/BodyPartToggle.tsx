@@ -59,7 +59,7 @@ export function BodyPartToggle(): React.ReactElement {
               <span className="text-base leading-none">{opt.icon}</span>
               <span>{t(opt.tKey)}</span>
               {locale !== 'ko' && !isSelected && (
-                <span className="text-[10px] opacity-50">{tKo(opt.tKey)}</span>
+                <span className="text-xs opacity-50">{tKo(opt.tKey)}</span>
               )}
             </motion.button>
           );

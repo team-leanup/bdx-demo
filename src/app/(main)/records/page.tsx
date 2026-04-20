@@ -18,7 +18,8 @@ import { useAppStore } from '@/store/app-store';
 import { useConsultationStore } from '@/store/consultation-store';
 import { useFieldModeStore } from '@/store/field-mode-store';
 import { ConsultationStep } from '@/types/consultation';
-import type { DesignCategory, RemovalPreference, LengthPreference, AddOnOption } from '@/types/pre-consultation';
+import type { RemovalPreference, LengthPreference, AddOnOption } from '@/types/pre-consultation';
+import { asDesignCategory } from '@/lib/design-category-guard';
 import { useCustomerStore } from '@/store/customer-store';
 import { useT } from '@/lib/i18n';
 import { formatPrice, getKoreanWeekStart, getTodayInKorea, toKoreanDateString, toKoreanTimeString, getNowInKoreaIso } from '@/lib/format';
@@ -183,6 +184,7 @@ export default function RecordsPage() {
 
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const hydrateFromBooking = useFieldModeStore((s) => s.hydrateFromBooking);
+  const startTreatment = useFieldModeStore((s) => s.startTreatment);
   const setConsultationLocale = useLocaleStore((s) => s.setConsultationLocale);
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
   const getCustomerById = useCustomerStore((s) => s.getById);
@@ -429,19 +431,33 @@ export default function RecordsPage() {
       });
       // field-mode store에도 동일 예약 데이터 반영
       const raw = booking.preConsultationData as Record<string, unknown> | undefined;
+      const validatedCategory = asDesignCategory(raw?.designCategory);
       hydrateFromBooking({
         bookingId: booking.id,
         customerName: booking.customerName,
         customerPhone: booking.phone,
         customerId: booking.customerId ?? booking.preConsultationData?.customerId ?? null,
         designerId: booking.designerId ?? booking.preConsultationData?.designerId ?? '',
-        designCategory: (raw?.designCategory ?? null) as DesignCategory | null,
+        designCategory: validatedCategory,
         removalType: (raw?.removalPreference ?? 'none') as RemovalPreference,
         lengthType: (raw?.lengthPreference ?? 'keep') as LengthPreference,
         addOns: (raw?.addOns ?? []) as AddOnOption[],
         selectedPhotoUrl: (raw?.selectedPhotoUrl as string | undefined) ?? null,
         selectedPhotoId: (raw?.selectedPhotoId as string | undefined) ?? null,
       });
+
+      // 사전 상담 제출 완료 + 유효한 디자인 카테고리면 시술 화면 직행
+      // (2026-04-20 R4: asDesignCategory로 유효성 검증)
+      const hasPreConsult = !!booking.preConsultationCompletedAt && !!validatedCategory;
+      if (hasPreConsult) {
+        startTreatment();
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('field-mode:from-pre-consult', booking.id);
+        }
+        closeSelectedEventSheet();
+        router.push('/field-mode/treatment');
+        return;
+      }
     }
     closeSelectedEventSheet();
     router.push('/field-mode');

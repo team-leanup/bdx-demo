@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, Button, Input, LanguageSelector, Toggle, TimeInput, AddressInput, ProfileAvatar } from '@/components/ui';
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
+import { MembershipPlansSection } from '@/components/settings/MembershipPlansSection';
 import { IconShop, IconService, IconPalette, IconGear } from '@/components/icons';
 import { useAppStore } from '@/store/app-store';
 import type { CategoryPricingSettings } from '@/types/shop';
@@ -22,7 +23,6 @@ import { useShopStore } from '@/store/shop-store';
 import { DEFAULT_BASE_PRICES } from '@/data/service-options';
 import { formatPrice } from '@/lib/format';
 import { resizeImageToBase64 } from '@/lib/image-utils';
-import { dbUpdateDesignerPin } from '@/lib/db';
 import type { ServiceStructure } from '@/types/shop';
 
 const DAY_LABEL_KEYS = ['days_mon', 'days_tue', 'days_wed', 'days_thu', 'days_fri', 'days_sat', 'days_sun'];
@@ -443,12 +443,18 @@ function StaffSection() {
     if (!currentShopId) return;
 
     setPinBusyId(designerId);
-    await dbUpdateDesignerPin(currentShopId, designerId, newPin);
-    await setPassword(designerId, newPin);
-    setPinBusyId(null);
-    setPinEditingId(null);
-    setNewPin('');
-    setFeedback({ tone: 'success', message: 'PIN이 변경되었습니다.' });
+    try {
+      // setPassword 내부에서 해시 계산 + dbUpdateDesignerPin 호출까지 처리
+      await setPassword(designerId, newPin);
+      setPinEditingId(null);
+      setNewPin('');
+      setFeedback({ tone: 'success', message: 'PIN이 변경되었습니다.' });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'PIN 저장 실패';
+      setFeedback({ tone: 'error', message: msg });
+    } finally {
+      setPinBusyId(null);
+    }
   };
 
   return (
@@ -1443,44 +1449,9 @@ export default function SettingsPage() {
             </Card>
           </Section>
 
-          {/* 예약 채널 연결 */}
-          <Section title={t('settings.booking_channel')}>
-            <Card className="mx-4 md:mx-0">
-              <div className="flex flex-col gap-4">
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-text-secondary">
-                    {t('settings.booking_kakao')}
-                  </label>
-                  <Input
-                    value={kakaoTalkUrl}
-                    onChange={(e) => setKakaoTalkUrl(e.target.value)}
-                    placeholder={t('settings.booking_kakaoPlaceholder')}
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-medium text-text-secondary">
-                    {t('settings.booking_naver')}
-                  </label>
-                  <Input
-                    value={naverReservationUrl}
-                    onChange={(e) => setNaverReservationUrl(e.target.value)}
-                    placeholder={t('settings.booking_naverPlaceholder')}
-                  />
-                </div>
-                <p className="text-xs text-text-muted">{t('settings.booking_hint')}</p>
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    if (kakaoTalkUrl && !isValidBookingUrl(kakaoTalkUrl)) return;
-                    if (naverReservationUrl && !isValidBookingUrl(naverReservationUrl)) return;
-                    void setShopSettings({ kakaoTalkUrl, naverReservationUrl });
-                  }}
-                >
-                  저장
-                </Button>
-              </div>
-            </Card>
-          </Section>
+          {/* 예약 채널 연결 섹션 — 2026-04-17 회의 결정으로 UI 숨김.
+              이제 BDX 자체 공유 상담 링크로 예약을 받으므로 네이버/카카오 외부 링크는 불필요.
+              (kakaoTalkUrl/naverReservationUrl state·저장 로직·DB 컬럼은 확장 가능성을 위해 보존) */}
 
           {/* 선생님 관리 */}
           <StaffSection />
@@ -1492,6 +1463,7 @@ export default function SettingsPage() {
 
       {/* ── 서비스 탭 ── */}
       {effectiveTab === 'service' && (
+        <div className="flex flex-col gap-6">
         <Section title={t('settings.service_title')}>
           <Card className="mx-4 md:mx-0">
             <div className="mb-3 flex items-center justify-between">
@@ -1735,6 +1707,11 @@ export default function SettingsPage() {
             </Card>
           </Card>
         </Section>
+
+        <Section title="회원권">
+          <MembershipPlansSection />
+        </Section>
+        </div>
       )}
 
       {/* ── 테마 탭 ── */}

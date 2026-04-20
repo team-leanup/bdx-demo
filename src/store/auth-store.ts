@@ -5,6 +5,8 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { hasSupabaseEnv, supabase, supabaseConfigErrorMessage } from '@/lib/supabase';
 import {
   dbCreateShopAccount,
+  dbFetchDesignerPin,
+  dbUpdateDesignerPin,
   fetchDesignerById,
   fetchShopByOwnerId,
 } from '@/lib/db';
@@ -12,8 +14,6 @@ import type { UserRole } from '@/types/auth';
 
 const PBKDF2_SALT = 'bdx-pin-salt-v2';
 const PBKDF2_ITERATIONS = 100000;
-
-let _defaultHash: string | null = null;
 
 async function hashPassword(password: string, designerId?: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -57,7 +57,8 @@ interface AuthStore {
   activeDesignerId: string | null;
   activeDesignerName: string | null;
   pendingGoogleSignup: PendingGoogleSignup | null;
-  passwords: Record<string, string>;
+  // ⚠️ localStorage에 해시를 저장하지 않습니다. PIN 해시는 designers.pin (DB)에서만 관리.
+  // 이 필드는 항상 비어있고 partialize에서도 제외됩니다. (CRITICAL-1 수정 2026-04-20)
 
   initializeAuth: () => Promise<void>;
   loginWithPassword: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -155,7 +156,6 @@ export const useAuthStore = create<AuthStore>()(
       isInitialized: false,
       ...getLoggedOutState(),
       pendingGoogleSignup: null,
-      passwords: {},
 
       initializeAuth: async () => {
         if (_initDone) return;
@@ -426,7 +426,6 @@ export const useAuthStore = create<AuthStore>()(
           sessionStorage.removeItem('bdx-consultation');
           set({
             isInitialized: true,
-            passwords: {},
             ...getLoggedOutState(),
           });
           return;
@@ -444,7 +443,6 @@ export const useAuthStore = create<AuthStore>()(
         set({
           isInitialized: true,
           pendingGoogleSignup: null,
-          passwords: {},
           ...getLoggedOutState(),
         });
       },
@@ -461,32 +459,52 @@ export const useAuthStore = create<AuthStore>()(
           role: designerRole,
         }),
 
+      // PIN 해시는 서버(designers.pin)에만 저장. localStorage 저장 금지.
+      // 이 함수는 호출 즉시 DB에 해시를 기록한다.
       setPassword: async (designerId, newPassword) => {
+        const shopId = get().currentShopId;
+        if (!shopId) {
+          throw new Error('샵 정보가 없어 PIN을 저장할 수 없습니다.');
+        }
         const hashed = await hashPassword(newPassword, designerId);
-        set((state) => ({
-          passwords: {
-            ...state.passwords,
-            [designerId]: hashed,
-          },
-        }));
+        const result = await dbUpdateDesignerPin(shopId, designerId, hashed);
+        if (!result.success) {
+          throw new Error(result.error ?? 'PIN 저장 실패');
+        }
       },
 
+      // PIN 검증은 DB에서 직접 해시를 읽어 비교. 기본 PIN 1234 폴백 제거됨.
+      // 레거시 평문 PIN 만나면 비교 후 해시로 자동 마이그레이션.
       checkPassword: async (designerId, password) => {
-        const stored = get().passwords[designerId];
-        const inputHash = await hashPassword(password, designerId);
+        const shopId = get().currentShopId;
+        if (!shopId) return false;
 
-        if (!stored) {
-          if (!_defaultHash) {
-            _defaultHash = await hashPassword('1234');
-          }
-          return inputHash === _defaultHash;
-        }
+        const stored = await dbFetchDesignerPin(shopId, designerId);
 
-        if (stored.startsWith('h_')) {
+        // PIN이 설정되어 있지 않은 계정 — 로그인 불가 (기본 1234 차단)
+        if (!stored || stored.trim() === '') {
           return false;
         }
 
-        return stored === inputHash;
+        // 정상 케이스: 이미 해시로 저장된 경우
+        if (stored.startsWith('pbkdf2_')) {
+          const inputHash = await hashPassword(password, designerId);
+          return stored === inputHash;
+        }
+
+        // 레거시 평문 PIN — 일치하면 해시로 자동 마이그레이션 후 허용
+        if (stored === password) {
+          try {
+            const hashed = await hashPassword(password, designerId);
+            await dbUpdateDesignerPin(shopId, designerId, hashed);
+          } catch (err) {
+            // 마이그레이션 실패해도 현재 로그인은 성공 처리
+            console.warn('[auth] legacy PIN migration failed:', err);
+          }
+          return true;
+        }
+
+        return false;
       },
 
       setCurrentShopOnboardingComplete: (complete) =>
@@ -507,8 +525,8 @@ export const useAuthStore = create<AuthStore>()(
               removeItem: () => {},
             },
       ),
+      // ⚠️ passwords 필드를 절대 persist하지 않음 (CRITICAL-1 수정 2026-04-20)
       partialize: (state) => ({
-        passwords: state.passwords,
         role: state.role,
         currentShopId: state.currentShopId,
         currentShopOnboardingComplete: state.currentShopOnboardingComplete,

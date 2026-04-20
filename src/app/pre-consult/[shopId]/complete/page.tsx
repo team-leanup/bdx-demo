@@ -64,7 +64,7 @@ export default function PreConsultCompletePage(): React.ReactElement {
             d="M5 13l4 4L19 7"
             initial={{ pathLength: 0, opacity: 0 }}
             animate={{ pathLength: 1, opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.5, ease: 'easeOut' }}
+            transition={{ duration: 0.35, delay: 0.15, ease: 'easeOut' }}
           />
         </svg>
       </motion.div>
@@ -73,7 +73,7 @@ export default function PreConsultCompletePage(): React.ReactElement {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.7 }}
+        transition={{ delay: 0.2 }}
         className="text-center"
       >
         <h1 className="text-2xl font-bold text-text">
@@ -88,7 +88,7 @@ export default function PreConsultCompletePage(): React.ReactElement {
           {hasBookingSlot ? t('preConsult.bookingCompleteSub') : t('preConsult.completeSub')}
         </p>
         {locale !== 'ko' && (
-          <p className="text-[10px] text-text-muted opacity-60 mt-0.5">
+          <p className="text-xs text-text-muted opacity-60 mt-0.5">
             {hasBookingSlot ? tKo('preConsult.bookingCompleteSub') : tKo('preConsult.completeSub')}
           </p>
         )}
@@ -99,10 +99,10 @@ export default function PreConsultCompletePage(): React.ReactElement {
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9 }}
+          transition={{ delay: 0.3 }}
           className="max-w-sm w-full rounded-2xl bg-primary/5 border border-primary/20 px-5 py-4"
         >
-          <p className="text-[11px] text-text-muted text-center">
+          <p className="text-xs text-text-muted text-center">
             {t('preConsult.confirmedDateTime')}
           </p>
           <p className="mt-1 text-lg font-bold text-primary text-center">
@@ -120,7 +120,7 @@ export default function PreConsultCompletePage(): React.ReactElement {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1 }}
+        transition={{ delay: 0.35 }}
         className="px-5 py-4 rounded-2xl bg-surface border border-border text-center max-w-sm w-full"
       >
         <p className="text-xs text-text-secondary whitespace-pre-line leading-relaxed">
@@ -129,7 +129,7 @@ export default function PreConsultCompletePage(): React.ReactElement {
             : t('preConsult.autoSaveNotice')}
         </p>
         {locale !== 'ko' && (
-          <p className="text-[10px] text-text-muted opacity-60 mt-2 whitespace-pre-line leading-relaxed">
+          <p className="text-xs text-text-muted opacity-60 mt-2 whitespace-pre-line leading-relaxed">
             {hasBookingSlot
               ? tKo('preConsult.bookingCompleteNotice')
               : tKo('preConsult.autoSaveNotice')}

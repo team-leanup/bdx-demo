@@ -147,7 +147,7 @@ function PreConsultStartInner(): React.ReactElement {
           {heroTitle}
         </h1>
         {locale !== 'ko' && !linkData?.title && (
-          <p className="text-[11px] text-text-muted opacity-60 whitespace-pre-line">
+          <p className="text-xs text-text-muted opacity-60 whitespace-pre-line">
             {tKo('preConsult.heroTitle')}
           </p>
         )}

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Input, Modal } from '@/components/ui';
 import { formatPrice, getNowInKoreaIso } from '@/lib/format';
 import { useCustomerStore } from '@/store/customer-store';
-import { normalizePhone } from '@/lib/phone';
+import { normalizePhone, formatPhoneInput } from '@/lib/phone';
 import { useAuthStore } from '@/store/auth-store';
 import { FlagIcon } from '@/components/ui/FlagIcon';
 import { cn } from '@/lib/cn';
@@ -132,7 +132,7 @@ export default function CustomersPage() {
               key={key}
               onClick={() => setFilterTab(key)}
               className={cn(
-                'px-5 py-1.5 rounded-full text-xs font-medium transition-all',
+                'min-h-[44px] px-5 py-2.5 rounded-full text-sm font-medium transition-all',
                 filterTab === key
                   ? 'bg-primary text-white shadow-sm'
                   : 'text-text-secondary hover:text-text',
@@ -155,16 +155,16 @@ export default function CustomersPage() {
               type="button"
               onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
               disabled={currentPage === 1}
-              className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-text-secondary disabled:opacity-40"
+              className="min-h-[44px] min-w-[44px] rounded-lg border border-border px-3 py-2 text-sm font-medium text-text-secondary disabled:opacity-40"
             >
               이전
             </button>
-            <span className="min-w-10 text-center text-xs font-medium text-text">{currentPage}/{totalPages}</span>
+            <span className="min-w-10 text-center text-sm font-medium text-text">{currentPage}/{totalPages}</span>
             <button
               type="button"
               onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
               disabled={currentPage === totalPages}
-              className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-text-secondary disabled:opacity-40"
+              className="min-h-[44px] min-w-[44px] rounded-lg border border-border px-3 py-2 text-sm font-medium text-text-secondary disabled:opacity-40"
             >
               다음
             </button>
@@ -230,6 +230,13 @@ export default function CustomersPage() {
                     <span className="text-text-muted">{customer.visitCount}회</span>
                     <span className={cn('font-semibold tabular-nums', customer.totalSpend > 0 ? 'text-primary' : 'text-text-muted')}>{formatPrice(customer.totalSpend)}</span>
                   </div>
+
+                  {/* 회원권 잔여 뱃지 */}
+                  {customer.membership && customer.membership.status === 'active' && (
+                    <span className="rounded-full bg-success/10 text-success text-[10px] font-bold px-2 py-0.5 border border-success/20 tabular-nums">
+                      회원권 {customer.membership.remainingSessions}/{customer.membership.totalSessions}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -253,9 +260,11 @@ export default function CustomersPage() {
             <label className="text-xs font-medium text-text-secondary mb-1 block">전화번호</label>
             <input
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+              inputMode="tel"
+              type="tel"
               placeholder="010-0000-0000"
-              className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+              className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-base text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
             />
             {duplicateCustomer && (
               <p className="mt-1 text-xs text-warning">

@@ -1,8 +1,19 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
+
+// SVG/HTML 같은 XSS 벡터 차단용 화이트리스트
+const ALLOWED_PHOTO_TYPES = new Set<string>([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/heic',
+  'image/heif',
+]);
+const MAX_PHOTO_SIZE = 15 * 1024 * 1024; // 15MB (모바일 원본 대응)
 
 interface PhotoCaptureProps {
   photos: string[];
@@ -14,18 +25,37 @@ interface PhotoCaptureProps {
 export function PhotoCapture({ photos, onAdd, onRemove, maxPhotos = 3 }: PhotoCaptureProps): React.ReactElement {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+
+    setErrorMsg(null);
+
+    // 1) MIME 화이트리스트 검증
+    const fileType = (file.type || '').toLowerCase();
+    if (!ALLOWED_PHOTO_TYPES.has(fileType)) {
+      setErrorMsg('JPEG·PNG·WebP·HEIC 형식만 업로드할 수 있어요.');
+      return;
+    }
+    // 2) 크기 검증
+    if (file.size > MAX_PHOTO_SIZE) {
+      setErrorMsg('15MB 이하의 사진만 선택해주세요.');
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === 'string') {
         onAdd(reader.result);
       }
     };
+    reader.onerror = () => {
+      setErrorMsg('사진을 불러오지 못했어요. 다시 시도해주세요.');
+    };
     reader.readAsDataURL(file);
-    e.target.value = '';
   };
 
   const isMaxReached = photos.length >= maxPhotos;
@@ -61,6 +91,10 @@ export function PhotoCapture({ photos, onAdd, onRemove, maxPhotos = 3 }: PhotoCa
         <p className="text-xs text-text-muted text-center">
           최대 {maxPhotos}장까지 저장할 수 있어요
         </p>
+      )}
+
+      {errorMsg && (
+        <p className="text-xs font-medium text-red-600 text-center">{errorMsg}</p>
       )}
 
       <AnimatePresence>

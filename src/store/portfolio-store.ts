@@ -57,7 +57,15 @@ interface PortfolioStore {
 }
 
 function generateId(): string {
-  return `photo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `photo-${crypto.randomUUID()}`;
+  }
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return 'photo-' + Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('');
+  }
+  return `photo-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function isPortfolioPhoto(value: unknown): value is PortfolioPhoto {

@@ -76,6 +76,27 @@ export interface Membership {
   expiryDate: string;
   status: 'active' | 'expired' | 'used_up';
   transactions?: MembershipTransaction[];
+  /** 어떤 회원권 상품(템플릿)에서 생성됐는지. 프리셋 없이 수동 입력이면 undefined */
+  planId?: string;
+  /** 화면 표시용 상품명 스냅샷 (plan이 나중에 이름 바뀌어도 보존) */
+  planName?: string;
+}
+
+/** 샵별 회원권 상품 템플릿 (설정 → 회원권에서 등록) */
+export interface MembershipPlan {
+  id: string;
+  shopId: string;
+  name: string;
+  /** 판매 금액(원) */
+  price: number;
+  /** 총 차감 횟수 */
+  totalSessions: number;
+  /** 구매일로부터 유효기간(일). null = 무기한 */
+  validDays: number | null;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Customer {

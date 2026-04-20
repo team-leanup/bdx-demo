@@ -204,6 +204,18 @@ nav.topbar {
 }
 .note-blue b { color: #2563EB; }
 
+/* ── Section image ── */
+.sec-figure { margin: 18px 0 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.sec-img { display: block; width: 100%; max-width: 340px; height: auto; border-radius: 18px; border: 1px solid var(--line); box-shadow: 0 6px 20px rgba(0,0,0,0.06); background: #fff; }
+.sec-figcaption { font-size: 12px; color: var(--ink-faint); text-align: center; letter-spacing: 0.2px; line-height: 1.5; }
+.sec-figure.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; max-width: 520px; width: 100%; }
+.sec-figure.two .sec-img { max-width: 100%; }
+.sec-figure.two figcaption { grid-column: span 2; text-align: center; font-size: 12px; color: var(--ink-faint); }
+@media (max-width: 480px) {
+  .sec-figure.two { grid-template-columns: 1fr; max-width: 340px; }
+  .sec-figure.two figcaption { grid-column: span 1; }
+}
+
 /* ── Concept grid ── */
 .concepts {
   display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
@@ -538,6 +550,10 @@ footer a { color: var(--rose); text-decoration: none; }
 
     <h3 class="sub-head">홈 화면</h3>
     <p>앱을 열면 가장 먼저 보이는 화면이에요.</p>
+    <figure class="sec-figure">
+      <img src="/images/guide/01-home.png" alt="BDX 홈 화면 — 오늘 스케줄, 새 예약 등록, 매출 버튼, 손님 초대 링크 카드가 한 화면에 모여 있음" class="sec-img" loading="lazy">
+      <figcaption class="sec-figcaption">홈 화면 — 오늘 스케줄 · 새 예약 등록 · 매출 등록이 한 화면에 모여요</figcaption>
+    </figure>
     <div class="tbl-wrap"><table class="t">
       <tr><th>영역</th><th>설명</th></tr>
       <tr><td>오늘 스케줄</td><td>오늘 예약된 고객 리스트</td></tr>
@@ -549,6 +565,10 @@ footer a { color: var(--rose); text-decoration: none; }
 
     <h3 class="sub-head">기록 탭</h3>
     <p>상단에 <b>"스케줄"</b>과 <b>"시술 기록"</b> 두 개의 탭이 있어요.</p>
+    <figure class="sec-figure">
+      <img src="/images/guide/02-records.png" alt="기록 탭 — 주간 스케줄 타임그리드, 예약된 날짜에 점 표시" class="sec-img" loading="lazy">
+      <figcaption class="sec-figcaption">스케줄 탭 — 일주일 단위로 예약을 한눈에 확인해요</figcaption>
+    </figure>
     <p><b>스케줄 탭</b> — 주간 타임그리드로 디자이너별 일정을 한눈에 볼 수 있어요.</p>
     <ul>
       <li>빈 시간대를 <b>꾹 누르면</b> 바로 예약 등록</li>
@@ -566,9 +586,18 @@ footer a { color: var(--rose); text-decoration: none; }
       <li><b>"새 고객 등록"</b>으로 이름 + 전화 + 메모만 넣으면 끝</li>
       <li>고객 카드에서 총매출, 방문횟수, 태그, 시술 이력, 메모 확인</li>
     </ul>
+    <figure class="sec-figure two">
+      <img src="/images/guide/03-customers.png" alt="고객 목록 화면 — 전체/단골/일반 필터, 이름 검색" class="sec-img" loading="lazy">
+      <img src="/images/guide/04-customer-detail.png" alt="고객 상세 카드 — 총 방문, 평균 단가, 총 이용금액, 시술 이력" class="sec-img" loading="lazy">
+      <figcaption>왼쪽 고객 목록 · 오른쪽 고객 카드 상세 (방문 이력·선호 스타일·회원권까지 한눈에)</figcaption>
+    </figure>
 
     <h3 class="sub-head">대시보드</h3>
     <p>매장 현황을 숫자로 보여줘요 — 오늘/이번 달 매출, 인기 시술, 디자이너별 실적.</p>
+    <figure class="sec-figure">
+      <img src="/images/guide/09-dashboard.png" alt="대시보드 — 디자이너별 상담 현황과 예약 배정률, 상담 완료율 차트" class="sec-img" loading="lazy">
+      <figcaption class="sec-figcaption">대시보드 — 디자이너별 상담 건수·예약 배정률·완료율을 비교할 수 있어요</figcaption>
+    </figure>
 
     <h3 class="sub-head">현장모드 탭</h3>
     <p>예약 카드에서 <b>"시술 시작"</b>을 탭하면 현장모드가 시작돼요.</p>
@@ -577,6 +606,10 @@ footer a { color: var(--rose); text-decoration: none; }
       <li>시술 타이머 + 추가 옵션 관리</li>
       <li>정산 후 Wrap-up 화면에서 공유카드 생성</li>
     </ul>
+    <figure class="sec-figure">
+      <img src="/images/guide/05-field-mode-portfolio.png" alt="현장모드 포트폴리오 선택 — 카테고리 탭 + 직원추천/인기 정렬 + 가격 표시" class="sec-img" loading="lazy">
+      <figcaption class="sec-figcaption">현장모드 디자인 선택 — 카테고리·정렬·가격이 포함된 미니 메뉴판</figcaption>
+    </figure>
 
     <h3 class="sub-head">포트폴리오 탭</h3>
     <p>시술 작품 사진과 <strong>메뉴판</strong>을 관리하는 공간이에요. Wrap-up에서 저장한 사진이 자동으로 쌓이고, 메뉴판에 등록하면 고객이 손님 초대 링크에서 바로 선택할 수 있어요.</p>
@@ -586,9 +619,18 @@ footer a { color: var(--rose); text-decoration: none; }
       <li>카테고리 헤더의 <strong>수정</strong> 버튼 → 편집 모드 → 연필·해제·추천·인기·이동 표시</li>
     </ul>
     <div class="note"><b>경로:</b> 하단 탭바 → 포트폴리오</div>
+    <figure class="sec-figure">
+      <img src="/images/guide/07-portfolio.png" alt="포트폴리오 메뉴판 — 심플/프렌치 카테고리별 사진과 가격" class="sec-img" loading="lazy">
+      <figcaption class="sec-figcaption">포트폴리오 메뉴판 — 카테고리별로 시술 사진과 가격을 정리해요</figcaption>
+    </figure>
 
     <h3 class="sub-head">설정</h3>
-    <p>매장 정보, 가격, 디자이너 관리 (추가/수정/PIN 변경), 테마, 영업시간 등.</p>
+    <p>매장 정보, 가격, 디자이너 관리 (추가/수정/PIN 변경), 테마, 영업시간, <b>회원권 상품</b> 등.</p>
+    <figure class="sec-figure two">
+      <img src="/images/guide/08-settings-service.png" alt="설정 서비스 탭 — 기본 가격표와 서비스 옵션 토글" class="sec-img" loading="lazy">
+      <img src="/images/guide/10-membership-settings.png" alt="설정 회원권 섹션 — 회원권 상품 등록/관리" class="sec-img" loading="lazy">
+      <figcaption>왼쪽 서비스 가격표 · 오른쪽 회원권 상품 관리 (예: 10만원 5회권)</figcaption>
+    </figure>
   </section>
 
   <!-- 05 -->
@@ -697,6 +739,10 @@ footer a { color: var(--rose); text-decoration: none; }
   <section class="sec" id="s11">
     <div class="sec-head"><span class="sec-num">11</span><h2 class="sec-title">현장모드 — 빠른 시술 관리</h2><div class="sec-divider"></div></div>
     <p>고객이 왔을 때 예약 카드에서 바로 시술을 시작하고 정산까지 이어가는 흐름이에요.</p>
+    <figure class="sec-figure">
+      <img src="/images/guide/05-field-mode-portfolio.png" alt="현장모드 디자인 선택 — 포트폴리오 사진을 보며 고객과 함께 고를 수 있어요" class="sec-img" loading="lazy">
+      <figcaption class="sec-figcaption">현장모드 디자인 선택 — 카테고리 탭과 가격이 함께 표시돼요</figcaption>
+    </figure>
     <div class="flow">
       <div class="fl"><div class="fl-dot">1</div><div class="fl-body"><strong>시술 시작</strong><span>예약 카드에서 "시술 시작" 탭</span></div></div>
       <div class="fl"><div class="fl-dot">2</div><div class="fl-body"><strong>디자인 카테고리 선택</strong><span>심플 / 프렌치 / 자석 / 아트 중 선택</span></div></div>
@@ -719,6 +765,10 @@ footer a { color: var(--rose); text-decoration: none; }
       <div class="stp"><div class="stp-n">4</div><div class="stp-body"><b>사전상담 결과 확인</b><span>예약 카드 터치 → 사전상담 내용 상세 보기</span></div></div>
     </div>
     <div class="note note-blue"><b>지원 언어:</b> 한국어, 영어, 중국어, 일본어 — 고객이 스스로 언어를 선택해 작성해요.</div>
+    <figure class="sec-figure">
+      <img src="/images/guide/06-pre-consult.png" alt="사전 상담 고객 화면 — 언어 선택 탭과 방문 희망 날짜·시간 선택" class="sec-img" loading="lazy">
+      <figcaption class="sec-figcaption">고객이 보는 사전 상담 화면 — 언어 선택 후 날짜·시간을 직접 고를 수 있어요</figcaption>
+    </figure>
     <div class="note"><b>경로:</b> 기록 탭 → 예약 카드 → 링크 보내기</div>
   </section>
 
@@ -745,6 +795,10 @@ footer a { color: var(--rose); text-decoration: none; }
       <div class="concept"><div class="concept-name"><span class="dot"></span>수정 모드</div><div class="concept-desc">카테고리 헤더의 "수정" 버튼을 누르면 연필·해제·추천·인기·이동 버튼이 나타나요. 평소에는 깔끔한 메뉴판으로 보여요.</div></div>
       <div class="concept"><div class="concept-name"><span class="dot"></span>자동/수동</div><div class="concept-desc">Wrap-up 저장 사진 자동 수집 + 직접 업로드 지원</div></div>
     </div>
+    <figure class="sec-figure">
+      <img src="/images/guide/07-portfolio.png" alt="포트폴리오 메뉴판 — 심플/프렌치 카테고리별 사진과 가격" class="sec-img" loading="lazy">
+      <figcaption class="sec-figcaption">메뉴 탭 — 손님 초대 링크에서 고객에게 이 그대로 보여져요</figcaption>
+    </figure>
     <div class="note"><b>경로:</b> 하단 탭바 → 포트폴리오</div>
   </section>
 
@@ -773,6 +827,10 @@ footer a { color: var(--rose); text-decoration: none; }
       <div class="fl"><div class="fl-dot ok">✓</div><div class="fl-body"><strong>예약 자동 등록</strong><span>고객 완료 시 예약이 자동으로 등록되고 "사전상담 완료" 배지가 생겨요</span></div></div>
     </div>
     <div class="note note-blue"><b>기존 "사전 상담" 과 다른 점:</b> 기존에는 이미 등록된 예약에만 링크를 보낼 수 있었다면, 손님 초대 링크는 <strong>예약 없이도</strong> 고객이 스스로 날짜·시간까지 고를 수 있어요.</div>
+    <figure class="sec-figure">
+      <img src="/images/guide/06-pre-consult.png" alt="손님 초대 링크 — 고객이 보는 화면. 언어 선택 + 방문 희망 날짜와 시간을 고르게 돼 있음" class="sec-img" loading="lazy">
+      <figcaption class="sec-figcaption">고객이 링크를 열면 보이는 화면 — 날짜·시간을 직접 선택해요</figcaption>
+    </figure>
     <div class="note"><b>경로:</b> 홈 → 손님 초대 링크 카드</div>
   </section>
 

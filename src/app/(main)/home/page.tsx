@@ -12,7 +12,8 @@ import { useConsultationStore } from '@/store/consultation-store';
 import { useFieldModeStore } from '@/store/field-mode-store';
 import { ConsultationStep } from '@/types/consultation';
 import type { BookingChannel, BookingRequest } from '@/types/consultation';
-import type { DesignCategory, RemovalPreference, LengthPreference, AddOnOption } from '@/types/pre-consultation';
+import type { RemovalPreference, LengthPreference, AddOnOption } from '@/types/pre-consultation';
+import { asDesignCategory } from '@/lib/design-category-guard';
 import {
   GreetingHeader,
   HeroCTA,
@@ -133,6 +134,7 @@ export default function HomePage() {
   const foreignCount = todayReservations.filter((r) => r.language && r.language !== 'ko').length;
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const hydrateFromBooking = useFieldModeStore((s) => s.hydrateFromBooking);
+  const startTreatment = useFieldModeStore((s) => s.startTreatment);
 
   const handleAddReservation = (newBooking: BookingRequest) => {
     addReservation({
@@ -197,19 +199,33 @@ export default function HomePage() {
     // field-mode store에도 동일 예약 데이터 반영 (실제 이동 목적지)
     // preConsultationData는 JSONB로 저장되어 런타임에 pre-consult 필드를 포함할 수 있음
     const raw = booking.preConsultationData as Record<string, unknown> | undefined;
+    const validatedCategory = asDesignCategory(raw?.designCategory);
     hydrateFromBooking({
       bookingId: booking.id,
       customerName: booking.customerName,
       customerPhone: booking.phone,
       customerId: booking.customerId ?? booking.preConsultationData?.customerId ?? null,
       designerId: booking.designerId ?? booking.preConsultationData?.designerId ?? '',
-      designCategory: (raw?.designCategory ?? null) as DesignCategory | null,
+      designCategory: validatedCategory,
       removalType: (raw?.removalPreference ?? 'none') as RemovalPreference,
       lengthType: (raw?.lengthPreference ?? 'keep') as LengthPreference,
       addOns: (raw?.addOns ?? []) as AddOnOption[],
       selectedPhotoUrl: (raw?.selectedPhotoUrl as string | undefined) ?? null,
       selectedPhotoId: (raw?.selectedPhotoId as string | undefined) ?? null,
     });
+
+    // 사전 상담 제출 완료 + 디자인 카테고리가 이미 있으면
+    // → 포트폴리오 선택/옵션 단계를 건너뛰고 바로 시술 화면으로 진입
+    // (2026-04-20 R4: asDesignCategory로 유효성 검증 — 유효하지 않으면 normal flow)
+    const hasPreConsult = !!booking.preConsultationCompletedAt && !!validatedCategory;
+    if (hasPreConsult) {
+      startTreatment();
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('field-mode:from-pre-consult', booking.id);
+      }
+      router.push('/field-mode/treatment');
+      return;
+    }
     router.push('/field-mode');
   };
 

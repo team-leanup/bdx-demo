@@ -52,7 +52,7 @@ export function SlotPicker({ link, selectedDate, selectedTime, onSelect }: Props
           {t('preConsult.noAvailableSlots')}
         </p>
         {locale !== 'ko' && (
-          <p className="text-[11px] text-text-muted opacity-60 mt-1">
+          <p className="text-xs text-text-muted opacity-60 mt-1">
             {tKo('preConsult.noAvailableSlots')}
           </p>
         )}
@@ -76,7 +76,7 @@ export function SlotPicker({ link, selectedDate, selectedTime, onSelect }: Props
         <CalendarIcon className="w-4 h-4 text-primary" />
         <h3 className="text-sm font-bold text-text">{t('preConsult.selectDate')}</h3>
         {locale !== 'ko' && (
-          <span className="text-[10px] text-text-muted opacity-60">{tKo('preConsult.selectDate')}</span>
+          <span className="text-xs text-text-muted opacity-60">{tKo('preConsult.selectDate')}</span>
         )}
       </div>
 
@@ -97,11 +97,11 @@ export function SlotPicker({ link, selectedDate, selectedTime, onSelect }: Props
                   : 'border-border bg-surface text-text-secondary'
               }`}
             >
-              <span className={`text-[10px] font-semibold ${isSelected ? 'text-white/80' : 'text-text-muted'}`}>
+              <span className={`text-xs font-semibold ${isSelected ? 'text-white/80' : 'text-text-muted'}`}>
                 {wd}
               </span>
               <span className="text-base font-bold leading-tight mt-0.5">{md}</span>
-              <span className={`text-[9px] mt-0.5 ${isSelected ? 'text-white/80' : 'text-text-muted'}`}>
+              <span className={`text-xs mt-0.5 ${isSelected ? 'text-white/80' : 'text-text-muted'}`}>
                 {d.slots.filter((s) => !s.isBooked).length}{locale === 'ko' ? '자리' : ' open'}
               </span>
             </motion.button>
@@ -113,7 +113,7 @@ export function SlotPicker({ link, selectedDate, selectedTime, onSelect }: Props
         <ClockIcon className="w-4 h-4 text-primary" />
         <h3 className="text-sm font-bold text-text">{t('preConsult.selectTime')}</h3>
         {locale !== 'ko' && (
-          <span className="text-[10px] text-text-muted opacity-60">{tKo('preConsult.selectTime')}</span>
+          <span className="text-xs text-text-muted opacity-60">{tKo('preConsult.selectTime')}</span>
         )}
       </div>
 

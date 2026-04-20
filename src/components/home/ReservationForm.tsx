@@ -9,6 +9,7 @@ import { useShopStore } from '@/store/shop-store';
 import type { BookingChannel, BookingRequest } from '@/types/consultation';
 import type { Locale } from '@/store/locale-store';
 import { getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
+import { formatPhoneInput } from '@/lib/phone';
 
 function generateTimeSlots(start = '10:00', end = '20:00'): string[] {
   const slots: string[] = [];
@@ -229,10 +230,11 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
           </label>
           <input
             type="tel"
+            inputMode="tel"
             value={formPhone}
-            onChange={(e) => setFormPhone(e.target.value)}
+            onChange={(e) => setFormPhone(formatPhoneInput(e.target.value))}
             placeholder="010-0000-0000"
-            className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text placeholder-text-muted outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
+            className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-base text-text placeholder-text-muted outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
           />
         </div>
 

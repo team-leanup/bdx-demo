@@ -76,7 +76,7 @@ export function DesignGallery({ onConfirm, onSkip }: DesignGalleryProps): React.
       <p className="text-sm font-medium text-text-secondary text-center">
         {t('preConsult.galleryTitle')}
         {locale !== 'ko' && (
-          <span className="block text-[10px] text-text-muted opacity-60">
+          <span className="block text-xs text-text-muted opacity-60">
             {tKo('preConsult.galleryTitle')}
           </span>
         )}
@@ -138,7 +138,7 @@ export function DesignGallery({ onConfirm, onSkip }: DesignGalleryProps): React.
                 </div>
               )}
               {photo.isFeatured && !isSelected && (
-                <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-primary/90 text-white text-[9px] font-bold">
+                <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-primary/90 text-white text-xs font-bold">
                   PICK
                 </div>
               )}
@@ -156,7 +156,7 @@ export function DesignGallery({ onConfirm, onSkip }: DesignGalleryProps): React.
               {/* 가격 뱃지 */}
               {photo.price != null && (
                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent pt-4 pb-1.5 px-2">
-                  <span className="text-[11px] font-bold text-white">
+                  <span className="text-xs font-bold text-white">
                     {photo.price.toLocaleString('ko-KR')}원
                   </span>
                 </div>
