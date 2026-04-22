@@ -185,6 +185,10 @@ export interface ConsultationRecord {
   imageUrls?: string[];
   checklist?: DailyChecklist;
   paymentMethod?: PaymentMethod;
+  /** 회원권 + 차액(현금/카드) 복합 결제 시 차액의 결제 수단 */
+  secondaryPaymentMethod?: 'cash' | 'card';
+  /** 복합 결제 시 차액 금액 (현금/카드로 받은 금액) */
+  secondaryAmount?: number;
   isQuickSale?: boolean;
   shareCardId?: string;
 }

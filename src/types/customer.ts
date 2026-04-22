@@ -60,7 +60,8 @@ export type VisitFrequency = 'weekly' | 'biweekly' | 'monthly' | 'irregular';
 export interface MembershipTransaction {
   id: string;
   date: string;
-  type: 'purchase' | 'use';
+  /** purchase: 구매, use: 시술 차감, manual_deduct: 기존 회원권 이관 등 수동 차감 */
+  type: 'purchase' | 'use' | 'manual_deduct';
   sessionsDelta: number;
   recordId?: string;
   note?: string;

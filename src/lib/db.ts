@@ -805,6 +805,8 @@ export async function fetchConsultationRecords(shopId?: string | null): Promise<
     checklist: (row.checklist as unknown as DailyChecklist) ?? undefined,
     language: (row.language as ConsultationRecord['language']) ?? undefined,
     paymentMethod: (row.payment_method as ConsultationRecord['paymentMethod']) ?? undefined,
+    secondaryPaymentMethod: (row as Record<string, unknown>).secondary_payment_method as 'cash' | 'card' | undefined,
+    secondaryAmount: (row as Record<string, unknown>).secondary_amount as number | undefined,
     isQuickSale: row.is_quick_sale ?? false,
     shareCardId: (row as Record<string, unknown>).share_card_id as string | undefined,
   }));
@@ -1092,6 +1094,8 @@ export async function dbUpsertRecord(record: ConsultationRecord): Promise<{ succ
     checklist: (record.checklist as unknown as import('@/types/database').Json) ?? null,
     language: record.language ?? null,
     payment_method: record.paymentMethod ?? null,
+    secondary_payment_method: record.secondaryPaymentMethod ?? null,
+    secondary_amount: record.secondaryAmount ?? null,
     is_quick_sale: record.isQuickSale ?? false,
     share_card_id: record.shareCardId ?? null,
   });
@@ -1137,7 +1141,7 @@ export async function fetchShareCardPublicData(shareCardId: string): Promise<imp
   // Find the consultation record by share_card_id
   const { data: record, error: recErr } = await supabase
     .from('consultation_records')
-    .select('id, shop_id, consultation, image_urls, share_card_id')
+    .select('id, shop_id, consultation, image_urls, share_card_id, created_at, estimated_minutes')
     .eq('share_card_id' as string, shareCardId)
     .single();
 
@@ -1201,7 +1205,10 @@ export async function fetchShareCardPublicData(shareCardId: string): Promise<imp
       expressions: consultation.expressions,
       hasParts: consultation.hasParts,
       bodyPart: consultation.bodyPart,
+      nailShape: consultation.nailShape,
     },
+    estimatedMinutes: (record as { estimated_minutes?: number | null }).estimated_minutes ?? undefined,
+    createdAt: (record as { created_at?: string }).created_at ?? undefined,
     kakaoTalkUrl: settings.kakaoTalkUrl,
     naverReservationUrl: settings.naverReservationUrl,
     recordId: record.id,
@@ -1469,7 +1476,7 @@ export async function dbInsertMembershipTransaction(
     customerId: string;
     shopId: string;
     date: string;
-    type: 'purchase' | 'use';
+    type: 'purchase' | 'use' | 'manual_deduct';
     sessionsDelta: number;
     recordId?: string;
     note?: string;

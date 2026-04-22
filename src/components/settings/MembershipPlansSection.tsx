@@ -96,15 +96,15 @@ export function MembershipPlansSection(): React.ReactElement {
   return (
     <>
       <Card className="mx-4 md:mx-0">
-        <div className="mb-3 flex items-center justify-between">
-          <div>
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-text">회원권 상품</p>
-            <p className="mt-0.5 text-[11px] text-text-muted">자주 판매하는 회원권을 등록해두면 고객 카드에서 빠르게 부여할 수 있어요</p>
+            <p className="mt-0.5 text-[11px] text-text-muted leading-snug">자주 판매하는 회원권을 등록해두면 고객 카드에서 빠르게 부여할 수 있어요</p>
           </div>
           <button
             type="button"
             onClick={openCreate}
-            className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary/90 transition-colors"
+            className="flex-shrink-0 whitespace-nowrap rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary/90 transition-colors"
           >
             + 상품 추가
           </button>

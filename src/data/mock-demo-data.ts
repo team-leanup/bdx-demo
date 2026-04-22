@@ -742,7 +742,12 @@ function makeRecord(
       bookingId: opts?.bookingId,
     },
     totalPrice: price,
-    estimatedMinutes: scope === 'full_art' ? 90 : scope === 'solid_tone' ? 40 : 60,
+    // time-calculator.ts 규칙 기준 (핸드 base 60 + scope 디자인 시간)
+    estimatedMinutes:
+      scope === 'full_art' ? 100
+      : scope === 'monthly_art' ? 95
+      : scope === 'solid_point' ? 80
+      : 60,
     finalPrice: price,
     createdAt: iso,
     updatedAt: iso,

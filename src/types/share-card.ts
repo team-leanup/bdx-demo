@@ -5,6 +5,7 @@ export interface ShareCardDesignInfo {
   expressions: ExpressionType[];
   hasParts: boolean;
   bodyPart: 'hand' | 'foot';
+  nailShape?: string;
 }
 
 export interface ShareCardPublicData {
@@ -15,6 +16,8 @@ export interface ShareCardPublicData {
   shopLogoUrl?: string;
   imageUrls: string[];
   design: ShareCardDesignInfo;
+  estimatedMinutes?: number;
+  createdAt?: string;
   kakaoTalkUrl?: string;
   naverReservationUrl?: string;
   recordId: string;

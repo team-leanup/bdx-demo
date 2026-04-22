@@ -9,7 +9,7 @@ import { usePreConsultStore } from '@/store/pre-consult-store';
 import { calculatePreConsultPrice } from '@/lib/pre-consult-price';
 import { dbCompletePreConsultation, dbCompletePreconsultationBooking, dbCreatePreConsultation, fetchShopPublicData, fetchBookingRequestById, dbCreateBookingFromConsultationLink, dbCreateBookingFromShopLink } from '@/lib/db';
 import { getNowInKoreaIso } from '@/lib/format';
-import { formatPhoneInput } from '@/lib/phone';
+import { formatPhoneInput, normalizePhone } from '@/lib/phone';
 import { consumeClientRateLimit } from '@/lib/client-rate-limit';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -164,6 +164,8 @@ export default function PreConsultConfirmPage(): React.ReactElement {
 
   const [name, setName] = useState(customerName);
   const [phone, setPhone] = useState(customerPhone);
+  // 오타 방지용 전화번호 재확인 필드 (본인 인증 대체)
+  const [phoneConfirm, setPhoneConfirm] = useState(customerPhone);
   const [submitError, setSubmitError] = useState('');
 
   // 🔒 재제출 차단 Gate 1: 이미 제출된 세션이면 (sessionStorage isSubmitted) 즉시 complete로 이동
@@ -188,7 +190,10 @@ export default function PreConsultConfirmPage(): React.ReactElement {
       }
       // 정상 케이스: 비어있는 필드만 자동 채우기
       if (!name && booking.customerName) setName(booking.customerName);
-      if (!phone && booking.phone) setPhone(booking.phone);
+      if (!phone && booking.phone) {
+        setPhone(booking.phone);
+        setPhoneConfirm(booking.phone);
+      }
     });
   }, [bookingId, params.shopId, name, phone, router]);
 
@@ -219,6 +224,11 @@ export default function PreConsultConfirmPage(): React.ReactElement {
 
     if (!name.trim() || !phone.trim()) {
       setSubmitError(t('preConsult.nameLabel') + ' / ' + t('preConsult.phoneLabel'));
+      return;
+    }
+    // 오타 방지: 두 번 입력한 전화번호 비교 (포맷 차이 무시)
+    if (normalizePhone(phone) !== normalizePhone(phoneConfirm)) {
+      setSubmitError(t('preConsult.phoneMismatch'));
       return;
     }
     if (!priceEstimate || !selectedCategory) {
@@ -655,6 +665,17 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                 onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
                 placeholder="010-0000-0000"
                 autoComplete="tel"
+              />
+
+              <Input
+                label={t('preConsult.phoneConfirmLabel')}
+                type="tel"
+                inputMode="tel"
+                value={phoneConfirm}
+                onChange={(e) => setPhoneConfirm(formatPhoneInput(e.target.value))}
+                placeholder={t('preConsult.phoneConfirmPlaceholder')}
+                autoComplete="off"
+                hint={t('preConsult.phoneConfirmHint')}
               />
             </>
           )}

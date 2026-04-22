@@ -152,9 +152,23 @@ export default function SettlementPage(): React.ReactElement | null {
   const subtotal = (baseEstimate?.minTotal ?? 0) + inTreatmentTotal;
   const discountAmount = discountPercent > 0 ? Math.round(subtotal * discountPercent / 100) : 0;
   const isMembershipPayment = paymentMethod === 'membership' && canUseMembership;
-  const finalPrice = isMembershipPayment
-    ? 0
-    : Math.max(0, subtotal - discountAmount - depositApplied);
+
+  // 회원권 1회 단가 = 구매금액 / 총 횟수 (정수 내림)
+  const membershipUnitPrice = customerMembership && customerMembership.totalSessions > 0
+    ? Math.floor(customerMembership.purchaseAmount / customerMembership.totalSessions)
+    : 0;
+  // 시술금에서 실제 차감되는 회원권 금액 (단가를 넘지 않도록 clamp)
+  const afterDiscountDeposit = Math.max(0, subtotal - discountAmount - depositApplied);
+  const membershipApplied = isMembershipPayment
+    ? Math.min(membershipUnitPrice, afterDiscountDeposit)
+    : 0;
+  // 회원권 차감 후 남은 잔액 (차액)
+  const remainingAfterMembership = Math.max(0, afterDiscountDeposit - membershipApplied);
+  // 고객이 실제로 결제해야 할 금액
+  const finalPrice = isMembershipPayment ? remainingAfterMembership : afterDiscountDeposit;
+
+  // 회원권 + 차액 결제 시 현금/카드 선택 (기본 카드)
+  const [secondaryPaymentMethod, setSecondaryPaymentMethod] = useState<'cash' | 'card'>('card');
 
   // ── Treatment duration ───────────────────────────────────────────────────────
 
@@ -214,6 +228,9 @@ export default function SettlementPage(): React.ReactElement | null {
         serviceType: CATEGORY_LABELS[selectedCategory],
         finalPrice,
         paymentMethod,
+        // 회원권 + 차액 복합 결제 시 차액 정보 저장
+        secondaryPaymentMethod: isMembershipPayment && remainingAfterMembership > 0 ? secondaryPaymentMethod : undefined,
+        secondaryAmount: isMembershipPayment && remainingAfterMembership > 0 ? remainingAfterMembership : undefined,
         notes: '현장모드 시술',
         customerName: customerName || undefined,
         customerPhone: customerPhone || undefined,
@@ -468,7 +485,7 @@ export default function SettlementPage(): React.ReactElement | null {
                     ₩{subtotal.toLocaleString()}
                   </p>
                   <span className="rounded-full bg-success/10 text-success text-[10px] font-bold px-2 py-0.5 border border-success/20">
-                    회원권 1회 차감
+                    회원권 {membershipApplied.toLocaleString()}원 차감
                   </span>
                 </>
               ) : (
@@ -479,6 +496,11 @@ export default function SettlementPage(): React.ReactElement | null {
                 )
               )}
             </div>
+            {isMembershipPayment && remainingAfterMembership > 0 && (
+              <p className="text-xs text-text-muted mt-1">
+                회원권 1회 단가 {membershipUnitPrice.toLocaleString()}원 · 차액 {remainingAfterMembership.toLocaleString()}원을 {secondaryPaymentMethod === 'cash' ? '현금으로' : '카드로'} 결제
+              </p>
+            )}
           </div>
         </motion.div>
 
@@ -580,6 +602,39 @@ export default function SettlementPage(): React.ReactElement | null {
                   변경
                 </button>
               </p>
+            )}
+
+            {/* 회원권 + 차액 복합 결제: 차액 결제 수단 선택 */}
+            {isMembershipPayment && remainingAfterMembership > 0 && (
+              <div className="mt-4 rounded-xl bg-surface-alt border border-border p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold text-text-secondary">
+                    차액 <span className="text-primary tabular-nums">{remainingAfterMembership.toLocaleString()}원</span> 결제 수단
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {(
+                    [
+                      { method: 'cash' as const, label: t('fieldMode.paymentCash') },
+                      { method: 'card' as const, label: t('fieldMode.paymentCard') },
+                    ] as const
+                  ).map(({ method, label }) => (
+                    <button
+                      key={method}
+                      type="button"
+                      onClick={() => setSecondaryPaymentMethod(method)}
+                      className={cn(
+                        'min-h-[44px] rounded-xl text-sm font-semibold border transition-all duration-150 active:scale-95',
+                        secondaryPaymentMethod === method
+                          ? 'bg-primary text-white border-primary shadow-sm'
+                          : 'bg-surface text-text-secondary border-border hover:border-primary/40 hover:text-text',
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         </motion.div>

@@ -444,6 +444,8 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
             shopId: record.shopId,
             consultation: record.consultation,
             shareCardId: record.shareCardId,
+            createdAt: record.createdAt,
+            estimatedMinutes: record.estimatedMinutes,
           }}
           portfolioPhotos={portfolioPhotos.map(p => ({
             id: p.id,

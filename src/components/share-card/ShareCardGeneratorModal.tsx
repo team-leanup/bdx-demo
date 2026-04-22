@@ -20,6 +20,7 @@ interface ShareCardGeneratorModalProps {
     consultation: ConsultationType;
     shareCardId?: string;
     createdAt?: string;
+    estimatedMinutes?: number;
   };
   portfolioPhotos: Array<{
     id: string;
@@ -38,6 +39,7 @@ function ScaledPreview({
   ratio,
   shopId,
   createdAt,
+  estimatedMinutes,
 }: {
   imageUrl: string;
   consultation: ConsultationType;
@@ -45,6 +47,7 @@ function ScaledPreview({
   ratio: CardRatio;
   shopId?: string;
   createdAt?: string;
+  estimatedMinutes?: number;
 }): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0);
@@ -88,6 +91,7 @@ function ScaledPreview({
             templateRef={{ current: null }}
             shopId={shopId}
             createdAt={createdAt}
+            estimatedMinutes={estimatedMinutes}
           />
         </div>
       )}
@@ -325,6 +329,7 @@ export function ShareCardGeneratorModal({
                   ratio="9:16"
                   shopId={record.shopId}
                   createdAt={record.createdAt}
+                  estimatedMinutes={record.estimatedMinutes}
                 />
               )}
             </div>
@@ -443,6 +448,7 @@ export function ShareCardGeneratorModal({
                 templateRef={captureRef916}
                 shopId={record.shopId}
                 createdAt={record.createdAt}
+                estimatedMinutes={record.estimatedMinutes}
               />
               <ShareCardImageTemplate
                 imageUrl={resolvedImageUrl}
@@ -452,6 +458,7 @@ export function ShareCardGeneratorModal({
                 templateRef={captureRef34}
                 shopId={record.shopId}
                 createdAt={record.createdAt}
+                estimatedMinutes={record.estimatedMinutes}
               />
             </div>
           )}

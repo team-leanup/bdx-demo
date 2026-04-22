@@ -310,6 +310,8 @@ export function PortfolioOverlay({
               currentStep: 0,
             } as unknown as import('@/types/consultation').ConsultationType,
             shareCardId: linkedRecord?.shareCardId,
+            createdAt: linkedRecord?.createdAt ?? photo.createdAt,
+            estimatedMinutes: linkedRecord?.estimatedMinutes,
           }}
           portfolioPhotos={[{ id: photo.id, imageDataUrl: photo.imageDataUrl }]}
           shopName={shopName}

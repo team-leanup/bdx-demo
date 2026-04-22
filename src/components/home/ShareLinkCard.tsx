@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useAuthStore } from '@/store/auth-store';
+import { ToastContainer, type ToastData } from '@/components/ui';
 
 function Link2Icon({ className }: { className?: string }): React.ReactElement {
   return (
@@ -11,17 +12,19 @@ function Link2Icon({ className }: { className?: string }): React.ReactElement {
     </svg>
   );
 }
-function CopyIcon({ className }: { className?: string }): React.ReactElement {
-  return (<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" /><path d="M4 16V4a2 2 0 0 1 2-2h12" /></svg>);
-}
-function CheckIcon({ className }: { className?: string }): React.ReactElement {
-  return (<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>);
+
+function ChevronRightIcon({ className }: { className?: string }): React.ReactElement {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="m9 18 6-6-6-6" />
+    </svg>
+  );
 }
 
 export function ShareLinkCard(): React.ReactElement | null {
   const currentShopId = useAuthStore((s) => s.currentShopId);
   const [url, setUrl] = useState<string>('');
-  const [copied, setCopied] = useState(false);
+  const [toasts, setToasts] = useState<ToastData[]>([]);
 
   useEffect(() => {
     if (!currentShopId) return;
@@ -34,57 +37,44 @@ export function ShareLinkCard(): React.ReactElement | null {
   const handleCopy = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
+      setToasts((prev) => [
+        ...prev,
+        { id: `${Date.now()}-copy`, type: 'success', message: '링크가 복사되었어요' },
+      ]);
     } catch {
-      /* noop */
+      setToasts((prev) => [
+        ...prev,
+        { id: `${Date.now()}-copy-err`, type: 'error', message: '복사에 실패했어요' },
+      ]);
     }
   };
 
-  return (
-    <motion.div
-      className="relative overflow-hidden rounded-2xl bg-surface border border-border px-4 py-5"
-    >
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10">
-          <Link2Icon className="h-5 w-5 text-primary" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-text-muted">손님 공유용</p>
-          <h2 className="mt-0.5 text-base font-medium text-text">상담 링크</h2>
-          <p className="mt-0.5 text-xs text-text-muted">손님이 날짜·시간과 정보를 직접 입력해요</p>
-        </div>
-      </div>
+  const handleDismissToast = (id: string): void => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
 
-      <button
+  return (
+    <>
+      <motion.button
         type="button"
         onClick={() => void handleCopy()}
-        className="mt-3 w-full flex items-center justify-center gap-1.5 rounded-xl bg-primary py-3 text-sm font-semibold text-white active:scale-[0.98] transition-transform"
+        whileTap={{ scale: 0.98 }}
+        className="w-full relative overflow-hidden rounded-2xl bg-surface border border-border px-4 py-5 text-left hover:bg-surface-alt transition-colors"
       >
-        <AnimatePresence mode="wait" initial={false}>
-          {copied ? (
-            <motion.span
-              key="copied"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="flex items-center gap-1.5"
-            >
-              <CheckIcon className="w-4 h-4" /> 복사됨
-            </motion.span>
-          ) : (
-            <motion.span
-              key="copy"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="flex items-center gap-1.5"
-            >
-              <CopyIcon className="w-4 h-4" /> 상담 링크 복사
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </button>
-    </motion.div>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10">
+            <Link2Icon className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-text-muted">손님 공유용</p>
+            <h2 className="mt-0.5 text-base font-semibold text-text">상담 링크 복사</h2>
+            <p className="mt-0.5 text-xs text-text-muted">손님이 날짜·시간과 정보를 직접 입력해요</p>
+          </div>
+          <ChevronRightIcon className="h-5 w-5 flex-shrink-0 text-text-muted" />
+        </div>
+      </motion.button>
+
+      <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
+    </>
   );
 }

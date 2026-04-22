@@ -454,6 +454,8 @@ export default function WrapUpPage(): React.ReactElement {
             shopId: currentRecord.shopId || shopId,
             consultation: currentRecord.consultation,
             shareCardId: currentRecord.shareCardId,
+            createdAt: currentRecord.createdAt,
+            estimatedMinutes: currentRecord.estimatedMinutes,
           }}
           portfolioPhotos={[
             ...portfolioPhotos.map((p) => ({

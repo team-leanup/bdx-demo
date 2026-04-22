@@ -42,6 +42,7 @@ interface CustomerStore {
 
   addMembership: (customerId: string, membership: Membership) => void;
   useMembershipSession: (customerId: string, recordId?: string) => void;
+  manualDeductMembership: (customerId: string, count: number, note?: string) => void;
   updateMembership: (customerId: string, updates: Partial<Membership>) => void;
 
   recordTreatmentCompletion: (
@@ -538,6 +539,63 @@ export const useCustomerStore = create<CustomerStore>()(
               type: 'use',
               sessionsDelta: -1,
               recordId,
+            }).catch(console.error);
+          }
+        }
+      },
+
+      manualDeductMembership: (customerId, count, note) => {
+        if (!Number.isFinite(count) || count <= 0) return;
+        const txnId = generateId('txn');
+        const today = getTodayInKorea();
+        set((state) => ({
+          customers: state.customers.map((c) => {
+            if (c.id !== customerId) return c;
+            const m = c.membership;
+            if (!m || m.remainingSessions <= 0) return c;
+
+            const actualDeduct = Math.min(count, m.remainingSessions);
+            const transaction: MembershipTransaction = {
+              id: txnId,
+              date: today,
+              type: 'manual_deduct',
+              sessionsDelta: -actualDeduct,
+              note: note?.trim() || undefined,
+            };
+
+            const remainingSessions = m.remainingSessions - actualDeduct;
+            const usedSessions = m.usedSessions + actualDeduct;
+            const status: Membership['status'] =
+              remainingSessions === 0 ? 'used_up' : m.status;
+
+            const updatedMembership: Membership = {
+              ...m,
+              remainingSessions,
+              usedSessions,
+              status,
+              transactions: [...(m.transactions ?? []), transaction],
+            };
+
+            return { ...c, membership: updatedMembership, updatedAt: getNowInKoreaIso() };
+          }),
+        }));
+        const updated = get().customers.find((c) => c.id === customerId);
+        if (updated) {
+          dbUpsertCustomer(updated).catch(console.error);
+          const shopId = useAuthStore.getState().currentShopId;
+          if (shopId) {
+            const m = updated.membership;
+            const actualDeduct = m
+              ? (m.transactions?.find((t) => t.id === txnId)?.sessionsDelta ?? 0)
+              : 0;
+            dbInsertMembershipTransaction({
+              id: txnId,
+              customerId,
+              shopId,
+              date: today,
+              type: 'manual_deduct',
+              sessionsDelta: actualDeduct,
+              note: note?.trim() || undefined,
             }).catch(console.error);
           }
         }

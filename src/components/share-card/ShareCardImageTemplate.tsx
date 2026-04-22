@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
-import { DESIGN_SCOPE_LABEL, EXPRESSION_LABEL, BODY_PART_LABEL } from '@/lib/labels';
+import { DESIGN_SCOPE_LABEL, BODY_PART_LABEL } from '@/lib/labels';
 import type { ConsultationType } from '@/types/consultation';
 
-// ── Design scope → mood title mapping ───────────────────────────────────────
+// Design scope → mood title (영문)
 const MOOD_TITLE: Record<string, string> = {
   solid_tone: 'Clean Minimal',
   gradient: 'Soft Gradient',
@@ -18,7 +18,7 @@ const MOOD_TITLE: Record<string, string> = {
   full_art: 'Full Art Edition',
 };
 
-// ── Design scope → hashtag mapping ──────────────────────────────────────────
+// Design scope → hashtag
 const SCOPE_HASHTAG: Record<string, string> = {
   solid_tone: '#Minimal',
   gradient: '#Soft',
@@ -31,7 +31,7 @@ const SCOPE_HASHTAG: Record<string, string> = {
   full_art: '#FullArt',
 };
 
-// ── Nail shape → 한글 라벨 ──────────────────────────────────────────────────
+// Nail shape → 한글
 const SHAPE_LABEL: Record<string, string> = {
   round: '라운드',
   oval: '오벌',
@@ -42,29 +42,7 @@ const SHAPE_LABEL: Record<string, string> = {
   coffin: '코핀',
 };
 
-// ── Off type → 한글 라벨 ────────────────────────────────────────────────────
-const OFF_LABEL_SHORT: Record<string, string> = {
-  same_shop: '자샵 오프',
-  other_shop: '타샵 오프',
-};
-
-// ── Extension type → 한글 라벨 ──────────────────────────────────────────────
-const EXTENSION_LABEL_SHORT: Record<string, string> = {
-  none: '',
-  natural: '내추럴 연장',
-  short: '쇼트 연장',
-  medium: '미디엄 연장',
-  long: '롱 연장',
-};
-
-// ── Expression → English hashtag ────────────────────────────────────────────
-const EXPRESSION_HASHTAG: Record<string, string> = {
-  solid: '#Clean',
-  gradient: '#Gradient',
-  french: '#French',
-  magnetic: '#CatEye',
-};
-
+// Design scope 한글 라벨 (인스타 스타일)
 const INSTA_SCOPE_LABEL: Record<string, string> = {
   solid_tone: '원톤 (단색)',
   gradient: '그라데이션',
@@ -81,14 +59,17 @@ function getDesignLabel(scope: string): string {
   return INSTA_SCOPE_LABEL[scope] ?? DESIGN_SCOPE_LABEL[scope] ?? scope;
 }
 
+const DEFAULT_FEEDBACK_LINE = '너무 만족하셨어요';
+const CONSULT_BUILT_LINE = '상담을 통해 완성된 디자인입니다';
+
 export type CardRatio = '9:16' | '3:4';
 
 const RATIO_CONFIG: Record<CardRatio, { width: number; height: number; photoPercent: number }> = {
-  '9:16': { width: 1080, height: 1920, photoPercent: 58 },
-  '3:4':  { width: 1080, height: 1440, photoPercent: 50 },
+  '9:16': { width: 1080, height: 1920, photoPercent: 62 },
+  '3:4':  { width: 1080, height: 1440, photoPercent: 54 },
 };
 
-// BDX 심볼 로고 — 인라인 SVG (html2canvas 호환용)
+// BDX 심볼 로고 — 인라인 SVG (html2canvas 호환)
 function BdxLogo({ size }: { size: number }): React.ReactElement {
   return (
     <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width={size} height={size}>
@@ -135,6 +116,7 @@ interface ShareCardImageTemplateProps {
   templateRef: React.RefObject<HTMLDivElement | null>;
   shopId?: string;
   createdAt?: string;
+  estimatedMinutes?: number;
 }
 
 export function ShareCardImageTemplate({
@@ -145,39 +127,19 @@ export function ShareCardImageTemplate({
   templateRef,
   shopId,
   createdAt,
+  estimatedMinutes,
 }: ShareCardImageTemplateProps): React.ReactElement {
   const config = RATIO_CONFIG[ratio];
   const infoPercent = 100 - config.photoPercent;
   const designLabel = getDesignLabel(consultation.designScope);
   const bodyLabel = BODY_PART_LABEL[consultation.bodyPart] ?? consultation.bodyPart;
-  const expressionLabels = (consultation.expressions ?? [])
-    .map((e) => EXPRESSION_LABEL[e] ?? e)
-    .filter(Boolean);
 
   const moodTitle = MOOD_TITLE[consultation.designScope] ?? 'Nail Design';
   const hashtag = SCOPE_HASHTAG[consultation.designScope] ?? '#Nail';
 
-  // ── TREATMENT 섹션용 시술 정보 수집 ────────────────────────────────────────
   const shapeLabel = consultation.nailShape ? SHAPE_LABEL[consultation.nailShape] : null;
-  const offLabel = OFF_LABEL_SHORT[consultation.offType] ?? null;
-  const extensionLabel = consultation.extensionType
-    ? EXTENSION_LABEL_SHORT[consultation.extensionType] ?? null
-    : null;
-  const partsCount = (consultation.partsSelections ?? []).reduce(
-    (sum, p) => sum + (p.quantity ?? 0),
-    0,
-  );
-  const extraColorCount = consultation.extraColorCount ?? 0;
-  const repairCount = consultation.repairCount ?? 0;
-
-  // 2열 좌/우로 나눠서 밀도 있는 레이아웃 구성
-  const treatmentRows: Array<{ label: string; value: string }> = [];
-  if (shapeLabel) treatmentRows.push({ label: 'SHAPE', value: shapeLabel });
-  if (offLabel) treatmentRows.push({ label: 'OFF', value: offLabel });
-  if (extensionLabel) treatmentRows.push({ label: 'EXTENSION', value: extensionLabel });
-  if (partsCount > 0) treatmentRows.push({ label: 'PARTS', value: `${partsCount}개` });
-  if (extraColorCount > 0) treatmentRows.push({ label: 'COLOR', value: `+${extraColorCount}` });
-  if (repairCount > 0) treatmentRows.push({ label: 'REPAIR', value: `${repairCount}개` });
+  const shapeBodyParts = shapeLabel ? [shapeLabel, bodyLabel] : [bodyLabel];
+  const showMinutes = typeof estimatedMinutes === 'number' && estimatedMinutes > 0;
 
   const dateStr = createdAt
     ? new Date(createdAt).toLocaleDateString('en-CA').replace(/-/g, '.')
@@ -189,20 +151,14 @@ export function ShareCardImageTemplate({
     if (!shopId) return;
     const url = `https://beauty-decision.com/pre-consult/${shopId}`;
     QRCode.toDataURL(url, {
-      width: 200,
+      width: 240,
       margin: 1,
-      color: { dark: '#191F28', light: '#FAF8F500' },
+      color: { dark: '#191F28', light: '#FFFFFF00' },
       errorCorrectionLevel: 'M',
     })
       .then(setQrDataUrl)
       .catch(() => { /* QR generation failed — skip */ });
   }, [shopId]);
-
-  // Expression hashtags for overlay (English)
-  const exprHashtags = (consultation.expressions ?? [])
-    .map((e) => EXPRESSION_HASHTAG[e])
-    .filter(Boolean);
-  const allHashtags = [hashtag, ...exprHashtags].slice(0, 4);
 
   return (
     <div
@@ -212,210 +168,220 @@ export function ShareCardImageTemplate({
         height: config.height,
         position: 'relative',
         overflow: 'hidden',
-        background: '#FAF8F5',
+        background: '#F5F0EA',
         flexShrink: 0,
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", "Noto Sans KR", sans-serif',
       }}
     >
-      {/* 상단: 시술 사진 */}
+      {/* 상단: 시술 사진 1장 */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: `${config.photoPercent}%` }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
 
-        {/* Gradient overlay at bottom */}
+        {/* 하단 페이드 */}
         <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0, height: 140,
-          background: 'linear-gradient(to bottom, rgba(250,248,245,0) 0%, rgba(250,248,245,1) 100%)',
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: 180,
+          background: 'linear-gradient(to bottom, rgba(245,240,234,0) 0%, rgba(245,240,234,1) 100%)',
         }} />
 
-        {/* Top-left: CURATED VIBES tag */}
+        {/* 좌상단: 단일 해시태그 pill (광고 느낌 제거, 기록 카드 톤) */}
         <div style={{
-          position: 'absolute', top: 36, left: 36,
-          display: 'flex', flexDirection: 'column', gap: 10,
+          position: 'absolute', top: 40, left: 40,
         }}>
           <span style={{
-            display: 'inline-flex', padding: '10px 20px', borderRadius: 999,
-            fontSize: 24, fontWeight: 800, letterSpacing: '0.12em',
-            background: 'rgba(0,0,0,0.6)', color: '#FFFFFF',
-            textTransform: 'uppercase' as const,
+            display: 'inline-flex', padding: '12px 22px', borderRadius: 999,
+            fontSize: 22, fontWeight: 700, letterSpacing: '-0.005em',
+            background: 'rgba(255,255,255,0.92)', color: '#191F28',
           }}>
-            CURATED VIBES
+            {hashtag}
           </span>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {allHashtags.map((tag, i) => (
-              <span key={i} style={{
-                display: 'inline-flex', padding: '6px 14px', borderRadius: 999,
-                fontSize: 22, fontWeight: 600,
-                background: 'rgba(255,255,255,0.85)', color: '#191F28',
-              }}>
-                {tag}
-              </span>
-            ))}
-          </div>
         </div>
       </div>
 
       {/* 하단: 정보 패널 */}
       <div style={{
         position: 'absolute', left: 0, right: 0, bottom: 0,
-        height: `${infoPercent}%`, background: '#FAF8F5',
+        height: `${infoPercent}%`, background: '#F5F0EA',
         display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-        padding: '16px 36px 28px',
+        padding: '40px 56px 48px',
       }}>
-        {/* Upper section: Design info */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {/* DAILY MOOD label with accent line */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{
-              width: 28, height: 2, background: '#F43F5E', borderRadius: 2,
-            }} />
-            <span style={{
-              fontSize: 20, fontWeight: 700, letterSpacing: '0.18em',
-              color: '#F43F5E', textTransform: 'uppercase' as const,
-            }}>
-              DAILY MOOD
-            </span>
-          </div>
-
-          {/* Mood title (English, display) */}
+        {/* Upper: 타이틀 + 서브 + 본문 */}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {/* Display — 영문 무드 타이틀 */}
           <span style={{
-            fontSize: 68, fontWeight: 900, color: '#191F28',
-            lineHeight: 1.02, letterSpacing: '-0.035em',
+            fontSize: 88, fontWeight: 900, color: '#191F28',
+            lineHeight: 0.98, letterSpacing: '-0.04em',
           }}>
             {moodTitle}
           </span>
 
-          {/* Design label (Korean subtitle) */}
+          {/* Body Large — 한글 서브 */}
           <span style={{
-            fontSize: 32, fontWeight: 600, color: '#6B7280',
-            lineHeight: 1.25, letterSpacing: '-0.015em',
+            fontSize: 32, fontWeight: 600, color: '#4B5563',
+            lineHeight: 1.2, letterSpacing: '-0.02em',
+            marginTop: 14,
           }}>
             {designLabel}
           </span>
 
-          {/* Body part + expression badges */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
-            <span style={{
-              display: 'inline-flex', padding: '8px 18px', borderRadius: 999,
-              fontSize: 24, fontWeight: 700, background: '#FFF1F2', color: '#F43F5E',
-              letterSpacing: '-0.01em',
-            }}>
-              {bodyLabel}
-            </span>
-            {expressionLabels.map((label, i) => (
-              <span key={i} style={{
-                display: 'inline-flex', padding: '8px 18px', borderRadius: 999,
-                fontSize: 22, fontWeight: 600, background: '#F0EDE8', color: '#6B7280',
-                letterSpacing: '-0.01em',
-              }}>
-                {label}
-              </span>
-            ))}
-          </div>
+          {/* Body — 상담 메시지 */}
+          <span style={{
+            fontSize: 24, fontWeight: 500, color: '#6B7280',
+            lineHeight: 1.4, letterSpacing: '-0.012em',
+            marginTop: 22,
+          }}>
+            {CONSULT_BUILT_LINE}
+          </span>
         </div>
 
-        {/* Middle: TREATMENT DETAILS — 실제 시술 정보 */}
-        {treatmentRows.length > 0 && (
-          <div style={{
-            display: 'flex', flexDirection: 'column', gap: 14,
-            padding: '20px 24px',
-            background: '#FFFFFF',
-            borderRadius: 20,
-            border: '1px solid #EEE8E0',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{
-                width: 4, height: 18, borderRadius: 2, background: '#F43F5E',
-              }} />
-              <span style={{
-                fontSize: 20, fontWeight: 700, letterSpacing: '0.18em',
-                color: '#6B7280', textTransform: 'uppercase' as const,
-              }}>
-                TREATMENT
-              </span>
-            </div>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              columnGap: 32,
-              rowGap: 10,
-            }}>
-              {treatmentRows.map((row, i) => (
-                <div key={i} style={{
-                  display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
-                  gap: 12,
-                  borderBottom: '1px dashed #EEE8E0',
-                  paddingBottom: 8,
-                }}>
-                  <span style={{
-                    fontSize: 18, fontWeight: 700, letterSpacing: '0.12em',
-                    color: '#B0A8A0', textTransform: 'uppercase' as const,
-                  }}>
-                    {row.label}
-                  </span>
-                  <span style={{
-                    fontSize: 26, fontWeight: 700, color: '#191F28',
-                    letterSpacing: '-0.01em',
-                  }}>
-                    {row.value}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Middle: 3줄 감성 정보 박스 */}
+        <div style={{
+          display: 'flex', flexDirection: 'column',
+          background: 'rgba(255,255,255,0.62)',
+          borderRadius: 20,
+          border: '1px solid rgba(222, 214, 200, 0.7)',
+          overflow: 'hidden',
+        }}>
+          <FeedbackRow
+            icon="💅"
+            parts={shapeBodyParts}
+            isLast={false}
+          />
+          {showMinutes && (
+            <FeedbackRow
+              icon="⏱️"
+              number={estimatedMinutes}
+              unit="분"
+              isLast={false}
+            />
+          )}
+          <FeedbackRow
+            icon="💕"
+            parts={[DEFAULT_FEEDBACK_LINE]}
+            isLast
+          />
+        </div>
 
-        {/* Bottom: Shop name + Date + QR + BDX logo */}
+        {/* Bottom: Shop + Date + BDX logo | CTA + QR */}
         <div style={{
           display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
-          paddingTop: 18, borderTop: '1px solid #EEE8E0',
+          gap: 28,
         }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {/* Shop name */}
+          {/* 좌측: 샵 정보 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1, minWidth: 0 }}>
             <span style={{
-              fontSize: 44, fontWeight: 900, color: '#191F28',
-              letterSpacing: '-0.02em', lineHeight: 1.1,
+              fontSize: 36, fontWeight: 900, color: '#191F28',
+              letterSpacing: '-0.03em', lineHeight: 1.1,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
             }}>
               {shopName}
             </span>
-            {/* Date */}
             <span style={{
-              fontSize: 20, fontWeight: 600, letterSpacing: '0.1em', color: '#9CA3AF',
+              fontSize: 18, fontWeight: 600, letterSpacing: '0.08em', color: '#9CA3AF',
               fontVariantNumeric: 'tabular-nums' as const,
             }}>
               {dateStr}
             </span>
-            {/* BDX branding */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
-              <BdxLogo size={32} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginTop: 8 }}>
+              <BdxLogo size={24} />
               <span style={{
-                fontSize: 16, letterSpacing: '0.08em', color: '#B0A8A0',
+                fontSize: 12, letterSpacing: '0.18em', color: '#9A8F84',
                 fontWeight: 700, textTransform: 'uppercase' as const,
               }}>
-                Beauty Decision eXperience
+                Beauty Decision <span style={{ color: '#E11D48' }}>eXperience</span>
               </span>
             </div>
           </div>
 
-          {/* QR Code — 링크 안내 */}
+          {/* 우측: CTA + QR */}
           {qrDataUrl && (
             <div style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-              padding: 12, borderRadius: 14, background: '#FFFFFF',
-              border: '1px solid #EEE8E0',
+              display: 'flex', alignItems: 'center', gap: 14,
+              padding: '14px 16px 14px 20px',
+              background: 'rgba(255,255,255,0.95)',
+              borderRadius: 22,
+              border: '1px solid rgba(222, 214, 200, 0.85)',
             }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={qrDataUrl} alt="QR" style={{ width: 96, height: 96, display: 'block' }} />
               <span style={{
-                fontSize: 13, fontWeight: 700, color: '#191F28',
-                letterSpacing: '0.14em', textTransform: 'uppercase' as const,
+                fontSize: 20, fontWeight: 800, color: '#191F28',
+                letterSpacing: '-0.015em', lineHeight: 1.25,
+                whiteSpace: 'nowrap' as const,
               }}>
-                예약하기
+                이 디자인으로<br />
+                <span style={{ color: '#E11D48' }}>예약하기</span>
               </span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={qrDataUrl} alt="QR" style={{ width: 120, height: 120, display: 'block' }} />
             </div>
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+interface FeedbackRowProps {
+  icon: string;
+  parts?: string[];
+  number?: number;
+  unit?: string;
+  isLast?: boolean;
+}
+
+function FeedbackRow({ icon, parts, number, unit, isLast }: FeedbackRowProps): React.ReactElement {
+  const borderBottom = isLast ? 'none' : '1px solid rgba(222, 214, 200, 0.55)';
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 20,
+      padding: '24px 32px',
+      borderBottom,
+    }}>
+      <span style={{
+        fontSize: 32, lineHeight: 1,
+        width: 40, textAlign: 'center' as const,
+        fontFamily: 'Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif',
+      }}>
+        {icon}
+      </span>
+      {typeof number === 'number' ? (
+        <span style={{ display: 'inline-flex', alignItems: 'baseline' }}>
+          <span style={{
+            fontSize: 30, fontWeight: 800, color: '#191F28',
+            letterSpacing: '-0.02em',
+            fontVariantNumeric: 'tabular-nums' as const,
+          }}>
+            {number}
+          </span>
+          {unit && (
+            <span style={{
+              fontSize: 24, fontWeight: 600, color: '#1F2937',
+              letterSpacing: '-0.01em',
+              marginLeft: 4,
+            }}>
+              {unit}
+            </span>
+          )}
+        </span>
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          {(parts ?? []).map((p, i) => (
+            <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              {i > 0 && (
+                <span style={{
+                  width: 5, height: 5, borderRadius: 999,
+                  background: '#C9BEB0', display: 'inline-block',
+                }} />
+              )}
+              <span style={{
+                fontSize: 26, fontWeight: 600, color: '#1F2937',
+                letterSpacing: '-0.015em',
+              }}>
+                {p}
+              </span>
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

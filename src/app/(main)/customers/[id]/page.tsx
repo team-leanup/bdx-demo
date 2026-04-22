@@ -125,6 +125,7 @@ function CustomerDetailContent({ id }: { id: string }) {
   const updateTagsInStore = useCustomerStore((s) => s.updateTags);
   const appendSmallTalkNote = useCustomerStore((s) => s.appendSmallTalkNote);
   const addMembership = useCustomerStore((s) => s.addMembership);
+  const manualDeductMembership = useCustomerStore((s) => s.manualDeductMembership);
   const designers = useShopStore((s) => s.designers);
 
   const [isVip, setIsVip] = useState(() => useCustomerStore.getState().getById(id)?.isRegular ?? false);
@@ -145,6 +146,9 @@ function CustomerDetailContent({ id }: { id: string }) {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [toasts, setToasts] = useState<ToastData[]>([]);
   const [showMembershipModal, setShowMembershipModal] = useState(false);
+  const [showDeductModal, setShowDeductModal] = useState(false);
+  const [deductCount, setDeductCount] = useState('1');
+  const [deductNote, setDeductNote] = useState('');
   const [mbPurchaseAmount, setMbPurchaseAmount] = useState('');
   const [mbTotalSessions, setMbTotalSessions] = useState('');
   const [mbExpiryDate, setMbExpiryDate] = useState('');
@@ -989,7 +993,29 @@ function CustomerDetailContent({ id }: { id: string }) {
       <div className="mx-4">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold text-text-secondary">회원권</h2>
-          {customer.membership && (
+          {customer.membership && customer.membership.remainingSessions > 0 && (
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeductCount('1');
+                  setDeductNote('');
+                  setShowDeductModal(true);
+                }}
+                className="text-xs font-medium text-text-secondary hover:text-text hover:underline"
+              >
+                횟수 차감
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowMembershipModal(true)}
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                수정
+              </button>
+            </div>
+          )}
+          {customer.membership && customer.membership.remainingSessions === 0 && (
             <button
               type="button"
               onClick={() => setShowMembershipModal(true)}
@@ -1455,6 +1481,72 @@ function CustomerDetailContent({ id }: { id: string }) {
               className="flex-1 rounded-xl bg-primary py-3 text-sm font-medium text-white disabled:opacity-40"
             >
               {customer.membership ? '저장' : '등록'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 회원권 수동 차감 모달 (기존 회원권 이관용) */}
+      <Modal
+        isOpen={showDeductModal}
+        onClose={() => setShowDeductModal(false)}
+        title="회원권 횟수 차감"
+      >
+        <div className="px-5 py-4 flex flex-col gap-4">
+          <p className="text-sm text-text-secondary">
+            다른 곳에서 쓰던 회원권을 옮겨오거나 시술 기록 없이 차감해야 할 때 사용하세요.
+          </p>
+          {customer.membership && (
+            <div className="rounded-xl bg-surface-alt border border-border p-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-text-muted">현재 잔여</span>
+                <span className="font-semibold text-text tabular-nums">
+                  {customer.membership.remainingSessions}회 / {customer.membership.totalSessions}회
+                </span>
+              </div>
+            </div>
+          )}
+          <div>
+            <label className="text-xs font-medium text-text-secondary mb-1 block">차감 횟수 *</label>
+            <input
+              value={deductCount}
+              onChange={(e) => setDeductCount(e.target.value.replace(/[^0-9]/g, ''))}
+              inputMode="numeric"
+              placeholder="1"
+              className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-base text-text placeholder:text-text-muted focus:border-primary focus:outline-none tabular-nums"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-text-secondary mb-1 block">사유 메모 (선택)</label>
+            <input
+              value={deductNote}
+              onChange={(e) => setDeductNote(e.target.value)}
+              placeholder="예: 기존 회원권 이관"
+              className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-base text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
+            />
+          </div>
+          <div className="flex gap-3 pt-2 pb-2">
+            <button
+              type="button"
+              onClick={() => setShowDeductModal(false)}
+              className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-text-secondary"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              disabled={!deductCount || Number(deductCount) <= 0}
+              onClick={() => {
+                const n = Number(deductCount);
+                if (!Number.isFinite(n) || n <= 0) return;
+                manualDeductMembership(id, n, deductNote);
+                setShowDeductModal(false);
+                setDeductCount('1');
+                setDeductNote('');
+              }}
+              className="flex-1 rounded-xl bg-primary py-3 text-sm font-medium text-white disabled:opacity-40"
+            >
+              차감하기
             </button>
           </div>
         </div>

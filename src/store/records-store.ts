@@ -17,6 +17,7 @@ import type { DesignScope } from '@/types/consultation';
 import { getTodayInKorea } from '@/lib/format';
 import { designCategoryToScope } from '@/lib/category-mapping';
 import type { DesignCategory } from '@/types/pre-consultation';
+import { estimateTime } from '@/lib/time-calculator';
 
 interface RecordsStore {
   records: ConsultationRecord[];
@@ -35,6 +36,8 @@ interface RecordsStore {
     finalPrice: number;
     notes?: string;
     paymentMethod?: import('@/types/consultation').PaymentMethod;
+    secondaryPaymentMethod?: 'cash' | 'card';
+    secondaryAmount?: number;
     bookingId?: string;
     saleDate?: string;
     saleTime?: string;
@@ -85,7 +88,7 @@ export const useRecordsStore = create<RecordsStore>()(
         });
       },
 
-      addQuickSaleRecord: ({ id, shopId, designerId, customerId, customerName, customerPhone, serviceType, finalPrice, notes, paymentMethod, bookingId, saleDate, saleTime }) => {
+      addQuickSaleRecord: ({ id, shopId, designerId, customerId, customerName, customerPhone, serviceType, finalPrice, notes, paymentMethod, secondaryPaymentMethod, secondaryAmount, bookingId, saleDate, saleTime }) => {
         const now = getNowInKoreaIso();
         const today = getTodayInKorea();
         // 사용자가 날짜/시간을 지정한 경우 해당 값으로 createdAt 생성
@@ -111,28 +114,29 @@ export const useRecordsStore = create<RecordsStore>()(
           (serviceType ? SERVICE_TO_CATEGORY[serviceType] : undefined) ?? 'simple';
         const designScope: DesignScope = designCategoryToScope(category);
 
+        const consultationSnapshot = {
+          bodyPart: 'hand' as const,
+          offType: 'none' as const,
+          extensionType: 'none' as const,
+          nailShape: 'round' as const,
+          designScope,
+          expressions: [],
+          hasParts: false,
+          partsSelections: [],
+          extraColorCount: 0,
+          currentStep: ConsultationStep.SUMMARY,
+          customerName,
+          customerPhone,
+          bookingId,
+        };
         const record: ConsultationRecord = {
           id,
           shopId,
           designerId,
           customerId: customerId ?? '',
-          consultation: {
-            bodyPart: 'hand',
-            offType: 'none',
-            extensionType: 'none',
-            nailShape: 'round',
-            designScope,
-            expressions: [],
-            hasParts: false,
-            partsSelections: [],
-            extraColorCount: 0,
-            currentStep: ConsultationStep.SUMMARY,
-            customerName,
-            customerPhone,
-            bookingId,
-          },
+          consultation: consultationSnapshot,
           totalPrice: finalPrice,
-          estimatedMinutes: 0,
+          estimatedMinutes: estimateTime(consultationSnapshot),
           finalPrice,
           createdAt: effectiveCreatedAt,
           updatedAt: now,
@@ -140,6 +144,8 @@ export const useRecordsStore = create<RecordsStore>()(
           isQuickSale: true,
           notes,
           paymentMethod,
+          secondaryPaymentMethod,
+          secondaryAmount,
         };
         // N-15: customerId 없고 customerName 있으면 전화→이름 순으로 매칭, 없으면 신규 고객 생성
         let effectiveCustomerId = customerId;
