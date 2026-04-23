@@ -185,13 +185,15 @@ export function ShareCardImageTemplate({
         }} />
 
         {/* 좌상단: 단일 해시태그 pill (광고 느낌 제거, 기록 카드 톤) */}
+        {/* 0423: 폰트/패딩 축소로 시각 비중 완화 */}
         <div style={{
           position: 'absolute', top: 40, left: 40,
         }}>
           <span style={{
-            display: 'inline-flex', padding: '12px 22px', borderRadius: 999,
-            fontSize: 22, fontWeight: 700, letterSpacing: '-0.005em',
+            display: 'inline-flex', padding: '10px 18px', borderRadius: 999,
+            fontSize: 20, fontWeight: 700, letterSpacing: '-0.005em',
             background: 'rgba(255,255,255,0.92)', color: '#191F28',
+            lineHeight: 1,
           }}>
             {hashtag}
           </span>
@@ -203,32 +205,33 @@ export function ShareCardImageTemplate({
         position: 'absolute', left: 0, right: 0, bottom: 0,
         height: `${infoPercent}%`, background: '#F5F0EA',
         display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-        padding: '40px 56px 48px',
+        padding: '48px 56px 52px',
       }}>
         {/* Upper: 타이틀 + 서브 + 본문 */}
+        {/* 0423 반영: 지승호 대표 "글씨 배열만 알맞게" 피드백 — 리듬 재조정 */}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {/* Display — 영문 무드 타이틀 */}
           <span style={{
-            fontSize: 88, fontWeight: 900, color: '#191F28',
-            lineHeight: 0.98, letterSpacing: '-0.04em',
+            fontSize: 84, fontWeight: 900, color: '#191F28',
+            lineHeight: 1, letterSpacing: '-0.035em',
           }}>
             {moodTitle}
           </span>
 
-          {/* Body Large — 한글 서브 */}
+          {/* Body Large — 한글 서브 (타이틀과 한 묶음으로 인식되도록 간격 축소) */}
           <span style={{
-            fontSize: 32, fontWeight: 600, color: '#4B5563',
-            lineHeight: 1.2, letterSpacing: '-0.02em',
-            marginTop: 14,
+            fontSize: 30, fontWeight: 600, color: '#4B5563',
+            lineHeight: 1.25, letterSpacing: '-0.018em',
+            marginTop: 10,
           }}>
             {designLabel}
           </span>
 
-          {/* Body — 상담 메시지 */}
+          {/* Body — 상담 메시지 (서브에서 한 호흡 두고 분리) */}
           <span style={{
-            fontSize: 24, fontWeight: 500, color: '#6B7280',
-            lineHeight: 1.4, letterSpacing: '-0.012em',
-            marginTop: 22,
+            fontSize: 22, fontWeight: 500, color: '#6B7280',
+            lineHeight: 1.45, letterSpacing: '-0.01em',
+            marginTop: 24,
           }}>
             {CONSULT_BUILT_LINE}
           </span>
@@ -267,51 +270,53 @@ export function ShareCardImageTemplate({
           display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
           gap: 28,
         }}>
-          {/* 좌측: 샵 정보 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1, minWidth: 0 }}>
+          {/* 좌측: 샵 정보 — 0423: 샵 이름 크기 축소 + 간격 정돈 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 0 }}>
             <span style={{
-              fontSize: 36, fontWeight: 900, color: '#191F28',
-              letterSpacing: '-0.03em', lineHeight: 1.1,
+              fontSize: 32, fontWeight: 800, color: '#191F28',
+              letterSpacing: '-0.025em', lineHeight: 1.15,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const,
             }}>
               {shopName}
             </span>
             <span style={{
-              fontSize: 18, fontWeight: 600, letterSpacing: '0.08em', color: '#9CA3AF',
+              fontSize: 17, fontWeight: 600, letterSpacing: '0.06em', color: '#9CA3AF',
               fontVariantNumeric: 'tabular-nums' as const,
+              lineHeight: 1,
             }}>
               {dateStr}
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginTop: 8 }}>
-              <BdxLogo size={24} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
+              <BdxLogo size={22} />
               <span style={{
-                fontSize: 12, letterSpacing: '0.18em', color: '#9A8F84',
+                fontSize: 11, letterSpacing: '0.2em', color: '#9A8F84',
                 fontWeight: 700, textTransform: 'uppercase' as const,
+                lineHeight: 1,
               }}>
                 Beauty Decision <span style={{ color: '#E11D48' }}>eXperience</span>
               </span>
             </div>
           </div>
 
-          {/* 우측: CTA + QR */}
+          {/* 우측: CTA + QR — 0423: 시각 균형 조정 (QR 축소, 텍스트 타이트) */}
           {qrDataUrl && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: 14,
               padding: '14px 16px 14px 20px',
               background: 'rgba(255,255,255,0.95)',
-              borderRadius: 22,
+              borderRadius: 20,
               border: '1px solid rgba(222, 214, 200, 0.85)',
             }}>
               <span style={{
-                fontSize: 20, fontWeight: 800, color: '#191F28',
-                letterSpacing: '-0.015em', lineHeight: 1.25,
+                fontSize: 18, fontWeight: 800, color: '#191F28',
+                letterSpacing: '-0.012em', lineHeight: 1.3,
                 whiteSpace: 'nowrap' as const,
               }}>
                 이 디자인으로<br />
                 <span style={{ color: '#E11D48' }}>예약하기</span>
               </span>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={qrDataUrl} alt="QR" style={{ width: 120, height: 120, display: 'block' }} />
+              <img src={qrDataUrl} alt="QR" style={{ width: 108, height: 108, display: 'block' }} />
             </div>
           )}
         </div>
@@ -330,15 +335,17 @@ interface FeedbackRowProps {
 
 function FeedbackRow({ icon, parts, number, unit, isLast }: FeedbackRowProps): React.ReactElement {
   const borderBottom = isLast ? 'none' : '1px solid rgba(222, 214, 200, 0.55)';
+  // 0423: 이모지/텍스트 baseline 정렬, 상하 패딩 균일화
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 20,
-      padding: '24px 32px',
+      display: 'flex', alignItems: 'center', gap: 18,
+      padding: '22px 32px',
       borderBottom,
+      minHeight: 72,
     }}>
       <span style={{
-        fontSize: 32, lineHeight: 1,
-        width: 40, textAlign: 'center' as const,
+        fontSize: 30, lineHeight: 1,
+        width: 36, textAlign: 'center' as const,
         fontFamily: 'Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif',
       }}>
         {icon}
@@ -346,16 +353,16 @@ function FeedbackRow({ icon, parts, number, unit, isLast }: FeedbackRowProps): R
       {typeof number === 'number' ? (
         <span style={{ display: 'inline-flex', alignItems: 'baseline' }}>
           <span style={{
-            fontSize: 30, fontWeight: 800, color: '#191F28',
-            letterSpacing: '-0.02em',
+            fontSize: 28, fontWeight: 800, color: '#191F28',
+            letterSpacing: '-0.02em', lineHeight: 1,
             fontVariantNumeric: 'tabular-nums' as const,
           }}>
             {number}
           </span>
           {unit && (
             <span style={{
-              fontSize: 24, fontWeight: 600, color: '#1F2937',
-              letterSpacing: '-0.01em',
+              fontSize: 22, fontWeight: 600, color: '#1F2937',
+              letterSpacing: '-0.01em', lineHeight: 1,
               marginLeft: 4,
             }}>
               {unit}
@@ -363,18 +370,18 @@ function FeedbackRow({ icon, parts, number, unit, isLast }: FeedbackRowProps): R
           )}
         </span>
       ) : (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           {(parts ?? []).map((p, i) => (
-            <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               {i > 0 && (
                 <span style={{
-                  width: 5, height: 5, borderRadius: 999,
+                  width: 4, height: 4, borderRadius: 999,
                   background: '#C9BEB0', display: 'inline-block',
                 }} />
               )}
               <span style={{
-                fontSize: 26, fontWeight: 600, color: '#1F2937',
-                letterSpacing: '-0.015em',
+                fontSize: 24, fontWeight: 600, color: '#1F2937',
+                letterSpacing: '-0.015em', lineHeight: 1.15,
               }}>
                 {p}
               </span>

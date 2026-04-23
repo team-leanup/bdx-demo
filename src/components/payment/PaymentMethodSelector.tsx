@@ -6,7 +6,10 @@ import type { PaymentMethod } from '@/types/consultation';
 interface PaymentMethodSelectorProps {
   value: PaymentMethod | undefined;
   onChange: (method: PaymentMethod) => void;
+  /** 잔여 횟수 (legacy — 0일 때 비활성 판단에 계속 사용) */
   membershipRemaining?: number;
+  /** 0423 반영: 잔액(원) — 뱃지/안내 표시용 */
+  membershipRemainingAmount?: number;
 }
 
 const METHODS: { key: PaymentMethod; label: string; icon: string }[] = [
@@ -19,8 +22,14 @@ export function PaymentMethodSelector({
   value,
   onChange,
   membershipRemaining,
+  membershipRemainingAmount,
 }: PaymentMethodSelectorProps): React.ReactElement {
-  const membershipDisabled = membershipRemaining === 0;
+  // 0423: 잔액 또는 횟수 정보가 없으면 안전하게 비활성 (undefined는 "회원권 없음"을 의미)
+  const hasMembership = membershipRemaining !== undefined || membershipRemainingAmount !== undefined;
+  const membershipDisabled =
+    !hasMembership ||
+    membershipRemaining === 0 ||
+    (typeof membershipRemainingAmount === 'number' && membershipRemainingAmount <= 0);
 
   return (
     <div className="flex gap-2" role="radiogroup" aria-label="결제수단 선택">
@@ -49,14 +58,17 @@ export function PaymentMethodSelector({
             <span className="text-xl leading-none" aria-hidden="true">{icon}</span>
             <span className="text-xs font-bold">{label}</span>
 
-            {isMembership && membershipRemaining !== undefined && membershipRemaining > 0 && (
+            {isMembership && membershipRemainingAmount !== undefined && membershipRemainingAmount > 0 && (
               <span
                 className={cn(
-                  'absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full text-[9px] font-black flex items-center justify-center',
+                  'absolute -top-2 right-1 px-1.5 h-[18px] rounded-full text-[9px] font-black flex items-center justify-center tabular-nums',
                   isSelected ? 'bg-primary text-white' : 'bg-text-muted text-white',
                 )}
+                aria-label={`잔액 ${membershipRemainingAmount.toLocaleString()}원`}
               >
-                {membershipRemaining}
+                {membershipRemainingAmount >= 10000
+                  ? `${Math.floor(membershipRemainingAmount / 10000)}만`
+                  : `${Math.floor(membershipRemainingAmount / 1000)}천`}
               </span>
             )}
 

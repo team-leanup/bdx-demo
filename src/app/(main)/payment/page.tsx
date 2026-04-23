@@ -13,6 +13,8 @@ import { generateId } from '@/lib/generate-id';
 import { getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
 import { DESIGN_SCOPE_LABEL, OFF_TYPE_LABEL } from '@/lib/labels';
 import type { PaymentMethod } from '@/types/consultation';
+import { getRemainingAmount, getMembershipSessionState } from '@/lib/membership';
+import { cn } from '@/lib/cn';
 
 type SectionId = 1 | 2 | 3 | 4 | 5;
 
@@ -44,6 +46,8 @@ export default function PaymentPage(): React.ReactElement | null {
   const [currentSection, setCurrentSection] = useState<SectionId>(2);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | undefined>();
   const [isProcessing, setIsProcessing] = useState(false);
+  // 0423: 회원권 잔액 < 시술금일 때 차액을 받을 결제 수단
+  const [secondaryPaymentMethod, setSecondaryPaymentMethod] = useState<'cash' | 'card'>('card');
 
   // Section 3: customer info
   const [customerName, setCustomerName] = useState('');
@@ -86,10 +90,34 @@ export default function PaymentPage(): React.ReactElement | null {
 
     setIsProcessing(true);
 
-    updateRecord(recordId, { paymentMethod });
+    // 0423: 회원권 차액(현금/카드) 계산 — 시술금 > 잔액이면 잔액만큼 차감 + 차액 저장
+    const membershipForDeduct =
+      paymentMethod === 'membership' && record.customerId
+        ? useCustomerStore.getState().getById(record.customerId)?.membership
+        : undefined;
+    const membershipAvailable = membershipForDeduct ? getRemainingAmount(membershipForDeduct) : 0;
+    const membershipAppliedAmount =
+      paymentMethod === 'membership'
+        ? Math.max(0, Math.min(membershipAvailable, record.finalPrice))
+        : 0;
+    const diffAmount = Math.max(0, record.finalPrice - membershipAppliedAmount);
+
+    updateRecord(recordId, {
+      paymentMethod,
+      // 차액이 있을 때만 보조 결제 수단 기록
+      secondaryPaymentMethod:
+        paymentMethod === 'membership' && diffAmount > 0 ? secondaryPaymentMethod : undefined,
+      secondaryAmount:
+        paymentMethod === 'membership' && diffAmount > 0 ? diffAmount : undefined,
+    });
 
     if (paymentMethod === 'membership' && record.customerId) {
-      useCustomerStore.getState().useMembershipSession(record.customerId, recordId);
+      // 0423: 회원권 잔액만큼만 차감 (차액은 현금/카드로 별도 처리)
+      useCustomerStore.getState().useMembershipSession(
+        record.customerId,
+        recordId,
+        membershipAppliedAmount,
+      );
     }
 
     // 상담(consultation) 플로우 전용 고객 통계 업데이트
@@ -120,7 +148,7 @@ export default function PaymentPage(): React.ReactElement | null {
 
     setIsProcessing(false);
     setCurrentSection(3);
-  }, [paymentMethod, record, recordId, updateRecord]);
+  }, [paymentMethod, record, recordId, updateRecord, secondaryPaymentMethod]);
 
   const handleCustomerRegister = useCallback((): void => {
     if (!customerName.trim() || !record || !recordId) return;
@@ -293,7 +321,67 @@ export default function PaymentPage(): React.ReactElement | null {
               value={paymentMethod}
               onChange={setPaymentMethod}
               membershipRemaining={membership?.remainingSessions}
+              membershipRemainingAmount={membership ? getRemainingAmount(membership) : undefined}
             />
+
+            {/* 0423: 회원권 선택 시 차감액·차액 안내 (현장모드와 동일 UX) */}
+            {paymentMethod === 'membership' && membership && (() => {
+              const available = getRemainingAmount(membership);
+              const applied = Math.max(0, Math.min(available, record.finalPrice));
+              const diff = Math.max(0, record.finalPrice - applied);
+              const sessionState = getMembershipSessionState(membership);
+              return (
+                <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-4 flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-text-secondary">회원권에서 차감</span>
+                    <span className="font-bold text-primary tabular-nums">
+                      -{applied.toLocaleString()}원
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-text-muted">
+                    {sessionState.currentSessionNumber}회차 · 결제 후 총 잔액 {Math.max(0, available - applied).toLocaleString()}원
+                  </p>
+                  {diff > 0 && (
+                    <>
+                      <div className="mt-1 pt-3 border-t border-primary/15 flex items-center justify-between">
+                        <span className="text-sm font-semibold text-text">
+                          차액 <span className="text-[11px] text-text-muted font-normal">(추가 결제)</span>
+                        </span>
+                        <span className="text-lg font-black text-text tabular-nums">
+                          {diff.toLocaleString()}원
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(['cash', 'card'] as const).map((method) => (
+                          <button
+                            key={method}
+                            type="button"
+                            onClick={() => setSecondaryPaymentMethod(method)}
+                            className={cn(
+                              'min-h-[44px] rounded-lg text-sm font-bold border transition-all duration-150 active:scale-95',
+                              secondaryPaymentMethod === method
+                                ? 'bg-primary text-white border-primary'
+                                : 'bg-surface text-text-secondary border-border hover:border-primary/40',
+                            )}
+                          >
+                            {method === 'cash' ? '현금' : '카드'}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-[11px] text-text-muted">
+                        회원권 {applied.toLocaleString()}원 + {secondaryPaymentMethod === 'cash' ? '현금' : '카드'} {diff.toLocaleString()}원 받으시면 돼요
+                      </p>
+                    </>
+                  )}
+                  {diff === 0 && applied > 0 && (
+                    <p className="text-[11px] text-success font-medium">
+                      회원권으로 전액 결제 · 추가로 받으실 금액 없어요
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
+
             <button
               type="button"
               disabled={!paymentMethod || isProcessing}

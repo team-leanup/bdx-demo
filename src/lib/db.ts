@@ -1478,6 +1478,8 @@ export async function dbInsertMembershipTransaction(
     date: string;
     type: 'purchase' | 'use' | 'manual_deduct';
     sessionsDelta: number;
+    /** 0423 반영: 금액 기반 차감 추적 */
+    amountDelta?: number;
     recordId?: string;
     note?: string;
   },
@@ -1489,6 +1491,7 @@ export async function dbInsertMembershipTransaction(
     date: transaction.date,
     type: transaction.type,
     sessions_delta: transaction.sessionsDelta,
+    amount_delta: transaction.amountDelta ?? null,
     record_id: transaction.recordId ?? null,
     note: transaction.note ?? null,
   });
@@ -1502,7 +1505,7 @@ export async function dbInsertMembershipTransaction(
 export async function dbFetchMembershipTransactions(
   customerId: string,
   shopId: string,
-): Promise<{ id: string; date: string; type: string; sessionsDelta: number; recordId?: string; note?: string }[]> {
+): Promise<{ id: string; date: string; type: string; sessionsDelta: number; amountDelta?: number; recordId?: string; note?: string }[]> {
   const { data, error } = await supabase
     .from('membership_transactions')
     .select('*')
@@ -1513,14 +1516,19 @@ export async function dbFetchMembershipTransactions(
     console.error('[db] dbFetchMembershipTransactions error:', toDbErrorSnapshot(error));
     return [];
   }
-  return data.map((row) => ({
-    id: row.id,
-    date: row.date,
-    type: row.type,
-    sessionsDelta: row.sessions_delta,
-    recordId: row.record_id ?? undefined,
-    note: row.note ?? undefined,
-  }));
+  return data.map((row) => {
+    // 0423 migration 전/후 양쪽 호환: 생성 타입에 amount_delta가 없을 수 있음
+    const extended = row as typeof row & { amount_delta?: number | null };
+    return {
+      id: row.id,
+      date: row.date,
+      type: row.type,
+      sessionsDelta: row.sessions_delta,
+      amountDelta: extended.amount_delta ?? undefined,
+      recordId: row.record_id ?? undefined,
+      note: row.note ?? undefined,
+    };
+  });
 }
 
 // ─── Membership Plans ────────────────────────────────────────────────────────

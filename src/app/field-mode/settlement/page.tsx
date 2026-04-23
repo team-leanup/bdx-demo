@@ -19,6 +19,7 @@ import { useCustomerStore } from '@/store/customer-store';
 import type { PaymentMethod } from '@/types/consultation';
 import type { AddOnOption } from '@/types/pre-consultation';
 import { generateId } from '@/lib/generate-id';
+import { getRemainingAmount, getMembershipSessionState, canUseMembership as canUseMembershipFn, getEffectiveStatus } from '@/lib/membership';
 
 const ADD_ON_LABELS: Record<string, string> = {
   stone: '스톤',
@@ -94,8 +95,8 @@ export default function SettlementPage(): React.ReactElement | null {
   const customerMembership = useCustomerStore((s) =>
     customerId ? s.customers.find((c) => c.id === customerId)?.membership : undefined,
   );
-  const canUseMembership =
-    !!customerId && !!customerMembership && customerMembership.status === 'active' && customerMembership.remainingSessions > 0;
+  // 0423: 잔액 기반 + 만료일 자동 판정
+  const canUseMembership = !!customerId && canUseMembershipFn(customerMembership);
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
@@ -123,11 +124,7 @@ export default function SettlementPage(): React.ReactElement | null {
     if (currentShopId !== 'shop-demo') return;
     if (customerId) return;
     const demoCustomer = customers.find(
-      (c) =>
-        c.shopId === 'shop-demo' &&
-        c.membership &&
-        c.membership.status === 'active' &&
-        c.membership.remainingSessions > 0,
+      (c) => c.shopId === 'shop-demo' && canUseMembershipFn(c.membership),
     );
     if (demoCustomer) {
       setCustomerInfo(demoCustomer.name, demoCustomer.phone, demoCustomer.id);
@@ -153,16 +150,21 @@ export default function SettlementPage(): React.ReactElement | null {
   const discountAmount = discountPercent > 0 ? Math.round(subtotal * discountPercent / 100) : 0;
   const isMembershipPayment = paymentMethod === 'membership' && canUseMembership;
 
-  // 회원권 1회 단가 = 구매금액 / 총 횟수 (정수 내림)
-  const membershipUnitPrice = customerMembership && customerMembership.totalSessions > 0
-    ? Math.floor(customerMembership.purchaseAmount / customerMembership.totalSessions)
-    : 0;
-  // 시술금에서 실제 차감되는 회원권 금액 (단가를 넘지 않도록 clamp)
+  // 0423 반영: "얼마 남았는지" 기준 차감.
+  // - 회원권 잔액(원)이 시술금보다 크거나 같으면 시술금 전액 차감 → 고객 결제 0원
+  // - 잔액보다 시술금이 크면 잔액만큼만 차감 → 차액은 현금/카드로 결제
   const afterDiscountDeposit = Math.max(0, subtotal - discountAmount - depositApplied);
+  const membershipRemainingBefore = customerMembership ? getRemainingAmount(customerMembership) : 0;
+  const membershipSessionState = customerMembership
+    ? getMembershipSessionState(customerMembership)
+    : null;
   const membershipApplied = isMembershipPayment
-    ? Math.min(membershipUnitPrice, afterDiscountDeposit)
+    ? Math.max(0, Math.min(membershipRemainingBefore, afterDiscountDeposit))
     : 0;
-  // 회원권 차감 후 남은 잔액 (차액)
+  const membershipRemainingAfter = isMembershipPayment
+    ? Math.max(0, membershipRemainingBefore - membershipApplied)
+    : membershipRemainingBefore;
+  // 회원권 차감 후 남은 잔액 (차액 — 고객이 결제해야 할 금액)
   const remainingAfterMembership = Math.max(0, afterDiscountDeposit - membershipApplied);
   // 고객이 실제로 결제해야 할 금액
   const finalPrice = isMembershipPayment ? remainingAfterMembership : afterDiscountDeposit;
@@ -249,8 +251,9 @@ export default function SettlementPage(): React.ReactElement | null {
     }
 
     // 3) 회원권 자동 차감 — 시술 기록이 정상 저장된 경우에만 (2026-04-20 R3)
+    //    0423: 금액 기반으로 차감 (membershipApplied)
     if (recordSaved && paymentMethod === 'membership' && customerId) {
-      useCustomerStore.getState().useMembershipSession(customerId, recordId);
+      useCustomerStore.getState().useMembershipSession(customerId, recordId, membershipApplied);
     }
 
     setRecordId(recordId);
@@ -496,9 +499,22 @@ export default function SettlementPage(): React.ReactElement | null {
                 )
               )}
             </div>
-            {isMembershipPayment && remainingAfterMembership > 0 && (
+            {isMembershipPayment && membershipSessionState && remainingAfterMembership > 0 && (
               <p className="text-xs text-text-muted mt-1">
-                회원권 1회 단가 {membershipUnitPrice.toLocaleString()}원 · 차액 {remainingAfterMembership.toLocaleString()}원을 {secondaryPaymentMethod === 'cash' ? '현금으로' : '카드로'} 결제
+                {membershipSessionState.currentSessionNumber}회차에서 {membershipApplied.toLocaleString()}원 차감 · 차액 {remainingAfterMembership.toLocaleString()}원을 {secondaryPaymentMethod === 'cash' ? '현금으로' : '카드로'} 결제
+                <br />
+                <span className="text-[11px] text-text-muted/80">
+                  결제 후 회원권 총 잔액: {membershipRemainingAfter.toLocaleString()}원
+                </span>
+              </p>
+            )}
+            {isMembershipPayment && membershipSessionState && remainingAfterMembership === 0 && membershipApplied > 0 && (
+              <p className="text-xs text-text-muted mt-1">
+                {membershipSessionState.currentSessionNumber}회차에서 {membershipApplied.toLocaleString()}원 차감 · 추가 결제 없음
+                <br />
+                <span className="text-[11px] text-text-muted/80">
+                  결제 후 회원권 총 잔액: {membershipRemainingAfter.toLocaleString()}원
+                </span>
               </p>
             )}
           </div>
@@ -554,14 +570,14 @@ export default function SettlementPage(): React.ReactElement | null {
                     )}
                   >
                     <span>{label}</span>
-                    {isMembership && customerMembership && canUseMembership && (
+                    {isMembership && customerMembership && canUseMembership && membershipSessionState && (
                       <span
                         className={cn(
                           'text-[10px] font-semibold tabular-nums leading-tight',
                           paymentMethod === 'membership' ? 'text-white/90' : 'text-primary',
                         )}
                       >
-                        잔여 {customerMembership.remainingSessions}/{customerMembership.totalSessions}회
+                        {membershipSessionState.currentSessionNumber}회차 {membershipSessionState.currentSessionRemaining.toLocaleString()}원
                       </span>
                     )}
                   </button>
@@ -576,9 +592,11 @@ export default function SettlementPage(): React.ReactElement | null {
                     ? '회원권 결제를 사용하려면 고객을 연결해 주세요'
                     : !customerMembership
                       ? '이 고객은 등록된 회원권이 없어요 · 고객 카드에서 회원권을 등록해보세요'
-                      : customerMembership.status !== 'active'
-                        ? '이 고객의 회원권은 만료되었거나 소진되었어요'
-                        : '이 고객의 회원권 잔여 횟수가 없어요'}
+                      : getEffectiveStatus(customerMembership) === 'expired'
+                        ? '이 회원권은 만료되었어요'
+                        : getEffectiveStatus(customerMembership) === 'used_up'
+                          ? '이 회원권은 잔액이 모두 소진되었어요'
+                          : '이 회원권은 지금 사용할 수 없어요'}
                 </p>
                 {!customerId && (
                   <button
@@ -704,8 +722,9 @@ export default function SettlementPage(): React.ReactElement | null {
                   )
                 : customers;
               const sorted = [...list].sort((a, b) => {
-                const aHas = a.membership && a.membership.status === 'active' && a.membership.remainingSessions > 0;
-                const bHas = b.membership && b.membership.status === 'active' && b.membership.remainingSessions > 0;
+                // 0423: 잔액 + 만료일 반영
+                const aHas = canUseMembershipFn(a.membership);
+                const bHas = canUseMembershipFn(b.membership);
                 if (aHas !== bHas) return aHas ? -1 : 1;
                 return a.name.localeCompare(b.name, 'ko');
               });
@@ -713,7 +732,7 @@ export default function SettlementPage(): React.ReactElement | null {
                 return <p className="text-sm text-text-muted py-6 text-center">일치하는 고객이 없어요</p>;
               }
               return sorted.slice(0, 30).map((c) => {
-                const activeMb = c.membership && c.membership.status === 'active' && c.membership.remainingSessions > 0;
+                const activeMb = canUseMembershipFn(c.membership);
                 return (
                   <button
                     key={c.id}
@@ -731,7 +750,7 @@ export default function SettlementPage(): React.ReactElement | null {
                     </div>
                     {activeMb && c.membership && (
                       <span className="rounded-full bg-success/10 text-success text-[10px] font-bold px-2 py-0.5 border border-success/20 tabular-nums flex-shrink-0 ml-2">
-                        회원권 {c.membership.remainingSessions}/{c.membership.totalSessions}
+                        회원권 잔액 {getRemainingAmount(c.membership).toLocaleString()}원
                       </span>
                     )}
                   </button>

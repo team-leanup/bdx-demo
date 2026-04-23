@@ -1,6 +1,12 @@
 'use client';
 
 import { cn } from '@/lib/cn';
+import {
+  getRemainingAmount,
+  getMembershipSessionState,
+  getEffectiveStatus,
+  formatWon,
+} from '@/lib/membership';
 import type { Membership } from '@/types/customer';
 
 interface MembershipCardProps {
@@ -32,29 +38,37 @@ function formatDate(dateStr: string): string {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function formatPrice(amount: number): string {
-  return amount.toLocaleString('ko-KR') + '원';
-}
-
 export function MembershipCard({
   membership,
   onAddSession,
   onExpire,
 }: MembershipCardProps): React.ReactElement {
-  const style = STATUS_STYLES[membership.status];
-  const progressPct =
-    membership.totalSessions > 0
-      ? Math.min(100, (membership.remainingSessions / membership.totalSessions) * 100)
-      : 0;
+  // 0423: 만료일·잔액을 결합한 실사용 상태로 뱃지 결정
+  const effectiveStatus = getEffectiveStatus(membership);
+  const style = STATUS_STYLES[effectiveStatus];
+
+  // 0423 반영: 회차별 표시 ("1회권 중 5만원 사용, 남은 금액 5만원")
+  const state = getMembershipSessionState(membership);
+  const totalRemainingAmount = getRemainingAmount(membership);
+
+  // 현재 회차 프로그레스 (회차 내 사용률)
+  const currentSessionPct = state.sessionLimit > 0
+    ? Math.min(100, (state.currentSessionUsed / state.sessionLimit) * 100)
+    : 0;
 
   return (
     <div className="rounded-2xl border border-border bg-surface p-4 flex flex-col gap-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <span className="text-sm font-bold text-text">회원권</span>
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm font-bold text-text">회원권</span>
+          {membership.planName && (
+            <span className="text-xs text-text-muted truncate">· {membership.planName}</span>
+          )}
+        </div>
         <span
           className={cn(
-            'px-2.5 py-0.5 rounded-full text-[11px] font-bold border',
+            'px-2.5 py-0.5 rounded-full text-[11px] font-bold border shrink-0',
             style.badge,
           )}
         >
@@ -62,28 +76,64 @@ export function MembershipCard({
         </span>
       </div>
 
-      {/* Progress */}
+      {/* 현재 회차 상태 — 지승호 대표 원문대로 */}
       <div className="flex flex-col gap-2">
-        <div className="flex items-end justify-between">
-          <span className="text-2xl font-black text-text tabular-nums">
-            {membership.remainingSessions}
-            <span className="text-sm font-semibold text-text-muted ml-1">/ {membership.totalSessions}회</span>
-          </span>
-          <span className="text-xs text-text-muted font-medium">
-            사용 {membership.usedSessions}회
-          </span>
+        <div className="flex items-baseline justify-between gap-3 flex-wrap">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-xs font-bold text-primary">
+              {state.currentSessionNumber}회차
+            </span>
+            <span className="text-xs text-text-muted">
+              중 {formatWon(state.currentSessionUsed)} 사용
+            </span>
+          </div>
+          <div className="flex items-baseline gap-1">
+            <span className="text-[11px] font-semibold text-text-muted">남은 금액</span>
+            <span className="text-lg font-black text-text tabular-nums leading-none">
+              {formatWon(state.currentSessionRemaining)}
+            </span>
+          </div>
         </div>
-        <div className="h-2 rounded-full bg-surface-alt overflow-hidden">
+        <div
+          className="h-2 rounded-full bg-surface-alt overflow-hidden"
+          role="progressbar"
+          aria-valuenow={Math.round(currentSessionPct)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`${state.currentSessionNumber}회차에 ${formatWon(state.currentSessionRemaining)} 남음`}
+        >
           <div
-            className={cn('h-full rounded-full transition-all duration-500', style.bar)}
-            style={{ width: `${progressPct}%` }}
+            className={cn('h-full rounded-full transition-[width] duration-300', style.bar)}
+            style={{ width: `${currentSessionPct}%` }}
           />
         </div>
       </div>
 
-      {/* Info */}
+      {/* 전체 회원권 요약 */}
+      <div className="flex items-center justify-between rounded-xl bg-surface-alt border border-border px-3 py-2.5 text-[11px]">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-text-muted">총 잔액</span>
+          <span className="text-sm font-black text-text tabular-nums">
+            {formatWon(totalRemainingAmount)}
+          </span>
+        </div>
+        <div className="flex flex-col gap-0.5 items-center">
+          <span className="text-text-muted">남은 회차</span>
+          <span className="text-sm font-bold text-text tabular-nums">
+            {state.remainingSessionsCount} / {membership.totalSessions}회
+          </span>
+        </div>
+        <div className="flex flex-col gap-0.5 items-end">
+          <span className="text-text-muted">1회 한도</span>
+          <span className="text-sm font-bold text-text tabular-nums">
+            {formatWon(state.sessionLimit)}
+          </span>
+        </div>
+      </div>
+
+      {/* 만료일 / 구매일 */}
       <div className="flex items-center justify-between text-xs text-text-muted">
-        <span>구매금액 {formatPrice(membership.purchaseAmount)}</span>
+        <span>구매금액 {formatWon(membership.purchaseAmount)}</span>
         <span>만료일 {formatDate(membership.expiryDate)}</span>
       </div>
 
@@ -94,16 +144,16 @@ export function MembershipCard({
             <button
               type="button"
               onClick={onAddSession}
-              className="flex-1 py-2 rounded-xl bg-primary/10 text-primary text-xs font-bold border border-primary/20"
+              className="flex-1 min-h-[44px] py-2.5 rounded-xl bg-primary/10 text-primary text-xs font-bold border border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               + 회차 추가
             </button>
           )}
-          {onExpire && membership.status === 'active' && (
+          {onExpire && effectiveStatus === 'active' && (
             <button
               type="button"
               onClick={onExpire}
-              className="flex-1 py-2 rounded-xl bg-surface-alt text-text-muted text-xs font-semibold border border-border"
+              className="flex-1 min-h-[44px] py-2.5 rounded-xl bg-surface-alt text-text-muted text-xs font-semibold border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               만료 처리
             </button>

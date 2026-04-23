@@ -140,6 +140,14 @@ export function MembershipPlansSection(): React.ReactElement {
                       <span>{formatPrice(plan.price)}</span>
                       <span>·</span>
                       <span>{plan.totalSessions}회</span>
+                      {plan.totalSessions > 0 && (
+                        <>
+                          <span>·</span>
+                          <span className="text-primary/80">
+                            1회 {formatPrice(Math.floor(plan.price / plan.totalSessions))}
+                          </span>
+                        </>
+                      )}
                       {plan.validDays != null && (
                         <>
                           <span>·</span>
@@ -210,6 +218,12 @@ export function MembershipPlansSection(): React.ReactElement {
               placeholder="예: 5"
               className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-base text-text placeholder:text-text-muted focus:border-primary focus:outline-none tabular-nums"
             />
+            {/* 0423: 1회당 한도 실시간 표시 */}
+            {form.price && form.totalSessions && Number(form.totalSessions) > 0 && (
+              <p className="mt-1 text-[11px] text-primary font-medium tabular-nums">
+                1회 한도 {Math.floor(Number(form.price) / Number(form.totalSessions)).toLocaleString('ko-KR')}원
+              </p>
+            )}
           </div>
           <div>
             <label className="text-xs font-medium text-text-secondary mb-1 block">유효기간 (일, 선택)</label>

@@ -86,6 +86,11 @@ export interface ShopExtendedSettings {
   categoryPricing?: CategoryPricingSettings;
   kakaoTalkUrl?: string;
   naverReservationUrl?: string;
+  /**
+   * 0423 반영: 재방문 알림 문자 기본 문구틀 (샵주인 편집 가능).
+   * 치환 변수: {customerName}, {shopName}
+   */
+  revisitMessageTemplate?: string;
 }
 
 export interface Shop {

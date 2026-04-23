@@ -667,4 +667,20 @@
 | **미리 정하기** | **12** | **12** | **0** | **0** | **0** |
 | **시술 후 결제 UX** | **6** | **6** | **0** | **0** | **0** |
 | **전체 심층 QA** | **32** | **30** | **0** | **0** | **0** |
-| **합계** | **179** | **152** | **0** | **2** | **21** |
+| **0423 카톡 피드백** | **3** | **3** | **0** | **0** | **0** |
+| **합계** | **182** | **155** | **0** | **2** | **21** |
+
+---
+
+## 20. 0423 카카오톡 피드백 반영 (지승호 대표)
+
+> 출처: 2026-04-22 카톡 대화 · `client-fix/0423/0423-todo.md`
+
+### 20.1 🟢 회원권 잔액 **금액 기반** 재설계
+- **지금/완료**: `Membership` 타입에 `usedAmount`, `remainingAmount` 추가. `MembershipTransaction.amountDelta` 추가. `src/lib/membership.ts` 헬퍼(getRemainingAmount, calcMembershipDeduct) 신규. `useMembershipSession(customerId, recordId, amount)` 시그니처 확장 — 시술 금액을 넘기면 그만큼 차감, 생략 시 1회 단가 추정(하위 호환). `MembershipCard`가 "남은 금액 ₩X / 사용 ₩Y" 중심으로 전환, 횟수는 보조. 현장모드 정산에서 회원권 잔액 > 시술금이면 전액 차감, 잔액 < 시술금이면 차액은 현금/카드 선택 결제. 고객 상세·고객 목록·수동 차감 모달도 금액 기반 표시로 통일. `20260423_add_membership_amount.sql` 마이그레이션으로 `membership_transactions.amount_delta` 컬럼 추가.
+
+### 20.2 🟢 재방문 알림 문구 **샵주인 커스터마이징**
+- **지금/완료**: `ShopExtendedSettings.revisitMessageTemplate` 필드 추가. 설정 탭 > **고객 알림 > 재방문 알림 기본 문구** 섹션(`RevisitMessageSection`) 신설 — 기본 문구틀을 편집하고 `{customerName}` `{shopName}` 변수 삽입 버튼, 실시간 미리보기, 저장/기본값 되돌리기 제공. `RevisitReminderCard`가 저장된 템플릿을 `renderRevisitMessage`로 치환해 복사/SMS에 사용. 템플릿 미저장 시 기본값 fallback 유지.
+
+### 20.3 🟢 공유카드 글씨 배열 다듬기
+- **지금/완료**: `ShareCardImageTemplate`의 상단 해시태그 pill, 영문 타이틀(88→84px + letter-spacing 완화), 한글 서브(30px + 간격 14→10), 상담 메시지(22px + 간격 22→24), 샵 이름 블록(36→32px), QR 박스(120→108, 폰트 20→18, padding 재조정), FeedbackRow(padding 22/32 + minHeight 72)까지 타이포그래피 리듬을 재정돈. 디자인 톤은 유지한 채 "글씨 배열만" 정리.

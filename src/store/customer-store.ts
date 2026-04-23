@@ -41,7 +41,12 @@ interface CustomerStore {
   appendSmallTalkNote: (customerId: string, note: SmallTalkNote) => void;
 
   addMembership: (customerId: string, membership: Membership) => void;
-  useMembershipSession: (customerId: string, recordId?: string) => void;
+  /**
+   * 시술 1건에 대한 회원권 차감.
+   * - `amount`: 이번 시술에 회원권에서 실제 차감할 금액(원). 없으면 1회 단가로 추정(하위 호환).
+   * - 횟수도 함께 1회 차감.
+   */
+  useMembershipSession: (customerId: string, recordId?: string, amount?: number) => void;
   manualDeductMembership: (customerId: string, count: number, note?: string) => void;
   updateMembership: (customerId: string, updates: Partial<Membership>) => void;
 
@@ -470,10 +475,16 @@ export const useCustomerStore = create<CustomerStore>()(
       },
 
       addMembership: (customerId, membership) => {
+        // 0423 반영: 금액 기반 잔액이 누락된 경우 구매금액으로 초기화
+        const normalized: Membership = {
+          ...membership,
+          usedAmount: membership.usedAmount ?? 0,
+          remainingAmount: membership.remainingAmount ?? membership.purchaseAmount,
+        };
         set((state) => ({
           customers: state.customers.map((c) => {
             if (c.id !== customerId) return c;
-            return { ...c, membership, updatedAt: getNowInKoreaIso() };
+            return { ...c, membership: normalized, updatedAt: getNowInKoreaIso() };
           }),
         }));
         const updated = get().customers.find((c) => c.id === customerId);
@@ -487,38 +498,64 @@ export const useCustomerStore = create<CustomerStore>()(
               shopId,
               date: getTodayInKorea(),
               type: 'purchase',
-              sessionsDelta: membership.totalSessions,
+              sessionsDelta: normalized.totalSessions,
+              amountDelta: normalized.purchaseAmount,
             }).catch(console.error);
           }
         }
       },
 
-      useMembershipSession: (customerId, recordId) => {
+      useMembershipSession: (customerId, recordId, amount) => {
         // M-8: txnId를 한 번만 생성하여 로컬/DB 트랜잭션 ID 통일
         const txnId = generateId('txn');
+        let deductedAmount = 0;
         set((state) => ({
           customers: state.customers.map((c) => {
             if (c.id !== customerId) return c;
             const m = c.membership;
-            if (!m || m.remainingSessions <= 0) return c;
+            if (!m) return c;
+            // 0423: 잔액 기반 정책 — 횟수 카운터가 0이어도 잔액 남아있으면 허용
+            const prevRemainingAmount = typeof m.remainingAmount === 'number'
+              ? m.remainingAmount
+              : (m.totalSessions > 0
+                ? Math.round(m.purchaseAmount * (m.remainingSessions / m.totalSessions))
+                : 0);
+            if (prevRemainingAmount <= 0) return c;
+            const prevUsedAmount = typeof m.usedAmount === 'number'
+              ? m.usedAmount
+              : Math.max(0, m.purchaseAmount - prevRemainingAmount);
+            const estimateUnitPrice = m.totalSessions > 0
+              ? Math.floor(m.purchaseAmount / m.totalSessions)
+              : prevRemainingAmount;
+            const requested = typeof amount === 'number' && Number.isFinite(amount) && amount >= 0
+              ? amount
+              : estimateUnitPrice;
+            deductedAmount = Math.max(0, Math.min(prevRemainingAmount, Math.round(requested)));
 
             const transaction: MembershipTransaction = {
               id: txnId,
               date: getTodayInKorea(),
               type: 'use',
               sessionsDelta: -1,
+              amountDelta: deductedAmount > 0 ? -deductedAmount : undefined,
               recordId,
             };
 
-            const remainingSessions = m.remainingSessions - 1;
+            // 0423: 횟수 카운터는 음수로 가지 않도록 clamp
+            const remainingSessions = Math.max(0, m.remainingSessions - 1);
             const usedSessions = m.usedSessions + 1;
+            const remainingAmount = Math.max(0, prevRemainingAmount - deductedAmount);
+            const usedAmount = prevUsedAmount + deductedAmount;
+            // 잔액 0원이면 소진 (횟수 카운터와 무관하게 금액 기준)
             const status: Membership['status'] =
-              remainingSessions === 0 ? 'used_up' : m.status;
+              remainingAmount === 0 ? 'used_up' : m.status;
 
             const updatedMembership: Membership = {
               ...m,
               remainingSessions,
               usedSessions,
+              remainingAmount,
+              usedAmount,
               status,
               transactions: [...(m.transactions ?? []), transaction],
             };
@@ -538,6 +575,7 @@ export const useCustomerStore = create<CustomerStore>()(
               date: getTodayInKorea(),
               type: 'use',
               sessionsDelta: -1,
+              amountDelta: deductedAmount > 0 ? -deductedAmount : undefined,
               recordId,
             }).catch(console.error);
           }
@@ -552,26 +590,48 @@ export const useCustomerStore = create<CustomerStore>()(
           customers: state.customers.map((c) => {
             if (c.id !== customerId) return c;
             const m = c.membership;
-            if (!m || m.remainingSessions <= 0) return c;
+            if (!m) return c;
+            // 0423: 잔액 기반 정책 — remainingSessions가 0이어도 잔액 있으면 차감 허용
+            if (m.remainingSessions <= 0) return c;
 
             const actualDeduct = Math.min(count, m.remainingSessions);
+            // 0423: 금액도 비례 차감 (1회 단가 × 차감 횟수)
+            const prevRemainingAmount = typeof m.remainingAmount === 'number'
+              ? m.remainingAmount
+              : (m.totalSessions > 0
+                ? Math.round(m.purchaseAmount * (m.remainingSessions / m.totalSessions))
+                : 0);
+            const prevUsedAmount = typeof m.usedAmount === 'number'
+              ? m.usedAmount
+              : Math.max(0, m.purchaseAmount - prevRemainingAmount);
+            const unitPrice = m.totalSessions > 0
+              ? Math.floor(m.purchaseAmount / m.totalSessions)
+              : 0;
+            const deductedAmount = Math.min(prevRemainingAmount, unitPrice * actualDeduct);
+
             const transaction: MembershipTransaction = {
               id: txnId,
               date: today,
               type: 'manual_deduct',
               sessionsDelta: -actualDeduct,
+              amountDelta: deductedAmount > 0 ? -deductedAmount : undefined,
               note: note?.trim() || undefined,
             };
 
-            const remainingSessions = m.remainingSessions - actualDeduct;
+            const remainingSessions = Math.max(0, m.remainingSessions - actualDeduct);
             const usedSessions = m.usedSessions + actualDeduct;
+            const remainingAmount = Math.max(0, prevRemainingAmount - deductedAmount);
+            const usedAmount = prevUsedAmount + deductedAmount;
+            // 0423: 잔액 0원이면 소진 (횟수 카운터와 무관하게 금액 기준)
             const status: Membership['status'] =
-              remainingSessions === 0 ? 'used_up' : m.status;
+              remainingAmount === 0 ? 'used_up' : m.status;
 
             const updatedMembership: Membership = {
               ...m,
               remainingSessions,
               usedSessions,
+              remainingAmount,
+              usedAmount,
               status,
               transactions: [...(m.transactions ?? []), transaction],
             };
@@ -585,9 +645,8 @@ export const useCustomerStore = create<CustomerStore>()(
           const shopId = useAuthStore.getState().currentShopId;
           if (shopId) {
             const m = updated.membership;
-            const actualDeduct = m
-              ? (m.transactions?.find((t) => t.id === txnId)?.sessionsDelta ?? 0)
-              : 0;
+            const txn = m?.transactions?.find((t) => t.id === txnId);
+            const actualDeduct = txn?.sessionsDelta ?? 0;
             dbInsertMembershipTransaction({
               id: txnId,
               customerId,
@@ -595,6 +654,7 @@ export const useCustomerStore = create<CustomerStore>()(
               date: today,
               type: 'manual_deduct',
               sessionsDelta: actualDeduct,
+              amountDelta: txn?.amountDelta,
               note: note?.trim() || undefined,
             }).catch(console.error);
           }

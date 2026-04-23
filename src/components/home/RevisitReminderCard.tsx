@@ -3,7 +3,9 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useCustomerStore } from '@/store/customer-store';
+import { useAppStore } from '@/store/app-store';
 import { formatRelativeDate } from '@/lib/format';
+import { renderRevisitMessage } from '@/components/settings/RevisitMessageSection';
 
 interface RevisitReminderCardProps {
   shopName: string;
@@ -20,6 +22,8 @@ export function RevisitReminderCard({
   itemVariants,
 }: RevisitReminderCardProps): React.ReactElement | null {
   const customers = useCustomerStore((s) => s.customers);
+  // 0423 반영: 설정 탭의 기본 문구틀을 사용 (없으면 기본값)
+  const revisitTemplate = useAppStore((s) => s.shopSettings.revisitMessageTemplate);
 
   const overdueCustomers = useMemo(() => {
     const threshold = Date.now() - FOUR_WEEKS_MS;
@@ -39,7 +43,7 @@ export function RevisitReminderCard({
   if (overdueCustomers.length === 0) return null;
 
   const buildMessage = (customerName: string): string =>
-    `안녕하세요, ${customerName}님! ${shopName}입니다. 마지막 방문 이후 한 달이 지났네요. 예약을 도와드릴까요?`;
+    renderRevisitMessage(revisitTemplate ?? '', { customerName, shopName });
 
   const copyMessage = (customerId: string, customerName: string): void => {
     const msg = buildMessage(customerName);

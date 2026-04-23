@@ -6,6 +6,7 @@ import { Card, Button, Input, LanguageSelector, Toggle, TimeInput, AddressInput,
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { MembershipPlansSection } from '@/components/settings/MembershipPlansSection';
+import { RevisitMessageSection } from '@/components/settings/RevisitMessageSection';
 import { IconShop, IconService, IconPalette, IconGear } from '@/components/icons';
 import { useAppStore } from '@/store/app-store';
 import type { CategoryPricingSettings } from '@/types/shop';
@@ -1710,6 +1711,10 @@ export default function SettingsPage() {
 
         <Section title="회원권">
           <MembershipPlansSection />
+        </Section>
+
+        <Section title="고객 알림">
+          <RevisitMessageSection />
         </Section>
         </div>
       )}

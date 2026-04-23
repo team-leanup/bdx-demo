@@ -705,3 +705,72 @@ treatment-sheet "결제하기" → /payment?recordId=xxx
 | 날짜 | 내용 |
 |------|------|
 | 2026-04-03 | 전체 구현: /payment 5섹션 페이지, price-utils.ts, Quick Add Chips, 고객매칭, 사진저장, 포트폴리오 연결 |
+| 2026-04-23 | 회원권 **금액 기반** 차감 — `useMembershipSession(cid, rid, amount?)` 확장, 잔액 < 시술금이면 차액 현금/카드 결제. `Membership`에 `remainingAmount/usedAmount` 필드 + `MembershipTransaction.amountDelta` 컬럼(`20260423_add_membership_amount.sql`) |
+
+---
+
+## 21. 0423 카톡 피드백 (지승호 대표)
+
+### 개요
+2026-04-22 카톡 대화 3건을 반영:
+1. 회원권 잔액을 "얼마 남았는지" 금액 기준으로 표기
+2. 재방문 알림 기본 문구를 샵주인이 설정 탭에서 편집 가능하게
+3. 공유카드 글씨 배열 다듬기
+
+### 21.1 회원권 금액 기반 재설계
+
+**데이터 모델**
+- `Membership.remainingAmount` / `usedAmount` (새 필드) — 기존 `remainingSessions/totalSessions`는 보조 지표로 유지
+- `MembershipTransaction.amountDelta` (새 컬럼) — DB 마이그레이션 `supabase/migrations/20260423_add_membership_amount.sql`
+- 헬퍼: `src/lib/membership.ts` — `getRemainingAmount`, `getUsedAmount`, `calcMembershipDeduct`, `formatWon` (하위 호환 fallback 포함)
+
+**차감 플로우**
+1. `customerStore.useMembershipSession(customerId, recordId, amount?)` — amount가 주어지면 그 금액만큼 잔액에서 차감, 없으면 1회 단가 추정(레거시 호환)
+2. 현장모드 정산: 시술금 = `min(회원권 잔액, 결제 대상 금액)` 차감 → 차액이 남으면 현금/카드 선택 UI 노출
+3. 상담 결제(/payment): `record.finalPrice`를 amount로 전달
+
+**표시 규칙**
+- `MembershipCard`: "남은 금액 ₩X" 메인 + "사용 ₩Y" 보조, 프로그레스 게이지(aria-label 포함) + 잔여 N/N회 보조, 구매금액 표시
+- 고객 목록 뱃지: `회원권 잔액 ₩X` 형식
+- 현장모드 정산 버튼: `회원권 · 잔액 ₩X` 표시, 결제 후 잔액 프리뷰
+
+**히스토리**
+| 날짜 | 내용 |
+|------|------|
+| 2026-04-23 | 타입/헬퍼/스토어/UI/마이그레이션 반영 + QA |
+
+### 21.2 재방문 알림 문구 커스터마이징
+
+**데이터 모델**
+- `ShopExtendedSettings.revisitMessageTemplate` (새 필드) — DB `shops.settings` JSONB 내부
+- `AppStore.shopSettings.revisitMessageTemplate` 기본값: `'안녕하세요, {customerName}님! {shopName}입니다. 마지막 방문 이후 한 달이 지났네요. 예약을 도와드릴까요?'`
+
+**UI**
+- `src/components/settings/RevisitMessageSection.tsx` — 설정 탭 > **고객 알림** 섹션
+  - 변수 삽입 pill 버튼 ({customerName}, {shopName})
+  - 4줄 textarea (16px 본문, focus ring, aria-label)
+  - 실시간 미리보기 카드 (김민지/실제 샵명 치환)
+  - 기본값으로 되돌리기 / 저장 (상태 피드백)
+- `renderRevisitMessage(template, vars)` — `replaceAll` 기반 치환, 템플릿 부재 시 기본값 사용
+- `RevisitReminderCard`가 이 템플릿을 사용 (SMS URI, 클립보드 복사 공통)
+
+**히스토리**
+| 날짜 | 내용 |
+|------|------|
+| 2026-04-23 | 타입/기본값/설정 UI/RevisitReminderCard 연결 |
+
+### 21.3 공유카드 글씨 배열 다듬기
+
+**조정 범위** (`src/components/share-card/ShareCardImageTemplate.tsx`)
+- 해시태그 pill: 22→20px, padding 12/22 → 10/18, line-height 1
+- 영문 타이틀: 88→84px, letter-spacing -0.04 → -0.035em, line-height 0.98 → 1
+- 한글 서브: 32→30px, margin-top 14 → 10 (타이틀과 한 묶음으로 인지)
+- 상담 메시지: 24→22px, margin-top 22 → 24 (서브에서 한 호흡)
+- 샵 이름: 36→32px, weight 900 → 800, letter-spacing 완화
+- QR 박스: QR 120→108, 텍스트 20→18, border-radius 22→20
+- FeedbackRow: padding 24/32 → 22/32, minHeight 72, 폰트/gap 재조정
+
+**히스토리**
+| 날짜 | 내용 |
+|------|------|
+| 2026-04-23 | 지승호 대표 "글씨 배열만 맞춰주면 될 것 같다" 피드백 반영 |

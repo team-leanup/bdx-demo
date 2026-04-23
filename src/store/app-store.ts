@@ -33,6 +33,8 @@ interface ShopSettings {
   kakaoTalkUrl: string;
   naverReservationUrl: string;
   monthlyTargetRevenue?: number;
+  /** 0423 반영: 재방문 알림 문자 기본 문구틀 ({customerName}, {shopName} 치환) */
+  revisitMessageTemplate: string;
 }
 
 const DEFAULT_CATEGORY_PRICING: CategoryPricingSettings = {
@@ -61,6 +63,7 @@ const DEFAULT_SHOP_SETTINGS: ShopSettings = {
   depositAmount: 10000,
   kakaoTalkUrl: '',
   naverReservationUrl: '',
+  revisitMessageTemplate: '안녕하세요, {customerName}님! {shopName}입니다. 마지막 방문 이후 한 달이 지났네요. 예약을 도와드릴까요?',
   businessHours: [
     { dayOfWeek: 0, isOpen: false },
     { dayOfWeek: 1, isOpen: true, openTime: '10:00', closeTime: '20:00' },
@@ -147,6 +150,7 @@ export const useAppStore = create<AppStore>()(
             categoryPricing: next.categoryPricing,
             kakaoTalkUrl: next.kakaoTalkUrl || undefined,
             naverReservationUrl: next.naverReservationUrl || undefined,
+            revisitMessageTemplate: next.revisitMessageTemplate || undefined,
           });
 
           if (!result.success) {
@@ -201,6 +205,8 @@ export const useAppStore = create<AppStore>()(
                 : state.shopSettings.categoryPricing,
               kakaoTalkUrl: s.kakaoTalkUrl ?? state.shopSettings.kakaoTalkUrl,
               naverReservationUrl: s.naverReservationUrl ?? state.shopSettings.naverReservationUrl,
+              revisitMessageTemplate:
+                s.revisitMessageTemplate ?? state.shopSettings.revisitMessageTemplate,
             } : {}),
           },
         }));
@@ -248,6 +254,8 @@ export const useAppStore = create<AppStore>()(
               ...DEFAULT_CATEGORY_PRICING,
               ...(p.shopSettings?.categoryPricing ?? {}),
             },
+            revisitMessageTemplate:
+              p.shopSettings?.revisitMessageTemplate ?? DEFAULT_SHOP_SETTINGS.revisitMessageTemplate,
           },
         };
       },

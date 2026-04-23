@@ -126,6 +126,7 @@ function CustomerDetailContent({ id }: { id: string }) {
   const appendSmallTalkNote = useCustomerStore((s) => s.appendSmallTalkNote);
   const addMembership = useCustomerStore((s) => s.addMembership);
   const manualDeductMembership = useCustomerStore((s) => s.manualDeductMembership);
+  const updateMembership = useCustomerStore((s) => s.updateMembership);
   const designers = useShopStore((s) => s.designers);
 
   const [isVip, setIsVip] = useState(() => useCustomerStore.getState().getById(id)?.isRegular ?? false);
@@ -1026,7 +1027,16 @@ function CustomerDetailContent({ id }: { id: string }) {
           )}
         </div>
         {customer.membership ? (
-          <MembershipCard membership={customer.membership} />
+          <MembershipCard
+            membership={customer.membership}
+            onAddSession={() => setShowMembershipModal(true)}
+            onExpire={() => {
+              if (typeof window !== 'undefined' && !window.confirm('이 회원권을 만료 처리할까요? 결제 수단에서 더 이상 선택할 수 없어요.')) {
+                return;
+              }
+              updateMembership(id, { status: 'expired' });
+            }}
+          />
         ) : (
           <button
             type="button"
@@ -1359,8 +1369,8 @@ function CustomerDetailContent({ id }: { id: string }) {
         title={customer.membership ? '회원권 수정' : '회원권 등록'}
       >
         <div className="px-5 py-4 flex flex-col gap-4">
-          {/* 상품 선택 드롭다운 (설정 탭에 등록된 상품이 있을 때만 노출) */}
-          {activePlans.length > 0 && !customer.membership && (
+          {/* 상품 선택 드롭다운 — 0423: 수정 시에도 다른 상품으로 변경 가능하게 */}
+          {activePlans.length > 0 && (
             <div>
               <label className="text-xs font-medium text-text-secondary mb-1 block">상품 선택 (선택)</label>
               <select
@@ -1387,6 +1397,9 @@ function CustomerDetailContent({ id }: { id: string }) {
                 {activePlans.map((plan) => (
                   <option key={plan.id} value={plan.id}>
                     {plan.name} · {plan.price.toLocaleString('ko-KR')}원 · {plan.totalSessions}회
+                    {plan.totalSessions > 0
+                      ? ` (1회 ${Math.floor(plan.price / plan.totalSessions).toLocaleString('ko-KR')}원)`
+                      : ''}
                   </option>
                 ))}
               </select>
@@ -1459,12 +1472,19 @@ function CustomerDetailContent({ id }: { id: string }) {
                 const expiryDate = mbExpiryDate || defaultExpiry.toISOString().slice(0, 10);
                 const existing = customer.membership;
                 const selectedPlan = activePlans.find((p) => p.id === mbSelectedPlanId);
+                // 0423: 금액 기반 잔액도 함께 계산
+                // - 신규 등록: remainingAmount = purchaseAmount, usedAmount = 0
+                // - 기존 수정: 사용 금액은 그대로 유지, 잔액만 purchaseAmount - usedAmount로 재계산
+                const prevUsedAmount = existing?.usedAmount ?? 0;
+                const nextRemainingAmount = Math.max(0, amount - prevUsedAmount);
                 addMembership(id, {
                   id: existing?.id ?? generateId('mb'),
                   totalSessions: total,
                   usedSessions: existing?.usedSessions ?? 0,
                   remainingSessions: existing ? total - existing.usedSessions : total,
                   purchaseAmount: amount,
+                  usedAmount: prevUsedAmount,
+                  remainingAmount: nextRemainingAmount,
                   purchaseDate: existing?.purchaseDate ?? today.toISOString().slice(0, 10),
                   expiryDate,
                   status: 'active',
@@ -1497,9 +1517,18 @@ function CustomerDetailContent({ id }: { id: string }) {
             다른 곳에서 쓰던 회원권을 옮겨오거나 시술 기록 없이 차감해야 할 때 사용하세요.
           </p>
           {customer.membership && (
-            <div className="rounded-xl bg-surface-alt border border-border p-3 text-sm">
+            <div className="rounded-xl bg-surface-alt border border-border p-3 text-sm flex flex-col gap-1">
               <div className="flex items-center justify-between">
-                <span className="text-text-muted">현재 잔여</span>
+                <span className="text-text-muted">남은 금액</span>
+                <span className="font-semibold text-text tabular-nums">
+                  {(customer.membership.remainingAmount ?? Math.round(
+                    customer.membership.purchaseAmount *
+                      (customer.membership.remainingSessions / Math.max(1, customer.membership.totalSessions)),
+                  )).toLocaleString()}원
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-text-muted">남은 횟수</span>
                 <span className="font-semibold text-text tabular-nums">
                   {customer.membership.remainingSessions}회 / {customer.membership.totalSessions}회
                 </span>

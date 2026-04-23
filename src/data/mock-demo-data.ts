@@ -132,6 +132,8 @@ export const DEMO_CUSTOMERS: Customer[] = [
       usedSessions: 3,
       remainingSessions: 7,
       purchaseAmount: 500000,
+      usedAmount: 150000,
+      remainingAmount: 350000,
       purchaseDate: '2026-01-10',
       expiryDate: '2027-01-10',
       status: 'active',

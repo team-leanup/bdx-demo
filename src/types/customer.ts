@@ -63,6 +63,8 @@ export interface MembershipTransaction {
   /** purchase: 구매, use: 시술 차감, manual_deduct: 기존 회원권 이관 등 수동 차감 */
   type: 'purchase' | 'use' | 'manual_deduct';
   sessionsDelta: number;
+  /** 금액 기반 차감/추가 (0423 반영 — "얼마 남았는지" 기준 표기) */
+  amountDelta?: number;
   recordId?: string;
   note?: string;
 }
@@ -73,6 +75,10 @@ export interface Membership {
   usedSessions: number;
   remainingSessions: number;
   purchaseAmount: number;
+  /** 사용한 금액 누적 (0423 반영) */
+  usedAmount?: number;
+  /** 남은 금액 — 금액 기반 잔액 표시/차감의 근거 (0423 반영) */
+  remainingAmount?: number;
   purchaseDate?: string;
   expiryDate: string;
   status: 'active' | 'expired' | 'used_up';

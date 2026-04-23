@@ -9,6 +9,7 @@ import { normalizePhone, formatPhoneInput } from '@/lib/phone';
 import { useAuthStore } from '@/store/auth-store';
 import { FlagIcon } from '@/components/ui/FlagIcon';
 import { cn } from '@/lib/cn';
+import { getRemainingAmount, getEffectiveStatus } from '@/lib/membership';
 
 
 type FilterTab = 'all' | 'vip' | 'regular';
@@ -231,10 +232,10 @@ export default function CustomersPage() {
                     <span className={cn('font-semibold tabular-nums', customer.totalSpend > 0 ? 'text-primary' : 'text-text-muted')}>{formatPrice(customer.totalSpend)}</span>
                   </div>
 
-                  {/* 회원권 잔여 뱃지 */}
-                  {customer.membership && customer.membership.status === 'active' && (
+                  {/* 회원권 잔여 뱃지 — 0423: 금액 기반 + 만료일 자동 판정 */}
+                  {customer.membership && getEffectiveStatus(customer.membership) === 'active' && (
                     <span className="rounded-full bg-success/10 text-success text-[10px] font-bold px-2 py-0.5 border border-success/20 tabular-nums">
-                      회원권 {customer.membership.remainingSessions}/{customer.membership.totalSessions}
+                      회원권 {getRemainingAmount(customer.membership).toLocaleString()}원
                     </span>
                   )}
                 </button>
