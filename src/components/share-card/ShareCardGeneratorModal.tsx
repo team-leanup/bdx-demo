@@ -31,7 +31,10 @@ interface ShareCardGeneratorModalProps {
   onShareCardCreated?: (shareCardId: string) => void;
 }
 
-// ─── Scaled preview: renders the fixed-pixel template scaled to fit container ───
+// ─── Scaled preview: 카드 전체가 미리보기 영역에 보이도록 ───
+// 0424 수정: 모바일에서 aspectRatio만 쓰면 카드가 세로로 너무 길어져
+// 하단 정보 패널(타이틀/서브/정보박스/샵/QR)이 밀려 안 보임.
+// → 뷰포트 기반 max-height를 기준으로 width를 역산해 카드 전체가 fit되게.
 function ScaledPreview({
   imageUrl,
   consultation,
@@ -50,28 +53,54 @@ function ScaledPreview({
   estimatedMinutes?: number;
 }): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0);
+  const [dims, setDims] = useState<{ width: number; height: number } | null>(null);
 
-  const templateW = ratio === '9:16' ? 1080 : 1080;
+  const templateW = 1080;
   const templateH = ratio === '9:16' ? 1920 : 1440;
+  const cardAspect = templateW / templateH; // 9:16 → 0.5625, 3:4 → 0.75
 
   useEffect(() => {
-    if (!containerRef.current) return;
-    const obs = new ResizeObserver((entries) => {
-      const w = entries[0]?.contentRect.width ?? 0;
-      if (w > 0) setScale(w / templateW);
-    });
-    obs.observe(containerRef.current);
-    return () => obs.disconnect();
-  }, [templateW]);
+    function calc(): void {
+      const parent = containerRef.current?.parentElement;
+      if (!parent) return;
+      const parentW = parent.clientWidth;
+      // 모달 내부에서 카드 전체가 보이도록 제한: 뷰포트의 55% 또는 560px 중 작은 쪽
+      const maxH = Math.min(window.innerHeight * 0.55, 560);
+
+      // 1) width 기준 높이 계산
+      let w = parentW;
+      let h = w / cardAspect;
+      // 2) 높이가 max를 넘으면 height를 줄이고 width도 비율 맞춰 축소
+      if (h > maxH) {
+        h = maxH;
+        w = h * cardAspect;
+      }
+      setDims({ width: Math.floor(w), height: Math.floor(h) });
+    }
+    calc();
+    const parent = containerRef.current?.parentElement;
+    const obs = parent ? new ResizeObserver(calc) : null;
+    if (parent && obs) obs.observe(parent);
+    window.addEventListener('resize', calc);
+    return () => {
+      obs?.disconnect();
+      window.removeEventListener('resize', calc);
+    };
+  }, [cardAspect]);
+
+  const scale = dims ? dims.width / templateW : 0;
 
   return (
     <div
       ref={containerRef}
-      className="w-full relative overflow-hidden rounded-2xl border border-border"
-      style={{ aspectRatio: ratio === '9:16' ? '9 / 16' : '3 / 4' }}
+      className="relative mx-auto overflow-hidden rounded-2xl border border-border"
+      style={
+        dims
+          ? { width: dims.width, height: dims.height }
+          : { aspectRatio: `${templateW} / ${templateH}`, width: '100%' }
+      }
     >
-      {scale > 0 && (
+      {scale > 0 && dims && (
         <div
           style={{
             width: templateW,
