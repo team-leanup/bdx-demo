@@ -64,8 +64,8 @@ function ScaledPreview({
       const parent = containerRef.current?.parentElement;
       if (!parent) return;
       const parentW = parent.clientWidth;
-      // 모달 내부에서 카드 전체가 보이도록 제한: 뷰포트의 55% 또는 560px 중 작은 쪽
-      const maxH = Math.min(window.innerHeight * 0.55, 560);
+      // 0424: 사진 셀렉터 축소로 미리보기 공간 더 확보 — 뷰포트의 65% 또는 680px 중 작은 쪽
+      const maxH = Math.min(window.innerHeight * 0.65, 680);
 
       // 1) width 기준 높이 계산
       let w = parentW;
@@ -313,39 +313,43 @@ export function ShareCardGeneratorModal({
             {/* Scrollable body */}
             <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-4 flex flex-col gap-4">
 
-              {/* ── Photo selector ── */}
-              {portfolioPhotos.length === 0 ? (
+              {/* ── Photo selector — 0424: 사진 2장 이상일 때만 노출 (1장은 선택의 여지 없음) ── */}
+              {portfolioPhotos.length === 0 && (
                 <div className="rounded-2xl bg-surface-alt border border-border py-8 flex items-center justify-center">
                   <p className="text-xs text-text-muted">시술 사진이 없어요</p>
                 </div>
-              ) : (
-                <div className="grid grid-cols-4 gap-2">
-                  {portfolioPhotos.map((photo, index) => {
-                    const imgSrc = photo.imageDataUrl ?? photo.imagePath;
-                    if (!imgSrc) return null;
-                    const isSelected = photo.id === selectedPhotoId;
-                    return (
-                      <button
-                        key={photo.id}
-                        type="button"
-                        onClick={() => setSelectedPhotoId(photo.id)}
-                        className={[
-                          'relative aspect-square rounded-xl overflow-hidden border-2 transition-all',
-                          isSelected ? 'border-primary shadow-md scale-[1.03]' : 'border-transparent opacity-60 hover:opacity-100',
-                        ].join(' ')}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={imgSrc} alt={`사진 ${index + 1}`} className="w-full h-full object-cover" />
-                        {isSelected && (
-                          <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                            <svg className="w-5 h-5 text-white drop-shadow" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                            </svg>
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
+              )}
+              {portfolioPhotos.length >= 2 && (
+                <div>
+                  <p className="text-[11px] font-medium text-text-muted mb-1.5">사진 선택</p>
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {portfolioPhotos.map((photo, index) => {
+                      const imgSrc = photo.imageDataUrl ?? photo.imagePath;
+                      if (!imgSrc) return null;
+                      const isSelected = photo.id === selectedPhotoId;
+                      return (
+                        <button
+                          key={photo.id}
+                          type="button"
+                          onClick={() => setSelectedPhotoId(photo.id)}
+                          className={[
+                            'relative aspect-square rounded-lg overflow-hidden border-2 transition-all',
+                            isSelected ? 'border-primary shadow-md' : 'border-transparent opacity-55 hover:opacity-100',
+                          ].join(' ')}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={imgSrc} alt={`사진 ${index + 1}`} className="w-full h-full object-cover" />
+                          {isSelected && (
+                            <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                              <svg className="w-4 h-4 text-white drop-shadow" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                              </svg>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
@@ -423,8 +427,9 @@ export function ShareCardGeneratorModal({
                     </>
                   ) : (
                     <>
+                      {/* 0424: 깨진 path 교체 — Heroicons 정규 link 아이콘 */}
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.06a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364l1.757 1.757" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
                       </svg>
                       {t('shareCard.shareLinkCopy')}
                     </>
