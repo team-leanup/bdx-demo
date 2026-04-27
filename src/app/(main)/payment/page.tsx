@@ -13,7 +13,7 @@ import { generateId } from '@/lib/generate-id';
 import { getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
 import { DESIGN_SCOPE_LABEL, OFF_TYPE_LABEL } from '@/lib/labels';
 import type { PaymentMethod } from '@/types/consultation';
-import { getRemainingAmount, getMembershipSessionState } from '@/lib/membership';
+import { getRemainingAmount, getMembershipSessionState, canUseMembership } from '@/lib/membership';
 import { cn } from '@/lib/cn';
 
 type SectionId = 1 | 2 | 3 | 4 | 5;
@@ -27,6 +27,11 @@ export default function PaymentPage(): React.ReactElement | null {
   const updateRecord = useRecordsStore((s) => s.updateRecord);
 
   const record = recordId ? getRecordById(recordId) : undefined;
+  // 0428 P1-3: getState() 직접 호출 → 셀렉터 hook으로 (store 변경 시 자동 리렌더)
+  const customerIdForMembership = record?.customerId ?? null;
+  const membership = useCustomerStore((s) =>
+    customerIdForMembership ? s.getById(customerIdForMembership)?.membership : undefined,
+  );
 
   // Guards
   useEffect(() => {
@@ -259,10 +264,6 @@ export default function PaymentPage(): React.ReactElement | null {
   }
 
   const breakdown = buildBreakdownFromRecord(record);
-  const membership =
-    record.customerId
-      ? useCustomerStore.getState().getById(record.customerId)?.membership
-      : undefined;
 
   const offLabel = record.consultation.offType !== 'none'
     ? OFF_TYPE_LABEL[record.consultation.offType]
@@ -317,15 +318,22 @@ export default function PaymentPage(): React.ReactElement | null {
             className="rounded-2xl border border-border bg-surface p-5 animate-in fade-in duration-300"
           >
             <p className="text-base font-bold text-text mb-3">결제수단을 선택해주세요</p>
+            {/* 0428 P0-1: 만료 회원권은 잔액 0으로 전달해 자동 비활성 */}
             <PaymentMethodSelector
               value={paymentMethod}
               onChange={setPaymentMethod}
               membershipRemaining={membership?.remainingSessions}
-              membershipRemainingAmount={membership ? getRemainingAmount(membership) : undefined}
+              membershipRemainingAmount={
+                membership && canUseMembership(membership)
+                  ? getRemainingAmount(membership)
+                  : membership
+                    ? 0
+                    : undefined
+              }
             />
 
-            {/* 0423: 회원권 선택 시 차감액·차액 안내 (현장모드와 동일 UX) */}
-            {paymentMethod === 'membership' && membership && (() => {
+            {/* 0423: 회원권 선택 시 차감액·차액 안내 (현장모드와 동일 UX) — 만료 회원권은 표시 X */}
+            {paymentMethod === 'membership' && membership && canUseMembership(membership) && (() => {
               const available = getRemainingAmount(membership);
               const applied = Math.max(0, Math.min(available, record.finalPrice));
               const diff = Math.max(0, record.finalPrice - applied);

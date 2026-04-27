@@ -84,6 +84,9 @@ export default function SettlementPage(): React.ReactElement | null {
   } = useFieldModeStore();
 
   const customers = useCustomerStore((s) => s.customers);
+  // 0428 P0-4: 회원권 차감 DB sync 에러 가시성
+  const membershipSyncError = useCustomerStore((s) => s.membershipSyncError);
+  const clearMembershipSyncError = useCustomerStore((s) => s.clearMembershipSyncError);
   const [showCustomerPicker, setShowCustomerPicker] = useState(false);
   const [customerQuery, setCustomerQuery] = useState('');
 
@@ -233,6 +236,8 @@ export default function SettlementPage(): React.ReactElement | null {
         // 회원권 + 차액 복합 결제 시 차액 정보 저장
         secondaryPaymentMethod: isMembershipPayment && remainingAfterMembership > 0 ? secondaryPaymentMethod : undefined,
         secondaryAmount: isMembershipPayment && remainingAfterMembership > 0 ? remainingAfterMembership : undefined,
+        // 0428 P1-1: 회원권에서 차감된 금액 — totalSpend 시술 전액 기록용
+        membershipApplied: isMembershipPayment ? membershipApplied : undefined,
         notes: '현장모드 시술',
         customerName: customerName || undefined,
         customerPhone: customerPhone || undefined,
@@ -499,20 +504,29 @@ export default function SettlementPage(): React.ReactElement | null {
                 )
               )}
             </div>
+            {/* 0428 P1-5: 차액이 있으면 강조 박스로 표시 (받아야 할 금액 명확히) */}
             {isMembershipPayment && membershipSessionState && remainingAfterMembership > 0 && (
-              <p className="text-xs text-text-muted mt-1">
-                {membershipSessionState.currentSessionNumber}회차에서 {membershipApplied.toLocaleString()}원 차감 · 차액 {remainingAfterMembership.toLocaleString()}원을 {secondaryPaymentMethod === 'cash' ? '현금으로' : '카드로'} 결제
-                <br />
-                <span className="text-[11px] text-text-muted/80">
-                  결제 후 회원권 총 잔액: {membershipRemainingAfter.toLocaleString()}원
-                </span>
-              </p>
+              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 flex flex-col gap-1.5">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-xs font-semibold text-amber-900">
+                    추가로 받을 금액
+                  </span>
+                  <span className="text-lg font-black text-amber-900 tabular-nums">
+                    {remainingAfterMembership.toLocaleString()}원
+                  </span>
+                </div>
+                <p className="text-[11px] text-amber-800 leading-snug">
+                  {membershipSessionState.currentSessionNumber}회차에서 {membershipApplied.toLocaleString()}원 차감 + {secondaryPaymentMethod === 'cash' ? '현금' : '카드'}로 {remainingAfterMembership.toLocaleString()}원 결제
+                  <br />
+                  결제 후 회원권 총 잔액 {membershipRemainingAfter.toLocaleString()}원
+                </p>
+              </div>
             )}
             {isMembershipPayment && membershipSessionState && remainingAfterMembership === 0 && membershipApplied > 0 && (
-              <p className="text-xs text-text-muted mt-1">
-                {membershipSessionState.currentSessionNumber}회차에서 {membershipApplied.toLocaleString()}원 차감 · 추가 결제 없음
+              <p className="text-xs text-success font-medium mt-1">
+                {membershipSessionState.currentSessionNumber}회차에서 {membershipApplied.toLocaleString()}원 차감 · 추가로 받으실 금액 없어요
                 <br />
-                <span className="text-[11px] text-text-muted/80">
+                <span className="text-[11px] text-text-muted">
                   결제 후 회원권 총 잔액: {membershipRemainingAfter.toLocaleString()}원
                 </span>
               </p>
@@ -672,6 +686,24 @@ export default function SettlementPage(): React.ReactElement | null {
             type="button"
             onClick={() => setSaveError(false)}
             className="text-red-400 hover:text-red-600 text-lg leading-none"
+            aria-label="닫기"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* 0428 P0-4: 회원권 동기화 실패 가시성 */}
+      {membershipSyncError && (
+        <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mx-4 mb-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 flex items-center gap-3">
+          <span className="text-amber-600 text-lg leading-none">⚠</span>
+          <p className="text-sm font-medium text-amber-800 flex-1">
+            회원권 차감 동기화에 실패했어요. 인터넷 연결을 확인하고 잠시 후 다시 시도해 주세요.
+          </p>
+          <button
+            type="button"
+            onClick={() => clearMembershipSyncError()}
+            className="text-amber-600 hover:text-amber-800 text-lg leading-none"
             aria-label="닫기"
           >
             ×

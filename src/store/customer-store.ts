@@ -13,6 +13,7 @@ import {
   dbInsertMembershipTransaction,
 } from '@/lib/db';
 import { generateId } from '@/lib/generate-id';
+import { getRemainingAmount } from '@/lib/membership';
 
 interface LegacyCustomerTagAccent {
   accentColor?: TagAccent;
@@ -21,8 +22,11 @@ interface LegacyCustomerTagAccent {
 interface CustomerStore {
   customers: Customer[];
   _dbReady: boolean;
+  /** 0428 P0-4: 최근 회원권 차감 DB sync 에러 (UI에서 toast 띄우는 용도) */
+  membershipSyncError: { customerId: string; message: string; at: string } | null;
 
   hydrateFromDB: () => Promise<void>;
+  clearMembershipSyncError: () => void;
 
   getById: (id: string) => Customer | undefined;
   findByPhoneNormalized: (phone: string) => Customer | undefined;
@@ -302,6 +306,9 @@ export const useCustomerStore = create<CustomerStore>()(
     (set, get) => ({
       customers: [],
       _dbReady: false,
+      membershipSyncError: null,
+
+      clearMembershipSyncError: () => set({ membershipSyncError: null }),
 
       hydrateFromDB: async () => {
         const currentShopId = useAuthStore.getState().currentShopId;
@@ -475,11 +482,16 @@ export const useCustomerStore = create<CustomerStore>()(
       },
 
       addMembership: (customerId, membership) => {
+        // 0428: 수정 케이스에서 기존 status / transactions 보존
+        const existing = get().customers.find((c) => c.id === customerId)?.membership;
+        const isUpdate = !!existing && existing.id === membership.id;
         // 0423 반영: 금액 기반 잔액이 누락된 경우 구매금액으로 초기화
         const normalized: Membership = {
           ...membership,
           usedAmount: membership.usedAmount ?? 0,
           remainingAmount: membership.remainingAmount ?? membership.purchaseAmount,
+          // 0428 P0-3: 수정 시 호출자가 status를 명시 안 했으면 기존 status 유지
+          status: isUpdate ? (membership.status ?? existing.status) : (membership.status ?? 'active'),
         };
         set((state) => ({
           customers: state.customers.map((c) => {
@@ -491,7 +503,8 @@ export const useCustomerStore = create<CustomerStore>()(
         if (updated) {
           dbUpsertCustomer(updated).catch(console.error);
           const shopId = useAuthStore.getState().currentShopId;
-          if (shopId) {
+          // 0428: 수정 케이스에서는 purchase 트랜잭션 중복 생성 방지
+          if (shopId && !isUpdate) {
             dbInsertMembershipTransaction({
               id: generateId('txn'),
               customerId,
@@ -565,20 +578,34 @@ export const useCustomerStore = create<CustomerStore>()(
         }));
         const updated = get().customers.find((c) => c.id === customerId);
         if (updated) {
-          dbUpsertCustomer(updated).catch(console.error);
+          // 0428 P0-4: DB sync 에러를 store에 노출 (UI toast로 표시)
           const shopId = useAuthStore.getState().currentShopId;
+          const dbCalls: Promise<unknown>[] = [dbUpsertCustomer(updated)];
           if (shopId) {
-            dbInsertMembershipTransaction({
-              id: txnId,
-              customerId,
-              shopId,
-              date: getTodayInKorea(),
-              type: 'use',
-              sessionsDelta: -1,
-              amountDelta: deductedAmount > 0 ? -deductedAmount : undefined,
-              recordId,
-            }).catch(console.error);
+            dbCalls.push(
+              dbInsertMembershipTransaction({
+                id: txnId,
+                customerId,
+                shopId,
+                date: getTodayInKorea(),
+                type: 'use',
+                sessionsDelta: -1,
+                amountDelta: deductedAmount > 0 ? -deductedAmount : undefined,
+                recordId,
+              }),
+            );
           }
+          Promise.all(dbCalls).catch((err: unknown) => {
+            const message = err instanceof Error ? err.message : '회원권 차감 동기화 실패';
+            console.error('[membership] sync failed:', err);
+            set({
+              membershipSyncError: {
+                customerId,
+                message,
+                at: getNowInKoreaIso(),
+              },
+            });
+          });
         }
       },
 
@@ -591,10 +618,12 @@ export const useCustomerStore = create<CustomerStore>()(
             if (c.id !== customerId) return c;
             const m = c.membership;
             if (!m) return c;
-            // 0423: 잔액 기반 정책 — remainingSessions가 0이어도 잔액 있으면 차감 허용
-            if (m.remainingSessions <= 0) return c;
+            // 0428: 잔액 기반 정책 통일 — useMembershipSession과 동일하게 잔액 0이면 차단
+            if (getRemainingAmount(m) <= 0) return c;
 
-            const actualDeduct = Math.min(count, m.remainingSessions);
+            // 횟수 카운터가 이미 0이어도 잔액 남으면 1회만 사용한 것으로 처리
+            const safeRemainingSessions = Math.max(1, m.remainingSessions);
+            const actualDeduct = Math.min(count, safeRemainingSessions);
             // 0423: 금액도 비례 차감 (1회 단가 × 차감 횟수)
             const prevRemainingAmount = typeof m.remainingAmount === 'number'
               ? m.remainingAmount

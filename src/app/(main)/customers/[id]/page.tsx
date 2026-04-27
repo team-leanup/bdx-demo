@@ -24,6 +24,7 @@ import { PreferenceEditor } from '@/components/customer/PreferenceEditor';
 import { useCustomerStore } from '@/store/customer-store';
 import { useMembershipPlanStore } from '@/store/membership-plan-store';
 import { generateId } from '@/lib/generate-id';
+import { getRemainingAmount, getMembershipSessionState, formatWon } from '@/lib/membership';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useReservationStore } from '@/store/reservation-store';
@@ -148,6 +149,8 @@ function CustomerDetailContent({ id }: { id: string }) {
   const [toasts, setToasts] = useState<ToastData[]>([]);
   const [showMembershipModal, setShowMembershipModal] = useState(false);
   const [showDeductModal, setShowDeductModal] = useState(false);
+  // 0428 P1-6: window.confirm 대신 인라인 모달
+  const [showExpireConfirm, setShowExpireConfirm] = useState(false);
   const [deductCount, setDeductCount] = useState('1');
   const [deductNote, setDeductNote] = useState('');
   const [mbPurchaseAmount, setMbPurchaseAmount] = useState('');
@@ -162,6 +165,24 @@ function CustomerDetailContent({ id }: { id: string }) {
   useEffect(() => {
     if (!plansReady) void hydratePlans();
   }, [plansReady, hydratePlans]);
+
+  // 0428 P1-2: 회원권 모달 열릴 때 기존 회원권 값을 form에 주입
+  // 신규 등록은 빈 값으로, 수정은 기존 값으로 시작 (만료일 리셋 방지)
+  useEffect(() => {
+    if (!showMembershipModal) return;
+    const existing = useCustomerStore.getState().getById(id)?.membership;
+    if (existing) {
+      setMbPurchaseAmount(String(existing.purchaseAmount));
+      setMbTotalSessions(String(existing.totalSessions));
+      setMbExpiryDate(existing.expiryDate ?? '');
+      setMbSelectedPlanId(existing.planId ?? '');
+    } else {
+      setMbPurchaseAmount('');
+      setMbTotalSessions('');
+      setMbExpiryDate('');
+      setMbSelectedPlanId('');
+    }
+  }, [showMembershipModal, id]);
 
   const addPhoto = usePortfolioStore((s) => s.addPhoto);
   const removePhoto = usePortfolioStore((s) => s.removePhoto);
@@ -994,7 +1015,8 @@ function CustomerDetailContent({ id }: { id: string }) {
       <div className="mx-4">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-semibold text-text-secondary">회원권</h2>
-          {customer.membership && customer.membership.remainingSessions > 0 && (
+          {/* 0428 P1-4: 잔액 기반 — 잔액 남으면 횟수 차감 가능 */}
+          {customer.membership && getRemainingAmount(customer.membership) > 0 && (
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -1016,7 +1038,7 @@ function CustomerDetailContent({ id }: { id: string }) {
               </button>
             </div>
           )}
-          {customer.membership && customer.membership.remainingSessions === 0 && (
+          {customer.membership && getRemainingAmount(customer.membership) <= 0 && (
             <button
               type="button"
               onClick={() => setShowMembershipModal(true)}
@@ -1030,12 +1052,8 @@ function CustomerDetailContent({ id }: { id: string }) {
           <MembershipCard
             membership={customer.membership}
             onAddSession={() => setShowMembershipModal(true)}
-            onExpire={() => {
-              if (typeof window !== 'undefined' && !window.confirm('이 회원권을 만료 처리할까요? 결제 수단에서 더 이상 선택할 수 없어요.')) {
-                return;
-              }
-              updateMembership(id, { status: 'expired' });
-            }}
+            // 0428 P1-6: window.confirm → 인라인 모달
+            onExpire={() => setShowExpireConfirm(true)}
           />
         ) : (
           <button
@@ -1487,7 +1505,8 @@ function CustomerDetailContent({ id }: { id: string }) {
                   remainingAmount: nextRemainingAmount,
                   purchaseDate: existing?.purchaseDate ?? today.toISOString().slice(0, 10),
                   expiryDate,
-                  status: 'active',
+                  // 0428 P0-3: 수정 시 기존 status 보존, 신규는 active
+                  status: existing?.status ?? 'active',
                   transactions: existing?.transactions ?? [],
                   planId: selectedPlan?.id ?? existing?.planId,
                   planName: selectedPlan?.name ?? existing?.planName,
@@ -1544,6 +1563,27 @@ function CustomerDetailContent({ id }: { id: string }) {
               placeholder="1"
               className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-base text-text placeholder:text-text-muted focus:border-primary focus:outline-none tabular-nums"
             />
+            {/* 0428 P1-8: 입력 시 예상 차감 금액 + 차감 후 잔액 실시간 미리보기 */}
+            {customer.membership && deductCount && Number(deductCount) > 0 && (() => {
+              const n = Number(deductCount);
+              const state = getMembershipSessionState(customer.membership);
+              const sessionLimit = state.sessionLimit;
+              const remaining = getRemainingAmount(customer.membership);
+              const expectedDeduct = Math.min(remaining, sessionLimit * n);
+              const afterRemaining = Math.max(0, remaining - expectedDeduct);
+              return (
+                <div className="mt-2 rounded-lg bg-primary/5 border border-primary/15 px-3 py-2 text-xs text-text-secondary tabular-nums">
+                  <div className="flex justify-between">
+                    <span>예상 차감</span>
+                    <span className="font-bold text-primary">-{formatWon(expectedDeduct)}</span>
+                  </div>
+                  <div className="flex justify-between mt-0.5">
+                    <span>차감 후 잔액</span>
+                    <span className="font-semibold text-text">{formatWon(afterRemaining)}</span>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
           <div>
             <label className="text-xs font-medium text-text-secondary mb-1 block">사유 메모 (선택)</label>
@@ -1576,6 +1616,47 @@ function CustomerDetailContent({ id }: { id: string }) {
               className="flex-1 rounded-xl bg-primary py-3 text-sm font-medium text-white disabled:opacity-40"
             >
               차감하기
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 0428 P1-6: 만료 처리 confirm 모달 (window.confirm 대체) */}
+      <Modal
+        isOpen={showExpireConfirm}
+        onClose={() => setShowExpireConfirm(false)}
+        title="회원권 만료 처리"
+      >
+        <div className="px-5 py-4 flex flex-col gap-4">
+          <p className="text-sm text-text-secondary leading-relaxed">
+            이 회원권을 만료 처리할까요?<br />
+            결제 수단에서 더 이상 선택할 수 없게 됩니다.
+          </p>
+          {customer.membership && (
+            <div className="rounded-xl bg-surface-alt border border-border p-3 text-xs text-text-muted flex items-center justify-between">
+              <span>현재 잔액</span>
+              <span className="font-semibold text-text tabular-nums">
+                {formatWon(getRemainingAmount(customer.membership))}
+              </span>
+            </div>
+          )}
+          <div className="flex gap-3 pt-1 pb-2">
+            <button
+              type="button"
+              onClick={() => setShowExpireConfirm(false)}
+              className="flex-1 rounded-xl border border-border py-3 text-sm font-medium text-text-secondary"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                updateMembership(id, { status: 'expired' });
+                setShowExpireConfirm(false);
+              }}
+              className="flex-1 rounded-xl bg-warning py-3 text-sm font-bold text-white"
+            >
+              만료 처리
             </button>
           </div>
         </div>

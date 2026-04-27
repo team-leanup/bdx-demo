@@ -38,6 +38,11 @@ interface RecordsStore {
     paymentMethod?: import('@/types/consultation').PaymentMethod;
     secondaryPaymentMethod?: 'cash' | 'card';
     secondaryAmount?: number;
+    /**
+     * 0428 P1-1: 회원권에서 차감된 금액 (있을 경우).
+     * totalSpend 누적 시 finalPrice + membershipApplied로 시술 전액을 기록.
+     */
+    membershipApplied?: number;
     bookingId?: string;
     saleDate?: string;
     saleTime?: string;
@@ -88,7 +93,7 @@ export const useRecordsStore = create<RecordsStore>()(
         });
       },
 
-      addQuickSaleRecord: ({ id, shopId, designerId, customerId, customerName, customerPhone, serviceType, finalPrice, notes, paymentMethod, secondaryPaymentMethod, secondaryAmount, bookingId, saleDate, saleTime }) => {
+      addQuickSaleRecord: ({ id, shopId, designerId, customerId, customerName, customerPhone, serviceType, finalPrice, notes, paymentMethod, secondaryPaymentMethod, secondaryAmount, membershipApplied, bookingId, saleDate, saleTime }) => {
         const now = getNowInKoreaIso();
         const today = getTodayInKorea();
         // 사용자가 날짜/시간을 지정한 경우 해당 값으로 createdAt 생성
@@ -179,15 +184,17 @@ export const useRecordsStore = create<RecordsStore>()(
         }));
 
         // 고객 통계 갱신
+        // 0428 P1-1: 회원권 차감분(membershipApplied) + finalPrice = 시술 전액으로 totalSpend 누적
         if (effectiveCustomerId) {
           const customerStore = useCustomerStore.getState();
           const designerName = useShopStore.getState().getDesignerName(designerId);
-          customerStore.recordTreatmentCompletion(effectiveCustomerId, finalPrice, {
+          const totalServicePrice = finalPrice + (membershipApplied ?? 0);
+          customerStore.recordTreatmentCompletion(effectiveCustomerId, totalServicePrice, {
             recordId: id,
             date: effectiveDate,
             bodyPart: 'hand',
             designScope: serviceType ?? '기타',
-            price: finalPrice,
+            price: totalServicePrice,
             designerName,
             imageUrls: [],
           });

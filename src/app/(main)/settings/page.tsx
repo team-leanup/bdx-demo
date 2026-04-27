@@ -1465,6 +1465,11 @@ export default function SettingsPage() {
       {/* ── 서비스 탭 ── */}
       {effectiveTab === 'service' && (
         <div className="flex flex-col gap-6">
+        {/* 0428 P1-7: 회원권 발견성 향상 — 서비스 탭 최상단으로 */}
+        <Section title="회원권 상품">
+          <MembershipPlansSection />
+        </Section>
+
         <Section title={t('settings.service_title')}>
           <Card className="mx-4 md:mx-0">
             <div className="mb-3 flex items-center justify-between">
@@ -1707,10 +1712,6 @@ export default function SettingsPage() {
               </div>
             </Card>
           </Card>
-        </Section>
-
-        <Section title="회원권">
-          <MembershipPlansSection />
         </Section>
 
         <Section title="고객 알림">
