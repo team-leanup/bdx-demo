@@ -257,6 +257,15 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
           </SectionCard>
         )}
 
+        {/* 손님 요청사항 (사전상담 자유 입력) */}
+        {raw?.additionalRequest && raw.additionalRequest.trim() && (
+          <SectionCard icon="💬" title="손님 요청사항">
+            <div className="rounded-xl bg-surface-alt p-3">
+              <p className="text-sm text-text whitespace-pre-line">{raw.additionalRequest}</p>
+            </div>
+          </SectionCard>
+        )}
+
         {/* 요청 메모 */}
         {booking.requestNote && (
           <SectionCard icon="📝" title="요청 메모">

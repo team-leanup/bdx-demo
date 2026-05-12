@@ -13,10 +13,11 @@ import { ShapePickerSimple } from '@/components/pre-consult/ShapePickerSimple';
 import { VibeSelector } from '@/components/pre-consult/VibeSelector';
 import { StyleSelector } from '@/components/pre-consult/StyleSelector';
 import { AdditionalOptions } from '@/components/pre-consult/AdditionalOptions';
+import { AdditionalRequest } from '@/components/pre-consult/AdditionalRequest';
 import { ConsultReview } from '@/components/pre-consult/ConsultReview';
 import { FatigueMessage } from '@/components/pre-consult/FatigueMessage';
 
-type SectionId = 'upload' | 'nailStatus' | 'length' | 'shape' | 'vibe' | 'style' | 'addons' | 'review';
+type SectionId = 'upload' | 'nailStatus' | 'length' | 'shape' | 'vibe' | 'style' | 'addons' | 'additionalRequest' | 'review';
 
 const SECTION_ORDER: SectionId[] = [
   'upload',
@@ -26,6 +27,7 @@ const SECTION_ORDER: SectionId[] = [
   'vibe',
   'style',
   'addons',
+  'additionalRequest',
   'review',
 ];
 
@@ -161,6 +163,9 @@ export default function PreConsultConsultPage(): React.ReactElement {
                   )}
                   {sectionId === 'addons' && (
                     <AdditionalOptions onComplete={() => handleSectionComplete('addons')} />
+                  )}
+                  {sectionId === 'additionalRequest' && (
+                    <AdditionalRequest onComplete={() => handleSectionComplete('additionalRequest')} />
                   )}
                   {sectionId === 'review' && (
                     <ConsultReview onConfirm={handleConfirm} onModify={handleModify} />

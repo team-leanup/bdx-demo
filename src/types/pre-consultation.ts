@@ -84,6 +84,9 @@ export interface PreConsultationData {
 
   // Reference images
   referenceImageUrls: string[];
+
+  // Free-text customer request
+  additionalRequest?: string;
 }
 
 // ── Pre-Consultation Record ───────────────────────────────────────────────────

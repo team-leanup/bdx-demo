@@ -51,6 +51,7 @@ interface PreConsultState {
   stylePreference: StylePreference | null;
   styleKeywords: StyleKeyword[];
   addOns: AddOnOption[];
+  additionalRequest: string;
 
   // STEP 3: Booking
   customerName: string;
@@ -92,6 +93,7 @@ interface PreConsultActions {
   setStylePreference: (pref: StylePreference) => void;
   toggleStyleKeyword: (kw: StyleKeyword) => void;
   toggleAddOn: (opt: AddOnOption) => void;
+  setAdditionalRequest: (text: string) => void;
   setCustomerName: (name: string) => void;
   setCustomerPhone: (phone: string) => void;
   setBookingId: (id: string | null) => void;
@@ -134,6 +136,7 @@ const INITIAL_STATE: PreConsultState = {
   stylePreference: null,
   styleKeywords: [],
   addOns: [],
+  additionalRequest: '',
 
   customerName: '',
   customerPhone: '',
@@ -207,6 +210,8 @@ export const usePreConsultStore = create<PreConsultStore>()(
             ? s.addOns.filter((a) => a !== opt)
             : [...s.addOns, opt],
         })),
+
+      setAdditionalRequest: (text) => set({ additionalRequest: text }),
 
       setCustomerName: (name) => set({ customerName: name }),
 

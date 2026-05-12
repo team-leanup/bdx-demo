@@ -568,6 +568,9 @@
 ### 22.12 🟢 STEP 4 완료
 - **완료**: 체크 애니메이션, 자동 저장 안내, 5초 후 스토어 리셋
 
+### 22.13 🟢 손님 자유 입력 "추가 요청사항" 섹션 (2026-05-13)
+- **완료**: 사전상담 `consult` 페이지에 8번째 섹션 `additionalRequest`(addons↔review 사이)를 추가하여 손님이 정형 옵션에 없는 요구사항(예: 알러지, 특정 손가락 포인트 제외, 길이 조절 등)을 자유 텍스트로 입력 가능. 500자 제한·카운터·선택 입력. `PreConsultationData.additionalRequest`(JSONB) 신규 필드로 `booking_requests.pre_consultation_data`에 저장됨(DB 마이그레이션 없음). `ConsultReview`에 요약 줄 노출, 사장님 `records/preconsult/[bookingId]`에 "💬 손님 요청사항" 카드로 표시. i18n 4개 언어 4키 추가.
+
 ---
 
 ## 23. 시술 후 결제 UX (STEP 6~11)

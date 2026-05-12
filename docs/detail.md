@@ -668,6 +668,7 @@ src/app/pre-consult/[shopId]/
 | 날짜 | 내용 |
 |------|------|
 | 2026-04-03 | 전체 구현 완료: 타입(T-01~02), DB(T-03~04), 스토어/가격(T-05~06), DB함수(T-07), i18n(T-08~09), 레이아웃+STEP0(T-10~13), STEP1(T-14~17), STEP2(T-18~26), STEP3(T-27), STEP4(T-28). 빌드/타입체크/린트 통과 |
+| 2026-05-13 | 손님 자유 입력 "추가 요청사항" 섹션 추가 — `PreConsultationData.additionalRequest`(JSONB 페이로드, DB 마이그레이션 없음). 신규 컴포넌트 `AdditionalRequest.tsx`(textarea 500자 제한, 선택 입력). `consult/page.tsx` SECTION_ORDER에 `additionalRequest`를 addons↔review 사이로 삽입. `ConsultReview`에 요약 줄 노출. 사장님 `records/preconsult/[bookingId]`에 "💬 손님 요청사항" SectionCard로 표시. i18n 4언어 × 4키(additionalRequestTitle/Optional/Placeholder/ReviewLabel) 추가 |
 
 ---
 

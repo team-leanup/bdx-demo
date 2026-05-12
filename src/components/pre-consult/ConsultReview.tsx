@@ -279,6 +279,15 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
             onModify={onModify}
           />
         )}
+        {store.additionalRequest.trim() && (
+          <ReviewRow
+            label={t('preConsult.additionalRequestReviewLabel')}
+            value={store.additionalRequest.trim()}
+            section="additionalRequest"
+            modifyLabel={t('preConsult.modifyBtn')}
+            onModify={onModify}
+          />
+        )}
       </div>
 
       {/* Actions */}

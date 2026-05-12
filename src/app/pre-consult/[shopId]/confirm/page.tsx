@@ -133,6 +133,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
     wrappingPreference,
     designFeel,
     addOns,
+    additionalRequest,
     referenceImageUrls,
     styleKeywords,
     stylePreference,
@@ -253,6 +254,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
     store.setSubmitting(true);
     setSubmitError('');
 
+    const trimmedRequest = additionalRequest.trim();
     const data: PreConsultationData = {
       bodyPart,
       designCategory: selectedCategory ?? undefined,
@@ -268,6 +270,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
       styleKeyword: styleKeywords,
       addOns: addOns,
       referenceImageUrls: referenceImageUrls,
+      additionalRequest: trimmedRequest || undefined,
     };
 
     // ─── 경로 A: 공유 상담 링크 (linkId) — 선택한 slot 으로 booking 직접 생성 ───
