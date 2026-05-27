@@ -98,7 +98,8 @@ export default function CompletePage() {
         const portfolioPhotos: PortfolioPhoto[] = photos.map((p) => ({
           id: p.id,
           shopId: currentShopId,
-          customerId: 'onboarding',
+          // 온보딩 사진은 customer가 없음 — DB 컬럼은 nullable
+          customerId: undefined,
           kind: 'reference' as const,
           createdAt: onboardingCompletedAt,
           imageDataUrl: p.dataUrl,
@@ -112,32 +113,41 @@ export default function CompletePage() {
           usePortfolioStore.getState().setPhotos(portfolioPhotos);
         } else {
           // 실제 모드: Supabase Storage + DB 업로드
-          await dbBatchInsertPortfolioPhotos(portfolioPhotos);
+          const batchResult = await dbBatchInsertPortfolioPhotos(portfolioPhotos);
+          if (batchResult.errors > 0) {
+            console.error(`[onboarding] portfolio save failed: ${batchResult.errors}/${portfolioPhotos.length}`);
+            throw new Error(`포트폴리오 ${batchResult.errors}장 저장에 실패했어요`);
+          }
+          // 성공한 사진들을 store 에 즉시 반영 (홈에서 hydrateFromDB 호출 시까지 빈 화면 방지)
+          await usePortfolioStore.getState().hydrateFromDB();
         }
       }
 
       setCurrentShopOnboardingComplete(true);
       resetPhotos();
-    } catch {
+      return true;
+    } catch (err) {
+      console.error('[onboarding] commitDB error:', err);
       setError(true);
+      return false;
     } finally {
       setIsSaving(false);
     }
   };
 
   const handlePreview = async () => {
-    await commitDB();
-    if (!error) router.push(currentShopId ? `/pre-consult/${currentShopId}` : '/home');
+    const ok = await commitDB();
+    if (ok) router.push(currentShopId ? `/pre-consult/${currentShopId}` : '/home');
   };
 
   const handleHome = async () => {
-    await commitDB();
-    if (!error) router.push('/home');
+    const ok = await commitDB();
+    if (ok) router.push('/home');
   };
 
   const handleFieldMode = async () => {
-    await commitDB();
-    if (!error) router.push('/field-mode');
+    const ok = await commitDB();
+    if (ok) router.push('/field-mode');
   };
 
   return (

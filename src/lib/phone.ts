@@ -1,3 +1,8 @@
+export function isValidKoreanPhone(phone: string): boolean {
+  const digits = normalizePhone(phone);
+  return /^0\d{9,10}$/.test(digits);
+}
+
 export function normalizePhone(phone: string): string {
   const digits = phone.replace(/\D+/g, '');
 

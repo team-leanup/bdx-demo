@@ -1,13 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Button, Input } from '@/components/ui';
 import { useAuthStore } from '@/store/auth-store';
 
+const OAUTH_ERROR_MESSAGES: Record<string, string> = {
+  env_missing: 'Google 로그인 설정이 누락되었습니다. 운영자에게 문의해 주세요.',
+  provider_error: 'Google 로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+  exchange_failed: 'Google 로그인 세션 교환에 실패했습니다. 다시 시도해 주세요.',
+  no_code: 'Google 로그인 응답이 올바르지 않습니다.',
+};
+
 export default function LoginPage(): React.ReactElement {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isInitialized = useAuthStore((s) => s.isInitialized);
   const currentShopOnboardingComplete = useAuthStore((s) => s.currentShopOnboardingComplete);
   const role = useAuthStore((s) => s.role);
@@ -20,6 +28,13 @@ export default function LoginPage(): React.ReactElement {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const oauthError = searchParams.get('oauth_error');
+    if (oauthError) {
+      setError(OAUTH_ERROR_MESSAGES[oauthError] ?? 'Google 로그인에 실패했습니다.');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!isInitialized) {

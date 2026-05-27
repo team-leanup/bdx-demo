@@ -556,7 +556,7 @@ export type Database = {
         Row: {
           color_labels: Json
           created_at: string | null
-          customer_id: string
+          customer_id: string | null
           design_type: string | null
           id: string
           image_data_url: string | null
@@ -576,7 +576,7 @@ export type Database = {
         Insert: {
           color_labels?: Json
           created_at?: string | null
-          customer_id: string
+          customer_id?: string | null
           design_type?: string | null
           id: string
           image_data_url?: string | null
@@ -596,7 +596,7 @@ export type Database = {
         Update: {
           color_labels?: Json
           created_at?: string | null
-          customer_id?: string
+          customer_id?: string | null
           design_type?: string | null
           id?: string
           image_data_url?: string | null

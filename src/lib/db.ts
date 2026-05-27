@@ -244,7 +244,7 @@ function toPortfolioPhoto(row: Database['public']['Tables']['portfolio_photos'][
   return {
     id: row.id,
     shopId: row.shop_id,
-    customerId: row.customer_id,
+    customerId: row.customer_id ?? undefined,
     recordId: row.record_id ?? undefined,
     kind: row.kind as PortfolioPhoto['kind'],
     createdAt: row.created_at ?? '',
@@ -1308,7 +1308,9 @@ export async function dbInsertPortfolioPhoto(photo: PortfolioPhoto): Promise<Por
     if (!imagePath && photo.imageDataUrl.startsWith('data:')) {
       const { blob, mimeType } = dataUrlToBlob(photo.imageDataUrl);
       const extension = getPortfolioFileExtension(mimeType);
-      imagePath = `${photo.shopId}/${photo.customerId}/${photo.id}.${extension}`;
+      // 온보딩 사진은 customerId 없음 → 'onboarding' 폴더 사용
+      const folder = photo.customerId ?? 'onboarding';
+      imagePath = `${photo.shopId}/${folder}/${photo.id}.${extension}`;
 
       const { error: uploadError } = await supabase.storage
         .from(PORTFOLIO_BUCKET)
@@ -1328,7 +1330,7 @@ export async function dbInsertPortfolioPhoto(photo: PortfolioPhoto): Promise<Por
       .upsert({
         id: photo.id,
         shop_id: photo.shopId,
-        customer_id: photo.customerId,
+        customer_id: photo.customerId ?? null,
         record_id: photo.recordId ?? null,
         kind: photo.kind,
         created_at: photo.createdAt,

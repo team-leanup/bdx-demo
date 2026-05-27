@@ -242,9 +242,16 @@ export const useRecordsStore = create<RecordsStore>()(
           const customerStore = useCustomerStore.getState();
           const customer = customerStore.getById(record.customerId);
           if (customer) {
+            const filteredHistory = (customer.treatmentHistory ?? []).filter(
+              (h) => h.recordId !== id,
+            );
+            const newVisitCount = Math.max(0, (customer.visitCount ?? 0) - 1);
+            const newTotalSpend = Math.max(0, customer.totalSpend - record.finalPrice);
             customerStore.updateCustomer(record.customerId, {
-              totalSpend: Math.max(0, customer.totalSpend - record.finalPrice),
-              visitCount: Math.max(0, (customer.visitCount ?? 0) - 1),
+              totalSpend: newTotalSpend,
+              visitCount: newVisitCount,
+              averageSpend: newVisitCount > 0 ? Math.round(newTotalSpend / newVisitCount) : 0,
+              treatmentHistory: filteredHistory,
             });
           }
         }

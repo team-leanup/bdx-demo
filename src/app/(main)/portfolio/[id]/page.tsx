@@ -62,7 +62,7 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
   const [toasts, setToasts] = useState<ToastData[]>([]);
 
   const photo = photos.find((p) => p.id === id);
-  const customer = photo ? getCustomerById(photo.customerId) : undefined;
+  const customer = photo?.customerId ? getCustomerById(photo.customerId) : undefined;
   const records = getAllRecords();
   const linkedRecord = photo?.recordId ? records.find((r) => r.id === photo.recordId) : undefined;
   const serviceType = photo?.serviceType

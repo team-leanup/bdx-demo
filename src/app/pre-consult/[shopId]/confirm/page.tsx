@@ -9,7 +9,7 @@ import { usePreConsultStore } from '@/store/pre-consult-store';
 import { calculatePreConsultPrice } from '@/lib/pre-consult-price';
 import { dbCompletePreConsultation, dbCompletePreconsultationBooking, dbCreatePreConsultation, fetchShopPublicData, fetchBookingRequestById, dbCreateBookingFromConsultationLink, dbCreateBookingFromShopLink } from '@/lib/db';
 import { getNowInKoreaIso } from '@/lib/format';
-import { formatPhoneInput, normalizePhone } from '@/lib/phone';
+import { formatPhoneInput, normalizePhone, isValidKoreanPhone } from '@/lib/phone';
 import { consumeClientRateLimit } from '@/lib/client-rate-limit';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -225,6 +225,10 @@ export default function PreConsultConfirmPage(): React.ReactElement {
 
     if (!name.trim() || !phone.trim()) {
       setSubmitError(t('preConsult.nameLabel') + ' / ' + t('preConsult.phoneLabel'));
+      return;
+    }
+    if (!isValidKoreanPhone(phone)) {
+      setSubmitError(t('preConsult.phoneInvalidFormat'));
       return;
     }
     // 오타 방지: 두 번 입력한 전화번호 비교 (포맷 차이 무시)
@@ -692,7 +696,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
             fullWidth
             loading={isSubmitting}
             onClick={() => { void handleSubmit(); }}
-            disabled={!name.trim() || !phone.trim() || isSubmitting}
+            disabled={!name.trim() || !isValidKoreanPhone(phone) || !isValidKoreanPhone(phoneConfirm) || isSubmitting}
           >
             {t('preConsult.bookingBtn')}
             {locale !== 'ko' && (

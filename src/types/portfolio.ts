@@ -8,7 +8,7 @@ export type { DesignCategory as StyleCategory };
 export interface PortfolioPhoto {
   id: string;
   shopId: string;
-  customerId: string;
+  customerId?: string;
   recordId?: string;
   kind: PortfolioPhotoKind;
   createdAt: string;

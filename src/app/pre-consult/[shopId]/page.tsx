@@ -50,7 +50,12 @@ function PreConsultStartInner(): React.ReactElement {
       setBookingId(bookingIdParam);
       fetchBookingRequestById(bookingIdParam, params.shopId)
         .then((result) => {
-          if (result) setBookingInfo(result);
+          if (result) {
+            setBookingInfo(result);
+            const storeApi = usePreConsultStore.getState();
+            if (result.customerName) storeApi.setCustomerName(result.customerName);
+            if (result.phone) storeApi.setCustomerPhone(result.phone);
+          }
         })
         .catch(() => {})
         .finally(() => setIsLoading(false));

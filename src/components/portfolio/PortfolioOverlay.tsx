@@ -59,7 +59,7 @@ export function PortfolioOverlay({
 
   const currentIndex = photoIds.indexOf(currentId);
   const photo = photos.find((p) => p.id === currentId);
-  const customer = photo ? customerMap.get(photo.customerId) : undefined;
+  const customer = photo?.customerId ? customerMap.get(photo.customerId) : undefined;
   const linkedRecord = photo?.recordId ? recordMap.get(photo.recordId) : undefined;
   const serviceType = photo?.serviceType
     ?? (linkedRecord ? DESIGN_SCOPE_LABEL[linkedRecord.consultation.designScope] ?? linkedRecord.consultation.designScope : undefined);

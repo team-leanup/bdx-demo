@@ -460,6 +460,7 @@ export default function PortfolioPage(): React.ReactElement {
       new Map(
         photos
           .map((p) => p.customerId)
+          .filter((cid): cid is string => Boolean(cid))
           .filter((cid, i, arr) => arr.indexOf(cid) === i)
           .map((cid) => [cid, getById(cid)] as [string, Customer | undefined])
           .filter((entry): entry is [string, Customer] => entry[1] !== undefined),
@@ -473,7 +474,7 @@ export default function PortfolioPage(): React.ReactElement {
 
   const photoCards = useMemo(() => {
     return treatmentPhotos.map((photo) => {
-      const customer = getById(photo.customerId);
+      const customer = photo.customerId ? getById(photo.customerId) : undefined;
       const linkedRecord = photo.recordId ? recordMap.get(photo.recordId) : undefined;
       const serviceType = photo.serviceType
         ?? (linkedRecord ? DESIGN_SCOPE_LABEL[linkedRecord.consultation.designScope] ?? linkedRecord.consultation.designScope : undefined);
@@ -529,7 +530,7 @@ export default function PortfolioPage(): React.ReactElement {
         if (moodFilter && !(photo.tags ?? []).some((t) => t.includes(moodFilter.replace('#', '')))) return false;
 
         // PF-2: 글로벌 베스트
-        if (globalBestFilter && !foreignCustomerIds.has(photo.customerId)) return false;
+        if (globalBestFilter && (!photo.customerId || !foreignCustomerIds.has(photo.customerId))) return false;
 
         if (!q) return true;
         return searchSource.includes(q);

@@ -298,6 +298,18 @@ export const useAuthStore = create<AuthStore>()(
       loginAsDemo: async () => {
         _isAuthenticating = true;
         try {
+          // 실 계정 세션이 남아있으면 먼저 종료 (데모 진입 후 실 계정 DB 접근 차단)
+          if (hasSupabaseEnv) {
+            try {
+              const { data } = await supabase.auth.getSession();
+              if (data.session) {
+                await supabase.auth.signOut();
+              }
+            } catch (e) {
+              console.warn('[auth] loginAsDemo signOut failed:', e);
+            }
+          }
+
           // 항상 로컬 데모 모드로 즉시 진입 (Supabase 호출 없음)
           // middleware가 데모 세션을 인식하도록 쿠키 설정
           if (typeof document !== 'undefined') {
@@ -422,7 +434,7 @@ export const useAuthStore = create<AuthStore>()(
         }
 
         if (!hasSupabaseEnv) {
-          ['bdx-customers','bdx-shop','bdx-records','bdx-reservations','bdx-portfolio','bdx-app','bdx-parts','bdx-shop-settings','bdx-pre-consult'].forEach(k => localStorage.removeItem(k));
+          ['bdx-customers','bdx-shop','bdx-records','bdx-reservations','bdx-portfolio','bdx-app','bdx-parts','bdx-shop-settings','bdx-pre-consult','bdx-membership-plans','bdx-onboarding','bdx-auth','bdx-locale'].forEach(k => localStorage.removeItem(k));
           sessionStorage.removeItem('bdx-consultation');
           set({
             isInitialized: true,
@@ -436,7 +448,7 @@ export const useAuthStore = create<AuthStore>()(
           console.error('[auth] signOut error:', error);
         }
 
-        ['bdx-customers','bdx-shop','bdx-records','bdx-reservations','bdx-portfolio','bdx-app','bdx-parts','bdx-shop-settings','bdx-pre-consult'].forEach(k => localStorage.removeItem(k));
+        ['bdx-customers','bdx-shop','bdx-records','bdx-reservations','bdx-portfolio','bdx-app','bdx-parts','bdx-shop-settings','bdx-pre-consult','bdx-membership-plans','bdx-onboarding','bdx-auth','bdx-locale'].forEach(k => localStorage.removeItem(k));
         sessionStorage.removeItem('bdx-consultation');
         sessionStorage.removeItem('bdx-field-mode');
 

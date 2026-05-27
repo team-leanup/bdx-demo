@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from '@/components/ui';
 import { SignupConsentSection } from '@/components/auth/SignupConsentSection';
@@ -10,8 +10,16 @@ import { useAuthStore } from '@/store/auth-store';
 
 const SIGNUP_CONSENT_STORAGE_KEY = 'signup-required-consents';
 
+const OAUTH_ERROR_MESSAGES: Record<string, string> = {
+  env_missing: 'Google 로그인 설정이 누락되었습니다. 운영자에게 문의해 주세요.',
+  provider_error: 'Google 로그인이 활성화되어 있지 않습니다. 운영자에게 문의해 주세요.',
+  exchange_failed: 'Google 로그인 세션 교환에 실패했습니다. 다시 시도해 주세요.',
+  no_code: 'Google 로그인 응답이 올바르지 않습니다.',
+};
+
 export default function SignupPage(): React.ReactElement {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const resetApp = useAppStore((s) => s.resetApp);
   const setShopSettings = useAppStore((s) => s.setShopSettings);
   const isInitialized = useAuthStore((s) => s.isInitialized);
@@ -32,6 +40,13 @@ export default function SignupPage(): React.ReactElement {
   const [isLoading, setIsLoading] = useState(false);
   const [consentNudge, setConsentNudge] = useState(false);
   const consentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const oauthError = searchParams.get('oauth_error');
+    if (oauthError) {
+      setError(OAUTH_ERROR_MESSAGES[oauthError] ?? 'Google 회원가입에 실패했습니다.');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!isInitialized) {
