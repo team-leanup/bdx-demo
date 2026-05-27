@@ -13,7 +13,7 @@ import {
   dbInsertMembershipTransaction,
 } from '@/lib/db';
 import { generateId } from '@/lib/generate-id';
-import { getRemainingAmount } from '@/lib/membership';
+import { getRemainingAmount, isMembershipExpired } from '@/lib/membership';
 
 interface LegacyCustomerTagAccent {
   accentColor?: TagAccent;
@@ -368,7 +368,7 @@ export const useCustomerStore = create<CustomerStore>()(
         dbUpsertCustomer(next).catch((err) => {
           console.error('[customer-store] createCustomer DB sync failed:', err);
         });
-        dbUpsertCustomerTags(next.id, next.tags ?? []).catch((err) => {
+        dbUpsertCustomerTags(next.id, next.tags ?? [], useAuthStore.getState().currentShopId ?? undefined).catch((err) => {
           console.error('[customer-store] createCustomer tags DB sync failed:', err);
         });
 
@@ -397,7 +397,7 @@ export const useCustomerStore = create<CustomerStore>()(
                 : c,
             ),
         }));
-        dbUpsertCustomerTags(customerId, nextTags).catch(console.error);
+        dbUpsertCustomerTags(customerId, nextTags, useAuthStore.getState().currentShopId ?? undefined).catch(console.error);
       },
 
       appendSmallTalkNote: (customerId, note) => {
@@ -430,7 +430,7 @@ export const useCustomerStore = create<CustomerStore>()(
         }));
         const updated = get().customers.find((c) => c.id === customerId);
         if (updated) {
-          dbUpsertCustomerTags(customerId, updated.tags ?? []).catch(console.error);
+          dbUpsertCustomerTags(customerId, updated.tags ?? [], useAuthStore.getState().currentShopId ?? undefined).catch(console.error);
         }
       },
 
@@ -446,7 +446,7 @@ export const useCustomerStore = create<CustomerStore>()(
         }));
         const updated = get().customers.find((c) => c.id === customerId);
         if (updated) {
-          dbUpsertCustomerTags(customerId, updated.tags ?? []).catch(console.error);
+          dbUpsertCustomerTags(customerId, updated.tags ?? [], useAuthStore.getState().currentShopId ?? undefined).catch(console.error);
         }
       },
 
@@ -465,7 +465,7 @@ export const useCustomerStore = create<CustomerStore>()(
         }));
         const updated = get().customers.find((c) => c.id === customerId);
         if (updated) {
-          dbUpsertCustomerTags(customerId, updated.tags ?? []).catch(console.error);
+          dbUpsertCustomerTags(customerId, updated.tags ?? [], useAuthStore.getState().currentShopId ?? undefined).catch(console.error);
         }
       },
 
@@ -527,6 +527,8 @@ export const useCustomerStore = create<CustomerStore>()(
             if (c.id !== customerId) return c;
             const m = c.membership;
             if (!m) return c;
+            // 만료/비활성 회원권은 차감 차단 (잔액 있어도)
+            if (m.status !== 'active' || isMembershipExpired(m)) return c;
             // 0423: 잔액 기반 정책 — 횟수 카운터가 0이어도 잔액 남아있으면 허용
             const prevRemainingAmount = typeof m.remainingAmount === 'number'
               ? m.remainingAmount

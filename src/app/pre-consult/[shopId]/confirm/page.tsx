@@ -9,7 +9,7 @@ import { usePreConsultStore } from '@/store/pre-consult-store';
 import { calculatePreConsultPrice } from '@/lib/pre-consult-price';
 import { dbCompletePreConsultation, dbCompletePreconsultationBooking, dbCreatePreConsultation, fetchShopPublicData, fetchBookingRequestById, dbCreateBookingFromConsultationLink, dbCreateBookingFromShopLink } from '@/lib/db';
 import { getNowInKoreaIso } from '@/lib/format';
-import { formatPhoneInput, normalizePhone, isValidKoreanPhone } from '@/lib/phone';
+import { formatPhoneInput, normalizePhone, isValidPhoneForLocale } from '@/lib/phone';
 import { consumeClientRateLimit } from '@/lib/client-rate-limit';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -227,7 +227,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
       setSubmitError(t('preConsult.nameLabel') + ' / ' + t('preConsult.phoneLabel'));
       return;
     }
-    if (!isValidKoreanPhone(phone)) {
+    if (!isValidPhoneForLocale(phone, locale)) {
       setSubmitError(t('preConsult.phoneInvalidFormat'));
       return;
     }
@@ -249,7 +249,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
     });
     if (!rl.allowed) {
       const seconds = Math.ceil(rl.retryAfterMs / 1000);
-      setSubmitError(`잠시 후 다시 시도해 주세요 (${seconds}초)`);
+      setSubmitError(`${t('preConsult.rateLimitError')} (${seconds}s)`);
       return;
     }
 
@@ -696,7 +696,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
             fullWidth
             loading={isSubmitting}
             onClick={() => { void handleSubmit(); }}
-            disabled={!name.trim() || !isValidKoreanPhone(phone) || !isValidKoreanPhone(phoneConfirm) || isSubmitting}
+            disabled={!name.trim() || !isValidPhoneForLocale(phone, locale) || !isValidPhoneForLocale(phoneConfirm, locale) || isSubmitting}
           >
             {t('preConsult.bookingBtn')}
             {locale !== 'ko' && (

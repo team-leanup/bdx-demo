@@ -3,6 +3,17 @@ export function isValidKoreanPhone(phone: string): boolean {
   return /^0\d{9,10}$/.test(digits);
 }
 
+/**
+ * locale을 인식하는 전화번호 검증.
+ * - ko: 한국 번호 (0으로 시작, 10~11자리)
+ * - en/zh/ja: 국제 번호 허용 (숫자/공백/하이픈/괄호/+ 제외 7~15자리)
+ */
+export function isValidPhoneForLocale(phone: string, locale: string): boolean {
+  if (locale === 'ko') return isValidKoreanPhone(phone);
+  const digits = phone.replace(/[\s\-()+]/g, '').replace(/\D+/g, '');
+  return digits.length >= 7 && digits.length <= 15;
+}
+
 export function normalizePhone(phone: string): string {
   const digits = phone.replace(/\D+/g, '');
 

@@ -294,9 +294,14 @@ export const useConsultationStore = create<ConsultationStore>()(
       ),
       partialize: (state) => {
         const { referenceImages: _, ...rest } = state.consultation;
+        // base64 dataURL은 sessionStorage 용량 초과 위험 → 제외
+        // Supabase 업로드 완료된 http URL만 보존
+        const persistedRefs = (state.consultation.referenceImages ?? []).filter(
+          (url) => typeof url === 'string' && url.startsWith('http'),
+        );
         return {
           ...state,
-          consultation: { ...rest, referenceImages: [] },
+          consultation: { ...rest, referenceImages: persistedRefs },
         };
       },
     },
