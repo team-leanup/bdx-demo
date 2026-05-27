@@ -63,7 +63,9 @@ const LANGUAGE_SHORT_LABEL: Record<'en' | 'zh' | 'ja', string> = {
 function addMinutesToTime(time: string, minutes: number): string {
   const [h, m] = time.split(':').map(Number);
   const total = h * 60 + m + minutes;
-  const hh = Math.floor(total / 60) % 24;
+  // 자정 초과(>=24:00) 시 23:59로 clamp — 다음날 표시는 별도 UX로 처리
+  if (total >= 24 * 60) return '23:59';
+  const hh = Math.floor(total / 60);
   const mm = total % 60;
   return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
 }
@@ -133,7 +135,7 @@ export function TodayReservationCard({
   const getById = useCustomerStore((s) => s.getById);
   const getByCustomerId = usePortfolioStore((s) => s.getByCustomerId);
   const setEntryPoint = useConsultationStore((s) => s.setEntryPoint);
-  const allRecords = useRecordsStore((s) => s.getAllRecords());
+  const allRecords = useRecordsStore((s) => s.records);
   const defaultDurationMinutes = useAppStore((s) => s.shopSettings.timeSettings.baseHand) ?? 60;
 
   const [alertBooking, setAlertBooking] = useState<BookingRequest | null>(null);

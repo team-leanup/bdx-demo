@@ -127,16 +127,18 @@ export default function PaymentPage(): React.ReactElement | null {
 
     // 상담(consultation) 플로우 전용 고객 통계 업데이트
     // field-mode(quickSale)는 addQuickSaleRecord에서 이미 처리됨
+    // totalSpend는 회원권 차감분 포함 실제 시술 금액(finalPrice + membershipApplied) 기준 (field-mode와 일관)
     if (record.customerId && !record.isQuickSale) {
+      const totalServicePrice = record.finalPrice + membershipAppliedAmount;
       useCustomerStore.getState().recordTreatmentCompletion(
         record.customerId,
-        record.finalPrice,
+        totalServicePrice,
         {
           recordId: record.id,
           date: getTodayInKorea(),
           bodyPart: record.consultation?.bodyPart ?? 'hand',
           designScope: record.consultation?.designScope ?? '기타',
-          price: record.finalPrice,
+          price: totalServicePrice,
           imageUrls: [],
         },
       );
