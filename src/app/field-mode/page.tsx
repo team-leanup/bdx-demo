@@ -312,6 +312,7 @@ export default function FieldModePage() {
                   extensionLength={extensionLength}
                   addOns={addOns}
                   surcharges={shopSettings.surcharges}
+                  serviceStructure={shopSettings.serviceStructure}
                   onRemovalChange={setRemovalType}
                   onLengthChange={setLengthType}
                   onExtensionChange={setExtensionLength}

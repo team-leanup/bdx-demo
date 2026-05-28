@@ -16,12 +16,19 @@ export function NailStatusSelector({ onComplete }: NailStatusSelectorProps): Rea
   const tKo = useKo();
   const locale = useLocale();
   const store = usePreConsultStore();
-  const [showRemoval, setShowRemoval] = useState(store.nailStatus === 'existing');
+  const shopData = usePreConsultStore((s) => s.shopData);
+  // 사장님이 설정에서 OFF한 경우 — 오프(제거) 옵션 숨김 → 기존 네일 선택 시 바로 wrapping으로
+  const removalEnabled = shopData?.serviceStructure?.removal !== false;
+  const [showRemoval, setShowRemoval] = useState(removalEnabled && store.nailStatus === 'existing');
   const [showWrapping, setShowWrapping] = useState(store.wrappingPreference !== null);
 
   const handleSelect = (status: NailCurrentStatus): void => {
     store.setNailStatus(status);
     if (status === 'none') {
+      store.setRemovalPreference('none');
+      setShowWrapping(true);
+    } else if (!removalEnabled) {
+      // 오프 제공 안 함 — 오프 옵션 건너뛰고 바로 wrapping
       store.setRemovalPreference('none');
       setShowWrapping(true);
     } else {

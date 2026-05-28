@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/cn';
 import { useT } from '@/lib/i18n';
-import type { SurchargeSettings } from '@/types/shop';
+import type { ServiceStructure, SurchargeSettings } from '@/types/shop';
 import type {
   RemovalPreference,
   LengthPreference,
@@ -17,6 +17,7 @@ interface QuickOptionsPanelProps {
   extensionLength: ExtensionLength | null;
   addOns: AddOnOption[];
   surcharges: SurchargeSettings;
+  serviceStructure?: ServiceStructure;
   onRemovalChange: (type: RemovalPreference) => void;
   onLengthChange: (type: LengthPreference) => void;
   onExtensionChange: (length: ExtensionLength) => void;
@@ -39,6 +40,7 @@ export function QuickOptionsPanel({
   extensionLength,
   addOns,
   surcharges,
+  serviceStructure,
   onRemovalChange,
   onLengthChange,
   onExtensionChange,
@@ -46,28 +48,42 @@ export function QuickOptionsPanel({
 }: QuickOptionsPanelProps) {
   const t = useT();
 
+  // 사장님이 설정에서 OFF한 항목은 옵션에서 제외
+  const removalEnabled = serviceStructure?.removal !== false;
+  const extensionEnabled = serviceStructure?.extension !== false;
+  const partsEnabled = serviceStructure?.parts !== false;
+  const pointFullArtEnabled = serviceStructure?.pointFullArt !== false;
+
   const removalOptions: OptionButton<RemovalPreference>[] = [
     { value: 'none', label: t('fieldMode.optionRemovalNone') },
-    {
-      value: 'self_shop',
-      label: t('fieldMode.optionRemovalSelf'),
-      sublabel: `+₩${surcharges.selfRemoval.toLocaleString()}`,
-    },
-    {
-      value: 'other_shop',
-      label: t('fieldMode.optionRemovalOther'),
-      sublabel: `+₩${surcharges.otherRemoval.toLocaleString()}`,
-    },
+    ...(removalEnabled
+      ? [
+          {
+            value: 'self_shop' as const,
+            label: t('fieldMode.optionRemovalSelf'),
+            sublabel: `+₩${surcharges.selfRemoval.toLocaleString()}`,
+          },
+          {
+            value: 'other_shop' as const,
+            label: t('fieldMode.optionRemovalOther'),
+            sublabel: `+₩${surcharges.otherRemoval.toLocaleString()}`,
+          },
+        ]
+      : []),
   ];
 
   const lengthOptions: OptionButton<LengthPreference>[] = [
     { value: 'keep', label: t('fieldMode.optionLengthKeep') },
     { value: 'shorten', label: t('fieldMode.optionLengthShorten') },
-    {
-      value: 'extend',
-      label: t('fieldMode.optionLengthExtend'),
-      sublabel: `+₩${surcharges.extension.toLocaleString()}`,
-    },
+    ...(extensionEnabled
+      ? [
+          {
+            value: 'extend' as const,
+            label: t('fieldMode.optionLengthExtend'),
+            sublabel: `+₩${surcharges.extension.toLocaleString()}`,
+          },
+        ]
+      : []),
   ];
 
   const extensionOptions: OptionButton<ExtensionLength>[] = [
@@ -78,17 +94,25 @@ export function QuickOptionsPanel({
 
   const addOnOptions: OptionButton<AddOnOption>[] = [
     { value: 'stone', label: t('fieldMode.addStone'), sublabel: '+₩5,000' },
-    {
-      value: 'parts',
-      label: t('fieldMode.addParts'),
-      sublabel: `+₩${surcharges.largeParts.toLocaleString()}`,
-    },
+    ...(partsEnabled
+      ? [
+          {
+            value: 'parts' as const,
+            label: t('fieldMode.addParts'),
+            sublabel: `+₩${surcharges.largeParts.toLocaleString()}`,
+          },
+        ]
+      : []),
     { value: 'glitter', label: t('fieldMode.addGlitter'), sublabel: '+₩3,000' },
-    {
-      value: 'point_art',
-      label: t('fieldMode.addPointArt'),
-      sublabel: `+₩${surcharges.pointArt.toLocaleString()}`,
-    },
+    ...(pointFullArtEnabled
+      ? [
+          {
+            value: 'point_art' as const,
+            label: t('fieldMode.addPointArt'),
+            sublabel: `+₩${surcharges.pointArt.toLocaleString()}`,
+          },
+        ]
+      : []),
   ];
 
   return (

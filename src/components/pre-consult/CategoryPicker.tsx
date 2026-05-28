@@ -32,6 +32,19 @@ export function CategoryPicker(): React.ReactElement {
   const shopData = usePreConsultStore((s) => s.shopData);
   const portfolioPhotos = usePreConsultStore((s) => s.portfolioPhotos);
 
+  // 사장님이 설정에서 OFF한 카테고리는 카드에서 숨김 (simple은 항상 노출)
+  const visibleCategories = useMemo(() => {
+    const s = shopData?.serviceStructure;
+    if (!s) return CATEGORIES;
+    return CATEGORIES.filter((c) => {
+      if (c.key === 'simple') return true; // 기본 카테고리는 항상 노출
+      if (c.key === 'french') return s.french !== false;
+      if (c.key === 'magnet') return s.magnet !== false;
+      if (c.key === 'art') return s.pointFullArt !== false;
+      return true;
+    });
+  }, [shopData?.serviceStructure]);
+
   // Minimum price per category from menu (isFeatured) photos
   const menuMinPrices = useMemo(() => {
     const result: Partial<Record<DesignCategory, number>> = {};
@@ -75,7 +88,7 @@ export function CategoryPicker(): React.ReactElement {
 
   return (
     <div className="grid grid-cols-2 gap-3">
-      {CATEGORIES.map((cat) => {
+      {visibleCategories.map((cat) => {
         const isSelected = selected === cat.key;
         const thumb = categoryThumbs[cat.key];
         return (

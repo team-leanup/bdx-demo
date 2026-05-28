@@ -16,7 +16,10 @@ export function LengthSelector({ onComplete }: LengthSelectorProps): React.React
   const tKo = useKo();
   const locale = useLocale();
   const store = usePreConsultStore();
-  const [showExtension, setShowExtension] = useState(store.lengthPreference === 'extend');
+  const shopData = usePreConsultStore((s) => s.shopData);
+  // 사장님이 설정에서 OFF한 경우 — 연장 옵션 숨김
+  const extensionEnabled = shopData?.serviceStructure?.extension !== false;
+  const [showExtension, setShowExtension] = useState(store.lengthPreference === 'extend' && extensionEnabled);
 
   const handleLengthSelect = (pref: LengthPreference): void => {
     store.setLengthPreference(pref);
@@ -62,13 +65,15 @@ export function LengthSelector({ onComplete }: LengthSelectorProps): React.React
           title={t('preConsult.lengthShort')}
           subLabel={locale !== 'ko' ? tKo('preConsult.lengthShort') : undefined}
         />
-        <SelectCard
-          selected={store.lengthPreference === 'extend'}
-          onSelect={() => handleLengthSelect('extend')}
-          icon={<span>💎</span>}
-          title={t('preConsult.lengthExtend')}
-          subLabel={locale !== 'ko' ? tKo('preConsult.lengthExtend') : undefined}
-        />
+        {extensionEnabled && (
+          <SelectCard
+            selected={store.lengthPreference === 'extend'}
+            onSelect={() => handleLengthSelect('extend')}
+            icon={<span>💎</span>}
+            title={t('preConsult.lengthExtend')}
+            subLabel={locale !== 'ko' ? tKo('preConsult.lengthExtend') : undefined}
+          />
+        )}
       </div>
 
       <AnimatePresence>
