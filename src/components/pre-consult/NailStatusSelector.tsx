@@ -26,10 +26,12 @@ export function NailStatusSelector({ onComplete }: NailStatusSelectorProps): Rea
     store.setNailStatus(status);
     if (status === 'none') {
       store.setRemovalPreference('none');
+      setShowRemoval(false); // 'none' 선택 시 잔여 오프 섹션 정리
       setShowWrapping(true);
     } else if (!removalEnabled) {
       // 오프 제공 안 함 — 오프 옵션 건너뛰고 바로 wrapping
       store.setRemovalPreference('none');
+      setShowRemoval(false);
       setShowWrapping(true);
     } else {
       setShowRemoval(true);

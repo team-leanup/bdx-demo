@@ -103,7 +103,8 @@ function toDateStr(date: Date): string {
 }
 
 function toLocalDate(value: string): Date {
-  return value.includes('T') ? new Date(value) : new Date(`${value}T12:00:00`);
+  // 0529 LOW-2: YYYY-MM-DD 문자열에 KST 정오(+09:00) 명시 → 시스템 TZ 의존 제거.
+  return value.includes('T') ? new Date(value) : new Date(`${value}T12:00:00+09:00`);
 }
 
 function addDays(date: Date, days: number): Date {
@@ -156,12 +157,17 @@ const SHAPE_LABEL: Record<string, string> = {
   coffin: '코핀',
 };
 
+// 0528 M5 — 회원권 결제로 finalPrice=0인 경우도 실제 시술 금액(=membershipApplied)을 매출로 인식
+function recordRevenue(r: ConsultationRecord): number {
+  return r.finalPrice + (r.membershipApplied ?? 0);
+}
+
 // Sum finalPrice of records where finalizedAt falls on today (Korea)
 export function computeTodayRevenue(records: ConsultationRecord[]): number {
   const today = getTodayInKorea();
   return records
     .filter((r) => r.finalizedAt && toKoreanDateString(r.finalizedAt) === today)
-    .reduce((sum, r) => sum + r.finalPrice, 0);
+    .reduce((sum, r) => sum + recordRevenue(r), 0);
 }
 
 // Sum finalPrice of records where finalizedAt falls in the given year/month
@@ -173,31 +179,52 @@ export function computeMonthlyRevenue(
   const prefix = `${year}-${String(month).padStart(2, '0')}`;
   return records
     .filter((r) => r.finalizedAt && toKoreanDateString(r.finalizedAt).startsWith(prefix))
-    .reduce((sum, r) => sum + r.finalPrice, 0);
+    .reduce((sum, r) => sum + recordRevenue(r), 0);
 }
 
 // Count records where createdAt falls in the given year/month
 export function computeMonthlyConsultations(
   records: ConsultationRecord[],
+  reservations: BookingRequest[],
   year: number,
   month: number,
 ): number {
   const prefix = `${year}-${String(month).padStart(2, '0')}`;
-  return records.filter((r) => toKoreanDateString(r.createdAt).startsWith(prefix)).length;
+  const recordCount = records.filter((r) => toKoreanDateString(r.createdAt).startsWith(prefix)).length;
+  // 0528 — 사전상담 응답(시술 미완료)도 상담 건수에 포함. record로 변환된 booking은 중복 방지 위해 제외.
+  const recordBookingIds = new Set(
+    records.map((r) => r.consultation?.bookingId).filter((id): id is string => typeof id === 'string'),
+  );
+  const preConsultCount = reservations.filter(
+    (r) =>
+      r.preConsultationCompletedAt &&
+      toKoreanDateString(r.preConsultationCompletedAt).startsWith(prefix) &&
+      !recordBookingIds.has(r.id),
+  ).length;
+  return recordCount + preConsultCount;
 }
 
-// Find the most common designScope value across records, return the label
+// 0528 N3: 원본 designCategory 우선 → DESIGN_SCOPE_LABEL fallback.
+// magnet→solid_tone 매핑으로 자석 시술이 "원컬러"로 잘못 카운트되던 문제 해결.
+const CATEGORY_DISPLAY_LABEL: Record<string, string> = {
+  simple: '심플',
+  french: '프렌치',
+  magnet: '자석',
+  art: '아트',
+};
+
 export function computeTopDesignScope(records: ConsultationRecord[]): string {
   const counts: Record<string, number> = {};
   for (const r of records) {
-    const scope = r.consultation.designScope;
-    if (scope) {
-      counts[scope] = (counts[scope] ?? 0) + 1;
+    // designCategory가 있으면 그것 우선, 없으면 designScope (legacy)
+    const key = r.consultation.designCategory || r.consultation.designScope;
+    if (key) {
+      counts[key] = (counts[key] ?? 0) + 1;
     }
   }
   const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
   if (!top) return '-';
-  return DESIGN_SCOPE_LABEL[top[0]] ?? top[0];
+  return CATEGORY_DISPLAY_LABEL[top[0]] ?? DESIGN_SCOPE_LABEL[top[0]] ?? top[0];
 }
 
 // Return rate = (customers with visitCount >= 2) / total * 100
@@ -217,7 +244,10 @@ export function computeRegularCount(customers: Customer[]): number {
 // Count reservations where reservationDate === today
 export function computeTodayBookings(reservations: BookingRequest[]): number {
   const today = getTodayInKorea();
-  return reservations.filter((r) => r.reservationDate === today).length;
+  // 0528 M7: '미정'·빈 문자열 같은 비표준 reservationTime은 시간대 차트와 일관되게 제외
+  return reservations.filter(
+    (r) => r.reservationDate === today && r.reservationTime && /^\d{1,2}:\d{2}$/.test(r.reservationTime),
+  ).length;
 }
 
 // ((current - previous) / previous * 100), handle division by zero → 0
@@ -241,17 +271,20 @@ export function computeDailyConsultations(
       const dayRecords = records.filter((r) => toKoreanDateString(r.createdAt) === dateStr);
 
     // Find top design scope for this day
+    // 0529 HIGH-4: designCategory 우선 (magnet→solid_tone 매핑 우회), 없으면 designScope fallback.
     const scopeCounts: Record<string, number> = {};
     for (const r of dayRecords) {
-      const scope = r.consultation.designScope;
-      if (scope) scopeCounts[scope] = (scopeCounts[scope] ?? 0) + 1;
+      const key = r.consultation.designCategory || r.consultation.designScope;
+      if (key) scopeCounts[key] = (scopeCounts[key] ?? 0) + 1;
     }
     const topScope = Object.entries(scopeCounts).sort((a, b) => b[1] - a[1])[0];
 
     result.push({
       date: dateStr,
       consultations: dayRecords.length,
-      designScope: topScope ? (DESIGN_SCOPE_LABEL[topScope[0]] ?? topScope[0]) : undefined,
+      designScope: topScope
+        ? (CATEGORY_DISPLAY_LABEL[topScope[0]] ?? DESIGN_SCOPE_LABEL[topScope[0]] ?? topScope[0])
+        : undefined,
     });
   }
 
@@ -260,16 +293,18 @@ export function computeDailyConsultations(
 
 // Group records by designScope, count each, calc percentage
 export function computeDesignScopeBreakdown(records: ConsultationRecord[]): ServiceBreakdown[] {
+  // 0529 HIGH-4 + LOW-1: designCategory 우선해 "자석"이 "원컬러"로 잘못 묶이지 않게 함.
+  // computeTopDesignScope KPI와 동일 기준으로 통일.
   const counts: Record<string, number> = {};
   for (const r of records) {
-    const scope = r.consultation.designScope;
-    if (scope) counts[scope] = (counts[scope] ?? 0) + 1;
+    const key = r.consultation.designCategory || r.consultation.designScope;
+    if (key) counts[key] = (counts[key] ?? 0) + 1;
   }
   const total = records.length || 1;
   return Object.entries(counts)
     .sort((a, b) => b[1] - a[1])
     .map(([key, count]) => ({
-      name: DESIGN_SCOPE_LABEL[key] ?? key,
+      name: CATEGORY_DISPLAY_LABEL[key] ?? DESIGN_SCOPE_LABEL[key] ?? key,
       count,
       percentage: Math.round((count / total) * 1000) / 10,
     }));
@@ -342,7 +377,7 @@ export function computeDesignerStats(
         designerName: designer.name,
         consultations: designerRecords.length,
         bookings: designerReservations.length,
-        revenue: designerRecords.filter((r) => r.finalizedAt).reduce((sum, record) => sum + record.finalPrice, 0),
+        revenue: designerRecords.filter((r) => r.finalizedAt).reduce((sum, record) => sum + record.finalPrice + (record.membershipApplied ?? 0), 0),
         assignedBookingRate: roundToSingleDecimal(
           (designerReservations.length / totalActiveReservations) * 100,
         ),
@@ -380,9 +415,18 @@ export function computeUpsellMetrics(records: ConsultationRecord[], shopPricing?
       + breakdown.colorSurcharge
       + manualExtras;
 
-    totalUpsellRevenue += consultationUpsell;
+    // 0528 N2 + 0529 HIGH-2: settlement에서 명시 저장된 upsellAmount가 있으면
+    // 그 값만 사용 (inTreatmentTotal). 명시 저장 없는 사장님 직접 상담(/consultation/summary)
+    // 경로는 record.consultation 기반 consultationUpsell 사용.
+    // 이전 구현은 둘을 합산해 quick-sale에 사전상담 addOns가 양쪽으로 들어가면
+    // 이중 카운트 가능성. 명시 우선 원칙으로 충돌 차단.
+    const totalUpsellForRecord = record.upsellAmount != null
+      ? record.upsellAmount
+      : consultationUpsell;
 
-    if (consultationUpsell > 0) {
+    totalUpsellRevenue += totalUpsellForRecord;
+
+    if (totalUpsellForRecord > 0) {
       upsellConsultations += 1;
     }
 
@@ -586,8 +630,8 @@ export function computeKPICards(
   const prevYear = month === 1 ? year - 1 : year;
   const prevMonth = month === 1 ? 12 : month - 1;
 
-  const thisMonthCount = computeMonthlyConsultations(records, year, month);
-  const prevMonthCount = computeMonthlyConsultations(records, prevYear, prevMonth);
+  const thisMonthCount = computeMonthlyConsultations(records, reservations, year, month);
+  const prevMonthCount = computeMonthlyConsultations(records, reservations, prevYear, prevMonth);
   const monthChange = computeChangeRate(thisMonthCount, prevMonthCount);
 
   const topDesign = computeTopDesignScope(records);
@@ -628,7 +672,7 @@ export function computeKPICards(
   })();
   const yesterdayRevenue = records
     .filter((r) => r.finalizedAt && toKoreanDateString(r.finalizedAt) === yesterdayStr)
-    .reduce((sum, r) => sum + r.finalPrice, 0);
+    .reduce((sum, r) => sum + r.finalPrice + (r.membershipApplied ?? 0), 0);
   const todayRevenueChange = computeChangeRate(todayRevenue, yesterdayRevenue);
 
   // 재방문율 전월 대비 계산
@@ -637,13 +681,20 @@ export function computeKPICards(
   const prevMonthPrefix = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
 
   function monthReturnRate(prefix: string): number {
+    // 0529 MED-4: 같은 손님이 한 달에 여러 번 와도 분모-분자가 동일 손님을 한 번만 카운트.
+    // 이전 구현은 레코드 수 기반이라 같은 손님의 재방문이 양쪽에 중복 카운트되어 비율 부풀려짐.
     const monthRecords = records.filter((r) => toKoreanDateString(r.createdAt).startsWith(prefix));
     if (monthRecords.length === 0) return 0;
-    const returning = monthRecords.filter((r) => {
+    const uniqueCustomers = new Set<string>();
+    const returningCustomers = new Set<string>();
+    for (const r of monthRecords) {
+      if (!r.customerId) continue;
+      uniqueCustomers.add(r.customerId);
       const c = customerMap.get(r.customerId);
-      return c !== undefined && c.visitCount >= 2;
-    }).length;
-    return Math.round((returning / monthRecords.length) * 1000) / 10;
+      if (c && c.visitCount >= 2) returningCustomers.add(r.customerId);
+    }
+    if (uniqueCustomers.size === 0) return 0;
+    return Math.round((returningCustomers.size / uniqueCustomers.size) * 1000) / 10;
   }
 
   const thisMonthReturnRate = monthReturnRate(thisMonthPrefix);

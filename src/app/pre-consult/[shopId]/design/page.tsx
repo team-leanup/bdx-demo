@@ -12,8 +12,7 @@ import { CategoryPicker } from '@/components/pre-consult/CategoryPicker';
 import { DesignGallery } from '@/components/pre-consult/DesignGallery';
 
 import type { StyleCategory } from '@/types/portfolio';
-
-const VALID_CATEGORIES: StyleCategory[] = ['simple', 'french', 'magnet', 'art'];
+import { BUILTIN_DESIGN_CATEGORIES } from '@/types/pre-consultation';
 
 export default function PreConsultDesignPage(): React.ReactElement {
   const router = useRouter();
@@ -39,13 +38,17 @@ export default function PreConsultDesignPage(): React.ReactElement {
     });
   }, [bookingId, shopId]);
 
-  // 공유카드에서 넘어온 경우 카테고리 자동 선택
+  // 공유카드에서 넘어온 경우 카테고리 자동 선택 (builtin + custom 모두 허용)
+  const shopDataInStore = usePreConsultStore((s) => s.shopData);
   useEffect(() => {
     const designCategory = searchParams.get('designCategory');
-    if (designCategory && VALID_CATEGORIES.includes(designCategory as StyleCategory) && !selectedCategory) {
+    if (!designCategory || selectedCategory) return;
+    const isBuiltin = (BUILTIN_DESIGN_CATEGORIES as ReadonlyArray<string>).includes(designCategory);
+    const isCustom = shopDataInStore?.customCategories?.some((c) => c.id === designCategory) ?? false;
+    if (isBuiltin || isCustom) {
       usePreConsultStore.getState().setSelectedCategory(designCategory as StyleCategory);
     }
-  }, [searchParams, selectedCategory]);
+  }, [searchParams, selectedCategory, shopDataInStore]);
 
   const handleGalleryConfirm = (): void => {
     handleNext();

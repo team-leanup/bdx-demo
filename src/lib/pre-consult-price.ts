@@ -5,7 +5,12 @@ import type {
   RemovalPreference,
   LengthPreference,
 } from '@/types/pre-consultation';
-import type { CategoryPricingSettings, CustomPartSetting, SurchargeSettings } from '@/types/shop';
+import type {
+  CategoryPricingSettings,
+  CustomCategory,
+  CustomPartSetting,
+  SurchargeSettings,
+} from '@/types/shop';
 
 export const ADDON_FIXED_PRICES = {
   stone: 5000,
@@ -25,14 +30,18 @@ interface PriceCalcInput {
   customPartSelections?: Record<string, number>;
   /** 0528 — 샵 설정의 커스텀 파츠 정의 (가격 조회용) */
   customParts?: CustomPartSetting[];
+  /** 0528 — 샵이 추가한 시술 종류 (designCategory가 custom id일 때 가격/시간 조회) */
+  customCategories?: CustomCategory[];
 }
 
 export function calculatePreConsultPrice(input: PriceCalcInput): PreConsultPriceEstimate {
-  const { designCategory, removalPreference, lengthPreference, addOns, categoryPricing, surcharges, photoBasePrice, customPartSelections, customParts } = input;
+  const { designCategory, removalPreference, lengthPreference, addOns, categoryPricing, surcharges, photoBasePrice, customPartSelections, customParts, customCategories } = input;
 
-  // 1. Category base price & time
-  const categoryBase = photoBasePrice ?? categoryPricing[designCategory].price;
-  const categoryTime = categoryPricing[designCategory].time;
+  // 1. Category base price & time — builtin은 categoryPricing, custom은 customCategories
+  const customCat = customCategories?.find((c) => c.id === designCategory);
+  const builtinPricing = categoryPricing[designCategory as keyof CategoryPricingSettings];
+  const categoryBase = photoBasePrice ?? customCat?.price ?? builtinPricing?.price ?? 0;
+  const categoryTime = customCat?.time ?? builtinPricing?.time ?? 0;
 
   // 2. Removal surcharge
   let removalSurcharge = 0;

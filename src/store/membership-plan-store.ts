@@ -96,8 +96,9 @@ export const useMembershipPlanStore = create<MembershipPlanStore>()(
       },
 
       removePlan: (id) => {
+        const shopId = useAuthStore.getState().currentShopId;
         set((state) => ({ plans: state.plans.filter((p) => p.id !== id) }));
-        void dbDeleteMembershipPlan(id).catch(console.error);
+        void dbDeleteMembershipPlan(id, shopId).catch(console.error);
       },
 
       reset: () => set({ plans: [], _dbReady: false }),

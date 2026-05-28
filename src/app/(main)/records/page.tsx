@@ -195,9 +195,15 @@ export default function RecordsPage() {
   const role = useAuthStore((s) => s.role);
   const activeDesignerId = useAuthStore((s) => s.activeDesignerId);
   const allReservations = useReservationStore((s) => s.reservations);
+  const hydrateReservations = useReservationStore((s) => s.hydrateFromDB);
   const addReservation = useReservationStore((s) => s.addReservation);
   const updateReservation = useReservationStore((s) => s.updateReservation);
   const removeReservation = useReservationStore((s) => s.removeReservation);
+
+  // 페이지 진입 시 booking_requests 최신 데이터 fetch — 사전상담 응답이 시간그리드에 표시되도록
+  useEffect(() => {
+    void hydrateReservations();
+  }, [hydrateReservations]);
   const removeRecord = useRecordsStore((s) => s.removeRecord);
   const updateRecord = useRecordsStore((s) => s.updateRecord);
   const recordTreatmentCompletion = useCustomerStore((s) => s.recordTreatmentCompletion);
@@ -431,7 +437,7 @@ export default function RecordsPage() {
       });
       // field-mode store에도 동일 예약 데이터 반영
       const raw = booking.preConsultationData as Record<string, unknown> | undefined;
-      const validatedCategory = asDesignCategory(raw?.designCategory);
+      const validatedCategory = asDesignCategory(raw?.designCategory, shopSettings);
       hydrateFromBooking({
         bookingId: booking.id,
         customerName: booking.customerName,

@@ -31,8 +31,10 @@ export function PriceBar({
       : `₩${estimate.minTotal.toLocaleString()}~${estimate.maxTotal.toLocaleString()}`;
 
   const summaryParts: string[] = [];
-  if (designCategory && CATEGORY_LABELS[designCategory]) {
-    summaryParts.push(CATEGORY_LABELS[designCategory]);
+  if (designCategory) {
+    // builtin이면 CATEGORY_LABELS, 그 외(custom)는 호출자가 별도 처리하므로 여기서는 빈 라벨
+    const builtinLabel = CATEGORY_LABELS[designCategory];
+    if (builtinLabel) summaryParts.push(builtinLabel);
   }
   if (hasRemoval) summaryParts.push('제거');
   if (hasExtension) summaryParts.push('연장');

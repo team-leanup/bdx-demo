@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { ServiceStructure, SurchargeSettings, TimeSettings, BusinessHours, Shop, CategoryPricingSettings } from '@/types/shop';
+import type { ServiceStructure, SurchargeSettings, TimeSettings, BusinessHours, Shop, CategoryPricingSettings, CustomCategory } from '@/types/shop';
 import { dbUpdateShopSettings } from '@/lib/db';
 import { useAuthStore } from '@/store/auth-store';
 
@@ -37,6 +37,8 @@ interface ShopSettings {
   revisitMessageTemplate: string;
   /** 0528 — 사전상담/현장모드 노출용 커스텀 파츠 (partsStore와 동기화) */
   customParts?: { id: string; name: string; pricePerUnit: number }[];
+  /** 0528 — 사장님이 추가한 시술 종류 (기본 4개 외, 최대 4개) */
+  customCategories?: CustomCategory[];
 }
 
 const DEFAULT_CATEGORY_PRICING: CategoryPricingSettings = {
@@ -152,15 +154,33 @@ export const useAppStore = create<AppStore>()(
             categoryPricing: next.categoryPricing,
             kakaoTalkUrl: next.kakaoTalkUrl || undefined,
             naverReservationUrl: next.naverReservationUrl || undefined,
-            revisitMessageTemplate: next.revisitMessageTemplate || undefined,
+            // 0528 M9: '' 빈 문자열도 의도된 빈 값으로 보존 (사용자가 비웠을 때 이전 값 잔존 방지)
+            revisitMessageTemplate: next.revisitMessageTemplate,
             // 0528 — 사전상담/현장모드 연동용
             customParts: next.customParts,
+            customCategories: next.customCategories,
             depositAmount: next.depositAmount,
           });
 
           if (!result.success) {
             set({ shopSettings: previous });
             return { success: false, error: result.error };
+          }
+
+          // 0528 C6: baseHandPrice/baseFootPrice는 shops 루트 컬럼이므로 별도 updateShop 호출
+          if (
+            settings.baseHandPrice !== undefined ||
+            settings.baseFootPrice !== undefined
+          ) {
+            try {
+              const { useShopStore } = await import('@/store/shop-store');
+              await useShopStore.getState().updateShop({
+                baseHandPrice: next.baseHandPrice,
+                baseFootPrice: next.baseFootPrice,
+              });
+            } catch (err) {
+              console.error('[app-store] base price update failed:', err);
+            }
           }
         }
 
@@ -212,6 +232,9 @@ export const useAppStore = create<AppStore>()(
               naverReservationUrl: s.naverReservationUrl ?? state.shopSettings.naverReservationUrl,
               revisitMessageTemplate:
                 s.revisitMessageTemplate ?? state.shopSettings.revisitMessageTemplate,
+              customParts: s.customParts ?? state.shopSettings.customParts,
+              customCategories: s.customCategories ?? state.shopSettings.customCategories,
+              depositAmount: s.depositAmount ?? state.shopSettings.depositAmount,
             } : {}),
           },
         }));
@@ -261,6 +284,10 @@ export const useAppStore = create<AppStore>()(
             },
             revisitMessageTemplate:
               p.shopSettings?.revisitMessageTemplate ?? DEFAULT_SHOP_SETTINGS.revisitMessageTemplate,
+            // 0528 — persist 복원 시 누락 방지 (DEFAULT에 없는 필드들)
+            customCategories: p.shopSettings?.customCategories ?? DEFAULT_SHOP_SETTINGS.customCategories,
+            customParts: p.shopSettings?.customParts ?? DEFAULT_SHOP_SETTINGS.customParts,
+            depositAmount: p.shopSettings?.depositAmount ?? DEFAULT_SHOP_SETTINGS.depositAmount,
           },
         };
       },

@@ -12,7 +12,10 @@ export function createKoreanDate(
   minute = 0,
   second = 0,
 ): Date {
-  return new Date(Date.UTC(year, month - 1, day, hour - 9, minute, second));
+  // 0529 LOW-4: ISO 문자열 + KST 오프셋(+09:00) 방식으로 변경 — JS Date.UTC의 음수 hour 부담 제거.
+  // hour=0~9 케이스에서도 안정적으로 한국 시간 기준 Date 객체 생성.
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return new Date(`${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:${pad(second)}+09:00`);
 }
 
 export function parseKoreanDateString(dateStr: string): Date {

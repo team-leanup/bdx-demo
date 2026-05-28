@@ -47,11 +47,15 @@ export function formatWon(amount: number): string {
 export function isMembershipExpired(m: Membership): boolean {
   if (!m.expiryDate) return false;
   try {
-    const expiry = new Date(m.expiryDate);
-    if (Number.isNaN(expiry.getTime())) return false;
-    // 만료일 당일까지는 유효. 자정 지나면 만료.
-    expiry.setHours(23, 59, 59, 999);
-    return expiry.getTime() < Date.now();
+    // 0529 CRIT-2: KST(+09:00) 기준 만료일 23:59:59 까지 유효.
+    // 이전 구현은 시스템 로컬 TZ(setHours)에 의존해 Vercel Edge(UTC)에서
+    // 만료일 당일 KST 09:00 이전까지 잘못 만료 처리됨.
+    const expiryDateStr = m.expiryDate.includes('T')
+      ? m.expiryDate
+      : `${m.expiryDate}T23:59:59+09:00`;
+    const expiryMs = new Date(expiryDateStr).getTime();
+    if (Number.isNaN(expiryMs)) return false;
+    return expiryMs < Date.now();
   } catch {
     return false;
   }
@@ -129,7 +133,11 @@ export function getMembershipSessionState(m: Membership): MembershipSessionState
     Math.min(sessionLimit, usedAmount - currentSessionIdx * sessionLimit),
   );
   const currentSessionRemaining = Math.max(0, sessionLimit - currentSessionUsed);
-  const remainingSessionsCount = total - currentSessionIdx;
+  // 0529 MED-1: rawIdx가 total을 초과한 경우에도 remainingSessionsCount가 1로 표시되던 문제 보정.
+  // 잔여액이 1원이라도 남으면 1회, 0원이면 0회로 정정.
+  const remainingSessionsCount = remainingAmount > 0
+    ? Math.max(0, total - currentSessionIdx)
+    : 0;
 
   return {
     sessionLimit,
@@ -137,6 +145,6 @@ export function getMembershipSessionState(m: Membership): MembershipSessionState
     currentSessionUsed,
     currentSessionRemaining,
     remainingSessionsCount,
-    isFullyUsed: false,
+    isFullyUsed: remainingAmount <= 0,
   };
 }

@@ -85,8 +85,8 @@ export default function DashboardPage() {
     const prevMonth = month === 1 ? 12 : month - 1;
     const thisMonthRevenue = computeMonthlyRevenue(records, year, month);
     const prevMonthRevenue = computeMonthlyRevenue(records, prevYear, prevMonth);
-    const thisMonthCount = computeMonthlyConsultations(records, year, month);
-    const prevMonthCount = computeMonthlyConsultations(records, prevYear, prevMonth);
+    const thisMonthCount = computeMonthlyConsultations(records, reservations, year, month);
+    const prevMonthCount = computeMonthlyConsultations(records, reservations, prevYear, prevMonth);
     return {
       revenueChange: computeChangeRate(thisMonthRevenue, prevMonthRevenue),
       countChange: computeChangeRate(thisMonthCount, prevMonthCount),
@@ -95,7 +95,7 @@ export default function DashboardPage() {
       thisMonthCount,
       prevMonthCount,
     };
-  }, [records]);
+  }, [records, reservations]);
   const foreignReservationSummary = useMemo(
     () => computeForeignReservationSummary(reservations),
     [reservations],

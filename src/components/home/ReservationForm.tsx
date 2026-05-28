@@ -6,6 +6,7 @@ import { Button } from '@/components/ui';
 import { useAuthStore } from '@/store/auth-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { useShopStore } from '@/store/shop-store';
+import { useAppStore } from '@/store/app-store';
 import type { BookingChannel, BookingRequest } from '@/types/consultation';
 import type { Locale } from '@/store/locale-store';
 import { getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
@@ -38,7 +39,8 @@ const LANGUAGE_OPTIONS: { value: Locale; flag: string; label: string }[] = [
   { value: 'ja', flag: '🇯🇵', label: '日本語' },
 ];
 
-const SERVICE_OPTIONS = ['원컬러', '그라데이션', '자석젤', '아트'];
+// 기본 시술 종류 — 사전상담/현장모드/포트폴리오와 통일 (심플/프렌치/자석/아트)
+const BUILTIN_SERVICE_OPTIONS = ['심플', '프렌치', '자석', '아트'];
 
 interface ReservationFormProps {
   onSubmit: (reservation: BookingRequest) => void;
@@ -73,6 +75,14 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
   const currentShopId = useAuthStore((s) => s.currentShopId);
   const customers = useCustomerStore((s) => s.customers);
   const designers = useShopStore((s) => s.designers);
+  const customCategories = useAppStore((s) => s.shopSettings.customCategories) ?? [];
+  const serviceOptions = useMemo(
+    () => [
+      ...BUILTIN_SERVICE_OPTIONS,
+      ...customCategories.slice().sort((a, b) => a.order - b.order).map((c) => c.name),
+    ],
+    [customCategories],
+  );
   const [formName, setFormName] = useState('');
   const [formPhone, setFormPhone] = useState('');
   const [formDate, setFormDate] = useState(initialValues?.date ?? today);
@@ -249,7 +259,7 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
             className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
           >
             <option value="">선택 안함</option>
-            {SERVICE_OPTIONS.map((opt) => (
+            {serviceOptions.map((opt) => (
               <option key={opt} value={opt}>{opt}</option>
             ))}
           </select>

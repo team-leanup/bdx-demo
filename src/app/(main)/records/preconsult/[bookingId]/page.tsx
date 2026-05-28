@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useReservationStore } from '@/store/reservation-store';
 import { useConsultationStore } from '@/store/consultation-store';
+import { useCustomerStore } from '@/store/customer-store';
 import { useLocaleStore } from '@/store/locale-store';
 import { ConsultationStep } from '@/types/consultation';
 import { useFieldModeStore } from '@/store/field-mode-store';
@@ -79,6 +80,9 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
   const router = useRouter();
   const booking = useReservationStore((s) => s.reservations.find((r) => r.id === bookingId));
   const updateReservation = useReservationStore((s) => s.updateReservation);
+  const findCustomerByPhone = useCustomerStore((s) => s.findByPhoneNormalized);
+  const allCustomers = useCustomerStore((s) => s.customers);
+  const createCustomer = useCustomerStore((s) => s.createCustomer);
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const hydrateFromBooking = useFieldModeStore((s) => s.hydrateFromBooking);
   const setConsultationLocale = useLocaleStore((s) => s.setConsultationLocale);
@@ -116,26 +120,68 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
         addOns: raw.addOns ?? [],
         categoryPricing,
         surcharges,
+        // C5: 손님이 선택한 사진별 가격을 사장님 화면에도 동일하게 반영
+        photoBasePrice: raw.selectedPhotoPrice,
         customPartSelections: raw.customPartSelections,
         customParts: shopSettings?.customParts,
+        customCategories: shopSettings?.customCategories,
       })
     : null;
 
   const handleConfirm = (): void => {
-    updateReservation(booking.id, { status: 'confirmed' });
+    const resolvedCustomerId = resolveOrCreateCustomer();
+    updateReservation(booking.id, {
+      status: 'confirmed',
+      ...(resolvedCustomerId && resolvedCustomerId !== booking.customerId
+        ? { customerId: resolvedCustomerId }
+        : {}),
+    });
     router.push(`/records`);
+  };
+
+  // customer 자동 매칭/생성 (handleConfirm·handleStartConsultation에서 공통 사용)
+  const resolveOrCreateCustomer = (): string | undefined => {
+    if (booking.customerId) return booking.customerId;
+    const byPhone = booking.phone ? findCustomerByPhone(booking.phone) : undefined;
+    if (byPhone) return byPhone.id;
+    // 이름 또는 전화번호 중 하나는 있을 때만 customer 생성
+    if (booking.customerName || booking.phone) {
+      const byName = booking.customerName
+        ? allCustomers.find((c) => c.name === booking.customerName)
+        : undefined;
+      if (byName) return byName.id;
+      const newCustomer = createCustomer({
+        name: booking.customerName || '신규 손님',
+        phone: booking.phone || undefined,
+        preferredLanguage: booking.language,
+        assignedDesignerId: booking.designerId,
+        isRegular: false,
+      });
+      return newCustomer.id;
+    }
+    return undefined;
   };
 
   const handleStartConsultation = (): void => {
     if (booking.language && ['ko', 'en', 'zh', 'ja'].includes(booking.language)) {
       setConsultationLocale(booking.language);
     }
+    // 0528 C3·H1: customer 자동 매칭 + booking 확정 (handleConfirm 미경유 시에도 보장)
+    const resolvedCustomerId = resolveOrCreateCustomer();
+    if (booking.status !== 'confirmed' || (resolvedCustomerId && resolvedCustomerId !== booking.customerId)) {
+      updateReservation(booking.id, {
+        status: 'confirmed',
+        ...(resolvedCustomerId && resolvedCustomerId !== booking.customerId
+          ? { customerId: resolvedCustomerId }
+          : {}),
+      });
+    }
     hydrateConsultation({
       ...booking.preConsultationData,
       bookingId: booking.id,
       customerName: booking.customerName,
       customerPhone: booking.phone,
-      customerId: booking.customerId ?? booking.preConsultationData?.customerId,
+      customerId: resolvedCustomerId ?? booking.customerId ?? booking.preConsultationData?.customerId,
       referenceImages: images,
       entryPoint: 'staff',
       currentStep: ConsultationStep.START,
@@ -157,15 +203,28 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
             }));
           })
         : [];
+      // 0528 C4: PreConsultationData(removalPreference/lengthPreference)와
+      // FieldModeStore.hydrateFromBooking 시그니처(removalType/lengthType) 키 매핑.
+      // spread는 손님 입력 정보를 무시하므로 명시적 매핑 필수.
       hydrateFromBooking({
-        ...booking.preConsultationData,
+        designCategory: raw?.designCategory ?? null,
+        selectedPhotoUrl: raw?.selectedPhotoUrl ?? null,
+        selectedPhotoPrice: raw?.selectedPhotoPrice,
+        // selectedPhotoId는 preConsultationData에 없음 — 향후 확장 시
+        removalType: raw?.removalPreference,
+        lengthType: raw?.lengthPreference,
+        addOns: raw?.addOns,
         bookingId: booking.id,
         designerId: booking.designerId,
         customerName: booking.customerName,
         customerPhone: booking.phone,
-        customerId: booking.customerId ?? booking.preConsultationData?.customerId,
+        customerId: resolvedCustomerId ?? booking.customerId ?? booking.preConsultationData?.customerId ?? null,
         initialInTreatmentAddons,
       });
+    }
+    // H2: treatment 화면 안내 배너용 sessionStorage 설정
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('field-mode:from-pre-consult', booking.id);
     }
     // 사전상담 완료 → 옵션 선택 건너뛰고 바로 시술 중으로
     router.push('/field-mode/treatment');
@@ -235,10 +294,17 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
           </SectionCard>
         )}
 
-        {/* 디자인 선택 */}
+        {/* 디자인 선택 — '시술 종류'로 워딩 통일 */}
         {raw?.designCategory && (
           <SectionCard icon="💅" title="디자인 선택">
-            <InfoRow label="디자인 카테고리" value={CATEGORY_LABEL[raw.designCategory]} />
+            <InfoRow
+              label="시술 종류"
+              value={
+                CATEGORY_LABEL[raw.designCategory] ??
+                shopSettings?.customCategories?.find((c) => c.id === raw.designCategory)?.name ??
+                raw.designCategory
+              }
+            />
             {raw.designFeel && <InfoRow label="디자인 느낌" value={FEEL_LABEL[raw.designFeel] ?? raw.designFeel} />}
             {raw.nailShape && <InfoRow label="네일 쉐입" value={SHAPE_LABEL[raw.nailShape] ?? raw.nailShape} />}
             {raw.stylePreference && <InfoRow label="시술 방향" value={STYLE_PREF_LABEL[raw.stylePreference] ?? raw.stylePreference} />}
@@ -336,9 +402,15 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
         )}
         <button
           onClick={handleConfirm}
+          className="flex-1 rounded-xl border border-primary bg-surface py-3 text-sm font-semibold text-primary active:scale-[0.98] transition-transform"
+        >
+          확정만 하기
+        </button>
+        <button
+          onClick={handleStartConsultation}
           className="flex-1 rounded-xl bg-primary py-3 text-sm font-bold text-white active:scale-[0.98] transition-transform"
         >
-          확정하기
+          이 정보로 시술 시작 →
         </button>
       </div>
 

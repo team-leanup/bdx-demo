@@ -783,9 +783,9 @@ export default function IntroDemoPage() {
               headers={['단계', '화면', '설명', 'URL']}
               rows={[
                 ['시작', '상담 시작', '담당 선생님 선택, 상담 언어 선택', <UrlBadge key="c0" path="/consultation" />],
-                ['1', '고객 정보', '고객명, 연락처, 참고 이미지 첨부', <UrlBadge key="c1" path="/consultation/customer" />],
-                ['2', '기본 조건', '시술 부위, 오프, 연장/리페어, 네일 쉐입', <UrlBadge key="c2" path="/consultation/step1" />],
-                ['3', '디자인 범위', '원컬러/단색+포인트/풀아트/이달의 아트', <UrlBadge key="c3" path="/consultation/step2" />],
+                ['1', '기본 조건', '시술 부위, 오프, 연장/리페어, 네일 쉐입', <UrlBadge key="c1" path="/consultation/step1" />],
+                ['2', '디자인 범위', '원컬러/단색+포인트/풀아트/이달의 아트', <UrlBadge key="c2" path="/consultation/step2" />],
+                ['3', '고객 정보', '고객명, 연락처, 참고 이미지 첨부', <UrlBadge key="c3" path="/consultation/customer" />],
                 ['✨', '네일 캔버스', '손가락별 개별 색상/아트/파츠 지정', <UrlBadge key="c5" path="/consultation/canvas" />],
                 ['✅', '최종 요약', '전체 상담 요약 + 가격 분해표 + 할인 적용', <UrlBadge key="c6" path="/consultation/summary" />],
               ]}

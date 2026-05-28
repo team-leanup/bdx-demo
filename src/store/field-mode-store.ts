@@ -15,6 +15,8 @@ interface FieldModeState {
   selectedCategory: DesignCategory | null;
   selectedPhotoId: string | null;
   selectedPhotoUrl: string | null;
+  /** 0528 C5 — 사진별 가격 (사전상담에서 손님이 선택한 가격을 유지) */
+  selectedPhotoPrice: number | null;
 
   // STEP 3: Options
   removalType: RemovalPreference;
@@ -71,6 +73,8 @@ interface FieldModeActions {
     designCategory?: DesignCategory | null;
     selectedPhotoUrl?: string | null;
     selectedPhotoId?: string | null;
+    /** 0528 C5 — 사진별 가격(손님이 선택한 카테고리 기본가보다 우선) */
+    selectedPhotoPrice?: number | null;
     removalType?: RemovalPreference;
     lengthType?: LengthPreference;
     addOns?: AddOnOption[];
@@ -93,6 +97,7 @@ const DEFAULT_STATE: FieldModeState = {
   selectedCategory: null,
   selectedPhotoId: null,
   selectedPhotoUrl: null,
+  selectedPhotoPrice: null,
   removalType: 'none' as RemovalPreference,
   lengthType: 'keep' as LengthPreference,
   extensionLength: null,
@@ -206,6 +211,7 @@ export const useFieldModeStore = create<FieldModeStore>()(
           selectedCategory: data.designCategory ?? null,
           selectedPhotoUrl: data.selectedPhotoUrl ?? null,
           selectedPhotoId: data.selectedPhotoId ?? null,
+          selectedPhotoPrice: data.selectedPhotoPrice ?? null,
           removalType: data.removalType ?? 'none',
           lengthType: data.lengthType ?? 'keep',
           addOns: data.addOns ?? [],

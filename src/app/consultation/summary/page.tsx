@@ -201,6 +201,7 @@ export default function SummaryPage() {
         consultationSnapshot,
         now,
         linkedCustomerId,
+        effectiveShopId ?? undefined,
       );
 
       if (!preconsultationResult.success) {
@@ -230,6 +231,7 @@ export default function SummaryPage() {
         consultationSnapshot,
         now,
         customerId,
+        effectiveShopId ?? undefined,
       );
 
       if (!preconsultationResult.success) {
@@ -270,6 +272,22 @@ export default function SummaryPage() {
     } else {
       await addRecord(savedRecord);
 
+      // 0529 HIGH-1 (Phase 2 A): 사장님 상담 플로우(/consultation/summary)에서도
+      // 방문 횟수·누적 매출 갱신. addQuickSaleRecord와 동일하게 recordTreatmentCompletion 호출.
+      // customer-link/preconsultation 플로우는 위에서 별도 처리되므로 여기는 사장님 확정 경로.
+      if (customerId && savedRecord.finalizedAt) {
+        const { recordTreatmentCompletion } = useCustomerStore.getState();
+        recordTreatmentCompletion(customerId, adjustedFinalPrice, {
+          recordId: newId,
+          date: now.split('T')[0],
+          bodyPart: consultation.bodyPart,
+          designScope: DESIGN_SCOPE_LABEL[consultation.designScope] ?? consultation.designScope,
+          price: adjustedFinalPrice,
+          designerName: effectiveDesignerName,
+          imageUrls: [],
+        });
+      }
+
       if (bookingId) {
         updateReservation(bookingId, {
           status: 'completed' as BookingStatus,
@@ -301,9 +319,12 @@ export default function SummaryPage() {
     }
 
     // 고객 데이터 연동: 시술이력 갱신 (방문횟수/매출은 결제 확정 시 갱신)
+    // 0529 HIGH-1: 사장님 확정 경로는 위에서 recordTreatmentCompletion이 이미 처리하므로
+    // customer-link/사전상담 경로에서만 lastVisitDate + treatmentHistory 보강.
+    const isOwnerConfirmed = !isCustomerLinkFlow && !!savedRecord.finalizedAt;
     const { getById: getCustById, updateCustomer: updateCust } = useCustomerStore.getState();
     const existingCustomer = getCustById(customerId);
-    if (existingCustomer) {
+    if (existingCustomer && !isOwnerConfirmed) {
       updateCust(customerId, {
         lastVisitDate: now.split('T')[0],
         treatmentHistory: [

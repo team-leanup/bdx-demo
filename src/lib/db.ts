@@ -807,6 +807,8 @@ export async function fetchConsultationRecords(shopId?: string | null): Promise<
     paymentMethod: (row.payment_method as ConsultationRecord['paymentMethod']) ?? undefined,
     secondaryPaymentMethod: (row as Record<string, unknown>).secondary_payment_method as 'cash' | 'card' | undefined,
     secondaryAmount: (row as Record<string, unknown>).secondary_amount as number | undefined,
+    membershipApplied: (row as Record<string, unknown>).membership_applied as number | undefined,
+    upsellAmount: (row as Record<string, unknown>).upsell_amount as number | undefined,
     isQuickSale: row.is_quick_sale ?? false,
     shareCardId: (row as Record<string, unknown>).share_card_id as string | undefined,
   }));
@@ -1011,9 +1013,18 @@ export async function dbUpsertCustomerTags(customerId: string, tags: CustomerTag
   }
 }
 
-export async function dbInsertSmallTalkNote(note: SmallTalkNote): Promise<void> {
+export async function dbInsertSmallTalkNote(
+  note: SmallTalkNote,
+  shopId?: string | null,
+): Promise<void> {
+  // 0529 SEC-CRIT-2: shop_id 강제 — 다른 샵 customer_id로 노트 작성 방어
+  if (!shopId) {
+    console.error('[db] dbInsertSmallTalkNote: shopId 누락, 저장 차단', { noteId: note.id });
+    return;
+  }
   const { error } = await supabase.from('small_talk_notes').insert({
     id: note.id,
+    shop_id: shopId,
     customer_id: note.customerId,
     consultation_record_id: note.consultationRecordId ?? null,
     note_text: note.noteText,
@@ -1096,6 +1107,12 @@ export async function dbUpdateShopSettings(shopId: string, settings: ShopExtende
 // ─── Record Mutations ─────────────────────────────────────────────────────────
 
 export async function dbUpsertRecord(record: ConsultationRecord): Promise<{ success: boolean }> {
+  // 0528 — customer_id NOT NULL 가드: 빈 문자열로 호출되면 FK 위반.
+  // records-store.ts에서 customer 자동 생성을 보장하지만 방어적으로 한 번 더 차단.
+  if (!record.customerId || record.customerId.length === 0) {
+    console.error('[db] dbUpsertRecord: customerId 누락, 저장 중단', { recordId: record.id });
+    return { success: false };
+  }
   const { error } = await supabase.from('consultation_records').upsert({
     id: record.id,
     shop_id: record.shopId,
@@ -1116,6 +1133,8 @@ export async function dbUpsertRecord(record: ConsultationRecord): Promise<{ succ
     payment_method: record.paymentMethod ?? null,
     secondary_payment_method: record.secondaryPaymentMethod ?? null,
     secondary_amount: record.secondaryAmount ?? null,
+    membership_applied: record.membershipApplied ?? null,
+    upsell_amount: record.upsellAmount ?? null,
     is_quick_sale: record.isQuickSale ?? false,
     share_card_id: record.shareCardId ?? null,
   });
@@ -1293,13 +1312,16 @@ export async function dbCompletePreconsultationBooking(
   payload: ConsultationType,
   completedAt: string,
   customerId?: string,
+  shopId?: string,
 ): Promise<{ success: boolean; error?: string }> {
+  // 0529 SEC-CRIT-3: RPC가 p_shop_id 검증 — 다른 샵 booking 덮어쓰기 차단
   const { error } = await supabase.rpc('complete_preconsultation_for_booking', {
     target_booking_id: bookingId,
     payload: payload as unknown as import('@/types/database').Json,
     completed_at: completedAt,
     linked_customer_id: customerId ?? null,
-  });
+    p_shop_id: shopId ?? null,
+  } as never);
 
   if (error) {
     console.error('[db] dbCompletePreconsultationBooking error:', toDbErrorSnapshot(error));
@@ -1643,8 +1665,20 @@ export async function dbUpsertMembershipPlan(plan: MembershipPlan): Promise<{ su
   return { success: true };
 }
 
-export async function dbDeleteMembershipPlan(planId: string): Promise<{ success: boolean; error?: string }> {
-  const { error } = await supabase.from('membership_plans').delete().eq('id', planId);
+export async function dbDeleteMembershipPlan(
+  planId: string,
+  shopId?: string | null,
+): Promise<{ success: boolean; error?: string }> {
+  // 0529 SEC-CRIT-1: RLS 단독 의존 제거 — client 단에서도 shop_id 강제
+  if (!shopId) {
+    console.error('[db] dbDeleteMembershipPlan: shopId 누락, 삭제 차단', { planId });
+    return { success: false, error: 'shopId required' };
+  }
+  const { error } = await supabase
+    .from('membership_plans')
+    .delete()
+    .eq('id', planId)
+    .eq('shop_id', shopId);
   if (error) {
     console.error('[db] dbDeleteMembershipPlan error:', toDbErrorSnapshot(error));
     return { success: false, error: error.message };
@@ -1671,6 +1705,10 @@ export async function fetchShopPublicData(shopId: string): Promise<ShopPublicDat
     address: string | null;
     logo_url: string | null;
     settings: unknown;
+    // 0528 H6·H8 — RPC가 추가 필드를 반환하는 경우 대비 (없으면 undefined로 안전)
+    base_hand_price?: number | null;
+    base_foot_price?: number | null;
+    business_hours?: unknown;
   };
 
   const settings = (data.settings as unknown as ShopExtendedSettings) ?? {};
@@ -1718,7 +1756,12 @@ export async function fetchShopPublicData(shopId: string): Promise<ShopPublicDat
     // 0528 — 설정 ↔ 상담 연동 확장 필드
     serviceStructure: settings.serviceStructure ?? undefined,
     customParts: settings.customParts ?? undefined,
+    customCategories: settings.customCategories ?? undefined,
     depositAmount: settings.depositAmount ?? undefined,
+    // 0528 H6·H8: shops 루트 필드도 ShopPublicData에 포함 (사전상담 견적 정확도)
+    baseHandPrice: data.base_hand_price ?? undefined,
+    baseFootPrice: data.base_foot_price ?? undefined,
+    businessHours: (data.business_hours as unknown as import('@/types/shop').BusinessHours[]) ?? undefined,
     baseSolidPointPrice: settings.baseSolidPointPrice ?? undefined,
     baseFullArtPrice: settings.baseFullArtPrice ?? undefined,
     baseMonthlyArtPrice: settings.baseMonthlyArtPrice ?? undefined,

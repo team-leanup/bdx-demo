@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { TreatmentTimer } from '@/components/field-mode/TreatmentTimer';
 import { AddOnMiniPanel } from '@/components/field-mode/AddOnMiniPanel';
 import { CATEGORY_LABELS } from '@/lib/labels';
+import { resolveCategoryLabelKo, resolveCategoryPricing } from '@/lib/category-resolver';
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
@@ -22,6 +23,7 @@ export default function TreatmentPage(): React.ReactElement {
   const {
     selectedCategory,
     selectedPhotoUrl,
+    selectedPhotoPrice,
     treatmentStartedAt,
     inTreatmentAddons,
     addOns,
@@ -67,8 +69,10 @@ export default function TreatmentPage(): React.ReactElement {
       addOns,
       categoryPricing: shopSettings.categoryPricing,
       surcharges: shopSettings.surcharges,
+      photoBasePrice: selectedPhotoPrice ?? undefined,
+      customCategories: shopSettings.customCategories,
     });
-  }, [selectedCategory, removalType, lengthType, addOns, shopSettings]);
+  }, [selectedCategory, removalType, lengthType, addOns, shopSettings, selectedPhotoPrice]);
 
   // Running total
   const inTreatmentTotal = inTreatmentAddons.reduce((sum, a) => sum + a.amount, 0);
@@ -100,8 +104,10 @@ export default function TreatmentPage(): React.ReactElement {
     return <></>;
   }
 
-  const categoryLabel = CATEGORY_LABELS[selectedCategory];
-  const basePrice = shopSettings.categoryPricing[selectedCategory].price;
+  const categoryLabel = resolveCategoryLabelKo(selectedCategory, shopSettings);
+  // 0528 N1: 사진별 가격이 있으면 우선 사용 (사전상담에서 손님이 선택한 가격 = 설tlement 가격과 일관성)
+  const categoryBase = resolveCategoryPricing(selectedCategory, shopSettings)?.price ?? 0;
+  const basePrice = selectedPhotoPrice != null && selectedPhotoPrice > 0 ? selectedPhotoPrice : categoryBase;
 
   return (
     <div className="min-h-dvh bg-background flex flex-col">

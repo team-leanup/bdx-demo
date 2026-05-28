@@ -15,6 +15,7 @@ import { ShareCardGeneratorModal } from '@/components/share-card/ShareCardGenera
 import { useAuthStore } from '@/store/auth-store';
 import { useAppStore } from '@/store/app-store';
 import { CATEGORY_LABELS } from '@/lib/labels';
+import { resolveCategoryLabelKo } from '@/lib/category-resolver';
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 
@@ -105,6 +106,7 @@ export default function WrapUpPage(): React.ReactElement {
   const [photoSaveError, setPhotoSaveError] = useState(false);
 
   const shopName = useAppStore((s) => s.shopSettings.shopName);
+  const shopSettings = useAppStore((s) => s.shopSettings);
   const shopId = useAuthStore((s) => s.currentShopId ?? '');
   const getRecordById = useRecordsStore((s) => s.getRecordById);
   const currentRecord = useMemo(
@@ -202,7 +204,7 @@ export default function WrapUpPage(): React.ReactElement {
           styleCategory: selectedCategory ?? undefined,
           isPublic: true,
           price: rec?.finalPrice,
-          serviceType: selectedCategory ? CATEGORY_LABELS[selectedCategory] : undefined,
+          serviceType: selectedCategory ? resolveCategoryLabelKo(selectedCategory, shopSettings) : undefined,
         });
       }
       setPhotosSaved(true);

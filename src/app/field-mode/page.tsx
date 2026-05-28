@@ -21,7 +21,14 @@ import { getPortfolioPublicUrl } from '@/lib/db';
 
 type SortMode = 'featured' | 'popular';
 
-const CATEGORY_TABS: Array<{ key: DesignCategory | null; labelKey: string }> = [
+interface CategoryTab {
+  key: DesignCategory | null;
+  /** builtin이면 i18n key, custom이면 직접 라벨 */
+  labelKey?: string;
+  label?: string;
+}
+
+const BUILTIN_CATEGORY_TABS: CategoryTab[] = [
   { key: null, labelKey: 'fieldMode.categoryAll' },
   { key: 'simple', labelKey: 'fieldMode.categorySimple' },
   { key: 'french', labelKey: 'fieldMode.categoryFrench' },
@@ -95,6 +102,15 @@ export default function FieldModePage() {
   // ── Shop settings ─────────────────────────────────────────────────────────
   const { shopSettings } = useAppStore();
 
+  // builtin + custom 카테고리 탭
+  const categoryTabs = useMemo<CategoryTab[]>(() => {
+    const customs = (shopSettings.customCategories ?? [])
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map<CategoryTab>((c) => ({ key: c.id, label: c.name }));
+    return [...BUILTIN_CATEGORY_TABS, ...customs];
+  }, [shopSettings.customCategories]);
+
   // ── Price estimate ────────────────────────────────────────────────────────
   const estimate = useMemo(() => {
     if (!selectedCategory) return null;
@@ -107,6 +123,7 @@ export default function FieldModePage() {
       surcharges: shopSettings.surcharges,
       customPartSelections: customPartCounts,
       customParts: shopSettings.customParts,
+      customCategories: shopSettings.customCategories,
     });
   }, [selectedCategory, removalType, lengthType, addOns, shopSettings, customPartCounts]);
 
@@ -229,7 +246,7 @@ export default function FieldModePage() {
                     className="flex gap-2 overflow-x-auto pb-2"
                     style={{ scrollbarWidth: 'none' }}
                   >
-                    {CATEGORY_TABS.map(({ key, labelKey }) => (
+                    {categoryTabs.map(({ key, labelKey, label }) => (
                       <button
                         key={String(key)}
                         onClick={() => setActiveCategory(key)}
@@ -240,7 +257,7 @@ export default function FieldModePage() {
                             : 'bg-surface-alt text-text-secondary hover:bg-surface-inset',
                         )}
                       >
-                        {t(labelKey)}
+                        {labelKey ? t(labelKey) : label}
                       </button>
                     ))}
                   </div>

@@ -975,6 +975,7 @@ const translations = {
       heroTitle: '방문 전에 미리 선택하시면\n매장에서 기다리지 않고 더 빠르게 도와드릴 수 있어요',
       heroSub: '편하게 선택해주시면 되고,\n필요한 것만 확인할게요.',
       startBtn: '시작하기',
+      perUnit: '/개',
       bodyPartTitle: '어디에 하실 건가요?',
       bodyPartHand: '손',
       bodyPartFoot: '발',
@@ -2169,6 +2170,7 @@ const translations = {
     preConsult: {
       heroTitle: 'Choose in advance\nand we can help you faster without waiting at the salon',
       heroSub: 'Just pick what you like,\nwe only check what\'s needed.',
+      perUnit: '/ea',
       startBtn: 'Get Started',
       bodyPartTitle: 'Where would you like it?',
       bodyPartHand: 'Hands',
@@ -3364,6 +3366,7 @@ const translations = {
     preConsult: {
       heroTitle: '提前选好\n到店后无需等待 更快为您服务',
       heroSub: '轻松选择就好\n我们只确认必要的内容',
+      perUnit: '/个',
       startBtn: '开始',
       bodyPartTitle: '您想做哪里？',
       bodyPartHand: '手',
@@ -4559,6 +4562,7 @@ const translations = {
     preConsult: {
       heroTitle: '事前に選んでおけば\nサロンでお待たせせずスムーズにご案内できます',
       heroSub: '気軽にお選びください\n必要なことだけ確認します',
+      perUnit: '/個',
       startBtn: 'スタート',
       bodyPartTitle: 'どちらに施術しますか？',
       bodyPartHand: 'ハンド',

@@ -7,6 +7,7 @@ import { useCustomerStore } from '@/store/customer-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useRecordsStore } from '@/store/records-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
+import { useAppStore } from '@/store/app-store';
 import { resizePortfolioImage } from '@/lib/image-utils';
 import { formatDateDot, getTodayInKorea } from '@/lib/format';
 import { cn } from '@/lib/cn';
@@ -60,6 +61,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
 
   const records = getAllRecords();
   const allPhotos = usePortfolioStore((s) => s.photos);
+  const customCategories = useAppStore((s) => s.shopSettings.customCategories) ?? [];
 
   const filteredCustomers = customers.filter((customer) =>
     customer.name.toLowerCase().includes(customerSearch.toLowerCase()),
@@ -225,22 +227,21 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
       return;
     }
 
-    let effectiveCustomerId = selectedCustomerId;
-    if (!effectiveCustomerId) {
-      const placeholder = createCustomer({ name: '미지정' });
-      effectiveCustomerId = placeholder.id;
-    }
+    // 0528 C1: 메뉴판 등록(고객 미연결)은 customerId=null로 처리. '미지정' 더미 customer 생성 X.
+    const effectiveCustomerId = selectedCustomerId || undefined;
 
     setIsProcessing(true);
     setError(null);
 
     try {
       const dataUrl = await resizePortfolioImage(selectedFile);
-      const STYLE_CATEGORIES = ['simple', 'french', 'magnet', 'art'];
+      const BUILTIN_STYLE_CATEGORIES = ['simple', 'french', 'magnet', 'art'];
       const rawType = selectedRecord
         ? selectedRecord.consultation.designScope
         : serviceType.trim();
-      const isStyleCategory = STYLE_CATEGORIES.includes(rawType);
+      // 0528 C2: custom 카테고리 id('custom-xxx')도 styleCategory로 인정 (사전상담 그리드 노출 보장)
+      const isStyleCategory =
+        BUILTIN_STYLE_CATEGORIES.includes(rawType) || rawType.startsWith('custom-');
       const derivedServiceType = selectedRecord
         ? DESIGN_SCOPE_LABEL[selectedRecord.consultation.designScope] ?? selectedRecord.consultation.designScope
         : (isStyleCategory ? undefined : rawType || undefined);
@@ -454,6 +455,11 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
             <option value="french">프렌치</option>
             <option value="magnet">자석 (캣아이·자석젤)</option>
             <option value="art">아트 (풀아트·포인트)</option>
+            {customCategories.slice().sort((a, b) => a.order - b.order).map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.description ? `${c.name} (${c.description})` : c.name}
+              </option>
+            ))}
           </select>
         </div>
         <div>

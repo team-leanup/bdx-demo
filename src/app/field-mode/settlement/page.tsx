@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { SettlementCard } from '@/components/field-mode/SettlementCard';
 import { CATEGORY_LABELS } from '@/lib/labels';
+import { resolveCategoryLabelKo } from '@/lib/category-resolver';
 import { useReservationStore } from '@/store/reservation-store';
 import { useCustomerStore } from '@/store/customer-store';
 import type { PaymentMethod } from '@/types/consultation';
@@ -66,6 +67,7 @@ export default function SettlementPage(): React.ReactElement | null {
   const {
     selectedCategory,
     selectedPhotoUrl,
+    selectedPhotoPrice,
     removalType,
     lengthType,
     addOns,
@@ -146,8 +148,10 @@ export default function SettlementPage(): React.ReactElement | null {
       addOns,
       categoryPricing: shopSettings.categoryPricing,
       surcharges: shopSettings.surcharges,
+      photoBasePrice: selectedPhotoPrice ?? undefined,
+      customCategories: shopSettings.customCategories,
     });
-  }, [selectedCategory, removalType, lengthType, addOns, shopSettings]);
+  }, [selectedCategory, removalType, lengthType, addOns, shopSettings, selectedPhotoPrice]);
 
   const inTreatmentTotal = inTreatmentAddons.reduce((s, a) => s + a.amount, 0);
   const subtotal = (baseEstimate?.minTotal ?? 0) + inTreatmentTotal;
@@ -231,7 +235,7 @@ export default function SettlementPage(): React.ReactElement | null {
         id: recordId,
         shopId: effectiveShopId,
         designerId: effectiveDesignerId,
-        serviceType: CATEGORY_LABELS[selectedCategory],
+        serviceType: resolveCategoryLabelKo(selectedCategory, shopSettings),
         finalPrice,
         paymentMethod,
         // 회원권 + 차액 복합 결제 시 차액 정보 저장
@@ -239,6 +243,8 @@ export default function SettlementPage(): React.ReactElement | null {
         secondaryAmount: isMembershipPayment && remainingAfterMembership > 0 ? remainingAfterMembership : undefined,
         // 0428 P1-1: 회원권에서 차감된 금액 — totalSpend 시술 전액 기록용
         membershipApplied: isMembershipPayment ? membershipApplied : undefined,
+        // 0528 N2: 업셀링 매출 (사전상담 추가옵션 + 시술 중 추가 = inTreatmentTotal)
+        upsellAmount: inTreatmentTotal > 0 ? inTreatmentTotal : undefined,
         notes: '현장모드 시술',
         customerName: customerName || undefined,
         customerPhone: customerPhone || undefined,
@@ -308,7 +314,7 @@ export default function SettlementPage(): React.ReactElement | null {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={selectedPhotoUrl}
-                  alt={selectedCategory ? (CATEGORY_LABELS[selectedCategory] ?? selectedCategory) : ''}
+                  alt={selectedCategory ? (resolveCategoryLabelKo(selectedCategory, shopSettings)) : ''}
                   className="w-16 h-16 rounded-xl object-cover flex-shrink-0 bg-surface-alt"
                 />
               ) : (
@@ -318,7 +324,7 @@ export default function SettlementPage(): React.ReactElement | null {
               )}
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-text text-base">
-                  {CATEGORY_LABELS[selectedCategory] ?? selectedCategory}
+                  {resolveCategoryLabelKo(selectedCategory, shopSettings)}
                 </p>
                 <p className="text-sm text-text-secondary mt-0.5">
                   {(baseEstimate?.categoryBase ?? 0).toLocaleString()}원

@@ -3,14 +3,18 @@
 import { motion } from 'framer-motion';
 import { THEME_PRESETS } from '@/config/themes';
 import { useThemeStore } from '@/store/theme-store';
+import { useShopStore } from '@/store/shop-store';
 import type { ThemeId } from '@/types/theme';
 
 export function ThemeSelector() {
   const { themeId, setTheme } = useThemeStore();
+  const updateShop = useShopStore((s) => s.updateShop);
 
   const handleSelect = (id: ThemeId) => {
     setTheme(id);
     document.documentElement.setAttribute('data-theme', id);
+    // 0528 C7: themeId를 DB에도 저장 (다른 기기에서도 테마 유지)
+    void updateShop({ themeId: id });
   };
 
   return (

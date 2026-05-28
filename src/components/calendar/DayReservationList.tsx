@@ -23,6 +23,7 @@ import { KOREA_TIME_ZONE, parseKoreanDateString } from '@/lib/format';
 import { useT } from '@/lib/i18n';
 import { useLocaleStore } from '@/store/locale-store';
 import { useShopStore } from '@/store/shop-store';
+import { useAppStore } from '@/store/app-store';
 
 const CHANNEL_BADGE_STYLE: Record<BookingChannel, { className: string; emoji: string }> = {
   kakao: { className: 'bg-surface-alt text-text-secondary border-transparent', emoji: '💬' },
@@ -273,6 +274,7 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
   const shopName = useShopStore((s) => s.shop?.name) ?? '내 매장';
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const hydrateFromBooking = useFieldModeStore((s) => s.hydrateFromBooking);
+  const shopSettings = useAppStore((s) => s.shopSettings);
   const [showForm, setShowForm] = useState(false);
   const [alertBooking, setAlertBooking] = useState<BookingRequest | null>(null);
   const [alertTags, setAlertTags] = useState<CustomerTag[]>([]);
@@ -329,7 +331,7 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
       customerPhone: booking.phone,
       customerId: booking.customerId ?? booking.preConsultationData?.customerId ?? null,
       designerId: booking.designerId ?? booking.preConsultationData?.designerId ?? '',
-      designCategory: asDesignCategory(raw?.designCategory),
+      designCategory: asDesignCategory(raw?.designCategory, shopSettings),
       removalType: (raw?.removalPreference ?? 'none') as RemovalPreference,
       lengthType: (raw?.lengthPreference ?? 'keep') as LengthPreference,
       addOns: (raw?.addOns ?? []) as AddOnOption[],

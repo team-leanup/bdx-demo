@@ -75,12 +75,13 @@ export const useReservationStore = create<ReservationStore>()(
             if (byName) {
               resolvedCustomerId = byName.id;
             } else {
-              // 신규 고객 생성
+              // 신규 고객 생성 (단골 자동 지정 X)
               const newCustomer = customerStore.createCustomer({
                 name: reservation.customerName,
                 phone: reservation.phone,
                 preferredLanguage: reservation.language,
                 assignedDesignerId: reservation.designerId,
+                isRegular: false,
               });
               resolvedCustomerId = newCustomer.id;
               newlyCreatedCustomer = newCustomer;

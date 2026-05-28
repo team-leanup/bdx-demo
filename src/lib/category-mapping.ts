@@ -1,22 +1,27 @@
-import type { DesignCategory } from '@/types/pre-consultation';
+import type { BuiltinDesignCategory, DesignCategory } from '@/types/pre-consultation';
 import type { DesignScope } from '@/types/consultation';
 
-const CATEGORY_TO_SCOPE: Record<DesignCategory, DesignScope> = {
+// builtin 4개만 키로 (custom id는 fallback 처리)
+const CATEGORY_TO_SCOPE: Record<BuiltinDesignCategory, DesignScope> = {
   simple: 'solid_tone',
   french: 'solid_point',  // 프렌치는 단색+포인트에 해당
   magnet: 'solid_tone',   // 마그네틱은 기본 + expression으로 처리
   art: 'full_art',
 };
 
-const SCOPE_TO_CATEGORY: Record<DesignScope, DesignCategory> = {
+const SCOPE_TO_CATEGORY: Record<DesignScope, BuiltinDesignCategory> = {
   solid_tone: 'simple',
   solid_point: 'french',
   full_art: 'art',
   monthly_art: 'art',
 };
 
+const BUILTIN_KEYS = new Set<string>(['simple', 'french', 'magnet', 'art']);
+
 export function designCategoryToScope(category: DesignCategory): DesignScope {
-  return CATEGORY_TO_SCOPE[category];
+  // custom 카테고리는 'solid_tone'으로 매핑 (포트폴리오/시술 기록에 안전한 기본값)
+  if (!BUILTIN_KEYS.has(category)) return 'solid_tone';
+  return CATEGORY_TO_SCOPE[category as BuiltinDesignCategory];
 }
 
 export function designScopeToCategory(scope: DesignScope): DesignCategory {
@@ -44,5 +49,7 @@ const SERVICE_TYPE_TO_CATEGORY: Record<string, DesignCategory> = {
 
 export function serviceTypeToCategory(serviceType: string | null | undefined): DesignCategory | null {
   if (!serviceType) return null;
+  // 사장님 추가 카테고리 id ('custom-xxx')는 그대로 통과
+  if (serviceType.startsWith('custom-')) return serviceType;
   return SERVICE_TYPE_TO_CATEGORY[serviceType] ?? null;
 }

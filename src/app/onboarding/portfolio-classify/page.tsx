@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { useOnboardingPhotoStore } from '@/store/onboarding-photo-store';
+import { useAppStore } from '@/store/app-store';
 import type { StyleCategory } from '@/types/portfolio';
 
-const CATEGORIES: { value: StyleCategory; label: string; color: string }[] = [
+const BUILTIN_CATEGORIES: { value: StyleCategory; label: string; color: string }[] = [
   { value: 'simple', label: '심플', color: '#8B95A1' },
   { value: 'french', label: '프렌치', color: '#F472B6' },
   { value: 'magnet', label: '자석', color: '#8B5CF6' },
@@ -17,9 +18,24 @@ const CATEGORIES: { value: StyleCategory; label: string; color: string }[] = [
 const MIN_FEATURED = 3;
 const MAX_FEATURED = 5;
 
+const CUSTOM_COLORS = ['#10B981', '#3B82F6', '#EAB308', '#EC4899'];
+
 export default function PortfolioClassifyPage() {
   const router = useRouter();
   const { photos, classifyPhoto, setFeaturedIds: storeFeaturedIds } = useOnboardingPhotoStore();
+  const customCategories = useAppStore((s) => s.shopSettings.customCategories) ?? [];
+  // 0528 H4: 온보딩 재진입 시 이미 등록한 custom 카테고리도 분류 옵션에 노출
+  const CATEGORIES = useMemo(() => {
+    const customs = customCategories
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map((c, idx) => ({
+        value: c.id as StyleCategory,
+        label: c.name,
+        color: CUSTOM_COLORS[idx % CUSTOM_COLORS.length],
+      }));
+    return [...BUILTIN_CATEGORIES, ...customs];
+  }, [customCategories]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [phase, setPhase] = useState<'classify' | 'featured'>('classify');

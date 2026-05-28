@@ -199,7 +199,7 @@ export default function HomePage() {
     // field-mode store에도 동일 예약 데이터 반영 (실제 이동 목적지)
     // preConsultationData는 JSONB로 저장되어 런타임에 pre-consult 필드를 포함할 수 있음
     const raw = booking.preConsultationData as Record<string, unknown> | undefined;
-    const validatedCategory = asDesignCategory(raw?.designCategory);
+    const validatedCategory = asDesignCategory(raw?.designCategory, shopSettings);
     hydrateFromBooking({
       bookingId: booking.id,
       customerName: booking.customerName,
@@ -314,8 +314,8 @@ export default function HomePage() {
         consultationLabel="현장 시술"
         consultationTitle="디자인 고르기"
         consultationSubtitle="포트폴리오에서 디자인 고르기"
-        reservationLabel={t('home.cta_reservation')}
-        reservationTitle={t('home.cta_newReservation')}
+        reservationLabel="예약"
+        reservationTitle="새 예약 등록"
         quickSaleLabel="매출"
         quickSaleTitle="즉시 매출"
         itemVariants={itemVariants}

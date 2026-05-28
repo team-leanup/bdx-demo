@@ -81,6 +81,8 @@ export interface ConsultationType {
 
   // STEP2: 디자인 범위
   designScope: DesignScope;
+  /** 0528 N3 — 원본 카테고리 (사전상담/즉시매출에서 선택한 simple/french/magnet/art/custom-*) — 인기 디자인 통계 정확도 */
+  designCategory?: import('@/types/pre-consultation').DesignCategory;
 
   // STEP3: 추가 옵션
   expressions: ExpressionType[];
@@ -189,6 +191,10 @@ export interface ConsultationRecord {
   secondaryPaymentMethod?: 'cash' | 'card';
   /** 복합 결제 시 차액 금액 (현금/카드로 받은 금액) */
   secondaryAmount?: number;
+  /** 0528 M5 — 회원권 차감 금액 (finalPrice + membershipApplied = 시술 전액) */
+  membershipApplied?: number;
+  /** 0528 N2 — 업셀링 매출 (사전상담 추가옵션 + 시술 중 추가 = inTreatmentAddons 합계) */
+  upsellAmount?: number;
   isQuickSale?: boolean;
   shareCardId?: string;
 }

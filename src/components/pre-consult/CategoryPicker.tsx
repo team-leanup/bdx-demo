@@ -11,15 +11,22 @@ import type { DesignCategory } from '@/types/pre-consultation';
 interface CategoryConfig {
   key: DesignCategory;
   icon: string;
-  tKey: string;
-  tDescKey: string;
+  /** builtin → i18n key, custom → 직접 표시 */
+  builtin: boolean;
+  /** builtin인 경우 i18n key */
+  tKey?: string;
+  tDescKey?: string;
+  /** custom인 경우 표시 라벨/설명 */
+  label?: string;
+  labelKo?: string;
+  desc?: string;
 }
 
-const CATEGORIES: CategoryConfig[] = [
-  { key: 'simple', icon: '💅', tKey: 'preConsult.catSimple', tDescKey: 'preConsult.catSimpleDesc' },
-  { key: 'french', icon: '🤍', tKey: 'preConsult.catFrench', tDescKey: 'preConsult.catFrenchDesc' },
-  { key: 'magnet', icon: '✨', tKey: 'preConsult.catMagnet', tDescKey: 'preConsult.catMagnetDesc' },
-  { key: 'art', icon: '🎨', tKey: 'preConsult.catArt', tDescKey: 'preConsult.catArtDesc' },
+const BUILTIN_CATEGORIES: CategoryConfig[] = [
+  { key: 'simple', icon: '💅', builtin: true, tKey: 'preConsult.catSimple', tDescKey: 'preConsult.catSimpleDesc' },
+  { key: 'french', icon: '🤍', builtin: true, tKey: 'preConsult.catFrench', tDescKey: 'preConsult.catFrenchDesc' },
+  { key: 'magnet', icon: '✨', builtin: true, tKey: 'preConsult.catMagnet', tDescKey: 'preConsult.catMagnetDesc' },
+  { key: 'art', icon: '🎨', builtin: true, tKey: 'preConsult.catArt', tDescKey: 'preConsult.catArtDesc' },
 ];
 
 export function CategoryPicker(): React.ReactElement {
@@ -33,17 +40,34 @@ export function CategoryPicker(): React.ReactElement {
   const portfolioPhotos = usePreConsultStore((s) => s.portfolioPhotos);
 
   // 사장님이 설정에서 OFF한 카테고리는 카드에서 숨김 (simple은 항상 노출)
-  const visibleCategories = useMemo(() => {
+  // 추가 카테고리는 항상 노출
+  const visibleCategories = useMemo<CategoryConfig[]>(() => {
     const s = shopData?.serviceStructure;
-    if (!s) return CATEGORIES;
-    return CATEGORIES.filter((c) => {
-      if (c.key === 'simple') return true; // 기본 카테고리는 항상 노출
+    const builtinFiltered = BUILTIN_CATEGORIES.filter((c) => {
+      if (!s) return true;
+      if (c.key === 'simple') return true;
       if (c.key === 'french') return s.french !== false;
       if (c.key === 'magnet') return s.magnet !== false;
       if (c.key === 'art') return s.pointFullArt !== false;
       return true;
     });
-  }, [shopData?.serviceStructure]);
+    const customConfigs: CategoryConfig[] = (shopData?.customCategories ?? [])
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map((c) => ({
+        key: c.id,
+        icon: '✨',
+        builtin: false,
+        label:
+          locale === 'en' ? (c.nameEn?.trim() || c.name)
+          : locale === 'zh' ? (c.nameZh?.trim() || c.name)
+          : locale === 'ja' ? (c.nameJa?.trim() || c.name)
+          : c.name,
+        labelKo: c.name,
+        desc: c.description ?? '',
+      }));
+    return [...builtinFiltered, ...customConfigs];
+  }, [shopData?.serviceStructure, shopData?.customCategories, locale]);
 
   // Minimum price per category from menu (isFeatured) photos
   const menuMinPrices = useMemo(() => {
@@ -80,8 +104,11 @@ export function CategoryPicker(): React.ReactElement {
     if (menuMin != null) {
       return `${menuMin.toLocaleString()}원~`;
     }
-    if (!shopData?.categoryPricing) return '';
-    const price = shopData.categoryPricing[cat]?.price;
+    if (!shopData) return '';
+    // builtin: categoryPricing 조회 / custom: customCategories에서 직접
+    const builtinPrice = shopData.categoryPricing?.[cat]?.price;
+    const customPrice = shopData.customCategories?.find((c) => c.id === cat)?.price;
+    const price = customPrice ?? builtinPrice;
     if (!price) return '';
     return `${(price / 1000).toFixed(0)},000${t('preConsult.won')}~`;
   };
@@ -114,7 +141,7 @@ export function CategoryPicker(): React.ReactElement {
               {thumb ? (
                 <Image
                   src={thumb}
-                  alt={t(cat.tKey)}
+                  alt={cat.builtin ? t(cat.tKey!) : (cat.label ?? '')}
                   fill
                   unoptimized
                   sizes="(max-width: 420px) 48vw, 200px"
@@ -134,13 +161,19 @@ export function CategoryPicker(): React.ReactElement {
             {/* 텍스트/가격 영역 */}
             <div className="flex flex-col items-center gap-0.5 px-3 py-3 text-center">
               <p className={`font-semibold text-sm ${isSelected ? 'text-primary' : 'text-text'}`}>
-                {t(cat.tKey)}
+                {cat.builtin ? t(cat.tKey!) : cat.label}
               </p>
               {locale !== 'ko' && (
-                <p className="text-xs text-text-muted opacity-60">{tKo(cat.tKey)}</p>
+                <p className="text-xs text-text-muted opacity-60">
+                  {cat.builtin ? tKo(cat.tKey!) : cat.labelKo}
+                </p>
               )}
-              <p className="text-xs text-text-muted leading-tight">{t(cat.tDescKey)}</p>
-              {(menuMinPrices[cat.key] != null || shopData?.categoryPricing) && (
+              {(cat.builtin ? t(cat.tDescKey!) : cat.desc) && (
+                <p className="text-xs text-text-muted leading-tight">
+                  {cat.builtin ? t(cat.tDescKey!) : cat.desc}
+                </p>
+              )}
+              {(menuMinPrices[cat.key] != null || shopData) && (
                 <span className="mt-1 text-xs font-semibold text-primary tabular-nums">
                   {getPriceHint(cat.key)}
                 </span>

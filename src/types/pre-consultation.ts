@@ -1,11 +1,22 @@
 import type { NailShape } from '@/types/consultation';
-import type { CategoryPricingSettings, CustomPartSetting, ServiceStructure, SurchargeSettings } from '@/types/shop';
+import type { BusinessHours, CategoryPricingSettings, CustomCategory, CustomPartSetting, ServiceStructure, SurchargeSettings } from '@/types/shop';
 
 // ── Step & Category Enums ────────────────────────────────────────────────────
 
 export type PreConsultStep = 'start' | 'design' | 'consult' | 'confirm' | 'complete';
 
-export type DesignCategory = 'simple' | 'french' | 'magnet' | 'art';
+/** 기본 4개 카테고리 (사장님이 삭제/이름변경 불가) */
+export type BuiltinDesignCategory = 'simple' | 'french' | 'magnet' | 'art';
+
+/** DesignCategory = 기본 4개 + 사장님이 추가한 custom-* id */
+export type DesignCategory = BuiltinDesignCategory | string;
+
+/** 기본 카테고리 상수 — 순회/검증에 사용 */
+export const BUILTIN_DESIGN_CATEGORIES: BuiltinDesignCategory[] = ['simple', 'french', 'magnet', 'art'];
+
+/** 사장님이 추가할 수 있는 최대 시술 종류 수 (기본 4 + 추가 4) */
+export const MAX_DESIGN_CATEGORIES = 8;
+export const MAX_CUSTOM_CATEGORIES = 4;
 
 export type BodyPart = 'hand' | 'foot';
 
@@ -61,6 +72,8 @@ export interface PreConsultationData {
   // Design selection
   designCategory?: DesignCategory;
   selectedPhotoUrl?: string;
+  /** 0528 C5 — 사진별 가격(포트폴리오에서 가격이 설정된 사진 선택 시) — 가격 정합성 보장 */
+  selectedPhotoPrice?: number;
 
   // Current nail status
   nailStatus?: NailCurrentStatus;
@@ -124,6 +137,11 @@ export interface ShopPublicData {
   phone?: string;
   address?: string;
   logoUrl?: string;
+  /** 0528 H6 — 핸드/페디 기본가 (사전상담 견적에 사용) */
+  baseHandPrice?: number;
+  baseFootPrice?: number;
+  /** 0528 H8 — 영업시간 (사전상담 슬롯 필터링용) */
+  businessHours?: BusinessHours[];
   categoryPricing: CategoryPricingSettings;
   surcharges: SurchargeSettings;
   customerNotice?: string;
@@ -134,6 +152,8 @@ export interface ShopPublicData {
   serviceStructure?: ServiceStructure;
   /** 커스텀 파츠 (상담 시 빠른 선택 옵션) */
   customParts?: CustomPartSetting[];
+  /** 사장님이 추가한 시술 종류 (기본 4개 외) — 0528 */
+  customCategories?: CustomCategory[];
   /** 예약금 (사전상담 제출 시 booking에 자동 적용) */
   depositAmount?: number;
   /** 디자인 옵션 추가금 (사전상담 가격 계산 반영) */

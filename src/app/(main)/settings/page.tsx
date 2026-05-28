@@ -9,7 +9,8 @@ import { MembershipPlansSection } from '@/components/settings/MembershipPlansSec
 import { RevisitMessageSection } from '@/components/settings/RevisitMessageSection';
 import { IconShop, IconService, IconPalette, IconGear } from '@/components/icons';
 import { useAppStore } from '@/store/app-store';
-import type { CategoryPricingSettings } from '@/types/shop';
+import type { CategoryPricingSettings, CustomCategory } from '@/types/shop';
+import { MAX_CUSTOM_CATEGORIES } from '@/types/pre-consultation';
 import { useAuthStore } from '@/store/auth-store';
 import { usePartsStore } from '@/store/parts-store';
 import { useCustomerStore } from '@/store/customer-store';
@@ -70,11 +71,15 @@ function CustomPartsManager() {
   const setShopSettings = useAppStore((s) => s.setShopSettings);
   const t = useT();
 
-  // partsStore → shopSettings.customParts 동기화 (사전상담/현장모드에서 조회 가능)
+  // 0528 H7: partsStore → shopSettings.customParts 동기화.
+  // 매 렌더마다 setShopSettings 호출되면 DB write race 발생 → 직렬화로 변경 감지 후 1회만.
+  const partsSyncedRef = useRef<string>('');
   useEffect(() => {
-    setShopSettings({
-      customParts: customParts.map((p) => ({ id: p.id, name: p.name, pricePerUnit: p.pricePerUnit })),
-    });
+    const next = customParts.map((p) => ({ id: p.id, name: p.name, pricePerUnit: p.pricePerUnit }));
+    const serialized = JSON.stringify(next);
+    if (partsSyncedRef.current === serialized) return;
+    partsSyncedRef.current = serialized;
+    void setShopSettings({ customParts: next });
   }, [customParts, setShopSettings]);
 
   const [showAddForm, setShowAddForm] = useState(false);
@@ -1234,6 +1239,7 @@ export default function SettingsPage() {
   });
 
   const [categoryPricingEdit, setCategoryPricingEdit] = useState<CategoryPricingSettings>(shopSettings.categoryPricing);
+  const [customCategoriesEdit, setCustomCategoriesEdit] = useState<CustomCategory[]>(shopSettings.customCategories ?? []);
   const [editingCategoryPricing, setEditingCategoryPricing] = useState(false);
 
   const handleSavePrices = () => {
@@ -1248,6 +1254,8 @@ export default function SettingsPage() {
     const monthlyArt = parseInt(priceMonthlyArt, 10);
     const deposit = parseInt(priceDeposit, 10) || 0;
     const targetRevenue = parseInt(monthlyTarget, 10) || 0;
+    // 0528 M8: deposit/monthlyTarget도 음수 차단 (0은 허용)
+    if (deposit < 0 || targetRevenue < 0) return;
     if ([hand, foot, offSameShop, offOtherShop, repair, extension, solidPoint, fullArt, monthlyArt].some((v) => isNaN(v) || v < 0)) return;
     setSavedPrices({ hand, foot, offSameShop, offOtherShop, repair, extension, solidPoint, fullArt, monthlyArt });
     setShopSettings({
@@ -1285,13 +1293,50 @@ export default function SettingsPage() {
   };
 
   const handleSaveCategoryPricing = () => {
-    void setShopSettings({ categoryPricing: categoryPricingEdit });
+    // 추가 카테고리는 한국어 이름 + 양수 가격이 있는 것만 저장
+    const cleanedCustom = customCategoriesEdit
+      .filter((c) => c.name.trim().length > 0 && c.price >= 0 && c.time >= 0)
+      .map((c, idx) => ({ ...c, name: c.name.trim(), order: idx }));
+    void setShopSettings({
+      categoryPricing: categoryPricingEdit,
+      customCategories: cleanedCustom,
+    });
+    setCustomCategoriesEdit(cleanedCustom);
     setEditingCategoryPricing(false);
   };
 
   const handleCancelCategoryPricing = () => {
     setCategoryPricingEdit(shopSettings.categoryPricing);
+    setCustomCategoriesEdit(shopSettings.customCategories ?? []);
     setEditingCategoryPricing(false);
+  };
+
+  const handleAddCustomCategory = () => {
+    if (customCategoriesEdit.length >= MAX_CUSTOM_CATEGORIES) return;
+    const nextIdx = customCategoriesEdit.length;
+    // 빠른 더블탭/연속 호출에도 충돌 안 나도록 crypto.randomUUID 사용
+    const rand =
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID().slice(0, 8)
+        : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+    setCustomCategoriesEdit((prev) => [
+      ...prev,
+      {
+        id: `custom-${rand}`,
+        name: '',
+        price: 0,
+        time: 60,
+        order: nextIdx,
+      },
+    ]);
+  };
+
+  const handleUpdateCustomCategory = (id: string, patch: Partial<CustomCategory>) => {
+    setCustomCategoriesEdit((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  };
+
+  const handleRemoveCustomCategory = (id: string) => {
+    setCustomCategoriesEdit((prev) => prev.filter((c) => c.id !== id));
   };
 
   const handleSaveShop = async () => {
@@ -1603,15 +1648,20 @@ export default function SettingsPage() {
 
             <div className="my-3 border-t border-border" />
 
-            {/* 카테고리별 기본 가격 (미리 상담하기 / 현장모드) */}
+            {/* 시술 종류 (기본 4개 + 사장님 추가, 최대 8개) */}
             <div className="mb-3 flex items-center justify-between">
               <div>
-                <span className="text-sm font-medium text-text">카테고리별 기본 가격</span>
-                <p className="mt-0.5 text-[11px] text-text-muted">미리 상담하기 및 현장모드에서 사용되는 가격입니다</p>
+                <span className="text-sm font-medium text-text">시술 종류</span>
+                <p className="mt-0.5 text-[11px] text-text-muted">사전상담·현장모드·포트폴리오에서 사용됩니다 (최대 {4 + MAX_CUSTOM_CATEGORIES}개)</p>
               </div>
               {!editingCategoryPricing ? (
                 <button
-                  onClick={() => setEditingCategoryPricing(true)}
+                  onClick={() => {
+                    // 편집 진입 시 항상 현재 shopSettings로 재초기화 (stale state 방지)
+                    setCategoryPricingEdit(shopSettings.categoryPricing);
+                    setCustomCategoriesEdit(shopSettings.customCategories ?? []);
+                    setEditingCategoryPricing(true);
+                  }}
                   className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-alt transition-colors"
                 >
                   {t('settings.shop_edit')}
@@ -1683,6 +1733,117 @@ export default function SettingsPage() {
                 </div>
               );
             })}
+
+            {/* 사장님이 추가한 시술 종류 */}
+            {(editingCategoryPricing ? customCategoriesEdit : (shopSettings.customCategories ?? [])).map((cat) => (
+              editingCategoryPricing ? (
+                <div key={cat.id} className="mt-2 rounded-xl border border-border bg-surface-alt p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={cat.name}
+                      onChange={(e) => handleUpdateCustomCategory(cat.id, { name: e.target.value })}
+                      placeholder="이름 (필수, 한국어)"
+                      maxLength={20}
+                      className="flex-1 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-text focus:outline-none focus:border-primary transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveCustomCategory(cat.id)}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted hover:bg-rose-50 hover:text-rose-500 transition-colors"
+                      aria-label={`${cat.name || '시술 종류'} 삭제`}
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a2 2 0 012-2h2a2 2 0 012 2v3" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-1 flex-1">
+                      <input
+                        type="number"
+                        value={cat.price}
+                        onChange={(e) => handleUpdateCustomCategory(cat.id, { price: Number(e.target.value) })}
+                        min={0}
+                        step={1000}
+                        className="w-24 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-right text-text focus:outline-none focus:border-primary transition-colors"
+                      />
+                      <span className="text-xs text-text-muted">{t('home.stat_won')}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        value={cat.time}
+                        onChange={(e) => handleUpdateCustomCategory(cat.id, { time: Number(e.target.value) })}
+                        min={0}
+                        step={10}
+                        className="w-16 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-right text-text focus:outline-none focus:border-primary transition-colors"
+                      />
+                      <span className="text-xs text-text-muted">분</span>
+                    </div>
+                  </div>
+                  <details className="mt-2">
+                    <summary className="cursor-pointer text-[11px] text-text-muted hover:text-text-secondary">다국어 이름 (선택) · 미입력 시 한국어로 표시</summary>
+                    <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <input
+                        type="text"
+                        value={cat.nameEn ?? ''}
+                        onChange={(e) => handleUpdateCustomCategory(cat.id, { nameEn: e.target.value })}
+                        placeholder="English"
+                        maxLength={30}
+                        className="rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-text focus:outline-none focus:border-primary transition-colors"
+                      />
+                      <input
+                        type="text"
+                        value={cat.nameZh ?? ''}
+                        onChange={(e) => handleUpdateCustomCategory(cat.id, { nameZh: e.target.value })}
+                        placeholder="中文"
+                        maxLength={20}
+                        className="rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-text focus:outline-none focus:border-primary transition-colors"
+                      />
+                      <input
+                        type="text"
+                        value={cat.nameJa ?? ''}
+                        onChange={(e) => handleUpdateCustomCategory(cat.id, { nameJa: e.target.value })}
+                        placeholder="日本語"
+                        maxLength={20}
+                        className="rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-text focus:outline-none focus:border-primary transition-colors"
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      value={cat.description ?? ''}
+                      onChange={(e) => handleUpdateCustomCategory(cat.id, { description: e.target.value })}
+                      placeholder="짧은 설명 (예: 영롱한 캣아이·자석젤)"
+                      maxLength={40}
+                      className="mt-2 w-full rounded-lg border border-border bg-surface px-2.5 py-1.5 text-sm text-text focus:outline-none focus:border-primary transition-colors"
+                    />
+                  </details>
+                </div>
+              ) : (
+                <div key={cat.id} className="flex items-center gap-2 mb-2">
+                  <span className="w-16 flex-shrink-0 text-sm text-text-secondary truncate">{cat.name}</span>
+                  <div className="flex flex-1 items-center justify-between">
+                    <span className="text-sm font-medium text-text">{formatPrice(cat.price)}</span>
+                    <span className="text-xs text-text-muted">{cat.time}분</span>
+                  </div>
+                </div>
+              )
+            ))}
+
+            {/* 추가하기 버튼 — 편집 모드일 때만, 최대 4개까지 */}
+            {editingCategoryPricing && customCategoriesEdit.length < MAX_CUSTOM_CATEGORIES && (
+              <button
+                type="button"
+                onClick={handleAddCustomCategory}
+                className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border bg-surface px-3 py-2.5 text-sm font-semibold text-text-secondary hover:border-primary hover:text-primary transition-colors"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                시술 종류 추가 ({customCategoriesEdit.length}/{MAX_CUSTOM_CATEGORIES})
+              </button>
+            )}
 
             <div className="my-3 border-t border-border" />
 

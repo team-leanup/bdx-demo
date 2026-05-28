@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { useAppStore } from '@/store/app-store';
@@ -54,6 +54,8 @@ export default function CompletePage() {
   const { photos, featuredIds, reset: resetPhotos } = useOnboardingPhotoStore();
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(false);
+  // 0528 H5: useRef로 동기 가드 — useState는 비동기라 빠른 더블탭 시 중복 INSERT 가능
+  const savingRef = useRef(false);
 
   const { shopName, baseHandPrice, baseFootPrice } = shopSettings;
 
@@ -64,7 +66,9 @@ export default function CompletePage() {
   }, [shopName, router]);
 
   const commitDB = async () => {
-    if (isSaving) return;
+    // 동기 guard로 빠른 더블탭 차단
+    if (savingRef.current || isSaving) return;
+    savingRef.current = true;
     setIsSaving(true);
 
     try {
@@ -132,22 +136,41 @@ export default function CompletePage() {
       return false;
     } finally {
       setIsSaving(false);
+      savingRef.current = false;
+    }
+  };
+
+  // 0528 M3: 모든 진입 경로에서 hydrateFromDB 보장 (handleHome 외에 handlePreview/handleFieldMode도)
+  const ensureHydrated = async () => {
+    try {
+      await usePortfolioStore.getState().hydrateFromDB();
+    } catch (err) {
+      console.error('[onboarding] hydrate failed:', err);
     }
   };
 
   const handlePreview = async () => {
     const ok = await commitDB();
-    if (ok) router.push(currentShopId ? `/pre-consult/${currentShopId}` : '/home');
+    if (ok) {
+      await ensureHydrated();
+      router.push(currentShopId ? `/pre-consult/${currentShopId}` : '/home');
+    }
   };
 
   const handleHome = async () => {
     const ok = await commitDB();
-    if (ok) router.push('/home');
+    if (ok) {
+      await ensureHydrated();
+      router.push('/home');
+    }
   };
 
   const handleFieldMode = async () => {
     const ok = await commitDB();
-    if (ok) router.push('/field-mode');
+    if (ok) {
+      await ensureHydrated();
+      router.push('/field-mode');
+    }
   };
 
   return (

@@ -5,6 +5,7 @@ import { cn } from '@/lib/cn';
 import { PaymentMethodSelector } from './PaymentMethodSelector';
 import { useCustomerStore } from '@/store/customer-store';
 import { useShopStore } from '@/store/shop-store';
+import { useAppStore } from '@/store/app-store';
 import type { PaymentMethod } from '@/types/consultation';
 import type { Customer } from '@/types/customer';
 
@@ -42,12 +43,13 @@ interface QuickSaleFormProps {
   initialCustomerName?: string;
 }
 
-const SERVICE_OPTIONS = [
-  '원컬러',
-  '그라데이션',
+// 기본 시술 종류 — 사전상담/현장모드/예약과 통일 (심플/프렌치/자석/아트)
+// 즉시 매출 특화 옵션 (케어/리페어/연장/기타)도 함께 제공
+const BUILTIN_SERVICE_OPTIONS = [
+  '심플',
   '프렌치',
+  '자석',
   '아트',
-  '자석젤',
   '케어',
   '리페어',
   '연장',
@@ -62,6 +64,14 @@ export function QuickSaleForm({
 }: QuickSaleFormProps): React.ReactElement {
   const customers = useCustomerStore((s) => s.customers);
   const designers = useShopStore((s) => s.designers);
+  const customCategories = useAppStore((s) => s.shopSettings.customCategories) ?? [];
+  const SERVICE_OPTIONS = useMemo(
+    () => [
+      ...BUILTIN_SERVICE_OPTIONS,
+      ...customCategories.slice().sort((a, b) => a.order - b.order).map((c) => c.name),
+    ],
+    [customCategories],
+  );
   const activeDesigners = useMemo(() => designers.filter((d) => d.isActive), [designers]);
 
   // N-4: initialCustomerId가 있으면 고객명 자동 채우기

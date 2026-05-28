@@ -1,6 +1,6 @@
 import type { BookedSlot, ConsultationLinkPublicData } from '@/types/consultation-link';
 import type { BusinessHours } from '@/types/shop';
-import { getTodayInKorea } from '@/lib/format';
+import { getTodayInKorea, getCurrentTimeInKorea } from '@/lib/format';
 
 export interface AvailableSlot {
   date: string;
@@ -79,6 +79,8 @@ function generateSlotCandidates(
  */
 export function computeAvailableDates(link: ConsultationLinkPublicData): AvailableDate[] {
   const today = getTodayInKorea();
+  // 0529 MED-5: validUntil이 오늘 이전이면 만료된 링크 — 빈 배열 반환.
+  if (link.validUntil < today) return [];
   const start = parseDate(link.validFrom < today ? today : link.validFrom);
   const end = parseDate(link.validUntil);
 
@@ -104,10 +106,12 @@ export function computeAvailableDates(link: ConsultationLinkPublicData): Availab
 
     const slots: AvailableSlot[] = candidates
       .filter((time) => {
-        // 오늘 날짜면 현재 시간 이후 슬롯만
+        // 0529 HIGH-5: 오늘 날짜면 KST 기준 현재 시간 이후 슬롯만.
+        // 이전 구현은 시스템 TZ(Vercel Edge UTC)에 의존해 KST 09시 이전 구간에서
+        // 이미 지난 슬롯이 예약 가능으로 표시되던 문제를 수정.
         if (dateStr === today) {
-          const now = new Date();
-          const nowStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+          const { hour, minute } = getCurrentTimeInKorea();
+          const nowStr = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
           if (!timeLess(nowStr, time)) return false;
         }
         return true;

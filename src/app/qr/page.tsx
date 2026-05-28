@@ -2,23 +2,22 @@
 
 import { useRef } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
-
-const DOMAIN = 'https://beauty-decision.com';
+import { SITE_URL, SITE_DOMAIN } from '@/lib/site';
 
 const QR_ITEMS = [
   {
     key: 'app',
     title: 'BDX 앱',
     subtitle: '네일샵 스케줄·고객·매출 관리',
-    url: DOMAIN,
-    hint: 'beauty-decision.com',
+    url: SITE_URL,
+    hint: SITE_DOMAIN,
   },
   {
     key: 'guide',
     title: 'BDX 사용 가이드',
     subtitle: '기능별 상세 설명',
-    url: `${DOMAIN}/guide`,
-    hint: 'beauty-decision.com/guide',
+    url: `${SITE_URL}/guide`,
+    hint: `${SITE_DOMAIN}/guide`,
   },
 ] as const;
 

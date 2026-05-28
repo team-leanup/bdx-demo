@@ -68,6 +68,25 @@ export interface CategoryPricingSettings {
   french: CategoryPricingItem;
   magnet: CategoryPricingItem;
   art: CategoryPricingItem;
+  // 0528: 사장님이 추가한 커스텀 카테고리 가격 (key는 CustomCategory.id)
+  [customId: string]: CategoryPricingItem;
+}
+
+/**
+ * 0528 — 사장님이 추가한 시술 종류 (기본 4개 외 추가)
+ * 최대 4개 추가 가능 (기본 4개 + 추가 4개 = 총 8개)
+ * 한국어는 필수, 다른 언어는 선택 → 미입력 시 한국어 fallback
+ */
+export interface CustomCategory {
+  id: string;          // 'custom-{slug}' 형태
+  name: string;        // 한국어 (필수)
+  nameEn?: string;
+  nameZh?: string;
+  nameJa?: string;
+  description?: string; // 한국어 짧은 설명 (선택)
+  price: number;
+  time: number;        // 분
+  order: number;       // 정렬 순서
 }
 
 export interface CustomPartSetting {
@@ -94,6 +113,8 @@ export interface ShopExtendedSettings {
   naverReservationUrl?: string;
   /** 0528: 커스텀 파츠 (상담 시 빠른 선택 옵션) — 사전상담/현장모드 노출용 */
   customParts?: CustomPartSetting[];
+  /** 0528: 추가 시술 종류 (기본 4개 외 사장님이 추가) — 최대 4개 */
+  customCategories?: CustomCategory[];
   /** 0528: 예약금 (사전상담 제출 시 booking_requests.deposit에 자동 적용) */
   depositAmount?: number;
   /**

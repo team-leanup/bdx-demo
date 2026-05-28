@@ -62,7 +62,10 @@ export function DesignConfirmSheet({
     ? (photo.imagePath.startsWith('http') ? photo.imagePath : getPortfolioPublicUrl(photo.imagePath))
     : photo.imageDataUrl;
   const category = photo.styleCategory ?? 'simple';
-  const pricing = categoryPricing[category];
+  const categoryPricingItem = categoryPricing[category];
+  // 사진별 가격이 설정되어 있으면 우선 사용 (사장님이 사진에 직접 입력한 가격이 카테고리 기본가보다 정확)
+  const effectivePrice = photo.price != null && photo.price > 0 ? photo.price : categoryPricingItem?.price;
+  const effectiveTime = categoryPricingItem?.time;
 
   return (
     <>
@@ -117,9 +120,10 @@ export function DesignConfirmSheet({
           {/* Title + price/time info */}
           <div className="flex flex-col gap-1">
             <h2 className="text-lg font-bold text-text">{t('fieldMode.designConfirmTitle')}</h2>
-            {pricing && (
+            {effectivePrice != null && (
               <p className="text-sm text-text-muted font-medium">
-                ₩{pricing.price.toLocaleString()} · ~{pricing.time}분
+                ₩{effectivePrice.toLocaleString()}
+                {effectiveTime != null && ` · ~${effectiveTime}분`}
               </p>
             )}
           </div>

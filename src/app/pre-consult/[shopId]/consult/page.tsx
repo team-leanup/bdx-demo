@@ -45,7 +45,22 @@ export default function PreConsultConsultPage(): React.ReactElement {
   const t = useT();
   const setCurrentStep = usePreConsultStore((s) => s.setCurrentStep);
 
-  const [completedSections, setCompletedSections] = useState<Set<SectionId>>(new Set());
+  // 0528 H3: 새로고침 시 store 스냅샷 기반으로 진행 상태 복원
+  const [completedSections, setCompletedSections] = useState<Set<SectionId>>(() => {
+    if (typeof window === 'undefined') return new Set();
+    const snap = usePreConsultStore.getState();
+    const completed = new Set<SectionId>();
+    // upload 단계 — referenceImageUrls가 있거나, 사용자가 명시적으로 건너뛴 경우는 unknown이므로
+    // 다음 섹션 데이터가 있으면 upload는 자동 완료된 것으로 간주
+    if (snap.nailStatus) completed.add('upload');
+    if (snap.nailStatus && snap.wrappingPreference) completed.add('nailStatus');
+    if (snap.lengthPreference) completed.add('length');
+    if (snap.nailShape) completed.add('shape');
+    if (snap.designFeel) completed.add('vibe');
+    if (snap.stylePreference) completed.add('style');
+    // addons / additionalRequest 는 optional이라 명시적 진행 확인 불가
+    return completed;
+  });
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Determine which sections are visible: show up to the first uncompleted one

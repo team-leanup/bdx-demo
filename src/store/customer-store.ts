@@ -355,7 +355,8 @@ export const useCustomerStore = create<CustomerStore>()(
           preference: input.preference,
           treatmentHistory: input.treatmentHistory ? deepClone(input.treatmentHistory) : [],
           profileImageUrl: input.profileImageUrl,
-          isRegular: input.isRegular,
+          // 0528 — 신규 고객은 명시적 false로 단골 분류 (자동 '단골' 태그 표시 방지)
+          isRegular: input.isRegular ?? false,
           regularSince: input.regularSince,
           visitFrequency: input.visitFrequency,
           membership: input.membership,
@@ -408,7 +409,7 @@ export const useCustomerStore = create<CustomerStore>()(
             return { ...c, smallTalkNotes: nextNotes, updatedAt: getNowInKoreaIso() };
           }),
         }));
-        dbInsertSmallTalkNote(note).catch(console.error);
+        dbInsertSmallTalkNote(note, useAuthStore.getState().currentShopId).catch(console.error);
       },
 
       toggleTagPinned: (customerId, tagId) => {
@@ -623,9 +624,17 @@ export const useCustomerStore = create<CustomerStore>()(
             // 0428: 잔액 기반 정책 통일 — useMembershipSession과 동일하게 잔액 0이면 차단
             if (getRemainingAmount(m) <= 0) return c;
 
-            // 횟수 카운터가 이미 0이어도 잔액 남으면 1회만 사용한 것으로 처리
-            const safeRemainingSessions = Math.max(1, m.remainingSessions);
-            const actualDeduct = Math.min(count, safeRemainingSessions);
+            // 0529 MED-2: 잔액 기반 차감 — 횟수가 0이라도 잔액 남으면 unitPrice 단위로 가능한 만큼 차감.
+            // 호출자가 count=2를 요구해도 unitPrice * 2가 잔액 초과면 잔액 한도까지만 깎임.
+            const unitPriceForCheck = m.totalSessions > 0
+              ? Math.floor(m.purchaseAmount / m.totalSessions)
+              : 0;
+            const remainingAmountAtStart = getRemainingAmount(m);
+            const maxByAmount = unitPriceForCheck > 0
+              ? Math.floor(remainingAmountAtStart / unitPriceForCheck)
+              : count;
+            const maxBySessions = Math.max(1, m.remainingSessions); // 잔액 있으면 최소 1회 보장
+            const actualDeduct = Math.min(count, Math.max(maxByAmount, maxBySessions));
             // 0423: 금액도 비례 차감 (1회 단가 × 차감 횟수)
             const prevRemainingAmount = typeof m.remainingAmount === 'number'
               ? m.remainingAmount

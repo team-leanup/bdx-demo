@@ -177,7 +177,15 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
           <div className="flex-1 min-w-0">
             <p className="text-xs text-text-muted">{t('consultation.designLabel')}</p>
             <p className="text-sm font-semibold text-text">
-              {store.selectedCategory ? t(`preConsult.cat${store.selectedCategory.charAt(0).toUpperCase()}${store.selectedCategory.slice(1)}`) : '-'}
+              {(() => {
+                const cat = store.selectedCategory;
+                if (!cat) return '-';
+                // builtin이면 i18n 키로 다국어 라벨, custom이면 shopData.customCategories에서 조회
+                if (['simple', 'french', 'magnet', 'art'].includes(cat)) {
+                  return t(`preConsult.cat${cat.charAt(0).toUpperCase()}${cat.slice(1)}`);
+                }
+                return store.shopData?.customCategories?.find((c) => c.id === cat)?.name ?? cat;
+              })()}
             </p>
           </div>
           <button

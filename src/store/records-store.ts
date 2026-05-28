@@ -9,8 +9,10 @@ import { getNowInKoreaIso } from '@/lib/format';
 import {
   fetchConsultationRecords,
   dbUpsertRecord,
+  dbUpsertCustomer,
   dbDeleteRecord,
 } from '@/lib/db';
+import type { Customer } from '@/types/customer';
 import { useCustomerStore } from '@/store/customer-store';
 import { useShopStore } from '@/store/shop-store';
 import type { DesignScope } from '@/types/consultation';
@@ -43,6 +45,8 @@ interface RecordsStore {
      * totalSpend 누적 시 finalPrice + membershipApplied로 시술 전액을 기록.
      */
     membershipApplied?: number;
+    /** 0528 N2 — 업셀링 매출 (사전상담 추가옵션 + 시술 중 추가) */
+    upsellAmount?: number;
     bookingId?: string;
     saleDate?: string;
     saleTime?: string;
@@ -93,12 +97,17 @@ export const useRecordsStore = create<RecordsStore>()(
         });
       },
 
-      addQuickSaleRecord: ({ id, shopId, designerId, customerId, customerName, customerPhone, serviceType, finalPrice, notes, paymentMethod, secondaryPaymentMethod, secondaryAmount, membershipApplied, bookingId, saleDate, saleTime }) => {
+      addQuickSaleRecord: ({ id, shopId, designerId, customerId, customerName, customerPhone, serviceType, finalPrice, notes, paymentMethod, secondaryPaymentMethod, secondaryAmount, membershipApplied, upsellAmount, bookingId, saleDate, saleTime }) => {
         const now = getNowInKoreaIso();
         const today = getTodayInKorea();
-        // 사용자가 날짜/시간을 지정한 경우 해당 값으로 createdAt 생성
+        // 0529 MED-6: saleTime 미지정 시 12:00 고정 → 현재 KST 시각으로 변경.
+        // 시간대 분포 차트에서 12시 카운트가 부풀려지는 문제 해결.
+        const nowKstHHmm = (() => {
+          const m = now.match(/T(\d{2}):(\d{2})/);
+          return m ? `${m[1]}:${m[2]}` : '12:00';
+        })();
         const effectiveCreatedAt = saleDate
-          ? `${saleDate}T${saleTime || '12:00'}:00+09:00`
+          ? `${saleDate}T${saleTime || nowKstHHmm}:00+09:00`
           : now;
         const effectiveDate = saleDate || today;
 
@@ -125,6 +134,8 @@ export const useRecordsStore = create<RecordsStore>()(
           extensionType: 'none' as const,
           nailShape: 'round' as const,
           designScope,
+          // N3: 원본 카테고리 보존 — 통계 라벨 정확도
+          designCategory: category,
           expressions: [],
           hasParts: false,
           partsSelections: [],
@@ -151,17 +162,21 @@ export const useRecordsStore = create<RecordsStore>()(
           paymentMethod,
           secondaryPaymentMethod,
           secondaryAmount,
+          membershipApplied,
+          upsellAmount,
         };
-        // N-15: customerId 없고 customerName 있으면 전화→이름 순으로 매칭, 없으면 신규 고객 생성
+        // 0528 — customer FK 보장: customerId 없으면 무조건 customer 자동 생성/매칭
+        // (consultation_records.customer_id NOT NULL + FK 위반 방지)
         let effectiveCustomerId = customerId;
-        if (!customerId && customerName) {
+        let pendingCustomerInsert: Customer | null = null;
+        if (!customerId) {
           const customerStore = useCustomerStore.getState();
           const matchedByPhone = customerPhone
             ? customerStore.findByPhoneNormalized(customerPhone)
             : undefined;
           if (matchedByPhone) {
             effectiveCustomerId = matchedByPhone.id;
-          } else {
+          } else if (customerName) {
             const matchedByName = customerStore.customers.find((c) => c.name === customerName);
             if (matchedByName) {
               effectiveCustomerId = matchedByName.id;
@@ -171,6 +186,20 @@ export const useRecordsStore = create<RecordsStore>()(
                 phone: customerPhone || undefined,
               });
               effectiveCustomerId = newCustomer.id;
+              pendingCustomerInsert = newCustomer;
+            }
+          } else {
+            // 워크인 손님 — 기존 '워크인 손님' customer 있으면 재사용 (매출 누적)
+            const existingWalkIn = customerStore.customers.find((c) => c.name === '워크인 손님');
+            if (existingWalkIn) {
+              effectiveCustomerId = existingWalkIn.id;
+            } else {
+              const newCustomer = customerStore.createCustomer({
+                name: '워크인 손님',
+                phone: customerPhone || undefined,
+              });
+              effectiveCustomerId = newCustomer.id;
+              pendingCustomerInsert = newCustomer;
             }
           }
         }
@@ -200,7 +229,13 @@ export const useRecordsStore = create<RecordsStore>()(
           });
         }
 
-        return dbUpsertRecord(recordWithEffectiveId).then((result) => {
+        // 0528 N4: 신규 customer는 DB에 먼저 저장 보장 (race condition 방지)
+        // customer-store의 dbUpsertCustomer는 fire-and-forget이라 record insert가 먼저 실행되면 FK 위반.
+        const ensureCustomerInDB = pendingCustomerInsert
+          ? dbUpsertCustomer(pendingCustomerInsert)
+          : Promise.resolve({ success: true } as { success: boolean; error?: string });
+
+        return ensureCustomerInDB.then(() => dbUpsertRecord(recordWithEffectiveId)).then((result) => {
           if (!result.success) {
             throw new Error('[records] DB insert failed for quick sale record ' + id);
           }
@@ -246,7 +281,10 @@ export const useRecordsStore = create<RecordsStore>()(
               (h) => h.recordId !== id,
             );
             const newVisitCount = Math.max(0, (customer.visitCount ?? 0) - 1);
-            const newTotalSpend = Math.max(0, customer.totalSpend - record.finalPrice);
+            // 0529 CRIT-1: addQuickSaleRecord에서 totalSpend는 finalPrice + membershipApplied로 누적되므로
+            // 삭제 롤백도 동일하게 finalPrice + membershipApplied를 차감해야 함
+            const rollbackAmount = record.finalPrice + (record.membershipApplied ?? 0);
+            const newTotalSpend = Math.max(0, customer.totalSpend - rollbackAmount);
             customerStore.updateCustomer(record.customerId, {
               totalSpend: newTotalSpend,
               visitCount: newVisitCount,

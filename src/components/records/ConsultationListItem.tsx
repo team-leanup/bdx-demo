@@ -107,7 +107,14 @@ export function ConsultationListItem({
               {BODY_PART_LABEL[c.bodyPart] ?? c.bodyPart}
             </span>
             <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-              {DESIGN_SCOPE_LABEL[c.designScope] ?? c.designScope}
+              {/* 0528 N3: designCategory 우선 (magnet→solid_tone 매핑 우회) */}
+              {(() => {
+                const cat = c.designCategory;
+                const CATEGORY_LABEL: Record<string, string> = { simple: '심플', french: '프렌치', magnet: '자석', art: '아트' };
+                if (cat && CATEGORY_LABEL[cat]) return CATEGORY_LABEL[cat];
+                if (cat) return cat;
+                return DESIGN_SCOPE_LABEL[c.designScope] ?? c.designScope;
+              })()}
             </span>
             {mobileExpressions.map((exp) => (
               <span key={exp} className="inline-flex items-center rounded-md bg-surface-alt px-1.5 py-0.5 text-[10px] text-text-muted">

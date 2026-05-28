@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button, Input, Modal } from '@/components/ui';
 import { cn } from '@/lib/cn';
 import { usePortfolioStore } from '@/store/portfolio-store';
+import { useAppStore } from '@/store/app-store';
 import type { PortfolioPhoto, StyleCategory } from '@/types/portfolio';
 
-const STYLE_CATEGORIES: { value: StyleCategory; label: string }[] = [
+const BUILTIN_STYLE_CATEGORIES: { value: StyleCategory; label: string }[] = [
   { value: 'simple', label: '심플 / 원컬러' },
   { value: 'french', label: '프렌치' },
   { value: 'magnet', label: '자석 / 마그넷' },
@@ -25,6 +26,14 @@ interface EditPhotoModalProps {
 
 export function EditPhotoModal({ photo, isOpen, onClose, onSuccess }: EditPhotoModalProps): React.ReactElement {
   const updatePhotoMetadata = usePortfolioStore((s) => s.updatePhotoMetadata);
+  const customCategories = useAppStore((s) => s.shopSettings.customCategories) ?? [];
+  const styleCategories = useMemo(() => {
+    const customs = customCategories.slice().sort((a, b) => a.order - b.order).map((c) => ({
+      value: c.id as StyleCategory,
+      label: c.description ? `${c.name} (${c.description})` : c.name,
+    }));
+    return [...BUILTIN_STYLE_CATEGORIES, ...customs];
+  }, [customCategories]);
   const [styleCategory, setStyleCategory] = useState<StyleCategory | undefined>(photo.styleCategory);
   const [designType, setDesignType] = useState(photo.designType ?? '');
   const [price, setPrice] = useState<string>(photo.price?.toString() ?? '');
@@ -91,7 +100,7 @@ export function EditPhotoModal({ photo, isOpen, onClose, onSuccess }: EditPhotoM
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-2">시술 종류</label>
           <div className="grid grid-cols-2 gap-2">
-            {STYLE_CATEGORIES.map((c) => (
+            {styleCategories.map((c) => (
               <button
                 key={c.value}
                 type="button"
@@ -127,8 +136,13 @@ export function EditPhotoModal({ photo, isOpen, onClose, onSuccess }: EditPhotoM
             id="price"
             type="number"
             inputMode="numeric"
+            min={0}
             value={price}
-            onChange={(e) => setPrice(e.target.value)}
+            onChange={(e) => {
+              // 0528 M1: 음수 입력 차단 (사전상담 가격 표시 오류 방지)
+              const v = e.target.value;
+              if (v === '' || /^[0-9]+$/.test(v)) setPrice(v);
+            }}
             placeholder="예: 85000"
           />
         </div>

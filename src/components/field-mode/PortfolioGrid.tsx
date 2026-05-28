@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/cn';
 import { useT } from '@/lib/i18n';
+import { useAppStore } from '@/store/app-store';
 import type { PortfolioPhoto } from '@/types/portfolio';
 import type { DesignCategory } from '@/types/pre-consultation';
 
@@ -15,7 +16,13 @@ interface PortfolioGridProps {
 
 type SortMode = 'featured' | 'popular';
 
-const CATEGORY_TABS: Array<{ key: DesignCategory | null; labelKey: string }> = [
+interface CategoryTab {
+  key: DesignCategory | null;
+  labelKey?: string;
+  label?: string;
+}
+
+const BUILTIN_CATEGORY_TABS: CategoryTab[] = [
   { key: null, labelKey: 'fieldMode.categoryAll' },
   { key: 'simple', labelKey: 'fieldMode.categorySimple' },
   { key: 'french', labelKey: 'fieldMode.categoryFrench' },
@@ -25,7 +32,16 @@ const CATEGORY_TABS: Array<{ key: DesignCategory | null; labelKey: string }> = [
 
 export function PortfolioGrid({ photos, onSelectPhoto, selectedCategory }: PortfolioGridProps) {
   const t = useT();
+  const customCategories = useAppStore((s) => s.shopSettings.customCategories) ?? [];
   const [sortMode, setSortMode] = useState<SortMode>('featured');
+
+  const categoryTabs = useMemo<CategoryTab[]>(() => {
+    const customs = customCategories.slice().sort((a, b) => a.order - b.order).map<CategoryTab>((c) => ({
+      key: c.id,
+      label: c.name,
+    }));
+    return [...BUILTIN_CATEGORY_TABS, ...customs];
+  }, [customCategories]);
 
   const filtered = photos.filter((p) => {
     if (selectedCategory === null) return true;
@@ -47,10 +63,10 @@ export function PortfolioGrid({ photos, onSelectPhoto, selectedCategory }: Portf
       {/* Category chips */}
       <div className="sticky top-0 z-10 bg-bg/95 backdrop-blur-sm px-4 pt-2 pb-1 border-b border-border">
         <div className="flex gap-2 overflow-x-auto scrollbar-none pb-2">
-          {CATEGORY_TABS.map(({ key, labelKey }) => (
+          {categoryTabs.map(({ key, labelKey, label }) => (
             <CategoryChip
               key={String(key)}
-              label={t(labelKey)}
+              label={labelKey ? t(labelKey) : (label ?? '')}
               active={selectedCategory === key}
               href={key}
             />

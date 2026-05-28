@@ -25,7 +25,7 @@ function useLabelMaps() {
       french: t('preConsult.catFrench'),
       magnet: t('preConsult.catMagnet'),
       art: t('preConsult.catArt'),
-    } satisfies Record<DesignCategory, string>,
+    } as Record<string, string>,
     nailStatus: {
       none: t('preConsult.nailNone'),
       existing: t('preConsult.nailExisting'),
@@ -215,6 +215,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
           photoBasePrice: selectedPhotoPrice ?? undefined,
           customPartSelections,
           customParts: shopData.customParts,
+          customCategories: shopData.customCategories,
         })
       : null;
 
@@ -239,6 +240,11 @@ export default function PreConsultConfirmPage(): React.ReactElement {
     // 오타 방지: 두 번 입력한 전화번호 비교 (포맷 차이 무시)
     if (normalizePhone(phone) !== normalizePhone(phoneConfirm)) {
       setSubmitError(t('preConsult.phoneMismatch'));
+      return;
+    }
+    if (!shopData) {
+      // 0528 H9: shopData null이면 매장 정보 로딩 중 — 명확한 안내
+      setSubmitError('매장 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
       return;
     }
     if (!priceEstimate || !selectedCategory) {
@@ -269,6 +275,8 @@ export default function PreConsultConfirmPage(): React.ReactElement {
       bodyPart,
       designCategory: selectedCategory ?? undefined,
       selectedPhotoUrl: selectedPhotoUrl ?? undefined,
+      // C5: 사진별 가격을 booking에 저장 → 사장님·settlement에서 동일 가격 사용
+      selectedPhotoPrice: selectedPhotoPrice != null && selectedPhotoPrice > 0 ? selectedPhotoPrice : undefined,
       nailStatus: nailStatus ?? undefined,
       removalPreference: removalPreference ?? undefined,
       lengthPreference: lengthPreference ?? undefined,
@@ -358,6 +366,8 @@ export default function PreConsultConfirmPage(): React.ReactElement {
         bookingId,
         bookingPayload,
         getNowInKoreaIso(),
+        undefined,
+        params.shopId,
       );
       if (result.success) {
         store.setSubmitted(bookingId);
@@ -443,7 +453,9 @@ export default function PreConsultConfirmPage(): React.ReactElement {
               <div className="flex flex-col gap-1.5 min-w-0">
                 {selectedCategory && (
                   <span className="inline-block px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold w-fit">
-                    {labels.category[selectedCategory]}
+                    {labels.category[selectedCategory] ??
+                      shopData?.customCategories?.find((c) => c.id === selectedCategory)?.name ??
+                      selectedCategory}
                   </span>
                 )}
                 {referenceImageUrls.length > 0 && (
@@ -541,7 +553,13 @@ export default function PreConsultConfirmPage(): React.ReactElement {
             <div className="rounded-2xl border border-border bg-surface p-4 flex flex-col gap-1">
               {/* Base price */}
               <PriceRow
-                label={selectedCategory ? labels.category[selectedCategory] : '기본'}
+                label={
+                  selectedCategory
+                    ? (labels.category[selectedCategory] ??
+                       shopData?.customCategories?.find((c) => c.id === selectedCategory)?.name ??
+                       selectedCategory)
+                    : '기본'
+                }
                 amount={priceEstimate.categoryBase}
                 won={t('preConsult.won')}
               />

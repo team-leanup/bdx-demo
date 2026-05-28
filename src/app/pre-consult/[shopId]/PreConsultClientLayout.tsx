@@ -29,9 +29,15 @@ export function PreConsultClientLayout({
 
   useEffect(() => {
     // shopId가 변경되면 이전 선택값 오염 방지를 위해 리셋
+    // 0528 M4: isSubmitted 상태는 보존 (다른 샵 진입으로 complete 페이지에서 리다이렉트되는 버그 방지)
     const store = usePreConsultStore.getState();
     if (store.shopId !== shopId) {
+      const preservedSubmitted = store.isSubmitted;
+      const preservedSubmittedId = store.submittedId;
       store.reset();
+      if (preservedSubmitted && preservedSubmittedId && store.shopId === shopId) {
+        store.setSubmitted(preservedSubmittedId);
+      }
     }
 
     // Set shopId. shopData도 초기 설정 (단, 이미 photos가 있으면 보존)
