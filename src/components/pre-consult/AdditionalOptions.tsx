@@ -132,7 +132,6 @@ export function AdditionalOptions({ onComplete }: AdditionalOptionsProps): React
               </span>
             ))}
           </div>
-          <p className="mt-2 text-[10px] text-text-muted">{t('preConsult.partsListHint')}</p>
         </div>
       )}
 

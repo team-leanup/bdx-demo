@@ -211,7 +211,6 @@ export function QuickOptionsPanel({
       {customParts && customParts.length > 0 && (
         <section>
           <SectionLabel>커스텀 파츠</SectionLabel>
-          <p className="mt-1 text-xs text-text-muted">상담 시 참고용 — 정산에서 개수 입력</p>
           <div className="flex flex-wrap gap-2 mt-3">
             {customParts.map((part) => (
               <span
