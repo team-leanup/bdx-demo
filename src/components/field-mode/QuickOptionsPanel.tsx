@@ -11,6 +11,12 @@ import type {
   AddOnOption,
 } from '@/types/pre-consultation';
 
+interface CustomPartItem {
+  id: string;
+  name: string;
+  pricePerUnit: number;
+}
+
 interface QuickOptionsPanelProps {
   removalType: RemovalPreference;
   lengthType: LengthPreference;
@@ -18,6 +24,7 @@ interface QuickOptionsPanelProps {
   addOns: AddOnOption[];
   surcharges: SurchargeSettings;
   serviceStructure?: ServiceStructure;
+  customParts?: CustomPartItem[];
   onRemovalChange: (type: RemovalPreference) => void;
   onLengthChange: (type: LengthPreference) => void;
   onExtensionChange: (length: ExtensionLength) => void;
@@ -41,6 +48,7 @@ export function QuickOptionsPanel({
   addOns,
   surcharges,
   serviceStructure,
+  customParts,
   onRemovalChange,
   onLengthChange,
   onExtensionChange,
@@ -198,6 +206,25 @@ export function QuickOptionsPanel({
           ))}
         </div>
       </section>
+
+      {/* Section 5: 커스텀 파츠 (사장님이 설정에서 등록한 목록) */}
+      {customParts && customParts.length > 0 && (
+        <section>
+          <SectionLabel>커스텀 파츠</SectionLabel>
+          <p className="mt-1 text-xs text-text-muted">상담 시 참고용 — 정산에서 개수 입력</p>
+          <div className="flex flex-wrap gap-2 mt-3">
+            {customParts.map((part) => (
+              <span
+                key={part.id}
+                className="inline-flex items-center gap-1.5 rounded-full bg-surface-alt border border-border px-3 py-1.5 text-xs font-medium text-text-secondary"
+              >
+                <span className="font-semibold text-text">{part.name}</span>
+                <span className="text-primary">+₩{part.pricePerUnit.toLocaleString()}/개</span>
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

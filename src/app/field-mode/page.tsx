@@ -313,6 +313,7 @@ export default function FieldModePage() {
                   addOns={addOns}
                   surcharges={shopSettings.surcharges}
                   serviceStructure={shopSettings.serviceStructure}
+                  customParts={shopSettings.customParts}
                   onRemovalChange={setRemovalType}
                   onLengthChange={setLengthType}
                   onExtensionChange={setExtensionLength}
