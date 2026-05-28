@@ -225,8 +225,8 @@ export function EditPhotoModal({ photo, isOpen, onClose, onSuccess }: EditPhotoM
                 className={cn(
                   'rounded-full px-3 py-1 text-xs font-medium border transition-colors',
                   colorLabels.includes(color)
-                    ? 'bg-rose-500 text-white border-rose-500'
-                    : 'border-border text-text-secondary hover:border-rose-300 bg-surface',
+                    ? 'bg-primary text-white border-primary'
+                    : 'border-border text-text-secondary hover:border-primary/40 bg-surface',
                 )}
               >
                 {color}
@@ -237,7 +237,7 @@ export function EditPhotoModal({ photo, isOpen, onClose, onSuccess }: EditPhotoM
                 key={color}
                 type="button"
                 onClick={() => toggleColor(color)}
-                className="rounded-full px-3 py-1 text-xs font-medium border bg-rose-500 text-white border-rose-500"
+                className="rounded-full px-3 py-1 text-xs font-medium border bg-primary text-white border-primary"
               >
                 {color} ×
               </button>
