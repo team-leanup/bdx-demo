@@ -59,6 +59,18 @@ export default function FieldModePage() {
   const setExtensionLength = useFieldModeStore((s) => s.setExtensionLength);
   const toggleAddOn = useFieldModeStore((s) => s.toggleAddOn);
   const startTreatment = useFieldModeStore((s) => s.startTreatment);
+  const inTreatmentAddons = useFieldModeStore((s) => s.inTreatmentAddons);
+  const addInTreatmentAddon = useFieldModeStore((s) => s.addInTreatmentAddon);
+  const removeInTreatmentAddon = useFieldModeStore((s) => s.removeInTreatmentAddon);
+
+  // 커스텀 파츠 별 누적 카운트 (inTreatmentAddons의 label 매칭)
+  const customPartCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const a of inTreatmentAddons) {
+      counts[a.label] = (counts[a.label] ?? 0) + 1;
+    }
+    return counts;
+  }, [inTreatmentAddons]);
 
   // ── Portfolio ─────────────────────────────────────────────────────────────
   const allPhotos = usePortfolioStore((s) => s.photos);
@@ -314,10 +326,17 @@ export default function FieldModePage() {
                   surcharges={shopSettings.surcharges}
                   serviceStructure={shopSettings.serviceStructure}
                   customParts={shopSettings.customParts}
+                  customPartCounts={customPartCounts}
                   onRemovalChange={setRemovalType}
                   onLengthChange={setLengthType}
                   onExtensionChange={setExtensionLength}
                   onToggleAddOn={toggleAddOn}
+                  onAddCustomPart={(part) => addInTreatmentAddon({ label: part.name, amount: part.pricePerUnit })}
+                  onRemoveCustomPart={(part) => {
+                    // 같은 label의 가장 최근 항목 1개 제거
+                    const target = [...inTreatmentAddons].reverse().find((a) => a.label === part.name);
+                    if (target) removeInTreatmentAddon(target.id);
+                  }}
                 />
               </div>
             </motion.div>

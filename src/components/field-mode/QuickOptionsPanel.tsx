@@ -25,10 +25,13 @@ interface QuickOptionsPanelProps {
   surcharges: SurchargeSettings;
   serviceStructure?: ServiceStructure;
   customParts?: CustomPartItem[];
+  customPartCounts?: Record<string, number>;
   onRemovalChange: (type: RemovalPreference) => void;
   onLengthChange: (type: LengthPreference) => void;
   onExtensionChange: (length: ExtensionLength) => void;
   onToggleAddOn: (option: AddOnOption) => void;
+  onAddCustomPart?: (part: CustomPartItem) => void;
+  onRemoveCustomPart?: (part: CustomPartItem) => void;
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -49,10 +52,13 @@ export function QuickOptionsPanel({
   surcharges,
   serviceStructure,
   customParts,
+  customPartCounts,
   onRemovalChange,
   onLengthChange,
   onExtensionChange,
   onToggleAddOn,
+  onAddCustomPart,
+  onRemoveCustomPart,
 }: QuickOptionsPanelProps) {
   const t = useT();
 
@@ -212,15 +218,56 @@ export function QuickOptionsPanel({
         <section>
           <SectionLabel>커스텀 파츠</SectionLabel>
           <div className="flex flex-wrap gap-2 mt-3">
-            {customParts.map((part) => (
-              <span
-                key={part.id}
-                className="inline-flex items-center gap-1.5 rounded-full bg-surface-alt border border-border px-3 py-1.5 text-xs font-medium text-text-secondary"
-              >
-                <span className="font-semibold text-text">{part.name}</span>
-                <span className="text-primary">+₩{part.pricePerUnit.toLocaleString()}/개</span>
-              </span>
-            ))}
+            {customParts.map((part) => {
+              const count = customPartCounts?.[part.name] ?? 0;
+              const isActive = count > 0;
+              return (
+                <div
+                  key={part.id}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full border px-1 py-1 text-xs font-medium transition-all',
+                    isActive
+                      ? 'bg-primary/10 border-primary text-primary'
+                      : 'bg-surface-alt border-border text-text-secondary',
+                  )}
+                >
+                  {isActive && onRemoveCustomPart && (
+                    <button
+                      type="button"
+                      onClick={() => onRemoveCustomPart(part)}
+                      className="flex h-6 w-6 items-center justify-center rounded-full bg-surface text-text-secondary hover:bg-surface-inset active:scale-90 transition-all"
+                      aria-label={`${part.name} -1`}
+                    >
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+                      </svg>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => onAddCustomPart?.(part)}
+                    disabled={!onAddCustomPart}
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 disabled:cursor-default"
+                  >
+                    <span className={cn('font-semibold', isActive ? 'text-primary' : 'text-text')}>{part.name}</span>
+                    {isActive && <span className="text-primary font-bold">×{count}</span>}
+                    <span className={isActive ? 'text-primary/80' : 'text-primary'}>+₩{part.pricePerUnit.toLocaleString()}</span>
+                  </button>
+                  {onAddCustomPart && (
+                    <button
+                      type="button"
+                      onClick={() => onAddCustomPart(part)}
+                      className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white hover:bg-primary-dark active:scale-90 transition-all"
+                      aria-label={`${part.name} +1`}
+                    >
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
