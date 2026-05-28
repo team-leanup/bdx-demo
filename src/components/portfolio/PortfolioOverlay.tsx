@@ -11,6 +11,7 @@ import { cn } from '@/lib/cn';
 import { downloadForInstagram } from '@/lib/image-utils';
 import { InstagramHashtags } from './InstagramHashtags';
 import { ShareCardGeneratorModal } from '@/components/share-card/ShareCardGeneratorModal';
+import { EditPhotoModal } from './EditPhotoModal';
 import type { PortfolioPhoto } from '@/types/portfolio';
 import type { Customer } from '@/types/customer';
 import type { ConsultationRecord } from '@/types/consultation';
@@ -54,6 +55,7 @@ export function PortfolioOverlay({
   const [downloading, setDownloading] = useState(false);
   const [showHashtags, setShowHashtags] = useState(false);
   const [showShareCard, setShowShareCard] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [editingPartsMemo, setEditingPartsMemo] = useState(false);
   const [partsMemoInput, setPartsMemoInput] = useState('');
 
@@ -106,7 +108,16 @@ export function PortfolioOverlay({
           <div className="relative aspect-[4/3] w-full bg-black shrink-0">
             <Image src={imgSrc} alt={customer?.name ?? ''} fill unoptimized className="object-cover" />
 
-            {/* 닫기 */}
+            {/* 수정 + 닫기 */}
+            <button
+              onClick={() => setShowEditModal(true)}
+              aria-label="사진 정보 수정"
+              className="absolute top-3 right-16 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60 transition-colors"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
             <button onClick={onClose} aria-label="닫기" className="absolute top-3 right-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm">
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
@@ -315,6 +326,15 @@ export function PortfolioOverlay({
           }}
           portfolioPhotos={[{ id: photo.id, imageDataUrl: photo.imageDataUrl }]}
           shopName={shopName}
+        />
+      )}
+
+      {/* 사진 정보 수정 모달 */}
+      {showEditModal && (
+        <EditPhotoModal
+          photo={photo}
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
         />
       )}
     </AnimatePresence>
