@@ -214,63 +214,85 @@ export function QuickOptionsPanel({
       </section>
 
       {/* Section 5: 커스텀 파츠 (사장님이 설정에서 등록한 목록) */}
-      {customParts && customParts.length > 0 && (
-        <section>
-          <SectionLabel>커스텀 파츠</SectionLabel>
-          <div className="flex flex-wrap gap-2 mt-3">
-            {customParts.map((part) => {
-              const count = customPartCounts?.[part.name] ?? 0;
-              const isActive = count > 0;
-              return (
-                <div
-                  key={part.id}
-                  className={cn(
-                    'inline-flex items-center gap-1.5 rounded-full border px-1 py-1 text-xs font-medium transition-all',
-                    isActive
-                      ? 'bg-primary/10 border-primary text-primary'
-                      : 'bg-surface-alt border-border text-text-secondary',
-                  )}
-                >
-                  {isActive && onRemoveCustomPart && (
-                    <button
-                      type="button"
-                      onClick={() => onRemoveCustomPart(part)}
-                      className="flex h-6 w-6 items-center justify-center rounded-full bg-surface text-text-secondary hover:bg-surface-inset active:scale-90 transition-all"
-                      aria-label={`${part.name} -1`}
-                    >
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
-                      </svg>
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => onAddCustomPart?.(part)}
-                    disabled={!onAddCustomPart}
-                    className="inline-flex items-center gap-1.5 px-2 py-0.5 disabled:cursor-default"
+      {customParts && customParts.length > 0 && (() => {
+        // 활성 파츠의 총 누적 금액
+        const partsTotal = customParts.reduce((sum, part) => {
+          const count = customPartCounts?.[part.name] ?? 0;
+          return sum + count * part.pricePerUnit;
+        }, 0);
+        return (
+          <section>
+            <div className="flex items-baseline justify-between">
+              <SectionLabel>커스텀 파츠</SectionLabel>
+              {partsTotal > 0 && (
+                <span className="text-sm font-bold text-primary tabular-nums">
+                  합계 +₩{partsTotal.toLocaleString()}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2 mt-3">
+              {customParts.map((part) => {
+                const count = customPartCounts?.[part.name] ?? 0;
+                const isActive = count > 0;
+                const partTotal = count * part.pricePerUnit;
+                return (
+                  <div
+                    key={part.id}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded-full border px-1 py-1 text-xs font-medium transition-all',
+                      isActive
+                        ? 'bg-primary/10 border-primary text-primary'
+                        : 'bg-surface-alt border-border text-text-secondary',
+                    )}
                   >
-                    <span className={cn('font-semibold', isActive ? 'text-primary' : 'text-text')}>{part.name}</span>
-                    {isActive && <span className="text-primary font-bold">×{count}</span>}
-                    <span className={isActive ? 'text-primary/80' : 'text-primary'}>+₩{part.pricePerUnit.toLocaleString()}</span>
-                  </button>
-                  {onAddCustomPart && (
+                    {isActive && onRemoveCustomPart && (
+                      <button
+                        type="button"
+                        onClick={() => onRemoveCustomPart(part)}
+                        className="flex h-6 w-6 items-center justify-center rounded-full bg-surface text-text-secondary hover:bg-surface-inset active:scale-90 transition-all"
+                        aria-label={`${part.name} -1`}
+                      >
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+                        </svg>
+                      </button>
+                    )}
                     <button
                       type="button"
-                      onClick={() => onAddCustomPart(part)}
-                      className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white hover:bg-primary-dark active:scale-90 transition-all"
-                      aria-label={`${part.name} +1`}
+                      onClick={() => onAddCustomPart?.(part)}
+                      disabled={!onAddCustomPart}
+                      className="inline-flex items-center gap-1.5 px-2 py-0.5 disabled:cursor-default"
                     >
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                      </svg>
+                      <span className={cn('font-semibold', isActive ? 'text-primary' : 'text-text')}>{part.name}</span>
+                      {isActive ? (
+                        <>
+                          <span className="text-primary font-bold">×{count}</span>
+                          <span className="text-primary">+₩{partTotal.toLocaleString()}</span>
+                          <span className="text-[10px] text-primary/60">({part.pricePerUnit.toLocaleString()}/개)</span>
+                        </>
+                      ) : (
+                        <span className="text-primary">+₩{part.pricePerUnit.toLocaleString()}/개</span>
+                      )}
                     </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
+                    {onAddCustomPart && (
+                      <button
+                        type="button"
+                        onClick={() => onAddCustomPart(part)}
+                        className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white hover:bg-primary-dark active:scale-90 transition-all"
+                        aria-label={`${part.name} +1`}
+                      >
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })()}
     </div>
   );
 }
