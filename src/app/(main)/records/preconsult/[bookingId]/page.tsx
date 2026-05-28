@@ -116,6 +116,8 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
         addOns: raw.addOns ?? [],
         categoryPricing,
         surcharges,
+        customPartSelections: raw.customPartSelections,
+        customParts: shopSettings?.customParts,
       })
     : null;
 

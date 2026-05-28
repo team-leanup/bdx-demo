@@ -105,8 +105,10 @@ export default function FieldModePage() {
       addOns,
       categoryPricing: shopSettings.categoryPricing,
       surcharges: shopSettings.surcharges,
+      customPartSelections: customPartCounts,
+      customParts: shopSettings.customParts,
     });
-  }, [selectedCategory, removalType, lengthType, addOns, shopSettings]);
+  }, [selectedCategory, removalType, lengthType, addOns, shopSettings, customPartCounts]);
 
   // ── Reconstruct selected photo ────────────────────────────────────────────
   const selectedPhoto = useMemo((): PortfolioPhoto | null => {
