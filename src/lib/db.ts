@@ -1449,6 +1449,50 @@ export async function dbDeleteAllPortfolioPhotos(photos: PortfolioPhoto[]): Prom
 
 // ─── Portfolio Visibility ────────────────────────────────────────────────────
 
+/** 포트폴리오 사진의 메타데이터 (시술종류/디자인타입/가격/메모/태그/컬러/촬영일/대표) 일괄 업데이트 */
+export async function dbUpdatePhotoMetadata(
+  photoId: string,
+  shopId: string,
+  updates: {
+    styleCategory?: string | null;
+    designType?: string | null;
+    serviceType?: string | null;
+    price?: number | null;
+    note?: string | null;
+    tags?: string[];
+    colorLabels?: string[];
+    takenAt?: string | null;
+    isFeatured?: boolean;
+  },
+): Promise<{ success: boolean; error?: string }> {
+  const payload: Record<string, unknown> = {};
+  if (updates.styleCategory !== undefined) payload.style_category = updates.styleCategory;
+  if (updates.designType !== undefined) payload.design_type = updates.designType;
+  if (updates.serviceType !== undefined) payload.service_type = updates.serviceType;
+  if (updates.price !== undefined) payload.price = updates.price;
+  if (updates.note !== undefined) payload.note = updates.note;
+  if (updates.tags !== undefined) payload.tags = updates.tags as unknown as Database['public']['Tables']['portfolio_photos']['Update']['tags'];
+  if (updates.colorLabels !== undefined) payload.color_labels = updates.colorLabels as unknown as Database['public']['Tables']['portfolio_photos']['Update']['color_labels'];
+  if (updates.takenAt !== undefined) payload.taken_at = updates.takenAt;
+  if (updates.isFeatured !== undefined) payload.is_featured = updates.isFeatured;
+
+  if (Object.keys(payload).length === 0) {
+    return { success: true };
+  }
+
+  const { error } = await supabase
+    .from('portfolio_photos')
+    .update(payload)
+    .eq('id', photoId)
+    .eq('shop_id', shopId);
+
+  if (error) {
+    console.error('[db] dbUpdatePhotoMetadata error:', toDbErrorSnapshot(error));
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}
+
 export async function dbUpdatePhotoFeatured(
   photoId: string,
   shopId: string,

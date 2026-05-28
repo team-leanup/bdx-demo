@@ -11,6 +11,7 @@ import {
   dbDeleteAllPortfolioPhotos,
   dbTogglePhotoVisibility,
   dbUpdatePhotoFeatured,
+  dbUpdatePhotoMetadata,
 } from '@/lib/db';
 import { getNowInKoreaIso } from '@/lib/format';
 import { DEMO_PORTFOLIO_PHOTOS } from '@/data/demo-portfolio';
@@ -45,6 +46,8 @@ interface PortfolioStore {
   toggleMenu: (id: string, price?: number) => void;
   getMenuPhotos: () => PortfolioPhoto[];
   updatePhoto: (id: string, updates: Partial<PortfolioPhoto>) => void;
+  /** DB 동기화 포함 메타데이터 업데이트 (시술종류/디자인타입/가격/메모/태그/컬러/촬영일/대표 등) */
+  updatePhotoMetadata: (id: string, updates: Partial<PortfolioPhoto>) => Promise<{ success: boolean; error?: string }>;
   setPhotos: (photos: PortfolioPhoto[]) => void;
 
   // 카테고리 관리
@@ -307,6 +310,44 @@ export const usePortfolioStore = create<PortfolioStore>()(
         set((state) => ({
           photos: state.photos.map((p) => (p.id === id ? { ...p, ...updates } : p)),
         }));
+      },
+
+      updatePhotoMetadata: async (id, updates) => {
+        const previous = get().photos.find((p) => p.id === id);
+        if (!previous) {
+          return { success: false, error: '사진을 찾을 수 없습니다' };
+        }
+
+        // optimistic update
+        set((state) => ({
+          photos: state.photos.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+        }));
+
+        const currentShopId = useAuthStore.getState().currentShopId;
+        if (!currentShopId || currentShopId === 'shop-demo') {
+          return { success: true };
+        }
+
+        const result = await dbUpdatePhotoMetadata(id, currentShopId, {
+          styleCategory: updates.styleCategory ?? null,
+          designType: updates.designType ?? null,
+          serviceType: updates.serviceType ?? null,
+          price: updates.price ?? null,
+          note: updates.note ?? null,
+          tags: updates.tags,
+          colorLabels: updates.colorLabels,
+          takenAt: updates.takenAt ?? null,
+          isFeatured: updates.isFeatured,
+        });
+
+        if (!result.success) {
+          // rollback
+          set((state) => ({
+            photos: state.photos.map((p) => (p.id === id ? previous : p)),
+          }));
+        }
+
+        return result;
       },
 
       setPhotos: (photos) => {

@@ -13,6 +13,7 @@ import { formatDateDot, formatPrice } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import type { PortfolioPhotoKind } from '@/types/portfolio';
 import { InstagramHashtags } from '@/components/portfolio/InstagramHashtags';
+import { EditPhotoModal } from '@/components/portfolio/EditPhotoModal';
 
 const KIND_LABEL: Record<PortfolioPhotoKind, string> = {
   reference: '레퍼런스',
@@ -58,6 +59,7 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
   const getAllRecords = useRecordsStore((s) => s.getAllRecords);
   
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [toasts, setToasts] = useState<ToastData[]>([]);
 
@@ -139,8 +141,18 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
         <h1 className="text-lg font-bold text-text">사진 상세</h1>
         <div className="flex-1" />
         <button
+          onClick={() => setShowEditModal(true)}
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+          aria-label="사진 정보 수정"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        </button>
+        <button
           onClick={() => setShowDeleteConfirm(true)}
           className="flex h-11 w-11 items-center justify-center rounded-full bg-error/10 text-error hover:bg-error/20 transition-colors"
+          aria-label="사진 삭제"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -318,6 +330,20 @@ function PortfolioDetailContent({ id }: { id: string }): React.ReactElement {
           )}
         </div>
       </Card>
+
+      {showEditModal && (
+        <EditPhotoModal
+          photo={photo}
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onSuccess={() => {
+            setToasts((current) => [
+              ...current,
+              { id: `toast-${Date.now()}`, type: 'success', message: '사진 정보가 수정됐어요' },
+            ]);
+          }}
+        />
+      )}
 
       <AnimatePresence>
         {showDeleteConfirm && (
