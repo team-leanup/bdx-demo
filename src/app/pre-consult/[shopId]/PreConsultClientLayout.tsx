@@ -28,32 +28,28 @@ export function PreConsultClientLayout({
   }, [pathname]);
 
   useEffect(() => {
-    console.log('[PreConsultLayout] useEffect fired', { shopId });
     // shopId가 변경되면 이전 선택값 오염 방지를 위해 리셋
     const store = usePreConsultStore.getState();
     if (store.shopId !== shopId) {
-      console.log('[PreConsultLayout] reset store');
       store.reset();
     }
 
     // Set shopId. shopData도 초기 설정 (단, 이미 photos가 있으면 보존)
     store.setShopId(shopId);
     if (store.portfolioPhotos.length === 0) {
-      console.log('[PreConsultLayout] setShopData with empty photos');
       store.setShopData(shopData, []);
     }
 
     // Fetch portfolio photos client-side
-    console.log('[PreConsultLayout] fetch start');
     fetchPublicPortfolioPhotos(shopId)
       .then((photos) => {
-        console.log('[PreConsultLayout] fetch SUCCESS, photos count:', photos.length);
         usePreConsultStore.getState().setShopData(shopData, photos);
-        console.log('[PreConsultLayout] setShopData called, store now:', usePreConsultStore.getState().portfolioPhotos.length);
       })
-      .catch((err) => {
-        console.error('[PreConsultLayout] fetch FAILED:', err);
+      .catch(() => {
+        // Photos failed to load — graceful degradation (store에 빈 배열 유지)
       });
+    // shopData는 server component에서 매 render마다 새 object reference 발생 → deps에서 제외
+    // shopId만 추적해 useEffect 무한 재실행 방지
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shopId]);
 
