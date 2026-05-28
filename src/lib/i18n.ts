@@ -2900,6 +2900,7 @@ const translations = {
       shareLinkCopied: '链接已复制！\n粘贴到Instagram故事中',
     },
     dashboard: {
+      title: '数据看板',
       monthlyRevenue: '本月营收',
       monthlyConsultations: '本月咨询数',
       avgSpend: '客单价',
@@ -4094,6 +4095,7 @@ const translations = {
       shareLinkCopied: 'リンクがコピーされました！\nInstagramストーリーに貼り付けてください',
     },
     dashboard: {
+      title: 'ダッシュボード',
       monthlyRevenue: '今月の売上',
       monthlyConsultations: '今月の相談数',
       avgSpend: '客単価',

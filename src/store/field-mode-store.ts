@@ -79,6 +79,8 @@ interface FieldModeActions {
     customerId?: string | null;
     designerId?: string;
     bookingId?: string | null;
+    /** 0528 — 사전상담에서 손님이 선택한 커스텀 파츠를 inTreatmentAddons로 미리 채움 */
+    initialInTreatmentAddons?: FieldModeAddon[];
   }) => void;
 }
 
@@ -212,6 +214,7 @@ export const useFieldModeStore = create<FieldModeStore>()(
           customerId: data.customerId ?? null,
           designerId: data.designerId ?? '',
           bookingId: data.bookingId ?? null,
+          inTreatmentAddons: data.initialInTreatmentAddons ?? [],
           // 사전상담에서 디자인 카테고리가 이미 선택된 경우 options 단계부터 시작
           phase: data.designCategory ? 'options' : 'portfolio',
         }),

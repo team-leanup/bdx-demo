@@ -192,8 +192,8 @@ export function QuickOptionsPanel({
       <section>
         <SectionLabel>랩핑</SectionLabel>
         <div className="grid grid-cols-2 gap-2 mt-3">
-          <OptionBtn active={!addOns.includes('wrapping' as AddOnOption)} label="없음" onClick={() => { if (addOns.includes('wrapping' as AddOnOption)) onToggleAddOn('wrapping' as AddOnOption); }} />
-          <OptionBtn active={addOns.includes('wrapping' as AddOnOption)} label="랩핑" sublabel="+₩5,000" onClick={() => { if (!addOns.includes('wrapping' as AddOnOption)) onToggleAddOn('wrapping' as AddOnOption); }} />
+          <OptionBtn active={!addOns.includes('wrapping')} label="없음" onClick={() => { if (addOns.includes('wrapping')) onToggleAddOn('wrapping'); }} />
+          <OptionBtn active={addOns.includes('wrapping')} label="랩핑" sublabel="+₩5,000" onClick={() => { if (!addOns.includes('wrapping')) onToggleAddOn('wrapping'); }} />
         </div>
       </section>
 
@@ -249,9 +249,10 @@ export function QuickOptionsPanel({
                       <button
                         type="button"
                         onClick={() => onRemoveCustomPart(part)}
-                        className="flex h-6 w-6 items-center justify-center rounded-full bg-surface text-text-secondary hover:bg-surface-inset active:scale-90 transition-all"
-                        aria-label={`${part.name} -1`}
+                        className="relative flex h-6 w-6 items-center justify-center rounded-full bg-surface text-text-secondary hover:bg-surface-inset active:scale-90 transition-all"
+                        aria-label={`${part.name} 1개 감소`}
                       >
+                        <span aria-hidden className="absolute -inset-3" />
                         <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
                         </svg>
@@ -262,6 +263,8 @@ export function QuickOptionsPanel({
                       onClick={() => onAddCustomPart?.(part)}
                       disabled={!onAddCustomPart}
                       className="inline-flex items-center gap-1.5 px-2 py-0.5 disabled:cursor-default"
+                      aria-label={isActive ? `${part.name} 현재 ${count}개, 추가` : `${part.name} 추가`}
+                      aria-pressed={isActive}
                     >
                       <span className={cn('font-semibold', isActive ? 'text-primary' : 'text-text')}>{part.name}</span>
                       {isActive ? (
@@ -278,9 +281,10 @@ export function QuickOptionsPanel({
                       <button
                         type="button"
                         onClick={() => onAddCustomPart(part)}
-                        className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white hover:bg-primary-dark active:scale-90 transition-all"
-                        aria-label={`${part.name} +1`}
+                        className="relative flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white hover:bg-primary-dark active:scale-90 transition-all"
+                        aria-label={`${part.name} 1개 추가`}
                       >
+                        <span aria-hidden className="absolute -inset-3" />
                         <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
@@ -320,7 +324,9 @@ function OptionBtn({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={cn(
         'flex flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-3 text-sm font-semibold min-h-[56px] transition-all duration-150 active:scale-[0.96] border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
         variant === 'sub' && 'min-h-[44px] text-xs',
@@ -360,7 +366,9 @@ function AddOnChip({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={cn(
         'flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-semibold min-h-[44px] border transition-all duration-150 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
         active

@@ -285,9 +285,13 @@ export const usePreConsultStore = create<PreConsultStore>()(
           isSubmitting: _isSubmitting,
           ...persistedState
         } = state;
+        // base64 data URL은 localStorage 용량 폭증 원인 → http URL만 persist
+        const isPersistableUrl = (url: string | null | undefined): url is string =>
+          typeof url === 'string' && url.startsWith('http');
         return {
           ...persistedState,
-          referenceImageUrls: state.referenceImageUrls.filter((url) => url.startsWith('http')),
+          referenceImageUrls: state.referenceImageUrls.filter(isPersistableUrl),
+          selectedPhotoUrl: isPersistableUrl(state.selectedPhotoUrl) ? state.selectedPhotoUrl : null,
         };
       },
     },

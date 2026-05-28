@@ -124,7 +124,12 @@ export function AdditionalOptions({ onComplete }: AdditionalOptionsProps): React
         return (
           <div className="rounded-2xl bg-surface-alt border border-border p-3 mt-1">
             <div className="flex items-baseline justify-between mb-2">
-              <p className="text-xs font-semibold text-text">{t('preConsult.partsListTitle')}</p>
+              <div>
+                <p className="text-xs font-semibold text-text">{t('preConsult.partsListTitle')}</p>
+                {locale !== 'ko' && (
+                  <p className="text-[10px] text-text-muted opacity-60 mt-0.5">{tKo('preConsult.partsListTitle')}</p>
+                )}
+              </div>
               {partsTotal > 0 && (
                 <span className="text-sm font-bold text-primary tabular-nums">
                   +₩{partsTotal.toLocaleString()}
@@ -150,9 +155,10 @@ export function AdditionalOptions({ onComplete }: AdditionalOptionsProps): React
                       <button
                         type="button"
                         onClick={() => store.decrementCustomPart(part.name)}
-                        className="flex h-6 w-6 items-center justify-center rounded-full bg-surface text-text-secondary hover:bg-surface-inset active:scale-90 transition-all"
-                        aria-label={`${part.name} -1`}
+                        className="relative flex h-6 w-6 items-center justify-center rounded-full bg-surface text-text-secondary hover:bg-surface-inset active:scale-90 transition-all"
+                        aria-label={`${part.name} 1개 감소`}
                       >
+                        <span aria-hidden className="absolute -inset-3" />
                         <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
                         </svg>
@@ -162,6 +168,8 @@ export function AdditionalOptions({ onComplete }: AdditionalOptionsProps): React
                       type="button"
                       onClick={() => store.incrementCustomPart(part.name)}
                       className="inline-flex items-center gap-1.5 px-2 py-0.5"
+                      aria-label={isActive ? `${part.name} 현재 ${count}개, 추가` : `${part.name} 추가`}
+                      aria-pressed={isActive}
                     >
                       <span className={cn('font-semibold', isActive ? 'text-primary' : 'text-text')}>{part.name}</span>
                       {isActive ? (
@@ -170,15 +178,18 @@ export function AdditionalOptions({ onComplete }: AdditionalOptionsProps): React
                           <span className="text-primary">+₩{partTotal.toLocaleString()}</span>
                         </>
                       ) : (
-                        <span className="text-primary">+₩{part.pricePerUnit.toLocaleString()}/개</span>
+                        <span className="text-primary">
+                          +₩{part.pricePerUnit.toLocaleString()}{t('preConsult.perUnit')}
+                        </span>
                       )}
                     </button>
                     <button
                       type="button"
                       onClick={() => store.incrementCustomPart(part.name)}
-                      className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white hover:bg-primary-dark active:scale-90 transition-all"
-                      aria-label={`${part.name} +1`}
+                      className="relative flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white hover:bg-primary-dark active:scale-90 transition-all"
+                      aria-label={`${part.name} 1개 추가`}
                     >
+                      <span aria-hidden className="absolute -inset-3" />
                       <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                       </svg>

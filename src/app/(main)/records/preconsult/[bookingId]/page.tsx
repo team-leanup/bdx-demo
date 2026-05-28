@@ -97,13 +97,13 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
   }
 
   const raw = booking.preConsultationData as unknown as PreConsultationData | undefined;
-  const images = raw?.referenceImageUrls?.length
+  // store/source 배열을 직접 변이하지 않도록 새 배열 생성
+  const baseImages = raw?.referenceImageUrls?.length
     ? raw.referenceImageUrls
     : (booking.referenceImageUrls ?? []);
-  // selectedPhotoUrl도 이미지에 포함
-  if (raw?.selectedPhotoUrl && !images.includes(raw.selectedPhotoUrl)) {
-    images.unshift(raw.selectedPhotoUrl);
-  }
+  const images = raw?.selectedPhotoUrl && !baseImages.includes(raw.selectedPhotoUrl)
+    ? [raw.selectedPhotoUrl, ...baseImages]
+    : [...baseImages];
 
   // 가격 계산
   const categoryPricing = shopSettings?.categoryPricing;
@@ -141,6 +141,22 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
       currentStep: ConsultationStep.START,
     });
     if (booking.preConsultationData) {
+      // 사전상담에서 손님이 선택한 커스텀 파츠 → inTreatmentAddons로 변환
+      // (settlement에서 inTreatmentTotal로 합산되어 시술 금액에 자동 반영)
+      const hydratedAt = new Date().toISOString();
+      const initialInTreatmentAddons = raw?.customPartSelections && shopSettings?.customParts
+        ? Object.entries(raw.customPartSelections).flatMap(([name, countRaw]) => {
+            const part = shopSettings.customParts!.find((p) => p.name === name);
+            if (!part) return [];
+            const count = typeof countRaw === 'number' ? Math.max(0, Math.floor(countRaw)) : 0;
+            return Array.from({ length: count }, (_, i) => ({
+              id: `pre-${name}-${i}-${Date.now()}`,
+              label: part.name,
+              amount: part.pricePerUnit,
+              addedAt: hydratedAt,
+            }));
+          })
+        : [];
       hydrateFromBooking({
         ...booking.preConsultationData,
         bookingId: booking.id,
@@ -148,6 +164,7 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
         customerName: booking.customerName,
         customerPhone: booking.phone,
         customerId: booking.customerId ?? booking.preConsultationData?.customerId,
+        initialInTreatmentAddons,
       });
     }
     // 사전상담 완료 → 옵션 선택 건너뛰고 바로 시술 중으로
@@ -253,9 +270,31 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
         )}
 
         {/* 추가 옵션 */}
-        {raw?.addOns && raw.addOns.length > 0 && (
+        {((raw?.addOns && raw.addOns.length > 0) ||
+          (raw?.customPartSelections && Object.keys(raw.customPartSelections).length > 0)) && (
           <SectionCard icon="💎" title="추가 옵션">
-            <TagList tags={raw.addOns} labelMap={ADDON_LABEL} />
+            {raw?.addOns && raw.addOns.length > 0 && (
+              <TagList tags={raw.addOns} labelMap={ADDON_LABEL} />
+            )}
+            {raw?.customPartSelections && Object.keys(raw.customPartSelections).length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {Object.entries(raw.customPartSelections).map(([name, count]) => {
+                  const part = shopSettings?.customParts?.find((p) => p.name === name);
+                  const partTotal = part ? part.pricePerUnit * count : 0;
+                  return (
+                    <span
+                      key={name}
+                      className="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary px-2.5 py-1 text-xs font-semibold text-primary"
+                    >
+                      {name} ×{count}
+                      {partTotal > 0 && (
+                        <span className="text-primary/80 font-normal">+₩{partTotal.toLocaleString()}</span>
+                      )}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
           </SectionCard>
         )}
 

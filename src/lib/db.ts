@@ -1874,14 +1874,29 @@ export async function dbCompletePreConsultation(
 }
 
 const PRE_CONSULT_REFS_BUCKET = 'pre-consult-refs';
+// 보안: anon이 업로드하므로 화이트리스트로 제한
+const ALLOWED_IMAGE_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif']);
+const ALLOWED_IMAGE_EXT = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif']);
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
 
 export async function uploadPreConsultImage(
   shopId: string,
   file: File,
 ): Promise<{ success: boolean; url?: string; error?: string }> {
   try {
+    // 1. MIME 검증 — 클라이언트가 변조 가능하므로 확장자도 함께 검증
+    if (!ALLOWED_IMAGE_MIME.has(file.type)) {
+      return { success: false, error: '지원하지 않는 파일 형식입니다 (jpg/png/webp/gif/heic만 가능)' };
+    }
+    // 2. 파일 크기 제한
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return { success: false, error: '파일이 너무 큽니다 (최대 10MB)' };
+    }
+    // 3. 확장자 화이트리스트 — file.name 기반 path traversal/실행 파일 차단
+    const rawExt = file.name.split('.').pop()?.toLowerCase() ?? '';
+    const ext = ALLOWED_IMAGE_EXT.has(rawExt) ? rawExt : 'jpg';
+
     const uuid = createId('img');
-    const ext = file.name.split('.').pop() ?? 'jpg';
     const path = `${shopId}/${uuid}/${Date.now()}.${ext}`;
 
     const { error: uploadError } = await supabase.storage

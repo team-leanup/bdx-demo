@@ -97,7 +97,7 @@ export function RevisitMessageSection(): React.ReactElement {
             type="button"
             onClick={() => insertVariable(v.key)}
             aria-label={`${v.label} 변수(${v.key}) 삽입`}
-            className="inline-flex min-h-[36px] items-center gap-1 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-text-secondary hover:border-primary/40 hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            className="inline-flex min-h-[44px] items-center gap-1 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-text-secondary hover:border-primary/40 hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
             {v.label}
             <span className="font-mono text-[11px] text-text-muted">{v.key}</span>

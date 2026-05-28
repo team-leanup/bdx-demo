@@ -126,6 +126,7 @@ function useAddOnsLabel(addOns: AddOnOption[], t: (key: string) => string): stri
     parts: t('preConsult.addOnParts'),
     glitter: t('preConsult.addOnGlitter'),
     point_art: t('preConsult.addOnPointArt'),
+    wrapping: t('preConsult.wrappingLabel'),
   };
   return addOns.map((a) => map[a]).join(', ');
 }

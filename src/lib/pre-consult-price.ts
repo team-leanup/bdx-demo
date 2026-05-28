@@ -10,6 +10,7 @@ import type { CategoryPricingSettings, CustomPartSetting, SurchargeSettings } fr
 export const ADDON_FIXED_PRICES = {
   stone: 5000,
   glitter: 3000,
+  wrapping: 5000,
 } as const;
 
 interface PriceCalcInput {
@@ -55,14 +56,18 @@ export function calculatePreConsultPrice(input: PriceCalcInput): PreConsultPrice
       addOnSurcharge += ADDON_FIXED_PRICES.glitter;
     } else if (addOn === 'point_art') {
       addOnSurcharge += surcharges.pointArt;
+    } else if (addOn === 'wrapping') {
+      addOnSurcharge += ADDON_FIXED_PRICES.wrapping;
     }
   }
 
   // 4-1. Custom parts surcharge (사장님이 등록한 파츠 × 손님이 선택한 개수)
+  // 보안: count는 정수 + 0 이상으로 클램프 (클라이언트 조작 방지)
   let customPartsSurcharge = 0;
   if (customPartSelections && customParts) {
     for (const part of customParts) {
-      const count = customPartSelections[part.name] ?? 0;
+      const raw = customPartSelections[part.name];
+      const count = typeof raw === 'number' ? Math.max(0, Math.floor(raw)) : 0;
       if (count > 0) {
         customPartsSurcharge += part.pricePerUnit * count;
       }

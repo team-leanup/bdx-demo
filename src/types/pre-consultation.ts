@@ -36,7 +36,7 @@ export type StyleKeyword =
 
 // ── Add-On Options ────────────────────────────────────────────────────────────
 
-export type AddOnOption = 'stone' | 'parts' | 'glitter' | 'point_art';
+export type AddOnOption = 'stone' | 'parts' | 'glitter' | 'point_art' | 'wrapping';
 
 // ── Price Estimate ────────────────────────────────────────────────────────────
 
