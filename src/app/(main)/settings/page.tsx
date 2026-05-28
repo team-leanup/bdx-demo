@@ -28,15 +28,16 @@ import type { ServiceStructure } from '@/types/shop';
 
 const DAY_LABEL_KEYS = ['days_mon', 'days_tue', 'days_wed', 'days_thu', 'days_fri', 'days_sat', 'days_sun'];
 
+// 사전상담/현장모드 UI에 실제 매핑되는 토글만 노출.
+// 매핑할 UI가 없는 gradation/repair/overlay는 제거 (사장님 혼란 방지).
+// pointFullArt도 추가 — 사전상담 카테고리 '아트' 카드 + 추가옵션 '포인트아트'에 매핑됨.
 const SERVICE_TOGGLE_ITEMS: { key: keyof ServiceStructure; label: string; description: string }[] = [
   { key: 'removal', label: '오프 (제거)', description: '자샵오프, 타샵오프 선택 옵션' },
-  { key: 'gradation', label: '그라데이션', description: '그라데이션 표현 기법' },
   { key: 'french', label: '프렌치', description: '프렌치 네일 표현 기법' },
   { key: 'magnet', label: '마그네틱', description: '마그네틱/캣아이 표현 기법' },
+  { key: 'pointFullArt', label: '아트 (포인트/풀아트)', description: '포인트·풀아트 시술' },
   { key: 'parts', label: '파츠', description: '파츠 (스톤, 참 등) 옵션' },
-  { key: 'repair', label: '리페어', description: '네일 리페어 서비스' },
   { key: 'extension', label: '연장', description: '네일 연장 서비스' },
-  { key: 'overlay', label: '오버레이', description: '네일 오버레이 서비스' },
 ];
 
 type TabId = 'shop' | 'service' | 'theme' | 'app';
