@@ -200,6 +200,8 @@ export default function PreConsultConfirmPage(): React.ReactElement {
 
   // ─── Price calculation ─────────────────────────────────────────────────────
 
+  const customPartSelections = usePreConsultStore((s) => s.customPartSelections);
+
   const priceEstimate =
     selectedCategory && shopData?.categoryPricing && shopData?.surcharges
       ? calculatePreConsultPrice({
@@ -210,6 +212,8 @@ export default function PreConsultConfirmPage(): React.ReactElement {
           categoryPricing: shopData.categoryPricing,
           surcharges: shopData.surcharges,
           photoBasePrice: selectedPhotoPrice ?? undefined,
+          customPartSelections,
+          customParts: shopData.customParts,
         })
       : null;
 
@@ -259,6 +263,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
     setSubmitError('');
 
     const trimmedRequest = additionalRequest.trim();
+    const hasCustomParts = Object.keys(customPartSelections).length > 0;
     const data: PreConsultationData = {
       bodyPart,
       designCategory: selectedCategory ?? undefined,
@@ -273,6 +278,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
       stylePreference: stylePreference ?? undefined,
       styleKeyword: styleKeywords,
       addOns: addOns,
+      customPartSelections: hasCustomParts ? customPartSelections : undefined,
       referenceImageUrls: referenceImageUrls,
       additionalRequest: trimmedRequest || undefined,
     };
@@ -503,6 +509,14 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                 value={addOns.map((a) => labels.addOn[a] ?? a).join(', ')}
               />
             )}
+            {Object.keys(customPartSelections).length > 0 && (
+              <SummaryRow
+                label={t('preConsult.partsListTitle')}
+                value={Object.entries(customPartSelections)
+                  .map(([name, count]) => `${name} ×${count}`)
+                  .join(', ')}
+              />
+            )}
           </div>
         </motion.section>
 
@@ -556,6 +570,18 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                 <PriceRow
                   label={addOns.map((a) => labels.addOn[a] ?? a).join(' + ')}
                   amount={priceEstimate.addOnSurcharge}
+                  won={t('preConsult.won')}
+                  muted
+                />
+              )}
+
+              {/* Custom parts surcharge */}
+              {priceEstimate.customPartsSurcharge > 0 && (
+                <PriceRow
+                  label={Object.entries(customPartSelections)
+                    .map(([name, count]) => `${name} ×${count}`)
+                    .join(' + ')}
+                  amount={priceEstimate.customPartsSurcharge}
                   won={t('preConsult.won')}
                   muted
                 />

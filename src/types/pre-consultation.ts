@@ -45,6 +45,8 @@ export interface PreConsultPriceEstimate {
   removalSurcharge: number;
   extensionSurcharge: number;
   addOnSurcharge: number;
+  /** 0528 — 커스텀 파츠 추가금 (사장님 설정 × 손님이 선택한 개수) */
+  customPartsSurcharge: number;
   minTotal: number;
   maxTotal: number;
   estimatedMinutes: number;
@@ -81,6 +83,9 @@ export interface PreConsultationData {
 
   // Add-ons
   addOns: AddOnOption[];
+
+  // 0528 — 사장님이 등록한 커스텀 파츠 (name → 개수)
+  customPartSelections?: Record<string, number>;
 
   // Reference images
   referenceImageUrls: string[];

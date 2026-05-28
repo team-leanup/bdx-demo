@@ -5,7 +5,7 @@ import type {
   RemovalPreference,
   LengthPreference,
 } from '@/types/pre-consultation';
-import type { CategoryPricingSettings, SurchargeSettings } from '@/types/shop';
+import type { CategoryPricingSettings, CustomPartSetting, SurchargeSettings } from '@/types/shop';
 
 export const ADDON_FIXED_PRICES = {
   stone: 5000,
@@ -20,10 +20,14 @@ interface PriceCalcInput {
   categoryPricing: CategoryPricingSettings;
   surcharges: SurchargeSettings;
   photoBasePrice?: number;
+  /** 0528 — 손님이 선택한 커스텀 파츠 개수 (name → count) */
+  customPartSelections?: Record<string, number>;
+  /** 0528 — 샵 설정의 커스텀 파츠 정의 (가격 조회용) */
+  customParts?: CustomPartSetting[];
 }
 
 export function calculatePreConsultPrice(input: PriceCalcInput): PreConsultPriceEstimate {
-  const { designCategory, removalPreference, lengthPreference, addOns, categoryPricing, surcharges, photoBasePrice } = input;
+  const { designCategory, removalPreference, lengthPreference, addOns, categoryPricing, surcharges, photoBasePrice, customPartSelections, customParts } = input;
 
   // 1. Category base price & time
   const categoryBase = photoBasePrice ?? categoryPricing[designCategory].price;
@@ -54,8 +58,19 @@ export function calculatePreConsultPrice(input: PriceCalcInput): PreConsultPrice
     }
   }
 
+  // 4-1. Custom parts surcharge (사장님이 등록한 파츠 × 손님이 선택한 개수)
+  let customPartsSurcharge = 0;
+  if (customPartSelections && customParts) {
+    for (const part of customParts) {
+      const count = customPartSelections[part.name] ?? 0;
+      if (count > 0) {
+        customPartsSurcharge += part.pricePerUnit * count;
+      }
+    }
+  }
+
   // 5. Base total
-  const base = categoryBase + removalSurcharge + extensionSurcharge + addOnSurcharge;
+  const base = categoryBase + removalSurcharge + extensionSurcharge + addOnSurcharge + customPartsSurcharge;
 
   // 6. Min/max total
   const minTotal = base;
@@ -73,6 +88,7 @@ export function calculatePreConsultPrice(input: PriceCalcInput): PreConsultPrice
     removalSurcharge,
     extensionSurcharge,
     addOnSurcharge,
+    customPartsSurcharge,
     minTotal,
     maxTotal,
     estimatedMinutes,

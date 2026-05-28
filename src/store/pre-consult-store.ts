@@ -52,6 +52,8 @@ interface PreConsultState {
   styleKeywords: StyleKeyword[];
   addOns: AddOnOption[];
   additionalRequest: string;
+  /** 0528: 손님이 사전상담에서 선택한 커스텀 파츠 개수 (name 기준) */
+  customPartSelections: Record<string, number>;
 
   // STEP 3: Booking
   customerName: string;
@@ -94,6 +96,8 @@ interface PreConsultActions {
   toggleStyleKeyword: (kw: StyleKeyword) => void;
   toggleAddOn: (opt: AddOnOption) => void;
   setAdditionalRequest: (text: string) => void;
+  incrementCustomPart: (name: string) => void;
+  decrementCustomPart: (name: string) => void;
   setCustomerName: (name: string) => void;
   setCustomerPhone: (phone: string) => void;
   setBookingId: (id: string | null) => void;
@@ -137,6 +141,7 @@ const INITIAL_STATE: PreConsultState = {
   styleKeywords: [],
   addOns: [],
   additionalRequest: '',
+  customPartSelections: {},
 
   customerName: '',
   customerPhone: '',
@@ -212,6 +217,29 @@ export const usePreConsultStore = create<PreConsultStore>()(
         })),
 
       setAdditionalRequest: (text) => set({ additionalRequest: text }),
+
+      incrementCustomPart: (name) =>
+        set((s) => ({
+          customPartSelections: {
+            ...s.customPartSelections,
+            [name]: (s.customPartSelections[name] ?? 0) + 1,
+          },
+        })),
+
+      decrementCustomPart: (name) =>
+        set((s) => {
+          const current = s.customPartSelections[name] ?? 0;
+          if (current <= 1) {
+            const { [name]: _, ...rest } = s.customPartSelections;
+            return { customPartSelections: rest };
+          }
+          return {
+            customPartSelections: {
+              ...s.customPartSelections,
+              [name]: current - 1,
+            },
+          };
+        }),
 
       setCustomerName: (name) => set({ customerName: name }),
 
