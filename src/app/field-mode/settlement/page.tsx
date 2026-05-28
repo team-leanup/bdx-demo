@@ -81,6 +81,7 @@ export default function SettlementPage(): React.ReactElement | null {
     setCustomerInfo,
     setRecordId,
     setPhase,
+    addInTreatmentAddon,
   } = useFieldModeStore();
 
   const customers = useCustomerStore((s) => s.customers);
@@ -367,6 +368,32 @@ export default function SettlementPage(): React.ReactElement | null {
               <div className="divide-y divide-border/50">
                 {inTreatmentAddons.map((addon) => (
                   <LineRow key={addon.id} label={addon.label} amount={addon.amount} />
+                ))}
+              </div>
+            </SettlementCard>
+          </motion.div>
+        )}
+
+        {/* Card 3-B: 커스텀 파츠 빠른 추가 — 사장님이 설정에서 등록한 파츠 */}
+        {shopSettings.customParts && shopSettings.customParts.length > 0 && (
+          <motion.div variants={itemVariants}>
+            <SettlementCard icon="💎" title="파츠 빠른 추가">
+              <p className="text-xs text-text-muted mb-3">탭하면 위 시술 추가 항목에 누적돼요</p>
+              <div className="flex flex-wrap gap-2">
+                {shopSettings.customParts.map((part) => (
+                  <button
+                    key={part.id}
+                    type="button"
+                    onClick={() => addInTreatmentAddon({
+                      label: part.name,
+                      amount: part.pricePerUnit,
+                    })}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-surface-alt border border-border px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:bg-primary/5 active:scale-95 transition-all"
+                  >
+                    <span className="text-primary font-bold">+</span>
+                    <span className="font-semibold text-text">{part.name}</span>
+                    <span className="text-primary">₩{part.pricePerUnit.toLocaleString()}</span>
+                  </button>
                 ))}
               </div>
             </SettlementCard>
