@@ -853,38 +853,58 @@ export async function fetchBookingRequestById(
     console.warn('[db] fetchBookingRequestById called without shopId — returning null for safety');
     return null;
   }
-  const query = supabase.from('booking_requests').select('*').eq('id', bookingId).eq('shop_id', shopId);
 
-  const { data, error } = await query.maybeSingle();
-  if (error || !data) {
-    console.error('[db] fetchBookingRequestById error:', {
-      ...toDbErrorSnapshot(error),
-      bookingId,
-      shopId,
-    });
-    return null;
+  // 1차: 직접 SELECT (사장님 인증 세션 — RLS booking_auth_all 통과)
+  const { data, error } = await supabase
+    .from('booking_requests')
+    .select('*')
+    .eq('id', bookingId)
+    .eq('shop_id', shopId)
+    .maybeSingle();
+
+  let row: Record<string, unknown> | null = data as Record<string, unknown> | null;
+
+  // 2차 fallback: anon(손님 사전상담 페이지) → RLS 차단되므로 SECURITY DEFINER RPC 경유
+  if (!row) {
+    const { data: rpcData, error: rpcError } = await supabase.rpc(
+      'get_booking_for_pre_consult' as never,
+      { p_booking_id: bookingId, p_shop_id: shopId } as never,
+    );
+    if (rpcError || !rpcData) {
+      // 두 경로 모두 실패 — 진짜 없는 booking이거나 권한 없음
+      if (error || rpcError) {
+        console.error('[db] fetchBookingRequestById error:', {
+          directError: error ? toDbErrorSnapshot(error) : null,
+          rpcError: rpcError ? toDbErrorSnapshot(rpcError) : null,
+          bookingId,
+          shopId,
+        });
+      }
+      return null;
+    }
+    row = rpcData as Record<string, unknown>;
   }
 
   return {
-    id: data.id,
-    shopId: data.shop_id,
-    customerName: data.customer_name,
-    phone: data.phone ?? '',
-    reservationDate: data.reservation_date,
-    reservationTime: data.reservation_time,
-    channel: (data.channel as BookingChannel | null) ?? 'phone',
-    requestNote: data.request_note ?? undefined,
-    referenceImageUrls: (data.reference_image_urls as unknown as string[]) ?? [],
-    status: (data.status as BookingStatus | null) ?? 'pending',
-    createdAt: data.created_at ?? '',
-    language: (data.language as BookingRequest['language']) ?? undefined,
-    designerId: data.designer_id ?? undefined,
-    serviceLabel: data.service_label ?? undefined,
-    customerId: data.customer_id ?? undefined,
-    preConsultationData: (data.pre_consultation_data as unknown as BookingRequest['preConsultationData']) ?? undefined,
-    preConsultationCompletedAt: data.pre_consultation_completed_at ?? undefined,
-    consultationLinkSentAt: data.consultation_link_sent_at ?? undefined,
-    deposit: (data as Record<string, unknown>).deposit as number | undefined,
+    id: row.id as string,
+    shopId: row.shop_id as string,
+    customerName: row.customer_name as string,
+    phone: (row.phone as string) ?? '',
+    reservationDate: row.reservation_date as string,
+    reservationTime: row.reservation_time as string,
+    channel: ((row.channel as BookingChannel | null) ?? 'phone'),
+    requestNote: (row.request_note as string) ?? undefined,
+    referenceImageUrls: (row.reference_image_urls as unknown as string[]) ?? [],
+    status: ((row.status as BookingStatus | null) ?? 'pending'),
+    createdAt: (row.created_at as string) ?? '',
+    language: (row.language as BookingRequest['language']) ?? undefined,
+    designerId: (row.designer_id as string) ?? undefined,
+    serviceLabel: (row.service_label as string) ?? undefined,
+    customerId: (row.customer_id as string) ?? undefined,
+    preConsultationData: (row.pre_consultation_data as unknown as BookingRequest['preConsultationData']) ?? undefined,
+    preConsultationCompletedAt: (row.pre_consultation_completed_at as string) ?? undefined,
+    consultationLinkSentAt: (row.consultation_link_sent_at as string) ?? undefined,
+    deposit: row.deposit as number | undefined,
   };
 }
 
