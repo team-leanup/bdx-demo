@@ -183,7 +183,23 @@ export const useReservationStore = create<ReservationStore>()(
       ),
       partialize: (state) => {
         const { _dbReady: _, ...rest } = state;
-        return rest;
+        // localStorage QuotaExceeded 방지 — base64 data URL은 persist에서 제거
+        // (Supabase Storage URL은 보존)
+        const slim = rest.reservations.map((r) => {
+          const refUrls = (r.referenceImageUrls ?? []).filter(
+            (u): u is string => typeof u === 'string' && !u.startsWith('data:'),
+          );
+          const preData = r.preConsultationData
+            ? {
+                ...r.preConsultationData,
+                referenceImages: ((r.preConsultationData as { referenceImages?: string[] }).referenceImages ?? []).filter(
+                  (u: string) => typeof u === 'string' && !u.startsWith('data:'),
+                ),
+              }
+            : undefined;
+          return { ...r, referenceImageUrls: refUrls, preConsultationData: preData };
+        });
+        return { ...rest, reservations: slim };
       },
     },
   ),
