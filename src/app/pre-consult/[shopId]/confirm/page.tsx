@@ -297,6 +297,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
         serviceLabel: selectedCategory,
         preConsultationData,
         referenceImageUrls,
+        deposit: shopData?.depositAmount ?? 0,
       });
       if (result.success && result.bookingId) {
         store.setSubmitted(result.bookingId);
@@ -326,6 +327,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
         serviceLabel: selectedCategory,
         preConsultationData,
         referenceImageUrls,
+        deposit: shopData?.depositAmount ?? 0,
       });
       if (result.success && result.bookingId) {
         store.setSubmitted(result.bookingId);

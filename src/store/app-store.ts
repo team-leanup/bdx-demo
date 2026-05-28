@@ -35,6 +35,8 @@ interface ShopSettings {
   monthlyTargetRevenue?: number;
   /** 0423 반영: 재방문 알림 문자 기본 문구틀 ({customerName}, {shopName} 치환) */
   revisitMessageTemplate: string;
+  /** 0528 — 사전상담/현장모드 노출용 커스텀 파츠 (partsStore와 동기화) */
+  customParts?: { id: string; name: string; pricePerUnit: number }[];
 }
 
 const DEFAULT_CATEGORY_PRICING: CategoryPricingSettings = {
@@ -151,6 +153,9 @@ export const useAppStore = create<AppStore>()(
             kakaoTalkUrl: next.kakaoTalkUrl || undefined,
             naverReservationUrl: next.naverReservationUrl || undefined,
             revisitMessageTemplate: next.revisitMessageTemplate || undefined,
+            // 0528 — 사전상담/현장모드 연동용
+            customParts: next.customParts,
+            depositAmount: next.depositAmount,
           });
 
           if (!result.success) {

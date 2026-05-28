@@ -70,6 +70,12 @@ export interface CategoryPricingSettings {
   art: CategoryPricingItem;
 }
 
+export interface CustomPartSetting {
+  id: string;
+  name: string;
+  pricePerUnit: number;
+}
+
 export interface ShopExtendedSettings {
   addressDetail?: string;
   baseOffSameShop?: number;
@@ -86,6 +92,10 @@ export interface ShopExtendedSettings {
   categoryPricing?: CategoryPricingSettings;
   kakaoTalkUrl?: string;
   naverReservationUrl?: string;
+  /** 0528: 커스텀 파츠 (상담 시 빠른 선택 옵션) — 사전상담/현장모드 노출용 */
+  customParts?: CustomPartSetting[];
+  /** 0528: 예약금 (사전상담 제출 시 booking_requests.deposit에 자동 적용) */
+  depositAmount?: number;
   /**
    * 0423 반영: 재방문 알림 문자 기본 문구틀 (샵주인 편집 가능).
    * 치환 변수: {customerName}, {shopName}

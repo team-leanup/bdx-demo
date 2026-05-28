@@ -1,5 +1,5 @@
 import type { NailShape } from '@/types/consultation';
-import type { CategoryPricingSettings, SurchargeSettings } from '@/types/shop';
+import type { CategoryPricingSettings, CustomPartSetting, ServiceStructure, SurchargeSettings } from '@/types/shop';
 
 // ── Step & Category Enums ────────────────────────────────────────────────────
 
@@ -124,4 +124,15 @@ export interface ShopPublicData {
   customerNotice?: string;
   kakaoTalkUrl?: string;
   naverReservationUrl?: string;
+  // 0528 — 설정 ↔ 상담 연동 확장
+  /** 시술 항목 ON/OFF (OFF한 항목은 사전상담/현장모드에 표시 안 함) */
+  serviceStructure?: ServiceStructure;
+  /** 커스텀 파츠 (상담 시 빠른 선택 옵션) */
+  customParts?: CustomPartSetting[];
+  /** 예약금 (사전상담 제출 시 booking에 자동 적용) */
+  depositAmount?: number;
+  /** 디자인 옵션 추가금 (사전상담 가격 계산 반영) */
+  baseSolidPointPrice?: number;
+  baseFullArtPrice?: number;
+  baseMonthlyArtPrice?: number;
 }

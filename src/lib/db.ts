@@ -1715,6 +1715,13 @@ export async function fetchShopPublicData(shopId: string): Promise<ShopPublicDat
     customerNotice: settings.customerNotice ?? undefined,
     kakaoTalkUrl: settings.kakaoTalkUrl ?? undefined,
     naverReservationUrl: settings.naverReservationUrl ?? undefined,
+    // 0528 — 설정 ↔ 상담 연동 확장 필드
+    serviceStructure: settings.serviceStructure ?? undefined,
+    customParts: settings.customParts ?? undefined,
+    depositAmount: settings.depositAmount ?? undefined,
+    baseSolidPointPrice: settings.baseSolidPointPrice ?? undefined,
+    baseFullArtPrice: settings.baseFullArtPrice ?? undefined,
+    baseMonthlyArtPrice: settings.baseMonthlyArtPrice ?? undefined,
   };
 }
 
@@ -2070,6 +2077,7 @@ export async function dbCreateBookingFromShopLink(input: {
   serviceLabel?: string;
   preConsultationData: unknown;
   referenceImageUrls?: string[];
+  deposit?: number;
 }): Promise<{ success: boolean; bookingId?: string; error?: string }> {
   const now = getNowInKoreaIso();
   const bookingId = createId('bk');
@@ -2088,6 +2096,7 @@ export async function dbCreateBookingFromShopLink(input: {
     pre_consultation_data: input.preConsultationData as Database['public']['Tables']['booking_requests']['Insert']['pre_consultation_data'],
     reference_image_urls:
       (input.referenceImageUrls as unknown as Database['public']['Tables']['booking_requests']['Insert']['reference_image_urls']) ?? null,
+    deposit: input.deposit ?? 0,
     created_at: now,
   });
 
@@ -2123,6 +2132,7 @@ export async function dbCreateBookingFromConsultationLink(input: {
   serviceLabel?: string;
   preConsultationData: unknown;
   referenceImageUrls?: string[];
+  deposit?: number;
 }): Promise<{ success: boolean; bookingId?: string; error?: string }> {
   const now = getNowInKoreaIso();
   const bookingId = createId('bk');
@@ -2143,6 +2153,7 @@ export async function dbCreateBookingFromConsultationLink(input: {
     pre_consultation_data: input.preConsultationData as Database['public']['Tables']['booking_requests']['Insert']['pre_consultation_data'],
     reference_image_urls:
       (input.referenceImageUrls as unknown as Database['public']['Tables']['booking_requests']['Insert']['reference_image_urls']) ?? null,
+    deposit: input.deposit ?? 0,
     created_at: now,
   });
 

@@ -66,7 +66,15 @@ const DEFAULT_DAY_SCHEDULES: DaySchedule[] = DAY_LABEL_KEYS.map((_, i) => ({
 // ── 커스텀 파츠 관리 컴포넌트 ──
 function CustomPartsManager() {
   const { customParts, addPart, removePart, updatePart } = usePartsStore();
+  const setShopSettings = useAppStore((s) => s.setShopSettings);
   const t = useT();
+
+  // partsStore → shopSettings.customParts 동기화 (사전상담/현장모드에서 조회 가능)
+  useEffect(() => {
+    setShopSettings({
+      customParts: customParts.map((p) => ({ id: p.id, name: p.name, pricePerUnit: p.pricePerUnit })),
+    });
+  }, [customParts, setShopSettings]);
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newPartName, setNewPartName] = useState('');

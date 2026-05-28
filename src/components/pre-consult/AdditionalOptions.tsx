@@ -4,8 +4,9 @@ import { useT, useKo, useLocale } from '@/lib/i18n';
 import { usePreConsultStore } from '@/store/pre-consult-store';
 import { Button } from '@/components/ui/Button';
 import { ADDON_FIXED_PRICES } from '@/lib/pre-consult-price';
+import { formatPrice } from '@/lib/format';
 import type { AddOnOption } from '@/types/pre-consultation';
-import type { SurchargeSettings } from '@/types/shop';
+import type { ServiceStructure, SurchargeSettings } from '@/types/shop';
 
 interface AdditionalOptionsProps {
   onComplete: () => void;
@@ -39,7 +40,16 @@ export function AdditionalOptions({ onComplete }: AdditionalOptionsProps): React
   const store = usePreConsultStore();
   const shopData = usePreConsultStore((s) => s.shopData);
   const surcharges = shopData?.surcharges ?? DEFAULT_SURCHARGES;
-  const ADD_ONS = getAddOnConfigs(surcharges);
+  const serviceStructure: ServiceStructure | undefined = shopData?.serviceStructure;
+  const customParts = shopData?.customParts ?? [];
+
+  // 사장님이 설정에서 OFF한 시술 항목은 옵션에서 제거
+  const ADD_ONS = getAddOnConfigs(surcharges).filter((addon) => {
+    if (!serviceStructure) return true;
+    if (addon.key === 'parts' && !serviceStructure.parts) return false;
+    if (addon.key === 'point_art' && !serviceStructure.pointFullArt) return false;
+    return true;
+  });
 
   const handleToggle = (opt: AddOnOption): void => {
     store.toggleAddOn(opt);
@@ -106,6 +116,25 @@ export function AdditionalOptions({ onComplete }: AdditionalOptionsProps): React
           );
         })}
       </div>
+
+      {/* 사장님이 등록한 커스텀 파츠 — 손님 안내용 */}
+      {customParts.length > 0 && (
+        <div className="rounded-2xl bg-surface-alt border border-border p-3 mt-1">
+          <p className="text-xs font-semibold text-text mb-2">{t('preConsult.partsListTitle')}</p>
+          <div className="flex flex-wrap gap-1.5">
+            {customParts.map((part) => (
+              <span
+                key={part.id}
+                className="inline-flex items-center gap-1 rounded-full bg-surface border border-border px-2.5 py-1 text-[11px] font-medium text-text-secondary"
+              >
+                <span>{part.name}</span>
+                <span className="text-primary">{formatPrice(part.pricePerUnit)}/개</span>
+              </span>
+            ))}
+          </div>
+          <p className="mt-2 text-[10px] text-text-muted">{t('preConsult.partsListHint')}</p>
+        </div>
+      )}
 
       <Button fullWidth onClick={onComplete} className="mt-2">
         {t('preConsult.next')}
