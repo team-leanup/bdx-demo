@@ -245,7 +245,6 @@ export default function SettlementPage(): React.ReactElement | null {
         membershipApplied: isMembershipPayment ? membershipApplied : undefined,
         // 0528 N2: 업셀링 매출 (사전상담 추가옵션 + 시술 중 추가 = inTreatmentTotal)
         upsellAmount: inTreatmentTotal > 0 ? inTreatmentTotal : undefined,
-        notes: '현장모드 시술',
         customerName: customerName || undefined,
         customerPhone: customerPhone || undefined,
         customerId: customerId || undefined,

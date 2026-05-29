@@ -1737,6 +1737,7 @@ export async function fetchShopPublicData(shopId: string): Promise<ShopPublicDat
     repairPer: 5000,
     extension: 20000,
     overlay: 10000,
+    wrapping: 5000,
   };
 
   return {

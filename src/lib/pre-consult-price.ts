@@ -4,6 +4,7 @@ import type {
   PreConsultPriceEstimate,
   RemovalPreference,
   LengthPreference,
+  WrappingPreference,
 } from '@/types/pre-consultation';
 import type {
   CategoryPricingSettings,
@@ -22,6 +23,8 @@ interface PriceCalcInput {
   designCategory: DesignCategory;
   removalPreference: RemovalPreference | null;
   lengthPreference: LengthPreference | null;
+  /** 0529 — 랩핑 선호 (네일 상태 섹션). 'yes'면 surcharges.wrapping 추가 */
+  wrappingPreference?: WrappingPreference | null;
   addOns: AddOnOption[];
   categoryPricing: CategoryPricingSettings;
   surcharges: SurchargeSettings;
@@ -35,7 +38,7 @@ interface PriceCalcInput {
 }
 
 export function calculatePreConsultPrice(input: PriceCalcInput): PreConsultPriceEstimate {
-  const { designCategory, removalPreference, lengthPreference, addOns, categoryPricing, surcharges, photoBasePrice, customPartSelections, customParts, customCategories } = input;
+  const { designCategory, removalPreference, lengthPreference, wrappingPreference, addOns, categoryPricing, surcharges, photoBasePrice, customPartSelections, customParts, customCategories } = input;
 
   // 1. Category base price & time — builtin은 categoryPricing, custom은 customCategories
   const customCat = customCategories?.find((c) => c.id === designCategory);
@@ -66,8 +69,12 @@ export function calculatePreConsultPrice(input: PriceCalcInput): PreConsultPrice
     } else if (addOn === 'point_art') {
       addOnSurcharge += surcharges.pointArt;
     } else if (addOn === 'wrapping') {
-      addOnSurcharge += ADDON_FIXED_PRICES.wrapping;
+      addOnSurcharge += surcharges.wrapping ?? ADDON_FIXED_PRICES.wrapping;
     }
+  }
+  // 0529: 랩핑 선호(네일 상태 섹션 '랩핑 해주세요')도 가격 반영 — addOns에 없을 때만(이중 방지)
+  if (wrappingPreference === 'yes' && !addOns.includes('wrapping')) {
+    addOnSurcharge += surcharges.wrapping ?? ADDON_FIXED_PRICES.wrapping;
   }
 
   // 4-1. Custom parts surcharge (사장님이 등록한 파츠 × 손님이 선택한 개수)

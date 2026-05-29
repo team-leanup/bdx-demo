@@ -118,6 +118,7 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
         designCategory: raw.designCategory,
         removalPreference: raw.removalPreference ?? 'none',
         lengthPreference: raw.lengthPreference ?? 'keep',
+        wrappingPreference: raw.wrappingPreference,
         addOns: raw.addOns ?? [],
         categoryPricing,
         surcharges,

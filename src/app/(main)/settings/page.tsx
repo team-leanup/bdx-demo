@@ -1221,6 +1221,7 @@ export default function SettingsPage() {
   const [priceOffOther, setPriceOffOther] = useState(String(shopSettings.baseOffOtherShop || DEFAULT_BASE_PRICES.offOtherShop));
   const [priceRepair, setPriceRepair] = useState(String(shopSettings.surcharges.repairPer ?? DEFAULT_BASE_PRICES.repair));
   const [priceExtension, setPriceExtension] = useState(String(shopSettings.surcharges.extension ?? DEFAULT_BASE_PRICES.extension));
+  const [priceWrapping, setPriceWrapping] = useState(String(shopSettings.surcharges.wrapping ?? 5000));
   const [priceSolidPoint, setPriceSolidPoint] = useState(String(shopSettings.baseSolidPointPrice ?? DEFAULT_BASE_PRICES.solidPoint));
   const [priceFullArt, setPriceFullArt] = useState(String(shopSettings.baseFullArtPrice ?? DEFAULT_BASE_PRICES.fullArt));
   const [priceMonthlyArt, setPriceMonthlyArt] = useState(String(shopSettings.baseMonthlyArtPrice ?? DEFAULT_BASE_PRICES.monthlyArt));
@@ -1233,6 +1234,7 @@ export default function SettingsPage() {
     offOtherShop: shopSettings.baseOffOtherShop || DEFAULT_BASE_PRICES.offOtherShop,
     repair: shopSettings.surcharges.repairPer ?? DEFAULT_BASE_PRICES.repair,
     extension: shopSettings.surcharges.extension ?? DEFAULT_BASE_PRICES.extension,
+    wrapping: shopSettings.surcharges.wrapping ?? 5000,
     solidPoint: shopSettings.baseSolidPointPrice ?? DEFAULT_BASE_PRICES.solidPoint,
     fullArt: shopSettings.baseFullArtPrice ?? DEFAULT_BASE_PRICES.fullArt,
     monthlyArt: shopSettings.baseMonthlyArtPrice ?? DEFAULT_BASE_PRICES.monthlyArt,
@@ -1249,6 +1251,7 @@ export default function SettingsPage() {
     const offOtherShop = parseInt(priceOffOther, 10);
     const repair = parseInt(priceRepair, 10);
     const extension = parseInt(priceExtension, 10);
+    const wrapping = parseInt(priceWrapping, 10);
     const solidPoint = parseInt(priceSolidPoint, 10);
     const fullArt = parseInt(priceFullArt, 10);
     const monthlyArt = parseInt(priceMonthlyArt, 10);
@@ -1256,8 +1259,8 @@ export default function SettingsPage() {
     const targetRevenue = parseInt(monthlyTarget, 10) || 0;
     // 0528 M8: deposit/monthlyTarget도 음수 차단 (0은 허용)
     if (deposit < 0 || targetRevenue < 0) return;
-    if ([hand, foot, offSameShop, offOtherShop, repair, extension, solidPoint, fullArt, monthlyArt].some((v) => isNaN(v) || v < 0)) return;
-    setSavedPrices({ hand, foot, offSameShop, offOtherShop, repair, extension, solidPoint, fullArt, monthlyArt });
+    if ([hand, foot, offSameShop, offOtherShop, repair, extension, wrapping, solidPoint, fullArt, monthlyArt].some((v) => isNaN(v) || v < 0)) return;
+    setSavedPrices({ hand, foot, offSameShop, offOtherShop, repair, extension, wrapping, solidPoint, fullArt, monthlyArt });
     setShopSettings({
       depositAmount: deposit,
       monthlyTargetRevenue: targetRevenue > 0 ? targetRevenue : undefined,
@@ -1272,6 +1275,7 @@ export default function SettingsPage() {
         ...shopSettings.surcharges,
         repairPer: repair,
         extension,
+        wrapping,
       },
     });
     setEditingPrices(false);
@@ -1284,6 +1288,7 @@ export default function SettingsPage() {
     setPriceOffOther(String(savedPrices.offOtherShop));
     setPriceRepair(String(savedPrices.repair));
     setPriceExtension(String(savedPrices.extension));
+    setPriceWrapping(String(savedPrices.wrapping));
     setPriceSolidPoint(String(savedPrices.solidPoint));
     setPriceFullArt(String(savedPrices.fullArt));
     setPriceMonthlyArt(String(savedPrices.monthlyArt));
@@ -1617,6 +1622,7 @@ export default function SettingsPage() {
                   { label: '타샵오프', value: priceOffOther, onChange: setPriceOffOther },
                   { label: '리페어 개당', value: priceRepair, onChange: setPriceRepair },
                   { label: '연장 추가금', value: priceExtension, onChange: setPriceExtension },
+                  { label: '랩핑 추가금', value: priceWrapping, onChange: setPriceWrapping },
                   { labelKey: 'service_solidPoint', value: priceSolidPoint, onChange: setPriceSolidPoint },
                   { labelKey: 'service_fullArt', value: priceFullArt, onChange: setPriceFullArt },
                   { labelKey: 'service_monthlyArt', value: priceMonthlyArt, onChange: setPriceMonthlyArt },

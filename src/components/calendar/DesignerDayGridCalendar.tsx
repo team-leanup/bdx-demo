@@ -241,8 +241,10 @@ function DraggableEvent({
   };
 
   return (
-    <motion.button
+    <motion.div
       key={ev.id}
+      role="button"
+      tabIndex={0}
       drag={canDrag}
       dragMomentum={false}
       dragElastic={0}
@@ -318,7 +320,7 @@ function DraggableEvent({
           </>
         ) : null}
       </div>
-    </motion.button>
+    </motion.div>
   );
 }
 

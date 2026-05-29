@@ -26,6 +26,7 @@ export interface SurchargeSettings {
   repairPer: number;          // 리페어 개당
   extension: number;
   overlay: number;            // 오버레이
+  wrapping?: number;          // 랩핑 (손톱 끝 감싸기) — 미설정 시 기본 5000
 }
 
 export interface TimeSettings {

@@ -209,6 +209,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
           designCategory: selectedCategory,
           removalPreference: removalPreference,
           lengthPreference: lengthPreference,
+          wrappingPreference: wrappingPreference,
           addOns: addOns,
           categoryPricing: shopData.categoryPricing,
           surcharges: shopData.surcharges,

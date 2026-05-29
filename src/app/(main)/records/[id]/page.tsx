@@ -12,7 +12,7 @@ import { useRecordsStore } from '@/store/records-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { useConsultationStore } from '@/store/consultation-store';
-import { calculatePrice } from '@/lib/price-calculator';
+import { calculatePrice, buildServicePricingFromShopSettings } from '@/lib/price-calculator';
 import { useT } from '@/lib/i18n';
 import { getSafetyTagMeta } from '@/lib/tag-safety';
 import { SafetyTag } from '@/components/ui/SafetyTag';
@@ -59,7 +59,8 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
   }
 
   const c = record.consultation;
-  const breakdown = calculatePrice(c);
+  // 0529: 샵 설정 가격으로 계산 (이전엔 인자 누락으로 기본값 사용 → 가격 상세 부정확)
+  const breakdown = calculatePrice(c, buildServicePricingFromShopSettings(shopSettings));
 
   const pinnedTags = getPinnedTags(record.customerId);
   const safetyTags = pinnedTags.filter((tag) => {
