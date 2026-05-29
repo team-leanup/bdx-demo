@@ -144,8 +144,8 @@ function DraggableEvent({
   const showMetaRow = height >= 48;
   const showTags = height >= 60 && displayTags.length > 0;
 
-  const isCancelledOrCompleted = ev.status === 'cancelled' || ev.status === 'completed';
-  const canDrag = role !== null && !isCancelledOrCompleted;
+  // 0529: 완료 예약도 시간대 변경(드래그) 허용 — 취소 예약만 고정
+  const canDrag = role !== null && ev.status !== 'cancelled';
 
   const handleDragEnd = (
     _event: MouseEvent | TouchEvent | PointerEvent,
@@ -404,20 +404,6 @@ function SlotColumn({
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
-      onTouchStart={(e) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const touch = e.touches[0];
-        const y = touch.clientY - rect.top;
-        const minuteFromTop = (y / hourHeight) * 60 + startHour * 60;
-        const snapped = snapToInterval(minuteFromTop, 15);
-        longPressTimeRef.current = minutesToTimeStr(
-          clampStartMinutes({ startMinutes: snapped, startHour, endHour, durationMinutes: 30 }),
-        );
-        setIsHolding(true);
-        longPressHandlers.onTouchStart(e);
-      }}
-      onTouchEnd={() => { setIsHolding(false); longPressHandlers.onTouchEnd(); }}
-      onTouchMove={(e) => { setIsHolding(false); longPressHandlers.onTouchMove(e); }}
     >
       {events.map((ev) => {
         const startMin = timeToMinutes(ev.startTime);
