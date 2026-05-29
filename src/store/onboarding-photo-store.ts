@@ -1,6 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { StyleCategory } from '@/types/portfolio';
 
 export interface OnboardingPhoto {
@@ -20,18 +21,28 @@ interface OnboardingPhotoStore {
   reset: () => void;
 }
 
-export const useOnboardingPhotoStore = create<OnboardingPhotoStore>((set) => ({
-  photos: [],
-  featuredIds: [],
-  setPhotos: (photos) => set({ photos }),
-  addPhotos: (newPhotos) =>
-    set((s) => ({ photos: [...s.photos, ...newPhotos].slice(0, 20) })),
-  removePhoto: (id) =>
-    set((s) => ({ photos: s.photos.filter((p) => p.id !== id) })),
-  classifyPhoto: (id, category) =>
-    set((s) => ({
-      photos: s.photos.map((p) => (p.id === id ? { ...p, category } : p)),
-    })),
-  setFeaturedIds: (ids) => set({ featuredIds: ids }),
-  reset: () => set({ photos: [], featuredIds: [] }),
-}));
+// 0529 이슈: 회원가입 onboarding에서 업로드한 사진이 commit 시점에 휘발돼 portfolio_photos가 비는 케이스 차단.
+// sessionStorage로 persist — 탭 닫으면 자연스럽게 정리, 같은 탭에서 새로고침해도 유지.
+export const useOnboardingPhotoStore = create<OnboardingPhotoStore>()(
+  persist(
+    (set) => ({
+      photos: [],
+      featuredIds: [],
+      setPhotos: (photos) => set({ photos }),
+      addPhotos: (newPhotos) =>
+        set((s) => ({ photos: [...s.photos, ...newPhotos].slice(0, 20) })),
+      removePhoto: (id) =>
+        set((s) => ({ photos: s.photos.filter((p) => p.id !== id) })),
+      classifyPhoto: (id, category) =>
+        set((s) => ({
+          photos: s.photos.map((p) => (p.id === id ? { ...p, category } : p)),
+        })),
+      setFeaturedIds: (ids) => set({ featuredIds: ids }),
+      reset: () => set({ photos: [], featuredIds: [] }),
+    }),
+    {
+      name: 'bdx-onboarding-photos',
+      storage: createJSONStorage(() => sessionStorage),
+    },
+  ),
+);

@@ -116,17 +116,21 @@ export default function CompletePage() {
           usePortfolioStore.getState().setPhotos(portfolioPhotos);
         } else {
           try {
+            console.log(`[onboarding] uploading ${portfolioPhotos.length} portfolio photos for shop ${currentShopId}`);
             const batchResult = await dbBatchInsertPortfolioPhotos(portfolioPhotos);
+            console.log(`[onboarding] batch result: uploaded=${batchResult.uploaded}, errors=${batchResult.errors}`);
             if (batchResult.errors > 0) {
-              console.warn(`[onboarding] portfolio partial fail: ${batchResult.errors}/${portfolioPhotos.length}`);
+              console.error(`[onboarding] portfolio partial fail: ${batchResult.errors}/${portfolioPhotos.length}`);
               portfolioPartialFail = true;
             }
             await usePortfolioStore.getState().hydrateFromDB();
           } catch (photoErr) {
-            console.warn('[onboarding] portfolio save failed (non-blocking):', photoErr);
+            console.error('[onboarding] portfolio save failed (non-blocking):', photoErr);
             portfolioPartialFail = true;
           }
         }
+      } else if (currentShopId) {
+        console.warn(`[onboarding] no photos to upload (photos.length=${photos.length})`);
       }
 
       setCurrentShopOnboardingComplete(true);
