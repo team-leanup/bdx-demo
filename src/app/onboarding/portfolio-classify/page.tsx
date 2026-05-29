@@ -102,8 +102,15 @@ export default function PortfolioClassifyPage() {
   };
 
   const handleFinish = () => {
-    storeFeaturedIds(Array.from(featuredIds));
-    router.push('/onboarding/pricing');
+    try {
+      storeFeaturedIds(Array.from(featuredIds));
+      console.log('[onboarding] featured saved, navigating to pricing', Array.from(featuredIds));
+      router.push('/onboarding/pricing');
+    } catch (err) {
+      console.error('[onboarding] handleFinish error:', err);
+      // 0529: router.push가 실패하면 window.location으로 fallback
+      window.location.href = '/onboarding/pricing';
+    }
   };
 
   const canFinish = featuredIds.size >= MIN_FEATURED;
@@ -356,7 +363,7 @@ export default function PortfolioClassifyPage() {
 
       {/* CTA */}
       <div className="pt-6">
-        <Button size="lg" fullWidth onClick={handleFinish} disabled={!canFinish}>
+        <Button type="button" size="lg" fullWidth onClick={handleFinish} disabled={!canFinish}>
           다음
         </Button>
       </div>
