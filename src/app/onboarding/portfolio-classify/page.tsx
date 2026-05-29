@@ -45,19 +45,25 @@ export default function PortfolioClassifyPage() {
   const totalPhotos = photos.length;
   const classifiedCount = photos.filter((p) => p.category).length;
 
+  // 0529 UX: 카테고리 선택 → 잠깐 highlight → 자동으로 다음 사진. 사용자가 advance를 인지하지 못하는 이슈 해소.
   const classify = useCallback(
     (category: StyleCategory) => {
       if (currentPhoto) {
         classifyPhoto(currentPhoto.id, category);
       }
-      if (currentIndex < totalPhotos - 1) {
-        setDirection(1);
-        setCurrentIndex((prev) => prev + 1);
-      } else {
-        setPhase('featured');
-      }
+      // 320ms 후 advance — 카테고리 선택 highlight를 인지할 시간 + 카드 슬라이드 transition.
+      setTimeout(() => {
+        setCurrentIndex((prev) => {
+          if (prev < totalPhotos - 1) {
+            setDirection(1);
+            return prev + 1;
+          }
+          setPhase('featured');
+          return prev;
+        });
+      }, 320);
     },
-    [currentIndex, totalPhotos, currentPhoto, classifyPhoto]
+    [totalPhotos, currentPhoto, classifyPhoto]
   );
 
   const skip = useCallback(() => {
