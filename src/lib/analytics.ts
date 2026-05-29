@@ -262,18 +262,31 @@ export function computeChangeRate(current: number, previous: number): number {
 }
 
 // For the last N days, count consultations per day
+// computeMonthlyConsultations(KPI SSOT)와 동일 기준: records + preConsultationCompletedAt 예약 (중복 제외)
 export function computeDailyConsultations(
   records: ConsultationRecord[],
+  reservations: BookingRequest[],
   days: number,
 ): DailyConsultation[] {
   const result: DailyConsultation[] = [];
   const today = new Date();
 
+  // preConsultation 전용 예약만 사용 (record로 이미 전환된 booking 제외)
+  const recordBookingIds = new Set(
+    records.map((r) => r.consultation?.bookingId).filter((id): id is string => typeof id === 'string'),
+  );
+  const preConsultReservations = reservations.filter(
+    (r) => r.preConsultationCompletedAt && !recordBookingIds.has(r.id),
+  );
+
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const dateStr = toDateStr(d);
-      const dayRecords = records.filter((r) => toKoreanDateString(r.createdAt) === dateStr);
+    const dayRecords = records.filter((r) => toKoreanDateString(r.createdAt) === dateStr);
+    const dayPreConsult = preConsultReservations.filter(
+      (r) => toKoreanDateString(r.preConsultationCompletedAt as string) === dateStr,
+    );
 
     // Find top design scope for this day
     // 0529 HIGH-4: designCategory 우선 (magnet→solid_tone 매핑 우회), 없으면 designScope fallback.
@@ -286,7 +299,7 @@ export function computeDailyConsultations(
 
     result.push({
       date: dateStr,
-      consultations: dayRecords.length,
+      consultations: dayRecords.length + dayPreConsult.length,
       designScope: topScope
         ? (CATEGORY_DISPLAY_LABEL[topScope[0]] ?? DESIGN_SCOPE_LABEL[topScope[0]] ?? topScope[0])
         : undefined,
@@ -407,7 +420,7 @@ export function computeUpsellMetrics(records: ConsultationRecord[], shopPricing?
   let colorUpsellCount = 0;
   let colorUpsellConsultations = 0;
 
-  records.forEach((record) => {
+  records.filter((record) => record.finalizedAt != null).forEach((record) => {
     const breakdown = calculatePrice(record.consultation, shopPricing);
     const manualExtras = record.pricingAdjustments?.extras.reduce(
       (sum, extra) => sum + extra.amount,
@@ -451,10 +464,11 @@ export function computeUpsellMetrics(records: ConsultationRecord[], shopPricing?
     }
   });
 
+  const finalizedCount = records.filter((r) => r.finalizedAt != null).length;
   return {
     totalUpsellRevenue,
     upsellConsultations,
-    upsellRate: records.length > 0 ? roundToSingleDecimal((upsellConsultations / records.length) * 100) : 0,
+    upsellRate: finalizedCount > 0 ? roundToSingleDecimal((upsellConsultations / finalizedCount) * 100) : 0,
     partsUpsellCount,
     partsUpsellConsultations,
     colorUpsellCount,
@@ -530,7 +544,8 @@ export function computeGoldenTimeTargets(
     .map((customer) => {
       const lastVisitDate = toLocalDate(customer.lastVisitDate);
       const expectedReservationDate = addDays(lastVisitDate, averageCycleDays);
-      const recentServiceLabel = customer.treatmentHistory[0]?.designScope ?? '최근 시술';
+      const recentServiceLabel =
+        customer.treatmentHistory[customer.treatmentHistory.length - 1]?.designScope ?? '최근 시술';
 
       return {
         customerId: customer.id,
@@ -788,9 +803,10 @@ export function computeKPICards(
   ];
 }
 
-// Top 3 design scopes + expressions combined
+// Top 3 design scopes only (expressions excluded to avoid mixing categories)
 // 0530 MED-6: designCategory 우선 사용 (magnet→solid_tone 오집계 방지)
-// computeTopDesignScope/computeDesignScopeBreakdown과 동일 기준으로 통일
+// computeTopDesignScope/computeDesignScopeBreakdown과 동일 기준으로 통일.
+// 표현 기법(expressions)은 별도 computeExpressionBreakdown에서 집계 — 여기선 제외.
 export function computePopularTreatments(
   records: ConsultationRecord[],
 ): { rank: number; name: string; count: number }[] {
@@ -801,13 +817,6 @@ export function computePopularTreatments(
     if (scope) {
       const label = CATEGORY_DISPLAY_LABEL[scope] ?? DESIGN_SCOPE_LABEL[scope] ?? scope;
       counts[label] = (counts[label] ?? 0) + 1;
-    }
-    const expressions = r.consultation.expressions;
-    if (Array.isArray(expressions)) {
-      for (const expr of expressions) {
-        const label = EXPRESSION_LABEL[expr] ?? expr;
-        counts[label] = (counts[label] ?? 0) + 1;
-      }
     }
   }
 

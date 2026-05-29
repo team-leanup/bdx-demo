@@ -52,6 +52,25 @@ interface RecordsStore {
     bookingId?: string;
     saleDate?: string;
     saleTime?: string;
+    /**
+     * [FM-2] field-mode consultation 실제 데이터 — offType·nailShape·hasParts·partsSelections 정합
+     * settlement/page에서 FieldModeStore 상태를 바탕으로 구성해서 전달
+     */
+    consultationOverrides?: {
+      offType?: import('@/types/consultation').OffType;
+      nailShape?: import('@/types/consultation').NailShape;
+      hasParts?: boolean;
+      partsSelections?: import('@/types/consultation').ConsultationType['partsSelections'];
+    };
+    /**
+     * [SALES-5] 할인/예약금 내역 저장
+     */
+    pricingMeta?: {
+      grossPrice: number;
+      discountPercent?: number;
+      discountAmount?: number;
+      depositAmount?: number;
+    };
   }) => Promise<void>;
   updateRecord: (id: string, patch: Partial<ConsultationRecord>) => void;
   removeRecord: (id: string) => void;
@@ -99,7 +118,7 @@ export const useRecordsStore = create<RecordsStore>()(
         });
       },
 
-      addQuickSaleRecord: ({ id, shopId, designerId, customerId, customerName, customerPhone, serviceType, finalPrice, notes, paymentMethod, secondaryPaymentMethod, secondaryAmount, membershipApplied, upsellAmount, deposit, bookingId, saleDate, saleTime }) => {
+      addQuickSaleRecord: ({ id, shopId, designerId, customerId, customerName, customerPhone, serviceType, finalPrice, notes, paymentMethod, secondaryPaymentMethod, secondaryAmount, membershipApplied, upsellAmount, deposit, bookingId, saleDate, saleTime, consultationOverrides, pricingMeta }) => {
         const now = getNowInKoreaIso();
         const today = getTodayInKorea();
         // 0529 MED-6: saleTime 미지정 시 12:00 고정 → 현재 KST 시각으로 변경.
@@ -132,28 +151,40 @@ export const useRecordsStore = create<RecordsStore>()(
 
         const consultationSnapshot = {
           bodyPart: 'hand' as const,
-          offType: 'none' as const,
+          // [FM-2] field-mode 실제 데이터가 있으면 우선 사용, 없으면 기본값
+          offType: consultationOverrides?.offType ?? 'none' as const,
           extensionType: 'none' as const,
-          nailShape: 'round' as const,
+          nailShape: consultationOverrides?.nailShape ?? 'round' as const,
           designScope,
           // N3: 원본 카테고리 보존 — 통계 라벨 정확도
           designCategory: category,
           expressions: [],
-          hasParts: false,
-          partsSelections: [],
+          hasParts: consultationOverrides?.hasParts ?? false,
+          partsSelections: consultationOverrides?.partsSelections ?? [],
           extraColorCount: 0,
           currentStep: ConsultationStep.SUMMARY,
           customerName,
           customerPhone,
           bookingId,
         };
+        // [SALES-5] pricingAdjustments: 할인/예약금 내역 보존
+        const pricingAdjustments: ConsultationRecord['pricingAdjustments'] = pricingMeta
+          ? {
+              basePrice: pricingMeta.grossPrice,
+              extras: [],
+              discountAmount: pricingMeta.discountAmount,
+              finalPrice,
+            }
+          : undefined;
+
         const record: ConsultationRecord = {
           id,
           shopId,
           designerId,
           customerId: customerId ?? '',
           consultation: consultationSnapshot,
-          totalPrice: finalPrice,
+          // [SALES-5] totalPrice는 gross(할인/예약금 차감 전)로 저장
+          totalPrice: pricingMeta?.grossPrice ?? finalPrice,
           estimatedMinutes: estimateTime(consultationSnapshot),
           finalPrice,
           createdAt: effectiveCreatedAt,
@@ -166,6 +197,7 @@ export const useRecordsStore = create<RecordsStore>()(
           secondaryAmount,
           membershipApplied,
           upsellAmount,
+          pricingAdjustments,
           // [MEDIUM] depositApplied 저장 — removeRecord rollback 및 기록 열람용
           deposit: deposit && deposit > 0 ? deposit : undefined,
         };
@@ -218,10 +250,11 @@ export const useRecordsStore = create<RecordsStore>()(
 
         // 고객 통계 갱신
         // 0428 P1-1: 회원권 차감분(membershipApplied) + finalPrice = 시술 전액으로 totalSpend 누적
+        // [SALES-2] deposit(예약금)도 시술 '가치'에 포함 (이미 받은 금액이므로 누락 시 과소 집계)
         if (effectiveCustomerId) {
           const customerStore = useCustomerStore.getState();
           const designerName = useShopStore.getState().getDesignerName(designerId);
-          const totalServicePrice = finalPrice + (membershipApplied ?? 0);
+          const totalServicePrice = finalPrice + (membershipApplied ?? 0) + (deposit ?? 0);
           customerStore.recordTreatmentCompletion(effectiveCustomerId, totalServicePrice, {
             recordId: id,
             date: effectiveDate,
@@ -285,9 +318,9 @@ export const useRecordsStore = create<RecordsStore>()(
               (h) => h.recordId !== id,
             );
             const newVisitCount = Math.max(0, (customer.visitCount ?? 0) - 1);
-            // 0529 CRIT-1: addQuickSaleRecord에서 totalSpend는 finalPrice + membershipApplied로 누적되므로
-            // 삭제 롤백도 동일하게 finalPrice + membershipApplied를 차감해야 함
-            const rollbackAmount = record.finalPrice + (record.membershipApplied ?? 0);
+            // 0529 CRIT-1: addQuickSaleRecord에서 totalSpend는 finalPrice + membershipApplied + deposit으로 누적되므로
+            // 삭제 롤백도 동일하게 차감해야 함 [SALES-2 일관성]
+            const rollbackAmount = record.finalPrice + (record.membershipApplied ?? 0) + (record.deposit ?? 0);
             const newTotalSpend = Math.max(0, customer.totalSpend - rollbackAmount);
             // 0529: 마지막 방문일도 남은 시술이력 기준으로 재계산 (골든타임 재방문 대상 정확도)
             const newLastVisitDate = filteredHistory.length > 0

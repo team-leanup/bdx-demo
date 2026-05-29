@@ -631,18 +631,6 @@ export const useCustomerStore = create<CustomerStore>()(
             // 0428: 잔액 기반 정책 통일 — useMembershipSession과 동일하게 잔액 0이면 차단
             if (getRemainingAmount(m) <= 0) return c;
 
-            // 0529 MED-2: 잔액 기반 차감 — 횟수가 0이라도 잔액 남으면 unitPrice 단위로 가능한 만큼 차감.
-            // 호출자가 count=2를 요구해도 unitPrice * 2가 잔액 초과면 잔액 한도까지만 깎임.
-            const unitPriceForCheck = m.totalSessions > 0
-              ? Math.floor(m.purchaseAmount / m.totalSessions)
-              : 0;
-            const remainingAmountAtStart = getRemainingAmount(m);
-            const maxByAmount = unitPriceForCheck > 0
-              ? Math.floor(remainingAmountAtStart / unitPriceForCheck)
-              : count;
-            const maxBySessions = Math.max(1, m.remainingSessions); // 잔액 있으면 최소 1회 보장
-            const actualDeduct = Math.min(count, Math.max(maxByAmount, maxBySessions));
-            // 0423: 금액도 비례 차감 (1회 단가 × 차감 횟수)
             const prevRemainingAmount = typeof m.remainingAmount === 'number'
               ? m.remainingAmount
               : (m.totalSessions > 0
@@ -651,10 +639,28 @@ export const useCustomerStore = create<CustomerStore>()(
             const prevUsedAmount = typeof m.usedAmount === 'number'
               ? m.usedAmount
               : Math.max(0, m.purchaseAmount - prevRemainingAmount);
-            const unitPrice = m.totalSessions > 0
-              ? Math.floor(m.purchaseAmount / m.totalSessions)
-              : 0;
-            const deductedAmount = Math.min(prevRemainingAmount, unitPrice * actualDeduct);
+
+            // [SALES-6] 금액권(totalSessions=0)은 count를 '금액'으로 직접 해석하여 차감
+            // 횟수권(totalSessions>0)은 기존 unitPrice 기반 차감 유지
+            let actualDeduct: number;
+            let deductedAmount: number;
+            if (m.totalSessions === 0) {
+              // 금액권: count = 차감할 금액(원), 잔액 초과 시 잔액만큼만
+              actualDeduct = 0; // 횟수 카운터는 건드리지 않음
+              deductedAmount = Math.max(0, Math.min(prevRemainingAmount, Math.round(count)));
+            } else {
+              // 0529 MED-2: 잔액 기반 차감 — 횟수가 0이라도 잔액 남으면 unitPrice 단위로 가능한 만큼 차감.
+              const unitPriceForCheck = Math.floor(m.purchaseAmount / m.totalSessions);
+              const remainingAmountAtStart = getRemainingAmount(m);
+              const maxByAmount = unitPriceForCheck > 0
+                ? Math.floor(remainingAmountAtStart / unitPriceForCheck)
+                : count;
+              const maxBySessions = Math.max(1, m.remainingSessions); // 잔액 있으면 최소 1회 보장
+              actualDeduct = Math.min(count, Math.max(maxByAmount, maxBySessions));
+              // 0423: 금액도 비례 차감 (1회 단가 × 차감 횟수)
+              const unitPrice = Math.floor(m.purchaseAmount / m.totalSessions);
+              deductedAmount = Math.min(prevRemainingAmount, unitPrice * actualDeduct);
+            }
 
             const transaction: MembershipTransaction = {
               id: txnId,

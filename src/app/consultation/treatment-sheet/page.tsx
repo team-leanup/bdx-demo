@@ -202,7 +202,16 @@ function TreatmentSheetPageInner() {
   const designer = designers.find(d => d.id === (consultationData.designerId || activeDesignerId));
   const shopSettings = useAppStore((s) => s.shopSettings);
   const shopPricing = useMemo(() => buildServicePricingFromShopSettings(shopSettings), [shopSettings]);
-  const consultationBreakdown = calculatePrice(consultationData, shopPricing);
+  const shopPartsPricing = useMemo(
+    () => ({
+      gradeS: 3000,
+      gradeA: 2000,
+      gradeB: 1000,
+      customParts: shopSettings.customParts as import('@/types/canvas').CustomPart[] | undefined,
+    }),
+    [shopSettings.customParts],
+  );
+  const consultationBreakdown = calculatePrice(consultationData, shopPricing, shopPartsPricing);
   const estimatedMinutes = estimateTime(consultationData);
   const today = formatNowInKorea('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -232,7 +241,7 @@ function TreatmentSheetPageInner() {
 
   useEffect(() => {
     const nextConsultation = record?.consultation ?? consultation;
-    const nextBreakdown = calculatePrice(nextConsultation, shopPricing);
+    const nextBreakdown = calculatePrice(nextConsultation, shopPricing, shopPartsPricing);
 
     setChecklist((prev) => ({
       ...prev,
@@ -244,7 +253,7 @@ function TreatmentSheetPageInner() {
     setDiscountValue(nextConsultation.discount?.value ?? 0);
     setDepositAmount(nextConsultation.deposit ?? 0);
     setIsPriceFinalized(Boolean(record?.finalizedAt));
-  }, [consultation, record, shopPricing]);
+  }, [consultation, record, shopPricing, shopPartsPricing]);
 
   // Build canvas selections for read-only display from canvasData
   const buildSelections = (handSide: 'left_hand' | 'right_hand'): Partial<Record<FingerPosition, FingerSelection>> => {

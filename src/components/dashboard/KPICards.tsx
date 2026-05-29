@@ -7,6 +7,7 @@ import {
   computeDesignScopeBreakdown,
   computeReturnRate,
   computeCustomerAnalytics,
+  computeMonthlyConsultations,
 } from '@/lib/analytics';
 import type { ConsultationRecord, BookingRequest } from '@/types/consultation';
 import type { Customer } from '@/types/customer';
@@ -26,16 +27,19 @@ function buildKPIDetail(
     case '이달 상담 건수': {
       const today = getTodayInKorea();
       const now = parseKoreanDateString(today);
-      const prefix = today.slice(0, 7);
-      const thisMonth = records.filter((r) => toKoreanDateString(r.createdAt).startsWith(prefix));
+      const [yearStr, monthStr] = today.split('-');
+      const thisYear = parseInt(yearStr, 10);
+      const thisMonth = parseInt(monthStr, 10);
+      // KPI value와 동일 기준: records + preConsultationCompletedAt 예약 (중복 제외)
+      const totalCount = computeMonthlyConsultations(records, reservations, thisYear, thisMonth);
       const daysInMonth = new Date(now.getUTCFullYear(), now.getUTCMonth() + 1, 0).getDate();
       const daysPassed = now.getUTCDate();
-      const dailyAvg = daysPassed > 0 ? (thisMonth.length / daysPassed).toFixed(1) : '0';
+      const dailyAvg = daysPassed > 0 ? (totalCount / daysPassed).toFixed(1) : '0';
       return (
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-            <span className="text-sm text-text-secondary">완료된 상담</span>
-            <span className="font-bold text-text">{thisMonth.length}건</span>
+            <span className="text-sm text-text-secondary">이달 상담 (상담+사전)</span>
+            <span className="font-bold text-text">{totalCount}건</span>
           </div>
           <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
             <span className="text-sm text-text-secondary">하루 평균</span>
@@ -264,7 +268,8 @@ function KPIBottomSheet({ kpi, onClose }: BottomSheetProps) {
                   kpi.changeDirection === 'up' ? 'text-success' : 'text-error'
                 }`}
               >
-                {kpi.changeDirection === 'up' ? '▲' : '▼'} 전월 대비 {Math.abs(kpi.change)}%
+                {kpi.changeDirection === 'up' ? '▲' : '▼'}{' '}
+                {kpi.label === '오늘 매출' ? '어제 대비' : '전월 대비'} {Math.abs(kpi.change)}%
               </p>
             )}
           </div>

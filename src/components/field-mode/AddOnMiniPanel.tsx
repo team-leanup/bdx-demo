@@ -7,23 +7,28 @@ import { cn } from '@/lib/cn';
 import type { SurchargeSettings } from '@/types/shop';
 import { ADDON_FIXED_PRICES } from '@/lib/pre-consult-price';
 import type { FieldModeAddon } from '@/types/field-mode';
+import type { AddOnOption } from '@/types/pre-consultation';
 
 interface AddOnMiniPanelProps {
   addons: FieldModeAddon[];
   surcharges: SurchargeSettings;
   onAdd: (addon: { label: string; amount: number }) => void;
   onRemove: (id: string) => void;
+  /** 0530 FM-1: 사전상담에서 이미 반영된(=baseEstimate에 포함된) add-on. 중복 청구 방지용으로 퀵버튼 비활성화 */
+  carriedAddOns?: AddOnOption[];
 }
 
 interface QuickAddBtn {
   labelKey: string;
   getAmount: (s: SurchargeSettings) => number;
+  /** 사전상담 addOns와 매칭되는 키 — carriedAddOns에 있으면 이미 반영된 것으로 보고 중복 추가 차단 */
+  addOnKey?: AddOnOption;
 }
 
 const QUICK_ADDS: QuickAddBtn[] = [
-  { labelKey: 'fieldMode.addParts',     getAmount: (s) => s.largeParts },
-  { labelKey: 'fieldMode.addGlitter',   getAmount: () => ADDON_FIXED_PRICES.glitter },
-  { labelKey: 'fieldMode.addPointArt',  getAmount: (s) => s.pointArt },
+  { labelKey: 'fieldMode.addParts',     getAmount: (s) => s.largeParts,             addOnKey: 'parts' },
+  { labelKey: 'fieldMode.addGlitter',   getAmount: () => ADDON_FIXED_PRICES.glitter, addOnKey: 'glitter' },
+  { labelKey: 'fieldMode.addPointArt',  getAmount: (s) => s.pointArt,               addOnKey: 'point_art' },
   { labelKey: 'fieldMode.addExtension', getAmount: (s) => s.extension },
 ];
 
@@ -32,6 +37,7 @@ export function AddOnMiniPanel({
   surcharges,
   onAdd,
   onRemove,
+  carriedAddOns = [],
 }: AddOnMiniPanelProps): React.ReactElement {
   const t = useT();
   const [showCustomForm, setShowCustomForm] = useState(false);
@@ -66,8 +72,24 @@ export function AddOnMiniPanel({
 
       {/* Quick-add buttons */}
       <div className="flex flex-wrap gap-2">
-        {QUICK_ADDS.map(({ labelKey, getAmount }) => {
+        {QUICK_ADDS.map(({ labelKey, getAmount, addOnKey }) => {
           const amount = getAmount(surcharges);
+          // FM-1: 사전상담에서 이미 반영된 add-on은 baseEstimate에 포함돼 있으므로 다시 누르면 이중 청구됨 → 비활성화
+          const alreadyApplied = addOnKey != null && carriedAddOns.includes(addOnKey);
+          if (alreadyApplied) {
+            return (
+              <span
+                key={labelKey}
+                aria-disabled="true"
+                className="min-h-[44px] inline-flex items-center gap-1 rounded-xl px-3 py-2 bg-primary/5 border border-primary/30 text-sm font-medium text-primary/70 select-none cursor-default"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                {t(labelKey)} <span className="text-text-muted">· 사전상담 반영됨</span>
+              </span>
+            );
+          }
           return (
             <button
               key={labelKey}

@@ -181,7 +181,7 @@ interface MenuCardPriceProps {
 }
 
 function MenuCardPrice({ photoId, price, readOnly }: MenuCardPriceProps): React.ReactElement {
-  const updatePhoto = usePortfolioStore((s) => s.updatePhoto);
+  const updatePhotoMetadata = usePortfolioStore((s) => s.updatePhotoMetadata);
   const [editing, setEditing] = useState(false);
   const [input, setInput] = useState('');
 
@@ -193,7 +193,8 @@ function MenuCardPrice({ photoId, price, readOnly }: MenuCardPriceProps): React.
 
   const commit = (): void => {
     const parsed = parseInt(input.replace(/[^0-9]/g, ''), 10);
-    updatePhoto(photoId, { price: isNaN(parsed) ? undefined : parsed });
+    // 낙관적 업데이트 + DB 영속화
+    void updatePhotoMetadata(photoId, { price: isNaN(parsed) ? undefined : parsed });
     setEditing(false);
   };
 
@@ -1190,7 +1191,6 @@ interface MenuCardProps {
 
 function MenuCard({ photo, fallbackIdx, editMode, onRemove, onOpenOverlay }: MenuCardProps): React.ReactElement {
   const imgSrc = photo.imageDataUrl || NAIL_FALLBACKS[fallbackIdx % NAIL_FALLBACKS.length];
-  const updatePhoto = usePortfolioStore((s) => s.updatePhoto);
   const updatePhotoMetadata = usePortfolioStore((s) => s.updatePhotoMetadata);
 
   return (
@@ -1213,7 +1213,7 @@ function MenuCard({ photo, fallbackIdx, editMode, onRemove, onOpenOverlay }: Men
           <div className="flex-1 min-w-0">
             <InlineEditText
               value={photo.designType ?? '미지정'}
-              onSave={(v) => updatePhoto(photo.id, { designType: v })}
+              onSave={(v) => { void updatePhotoMetadata(photo.id, { designType: v }); }}
               readOnly={!editMode}
             />
           </div>

@@ -371,7 +371,7 @@ function CustomerPageInner(): React.ReactElement {
             name={name}
             phone={phone}
             memo={memo}
-            nameError={showNameError && !name.trim() ? tKo('customerForm.nameRequired') : undefined}
+            nameError={showNameError && !name.trim() ? t('customerForm.nameRequired') : undefined}
             onNameChange={(v) => { setName(v); setShowNameError(false); }}
             onPhoneChange={setPhone}
             onMemoChange={setMemo}

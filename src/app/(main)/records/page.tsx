@@ -1339,6 +1339,14 @@ export default function RecordsPage() {
                               >
                                 상담 시작
                               </button>
+                              {booking?.preConsultationData && (
+                                <button
+                                  onClick={() => { closeSelectedEventSheet(); router.push(`/records/preconsult/${booking.id}`); }}
+                                  className="w-full rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary active:scale-[0.98] transition-transform"
+                                >
+                                  사전 상담 보기
+                                </button>
+                              )}
                               <div className="flex gap-2">
                                 <button
                                   onClick={handleEditModeEnter}

@@ -5,6 +5,7 @@ import SupabaseProvider from '@/components/SupabaseProvider';
 import { pretendard } from '@/lib/fonts';
 import { SITE_URL } from '@/lib/site';
 import { STORAGE_KEYS } from '@/constants/storage-keys';
+import { LocaleLangSync } from '@/components/layout/LocaleLangSync';
 
 const themeBootstrapScript = `
   (() => {
@@ -78,7 +79,10 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning className="min-h-screen bg-background text-text font-pretendard">
         <ThemeProvider>
-          <SupabaseProvider>{children}</SupabaseProvider>
+          <SupabaseProvider>
+            <LocaleLangSync />
+            {children}
+          </SupabaseProvider>
         </ThemeProvider>
       </body>
     </html>

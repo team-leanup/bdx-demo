@@ -17,7 +17,7 @@ import { CATEGORY_LABELS } from '@/lib/labels';
 import { resolveCategoryLabelKo } from '@/lib/category-resolver';
 import { useReservationStore } from '@/store/reservation-store';
 import { useCustomerStore } from '@/store/customer-store';
-import type { PaymentMethod } from '@/types/consultation';
+import type { PaymentMethod, OffType } from '@/types/consultation';
 import type { AddOnOption } from '@/types/pre-consultation';
 import { generateId } from '@/lib/generate-id';
 import { getRemainingAmount, getMembershipSessionState, canUseMembership as canUseMembershipFn, getEffectiveStatus } from '@/lib/membership';
@@ -85,8 +85,25 @@ export default function SettlementPage(): React.ReactElement | null {
     setCustomerInfo,
     setRecordId,
     setPhase,
-    addInTreatmentAddon,
+    addInTreatmentAddon: _addInTreatmentAddon,
   } = useFieldModeStore();
+
+  // [FM-1] addOns 라벨 목록 — inTreatmentAddons에서 이미 baseEstimate에 포함된 addon을 중복 추가하면 이중청구 발생
+  // 추가 시 addOns에 포함된 addon 라벨과 동일한 경우 차단
+  const addOnLabelSet = useMemo<Set<string>>(() => {
+    const labels = new Set<string>();
+    addOns.forEach((addon) => {
+      const label = ADD_ON_LABELS[addon];
+      if (label) labels.add(label);
+    });
+    return labels;
+  }, [addOns]);
+
+  const addInTreatmentAddon = (addon: { label: string; amount: number }): void => {
+    // [FM-1] 기본 옵션(addOns)에 이미 포함된 항목이면 inTreatmentAddons에 추가하지 않음
+    if (addOnLabelSet.has(addon.label)) return;
+    _addInTreatmentAddon(addon);
+  };
 
   const customers = useCustomerStore((s) => s.customers);
   // 0428 P0-4: 회원권 차감 DB sync 에러 가시성
@@ -232,6 +249,21 @@ export default function SettlementPage(): React.ReactElement | null {
     const effectiveDesignerId = designerId || activeDesignerId || '';
     const effectiveShopId = currentShopId ?? 'shop-demo';
 
+    // [FM-2] removalType → offType 매핑 (RemovalPreference → OffType)
+    const offType: OffType =
+      removalType === 'self_shop' ? 'same_shop'
+      : removalType === 'other_shop' ? 'other_shop'
+      : 'none';
+
+    // [FM-2] addOns에 파츠 관련 항목 있으면 hasParts=true
+    const hasParts = addOns.includes('parts');
+    const partsSelections = hasParts
+      ? [{ grade: 'A' as const, quantity: 1 }]
+      : [];
+
+    // [SALES-5] 할인/예약금 내역 보존
+    const grossPrice = subtotal; // 할인/예약금 차감 전 금액
+
     // 1) 시술 기록 저장 — 실패 시 회원권 차감 skip (2026-04-20 R3: 데이터 정합성)
     let recordSaved = true;
     try {
@@ -255,6 +287,19 @@ export default function SettlementPage(): React.ReactElement | null {
         customerPhone: customerPhone || undefined,
         customerId: customerId || undefined,
         bookingId: bookingId || undefined,
+        // [FM-2] 실제 field-mode 상태를 consultation 레코드에 정확히 저장
+        consultationOverrides: {
+          offType,
+          hasParts,
+          partsSelections,
+        },
+        // [SALES-5] 할인/예약금 내역
+        pricingMeta: (discountAmount > 0 || depositApplied > 0) ? {
+          grossPrice,
+          discountPercent: discountPercent > 0 ? discountPercent : undefined,
+          discountAmount: discountAmount > 0 ? discountAmount : undefined,
+          depositAmount: depositApplied > 0 ? depositApplied : undefined,
+        } : undefined,
       });
     } catch {
       console.warn('[settlement] DB save failed — skipping membership deduction');

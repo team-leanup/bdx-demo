@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import { cn } from '@/lib/cn';
 import { useRecordsStore } from '@/store/records-store';
+import { useReservationStore } from '@/store/reservation-store';
 import { computeDailyConsultations } from '@/lib/analytics';
 import type { DailyConsultation } from '@/lib/analytics';
 
@@ -73,8 +74,9 @@ const PERIOD_LABELS: { key: Period; label: string }[] = [
 export function RevenueChart() {
   const [period, setPeriod] = useState<Period>('daily');
   const records = useRecordsStore((s) => s.records);
+  const reservations = useReservationStore((s) => s.reservations);
 
-  const dailyData = useMemo(() => computeDailyConsultations(records, 60), [records]);
+  const dailyData = useMemo(() => computeDailyConsultations(records, reservations, 60), [records, reservations]);
 
   const data = useMemo(() => {
     if (period === 'daily') {

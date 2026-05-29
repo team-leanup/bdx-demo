@@ -675,7 +675,8 @@
 | **통계 정합성(0529)** | **5** | **5** | **0** | **0** | **0** |
 | **E2E 검증 수정(0529)** | **2** | **2** | **0** | **0** | **0** |
 | **상담 플로우 버그수정(0530)** | **10** | **10** | **0** | **0** | **0** |
-| **합계** | **199** | **172** | **0** | **2** | **21** |
+| **사용자관점 QA(0530)** | **49** | **47** | **0** | **1** | **1** |
+| **합계** | **248** | **219** | **0** | **3** | **22** |
 
 ---
 
@@ -691,3 +692,28 @@
 
 ### 20.3 🟢 공유카드 글씨 배열 다듬기
 - **지금/완료**: `ShareCardImageTemplate`의 상단 해시태그 pill, 영문 타이틀(88→84px + letter-spacing 완화), 한글 서브(30px + 간격 14→10), 상담 메시지(22px + 간격 22→24), 샵 이름 블록(36→32px), QR 박스(120→108, 폰트 20→18, padding 재조정), FeedbackRow(padding 22/32 + minHeight 72)까지 타이포그래피 리듬을 재정돈. 디자인 톤은 유지한 채 "글씨 배열만" 정리.
+
+## 21. 사용자관점 심층 QA (0530) — Chrome 실측 + 18에이전트 코드추적
+
+> 상세: `docs/qa-deep-20260530-userqa.md`. 사전상담 링크 생성→제출→사장님 확인→시술→매출→대시보드→스케줄 전 구간을 Chrome(모바일 ~500px)으로 직접 걸어보며 조사. `tsc/lint/build` 통과, BUG-A·SL-04 라이브 재검증.
+
+### 21.1 🟢 수정 완료 (24건)
+- **사전상담 고객 플로우(6)**: DesignGallery 중첩버튼 hydration 에러 제거(div role=button) · 요약 raw 키 `consultation.designLabel` 수정 · SlotPicker 요일 다국어화(en/zh/ja) · ConsultReview 8라벨 i18n · DesignGallery/ReferenceUpload 하드코딩 i18n
+- **파츠·가격(4)**: solidPoint/fullArt 설정가 견적 반영(SSOT 통일) · 랩핑 추가금 calculator 연결 · 견적=계산대 가격 일치(랩핑 폴백 통일) · app-store 기본값 정합
+- **대시보드(6)**: 골든타임 최근시술 라벨 · 인기시술 카테고리/표현 분리 · 업셀링 finalized 필터 · 상담건수 KPI/차트/바텀시트 SSOT · 오늘매출 변화율 레이블 · 취소예약 캘린더 제외
+- **스케줄(4)**: DragConfirmModal `__unassigned__` 정규화 · moveValidation 정규화 · 취소예약 색상 · 빈슬롯 모바일 롱프레스 touch 핸들러
+- **포트폴리오(4)**: MenuCard 인라인편집 DB 영속화 · is_staff_pick/is_popular 삽입 · isPublic 명시 boolean · magnet 무드 매핑
+
+### 21.2 🟢 후속 24건 수정 완료 (2차, SL-01 제외) — 상세 `docs/qa-deep-20260530-userqa.md` §2차 수정
+- **DB 마이그레이션** `20260530_userqa_fixes`: portfolio_photos.parts_memo · uq_shoplink_slot 부분 UNIQUE 인덱스
+- **매출/정산(8)**: FM-1 add-on 이중청구 차단(라이브검증) · SALES-1 즉시매출 회원권 차감 · SALES-2 예약금 totalSpend · SALES-3 wrap-up 고객변경 통계 · SALES-4 records/[id] breakdown · SALES-5 pricing_adjustments · SALES-6 금액권 차감 · 🔵 **FM-2 부분**(offType 수정, nailShape·partsSelections 미해결)
+- **가격(4)**: PRICE-3 손님 견적=계산대 105,000 일치(랩핑 폴백 정정, 라이브검증) · customPartId · calculatePrice customParts · 환율 근사표시
+- **사전상담/슬롯(5)**: SL-02 linkId 오염 · SL-03 샵링크 23505+인덱스 · SL-07 duration 겹침 · #20 미정 표시가드 · #13 complete 탈출버튼
+- **포트폴리오(3)**: partsMemo 영속화 · PortfolioBrowser 공개사진만 · 카테고리 삭제 orphan
+- **records 표시(2)**: SALES-4 · pre_consult_done '사전상담 보기'
+- **반응형/i18n(4)**: 로케일버튼 분리 · 폰트/터치(12/44/10px) · html lang 동적 · (main) restoreLocale
+
+### 21.3 ⬜ 여전히 미해결
+- **SL-01** 사전상담 링크 설정 UI 부재 — 제품 결정 보류(사용자 지시)
+- **FM-2 잔여** field-mode 매출레코드 nailShape·partsSelections 손실(데이터모델 작업 필요, final_price는 정확)
+- is_quick_sale=true 플래그(설계 확인) · 환율 실시간 · customPart 모달 복원(부분)

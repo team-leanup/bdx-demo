@@ -8,6 +8,8 @@ import type { ToastData } from '@/components/ui';
 import { useRecordsStore } from '@/store/records-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { useAuthStore } from '@/store/auth-store';
+import { useCustomerStore } from '@/store/customer-store';
+import { getRemainingAmount, canUseMembership as canUseMembershipFn } from '@/lib/membership';
 import type { PaymentMethod } from '@/types/consultation';
 
 interface QuickSaleSubmitData {
@@ -34,6 +36,7 @@ function QuickSaleContent(): React.ReactElement {
   const addQuickSaleRecord = useRecordsStore((s) => s.addQuickSaleRecord);
   const updateReservation = useReservationStore((s) => s.updateReservation);
   const { currentShopId, activeDesignerId } = useAuthStore();
+  const customers = useCustomerStore((s) => s.customers);
   const [toasts, setToasts] = useState<ToastData[]>([]);
   const submittingRef = useRef(false);
 
@@ -44,8 +47,25 @@ function QuickSaleContent(): React.ReactElement {
   const handleSubmit = (data: QuickSaleSubmitData): void => {
     if (submittingRef.current) return;
     submittingRef.current = true;
+
+    // [SALES-1] 회원권 결제 시 차감에 필요한 정보 사전 계산
+    const isMembershipPayment = data.paymentMethod === 'membership';
+    const payingCustomer = data.customerId
+      ? customers.find((c) => c.id === data.customerId)
+      : undefined;
+    const customerMembership = payingCustomer?.membership;
+    const membershipValid = isMembershipPayment && !!payingCustomer && canUseMembershipFn(customerMembership);
+    const membershipRemainingBefore = membershipValid && customerMembership
+      ? getRemainingAmount(customerMembership)
+      : 0;
+    // 잔액이 시술금보다 크면 전액 차감, 아니면 잔액만큼만 (차액은 현금/카드)
+    const membershipApplied = membershipValid
+      ? Math.max(0, Math.min(membershipRemainingBefore, data.amount))
+      : 0;
+    const recordId = `qs-${Date.now()}`;
+
     addQuickSaleRecord({
-      id: `qs-${Date.now()}`,
+      id: recordId,
       shopId: currentShopId ?? '',
       designerId: data.designerId || activeDesignerId || '',
       customerId: data.customerId || undefined,
@@ -55,9 +75,15 @@ function QuickSaleContent(): React.ReactElement {
       finalPrice: data.amount,
       notes: data.memo || undefined,
       paymentMethod: data.paymentMethod,
+      // [SALES-1] 회원권 차감액 저장 — totalSpend 정합
+      membershipApplied: membershipApplied > 0 ? membershipApplied : undefined,
       saleDate: data.saleDate,
       saleTime: data.saleTime,
     }).then(() => {
+      // [SALES-1] 회원권 잔액 차감 — DB 저장 성공 후에만 실행 (정합성 보장)
+      if (membershipValid && data.customerId && membershipApplied > 0) {
+        useCustomerStore.getState().useMembershipSession(data.customerId, recordId, membershipApplied);
+      }
       if (bookingId) {
         updateReservation(bookingId, { status: 'completed' });
       }

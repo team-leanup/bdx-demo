@@ -69,13 +69,14 @@ export function calculatePreConsultPrice(input: PriceCalcInput): PreConsultPrice
     } else if (addOn === 'point_art') {
       addOnSurcharge += surcharges.pointArt;
     } else if (addOn === 'wrapping') {
-      addOnSurcharge += surcharges.wrapping ?? ADDON_FIXED_PRICES.wrapping;
+      // 랩핑 추가금: 샵이 설정한 값만 청구. 미설정(undefined) 시 0 — field-mode/calculatePrice와 동일 기준(견적=계산대 일치)
+      addOnSurcharge += surcharges.wrapping ?? 0;
     }
   }
-  // 0529: 랩핑 선호(네일 상태 섹션 '랩핑 해주세요')도 가격 반영 — addOns에 없을 때만(이중 방지)
-  if (wrappingPreference === 'yes' && !addOns.includes('wrapping')) {
-    addOnSurcharge += surcharges.wrapping ?? ADDON_FIXED_PRICES.wrapping;
-  }
+  // 0530: 랩핑 선호('랩핑 해주세요')는 손님 견적 '금액'에 가산하지 않는다.
+  // 원장 사전상담 상세·field-mode 정산 모두 랩핑을 별도 청구하지 않으므로(surcharges.wrapping 기본 5,000이
+  // 주입돼 있어도) 손님 confirm만 +5,000 되어 "견적 110k vs 계산대 105k" 모순이 발생했다.
+  // 세 경로를 미청구로 통일(랩핑 시술시간은 estimatedMinutes에 그대로 반영).
 
   // 4-1. Custom parts surcharge (사장님이 등록한 파츠 × 손님이 선택한 개수)
   // 보안: count는 정수 + 0 이상으로 클램프 (클라이언트 조작 방지)

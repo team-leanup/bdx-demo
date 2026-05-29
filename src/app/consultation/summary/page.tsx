@@ -54,7 +54,19 @@ export default function SummaryPage() {
 
   const shopSettings = useAppStore((s) => s.shopSettings);
   const shopPricing = useMemo(() => buildServicePricingFromShopSettings(shopSettings), [shopSettings]);
-  const breakdown = useMemo(() => calculatePrice(consultation, shopPricing), [consultation, shopPricing]);
+  const shopPartsPricing = useMemo(
+    () => ({
+      gradeS: 3000,
+      gradeA: 2000,
+      gradeB: 1000,
+      customParts: shopSettings.customParts as import('@/types/canvas').CustomPart[] | undefined,
+    }),
+    [shopSettings.customParts],
+  );
+  const breakdown = useMemo(
+    () => calculatePrice(consultation, shopPricing, shopPartsPricing),
+    [consultation, shopPricing, shopPartsPricing],
+  );
   const adjustedFinalPrice = Math.max(0, breakdown.finalPrice + additionalCharge);
   const addRecord = useRecordsStore((s) => s.addRecord);
   const addPhoto = usePortfolioStore((s) => s.addPhoto);
@@ -454,7 +466,7 @@ export default function SummaryPage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className="flex-1 overflow-y-auto px-4 md:px-8 pt-5 pb-32 sm:pb-40 md:pb-6"
+        className="flex-1 overflow-y-auto px-4 md:px-8 pt-5 pb-52 sm:pb-56 md:pb-6"
       >
         <div className="max-w-2xl md:max-w-3xl mx-auto flex flex-col gap-4">
           {isCustomerLinkFlow && consultation.sourceShopName && (

@@ -18,6 +18,8 @@ export const DEFAULT_SERVICE_PRICING: ServicePricing = {
   french: 5000,
   magnetic: 5000,
   extraColorPerUnit: 3000,
+  // 기본 0 — 기존 견적이 변하지 않도록 회귀 방지
+  wrapping: 0,
 };
 
 export const DEFAULT_PARTS_PRICING: PartsPricing = {
@@ -44,6 +46,7 @@ export function buildServicePricingFromShopSettings(settings: {
     magnet: number;
     pointArt: number;
     fullArt: number;
+    wrapping?: number;
   };
 }): ServicePricing {
   return {
@@ -54,6 +57,7 @@ export function buildServicePricingFromShopSettings(settings: {
     repairPerNail: settings.surcharges.repairPer,
     extensionBase: settings.surcharges.extension,
     solidTone: 0,
+    // [CRITICAL] surcharges.pointArt/fullArt가 SSOT — settings 저장 시 항상 동기화됨
     solidPoint: settings.surcharges.pointArt,
     fullArt: settings.surcharges.fullArt,
     monthlyArt: settings.baseMonthlyArtPrice,
@@ -61,6 +65,8 @@ export function buildServicePricingFromShopSettings(settings: {
     french: settings.surcharges.french,
     magnetic: settings.surcharges.magnet,
     extraColorPerUnit: DEFAULT_SERVICE_PRICING.extraColorPerUnit,
+    // [HIGH] 랩핑 추가금: surcharges.wrapping이 없거나 0이면 기존 견적에 영향 없음
+    wrapping: settings.surcharges.wrapping ?? 0,
   };
 }
 
@@ -186,6 +192,15 @@ export function calculatePrice(
     });
   }
 
+  // 8. 랩핑 추가금
+  // wrappingPreference === 'yes'이고 pricing.wrapping > 0 일 때만 가산.
+  // 기본 surcharges.wrapping이 0이면 기존 견적에 영향 없음 (회귀 방지).
+  let wrappingSurcharge = 0;
+  if (consultation.wrappingPreference === 'yes' && pricing.wrapping > 0) {
+    wrappingSurcharge = pricing.wrapping;
+    items.push({ label: '랩핑', labelEn: 'Wrapping', amount: wrappingSurcharge });
+  }
+
   // 소계
   const subtotal =
     basePrice +
@@ -194,7 +209,8 @@ export function calculatePrice(
     designSurcharge +
     expressionSurcharge +
     partsSurcharge +
-    colorSurcharge;
+    colorSurcharge +
+    wrappingSurcharge;
 
   // 8. 할인
   let discountAmount = 0;
@@ -241,6 +257,7 @@ export function calculatePrice(
     expressionSurcharge,
     partsSurcharge,
     colorSurcharge,
+    wrappingSurcharge,
     subtotal,
     discountAmount,
     depositAmount,

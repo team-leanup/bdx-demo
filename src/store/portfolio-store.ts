@@ -334,7 +334,10 @@ export const usePortfolioStore = create<PortfolioStore>()(
           return { success: true };
         }
 
-        const result = await dbUpdatePhotoMetadata(id, currentShopId, {
+        // NOTE: partsMemo는 낙관적 업데이트(위 set)로 store에 이미 반영됨.
+        // db.ts의 dbUpdatePhotoMetadata updates 타입에 partsMemo가 추가되면
+        // 아래 payload에 자동 전달되도록 별도 인자로 분리.
+        const dbUpdates: Parameters<typeof dbUpdatePhotoMetadata>[2] = {
           styleCategory: updates.styleCategory ?? null,
           designType: updates.designType ?? null,
           serviceType: updates.serviceType ?? null,
@@ -346,7 +349,9 @@ export const usePortfolioStore = create<PortfolioStore>()(
           isFeatured: updates.isFeatured,
           isStaffPick: updates.isStaffPick,
           isPopular: updates.isPopular,
-        });
+          partsMemo: updates.partsMemo ?? null,
+        };
+        const result = await dbUpdatePhotoMetadata(id, currentShopId, dbUpdates);
 
         if (!result.success) {
           // rollback
@@ -386,6 +391,24 @@ export const usePortfolioStore = create<PortfolioStore>()(
         }
       },
       removeCategory: (key) => {
+        // 해당 카테고리에 속한 사진들을 기본값 'simple'로 재할당 (orphan 방지)
+        const orphanIds: string[] = get().photos
+          .filter((p) => p.styleCategory === key)
+          .map((p) => p.id);
+        if (orphanIds.length > 0) {
+          set((s) => ({
+            photos: s.photos.map((p) =>
+              p.styleCategory === key ? { ...p, styleCategory: 'simple' } : p,
+            ),
+          }));
+          // 낙관적 업데이트 후 DB 동기화 (shop-demo 제외)
+          const currentShopId = useAuthStore.getState().currentShopId;
+          if (currentShopId && currentShopId !== 'shop-demo') {
+            for (const id of orphanIds) {
+              void dbUpdatePhotoMetadata(id, currentShopId, { styleCategory: 'simple' });
+            }
+          }
+        }
         set((s) => ({ menuCategories: s.menuCategories.filter((c) => c.key !== key) }));
         if (key.startsWith('custom-')) {
           const app = useAppStore.getState();

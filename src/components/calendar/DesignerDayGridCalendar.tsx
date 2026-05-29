@@ -79,7 +79,22 @@ function timeToMinutes(time: string): number {
   return (isNaN(h) ? 0 : h) * 60 + (isNaN(m) ? 0 : m);
 }
 
-function getEventColor(designerId?: string): { bg: string; border: string; text: string } {
+/**
+ * '__unassigned__' sentinel 값을 undefined로 정규화. (버그 1 수정)
+ * 드래그 직접 경로와 모달 확정 경로 모두 이 함수를 사용해 일관성을 보장한다.
+ */
+function normalizeDesignerId(id: string | undefined): string | undefined {
+  return !id || id === '__unassigned__' ? undefined : id;
+}
+
+function getEventColor(
+  designerId: string | undefined,
+  status?: string,
+): { bg: string; border: string; text: string } {
+  // 버그 3 수정: 취소 예약은 상태와 관계없이 회색 계열로 표시
+  if (status === 'cancelled') {
+    return { bg: 'bg-slate-100', border: 'border-slate-400', text: 'text-slate-400' };
+  }
   if (designerId && DESIGNER_COLORS[designerId]) {
     return DESIGNER_COLORS[designerId];
   }
@@ -167,7 +182,7 @@ function DraggableEvent({
     const colWidth = (rect.width - axisWidth) / columnCount;
     const colIndex = Math.max(0, Math.min(Math.floor(dropXCols / colWidth), columnCount - 1));
 
-    const targetDesignerId = columns[colIndex]?.id === '__unassigned__' ? undefined : columns[colIndex]?.id;
+    const targetDesignerId = normalizeDesignerId(columns[colIndex]?.id);
 
     const minuteFromTop = (dropY / hourHeight) * 60 + startHour * 60;
     const snapped = snapToInterval(minuteFromTop, 15);
@@ -265,6 +280,8 @@ function DraggableEvent({
         'border-l-3',
         color.border,
         color.text,
+        // 버그 3 수정: 취소 예약은 opacity-50 + 취소선으로 시각 구분
+        ev.status === 'cancelled' && 'opacity-50 line-through',
       )}
       style={{ top, height, touchAction: canDrag ? 'none' : undefined }}
     >
@@ -397,6 +414,29 @@ function SlotColumn({
     longPressHandlers.onMouseLeave();
   };
 
+  // 버그 4 수정: 모바일 롱프레스를 위해 touch 이벤트에서도 longPressTimeRef를 설정
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const touch = e.touches[0];
+    const y = touch.clientY - rect.top;
+    const minuteFromTop = (y / hourHeight) * 60 + startHour * 60;
+    const snapped = snapToInterval(minuteFromTop, 15);
+    longPressTimeRef.current = minutesToTimeStr(
+      clampStartMinutes({ startMinutes: snapped, startHour, endHour, durationMinutes: 30 }),
+    );
+    setIsHolding(true);
+    longPressHandlers.onTouchStart(e);
+  };
+
+  const handleTouchEnd = () => {
+    setIsHolding(false);
+    longPressHandlers.onTouchEnd();
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    longPressHandlers.onTouchMove(e);
+  };
+
   return (
     <div
       className={cn('relative border-l-2 border-border overflow-visible transition-colors select-none', isHolding && 'bg-primary/10 animate-pulse')}
@@ -404,6 +444,9 @@ function SlotColumn({
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchMove}
     >
       {events.map((ev) => {
         const startMin = timeToMinutes(ev.startTime);
@@ -412,7 +455,7 @@ function SlotColumn({
         const rawHeight = Math.max(((endMin - startMin) / 60) * hourHeight, 40);
         const evTop = Math.max(0, Math.min(rawTop, gridHeight - rawHeight));
         const evHeight = rawHeight;
-        const color = getEventColor(ev.designerId);
+        const color = getEventColor(ev.designerId, ev.status);
         const customerTags = ev.customerId ? getPrimaryTags(ev.customerId) : [];
 
         return (
@@ -682,9 +725,11 @@ export function DesignerDayGridCalendar({
         toDesigner={pendingMove?.toDesigner}
         onConfirm={() => {
           if (pendingMove) {
+            // 버그 1 수정: '__unassigned__' sentinel을 undefined로 정규화해서 전달
+            const rawDesignerId = columns.find((c) => c.name === pendingMove.toDesigner)?.id;
             onEventMove?.(pendingMove.eventId, {
               reservationTime: pendingMove.toTime,
-              designerId: columns.find((c) => c.name === pendingMove.toDesigner)?.id,
+              designerId: normalizeDesignerId(rawDesignerId),
             });
           }
           setPendingMove(null);

@@ -62,12 +62,23 @@ export function SlotPicker({ link, selectedDate, selectedTime, onSelect }: Props
 
   const activeDate = availableDates.find((d) => d.date === openDate) ?? availableDates[0];
 
-  const formatDateShort = (dateStr: string, weekday: string): { md: string; wd: string } => {
+  const WEEKDAY_LABELS: Record<string, readonly string[]> = {
+    ko: ['일', '월', '화', '수', '목', '금', '토'],
+    en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    zh: ['日', '一', '二', '三', '四', '五', '六'],
+    ja: ['日', '月', '火', '水', '木', '金', '土'],
+  };
+
+  const formatDateShort = (dateStr: string): { md: string; wd: string } => {
     const [, m, d] = dateStr.split('-');
     const month = Number(m);
     const day = Number(d);
-    if (locale === 'ko') return { md: `${month}.${day}`, wd: weekday };
-    return { md: `${month}/${day}`, wd: weekday };
+    // KST 기준 요일 인덱스 도출 (YYYY-MM-DD + T00:00:00+09:00)
+    const dayIndex = new Date(`${dateStr}T00:00:00+09:00`).getDay();
+    const labels = WEEKDAY_LABELS[locale] ?? WEEKDAY_LABELS.ko;
+    const wd = labels[dayIndex];
+    if (locale === 'ko') return { md: `${month}.${day}`, wd };
+    return { md: `${month}/${day}`, wd };
   };
 
   return (
@@ -83,7 +94,7 @@ export function SlotPicker({ link, selectedDate, selectedTime, onSelect }: Props
       {/* Date chips - horizontal scroll */}
       <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory">
         {availableDates.map((d) => {
-          const { md, wd } = formatDateShort(d.date, d.weekday);
+          const { md, wd } = formatDateShort(d.date);
           const isSelected = d.date === activeDate.date;
           return (
             <motion.button
@@ -91,7 +102,7 @@ export function SlotPicker({ link, selectedDate, selectedTime, onSelect }: Props
               type="button"
               onClick={() => setOpenDate(d.date)}
               aria-pressed={isSelected}
-              aria-label={`${md} ${wd}, ${d.slots.filter((s) => !s.isBooked).length}${locale === 'ko' ? '자리' : ' slots'}`}
+              aria-label={`${md} ${wd}, ${d.slots.filter((s) => !s.isBooked).length}${locale === 'ko' ? '자리' : locale === 'zh' ? '个' : locale === 'ja' ? '枠' : ' slots'}`}
               whileTap={{ scale: 0.96 }}
               className={`shrink-0 snap-start flex flex-col items-center justify-center min-w-[64px] h-[72px] rounded-xl border-2 transition-colors ${
                 isSelected
@@ -104,7 +115,7 @@ export function SlotPicker({ link, selectedDate, selectedTime, onSelect }: Props
               </span>
               <span className="text-base font-bold leading-tight mt-0.5">{md}</span>
               <span className={`text-xs mt-0.5 ${isSelected ? 'text-white/80' : 'text-text-muted'}`}>
-                {d.slots.filter((s) => !s.isBooked).length}{locale === 'ko' ? '자리' : ' open'}
+                {d.slots.filter((s) => !s.isBooked).length}{locale === 'ko' ? '자리' : locale === 'zh' ? '个' : locale === 'ja' ? '枠' : ' open'}
               </span>
             </motion.button>
           );

@@ -175,7 +175,7 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
             <img src={store.selectedPhotoUrl} alt="selected design" className="w-full h-full object-cover" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-text-muted">{t('consultation.designLabel')}</p>
+            <p className="text-xs text-text-muted">{t('preConsult.designLabel')}</p>
             <p className="text-sm font-semibold text-text">
               {(() => {
                 const cat = store.selectedCategory;
@@ -227,21 +227,21 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
       {/* Summary rows */}
       <div className="rounded-2xl bg-surface border border-border px-4 divide-y divide-border">
         <ReviewRow
-          label="현재 네일"
+          label={t('preConsult.reviewCurrentNail')}
           value={`${nailStatusLabel}${store.removalPreference && store.removalPreference !== 'none' ? ` · ${removalLabel}` : ''}`}
           section="nailStatus"
           modifyLabel={t('preConsult.modifyBtn')}
           onModify={onModify}
         />
         <ReviewRow
-          label="길이"
+          label={t('preConsult.reviewLength')}
           value={lengthLabel}
           section="length"
           modifyLabel={t('preConsult.modifyBtn')}
           onModify={onModify}
         />
         <ReviewRow
-          label="모양"
+          label={t('preConsult.reviewShape')}
           value={shapeLabel}
           section="shape"
           modifyLabel={t('preConsult.modifyBtn')}
@@ -249,7 +249,7 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
         />
         {store.wrappingPreference && (
           <ReviewRow
-            label="랩핑"
+            label={t('preConsult.reviewWrapping')}
             value={wrappingLabel}
             section="nailStatus"
             modifyLabel={t('preConsult.modifyBtn')}
@@ -257,14 +257,14 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
           />
         )}
         <ReviewRow
-          label="분위기"
+          label={t('preConsult.reviewFeel')}
           value={feelLabel}
           section="vibe"
           modifyLabel={t('preConsult.modifyBtn')}
           onModify={onModify}
         />
         <ReviewRow
-          label="스타일"
+          label={t('preConsult.reviewStyle')}
           value={styleLabel}
           section="style"
           modifyLabel={t('preConsult.modifyBtn')}
@@ -272,7 +272,7 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
         />
         {store.styleKeywords.length > 0 && (
           <ReviewRow
-            label="키워드"
+            label={t('preConsult.reviewKeyword')}
             value={keywordsLabel}
             section="style"
             modifyLabel={t('preConsult.modifyBtn')}
@@ -281,7 +281,7 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
         )}
         {store.addOns.length > 0 && (
           <ReviewRow
-            label="추가 옵션"
+            label={t('preConsult.reviewAddOn')}
             value={addOnsLabel}
             section="addons"
             modifyLabel={t('preConsult.modifyBtn')}

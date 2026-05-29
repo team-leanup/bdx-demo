@@ -97,6 +97,27 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
   const openFingerModal = useCallback(
     (hand: HandSide, finger: FingerPosition) => {
       const existing = selections[hand][finger];
+
+      // 기존 selection에서 customPartId가 있는 parts를 역직렬화해 draftCustomEntries 복원
+      // parts를 customPartId 기준으로 그룹화하여 quantity 계산
+      const restoredCustomEntries: CustomPartEntry[] = (() => {
+        if (!existing?.parts?.length) return [];
+        const hasCustomParts = existing.parts.some((p) => p.customPartId);
+        if (!hasCustomParts) return [];
+
+        const grouped = new Map<string, CustomPartEntry>();
+        for (const p of existing.parts) {
+          if (!p.customPartId) continue;
+          const key = p.customPartId;
+          if (grouped.has(key)) {
+            grouped.get(key)!.quantity += 1;
+          } else {
+            grouped.set(key, { id: key, name: key, quantity: 1 });
+          }
+        }
+        return Array.from(grouped.values());
+      })();
+
       setModal({
         isOpen: true,
         hand,
@@ -109,7 +130,7 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
         draftGrade: existing?.parts?.[0]?.grade ?? 'A',
         draftPartId: existing?.parts?.[0]?.customPartId ?? 'basic-stone',
         draftQty: existing?.parts?.length ?? 1,
-        draftCustomEntries: [],
+        draftCustomEntries: restoredCustomEntries,
         draftMemo: existing?.memo ?? '',
       });
     },
@@ -138,7 +159,8 @@ export function FingerCanvas({ initialSelections, onChange, className }: FingerC
           id: `${modal.hand}-${modal.finger}-${entry.id}-${i}`,
           partType: 'other' as PartType,
           grade: 'A' as PartGrade,
-          customPartId: entry.name,
+          // entry.id를 customPartId로 사용 (price-calculator가 CustomPart.id로 조회)
+          customPartId: entry.id,
           x: 0.3 + i * 0.1,
           y: 0.5,
         })),

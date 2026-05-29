@@ -57,11 +57,11 @@ export function ReferenceUpload({ onComplete }: ReferenceUploadProps): React.Rea
 
     for (const file of toUpload) {
       if (!ALLOWED_TYPES.includes(file.type)) {
-        setErrorMsg('JPEG, PNG, WEBP 형식만 업로드할 수 있어요.');
+        setErrorMsg(t('preConsult.uploadErrorType'));
         continue;
       }
       if (file.size > MAX_FILE_SIZE) {
-        setErrorMsg('5MB 이하의 파일만 업로드할 수 있어요.');
+        setErrorMsg(t('preConsult.uploadErrorSize'));
         continue;
       }
 
@@ -99,7 +99,7 @@ export function ReferenceUpload({ onComplete }: ReferenceUploadProps): React.Rea
         )}
         <p className="text-sm text-text-muted mt-1">{t('preConsult.uploadHint')}</p>
         <p className="text-xs text-text-muted mt-1 opacity-70">
-          원하는 디자인 사진이 있다면 여기에 올려주세요
+          {t('preConsult.uploadSubHint')}
         </p>
       </div>
 
@@ -113,7 +113,7 @@ export function ReferenceUpload({ onComplete }: ReferenceUploadProps): React.Rea
         >
           <span className="text-3xl">📎</span>
           <span className="text-sm font-medium">{t('preConsult.uploadBtn')}</span>
-          <span className="text-xs">JPEG · PNG · WEBP · 5MB 이하</span>
+          <span className="text-xs">{t('preConsult.uploadFormats')}</span>
         </button>
       )}
 

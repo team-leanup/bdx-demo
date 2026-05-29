@@ -91,9 +91,24 @@ export function computeAvailableDates(link: ConsultationLinkPublicData): Availab
   const start = parseDate(link.validFrom < today ? today : link.validFrom);
   const end = parseDate(link.validUntil);
 
+  // SL-07: estimatedDurationMin > slotIntervalMin인 경우 예약 블록이 여러 슬롯에 걸침.
+  // 기존 예약 각 건의 [start, start+duration) 범위를 슬롯 간격으로 등록해
+  // 겹치는 후속 슬롯도 isBooked로 처리.
+  const durationMin = Math.max(1, Math.floor(link.estimatedDurationMin));
+  const intervalMin = Math.max(1, Math.floor(link.slotIntervalMin));
   const bookedSet = new Set<string>();
   for (const b of link.bookedSlots ?? []) {
-    bookedSet.add(`${b.date}__${b.time}`);
+    // 시작 슬롯 포함, [start, start+duration) 구간의 슬롯을 모두 차단
+    let occupied = b.time;
+    let guard = 0;
+    while (guard < 288) {
+      bookedSet.add(`${b.date}__${occupied}`);
+      const next = addMinutes(occupied, intervalMin);
+      // start + duration을 초과하지 않는 슬롯까지만 차단
+      if (!timeLess(next, addMinutes(b.time, durationMin))) break;
+      occupied = next;
+      guard++;
+    }
   }
 
   const result: AvailableDate[] = [];

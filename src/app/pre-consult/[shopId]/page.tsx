@@ -48,6 +48,14 @@ function PreConsultStartInner(): React.ReactElement {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // SL-02: start 페이지 진입 시 URL 파라미터 기준으로 linkId/slot 항상 초기화.
+    // partialize에서 제외했어도 이전 세션 메모리 상태가 남을 수 있으므로
+    // linkIdParam 유무에 관계없이 명시적으로 설정.
+    setConsultationLinkId(linkIdParam ?? null);
+    if (!linkIdParam) {
+      setSelectedSlot(null, null);
+    }
+
     // 우선순위 1: bookingId 있으면 해당 예약 정보 로드 (사장님이 발송한 링크)
     if (bookingIdParam) {
       setBookingId(bookingIdParam);
@@ -67,7 +75,6 @@ function PreConsultStartInner(): React.ReactElement {
 
     // 우선순위 2: linkId 있으면 해당 링크 정보 로드 (구 공유 링크)
     if (linkIdParam) {
-      setConsultationLinkId(linkIdParam);
       fetchConsultationLinkPublic(linkIdParam)
         .then((result) => {
           if (!result || result.shopId !== params.shopId) {
@@ -92,7 +99,7 @@ function PreConsultStartInner(): React.ReactElement {
       })
       .catch(() => {})
       .finally(() => setIsLoading(false));
-  }, [bookingIdParam, linkIdParam, params.shopId, setBookingId, setConsultationLinkId, setSelectedCategory, setLinkDesignerId, t]);
+  }, [bookingIdParam, linkIdParam, params.shopId, setBookingId, setConsultationLinkId, setSelectedSlot, setSelectedCategory, setLinkDesignerId, t]);
 
   const handleStart = (): void => {
     router.push(`/pre-consult/${params.shopId}/design`);

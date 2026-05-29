@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePortfolioStore } from '@/store/portfolio-store';
-import { fetchPortfolioPhotos } from '@/lib/db';
+import { fetchPublicPortfolioPhotos } from '@/lib/db';
 import { cn } from '@/lib/cn';
 import { useT, useLocale, useKo } from '@/lib/i18n';
 import type { PortfolioPhoto } from '@/types/portfolio';
@@ -66,7 +66,7 @@ export function PortfolioBrowser({
       }
 
       if (shopId) {
-        const photos = await fetchPortfolioPhotos(shopId);
+        const photos = await fetchPublicPortfolioPhotos(shopId);
         if (!isCancelled) {
           setLinkedShopPhotos(photos);
           setIsLoading(false);

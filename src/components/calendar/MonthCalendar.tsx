@@ -71,10 +71,14 @@ export function MonthCalendar({ selectedDate, onSelectDate, reservations }: Mont
   // Pad to complete weeks
   while (cells.length % 7 !== 0) cells.push(null);
 
-  // Build reservation date set for quick lookup
+  // Build reservation date set for quick lookup (취소 건 제외)
   const reservationDates = new Set(
     reservations
-      .filter((r) => r.reservationDate.startsWith(`${year}-${String(month).padStart(2, '0')}`))
+      .filter(
+        (r) =>
+          r.status !== 'cancelled' &&
+          r.reservationDate.startsWith(`${year}-${String(month).padStart(2, '0')}`),
+      )
       .map((r) => r.reservationDate),
   );
 

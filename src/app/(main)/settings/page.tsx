@@ -1222,8 +1222,10 @@ export default function SettingsPage() {
   const [priceRepair, setPriceRepair] = useState(String(shopSettings.surcharges.repairPer ?? DEFAULT_BASE_PRICES.repair));
   const [priceExtension, setPriceExtension] = useState(String(shopSettings.surcharges.extension ?? DEFAULT_BASE_PRICES.extension));
   const [priceWrapping, setPriceWrapping] = useState(String(shopSettings.surcharges.wrapping ?? 5000));
-  const [priceSolidPoint, setPriceSolidPoint] = useState(String(shopSettings.baseSolidPointPrice ?? DEFAULT_BASE_PRICES.solidPoint));
-  const [priceFullArt, setPriceFullArt] = useState(String(shopSettings.baseFullArtPrice ?? DEFAULT_BASE_PRICES.fullArt));
+  // [CRITICAL SSOT] 계산 엔진은 surcharges.pointArt/fullArt를 읽으므로,
+  // 설정 화면도 그 값을 초기값으로 표시한다. (baseSolid/FullArtPrice는 save 시 함께 동기화)
+  const [priceSolidPoint, setPriceSolidPoint] = useState(String(shopSettings.surcharges.pointArt ?? DEFAULT_BASE_PRICES.solidPoint));
+  const [priceFullArt, setPriceFullArt] = useState(String(shopSettings.surcharges.fullArt ?? DEFAULT_BASE_PRICES.fullArt));
   const [priceMonthlyArt, setPriceMonthlyArt] = useState(String(shopSettings.baseMonthlyArtPrice ?? DEFAULT_BASE_PRICES.monthlyArt));
   const [priceDeposit, setPriceDeposit] = useState(String(shopSettings.depositAmount ?? 10000));
   const [monthlyTarget, setMonthlyTarget] = useState(String(shopSettings.monthlyTargetRevenue ?? ''));
@@ -1235,8 +1237,8 @@ export default function SettingsPage() {
     repair: shopSettings.surcharges.repairPer ?? DEFAULT_BASE_PRICES.repair,
     extension: shopSettings.surcharges.extension ?? DEFAULT_BASE_PRICES.extension,
     wrapping: shopSettings.surcharges.wrapping ?? 5000,
-    solidPoint: shopSettings.baseSolidPointPrice ?? DEFAULT_BASE_PRICES.solidPoint,
-    fullArt: shopSettings.baseFullArtPrice ?? DEFAULT_BASE_PRICES.fullArt,
+    solidPoint: shopSettings.surcharges.pointArt ?? DEFAULT_BASE_PRICES.solidPoint,
+    fullArt: shopSettings.surcharges.fullArt ?? DEFAULT_BASE_PRICES.fullArt,
     monthlyArt: shopSettings.baseMonthlyArtPrice ?? DEFAULT_BASE_PRICES.monthlyArt,
   });
 
@@ -1268,6 +1270,8 @@ export default function SettingsPage() {
       baseFootPrice: foot,
       baseOffSameShop: offSameShop,
       baseOffOtherShop: offOtherShop,
+      // SSOT: baseSolid/FullArtPrice는 화면 표시용이고, 실제 계산은 surcharges.*를 사용.
+      // 두 값을 항상 동기화해서 설정 화면 표시값과 계산값이 동일하게 유지한다.
       baseSolidPointPrice: solidPoint,
       baseFullArtPrice: fullArt,
       baseMonthlyArtPrice: monthlyArt,
@@ -1276,6 +1280,9 @@ export default function SettingsPage() {
         repairPer: repair,
         extension,
         wrapping,
+        // [CRITICAL] solidPoint/fullArt 설정값을 surcharges에도 저장 — 계산 엔진이 이 값을 읽음
+        pointArt: solidPoint,
+        fullArt,
       },
     });
     setEditingPrices(false);

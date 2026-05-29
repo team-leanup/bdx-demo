@@ -69,8 +69,9 @@ export function WeekCalendar({ selectedDate, onSelectDate, reservations, onToggl
     };
   });
 
-  // Build reservation count map and channel dots per date
+  // Build reservation count map and channel dots per date (취소 건 제외)
   const reservationsByDate = reservations.reduce<Record<string, BookingRequest[]>>((acc, r) => {
+    if (r.status === 'cancelled') return acc;
     if (!acc[r.reservationDate]) acc[r.reservationDate] = [];
     acc[r.reservationDate].push(r);
     return acc;

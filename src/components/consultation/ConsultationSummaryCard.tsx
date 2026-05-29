@@ -116,7 +116,16 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
   const consultation = useConsultationStore((s) => s.consultation);
   const shopSettings = useAppStore((s) => s.shopSettings);
   const pricing = useMemo(() => buildServicePricingFromShopSettings(shopSettings), [shopSettings]);
-  const breakdown = calculatePrice(consultation, pricing);
+  const partsPricing = useMemo(
+    () => ({
+      gradeS: 3000,
+      gradeA: 2000,
+      gradeB: 1000,
+      customParts: shopSettings.customParts as import('@/types/canvas').CustomPart[] | undefined,
+    }),
+    [shopSettings.customParts],
+  );
+  const breakdown = calculatePrice(consultation, pricing, partsPricing);
   const minutes = estimateTime(consultation);
   const getDesignerById = useShopStore((s) => s.getDesignerById);
   const isCustomerLinkFlow = consultation.entryPoint === 'customer_link';

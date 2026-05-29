@@ -111,7 +111,10 @@ export function PreConsultationNotificationCenter({
                         </span>
                       )}
                       <span className="shrink-0 text-[10px] text-text-muted">
-                        {formatDateDot(notification.reservationDate)} · {formatTime(notification.reservationTime)}
+                        {formatDateDot(notification.reservationDate)}
+                        {notification.reservationTime && notification.reservationTime.includes(':')
+                          ? ` · ${formatTime(notification.reservationTime)}`
+                          : ' · 시간 미정'}
                       </span>
                       {notification.preConsultationData && (
                         <span className="shrink-0 text-[10px] text-text-secondary">

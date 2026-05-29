@@ -278,11 +278,16 @@ export const usePreConsultStore = create<PreConsultStore>()(
       // shopData and portfolioPhotos are runtime-loaded; don't persist them
       // isSubmitting은 network fail 복구 여지 위해 제외
       // isSubmitted/submittedId는 sessionStorage에 보존 → 새로고침 후 재제출 차단
+      // SL-02: consultationLinkId/selectedSlotDate/selectedSlotTime은 URL 파라미터에서
+      //   재주입되므로 localStorage 영속 금지 → 다른 샵/링크 진입 시 stale 오염 방지
       partialize: (state) => {
         const {
           shopData: _shopData,
           portfolioPhotos: _portfolioPhotos,
           isSubmitting: _isSubmitting,
+          consultationLinkId: _consultationLinkId,
+          selectedSlotDate: _selectedSlotDate,
+          selectedSlotTime: _selectedSlotTime,
           ...persistedState
         } = state;
         // base64 data URL은 localStorage 용량 폭증 원인 → http URL만 persist

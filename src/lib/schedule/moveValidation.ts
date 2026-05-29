@@ -77,11 +77,16 @@ export function overlapsAny({
 }: OverlapCheckParams): boolean {
   const nextEnd = nextStartMinutes + durationMinutes;
 
+  // '__unassigned__' sentinel 값과 null/undefined를 모두 동일하게 취급 (오염 데이터 방어)
+  const normalizeDesignerId = (id: string | undefined): string =>
+    !id || id === '__unassigned__' ? 'unassigned' : id;
+
+  const normalizedNext = normalizeDesignerId(nextDesignerId);
+
   return reservationsSameDay.some((r) => {
     if (r.id === reservationId) return false;
 
-    const sameColumn =
-      (r.designerId ?? 'unassigned') === (nextDesignerId ?? 'unassigned');
+    const sameColumn = normalizeDesignerId(r.designerId) === normalizedNext;
     if (!sameColumn) return false;
 
     const existingEnd = r.startMinutes + r.durationMinutes;

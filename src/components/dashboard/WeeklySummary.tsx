@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import { addDaysInKorea, getKoreanWeekStart, getTodayInKorea, parseKoreanDateString } from '@/lib/format';
 import { useRecordsStore } from '@/store/records-store';
+import { useReservationStore } from '@/store/reservation-store';
 import { computeDailyConsultations } from '@/lib/analytics';
 
 interface CustomTooltipProps {
@@ -32,12 +33,13 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 
 export function WeeklySummary() {
   const records = useRecordsStore((s) => s.records);
+  const reservations = useReservationStore((s) => s.reservations);
 
   const THIS_WEEK_DATA = useMemo(() => {
     const mondayStr = getKoreanWeekStart(getTodayInKorea());
     const sundayStr = addDaysInKorea(mondayStr, 6);
 
-    const daily = computeDailyConsultations(records, 14);
+    const daily = computeDailyConsultations(records, reservations, 14);
     return daily
       .filter((d) => d.date >= mondayStr && d.date <= sundayStr)
       .map((d) => {
@@ -45,7 +47,7 @@ export function WeeklySummary() {
         const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
         return { label: dayNames[date.getUTCDay()], consultations: d.consultations };
       });
-  }, [records]);
+  }, [records, reservations]);
 
   const weekConsultations = THIS_WEEK_DATA.reduce((s, d) => s + d.consultations, 0);
   const workDays = THIS_WEEK_DATA.filter((d) => d.consultations > 0).length;

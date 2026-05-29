@@ -98,7 +98,7 @@ export function DesignGallery({ onConfirm, onSkip }: DesignGalleryProps): React.
 
       {/* 선택 옵션 안내 */}
       <p className="text-center text-xs text-text-muted mb-1">
-        선택하지 않아도 다음으로 넘어갈 수 있어요
+        {t('preConsult.gallerySkipHint')}
       </p>
 
       {/* Photo grid */}
@@ -107,61 +107,71 @@ export function DesignGallery({ onConfirm, onSkip }: DesignGalleryProps): React.
           const url = photo.imageDataUrl;
           const isSelected = selectedPhotoId === photo.id;
           return (
-            <motion.button
-              key={photo.id}
-              type="button"
-              whileTap={{ scale: 0.97 }}
-              onClick={() => handleSelect(photo)}
-              className={[
-                'relative aspect-square rounded-xl overflow-hidden border-2 transition-all',
-                isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-border',
-              ].join(' ')}
-            >
-              <Image src={url} alt="" fill unoptimized className="object-cover" />
-              {isSelected && (
-                <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                    <svg
-                      className="w-5 h-5 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={3}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
+            <div key={photo.id} className="relative">
+              {/* 카드 선택 영역 — div role="button"으로 중첩 button 방지 */}
+              <motion.div
+                role="button"
+                tabIndex={0}
+                aria-pressed={isSelected}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => handleSelect(photo)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleSelect(photo);
+                  }
+                }}
+                className={[
+                  'relative aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer select-none',
+                  isSelected ? 'border-primary ring-2 ring-primary/30' : 'border-border',
+                ].join(' ')}
+              >
+                <Image src={url} alt="" fill unoptimized className="object-cover" />
+                {isSelected && (
+                  <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={3}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
                   </div>
-                </div>
-              )}
-              {photo.isFeatured && !isSelected && (
-                <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-primary/90 text-white text-xs font-bold">
-                  PICK
-                </div>
-              )}
-              {/* 확대 아이콘 */}
+                )}
+                {photo.isFeatured && !isSelected && (
+                  <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-primary/90 text-white text-xs font-bold">
+                    PICK
+                  </div>
+                )}
+                {/* 가격 뱃지 */}
+                {photo.price != null && (
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent pt-4 pb-1.5 px-2">
+                    <span className="text-xs font-bold text-white">
+                      {photo.price.toLocaleString('ko-KR')}원
+                    </span>
+                  </div>
+                )}
+              </motion.div>
+              {/* 확대 버튼 — 카드 형제 요소로 분리하여 button>button 중첩 방지 */}
               <button
                 type="button"
-                aria-label="확대"
-                onClick={(e) => { e.stopPropagation(); setZoomSrc(url); }}
-                className="absolute top-1.5 right-1.5 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+                aria-label={t('preConsult.zoomIn')}
+                onClick={() => setZoomSrc(url)}
+                className="absolute top-1.5 right-1.5 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors z-10"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                 </svg>
               </button>
-              {/* 가격 뱃지 */}
-              {photo.price != null && (
-                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent pt-4 pb-1.5 px-2">
-                  <span className="text-xs font-bold text-white">
-                    {photo.price.toLocaleString('ko-KR')}원
-                  </span>
-                </div>
-              )}
-            </motion.button>
+            </div>
           );
         })}
       </div>

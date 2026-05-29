@@ -357,7 +357,7 @@ function ConsultationStartPageInner() {
         <button
           type="button"
           onClick={() => router.push('/home')}
-          className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-surface-alt transition-colors"
+          className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-surface-alt transition-colors"
         >
           <svg
             className="w-5 h-5 text-text"
@@ -375,7 +375,7 @@ function ConsultationStartPageInner() {
                 <span className="ml-1 text-xs text-text-muted opacity-60 font-medium">{tKo('home.newConsultation')}</span>
               )}
             </h1>
-        <div className="w-9" />
+        <div className="w-11" />
       </header>
 
       {/* Content */}
@@ -424,7 +424,7 @@ function ConsultationStartPageInner() {
                   <span className="text-[10px] md:text-xs text-text-muted font-medium leading-tight text-center whitespace-nowrap">
                     {step.label}
                     {locale !== 'ko' && (
-                      <span className="block text-[7px] md:text-[9px] opacity-60">{step.koLabel}</span>
+                      <span className="block text-[10px] md:text-xs opacity-60">{step.koLabel}</span>
                     )}
                   </span>
                 </div>

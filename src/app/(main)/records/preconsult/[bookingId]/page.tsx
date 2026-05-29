@@ -257,7 +257,12 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
             )}
           </div>
           <div className="flex flex-col gap-1 text-xs text-text-secondary">
-            <span>{toKoreanDateString(booking.reservationDate)} {booking.reservationTime}</span>
+            <span>
+              {toKoreanDateString(booking.reservationDate)}
+              {booking.reservationTime && booking.reservationTime.includes(':')
+                ? ` ${booking.reservationTime}`
+                : ' 시간 미정'}
+            </span>
             {booking.phone && <a href={`tel:${booking.phone}`} className="text-primary font-medium">{booking.phone}</a>}
           </div>
         </div>

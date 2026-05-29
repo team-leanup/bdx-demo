@@ -13,6 +13,7 @@ export interface PriceBreakdown {
   expressionSurcharge: number; // 표현 기법 추가금
   partsSurcharge: number;      // 파츠 추가금
   colorSurcharge: number;      // 컬러 추가금
+  wrappingSurcharge: number;   // 랩핑 추가금 (0 = 미적용)
   subtotal: number;            // 소계 (할인 전)
   discountAmount: number;      // 할인액
   depositAmount: number;       // 예약금 (선결제)
@@ -47,6 +48,9 @@ export interface ServicePricing {
 
   // 컬러 추가 (1색당)
   extraColorPerUnit: number;   // 컬러 추가 1색당 (기본 3,000)
+
+  // 랩핑 추가금 (0이면 미반영)
+  wrapping: number;            // 랩핑 추가금 (기본 0 — 기존 견적 회귀 방지)
 }
 
 import type { CustomPart } from './canvas';

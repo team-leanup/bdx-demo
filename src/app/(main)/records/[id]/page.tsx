@@ -349,6 +349,43 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
               </div>
             ))}
 
+          {/* SALES-4: field-mode에서 적용한 할인·예약금·회원권 차감 반영 */}
+          {(record.pricingAdjustments?.discountAmount ?? 0) > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-text-secondary">할인</span>
+              <span className="text-error">-{formatPrice(record.pricingAdjustments!.discountAmount!)}</span>
+            </div>
+          )}
+          {(record.deposit ?? 0) > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-text-secondary">예약금 차감</span>
+              <span className="text-error">-{formatPrice(record.deposit!)}</span>
+            </div>
+          )}
+          {(record.membershipApplied ?? 0) > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-text-secondary">회원권 차감</span>
+              <span className="text-error">-{formatPrice(record.membershipApplied!)}</span>
+            </div>
+          )}
+
+          {/* 결제수단 표시 */}
+          {record.paymentMethod && (
+            <div className="flex justify-between text-sm">
+              <span className="text-text-secondary">결제수단</span>
+              <span className="text-text font-medium">
+                {record.paymentMethod === 'cash' && '현금'}
+                {record.paymentMethod === 'card' && '카드'}
+                {record.paymentMethod === 'membership' && '회원권'}
+                {record.secondaryPaymentMethod && record.secondaryAmount != null && record.secondaryAmount > 0 && (
+                  <span className="ml-1 text-text-secondary">
+                    + {record.secondaryPaymentMethod === 'cash' ? '현금' : '카드'} {formatPrice(record.secondaryAmount)}
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
+
           {!record.finalizedAt && (
             <div className="mt-2">
               <button

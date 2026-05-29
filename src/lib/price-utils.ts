@@ -37,6 +37,7 @@ export function buildBreakdownFromRecord(record: ConsultationRecord): PriceBreak
     expressionSurcharge: 0,
     partsSurcharge: 0,
     colorSurcharge: 0,
+    wrappingSurcharge: 0,
     subtotal,
     discountAmount,
     depositAmount,

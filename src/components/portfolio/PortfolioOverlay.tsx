@@ -15,8 +15,7 @@ import { ShareCardGeneratorModal } from '@/components/share-card/ShareCardGenera
 import { EditPhotoModal } from './EditPhotoModal';
 import type { PortfolioPhoto } from '@/types/portfolio';
 import type { Customer } from '@/types/customer';
-import type { ConsultationRecord } from '@/types/consultation';
-import type { DesignScope } from '@/types/consultation';
+import type { ConsultationRecord, DesignScope } from '@/types/consultation';
 
 interface PortfolioOverlayProps {
   photoIds: string[];
@@ -51,7 +50,7 @@ export function PortfolioOverlay({
 }: PortfolioOverlayProps): React.ReactElement {
   const router = useRouter();
   const toggleMenu = usePortfolioStore((s) => s.toggleMenu);
-  const updatePhoto = usePortfolioStore((s) => s.updatePhoto);
+  const updatePhotoMetadata = usePortfolioStore((s) => s.updatePhotoMetadata);
   const shopName = useShopStore((s) => s.shop?.name) ?? '네일샵';
   const [currentId, setCurrentId] = useState(initialPhotoId);
   const [downloading, setDownloading] = useState(false);
@@ -71,9 +70,11 @@ export function PortfolioOverlay({
   const effectiveDate = photo ? (photo.takenAt ?? photo.createdAt) : undefined;
   const imgSrc = photo?.imageDataUrl || NAIL_FALLBACKS[currentIndex % NAIL_FALLBACKS.length];
 
-  // 검증된 DesignScope 파생: styleCategory → scope 변환 우선, 없으면 linkedRecord 값, 기본값 full_art
-  const derivedScope: DesignScope = photo?.styleCategory
-    ? designCategoryToScope(photo.styleCategory)
+  // 검증된 scope 파생: magnet 카테고리는 scope 변환 없이 'magnet' 직접 사용
+  // (ShareCardImageTemplate에 magnet 키가 별도 정의되어 있어 올바른 무드/해시태그 표시)
+  // 그 외 카테고리는 designCategoryToScope로 DesignScope로 변환, 없으면 linkedRecord 값, 기본값 full_art
+  const derivedScope: DesignScope | string = photo?.styleCategory
+    ? (photo.styleCategory === 'magnet' ? 'magnet' : designCategoryToScope(photo.styleCategory))
     : (linkedRecord?.consultation.designScope ?? 'full_art');
 
   const goPrev = useCallback(() => {
@@ -184,7 +185,7 @@ export function PortfolioOverlay({
                       onChange={(e) => setPartsMemoInput(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
-                          updatePhoto(photo.id, { partsMemo: partsMemoInput.trim() || undefined });
+                          void updatePhotoMetadata(photo.id, { partsMemo: partsMemoInput.trim() || undefined });
                           setEditingPartsMemo(false);
                         }
                         if (e.key === 'Escape') setEditingPartsMemo(false);
@@ -193,7 +194,7 @@ export function PortfolioOverlay({
                       className="flex-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
                     />
                     <button
-                      onClick={() => { updatePhoto(photo.id, { partsMemo: partsMemoInput.trim() || undefined }); setEditingPartsMemo(false); }}
+                      onClick={() => { void updatePhotoMetadata(photo.id, { partsMemo: partsMemoInput.trim() || undefined }); setEditingPartsMemo(false); }}
                       className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white"
                     >
                       저장
@@ -313,12 +314,12 @@ export function PortfolioOverlay({
             shopId: photo.shopId,
             consultation: linkedRecord?.consultation ? {
               ...linkedRecord.consultation,
-              designScope: derivedScope,
+              designScope: derivedScope as DesignScope,
             } : {
               customerName: customer?.name ?? '고객',
               bodyPart: 'hand',
               nailShape: 'round',
-              designScope: derivedScope,
+              designScope: derivedScope as DesignScope,
               expressions: [],
               hasParts: false,
               partsSelections: [],

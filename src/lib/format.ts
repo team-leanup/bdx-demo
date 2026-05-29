@@ -145,7 +145,9 @@ export function getRelativeDayDiffInKorea(dateStr: string): number {
 }
 
 /**
- * 언어별 통화 환율 (KRW 기준, 근사값)
+ * 언어별 통화 환율 (KRW 기준, 참고용 근사 환율)
+ * ⚠️  실제 결제는 항상 KRW 기준. 아래 환율은 외국인 고객 안내용 참고값이며
+ *     실시간 시세와 다를 수 있습니다. 표시 금액에는 반드시 '≈' 기호가 붙습니다.
  */
 const CURRENCY_CONFIG: Record<string, { symbol: string; rate: number; code: string; locale: string }> = {
   ko: { symbol: '₩', rate: 1, code: 'KRW', locale: 'ko-KR' },
@@ -155,8 +157,8 @@ const CURRENCY_CONFIG: Record<string, { symbol: string; rate: number; code: stri
 };
 
 /**
- * 원화 금액을 해당 locale 통화로 변환하여 포맷팅
- * @example formatLocaleCurrency(85000, 'zh') → "¥442"
+ * 원화 금액을 해당 locale 통화로 변환하여 포맷팅 (근사값, '≈' 기호 포함)
+ * @example formatLocaleCurrency(85000, 'zh') → "≈¥442"
  */
 export function formatLocaleCurrency(amountKRW: number, locale: string): string {
   const config = CURRENCY_CONFIG[locale] ?? CURRENCY_CONFIG.ko;
@@ -165,9 +167,10 @@ export function formatLocaleCurrency(amountKRW: number, locale: string): string 
   }
   const converted = amountKRW * config.rate;
   // JPY는 소수점 없이, 나머지는 소수점 2자리 (단, 0이면 생략)
+  // 외국어 환산은 참고용 근사값이므로 '≈' 기호를 반드시 표시
   const formatted = locale === 'ja'
-    ? `${config.symbol}${Math.round(converted).toLocaleString(config.locale)}`
-    : `${config.symbol}${converted.toLocaleString(config.locale, { minimumFractionDigits: converted % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 })}`;
+    ? `≈${config.symbol}${Math.round(converted).toLocaleString(config.locale)}`
+    : `≈${config.symbol}${converted.toLocaleString(config.locale, { minimumFractionDigits: converted % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 })}`;
   return formatted;
 }
 

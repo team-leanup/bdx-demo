@@ -162,6 +162,8 @@ export default function WrapUpPage(): React.ReactElement {
         existingCustomer = customers.find((c) => c.name === localName.trim());
       }
 
+      const prevCustomerId = useFieldModeStore.getState().customerId;
+
       if (existingCustomer) {
         setCustomerInfo(existingCustomer.name, existingCustomer.phone ?? '', existingCustomer.id);
         setCustomerSaved(true);
@@ -175,10 +177,50 @@ export default function WrapUpPage(): React.ReactElement {
       }
 
       // Update record with customerId
-      // 통계 갱신은 addQuickSaleRecord에서 이미 처리됨 — 이중 카운팅 방지
       const savedId = existingCustomer?.id ?? (localName.trim() ? useFieldModeStore.getState().customerId : null);
       if (savedId && recordId) {
         useRecordsStore.getState().updateRecord(recordId, { customerId: savedId });
+
+        // [SALES-3] 고객 변경 시 이전 고객 통계 차감 + 신규 고객 통계 가산
+        // addQuickSaleRecord에서 prevCustomerId 기준으로 이미 처리됐으므로, 다른 고객으로 바꿀 때만 조정
+        if (prevCustomerId && prevCustomerId !== savedId) {
+          const record = useRecordsStore.getState().getRecordById(recordId);
+          const customerStore = useCustomerStore.getState();
+
+          // 이전 고객 통계 롤백
+          const prevCustomer = customerStore.getById(prevCustomerId);
+          if (prevCustomer) {
+            const rollbackAmount = (record?.finalPrice ?? 0) + (record?.membershipApplied ?? 0) + (record?.deposit ?? 0);
+            const filteredHistory = (prevCustomer.treatmentHistory ?? []).filter(
+              (h) => h.recordId !== recordId,
+            );
+            const newVisitCount = Math.max(0, (prevCustomer.visitCount ?? 0) - 1);
+            const newTotalSpend = Math.max(0, prevCustomer.totalSpend - rollbackAmount);
+            const newLastVisitDate = filteredHistory.length > 0
+              ? filteredHistory.reduce((latest, h) => (h.date > latest ? h.date : latest), filteredHistory[0].date)
+              : '';
+            customerStore.updateCustomer(prevCustomerId, {
+              visitCount: newVisitCount,
+              totalSpend: newTotalSpend,
+              averageSpend: newVisitCount > 0 ? Math.round(newTotalSpend / newVisitCount) : 0,
+              treatmentHistory: filteredHistory,
+              lastVisitDate: newLastVisitDate,
+            });
+          }
+
+          // 신규 고객 통계 가산 (이미 이중카운팅 방지 로직이 recordTreatmentCompletion 내부에 있음)
+          if (record) {
+            const totalServicePrice = record.finalPrice + (record.membershipApplied ?? 0) + (record.deposit ?? 0);
+            customerStore.recordTreatmentCompletion(savedId, totalServicePrice, {
+              recordId,
+              date: record.createdAt.split('T')[0] ?? new Date().toISOString().split('T')[0],
+              bodyPart: 'hand',
+              designScope: record.consultation?.designCategory ?? '기타',
+              price: totalServicePrice,
+              imageUrls: [],
+            });
+          }
+        }
       }
     } finally {
       setIsSaving(false);

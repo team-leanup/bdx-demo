@@ -31,7 +31,7 @@ export function ConsultationLocaleButton() {
   const current = LOCALES.find((l) => l.locale === locale) ?? LOCALES[0];
 
   return (
-    <div ref={ref} className="fixed top-4 right-4 z-50 safe-top">
+    <div ref={ref} className="fixed top-4 left-4 z-50 safe-top">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -49,7 +49,7 @@ export function ConsultationLocaleButton() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: -4 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full right-0 mt-1.5 flex flex-col gap-1 bg-surface border border-border rounded-2xl shadow-lg p-1.5 min-w-[140px]"
+            className="absolute top-full left-0 mt-1.5 flex flex-col gap-1 bg-surface border border-border rounded-2xl shadow-lg p-1.5 min-w-[140px]"
           >
             {LOCALES.map((l) => (
               <button

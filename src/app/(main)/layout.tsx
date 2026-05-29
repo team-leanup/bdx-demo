@@ -11,14 +11,15 @@ import type { ReactNode } from 'react';
 export default function MainLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const setLocale = useLocaleStore((s) => s.setLocale);
-  const locale = useLocaleStore((s) => s.locale);
   const isInitialized = useAuthStore((s) => s.isInitialized);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const currentShopOnboardingComplete = useAuthStore((s) => s.currentShopOnboardingComplete);
 
+  // 마운트 시 1회만 ko 강제 설정 (locale을 deps에서 제외하여 restoreLocale 무력화 방지)
   useLayoutEffect(() => {
     setLocale('ko');
-  }, [setLocale, locale]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setLocale]);
 
   useEffect(() => {
     if (!isInitialized) return;

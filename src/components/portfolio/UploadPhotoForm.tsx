@@ -263,7 +263,7 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
         colorLabels: selectedColors.length > 0 ? selectedColors : undefined,
         partsMemo: partsMemo.trim() || undefined,
         isFeatured: addToMenu || undefined,
-        isPublic: addToMenu || undefined,
+        isPublic: addToMenu,
       });
 
       if (!result.success) {

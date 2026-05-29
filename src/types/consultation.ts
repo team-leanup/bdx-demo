@@ -123,6 +123,9 @@ export interface ConsultationType {
   selectedPhotoUrl?: string;
   selectedPhotoId?: string;
 
+  /** 랩핑 선호 ('yes' = 랩핑 추가금 가산). pre-consult/field-mode에서 채워짐. */
+  wrappingPreference?: 'yes' | 'no';
+
   // 현재 단계
   currentStep: ConsultationStep;
 }

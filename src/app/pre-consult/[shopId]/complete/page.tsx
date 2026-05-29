@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useT, useKo, useLocale } from '@/lib/i18n';
 import { usePreConsultStore } from '@/store/pre-consult-store';
@@ -17,6 +18,7 @@ function formatSlot(date: string, time: string, locale: string): string {
 }
 
 export default function PreConsultCompletePage(): React.ReactElement {
+  const router = useRouter();
   const t = useT();
   const tKo = useKo();
   const locale = useLocale();
@@ -24,13 +26,14 @@ export default function PreConsultCompletePage(): React.ReactElement {
   const shopData = usePreConsultStore((s) => s.shopData);
   const selectedSlotDate = usePreConsultStore((s) => s.selectedSlotDate);
   const selectedSlotTime = usePreConsultStore((s) => s.selectedSlotTime);
+  const shopId = usePreConsultStore((s) => s.shopId);
 
   const hasBookingSlot = Boolean(selectedSlotDate && selectedSlotTime);
 
   useEffect(() => {
     if (!isSubmitted) {
-      const shopId = window.location.pathname.split('/')[2];
-      if (shopId) window.location.href = `/pre-consult/${shopId}`;
+      const sid = window.location.pathname.split('/')[2];
+      if (sid) window.location.href = `/pre-consult/${sid}`;
     }
   }, [isSubmitted]);
 
@@ -41,6 +44,15 @@ export default function PreConsultCompletePage(): React.ReactElement {
     }, 60000);
     return () => clearTimeout(timer);
   }, [isSubmitted]);
+
+  const handleClose = (): void => {
+    // 제출 완료 후 reset 후 start 페이지로 이동
+    usePreConsultStore.getState().reset();
+    const sid = shopId ?? window.location.pathname.split('/')[2];
+    if (sid) {
+      router.push(`/pre-consult/${sid}`);
+    }
+  };
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6 gap-6">
@@ -135,6 +147,25 @@ export default function PreConsultCompletePage(): React.ReactElement {
               : tKo('preConsult.autoSaveNotice')}
           </p>
         )}
+      </motion.div>
+
+      {/* #13: 탈출 버튼 — 브라우저 뒤로가기에만 의존하지 않도록 명시적 종료 수단 제공 */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.45 }}
+        className="w-full max-w-sm"
+      >
+        <button
+          type="button"
+          onClick={handleClose}
+          className="w-full py-3 rounded-2xl border border-border text-sm text-text-muted hover:bg-surface active:opacity-70 transition-opacity"
+        >
+          {t('common.close')}
+          {locale !== 'ko' && (
+            <span className="ml-1.5 text-xs opacity-60">{tKo('common.close')}</span>
+          )}
+        </button>
       </motion.div>
     </div>
   );

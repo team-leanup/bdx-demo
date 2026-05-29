@@ -241,6 +241,9 @@ async function resolveReservationForeignKey(
 }
 
 function toPortfolioPhoto(row: Database['public']['Tables']['portfolio_photos']['Row']): PortfolioPhoto {
+  // #17-db: parts_memo 컬럼은 마이그레이션(20260530_audit_fixes.sql)으로 추가됨.
+  // DB 자동생성 타입에는 아직 없으므로 unknown 캐스트로 접근.
+  const rowAny = row as unknown as Record<string, unknown>;
   return {
     id: row.id,
     shopId: row.shop_id,
@@ -262,6 +265,7 @@ function toPortfolioPhoto(row: Database['public']['Tables']['portfolio_photos'][
     isFeatured: row.is_featured ?? false,
     isStaffPick: row.is_staff_pick ?? false,
     isPopular: row.is_popular ?? false,
+    partsMemo: typeof rowAny['parts_memo'] === 'string' ? rowAny['parts_memo'] : undefined,
   };
 }
 
@@ -1405,7 +1409,11 @@ export async function dbInsertPortfolioPhoto(photo: PortfolioPhoto): Promise<Por
         is_public: photo.isPublic ?? true,
         style_category: photo.styleCategory ?? null,
         is_featured: photo.isFeatured ?? false,
-      })
+        is_staff_pick: photo.isStaffPick ?? false,
+        is_popular: photo.isPopular ?? false,
+        // #17-db: parts_memo 컬럼 (마이그레이션 20260530_audit_fixes.sql 추가분)
+        ...(photo.partsMemo !== undefined ? { parts_memo: photo.partsMemo } : {}),
+      } as unknown as Database['public']['Tables']['portfolio_photos']['Insert'])
       .select('*')
       .single();
 
@@ -1504,6 +1512,8 @@ export async function dbUpdatePhotoMetadata(
     isFeatured?: boolean;
     isStaffPick?: boolean;
     isPopular?: boolean;
+    /** #17-db: parts_memo 컬럼 (마이그레이션 20260530_audit_fixes.sql 추가분) */
+    partsMemo?: string | null;
   },
 ): Promise<{ success: boolean; error?: string }> {
   const payload: Record<string, unknown> = {};
@@ -1518,6 +1528,8 @@ export async function dbUpdatePhotoMetadata(
   if (updates.isFeatured !== undefined) payload.is_featured = updates.isFeatured;
   if (updates.isStaffPick !== undefined) payload.is_staff_pick = updates.isStaffPick;
   if (updates.isPopular !== undefined) payload.is_popular = updates.isPopular;
+  // #17-db: parts_memo ↔ partsMemo 매핑
+  if (updates.partsMemo !== undefined) payload.parts_memo = updates.partsMemo;
 
   if (Object.keys(payload).length === 0) {
     return { success: true };
@@ -2205,6 +2217,10 @@ export async function dbCreateBookingFromShopLink(input: {
   });
 
   if (error) {
+    // uq_shoplink_slot UNIQUE 위반 → 동시 제출로 같은 슬롯이 이미 예약됨
+    if ((error as { code?: string }).code === '23505') {
+      return { success: false, error: 'slot_taken' };
+    }
     console.error('[db] dbCreateBookingFromShopLink error:', toDbErrorSnapshot(error));
     return { success: false, error: error.message };
   }
