@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { PortfolioPhoto, PortfolioPhotoKind } from '@/types/portfolio';
 import { useAuthStore } from '@/store/auth-store';
+import { useAppStore } from '@/store/app-store';
 import {
   fetchPortfolioPhotos,
   dbInsertPortfolioPhoto,
@@ -354,15 +355,38 @@ export const usePortfolioStore = create<PortfolioStore>()(
         set({ photos: sortPortfolioPhotos(photos) });
       },
 
+      // 0529: 시술 종류 SSOT 통합 — 포트폴리오 카테고리 추가/수정/삭제를 DB customCategories와
+      // 동기화한다. 그래야 예약등록·사진수정·사전상담·설정 등 모든 시술종류 선택 UI에 함께 반영된다.
       addCategory: (label) => {
         const key = `custom-${Date.now()}`;
         set((s) => ({ menuCategories: [...s.menuCategories, { key, label }] }));
+        const app = useAppStore.getState();
+        const existing = app.shopSettings.customCategories ?? [];
+        if (!existing.some((c) => c.id === key)) {
+          void app.setShopSettings({
+            customCategories: [...existing, { id: key, name: label, price: 0, time: 60, order: existing.length }],
+          });
+        }
       },
       renameCategory: (key, label) => {
         set((s) => ({ menuCategories: s.menuCategories.map((c) => c.key === key ? { ...c, label } : c) }));
+        if (key.startsWith('custom-')) {
+          const app = useAppStore.getState();
+          const existing = app.shopSettings.customCategories ?? [];
+          if (existing.some((c) => c.id === key)) {
+            void app.setShopSettings({ customCategories: existing.map((c) => c.id === key ? { ...c, name: label } : c) });
+          }
+        }
       },
       removeCategory: (key) => {
         set((s) => ({ menuCategories: s.menuCategories.filter((c) => c.key !== key) }));
+        if (key.startsWith('custom-')) {
+          const app = useAppStore.getState();
+          const existing = app.shopSettings.customCategories ?? [];
+          if (existing.some((c) => c.id === key)) {
+            void app.setShopSettings({ customCategories: existing.filter((c) => c.id !== key) });
+          }
+        }
       },
 
       clearAll: async () => {

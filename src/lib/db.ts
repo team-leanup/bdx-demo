@@ -1350,8 +1350,8 @@ export async function dbInsertPortfolioPhoto(photo: PortfolioPhoto): Promise<Por
     if (!imagePath && photo.imageDataUrl.startsWith('data:')) {
       const { blob, mimeType } = dataUrlToBlob(photo.imageDataUrl);
       const extension = getPortfolioFileExtension(mimeType);
-      // 온보딩 사진은 customerId 없음 → 'onboarding' 폴더 사용
-      const folder = photo.customerId ?? 'onboarding';
+      // 온보딩/메뉴 사진은 customerId 없음 → 'onboarding' 폴더 사용 (빈 문자열도 포함)
+      const folder = photo.customerId || 'onboarding';
       imagePath = `${photo.shopId}/${folder}/${photo.id}.${extension}`;
 
       const { error: uploadError } = await supabase.storage
@@ -1372,7 +1372,8 @@ export async function dbInsertPortfolioPhoto(photo: PortfolioPhoto): Promise<Por
       .upsert({
         id: photo.id,
         shop_id: photo.shopId,
-        customer_id: photo.customerId ?? null,
+        // 0529: 빈 문자열('')도 null로 — customer_id FK 위반(메뉴 사진 등록 실패) 방지
+        customer_id: photo.customerId || null,
         record_id: photo.recordId ?? null,
         kind: photo.kind,
         created_at: photo.createdAt,

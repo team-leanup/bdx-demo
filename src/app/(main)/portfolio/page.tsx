@@ -8,6 +8,7 @@ import { Input, Button, ToastContainer } from '@/components/ui';
 import type { ToastData } from '@/components/ui';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useCustomerStore } from '@/store/customer-store';
+import { useAppStore } from '@/store/app-store';
 import { useRecordsStore } from '@/store/records-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { PortfolioOverlay } from '@/components/portfolio/PortfolioOverlay';
@@ -375,9 +376,19 @@ export default function PortfolioPage(): React.ReactElement {
   const clearMigrationNotice = usePortfolioStore((s) => s.clearMigrationNotice);
   const getMenuPhotos = usePortfolioStore((s) => s.getMenuPhotos);
   const toggleMenu = usePortfolioStore((s) => s.toggleMenu);
-  const menuCategories = usePortfolioStore((s) => s.menuCategories);
+  const menuCategoriesStore = usePortfolioStore((s) => s.menuCategories);
   const addCategory = usePortfolioStore((s) => s.addCategory);
   const renameCategory = usePortfolioStore((s) => s.renameCategory);
+  const customCategoriesSetting = useAppStore((s) => s.shopSettings.customCategories);
+  // 0529: 시술 종류 SSOT — builtin(로컬) + DB customCategories 통합.
+  // 설정/메뉴판 어디서 추가하든 모든 시술종류 선택 UI에 함께 반영된다.
+  const menuCategories = useMemo(() => {
+    const custom = customCategoriesSetting ?? [];
+    const builtin = menuCategoriesStore.filter((c) => !c.key.startsWith('custom-'));
+    const fromDb = custom.slice().sort((a, b) => a.order - b.order).map((c) => ({ key: c.id, label: c.name }));
+    const localOnly = menuCategoriesStore.filter((c) => c.key.startsWith('custom-') && !custom.some((cc) => cc.id === c.key));
+    return [...builtin, ...fromDb, ...localOnly];
+  }, [menuCategoriesStore, customCategoriesSetting]);
   const categoryOrder = menuCategories.map((c) => c.key);
   const categoryLabelMap = Object.fromEntries(menuCategories.map((c) => [c.key, c.label]));
   const getById = useCustomerStore((s) => s.getById);

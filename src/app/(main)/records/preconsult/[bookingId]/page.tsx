@@ -38,7 +38,8 @@ const STYLE_KW_LABEL: Record<string, string> = {
   office_friendly: '오피스 룩', slim_fingers: '손가락 길어보이게',
   tidy_look: '단정한 느낌', subtle_point: '은은한 포인트', more_fancy: '좀 더 화려하게',
 };
-const ADDON_LABEL: Record<string, string> = { stone: '스톤', parts: '파츠', glitter: '글리터', point_art: '포인트 아트' };
+const ADDON_LABEL: Record<string, string> = { stone: '스톤', parts: '파츠', glitter: '글리터', point_art: '포인트 아트', wrapping: '랩핑' };
+const BODY_PART_LABEL: Record<string, string> = { hand: '손', foot: '발' };
 
 // ───────── 서브 컴포넌트 ─────────
 function SectionCard({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }): React.ReactElement {
@@ -297,6 +298,7 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
         {/* 디자인 선택 — '시술 종류'로 워딩 통일 */}
         {raw?.designCategory && (
           <SectionCard icon="💅" title="디자인 선택">
+            {raw.bodyPart && <InfoRow label="시술 부위" value={BODY_PART_LABEL[raw.bodyPart] ?? raw.bodyPart} />}
             <InfoRow
               label="시술 종류"
               value={
