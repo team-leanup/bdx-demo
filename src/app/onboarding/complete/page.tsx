@@ -97,12 +97,12 @@ export default function CompletePage() {
         surcharges: shopSettings.surcharges,
       });
 
-      // 3. 포트폴리오 사진 저장
+      // 3. 포트폴리오 사진 저장 — 0529 이슈 #7: portfolio 실패는 격리. 일부 실패해도 온보딩 완료 처리.
+      let portfolioPartialFail = false;
       if (photos.length > 0 && currentShopId) {
         const portfolioPhotos: PortfolioPhoto[] = photos.map((p) => ({
           id: p.id,
           shopId: currentShopId,
-          // 온보딩 사진은 customer가 없음 — DB 컬럼은 nullable
           customerId: undefined,
           kind: 'reference' as const,
           createdAt: onboardingCompletedAt,
@@ -113,22 +113,26 @@ export default function CompletePage() {
         }));
 
         if (currentShopId === 'shop-demo') {
-          // 데모 모드: 포트폴리오 스토어에 직접 저장
           usePortfolioStore.getState().setPhotos(portfolioPhotos);
         } else {
-          // 실제 모드: Supabase Storage + DB 업로드
-          const batchResult = await dbBatchInsertPortfolioPhotos(portfolioPhotos);
-          if (batchResult.errors > 0) {
-            console.error(`[onboarding] portfolio save failed: ${batchResult.errors}/${portfolioPhotos.length}`);
-            throw new Error(`포트폴리오 ${batchResult.errors}장 저장에 실패했어요`);
+          try {
+            const batchResult = await dbBatchInsertPortfolioPhotos(portfolioPhotos);
+            if (batchResult.errors > 0) {
+              console.warn(`[onboarding] portfolio partial fail: ${batchResult.errors}/${portfolioPhotos.length}`);
+              portfolioPartialFail = true;
+            }
+            await usePortfolioStore.getState().hydrateFromDB();
+          } catch (photoErr) {
+            console.warn('[onboarding] portfolio save failed (non-blocking):', photoErr);
+            portfolioPartialFail = true;
           }
-          // 성공한 사진들을 store 에 즉시 반영 (홈에서 hydrateFromDB 호출 시까지 빈 화면 방지)
-          await usePortfolioStore.getState().hydrateFromDB();
         }
       }
 
       setCurrentShopOnboardingComplete(true);
       resetPhotos();
+      // portfolio 부분 실패는 console에만 남기고 navigate 진행 — 나중에 사진 추가 등록 가능.
+      void portfolioPartialFail; // 의도적으로 무시 (로그는 위에서 이미 남김)
       return true;
     } catch (err) {
       console.error('[onboarding] commitDB error:', err);

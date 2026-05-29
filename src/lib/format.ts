@@ -88,6 +88,12 @@ export function toKoreanTimeString(isoString: string): string {
   return `${parts.hour}:${parts.minute}`;
 }
 
+// 0529 이슈 #6: "발송 05-29 14:00" 같은 짧은 KST 표기 — UTC ISO 입력도 KST로 변환해 표시.
+export function toKoreanShortDateTimeString(isoString: string): string {
+  const parts = getKoreanDateParts(isoString);
+  return `${parts.month}-${parts.day} ${parts.hour}:${parts.minute}`;
+}
+
 export function getNowInKoreaIso(): string {
   const parts = getKoreanDateParts(new Date());
   return createKoreanDate(

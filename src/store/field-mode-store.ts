@@ -52,6 +52,8 @@ interface FieldModeState {
 interface FieldModeActions {
   setPhase: (phase: FieldModePhase) => void;
   selectDesign: (photoId: string, photoUrl: string, category: DesignCategory) => void;
+  // 0529 이슈 #1: 포트폴리오 사진 없이 카테고리만으로 시술 진행
+  selectCategoryOnly: (category: DesignCategory) => void;
   confirmDesign: () => void;
   setRemovalType: (type: RemovalPreference) => void;
   setLengthType: (type: LengthPreference) => void;
@@ -129,6 +131,15 @@ export const useFieldModeStore = create<FieldModeStore>()(
           selectedPhotoUrl: photoUrl,
           selectedCategory: category,
           phase: 'design-confirm',
+        }),
+
+      // 0529 이슈 #1: 신규 매장이 포트폴리오 사진 등록 전이라도 시술 진행할 수 있도록.
+      selectCategoryOnly: (category) =>
+        set({
+          selectedPhotoId: null,
+          selectedPhotoUrl: null,
+          selectedCategory: category,
+          phase: 'options',
         }),
 
       confirmDesign: () => set({ phase: 'options' }),

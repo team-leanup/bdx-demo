@@ -59,6 +59,8 @@ export default function FieldModePage() {
   const extensionLength = useFieldModeStore((s) => s.extensionLength);
   const addOns = useFieldModeStore((s) => s.addOns);
   const selectDesign = useFieldModeStore((s) => s.selectDesign);
+  // 0529 이슈 #1: 포트폴리오 비어있어도 카테고리만으로 진행할 수 있도록.
+  const selectCategoryOnly = useFieldModeStore((s) => s.selectCategoryOnly);
   const confirmDesign = useFieldModeStore((s) => s.confirmDesign);
   const setPhase = useFieldModeStore((s) => s.setPhase);
   const setRemovalType = useFieldModeStore((s) => s.setRemovalType);
@@ -289,7 +291,7 @@ export default function FieldModePage() {
               <div className="flex-1 overflow-y-auto px-4 pt-3 pb-8">
                 <div className="max-w-2xl mx-auto w-full">
                 {displayedPhotos.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-20 gap-3">
+                  <div className="flex flex-col items-center justify-center py-16 gap-3">
                     <div className="w-16 h-16 rounded-2xl bg-surface-alt flex items-center justify-center text-3xl">
                       🖼️
                     </div>
@@ -299,11 +301,27 @@ export default function FieldModePage() {
                     <p className="text-sm text-text-muted text-center max-w-[240px]">
                       {t('fieldMode.noPhotosDesc')}
                     </p>
+                    {/* 0529 이슈 #1: 사진 없이도 카테고리만 골라 시술 시작 가능 */}
+                    <div className="mt-4 w-full max-w-[280px] flex flex-col gap-2">
+                      <p className="text-xs text-text-muted text-center">사진 없이 카테고리만으로 시작</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {BUILTIN_CATEGORY_TABS.filter((c) => c.key !== null && c.labelKey).map((cat) => (
+                          <button
+                            key={cat.key as string}
+                            type="button"
+                            onClick={() => selectCategoryOnly(cat.key as DesignCategory)}
+                            className="px-3 py-2.5 rounded-xl border border-primary/30 bg-primary/5 text-primary text-sm font-semibold hover:bg-primary/10 active:scale-95 transition-all"
+                          >
+                            {t(cat.labelKey as string)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     {allPhotos.length === 0 && (
                       <button
                         type="button"
                         onClick={() => router.push('/portfolio/upload')}
-                        className="mt-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 active:scale-95 transition-all"
+                        className="mt-3 px-5 py-2.5 rounded-xl bg-surface-alt text-text-secondary text-sm font-medium hover:bg-surface-alt/80 active:scale-95 transition-all"
                       >
                         {t('fieldMode.noPhotosUploadBtn')}
                       </button>

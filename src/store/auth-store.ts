@@ -385,12 +385,26 @@ export const useAuthStore = create<AuthStore>()(
             },
           });
 
-          if (error || !data.user) {
-            return { success: false, error: error?.message ?? '회원가입에 실패했습니다.' };
+          if (error) {
+            // 0529 이슈 #2: Supabase 영문 메시지("User already registered" 등) 한국어 번역.
+            const raw = error.message ?? '';
+            if (/already.*registered|already.*exists|duplicate/i.test(raw)) {
+              return { success: false, error: '이미 가입된 이메일이에요. 아래 "로그인" 링크에서 로그인해 주세요.' };
+            }
+            return { success: false, error: raw || '회원가입에 실패했습니다.' };
+          }
+
+          if (!data.user) {
+            return { success: false, error: '회원가입에 실패했습니다.' };
           }
 
           if (!data.session) {
-            return { success: false, error: '이미 등록된 이메일입니다. 로그인을 이용해 주세요.' };
+            // 0529 이슈 #2: identities 빈 배열은 이미 가입된 이메일 신호. 그 외는 이메일 인증 대기.
+            const identities = (data.user.identities ?? []) as unknown[];
+            if (identities.length === 0) {
+              return { success: false, error: '이미 가입된 이메일이에요. 아래 "로그인" 링크에서 로그인해 주세요.' };
+            }
+            return { success: false, error: '회원가입 메일을 보냈어요. 메일함에서 인증을 완료한 뒤 로그인해 주세요.' };
           }
 
           // Explicitly set session so auth.uid() is available for subsequent RPC calls.

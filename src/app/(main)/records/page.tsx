@@ -201,8 +201,22 @@ export default function RecordsPage() {
   const removeReservation = useReservationStore((s) => s.removeReservation);
 
   // 페이지 진입 시 booking_requests 최신 데이터 fetch — 사전상담 응답이 시간그리드에 표시되도록
+  // 0529 이슈 #5: visibilitychange + focus + 30초 폴링으로 손님 confirm 직후 사장님 화면에 즉시 반영.
   useEffect(() => {
     void hydrateReservations();
+    const poll = (): void => {
+      if (document.visibilityState === 'visible') {
+        void hydrateReservations();
+      }
+    };
+    const interval = setInterval(poll, 30000);
+    document.addEventListener('visibilitychange', poll);
+    window.addEventListener('focus', poll);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', poll);
+      window.removeEventListener('focus', poll);
+    };
   }, [hydrateReservations]);
   const removeRecord = useRecordsStore((s) => s.removeRecord);
   const updateRecord = useRecordsStore((s) => s.updateRecord);

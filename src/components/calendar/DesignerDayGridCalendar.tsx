@@ -7,7 +7,7 @@ import { CustomerTagChip } from '@/components/customer/CustomerTagChip';
 import { DragConfirmModal } from '@/components/calendar/DragConfirmModal';
 import { useLongPress } from '@/lib/hooks/useLongPress';
 import { cn } from '@/lib/cn';
-import { formatDayLabelKo, getCurrentTimeInKorea, getTodayInKorea } from '@/lib/format';
+import { formatDayLabelKo, getCurrentTimeInKorea, getTodayInKorea, toKoreanShortDateTimeString } from '@/lib/format';
 import { useCustomerStore } from '@/store/customer-store';
 import {
   canMoveReservation,
@@ -314,7 +314,7 @@ function DraggableEvent({
         ) : ev.consultationLinkSentAt ? (
           <>
             <div className="border-t border-white/30 mt-1 mb-0.5" />
-            <div className="text-[11px] opacity-60">발송 {ev.consultationLinkSentAt.slice(5, 16).replace('T', ' ')}</div>
+            <div className="text-[11px] opacity-60">발송 {toKoreanShortDateTimeString(ev.consultationLinkSentAt)}</div>
           </>
         ) : null}
       </div>

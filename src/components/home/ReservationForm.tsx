@@ -186,7 +186,7 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
     setFormDesignerId('');
     setServiceLabel('');
     setSelectedCustomerId(null);
-    onCancel?.();
+    // 0529 이슈 #4: onSubmit이 이미 모달 close를 책임짐 — onCancel 중복 호출 제거로 재오픈 트리거 차단.
   };
 
   return (
