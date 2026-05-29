@@ -475,6 +475,7 @@
 
 ### 20.1 🟢 운영 효율성 — 캘린더
 - **완료**: 빈 슬롯 롱프레스 예약 폼, 드래그 앤 드롭 확인 모달(`DragConfirmModal`), 네이버 예약 채널 프리셋, 예약 폼 `initialValues` 지원
+- **완료 추가 (2026-05-29, CF-6)**: 태블릿에서 스케줄 블록 드래그가 안 되던 문제 근본 해결. `SlotColumn`의 빈슬롯 터치 핸들러(`onTouchStart/Move/End`)가 블록 터치를 가로채 드래그를 막던 것을 제거(빈슬롯 롱프레스 예약 모달 폐지 — 상단 `예약 추가` 버튼으로 대체). 완료(`completed`) 예약도 시간대 변경 드래그 허용(취소만 고정). 블록은 `motion.div + touchAction:none`로 iOS 터치 드래그 동작. (`73ee61d`)
 
 ### 20.2 🟢 상담 프로세스 최적화
 - **완료**: 신규/재방문 분기(`consultation.type`), 재방문 단축 플로우(`RETURN_VISIT_STEP_ORDER`), 특이사항 태그 아이콘 (`traitIcon`)
