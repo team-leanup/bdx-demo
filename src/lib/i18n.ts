@@ -575,6 +575,7 @@ const translations = {
       naver: '네이버',
       phone: '전화',
       walkIn: '워크인',
+      preConsult: '사전상담',
     },
     day: {
       mon: '월',
@@ -1771,6 +1772,7 @@ const translations = {
       naver: 'Naver',
       phone: 'Phone',
       walkIn: 'Walk-in',
+      preConsult: 'Pre-consult',
     },
     day: {
       mon: 'Mon',
@@ -2967,6 +2969,7 @@ const translations = {
       naver: 'Naver',
       phone: '电话',
       walkIn: '到店',
+      preConsult: '预约咨询',
     },
     day: {
       mon: '一',
@@ -4163,6 +4166,7 @@ const translations = {
       naver: 'ネイバー',
       phone: '電話',
       walkIn: 'ウォークイン',
+      preConsult: '事前相談',
     },
     day: {
       mon: '月',

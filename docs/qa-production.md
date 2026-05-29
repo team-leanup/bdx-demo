@@ -78,6 +78,15 @@
 | CF-5 | 메뉴에 사진 추가 안 됨 | ~~커스텀 카테고리는 `portfolio_photos.style_category` check(builtin 4종)에 막혀 저장 불가~~ **✅ constraint를 custom-* 허용으로 완화 + 업로드 코드 수정** | `20260529_portfolio_style_category_allow_custom`, `portfolio/page.tsx` |
 | CF-6 | 스케줄 드래그 고정(모바일) | ~~예약 블록 `touchAction: pan-y`가 터치 드래그를 스크롤로 가로챔(데스크탑 OK·태블릿 차단)~~ **✅ 드래그 가능 블록 `touchAction: none`** | `DesignerDayGridCalendar.tsx` |
 
+### 📣 클라이언트 피드백 2차 (2026-05-29, 태블릿)
+| # | 항목 | 원인 / 조치 | 파일 |
+|---|------|------|------|
+| CF-7 | 스케줄 월 달력 날짜 안 나옴 | ~~`createKoreanDate(y,m+1,0,12)`가 '0일' ISO → Invalid Date → `daysInMonth=NaN` → 셀 0개~~ **✅ 표준 Date로 1일 요일·말일 일수 계산** (Chrome 실증) | `MonthCalendar.tsx:61` |
+| CF-8 | 메뉴 카테고리 이동 → 새로고침 시 심플로 몰림 | ~~`MenuCategoryMove`가 `updatePhoto`(store-only) 호출 → DB 미저장 → 새로고침 시 DB의 style_category로 복귀~~ **✅ `updatePhotoMetadata`로 styleCategory DB 영속화** | `portfolio/page.tsx:345` |
+| CF-9 | 사전상담이 메뉴판과 연동 안 됨 | CF-8과 동일 원인 — styleCategory 미저장으로 사전상담 갤러리(isFeatured+styleCategory) 매칭 실패. **✅ CF-8 수정으로 해결** (메뉴/사전상담 모두 isFeatured 기준 일치) | `DesignGallery.tsx`(수정 불필요) |
+| CF-10 | 완료 예약에 '상담시작' 버튼 | ~~`DayReservationList`가 stage 무관하게 모든 예약에 '상담시작' 렌더~~ **✅ completed → '상담 내용 보기'(기록 상세), cancelled → 숨김** (Chrome 실증) | `DayReservationList.tsx:478` |
+| CF-11 | `channel.preConsult` 키 미번역 | ~~i18n `channel`에 `preConsult` 키 누락(4개 로케일)~~ **✅ ko/en/zh/ja 모두 추가** (Chrome 실증: '사전상담' 표시) | `i18n.ts` |
+
 ---
 
 ---

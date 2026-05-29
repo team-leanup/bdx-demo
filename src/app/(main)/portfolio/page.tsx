@@ -330,7 +330,9 @@ function CategoryHeader({ label, count, editMode, onToggleEditMode, onRename }: 
 // ── MenuCategoryMove: 탭하면 이동할 카테고리 옵션 표시 ──
 function MenuCategoryMove({ photoId, currentCategory }: { photoId: string; currentCategory: string }): React.ReactElement {
   const [open, setOpen] = useState(false);
-  const updatePhoto = usePortfolioStore((s) => s.updatePhoto);
+  // 0529 버그B: updatePhoto(store-only)는 DB에 저장하지 않아 새로고침 시 카테고리가 리셋됐다.
+  // updatePhotoMetadata로 styleCategory를 DB까지 영속화한다.
+  const updatePhotoMetadata = usePortfolioStore((s) => s.updatePhotoMetadata);
   const cats = usePortfolioStore((s) => s.menuCategories);
   if (!open) {
     return (
@@ -342,7 +344,7 @@ function MenuCategoryMove({ photoId, currentCategory }: { photoId: string; curre
   return (
     <div className="flex gap-1 flex-wrap" onClick={(e) => e.stopPropagation()}>
       {cats.filter((c) => c.key !== currentCategory).map((c) => (
-        <button key={c.key} onClick={() => { updatePhoto(photoId, { styleCategory: c.key as 'simple' | 'french' | 'magnet' | 'art' }); setOpen(false); }}
+        <button key={c.key} onClick={() => { void updatePhotoMetadata(photoId, { styleCategory: c.key }); setOpen(false); }}
           className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
           → {c.label}
         </button>

@@ -7,6 +7,8 @@ import { useReservationStore } from '@/store/reservation-store';
 import { useConsultationStore } from '@/store/consultation-store';
 import { useFieldModeStore } from '@/store/field-mode-store';
 import { useCustomerStore } from '@/store/customer-store';
+import { useRecordsStore } from '@/store/records-store';
+import { getBookingStage } from '@/lib/booking-stage';
 import { Button } from '@/components/ui/Button';
 import { PretreatmentAlertModal } from '@/components/alerts/PretreatmentAlertModal';
 import { LinkCustomerModal } from '@/components/reservations/LinkCustomerModal';
@@ -275,6 +277,7 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const hydrateFromBooking = useFieldModeStore((s) => s.hydrateFromBooking);
   const shopSettings = useAppStore((s) => s.shopSettings);
+  const records = useRecordsStore((s) => s.records);
   const [showForm, setShowForm] = useState(false);
   const [alertBooking, setAlertBooking] = useState<BookingRequest | null>(null);
   const [alertTags, setAlertTags] = useState<CustomerTag[]>([]);
@@ -399,6 +402,9 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
               const statusStyle = STATUS_BADGE_STYLE[booking.status];
               const dotColor = STATUS_DOT[booking.status];
               const isLast = idx === reservations.length - 1;
+              // 0529 버그D: 완료 예약은 '상담시작'(현장모드) 대신 '상담 내용 보기'로 분기
+              const matchedRecord = records.find((r) => r.consultation?.bookingId === booking.id);
+              const stage = getBookingStage(booking, matchedRecord);
 
               return (
                 <motion.div
@@ -475,12 +481,22 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
                             <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                           </svg>
                         </button>
-                        <Button
-                          size="sm"
-                          onClick={() => handleStartConsultation(booking)}
-                        >
-                          {t('calendar.startConsultation')}
-                        </Button>
+                        {stage === 'completed' && matchedRecord ? (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => router.push(`/records/${matchedRecord.id}`)}
+                          >
+                            상담 내용 보기
+                          </Button>
+                        ) : stage === 'cancelled' ? null : (
+                          <Button
+                            size="sm"
+                            onClick={() => handleStartConsultation(booking)}
+                          >
+                            {t('calendar.startConsultation')}
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>

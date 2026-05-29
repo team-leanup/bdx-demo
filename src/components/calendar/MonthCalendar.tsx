@@ -58,8 +58,10 @@ export function MonthCalendar({ selectedDate, onSelectDate, reservations }: Mont
   };
 
   // Build calendar grid
-  const firstDay = createKoreanDate(year, month, 1, 12).getUTCDay();
-  const daysInMonth = createKoreanDate(year, month + 1, 0, 12).getUTCDate();
+  // 0529 버그A: createKoreanDate(_, _, 0)은 '0일' ISO 문자열 → Invalid Date → getUTCDate()=NaN
+  // → 날짜 셀이 0개가 되어 월 달력이 비어 보였음. 표준 Date로 1일 요일·말일 일수 계산 (month 1-based).
+  const firstDay = new Date(year, month - 1, 1).getDay();
+  const daysInMonth = new Date(year, month, 0).getDate();
 
   const cells: (number | null)[] = [
     ...Array(firstDay).fill(null),
