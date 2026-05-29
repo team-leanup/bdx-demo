@@ -121,7 +121,11 @@ export default function SignupPage(): React.ReactElement {
       }
 
       resetApp();
-      setShopSettings({ shopName: shopName.trim() });
+      try {
+        await setShopSettings({ shopName: shopName.trim() });
+      } catch (settingsErr) {
+        console.error('[signup] setShopSettings failed:', settingsErr);
+      }
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem(SIGNUP_CONSENT_STORAGE_KEY);
       }

@@ -12,7 +12,7 @@ import { CustomerAnalytics } from '@/components/dashboard/CustomerAnalytics';
 import { DesignerPerformance } from '@/components/dashboard/DesignerPerformance';
 import { WeeklySummary } from '@/components/dashboard/WeeklySummary';
 import { HourlyBookings } from '@/components/dashboard/HourlyBookings';
-import { formatDateDot, formatNowInKorea, formatPrice } from '@/lib/format';
+import { formatDateDot, formatNowInKorea, formatPrice, getTodayInKorea } from '@/lib/format';
 import { DESIGN_SCOPE_LABEL } from '@/lib/labels';
 import { useAuthStore } from '@/store/auth-store';
 import { useRecordsStore } from '@/store/records-store';
@@ -78,9 +78,10 @@ export default function DashboardPage() {
 
   const todayRevenue = useMemo(() => computeTodayRevenue(records), [records]);
   const monthlyGrowthData = useMemo(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
+    // 0530 MED-4: Vercel UTC 자정~오전9시 구간 전월 오집계 방지 → KST 날짜 기준으로 year/month 추출
+    const todayKST = getTodayInKorea();
+    const year = parseInt(todayKST.slice(0, 4), 10);
+    const month = parseInt(todayKST.slice(5, 7), 10);
     const prevYear = month === 1 ? year - 1 : year;
     const prevMonth = month === 1 ? 12 : month - 1;
     const thisMonthRevenue = computeMonthlyRevenue(records, year, month);

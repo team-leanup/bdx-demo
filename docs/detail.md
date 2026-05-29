@@ -775,3 +775,68 @@ treatment-sheet "결제하기" → /payment?recordId=xxx
 | 날짜 | 내용 |
 |------|------|
 | 2026-04-23 | 지승호 대표 "글씨 배열만 맞춰주면 될 것 같다" 피드백 반영 |
+
+
+---
+
+## 22. 상담 플로우 버그수정 (2026-05-30)
+
+### 22.1 [HIGH] 캔버스 파츠 가격 미반영
+
+**파일**: `src/app/consultation/canvas/page.tsx`
+- handleChange() 끝에서 fingerParts를 grade+customPartId 키로 집계해 `partsSelections`/`hasParts`를 consultation 상태에 동기화
+- 기존에는 canvasData만 저장하고 partsSelections가 비어 price-calculator가 파츠 가격을 0으로 계산했음
+
+### 22.2 [MEDIUM] 신규 고객 dbUpsertCustomer 이중 호출
+
+**파일**: `src/app/consultation/summary/page.tsx`
+- 무조건 upsert 블록을 `!isExternalCustomerLinkFlow` 조건으로 감쌈
+- isExternalCustomerLinkFlow 분기 내 upsert만 실행되도록 분리
+
+### 22.3 [HIGH] customer_link 저장 후 잘못된 레코드로 이동
+
+**파일**: `src/app/consultation/summary/page.tsx`, `src/app/consultation/save-complete/page.tsx`
+- save-complete URL에 `&consultationId=${newId}` 추가
+- save-complete: `consultationId ?? 'record-001'` → `consultationId ?? null`, `/records/${consultationId}` → `consultationId ? /records/${consultationId} : /home`
+
+### 22.4 [MEDIUM] 단계 가드 우회
+
+**파일**: `step1/page.tsx`, `step2/page.tsx`, `canvas/page.tsx`
+- step1: `useConsultationGuard(true, ConsultationStep.STEP1_BASIC)`
+- step2: `useConsultationGuard(true, ConsultationStep.STEP2_DESIGN)`
+- canvas: `useConsultationGuard(true, ConsultationStep.STEP2_DESIGN)`
+
+### 22.5 [MEDIUM] repair 라벨이 '연장'으로 오표시
+
+**파일**: `src/components/consultation/ConsultationSummaryCard.tsx`
+- `repairCount` falsy 체크를 `!= null`로 수정, 항상 repairCount 기반 텍스트 반환 (undefined이면 '1개'로 표기)
+
+### 22.6 [MEDIUM] useSearchParams Suspense 누락
+
+**파일**: `consultation/page.tsx`, `treatment-sheet/page.tsx`
+- Inner 컴포넌트로 분리 + export default를 `<Suspense fallback={...}>`으로 래핑
+
+### 22.7 [HIGH] 언어 복원 깨짐
+
+**파일**: `src/components/consultation/ConsultationLocaleButton.tsx`
+- `setLocale` → `setConsultationLocale` (previousLocale 백업 보장)
+
+### 22.8 [LOW] DiscountModal '직접 입력' 하드코딩
+
+**파일**: `src/components/consultation/DiscountModal.tsx`
+- 2곳 → `t('discountModal.manualInput')`
+
+### 22.9 [LOW] step1 이미지 삭제 버튼 aria-label 하드코딩
+
+**파일**: `src/app/consultation/step1/page.tsx`
+- `"이미지 삭제"` → `t('common.delete')`
+
+### 22.10 [LOW] additionalCharge 레코드 미추적
+
+**파일**: `src/app/consultation/summary/page.tsx`
+- savedRecord에 pricingAdjustments 포함 (basePrice, extras, discountAmount, finalPrice)
+
+**히스토리**
+| 날짜 | 내용 |
+|------|------|
+| 2026-05-30 | 상담 플로우 10건 버그수정 (HIGH 3, MEDIUM 3, LOW 4) |

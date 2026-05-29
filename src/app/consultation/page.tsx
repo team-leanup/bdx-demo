@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -112,7 +112,7 @@ function StepFlowIcon({ type }: { type: 'customer' | 'basic' | 'treatment' | 'tr
 }
 
 
-export default function ConsultationStartPage() {
+function ConsultationStartPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const consultation = useConsultationStore((s) => s.consultation);
@@ -585,5 +585,13 @@ export default function ConsultationStartPage() {
       </>
       )}
     </div>
+  );
+}
+
+export default function ConsultationStartPage() {
+  return (
+    <Suspense fallback={<div className="h-dvh bg-background" />}>
+      <ConsultationStartPageInner />
+    </Suspense>
   );
 }

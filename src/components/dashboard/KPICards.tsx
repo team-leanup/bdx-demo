@@ -158,7 +158,7 @@ function buildKPIDetail(
     case '오늘 매출': {
       const today = getTodayInKorea();
       const todayRecords = records.filter((r) => r.finalizedAt && toKoreanDateString(r.finalizedAt) === today);
-      const totalRevenue = todayRecords.reduce((sum, r) => sum + r.finalPrice, 0);
+      const totalRevenue = todayRecords.reduce((sum, r) => sum + r.finalPrice + (r.membershipApplied ?? 0), 0);
       const avgRevenue = todayRecords.length > 0 ? Math.round(totalRevenue / todayRecords.length) : 0;
       return (
         <div className="flex flex-col gap-3">

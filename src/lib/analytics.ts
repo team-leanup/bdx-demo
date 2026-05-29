@@ -245,8 +245,13 @@ export function computeRegularCount(customers: Customer[]): number {
 export function computeTodayBookings(reservations: BookingRequest[]): number {
   const today = getTodayInKorea();
   // 0528 M7: '미정'·빈 문자열 같은 비표준 reservationTime은 시간대 차트와 일관되게 제외
+  // 0530 HIGH-2: 취소 건 제외 (computeDesignerStats/computeForeignReservationSummary와 일관)
   return reservations.filter(
-    (r) => r.reservationDate === today && r.reservationTime && /^\d{1,2}:\d{2}$/.test(r.reservationTime),
+    (r) =>
+      r.reservationDate === today &&
+      r.status !== 'cancelled' &&
+      r.reservationTime &&
+      /^\d{1,2}:\d{2}$/.test(r.reservationTime),
   ).length;
 }
 
@@ -599,15 +604,22 @@ export function computeCustomerAnalytics(
 }
 
 // Group reservations by hour, count each hour from 10-18
+// 0530 MED-3: '이달 기준' 표기와 일치하도록 이달 예약만 포함, 취소 건 제외
 export function computeHourlyDistribution(reservations: BookingRequest[]): HourlyDistribution[] {
   const hours = [10, 11, 12, 13, 14, 15, 16, 17, 18];
+  const monthPrefix = getTodayInKorea().slice(0, 7); // YYYY-MM
   const counts: Record<number, number> = {};
   for (const r of reservations) {
-    if (r.reservationTime) {
-      const hour = parseInt(r.reservationTime.split(':')[0], 10);
-      if (hours.includes(hour)) {
-        counts[hour] = (counts[hour] ?? 0) + 1;
-      }
+    if (
+      r.status === 'cancelled' ||
+      !r.reservationDate.startsWith(monthPrefix) ||
+      !r.reservationTime
+    ) {
+      continue;
+    }
+    const hour = parseInt(r.reservationTime.split(':')[0], 10);
+    if (hours.includes(hour)) {
+      counts[hour] = (counts[hour] ?? 0) + 1;
     }
   }
   return hours.map((hour) => ({
@@ -623,9 +635,10 @@ export function computeKPICards(
   customers: Customer[],
   reservations: BookingRequest[],
 ): KPICard[] {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+  // 0530 MED-4: Vercel UTC 자정~오전9시 구간 전월 오집계 방지 → KST 날짜 기준으로 year/month 추출
+  const [yearStr, monthStr] = getTodayInKorea().split('-');
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
 
   // Derive prev month
   const prevYear = month === 1 ? year - 1 : year;
@@ -683,16 +696,25 @@ export function computeKPICards(
 
   function monthReturnRate(prefix: string): number {
     // 0529 MED-4: 같은 손님이 한 달에 여러 번 와도 분모-분자가 동일 손님을 한 번만 카운트.
-    // 이전 구현은 레코드 수 기반이라 같은 손님의 재방문이 양쪽에 중복 카운트되어 비율 부풀려짐.
-    const monthRecords = records.filter((r) => toKoreanDateString(r.createdAt).startsWith(prefix));
+    // 0530 MED-7: prefix 월 이전에 동일 customerId 레코드가 존재하면 재방문으로 판단.
+    //   → 현재 visitCount 기반은 미래 방문까지 포함해 과거 월 재방문율을 과대 계산.
+    //   → prefix(YYYY-MM) 보다 createdAt이 이른 레코드가 있는지로 재방문 판단.
+    //   한계: 레코드 외 오프라인 방문 이력은 반영 불가. '레코드 기준 재방문율'로 표기.
+    const allRecords = records;
+    const monthRecords = allRecords.filter((r) => toKoreanDateString(r.createdAt).startsWith(prefix));
     if (monthRecords.length === 0) return 0;
     const uniqueCustomers = new Set<string>();
     const returningCustomers = new Set<string>();
     for (const r of monthRecords) {
       if (!r.customerId) continue;
       uniqueCustomers.add(r.customerId);
-      const c = customerMap.get(r.customerId);
-      if (c && c.visitCount >= 2) returningCustomers.add(r.customerId);
+      // prefix 이전(prefix < createdAt 날짜)에 같은 고객의 레코드가 하나라도 있으면 재방문
+      const hasEarlierRecord = allRecords.some(
+        (prev) =>
+          prev.customerId === r.customerId &&
+          toKoreanDateString(prev.createdAt) < prefix,
+      );
+      if (hasEarlierRecord) returningCustomers.add(r.customerId);
     }
     if (uniqueCustomers.size === 0) return 0;
     return Math.round((returningCustomers.size / uniqueCustomers.size) * 1000) / 10;
@@ -767,15 +789,17 @@ export function computeKPICards(
 }
 
 // Top 3 design scopes + expressions combined
+// 0530 MED-6: designCategory 우선 사용 (magnet→solid_tone 오집계 방지)
+// computeTopDesignScope/computeDesignScopeBreakdown과 동일 기준으로 통일
 export function computePopularTreatments(
   records: ConsultationRecord[],
 ): { rank: number; name: string; count: number }[] {
   const counts: Record<string, number> = {};
 
   for (const r of records) {
-    const scope = r.consultation.designScope;
+    const scope = r.consultation.designCategory || r.consultation.designScope;
     if (scope) {
-      const label = DESIGN_SCOPE_LABEL[scope] ?? scope;
+      const label = CATEGORY_DISPLAY_LABEL[scope] ?? DESIGN_SCOPE_LABEL[scope] ?? scope;
       counts[label] = (counts[label] ?? 0) + 1;
     }
     const expressions = r.consultation.expressions;

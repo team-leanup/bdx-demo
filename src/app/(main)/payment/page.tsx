@@ -92,6 +92,8 @@ export default function PaymentPage(): React.ReactElement | null {
 
   const handlePaymentComplete = useCallback(async (): Promise<void> => {
     if (!paymentMethod || !record || !recordId) return;
+    // [HIGH] 결제 이중 처리 방지 — 이미 결제 수단이 저장된 레코드는 재처리 차단
+    if (record.paymentMethod) return;
 
     setIsProcessing(true);
 
@@ -114,6 +116,8 @@ export default function PaymentPage(): React.ReactElement | null {
         paymentMethod === 'membership' && diffAmount > 0 ? secondaryPaymentMethod : undefined,
       secondaryAmount:
         paymentMethod === 'membership' && diffAmount > 0 ? diffAmount : undefined,
+      // [HIGH] removeRecord rollback이 finalPrice + membershipApplied로 계산하므로 반드시 저장
+      membershipApplied: membershipAppliedAmount > 0 ? membershipAppliedAmount : undefined,
     });
 
     if (paymentMethod === 'membership' && record.customerId) {
@@ -394,7 +398,7 @@ export default function PaymentPage(): React.ReactElement | null {
 
             <button
               type="button"
-              disabled={!paymentMethod || isProcessing}
+              disabled={!paymentMethod || isProcessing || !!record.paymentMethod}
               onClick={() => { void handlePaymentComplete(); }}
               className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-primary transition-all active:scale-[0.98] mt-4 disabled:opacity-40"
             >

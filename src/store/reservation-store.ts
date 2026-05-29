@@ -151,14 +151,14 @@ export const useReservationStore = create<ReservationStore>()(
       },
 
       getByWeek: (startDate: string) => {
-        const start = new Date(startDate);
-        start.setHours(0, 0, 0, 0);
+        // [MEDIUM] timezone-naive 방지: startDate는 YYYY-MM-DD — KST 정오로 파싱
+        const start = new Date(`${startDate}T00:00:00+09:00`);
         const end = new Date(start);
         end.setDate(start.getDate() + 6);
         end.setHours(23, 59, 59, 999);
         return get().reservations
           .filter((r) => {
-            const d = new Date(r.reservationDate);
+            const d = new Date(`${r.reservationDate}T12:00:00+09:00`);
             return d >= start && d <= end;
           })
           .sort((a, b) =>

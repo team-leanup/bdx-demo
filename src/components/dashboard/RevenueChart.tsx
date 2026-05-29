@@ -33,14 +33,19 @@ function aggregateWeekly(daily: DailyConsultation[]) {
 }
 
 function aggregateMonthly(daily: DailyConsultation[]) {
-  const months: Record<string, { consultations: number }> = {};
+  // 0530 MED-5: 연도 포함 key로 연도 collision 방지 (e.g. 2025-01월 vs 2026-01월)
+  // 표시 라벨은 월만 노출하되, key는 YYYY-MM월로 구분
+  const months: Record<string, { label: string; consultations: number }> = {};
   for (const d of daily) {
     const date = new Date(d.date);
-    const key = `${date.getMonth() + 1}월`;
-    if (!months[key]) months[key] = { consultations: 0 };
-    months[key].consultations += d.consultations;
+    const yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}월`;
+    const displayLabel = `${date.getMonth() + 1}월`;
+    if (!months[yearMonth]) months[yearMonth] = { label: displayLabel, consultations: 0 };
+    months[yearMonth].consultations += d.consultations;
   }
-  return Object.entries(months).map(([label, v]) => ({ label, ...v }));
+  return Object.entries(months)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, v]) => ({ label: v.label, consultations: v.consultations }));
 }
 
 interface CustomTooltipProps {

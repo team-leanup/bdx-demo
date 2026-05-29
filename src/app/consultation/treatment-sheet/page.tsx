@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useConsultationStore } from '@/store/consultation-store';
@@ -172,7 +172,7 @@ function StepValueControl({
   );
 }
 
-export default function TreatmentSheetPage() {
+function TreatmentSheetPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const consultationId = searchParams.get('consultationId');
@@ -968,5 +968,13 @@ export default function TreatmentSheetPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function TreatmentSheetPage() {
+  return (
+    <Suspense fallback={<div className="h-dvh bg-background" />}>
+      <TreatmentSheetPageInner />
+    </Suspense>
   );
 }

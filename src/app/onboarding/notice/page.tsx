@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
@@ -12,6 +12,12 @@ export default function NoticePage() {
   const router = useRouter();
   const { shopSettings, setShopSettings } = useAppStore();
   const [notice, setNotice] = useState(shopSettings.customerNotice);
+
+  useEffect(() => {
+    if (!shopSettings.shopName || shopSettings.shopName.trim() === '') {
+      router.replace('/onboarding');
+    }
+  }, [shopSettings.shopName, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (e.target.value.length <= MAX_LENGTH) {

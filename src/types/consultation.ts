@@ -195,6 +195,8 @@ export interface ConsultationRecord {
   membershipApplied?: number;
   /** 0528 N2 — 업셀링 매출 (사전상담 추가옵션 + 시술 중 추가 = inTreatmentAddons 합계) */
   upsellAmount?: number;
+  /** 현장 정산에서 차감된 예약금 — removeRecord rollback 및 기록 열람용 */
+  deposit?: number;
   isQuickSale?: boolean;
   shareCardId?: string;
 }

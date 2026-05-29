@@ -47,6 +47,8 @@ interface RecordsStore {
     membershipApplied?: number;
     /** 0528 N2 — 업셀링 매출 (사전상담 추가옵션 + 시술 중 추가) */
     upsellAmount?: number;
+    /** 예약금 차감액 (현장 정산에서 입력) */
+    deposit?: number;
     bookingId?: string;
     saleDate?: string;
     saleTime?: string;
@@ -97,7 +99,7 @@ export const useRecordsStore = create<RecordsStore>()(
         });
       },
 
-      addQuickSaleRecord: ({ id, shopId, designerId, customerId, customerName, customerPhone, serviceType, finalPrice, notes, paymentMethod, secondaryPaymentMethod, secondaryAmount, membershipApplied, upsellAmount, bookingId, saleDate, saleTime }) => {
+      addQuickSaleRecord: ({ id, shopId, designerId, customerId, customerName, customerPhone, serviceType, finalPrice, notes, paymentMethod, secondaryPaymentMethod, secondaryAmount, membershipApplied, upsellAmount, deposit, bookingId, saleDate, saleTime }) => {
         const now = getNowInKoreaIso();
         const today = getTodayInKorea();
         // 0529 MED-6: saleTime 미지정 시 12:00 고정 → 현재 KST 시각으로 변경.
@@ -164,6 +166,8 @@ export const useRecordsStore = create<RecordsStore>()(
           secondaryAmount,
           membershipApplied,
           upsellAmount,
+          // [MEDIUM] depositApplied 저장 — removeRecord rollback 및 기록 열람용
+          deposit: deposit && deposit > 0 ? deposit : undefined,
         };
         // 0528 — customer FK 보장: customerId 없으면 무조건 customer 자동 생성/매칭
         // (consultation_records.customer_id NOT NULL + FK 위반 방지)

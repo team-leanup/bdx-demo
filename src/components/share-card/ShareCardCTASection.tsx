@@ -4,20 +4,25 @@ import Link from 'next/link';
 import { useT } from '@/lib/i18n';
 import type { DesignScope } from '@/types/consultation';
 import type { StyleCategory } from '@/types/portfolio';
+import { designScopeToCategory as libDesignScopeToCategory } from '@/lib/category-mapping';
 
-function designScopeToCategory(scope: DesignScope): StyleCategory {
-  switch (scope) {
-    case 'solid_tone': return 'simple';
-    case 'solid_point': return 'french';
-    case 'full_art': return 'art';
-    case 'monthly_art': return 'art';
+// solid_tone → simple 이므로 magnet을 원본 카테고리로 복원할 수 없음.
+// designCategory prop이 있으면 우선 사용하여 magnet CTA 링크 정확도 보장.
+function resolveCategory(designScope: DesignScope, designCategory?: string | null): StyleCategory {
+  if (designCategory) {
+    // 알려진 StyleCategory 값만 통과 (unknown custom 카테고리는 scope 폴백)
+    const known: StyleCategory[] = ['simple', 'french', 'magnet', 'art'];
+    if ((known as string[]).includes(designCategory)) return designCategory as StyleCategory;
   }
+  return libDesignScopeToCategory(designScope) as StyleCategory;
 }
 
 interface Props {
   shopId: string;
   shareCardId: string;
   designScope: DesignScope;
+  /** 원본 디자인 카테고리 — 있으면 scope 역변환보다 우선 사용 (magnet 복원) */
+  designCategory?: string | null;
   /** 공유 상담 링크 ID — 있으면 고객이 가능한 시간 중 선택 */
   consultationLinkId?: string;
 }
@@ -26,14 +31,17 @@ export function ShareCardCTASection({
   shopId,
   shareCardId: _shareCardId,
   designScope,
+  designCategory,
   consultationLinkId,
 }: Props): React.ReactElement {
   const t = useT();
 
+  const category = resolveCategory(designScope, designCategory);
+
   // linkId가 있으면 그 링크로, 없으면 기본 사전상담으로
   const consultHref = consultationLinkId
     ? `/pre-consult/${shopId}?linkId=${consultationLinkId}`
-    : `/pre-consult/${shopId}?from=share&designCategory=${designScopeToCategory(designScope)}`;
+    : `/pre-consult/${shopId}?from=share&designCategory=${category}`;
 
   return (
     <div className="flex flex-col gap-3">

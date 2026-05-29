@@ -18,7 +18,7 @@ import { useT, useLocale, useKo } from '@/lib/i18n';
 import { useConsultationGuard } from '@/lib/use-consultation-guard';
 
 export default function Step1Page() {
-  useConsultationGuard();
+  useConsultationGuard(true, ConsultationStep.STEP1_BASIC);
   const router = useRouter();
   const setStep = useConsultationStore((s) => s.setStep);
   const consultation = useConsultationStore((s) => s.consultation);
@@ -105,7 +105,7 @@ export default function Step1Page() {
                         type="button"
                         onClick={() => removeReferenceImage(url)}
                         className="absolute top-0 right-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                        aria-label="이미지 삭제"
+                        aria-label={t('common.delete')}
                       >
                         <span className="w-5 h-5 rounded-full bg-black/60 flex items-center justify-center">
                           <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>

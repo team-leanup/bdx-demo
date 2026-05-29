@@ -131,7 +131,7 @@ export function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
                     : 'border-border text-text-secondary hover:border-primary/40',
                 )}
               >
-                직접 입력
+                {t('discountModal.manualInput')}
               </button>
             </div>
 
@@ -178,7 +178,7 @@ export function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
                     : 'border-border text-text-secondary hover:border-primary/40',
                 )}
               >
-                직접 입력
+                {t('discountModal.manualInput')}
               </button>
             </div>
 

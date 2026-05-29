@@ -9,12 +9,14 @@ import { useShopStore } from '@/store/shop-store';
 import { formatPrice, formatDateDot } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { downloadForInstagram } from '@/lib/image-utils';
+import { designCategoryToScope } from '@/lib/category-mapping';
 import { InstagramHashtags } from './InstagramHashtags';
 import { ShareCardGeneratorModal } from '@/components/share-card/ShareCardGeneratorModal';
 import { EditPhotoModal } from './EditPhotoModal';
 import type { PortfolioPhoto } from '@/types/portfolio';
 import type { Customer } from '@/types/customer';
 import type { ConsultationRecord } from '@/types/consultation';
+import type { DesignScope } from '@/types/consultation';
 
 interface PortfolioOverlayProps {
   photoIds: string[];
@@ -68,6 +70,11 @@ export function PortfolioOverlay({
   const effectivePrice = photo?.price ?? linkedRecord?.finalPrice;
   const effectiveDate = photo ? (photo.takenAt ?? photo.createdAt) : undefined;
   const imgSrc = photo?.imageDataUrl || NAIL_FALLBACKS[currentIndex % NAIL_FALLBACKS.length];
+
+  // 검증된 DesignScope 파생: styleCategory → scope 변환 우선, 없으면 linkedRecord 값, 기본값 full_art
+  const derivedScope: DesignScope = photo?.styleCategory
+    ? designCategoryToScope(photo.styleCategory)
+    : (linkedRecord?.consultation.designScope ?? 'full_art');
 
   const goPrev = useCallback(() => {
     if (currentIndex > 0) setCurrentId(photoIds[currentIndex - 1]);
@@ -306,12 +313,12 @@ export function PortfolioOverlay({
             shopId: photo.shopId,
             consultation: linkedRecord?.consultation ? {
               ...linkedRecord.consultation,
-              designScope: (photo.designType ?? linkedRecord.consultation.designScope) as import('@/types/consultation').ConsultationType['designScope'],
+              designScope: derivedScope,
             } : {
               customerName: customer?.name ?? '고객',
               bodyPart: 'hand',
               nailShape: 'round',
-              designScope: photo.designType ?? photo.serviceType ?? 'full_art',
+              designScope: derivedScope,
               expressions: [],
               hasParts: false,
               partsSelections: [],

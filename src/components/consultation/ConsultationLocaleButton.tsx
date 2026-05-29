@@ -14,7 +14,7 @@ const LOCALES: { locale: Locale; flag: string; label: string; abbr: string }[] =
 
 export function ConsultationLocaleButton() {
   const locale = useLocaleStore((s) => s.locale);
-  const setLocale = useLocaleStore((s) => s.setLocale);
+  const setConsultationLocale = useLocaleStore((s) => s.setConsultationLocale);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -56,7 +56,7 @@ export function ConsultationLocaleButton() {
                 key={l.locale}
                 type="button"
                 onClick={() => {
-                  setLocale(l.locale);
+                  setConsultationLocale(l.locale);
                   setOpen(false);
                 }}
                 className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-colors text-left ${

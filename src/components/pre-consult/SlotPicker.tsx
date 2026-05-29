@@ -90,6 +90,8 @@ export function SlotPicker({ link, selectedDate, selectedTime, onSelect }: Props
               key={d.date}
               type="button"
               onClick={() => setOpenDate(d.date)}
+              aria-pressed={isSelected}
+              aria-label={`${md} ${wd}, ${d.slots.filter((s) => !s.isBooked).length}${locale === 'ko' ? '자리' : ' slots'}`}
               whileTap={{ scale: 0.96 }}
               className={`shrink-0 snap-start flex flex-col items-center justify-center min-w-[64px] h-[72px] rounded-xl border-2 transition-colors ${
                 isSelected
@@ -125,6 +127,7 @@ export function SlotPicker({ link, selectedDate, selectedTime, onSelect }: Props
               key={`${slot.date}-${slot.time}`}
               type="button"
               disabled={slot.isBooked}
+              aria-pressed={isSelected}
               onClick={() => onSelect(slot.date, slot.time)}
               whileTap={{ scale: 0.96 }}
               className={`h-11 rounded-lg border-2 text-sm font-semibold transition-colors ${

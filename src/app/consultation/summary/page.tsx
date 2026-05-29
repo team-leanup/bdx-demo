@@ -145,7 +145,7 @@ export default function SummaryPage() {
       return;
     }
 
-    if (createdCustomer) {
+    if (createdCustomer && !isExternalCustomerLinkFlow) {
       // Wait for customer to be saved to DB before saving record (FK constraint)
       const upsertResult = await dbUpsertCustomer(createdCustomer).catch((err) => {
         console.error(err);
@@ -182,6 +182,13 @@ export default function SummaryPage() {
       updatedAt: now,
       notes: customerMemo || undefined,
       language: bookingLanguage,
+      // L-10: additionalCharge 추적
+      pricingAdjustments: {
+        basePrice: breakdown.subtotal,
+        extras: additionalCharge > 0 ? [{ label: '추가 금액', amount: additionalCharge }] : [],
+        discountAmount: breakdown.discountAmount,
+        finalPrice: adjustedFinalPrice,
+      },
     };
 
     if (isCustomerLinkFlow && bookingId && isExternalCustomerLinkFlow) {
@@ -400,7 +407,7 @@ export default function SummaryPage() {
 
     if (isCustomerLinkFlow) {
       setNavigatingAway(true);
-      router.push(`/consultation/save-complete?mode=consultation`);
+      router.push(`/consultation/save-complete?mode=consultation&consultationId=${newId}`);
       setTimeout(() => {
         useConsultationStore.getState().reset();
       }, 0);

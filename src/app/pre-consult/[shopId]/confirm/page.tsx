@@ -245,7 +245,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
     }
     if (!shopData) {
       // 0528 H9: shopData null이면 매장 정보 로딩 중 — 명확한 안내
-      setSubmitError('매장 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+      setSubmitError(t('preConsult.loadingShopData'));
       return;
     }
     if (!priceEstimate || !selectedCategory) {
@@ -320,7 +320,11 @@ export default function PreConsultConfirmPage(): React.ReactElement {
         router.push(`/pre-consult/${params.shopId}/complete`);
       } else {
         store.setSubmitting(false);
-        setSubmitError(result.error ?? t('preConsult.errorGeneric'));
+        setSubmitError(
+          result.error === 'slot_taken'
+            ? t('preConsult.slotTaken')
+            : (result.error ?? t('preConsult.errorGeneric')),
+        );
       }
       return;
     }
@@ -350,7 +354,11 @@ export default function PreConsultConfirmPage(): React.ReactElement {
         router.push(`/pre-consult/${params.shopId}/complete`);
       } else {
         store.setSubmitting(false);
-        setSubmitError(result.error ?? t('preConsult.errorGeneric'));
+        setSubmitError(
+          result.error === 'slot_taken'
+            ? t('preConsult.slotTaken')
+            : (result.error ?? t('preConsult.errorGeneric')),
+        );
       }
       return;
     }
@@ -559,7 +567,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                     ? (labels.category[selectedCategory] ??
                        shopData?.customCategories?.find((c) => c.id === selectedCategory)?.name ??
                        selectedCategory)
-                    : '기본'
+                    : t('preConsult.defaultCategory')
                 }
                 amount={priceEstimate.categoryBase}
                 won={t('preConsult.won')}
@@ -684,8 +692,12 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                 {(() => {
                   const [y, m, d] = selectedSlotDate.split('-').map(Number);
                   const dt = new Date(Date.UTC(y, m - 1, d, 12));
-                  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-                  return `${m}월 ${d}일 ${weekdays[dt.getUTCDay()]}요일 ${selectedSlotTime}`;
+                  const weekdaysKo = ['일', '월', '화', '수', '목', '금', '토'];
+                  const weekdaysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                  const wd = locale === 'ko' ? weekdaysKo[dt.getUTCDay()] : weekdaysEn[dt.getUTCDay()];
+                  return locale === 'ko'
+                    ? `${m}월 ${d}일 (${wd}) ${selectedSlotTime}`
+                    : `${m}/${d} (${wd}) ${selectedSlotTime}`;
                 })()}
               </p>
             </div>
@@ -717,7 +729,10 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                 type="tel"
                 inputMode="tel"
                 value={phone}
-                onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setPhone(locale === 'ko' ? formatPhoneInput(v) : v);
+                }}
                 placeholder="010-0000-0000"
                 autoComplete="tel"
               />
@@ -727,7 +742,10 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                 type="tel"
                 inputMode="tel"
                 value={phoneConfirm}
-                onChange={(e) => setPhoneConfirm(formatPhoneInput(e.target.value))}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setPhoneConfirm(locale === 'ko' ? formatPhoneInput(v) : v);
+                }}
                 placeholder={t('preConsult.phoneConfirmPlaceholder')}
                 autoComplete="off"
                 hint={t('preConsult.phoneConfirmHint')}

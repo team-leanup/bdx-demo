@@ -9,6 +9,7 @@ import type { CanvasSelections } from '@/components/canvas/FingerCanvas';
 import type { FingerPosition, FingerSelection, PartPlacement } from '@/types/canvas';
 import { ConsultationStep } from '@/types/consultation';
 import type { FingerArtSelection, FingerPartSelection, CanvasData } from '@/types/consultation';
+import type { PartGrade } from '@/types/canvas';
 import { useT, useKo } from '@/lib/i18n';
 import { useConsultationGuard } from '@/lib/use-consultation-guard';
 
@@ -60,7 +61,7 @@ function buildInitialSelections(canvasData: CanvasData[]): CanvasSelections {
 }
 
 export default function CanvasPage() {
-  useConsultationGuard();
+  useConsultationGuard(true, ConsultationStep.STEP2_DESIGN);
   const router = useRouter();
   const consultation = useConsultationStore((s) => s.consultation);
   const setStep = useConsultationStore((s) => s.setStep);
@@ -125,6 +126,24 @@ export default function CanvasPage() {
       }
     }
 
+    // Aggregate all fingerParts into partsSelections by (grade, customPartId)
+    const partsAggMap = new Map<string, { grade: PartGrade; customPartId?: string; quantity: number }>();
+    for (const fp of fingerParts) {
+      const key = fp.customPartId ? `custom:${fp.customPartId}` : `grade:${fp.partGrade}`;
+      const existing = partsAggMap.get(key);
+      if (existing) {
+        existing.quantity += fp.quantity;
+      } else {
+        partsAggMap.set(key, {
+          grade: fp.partGrade as PartGrade,
+          customPartId: fp.customPartId,
+          quantity: fp.quantity,
+        });
+      }
+    }
+    const nextPartsSelections = Array.from(partsAggMap.values());
+    const nextHasParts = nextPartsSelections.length > 0;
+
     useConsultationStore.setState((state) => ({
       consultation: {
         ...state.consultation,
@@ -140,6 +159,8 @@ export default function CanvasPage() {
             fingerParts: fingerParts.filter((f) => f.fingerId.startsWith('right')),
           },
         ],
+        hasParts: nextHasParts,
+        partsSelections: nextPartsSelections,
       },
     }));
   };

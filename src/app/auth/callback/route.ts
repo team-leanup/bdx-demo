@@ -6,9 +6,14 @@ const ALLOWED_NEXT = ['/login', '/signup', '/home', '/onboarding'];
 
 function getSafeNextPath(next: string | null): string {
   if (!next) return '/login';
-  const clean = next.replace(/^\/+/, '/');
-  if (ALLOWED_NEXT.some((p) => clean === p || clean.startsWith(p + '/'))) {
-    return clean;
+  let normalized: string;
+  try {
+    normalized = new URL(next, 'https://x').pathname;
+  } catch {
+    return '/login';
+  }
+  if (ALLOWED_NEXT.some((p) => normalized === p || normalized.startsWith(p + '/'))) {
+    return normalized;
   }
   return '/login';
 }

@@ -102,7 +102,9 @@ export function calculatePreConsultPrice(input: PriceCalcInput): PreConsultPrice
   const removalMinutes = removalPreference !== 'none' && removalPreference !== null ? 10 : 0;
   const extensionMinutes = lengthPreference === 'extend' ? 20 : 0;
   const addOnMinutes = addOns.length * 5;
-  const estimatedMinutes = categoryTime + removalMinutes + extensionMinutes + addOnMinutes;
+  // 랩핑 선호(addOns에 없을 때)도 시술시간에 5분 추가 (가격 반영과 대칭)
+  const wrappingMinutes = wrappingPreference === 'yes' && !addOns.includes('wrapping') ? 5 : 0;
+  const estimatedMinutes = categoryTime + removalMinutes + extensionMinutes + addOnMinutes + wrappingMinutes;
 
   return {
     categoryBase,

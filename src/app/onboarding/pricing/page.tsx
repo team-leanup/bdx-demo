@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
@@ -71,6 +71,12 @@ const CATEGORIES: {
 export default function PricingPage() {
   const router = useRouter();
   const { shopSettings, setShopSettings } = useAppStore();
+
+  useEffect(() => {
+    if (!shopSettings.shopName || shopSettings.shopName.trim() === '') {
+      router.replace('/onboarding');
+    }
+  }, [shopSettings.shopName, router]);
 
   const [pricing, setPricing] = useState<CategoryPricing>({
     ...shopSettings.categoryPricing,

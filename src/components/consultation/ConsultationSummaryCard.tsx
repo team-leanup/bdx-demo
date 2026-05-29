@@ -149,16 +149,16 @@ export function ConsultationSummaryCard({ className }: ConsultationSummaryCardPr
 
   const extLabels: Record<string, string> = {
     none: t('off.none'),
-    repair: consultation.repairCount
+    repair: consultation.repairCount != null
       ? t('summary.repairCount').replace('{count}', String(consultation.repairCount))
-      : t('summary.extensionLabel'),
+      : t('summary.repairCount').replace('{count}', '1'),
     extension: t('summary.extensionLabel'),
   };
   const extensionLabelsKo: Record<string, string> = {
     none: tKo('off.none'),
-    repair: consultation.repairCount
+    repair: consultation.repairCount != null
       ? tKo('summary.repairCount').replace('{count}', String(consultation.repairCount))
-      : tKo('summary.extensionLabel'),
+      : tKo('summary.repairCount').replace('{count}', '1'),
     extension: tKo('summary.extensionLabel'),
   };
 

@@ -562,6 +562,8 @@ export type Database = {
           image_data_url: string | null
           image_path: string | null
           is_featured: boolean
+          is_staff_pick: boolean
+          is_popular: boolean
           is_public: boolean
           kind: string
           note: string | null
@@ -582,6 +584,8 @@ export type Database = {
           image_data_url?: string | null
           image_path?: string | null
           is_featured?: boolean
+          is_staff_pick?: boolean
+          is_popular?: boolean
           is_public?: boolean
           kind: string
           note?: string | null
@@ -602,6 +606,8 @@ export type Database = {
           image_data_url?: string | null
           image_path?: string | null
           is_featured?: boolean
+          is_staff_pick?: boolean
+          is_popular?: boolean
           is_public?: boolean
           kind?: string
           note?: string | null
@@ -823,8 +829,13 @@ export type Database = {
           payload: Json
           completed_at: string
           linked_customer_id: string | null
+          p_shop_id: string | null
         }
         Returns: undefined
+      }
+      get_booking_for_pre_consult: {
+        Args: { p_booking_id: string; p_shop_id: string }
+        Returns: Json
       }
       get_my_shop_id: { Args: never; Returns: string }
       get_consultation_link_public: {

@@ -163,7 +163,7 @@ export const useAuthStore = create<AuthStore>()(
         _initPromise = (async () => {
         // 데모 모드 쿠키 체크: Supabase 호출 전 최우선 확인
         // (getUser() 에러 경로에서도 데모 상태가 초기화되는 race condition 방지)
-        if (typeof document !== 'undefined' && document.cookie.includes('bdx-demo=true')) {
+        if (typeof document !== 'undefined' && document.cookie.split(';').some((c) => c.trim() === 'bdx-demo=true')) {
           set({
             isInitialized: true,
             pendingGoogleSignup: null,

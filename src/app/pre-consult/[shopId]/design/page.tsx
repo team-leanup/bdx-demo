@@ -81,15 +81,34 @@ export default function PreConsultDesignPage(): React.ReactElement {
           )}
           <p className="text-sm text-text-muted mt-1">{t('preConsult.designSub')}</p>
           <p className="text-xs text-text-muted mt-2 opacity-70">
-            포트폴리오에서 선택하지 않아도, 다음 단계에서 직접 사진을 업로드할 수 있어요
+            {t('preConsult.portfolioUploadSkipHint')}
           </p>
+          {locale !== 'ko' && (
+            <p className="text-xs text-text-muted opacity-50">
+              {tKo('preConsult.portfolioUploadSkipHint')}
+            </p>
+          )}
         </div>
 
         {/* 예약 레퍼런스 이미지 */}
         {referenceImages.length > 0 && (
           <div className="rounded-2xl border border-border bg-surface-alt p-4">
-            <p className="text-sm font-semibold text-text mb-1">예약 시 첨부한 참고 이미지</p>
-            <p className="text-xs text-text-muted mb-3">이 느낌을 기준으로 아래에서 비슷한 디자인을 골라보세요</p>
+            <p className="text-sm font-semibold text-text mb-1">
+              {t('preConsult.bookingReferenceLabel')}
+            </p>
+            {locale !== 'ko' && (
+              <p className="text-xs text-text-muted opacity-60">
+                {tKo('preConsult.bookingReferenceLabel')}
+              </p>
+            )}
+            <p className="text-xs text-text-muted mb-3">
+              {t('preConsult.bookingReferenceHint')}
+            </p>
+            {locale !== 'ko' && (
+              <p className="text-xs text-text-muted opacity-60 mb-3">
+                {tKo('preConsult.bookingReferenceHint')}
+              </p>
+            )}
             <div className="flex gap-2 overflow-x-auto">
               {referenceImages.map((url, i) => (
                 <button key={i} onClick={() => setZoomSrc(url)} className="h-24 w-24 flex-shrink-0 rounded-xl overflow-hidden border border-border hover:ring-2 hover:ring-primary/40 transition-all cursor-pointer">

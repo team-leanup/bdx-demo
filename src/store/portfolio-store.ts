@@ -77,7 +77,14 @@ function isPortfolioPhoto(value: unknown): value is PortfolioPhoto {
     return false;
   }
 
-  return 'id' in value && 'customerId' in value && 'kind' in value && 'imageDataUrl' in value;
+  return (
+    'id' in value &&
+    'customerId' in value &&
+    'kind' in value &&
+    'imageDataUrl' in value &&
+    'shopId' in value &&
+    typeof (value as Record<string, unknown>).shopId === 'string'
+  );
 }
 
 function readLegacyPortfolioPhotos(): PortfolioPhoto[] {
@@ -144,7 +151,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
         }
 
         const hydrationVersion = ++portfolioHydrationVersion;
-        const legacyPhotos = readLegacyPortfolioPhotos();
+        const legacyPhotos = readLegacyPortfolioPhotos().filter((p) => p.shopId === currentShopId);
         const remotePhotos = await fetchPortfolioPhotos(currentShopId);
         const remoteIds = new Set(remotePhotos.map((photo) => photo.id));
 
@@ -278,13 +285,11 @@ export const usePortfolioStore = create<PortfolioStore>()(
 
       togglePhotoVisibility: (id) => {
         const currentShopId = useAuthStore.getState().currentShopId;
-        let newIsPublic = true;
+        const photo = get().photos.find((p) => p.id === id);
+        if (!photo) return;
+        const newIsPublic = !(photo.isPublic ?? true);
         set((state) => ({
-          photos: state.photos.map((p) => {
-            if (p.id !== id) return p;
-            newIsPublic = !(p.isPublic ?? true);
-            return { ...p, isPublic: newIsPublic };
-          }),
+          photos: state.photos.map((p) => (p.id === id ? { ...p, isPublic: newIsPublic } : p)),
         }));
         if (currentShopId && currentShopId !== 'shop-demo') {
           dbTogglePhotoVisibility(id, currentShopId, newIsPublic).catch(console.error);
@@ -339,6 +344,8 @@ export const usePortfolioStore = create<PortfolioStore>()(
           colorLabels: updates.colorLabels,
           takenAt: updates.takenAt ?? null,
           isFeatured: updates.isFeatured,
+          isStaffPick: updates.isStaffPick,
+          isPopular: updates.isPopular,
         });
 
         if (!result.success) {

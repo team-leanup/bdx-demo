@@ -1191,6 +1191,7 @@ interface MenuCardProps {
 function MenuCard({ photo, fallbackIdx, editMode, onRemove, onOpenOverlay }: MenuCardProps): React.ReactElement {
   const imgSrc = photo.imageDataUrl || NAIL_FALLBACKS[fallbackIdx % NAIL_FALLBACKS.length];
   const updatePhoto = usePortfolioStore((s) => s.updatePhoto);
+  const updatePhotoMetadata = usePortfolioStore((s) => s.updatePhotoMetadata);
 
   return (
     <div className="flex items-center gap-3.5 bg-surface rounded-2xl p-3 border border-border/60 shadow-sm">
@@ -1228,13 +1229,13 @@ function MenuCard({ photo, fallbackIdx, editMode, onRemove, onOpenOverlay }: Men
         {editMode && (
           <div className="flex items-center gap-1 flex-wrap mt-1">
             <button
-              onClick={(e) => { e.stopPropagation(); updatePhoto(photo.id, { isStaffPick: !photo.isStaffPick }); }}
+              onClick={(e) => { e.stopPropagation(); void updatePhotoMetadata(photo.id, { isStaffPick: !photo.isStaffPick }); }}
               className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full transition-colors',
                 photo.isStaffPick ? 'bg-primary text-white' : 'bg-surface-alt text-text-muted',
               )}
             >추천</button>
             <button
-              onClick={(e) => { e.stopPropagation(); updatePhoto(photo.id, { isPopular: !photo.isPopular }); }}
+              onClick={(e) => { e.stopPropagation(); void updatePhotoMetadata(photo.id, { isPopular: !photo.isPopular }); }}
               className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full transition-colors',
                 photo.isPopular ? 'bg-amber-500 text-white' : 'bg-surface-alt text-text-muted',
               )}

@@ -42,6 +42,12 @@ function timeLess(a: string, b: string): boolean {
   return ah * 60 + am < bh * 60 + bm;
 }
 
+function timeLessOrEqual(a: string, b: string): boolean {
+  const [ah, am] = a.split(':').map(Number);
+  const [bh, bm] = b.split(':').map(Number);
+  return ah * 60 + am <= bh * 60 + bm;
+}
+
 function getBusinessHoursForDay(businessHours: BusinessHours[], dayOfWeek: number): BusinessHours | null {
   return businessHours.find((bh) => bh.dayOfWeek === dayOfWeek) ?? null;
 }
@@ -60,11 +66,11 @@ function generateSlotCandidates(
   const slots: string[] = [];
   let cur = openTime;
   let guard = 0;
-  while (timeLess(addMinutes(cur, safeDuration), closeTime) || cur === closeTime) {
+  while (timeLessOrEqual(addMinutes(cur, safeDuration), closeTime)) {
     if (guard++ > 288) break;
     slots.push(cur);
     cur = addMinutes(cur, safeInterval);
-    if (cur === closeTime || !timeLess(cur, closeTime)) break;
+    if (!timeLess(cur, closeTime)) break;
   }
   return slots;
 }
@@ -78,6 +84,7 @@ function generateSlotCandidates(
  * - 과거 시간은 제외
  */
 export function computeAvailableDates(link: ConsultationLinkPublicData): AvailableDate[] {
+  if (link.status !== 'active') return [];
   const today = getTodayInKorea();
   // 0529 MED-5: validUntil이 오늘 이전이면 만료된 링크 — 빈 배열 반환.
   if (link.validUntil < today) return [];

@@ -266,15 +266,13 @@ function mergeDemoGoldenTimeCustomers(customers: Customer[], shopId: string | nu
 }
 
 function deduplicateByName(customers: Customer[]): Customer[] {
-  const map = new Map<string, Customer>();
+  // [MEDIUM] id 기반 보존: 이름이 같아도 id가 다르면 둘 다 유지 (customerId dangling 방지).
+  // 동일 id로 중복된 항목만 제거 (마지막 항목 우선 = 최신 데이터).
+  const seen = new Map<string, Customer>();
   for (const c of customers) {
-    const key = c.name.trim().toLowerCase();
-    const existing = map.get(key);
-    if (!existing || (c.visitCount ?? 0) > (existing.visitCount ?? 0)) {
-      map.set(key, c);
-    }
+    seen.set(c.id, c);
   }
-  return Array.from(map.values());
+  return Array.from(seen.values());
 }
 
 async function loadDemoCustomers(customers: Customer[], shopId: string | null): Promise<Customer[]> {
@@ -520,6 +518,15 @@ export const useCustomerStore = create<CustomerStore>()(
       },
 
       useMembershipSession: (customerId, recordId, amount) => {
+        // [HIGH] 회원권 이중 차감 방지 — 동일 recordId의 'use' 트랜잭션이 이미 있으면 조기 return
+        if (recordId) {
+          const existingCustomer = get().customers.find((c) => c.id === customerId);
+          const alreadyUsed = existingCustomer?.membership?.transactions?.some(
+            (txn) => txn.type === 'use' && txn.recordId === recordId,
+          );
+          if (alreadyUsed) return;
+        }
+
         // M-8: txnId를 한 번만 생성하여 로컬/DB 트랜잭션 ID 통일
         const txnId = generateId('txn');
         let deductedAmount = 0;
@@ -747,12 +754,20 @@ export const useCustomerStore = create<CustomerStore>()(
                   },
                 ]
               : c.treatmentHistory;
+            // [MEDIUM] lastVisitDate 소급 등록 반영:
+            // historyEntry.date가 있으면 기존 lastVisitDate와 비교해 더 최근 날짜 선택.
+            // 오늘보다 과거 날짜 소급 등록 시 lastVisitDate가 오늘로 덮어쓰여지던 버그 수정.
+            const treatmentDate = historyEntry?.date ?? today;
+            const newLastVisitDate =
+              treatmentDate > (c.lastVisitDate ?? '')
+                ? treatmentDate
+                : (c.lastVisitDate ?? treatmentDate);
             return {
               ...c,
               visitCount: newVisitCount,
               totalSpend: newTotalSpend,
               averageSpend: newAverageSpend,
-              lastVisitDate: today,
+              lastVisitDate: newLastVisitDate,
               treatmentHistory: nextHistory,
               updatedAt: getNowInKoreaIso(),
             };

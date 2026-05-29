@@ -318,8 +318,10 @@ export default function RecordsPage() {
     weekEnd.setHours(23, 59, 59, 999);
 
     const thisWeek = allReservations.filter((r) => {
-      const d = new Date(r.reservationDate);
-      return d >= weekStart && d <= weekEnd;
+      // [MEDIUM] timezone-naive 방지: YYYY-MM-DD + KST 정오로 파싱
+      const d = new Date(`${r.reservationDate}T12:00:00+09:00`);
+      // [MEDIUM] 취소 건 제외 — '이번주 N건'에 취소가 포함되던 버그 수정
+      return d >= weekStart && d <= weekEnd && r.status !== 'cancelled';
     });
 
     const now = new Date();
@@ -348,8 +350,11 @@ export default function RecordsPage() {
       nextReservationMinutes = h * 60 + m - nowMinutes;
     }
 
-    // R-2: 이번주 취소 건수
-    const cancelCount = thisWeek.filter((r) => r.status === 'cancelled').length;
+    // R-2: 이번주 취소 건수 (thisWeek에서 취소가 제외되었으므로 allReservations에서 별도 집계)
+    const cancelCount = allReservations.filter((r) => {
+      const d = new Date(`${r.reservationDate}T12:00:00+09:00`);
+      return d >= weekStart && d <= weekEnd && r.status === 'cancelled';
+    }).length;
 
     return { weekCount: thisWeek.length, todayRemainingCount: todayRemaining.length, nextReservationMinutes, cancelCount };
   }, [allReservations]);

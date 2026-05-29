@@ -16,6 +16,11 @@ const SCOPE_TO_CATEGORY: Record<DesignScope, BuiltinDesignCategory> = {
   monthly_art: 'art',
 };
 
+// magnet → solid_tone 단방향이라 역매핑에서 유실됨.
+// styleCategory가 있으면 그걸 우선 사용해야 하므로, scope 역변환보다 category 직접 전달을 권장.
+// 이 함수는 scope만 있고 원본 category가 없는 경우의 최선 추정.
+// 주의: magnet의 경우 solid_tone → simple로 매핑되어 magnet 복원 불가 — category를 보존해야 함.
+
 const BUILTIN_KEYS = new Set<string>(['simple', 'french', 'magnet', 'art']);
 
 export function designCategoryToScope(category: DesignCategory): DesignScope {

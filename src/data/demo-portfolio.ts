@@ -95,7 +95,7 @@ export const DEMO_PORTFOLIO_PHOTOS: PortfolioPhoto[] = [
     colorLabels: ['레드', '와인'],
     designType: '그라데이션',
     serviceType: '단색+포인트',
-    styleCategory: 'simple',
+    styleCategory: 'french',
     isFeatured: true,
     price: 70000,
     isPublic: true,

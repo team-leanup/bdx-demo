@@ -80,7 +80,7 @@ export default function CompletePage() {
       }
 
       // 1. Shop 기본 정보 + 설정 저장
-      await updateShop({
+      const shopUpdateResult = await updateShop({
         name: shopName || '우리 샵',
         phone: shopSettings.shopPhone || undefined,
         address: shopSettings.shopAddress || undefined,
@@ -89,6 +89,9 @@ export default function CompletePage() {
         baseFootPrice,
         onboardingCompletedAt,
       });
+      if (!shopUpdateResult.success) {
+        throw new Error(shopUpdateResult.error ?? 'Shop 저장에 실패했습니다.');
+      }
 
       // 2. categoryPricing + customerNotice DB 저장
       await setShopSettings({

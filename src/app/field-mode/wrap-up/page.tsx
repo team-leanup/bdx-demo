@@ -214,7 +214,7 @@ export default function WrapUpPage(): React.ReactElement {
     } finally {
       setIsSavingPhotos(false);
     }
-  }, [afterPhotoUrls, addPhoto, customerId, recordId, selectedCategory, photosSaved]);
+  }, [afterPhotoUrls, addPhoto, customerId, recordId, selectedCategory, shopSettings, photosSaved]);
 
   const handleGoHome = useCallback(async (): Promise<void> => {
     setIsGoingHome(true);

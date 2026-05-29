@@ -54,7 +54,7 @@ const TREATMENT_OPTIONS: TreatmentOption[] = [
 ];
 
 export default function Step2Page() {
-  useConsultationGuard();
+  useConsultationGuard(true, ConsultationStep.STEP2_DESIGN);
   const router = useRouter();
   const setStep = useConsultationStore((s) => s.setStep);
   const setDesignScope = useConsultationStore((s) => s.setDesignScope);

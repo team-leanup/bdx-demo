@@ -4,6 +4,7 @@ import { useRef, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { useAuthStore } from '@/store/auth-store';
 
 const STEPS = [
   { path: '/onboarding', label: '시작' },
@@ -25,12 +26,21 @@ export default function OnboardingLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const isInitialized = useAuthStore((s) => s.isInitialized);
+  const currentShopOnboardingComplete = useAuthStore((s) => s.currentShopOnboardingComplete);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo(0, 0);
   }, [pathname]);
+
+  // 온보딩을 이미 완료한 사용자가 back 버튼 등으로 재진입하면 홈으로 리다이렉트
+  useEffect(() => {
+    if (isInitialized && currentShopOnboardingComplete) {
+      router.replace('/home');
+    }
+  }, [isInitialized, currentShopOnboardingComplete, router]);
 
   const currentIndex = STEPS.findIndex((s) => s.path === pathname);
   const isFirst = currentIndex <= 0;

@@ -260,6 +260,8 @@ function toPortfolioPhoto(row: Database['public']['Tables']['portfolio_photos'][
     isPublic: row.is_public ?? true,
     styleCategory: (row.style_category as PortfolioPhoto['styleCategory']) ?? undefined,
     isFeatured: row.is_featured ?? false,
+    isStaffPick: row.is_staff_pick ?? false,
+    isPopular: row.is_popular ?? false,
   };
 }
 
@@ -869,8 +871,8 @@ export async function fetchBookingRequestById(
   // 2차 fallback: anon(손님 사전상담 페이지) → RLS 차단되므로 SECURITY DEFINER RPC 경유
   if (!row) {
     const { data: rpcData, error: rpcError } = await supabase.rpc(
-      'get_booking_for_pre_consult' as never,
-      { p_booking_id: bookingId, p_shop_id: shopId } as never,
+      'get_booking_for_pre_consult',
+      { p_booking_id: bookingId, p_shop_id: shopId },
     );
     if (rpcError || !rpcData) {
       // 두 경로 모두 실패 — 진짜 없는 booking이거나 권한 없음
@@ -1049,14 +1051,16 @@ export async function dbUpdateCustomerField(customerId: string, field: string, v
     console.error(`[db] dbUpdateCustomerField blocked — field "${field}" not in allowlist`);
     return;
   }
-  let query = supabase
+  // 2026-05-30: shopId 누락 시 교차 샵 수정 위험 — 명시적으로 차단
+  if (!shopId) {
+    console.error('[db] dbUpdateCustomerField blocked — shopId is required for shop isolation');
+    return;
+  }
+  const { error } = await supabase
     .from('customers')
     .update({ [field]: value, updated_at: getNowInKoreaIso() })
-    .eq('id', customerId);
-  if (shopId) {
-    query = query.eq('shop_id', shopId);
-  }
-  const { error } = await query;
+    .eq('id', customerId)
+    .eq('shop_id', shopId);
   if (error) {
     console.error('[db] dbUpdateCustomerField error:', toDbErrorSnapshot(error));
   }
@@ -1194,24 +1198,34 @@ export async function fetchShareCardPublicData(shareCardId: string): Promise<imp
     return null;
   }
 
-  // Fetch shop data
-  const { data: shop, error: shopErr } = await supabase
-    .from('shops')
-    .select('id, name, phone, address, logo_url, settings')
-    .eq('id', record.shop_id)
-    .single();
+  // Fetch shop data via SECURITY DEFINER RPC.
+  // 2026-05-30: anon 은 shops 테이블 직접 SELECT 가 RLS(shop-demo 외 차단)로 막히므로
+  // 직접 쿼리는 비-demo 샵 공유카드에서 항상 null → 404 를 유발했음. RPC 경유로 수정.
+  const { data: shopRpc, error: shopErr } = await supabase.rpc('get_shop_public_data', {
+    p_shop_id: record.shop_id,
+  });
 
-  if (shopErr || !shop) {
+  if (shopErr || !shopRpc) {
     console.error('[db] fetchShareCardPublicData shop error:', toDbErrorSnapshot(shopErr));
     return null;
   }
 
-  // Fetch portfolio photos for this record
+  const shop = shopRpc as unknown as {
+    id: string;
+    name: string;
+    phone: string | null;
+    address: string | null;
+    logo_url: string | null;
+    settings: unknown;
+  };
+
+  // Fetch portfolio photos for this record (공개 사진만 — 비공개 사진 URL 노출 방지)
   const { data: photos } = await supabase
     .from('portfolio_photos')
     .select('image_data_url, image_path')
     .eq('record_id', record.id)
-    .eq('shop_id', record.shop_id);
+    .eq('shop_id', record.shop_id)
+    .eq('is_public', true);
 
   const imageUrls: string[] = [];
   if (photos) {
@@ -1297,6 +1311,8 @@ export async function dbUpsertReservation(reservation: BookingRequest): Promise<
     pre_consultation_data: (reservation.preConsultationData as unknown as import('@/types/database').Json) ?? null,
     pre_consultation_completed_at: reservation.preConsultationCompletedAt ?? null,
     consultation_link_sent_at: reservation.consultationLinkSentAt ?? null,
+    // 2026-05-30: deposit 누락 시 예약 수정/상태변경마다 보증금이 NULL 로 덮어써지던 문제 수정
+    deposit: reservation.deposit ?? null,
   });
   if (error) {
     console.error('[db] dbUpsertReservation error:', {
@@ -1321,7 +1337,7 @@ export async function dbCompletePreconsultationBooking(
     completed_at: completedAt,
     linked_customer_id: customerId ?? null,
     p_shop_id: shopId ?? null,
-  } as never);
+  });
 
   if (error) {
     console.error('[db] dbCompletePreconsultationBooking error:', toDbErrorSnapshot(error));
@@ -1486,6 +1502,8 @@ export async function dbUpdatePhotoMetadata(
     colorLabels?: string[];
     takenAt?: string | null;
     isFeatured?: boolean;
+    isStaffPick?: boolean;
+    isPopular?: boolean;
   },
 ): Promise<{ success: boolean; error?: string }> {
   const payload: Record<string, unknown> = {};
@@ -1498,6 +1516,8 @@ export async function dbUpdatePhotoMetadata(
   if (updates.colorLabels !== undefined) payload.color_labels = updates.colorLabels as unknown as Database['public']['Tables']['portfolio_photos']['Update']['color_labels'];
   if (updates.takenAt !== undefined) payload.taken_at = updates.takenAt;
   if (updates.isFeatured !== undefined) payload.is_featured = updates.isFeatured;
+  if (updates.isStaffPick !== undefined) payload.is_staff_pick = updates.isStaffPick;
+  if (updates.isPopular !== undefined) payload.is_popular = updates.isPopular;
 
   if (Object.keys(payload).length === 0) {
     return { success: true };
@@ -1915,6 +1935,16 @@ export async function dbCompletePreConsultation(
     return { success: false, error: 'booking_insert_failed' };
   }
 
+  // 2026-05-30: 역방향 링크 — pre_consultations.booking_id 기록 (실패해도 booking 은 이미 성공이므로 non-fatal)
+  const { error: backlinkError } = await supabase
+    .from('pre_consultations')
+    .update({ booking_id: bookingId })
+    .eq('id', id)
+    .eq('shop_id', shopId);
+  if (backlinkError) {
+    console.error('[db] dbCompletePreConsultation: booking_id backlink failed (non-fatal):', toDbErrorSnapshot(backlinkError));
+  }
+
   return { success: true };
 }
 
@@ -2141,6 +2171,20 @@ export async function dbCreateBookingFromShopLink(input: {
 }): Promise<{ success: boolean; bookingId?: string; error?: string }> {
   const now = getNowInKoreaIso();
   const bookingId = createId('bk');
+
+  // 2026-05-30: 슬롯 중복 예약 방지 (데모 샵은 anon SELECT 가능해 사전 검사 동작)
+  const { data: conflict } = await supabase
+    .from('booking_requests')
+    .select('id')
+    .eq('shop_id', input.shopId)
+    .eq('reservation_date', input.reservationDate)
+    .eq('reservation_time', input.reservationTime)
+    .in('status', ['pending', 'confirmed'])
+    .limit(1);
+  if (conflict && conflict.length > 0) {
+    return { success: false, error: 'slot_taken' };
+  }
+
   const { error } = await supabase.from('booking_requests').insert({
     id: bookingId,
     shop_id: input.shopId,
@@ -2196,6 +2240,24 @@ export async function dbCreateBookingFromConsultationLink(input: {
 }): Promise<{ success: boolean; bookingId?: string; error?: string }> {
   const now = getNowInKoreaIso();
   const bookingId = createId('bk');
+
+  // 2026-05-30: 슬롯 중복 예약 방지 — 동시 제출/재제출 시 같은 슬롯 이중 예약 차단.
+  // (데모 샵은 anon SELECT 가 허용되어 사전 검사가 동작, 실 샵은 uq_booking_link_slot UNIQUE 인덱스가 최종 방어)
+  let conflictQuery = supabase
+    .from('booking_requests')
+    .select('id')
+    .eq('shop_id', input.shopId)
+    .eq('reservation_date', input.reservationDate)
+    .eq('reservation_time', input.reservationTime)
+    .in('status', ['pending', 'confirmed']);
+  if (input.designerId) {
+    conflictQuery = conflictQuery.eq('designer_id', input.designerId);
+  }
+  const { data: conflict } = await conflictQuery.limit(1);
+  if (conflict && conflict.length > 0) {
+    return { success: false, error: 'slot_taken' };
+  }
+
   const { error } = await supabase.from('booking_requests').insert({
     id: bookingId,
     shop_id: input.shopId,
@@ -2218,6 +2280,10 @@ export async function dbCreateBookingFromConsultationLink(input: {
   });
 
   if (error) {
+    // uq_booking_link_slot UNIQUE 위반 → 같은 링크 슬롯이 이미 예약됨
+    if ((error as { code?: string }).code === '23505') {
+      return { success: false, error: 'slot_taken' };
+    }
     console.error('[db] dbCreateBookingFromConsultationLink error:', toDbErrorSnapshot(error));
     return { success: false, error: error.message };
   }

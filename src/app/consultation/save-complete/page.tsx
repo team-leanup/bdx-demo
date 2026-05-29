@@ -11,7 +11,7 @@ import { useT, useKo, useLocale } from '@/lib/i18n';
 function SaveCompleteContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const consultationId = searchParams.get('consultationId') ?? 'record-001';
+  const consultationId = searchParams.get('consultationId') ?? null;
   const mode = searchParams.get('mode') ?? 'default';
   const sourceShopId = useConsultationStore((s) => s.consultation.sourceShopId);
   const sourceShopName = useConsultationStore((s) => s.consultation.sourceShopName);
@@ -21,7 +21,7 @@ function SaveCompleteContent() {
 
   useEffect(() => {
     if (mode !== 'preconsultation') {
-      router.replace(`/records/${consultationId}`);
+      router.replace(consultationId ? `/records/${consultationId}` : '/home');
     }
   }, [mode, consultationId, router]);
 

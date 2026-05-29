@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
@@ -68,6 +68,12 @@ export default function SurchargesPage() {
   const router = useRouter();
   const { shopSettings, setShopSettings } = useAppStore();
   const init = shopSettings.surcharges;
+
+  useEffect(() => {
+    if (!shopSettings.shopName || shopSettings.shopName.trim() === '') {
+      router.replace('/onboarding');
+    }
+  }, [shopSettings.shopName, router]);
 
   const [selfRemoval, setSelfRemoval] = useState(init.selfRemoval);
   const [otherRemoval, setOtherRemoval] = useState(init.otherRemoval);

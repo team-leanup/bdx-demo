@@ -11,12 +11,15 @@ import { SlotPicker } from '@/components/pre-consult/SlotPicker';
 import type { BookingRequest } from '@/types/consultation';
 import type { ConsultationLinkPublicData } from '@/types/consultation-link';
 
-function formatBookingDateTime(date: string, time: string): string {
+function formatBookingDateTime(date: string, time: string, locale: string): string {
   const [year, month, day] = date.split('-').map(Number);
   const d = new Date(Date.UTC(year, month - 1, day, 12));
-  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-  const weekday = weekdays[d.getUTCDay()];
-  return `${month}월 ${day}일 ${weekday}요일 ${time}`;
+  const weekdaysKo = ['일', '월', '화', '수', '목', '금', '토'];
+  const weekdaysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const weekday = locale === 'ko' ? weekdaysKo[d.getUTCDay()] : weekdaysEn[d.getUTCDay()];
+  return locale === 'ko'
+    ? `${month}월 ${day}일 ${weekday}요일 ${time}`
+    : `${month}/${day} (${weekday}) ${time}`;
 }
 
 function PreConsultStartInner(): React.ReactElement {
@@ -68,6 +71,8 @@ function PreConsultStartInner(): React.ReactElement {
       fetchConsultationLinkPublic(linkIdParam)
         .then((result) => {
           if (!result || result.shopId !== params.shopId) {
+            setLinkError(t('preConsult.linkInvalid'));
+          } else if (result.status !== 'active') {
             setLinkError(t('preConsult.linkInvalid'));
           } else {
             setLinkData(result);
@@ -143,7 +148,7 @@ function PreConsultStartInner(): React.ReactElement {
           <div className="rounded-xl bg-surface-alt border border-border px-4 py-3 text-center mx-auto max-w-xs">
             <p className="text-xs text-text-muted">{t('preConsult.bookingDateTime')}</p>
             <p className="mt-0.5 text-sm font-bold text-text">
-              {formatBookingDateTime(bookingInfo.reservationDate, bookingInfo.reservationTime)}
+              {formatBookingDateTime(bookingInfo.reservationDate, bookingInfo.reservationTime, locale)}
             </p>
           </div>
         )}

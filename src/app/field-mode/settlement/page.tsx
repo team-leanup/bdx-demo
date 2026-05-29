@@ -27,6 +27,8 @@ const ADD_ON_LABELS: Record<string, string> = {
   parts: '파츠',
   glitter: '글리터',
   point_art: '포인트아트',
+  // [HIGH] 랩핑 미표시 버그 수정
+  wrapping: '랩핑',
 };
 
 // ─── Framer-motion variants ────────────────────────────────────────────────────
@@ -202,6 +204,8 @@ export default function SettlementPage(): React.ReactElement | null {
       case 'parts': return shopSettings.surcharges.largeParts;
       case 'glitter': return ADDON_FIXED_PRICES.glitter;
       case 'point_art': return shopSettings.surcharges.pointArt;
+      // [HIGH] 랩핑 surcharge 반영 — shopSettings 우선, 없으면 고정가
+      case 'wrapping': return shopSettings.surcharges.wrapping ?? ADDON_FIXED_PRICES.wrapping;
       default: return 0;
     }
   }
@@ -245,6 +249,8 @@ export default function SettlementPage(): React.ReactElement | null {
         membershipApplied: isMembershipPayment ? membershipApplied : undefined,
         // 0528 N2: 업셀링 매출 (사전상담 추가옵션 + 시술 중 추가 = inTreatmentTotal)
         upsellAmount: inTreatmentTotal > 0 ? inTreatmentTotal : undefined,
+        // [MEDIUM] depositApplied 미저장 수정
+        deposit: depositApplied > 0 ? depositApplied : undefined,
         customerName: customerName || undefined,
         customerPhone: customerPhone || undefined,
         customerId: customerId || undefined,
@@ -256,14 +262,16 @@ export default function SettlementPage(): React.ReactElement | null {
       recordSaved = false;
     }
 
-    // 2) 예약 → completed
-    if (bookingId) {
+    // 2) 예약 → completed — DB 저장 성공 시에만 (실패 시 예약 상태 변경 차단)
+    // [HIGH] DB 저장 실패해도 booking이 completed로 바뀌던 버그 수정
+    if (recordSaved && bookingId) {
       useReservationStore.getState().updateReservation(bookingId, { status: 'completed' });
     }
 
     // 3) 회원권 자동 차감 — 시술 기록이 정상 저장된 경우에만 (2026-04-20 R3)
     //    0423: 금액 기반으로 차감 (membershipApplied)
-    if (recordSaved && paymentMethod === 'membership' && customerId) {
+    //    [HIGH] guard 불일치 수정: isMembershipPayment는 canUseMembership까지 포함
+    if (recordSaved && isMembershipPayment && customerId) {
       useCustomerStore.getState().useMembershipSession(customerId, recordId, membershipApplied);
     }
 
@@ -803,6 +811,10 @@ export default function SettlementPage(): React.ReactElement | null {
                     type="button"
                     onClick={() => {
                       setCustomerInfo(c.name, c.phone, c.id);
+                      // [HIGH] 고객 변경 시 새 고객이 회원권 사용불가면 stale paymentMethod 초기화
+                      if (paymentMethod === 'membership' && !canUseMembershipFn(c.membership)) {
+                        useFieldModeStore.setState({ paymentMethod: null });
+                      }
                       setShowCustomerPicker(false);
                       setCustomerQuery('');
                     }}

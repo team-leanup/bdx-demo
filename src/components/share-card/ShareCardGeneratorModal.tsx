@@ -192,7 +192,7 @@ export function ShareCardGeneratorModal({
   }, [isOpen, resolvedShareCardId, record.id, record.shopId, onShareCardCreated]);
 
   const selectedPhoto = portfolioPhotos.find((p) => p.id === selectedPhotoId);
-  const resolvedImageUrl = selectedPhoto?.imageDataUrl ?? selectedPhoto?.imagePath ?? null;
+  const resolvedImageUrl = selectedPhoto?.imageDataUrl || selectedPhoto?.imagePath || null;
 
   const designLabel = useMemo(
     () => DESIGN_SCOPE_LABEL[record.consultation.designScope] ?? record.consultation.designScope,
@@ -324,7 +324,7 @@ export function ShareCardGeneratorModal({
                   <p className="text-[11px] font-medium text-text-muted mb-1.5">사진 선택</p>
                   <div className="grid grid-cols-5 gap-1.5">
                     {portfolioPhotos.map((photo, index) => {
-                      const imgSrc = photo.imageDataUrl ?? photo.imagePath;
+                      const imgSrc = photo.imageDataUrl || photo.imagePath;
                       if (!imgSrc) return null;
                       const isSelected = photo.id === selectedPhotoId;
                       return (
