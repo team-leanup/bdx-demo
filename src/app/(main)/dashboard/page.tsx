@@ -172,6 +172,7 @@ export default function DashboardPage() {
               <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-text-secondary">업셀링 리포트</p>
+                  <p className="mt-0.5 text-[11px] leading-snug text-text-muted">기본 시술가 외 추가된 옵션(아트 업그레이드·파츠·추가 컬러·표현 기법) 매출의 합계예요</p>
                   <div className="mt-2 flex flex-wrap items-end gap-2">
                     <span className="text-2xl font-extrabold leading-none text-primary sm:text-3xl md:text-4xl">
                       {formatPrice(upsellMetrics.totalUpsellRevenue)}

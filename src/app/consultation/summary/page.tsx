@@ -29,8 +29,11 @@ import { ConsultationStep } from '@/types/consultation';
 import { useConsultationGuard } from '@/lib/use-consultation-guard';
 
 export default function SummaryPage() {
-  useConsultationGuard();
   const router = useRouter();
+  const [navigatingAway, setNavigatingAway] = useState(false);
+  // 0529: 저장 후 reset()이 entryPoint를 비우면 가드가 /consultation으로 되돌려보낸다.
+  // 이동을 시작하면 가드를 꺼서 false redirect를 막는다.
+  useConsultationGuard(!navigatingAway);
   const consultation = useConsultationStore((s) => s.consultation);
   const bookingId = useConsultationStore((s) => s.consultation.bookingId);
   const entryPoint = useConsultationStore((s) => s.consultation.entryPoint);
@@ -272,21 +275,9 @@ export default function SummaryPage() {
     } else {
       await addRecord(savedRecord);
 
-      // 0529 HIGH-1 (Phase 2 A): 사장님 상담 플로우(/consultation/summary)에서도
-      // 방문 횟수·누적 매출 갱신. addQuickSaleRecord와 동일하게 recordTreatmentCompletion 호출.
-      // customer-link/preconsultation 플로우는 위에서 별도 처리되므로 여기는 사장님 확정 경로.
-      if (customerId && savedRecord.finalizedAt) {
-        const { recordTreatmentCompletion } = useCustomerStore.getState();
-        recordTreatmentCompletion(customerId, adjustedFinalPrice, {
-          recordId: newId,
-          date: now.split('T')[0],
-          bodyPart: consultation.bodyPart,
-          designScope: DESIGN_SCOPE_LABEL[consultation.designScope] ?? consultation.designScope,
-          price: adjustedFinalPrice,
-          designerName: effectiveDesignerName,
-          imageUrls: [],
-        });
-      }
+      // 0529 HIGH-1: 사장님 상담 저장은 "미결제 기록 생성"이다. 방문 횟수·누적 매출은
+      // /records/[id]의 결제 확정(handleFinalize)에서 recordTreatmentCompletion이 처리한다.
+      // 여기서 통계를 선반영하면 결제 시 recordId 중복으로 누락되므로 건드리지 않는다.
 
       if (bookingId) {
         updateReservation(bookingId, {
@@ -319,12 +310,12 @@ export default function SummaryPage() {
     }
 
     // 고객 데이터 연동: 시술이력 갱신 (방문횟수/매출은 결제 확정 시 갱신)
-    // 0529 HIGH-1: 사장님 확정 경로는 위에서 recordTreatmentCompletion이 이미 처리하므로
-    // customer-link/사전상담 경로에서만 lastVisitDate + treatmentHistory 보강.
-    const isOwnerConfirmed = !isCustomerLinkFlow && !!savedRecord.finalizedAt;
+    // 0529 HIGH-1: 사장님 상담 플로우는 결제 확정(/records/[id])에서 recordTreatmentCompletion이
+    // treatmentHistory·visitCount·totalSpend를 일괄 처리한다. 여기서 treatmentHistory를
+    // 선반영하면 recordId 중복으로 결제 시 통계가 누락되므로, customer-link 경로에서만 보강한다.
     const { getById: getCustById, updateCustomer: updateCust } = useCustomerStore.getState();
     const existingCustomer = getCustById(customerId);
-    if (existingCustomer && !isOwnerConfirmed) {
+    if (existingCustomer && isCustomerLinkFlow) {
       updateCust(customerId, {
         lastVisitDate: now.split('T')[0],
         treatmentHistory: [
@@ -408,18 +399,21 @@ export default function SummaryPage() {
     restoreLocale();
 
     if (isCustomerLinkFlow) {
+      setNavigatingAway(true);
+      router.push(`/consultation/save-complete?mode=consultation`);
       setTimeout(() => {
         useConsultationStore.getState().reset();
       }, 0);
-      router.push(`/consultation/save-complete?mode=consultation`);
       return;
     }
 
-    // consultation store를 reset한 후 records/[id]로 직행
+    // 0529: 가드를 먼저 끈 뒤 records/[id]로 이동하고, 다음 틱에 consultation store를 초기화한다.
+    // (reset을 push 전에 하면 entryPoint가 비어 가드가 /consultation으로 되돌려보냄)
+    setNavigatingAway(true);
+    router.push(`/records/${newId}`);
     setTimeout(() => {
       useConsultationStore.getState().reset();
     }, 0);
-    router.push(`/records/${newId}`);
     } catch (err) {
       console.error('[summary]', err);
       pushToast('error', '저장 중 오류가 발생했어요. 다시 시도해주세요');

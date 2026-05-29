@@ -52,6 +52,32 @@
 | ~~INFO-5~~ | ~~B-06-2 QR 코드~~ | ~~QR 코드 다운로드 없음~~ **✅ 수정됨** (PNG 다운로드 추가) |
 | ~~INFO-6~~ | ~~F-04-1 데이터~~ | ~~로컬 데이터 사용량 Supabase 모드에서 미표시~~ **해당 없음으로 처리** |
 
+### 🔧 통계 정합성 (2026-05-29 전면 감사 후속)
+| # | 위치 | 이슈 | 파일 |
+|---|------|------|------|
+| BUG-10 | 상담 저장 → 결제 확정 | ~~`/consultation/summary`가 결제 전 `treatmentHistory`에 recordId를 선반영 → `/records/[id]` 결제 확정 시 `recordTreatmentCompletion`이 recordId 중복으로 early-return → visitCount/totalSpend 영구 누락~~ **✅ 수정됨** — summary 선반영을 customer-link 경로로 한정(staff는 결제 확정에서만 통계 갱신), `finalizedAt` 미설정으로 죽어있던 호출 블록 제거 | `consultation/summary/page.tsx` |
+| BUG-11 | 홈 오늘 매출 | ~~홈은 `finalPrice`만 합산, 대시보드는 `finalPrice + membershipApplied` → 회원권 결제 건에서 두 화면 수치 불일치~~ **✅ 수정됨** — 홈도 membershipApplied 합산 | `home/page.tsx:98` |
+| BUG-12 | 기록 결제 확정 2곳 | ~~`records/[id]` handleFinalize·`records` "결제 완료" 버튼이 `finalPrice`만 전달 → field-mode/payment와 totalSpend 누적 기준 불일치~~ **✅ 수정됨** — 두 경로 모두 `finalPrice + membershipApplied` | `records/[id]/page.tsx:81`, `records/page.tsx:1214` |
+| BUG-13 | 대시보드 디자이너 통계 | ~~`computeDesignerStats`만 legacy `designScope` 사용 → 자석(magnet)이 원컬러(solid_tone)로 오집계~~ **✅ 수정됨** — designCategory 우선 + 라벨 fallback 통일 | `analytics.ts:357,388` |
+| BUG-14 | 기록 삭제 | ~~`removeRecord`가 visitCount/totalSpend는 롤백하나 `lastVisitDate` 미갱신 → 골든타임 재방문 대상 부정확~~ **✅ 수정됨** — 남은 시술이력 기준 lastVisitDate 재계산 | `records-store.ts:280` |
+
+### 🧭 브라우저 E2E 검증 중 발견·수정 (2026-05-29)
+> 실계정("클로드 테스트 네일")·실DB로 상담→결제→삭제 풀플로우를 Claude-in-Chrome으로 검증하며 발견.
+| # | 위치 | 이슈 | 파일 |
+|---|------|------|------|
+| BUG-15 | 상담 저장 후 이동 | ~~staff 상담 저장 후 `reset()`이 `entryPoint`를 비워 `useConsultationGuard`가 `/consultation`으로 되돌려보냄 → 방금 만든 기록 상세(`/records/{id}`)로 진입 못 함~~ **✅ 수정됨** — 이동 직전 `navigatingAway`로 가드 비활성화 후 push, 다음 틱에 reset | `consultation/summary/page.tsx`, `use-consultation-guard.ts` |
+| BUG-16 | 상담 기록 삭제 | ~~상담·결제 기록 삭제 UI 진입점 부재 (`removeRecord`는 코드에 있으나 호출 버튼 없음)~~ **✅ 추가됨** — 기록 상세에 "이 기록 삭제" 버튼 + 확인 Modal (삭제 시 고객 통계 롤백) | `records/[id]/page.tsx` |
+
+### 📣 클라이언트 피드백 (2026-05-29)
+| # | 항목 | 원인 / 조치 | 파일 |
+|---|------|------|------|
+| CF-1 | 사전상담 제출 → 스케줄 '미지정' | ~~샵 고정 링크(`dbCreateBookingFromShopLink`)가 `designer_id`를 안 넣어 미지정~~ **✅ DB 트리거로 사전상담 예약에 원장(owner) 자동 배정 + 기존 미지정 백필** | `20260529_assign_owner_designer_to_preconsult` |
+| CF-2 | "내용 확인" 눌렀는데 시술시작 | ~~`pre_consult_done` 예약 카드 탭이 `handleStartClick`(시술시작)으로 연결~~ **✅ 카드 탭 → 사전상담 미리보기로 분기** | `TodayReservationCard.tsx` |
+| CF-3 | 업셀링 '20,000' 의미 | 버그 아님 — 기본 시술가 외 추가 옵션(아트·파츠·추가 컬러·표현기법) 매출 합계. **✅ 대시보드에 설명 문구 추가** | `dashboard/page.tsx` |
+| CF-4 | 메뉴 카테고리 추가 안 됨 | ~~사진 0장 카테고리는 메뉴판에 렌더링 안 돼 새 카테고리가 안 보임~~ **✅ 빈 카테고리도 표시 + 자동 편집모드로 사진 추가 진입점 노출** | `portfolio/page.tsx` |
+| CF-5 | 메뉴에 사진 추가 안 됨 | ~~커스텀 카테고리는 `portfolio_photos.style_category` check(builtin 4종)에 막혀 저장 불가~~ **✅ constraint를 custom-* 허용으로 완화 + 업로드 코드 수정** | `20260529_portfolio_style_category_allow_custom`, `portfolio/page.tsx` |
+| CF-6 | 스케줄 드래그 고정(모바일) | ~~예약 블록 `touchAction: pan-y`가 터치 드래그를 스크롤로 가로챔(데스크탑 OK·태블릿 차단)~~ **✅ 드래그 가능 블록 `touchAction: none`** | `DesignerDayGridCalendar.tsx` |
+
 ---
 
 ---

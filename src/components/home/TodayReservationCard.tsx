@@ -250,6 +250,10 @@ export function TodayReservationCard({
               if (stage === 'completed' || stage === 'cancelled') return;
               if (stage === 'just_registered') {
                 setLinkGenBooking(booking);
+              } else if (stage === 'pre_consult_done') {
+                // 0529 버그2: 사전상담 완료 예약은 카드 탭 시 '내용 확인(미리보기)'로 연다.
+                // 시술 시작은 전용 버튼으로만 — 카드 탭이 시술시작으로 넘어가던 오작동 방지.
+                setPreviewBooking(booking);
               } else {
                 handleStartClick(booking);
               }

@@ -633,7 +633,8 @@ export default function PortfolioPage(): React.ReactElement {
         customerId: '',
         kind: 'treatment',
         imageDataUrl: dataUrl,
-        styleCategory: cat as 'simple' | 'french' | 'magnet' | 'art',
+        // 0529 버그5: 커스텀 카테고리(custom-*)도 그대로 저장 (DesignCategory = builtin | string)
+        styleCategory: cat,
         isFeatured: true,
         isPublic: true,
       });
@@ -766,7 +767,9 @@ export default function PortfolioPage(): React.ReactElement {
           {categoryOrder.map((cat) => {
             const items = menuByCategory.get(cat) ?? [];
             const nonMenuItems = nonMenuByCategory.get(cat) ?? [];
-            if (items.length > 0 || nonMenuItems.length === 0) return null;
+            // 0529 버그4: 메뉴 사진이 없는 카테고리도 항상 표시해 사진 추가 진입점을 제공한다.
+            // (이전엔 비메뉴 사진까지 없으면 섹션이 숨겨져 새로 추가한 카테고리가 영영 안 보였음)
+            if (items.length > 0) return null;
             return (
               <CategorySection
                 key={`empty-${cat}`}
@@ -1061,7 +1064,9 @@ function CategorySection({
   onRenameCategory,
 }: CategorySectionProps): React.ReactElement {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [editMode, setEditMode] = useState(false);
+  // 0529 버그4/5: 메뉴 사진이 아직 없는 카테고리는 자동 편집모드로 시작해
+  // '메뉴에 추가' 진입점을 바로 노출 (수정 버튼을 못 찾던 문제 완화)
+  const [editMode, setEditMode] = useState(items.length === 0);
   return (
     <div className="flex flex-col gap-3">
       {/* Section header — 인라인 편집 + 수정 모드 토글 */}

@@ -3,7 +3,7 @@
 import { use, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Card, Badge, Button } from '@/components/ui';
+import { Card, Badge, Button, Modal } from '@/components/ui';
 import { formatPrice, formatDateDotWithTime, getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
 import { ShareCardGeneratorModal } from '@/components/share-card/ShareCardGeneratorModal';
 import { BODY_PART_LABEL, DESIGN_SCOPE_LABEL, EXPRESSION_LABEL, getDesignerName } from '@/lib/labels';
@@ -32,6 +32,7 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
 
   const record = useRecordsStore(useShallow((s) => s.records.find((r) => r.id === id)));
   const updateRecord = useRecordsStore((s) => s.updateRecord);
+  const removeRecord = useRecordsStore((s) => s.removeRecord);
   const portfolioPhotos = usePortfolioStore(useShallow((s) => s.photos.filter((p) => p.recordId === id)));
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
   const recordTreatmentCompletion = useCustomerStore((s) => s.recordTreatmentCompletion);
@@ -44,6 +45,7 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
   const [editingFinalPrice, setEditingFinalPrice] = useState(false);
   const [finalPriceValue, setFinalPriceValue] = useState(record?.finalPrice ?? 0);
   const priceInputRef = useRef<HTMLInputElement>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   if (!record) {
     return (
@@ -78,15 +80,23 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
     const now = getNowInKoreaIso();
     updateRecord(id, { finalizedAt: now });
     if (record.customerId) {
-      recordTreatmentCompletion(record.customerId, record.finalPrice, {
+      // 0529: totalSpend는 회원권 차감분 포함 실제 시술 금액 기준 (field-mode·payment와 일관)
+      const totalServicePrice = record.finalPrice + (record.membershipApplied ?? 0);
+      recordTreatmentCompletion(record.customerId, totalServicePrice, {
         recordId: id,
         date: getTodayInKorea(),
         bodyPart: record.consultation?.bodyPart ?? 'hand',
         designScope: record.consultation?.designScope ?? '기타',
-        price: record.finalPrice,
+        price: totalServicePrice,
         imageUrls: [],
       });
     }
+  };
+
+  const handleDelete = (): void => {
+    // removeRecord가 고객 통계(방문/매출/이력)와 lastVisitDate 롤백까지 처리
+    removeRecord(id);
+    router.replace('/records');
   };
 
   const handleStartEditing = (): void => {
@@ -417,6 +427,39 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
           </div>
         </div>
       </Card>
+
+      {/* 0529: 기록 삭제 — removeRecord가 고객 통계(방문/매출/이력) 롤백 포함 */}
+      <button
+        type="button"
+        onClick={() => setShowDeleteConfirm(true)}
+        className="mx-4 rounded-xl border border-error/30 bg-error/5 py-2.5 text-sm font-semibold text-error hover:bg-error/10 transition-colors"
+      >
+        이 기록 삭제
+      </button>
+
+      <Modal isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} title="기록을 삭제할까요?">
+        <div className="flex flex-col gap-4 p-5">
+          <p className="text-sm leading-relaxed text-text-secondary">
+            이 상담·결제 기록을 삭제하면 고객의 방문 횟수와 누적 매출에서도 함께 제외돼요. 삭제 후에는 되돌릴 수 없어요.
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(false)}
+              className="flex-1 rounded-xl border border-border bg-white py-2.5 text-sm font-semibold text-text-secondary"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="flex-1 rounded-xl bg-error py-2.5 text-sm font-bold text-white"
+            >
+              삭제
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* 액션 바 (fixed bottom) */}
       <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background px-4 py-3 safe-bottom">

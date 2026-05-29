@@ -285,11 +285,16 @@ export const useRecordsStore = create<RecordsStore>()(
             // 삭제 롤백도 동일하게 finalPrice + membershipApplied를 차감해야 함
             const rollbackAmount = record.finalPrice + (record.membershipApplied ?? 0);
             const newTotalSpend = Math.max(0, customer.totalSpend - rollbackAmount);
+            // 0529: 마지막 방문일도 남은 시술이력 기준으로 재계산 (골든타임 재방문 대상 정확도)
+            const newLastVisitDate = filteredHistory.length > 0
+              ? filteredHistory.reduce((latest, h) => (h.date > latest ? h.date : latest), filteredHistory[0].date)
+              : '';
             customerStore.updateCustomer(record.customerId, {
               totalSpend: newTotalSpend,
               visitCount: newVisitCount,
               averageSpend: newVisitCount > 0 ? Math.round(newTotalSpend / newVisitCount) : 0,
               treatmentHistory: filteredHistory,
+              lastVisitDate: newLastVisitDate,
             });
           }
         }

@@ -1211,12 +1211,14 @@ export default function RecordsPage() {
                                       updateReservation(selectedEvent.originalId, { status: 'completed' });
                                     }
                                     if (matchedRecord.customerId) {
-                                      recordTreatmentCompletion(matchedRecord.customerId, matchedRecord.finalPrice, {
+                                      // 0529: totalSpend는 회원권 차감분 포함 실제 시술 금액 기준 (field-mode·payment와 일관)
+                                      const totalServicePrice = matchedRecord.finalPrice + (matchedRecord.membershipApplied ?? 0);
+                                      recordTreatmentCompletion(matchedRecord.customerId, totalServicePrice, {
                                         recordId: matchedRecord.id,
                                         date: getTodayInKorea(),
                                         bodyPart: matchedRecord.consultation?.bodyPart ?? 'hand',
                                         designScope: matchedRecord.consultation?.designScope ?? '기타',
-                                        price: matchedRecord.finalPrice,
+                                        price: totalServicePrice,
                                         imageUrls: [],
                                       });
                                     }

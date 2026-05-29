@@ -354,7 +354,8 @@ export function computeDesignerStats(
       const shapeCounts: Record<string, number> = {};
 
       for (const r of designerRecords) {
-        const scope = r.consultation.designScope;
+        // 0529: designCategory 우선 (magnet→solid_tone 오집계 방지), 없으면 legacy designScope
+        const scope = r.consultation.designCategory || r.consultation.designScope;
         if (scope) scopeCounts[scope] = (scopeCounts[scope] ?? 0) + 1;
 
         const expressions = r.consultation.expressions;
@@ -385,7 +386,7 @@ export function computeDesignerStats(
         consultationCompletionRate: designerReservations.length > 0
           ? roundToSingleDecimal((completedReservations / designerReservations.length) * 100)
           : 0,
-        topDesign: topScopeEntry ? (DESIGN_SCOPE_LABEL[topScopeEntry[0]] ?? topScopeEntry[0]) : '-',
+        topDesign: topScopeEntry ? (CATEGORY_DISPLAY_LABEL[topScopeEntry[0]] ?? DESIGN_SCOPE_LABEL[topScopeEntry[0]] ?? topScopeEntry[0]) : '-',
         topShape: topShapeEntry ? (SHAPE_LABEL[topShapeEntry[0]] ?? topShapeEntry[0]) : '-',
         topExpression: topExprEntry ? (EXPRESSION_LABEL[topExprEntry[0]] ?? topExprEntry[0]) : '-',
       };

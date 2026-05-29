@@ -264,7 +264,7 @@ function DraggableEvent({
         color.border,
         color.text,
       )}
-      style={{ top, height }}
+      style={{ top, height, touchAction: canDrag ? 'none' : undefined }}
     >
       {/* 상태 뱃지 — 우측 상단 overlay */}
       {ev.type === 'reservation' && (
