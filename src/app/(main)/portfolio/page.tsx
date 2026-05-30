@@ -13,6 +13,7 @@ import { useRecordsStore } from '@/store/records-store';
 import { useReservationStore } from '@/store/reservation-store';
 import { PortfolioOverlay } from '@/components/portfolio/PortfolioOverlay';
 import { cn } from '@/lib/cn';
+import { resolveMenuCategoryLabel } from '@/lib/labels';
 import { formatDateDot, formatPrice } from '@/lib/format';
 
 // ── 텍스트 입력 팝업 ──
@@ -253,20 +254,18 @@ const DESIGN_SCOPE_LABEL: Record<string, string> = {
 };
 
 // 0530: 시술 종류 SSOT — 메뉴 카테고리는 shopSettings(categoryLabels + customCategories)에서 파생.
-// 설정 '시술 종류' / 사전상담 고객 화면과 100% 동일한 집합·순서를 보장한다.
-const BUILTIN_MENU_CATEGORIES: { key: string; label: string }[] = [
-  { key: 'simple', label: '심플 / 원컬러' },
-  { key: 'french', label: '프렌치' },
-  { key: 'magnet', label: '자석 / 마그넷' },
-  { key: 'art', label: '아트' },
-];
+// 라벨은 labels.ts CATEGORY_LABELS(resolveMenuCategoryLabel) 단일 소스를 사용 →
+// 설정 '시술 종류' / 사전상담 고객 화면과 100% 동일한 집합·순서·라벨을 보장한다.
+const BUILTIN_CATEGORY_KEYS = ['simple', 'french', 'magnet', 'art'] as const;
 
 function deriveMenuCategories(
   categoryLabels: Record<string, string> | undefined,
   customCategories: { id: string; name: string; order: number }[] | undefined,
 ): { key: string; label: string }[] {
-  const labels = categoryLabels ?? {};
-  const builtin = BUILTIN_MENU_CATEGORIES.map((c) => ({ key: c.key, label: labels[c.key] ?? c.label }));
+  const builtin = BUILTIN_CATEGORY_KEYS.map((key) => ({
+    key,
+    label: resolveMenuCategoryLabel(key, categoryLabels),
+  }));
   const custom = (customCategories ?? [])
     .slice()
     .sort((a, b) => a.order - b.order)

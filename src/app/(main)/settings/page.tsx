@@ -24,6 +24,7 @@ import { cn } from '@/lib/cn';
 import { useShopStore } from '@/store/shop-store';
 import { DEFAULT_BASE_PRICES } from '@/data/service-options';
 import { formatPrice } from '@/lib/format';
+import { resolveMenuCategoryLabel } from '@/lib/labels';
 import { resizeImageToBase64 } from '@/lib/image-utils';
 import type { ServiceStructure } from '@/types/shop';
 
@@ -1698,10 +1699,12 @@ export default function SettingsPage() {
             </div>
 
             {(['simple', 'french', 'magnet', 'art'] as const).map((cat) => {
-              const catLabel = cat === 'simple' ? '심플' : cat === 'french' ? '프렌치' : cat === 'magnet' ? '마그네틱' : '아트';
+              // 0530: 포트폴리오 메뉴판·사전상담과 동일한 라벨(심플 / 원컬러, 자석 / 마그넷)로 통일.
+              // categoryLabels override 도 동일하게 반영 (resolveMenuCategoryLabel = SSOT).
+              const catLabel = resolveMenuCategoryLabel(cat, shopSettings.categoryLabels);
               return (
                 <div key={cat} className="flex items-center gap-2 mb-2">
-                  <span className="w-16 flex-shrink-0 text-sm text-text-secondary">{catLabel}</span>
+                  <span className="w-28 flex-shrink-0 text-sm text-text-secondary whitespace-nowrap">{catLabel}</span>
                   {editingCategoryPricing ? (
                     <div className="flex flex-1 items-center gap-2">
                       <div className="flex items-center gap-1 flex-1">

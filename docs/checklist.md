@@ -741,6 +741,12 @@
 - **수정**: welcome `canStart` 를 `linkData && 가용슬롯>0` 이면 슬롯 선택 필수로 변경(`computeAvailableDates` 로 가용 여부 판정). 정상 흐름이 경로 A-2(`dbCreateBookingFromShopLink`, 실제 시간)로 가 booking 에 실제 시간 기록 → 슬롯 픽커가 line-through·카운트 감소로 차단. 버튼 텍스트도 canStart 와 일치. 슬롯 없는 샵(만석/휴무)은 종전대로 시간 없이 진행 허용
 - 참고: RPC `get_shop_pre_consult_data` 는 booked slots(pending/confirmed)를 정상 반환하고 SlotPicker/`computeAvailableDates` 차단 로직도 정상 → 데이터(=실제 시간)만 들어오면 동작
 
+### 22.6 🟢 P2 시술 종류 라벨 불일치 (설정 ↔ 포트폴리오 ↔ 사전상담)
+- **증상**: 설정 시술종류는 "심플 / 마그네틱", 포트폴리오·사전상담은 "심플 / 원컬러 / 자석 / 마그넷" — builtin 라벨 텍스트가 화면마다 다름
+- **원인**: 설정 page.tsx 가 인라인 라벨(`cat==='simple'?'심플':...`) 사용 → labels.ts `CATEGORY_LABELS`(canonical) 미사용
+- **수정**: 설정을 `resolveMenuCategoryLabel(cat, categoryLabels)` 로 교체(라벨 칸 폭 w-16→w-28). 포트폴리오 `deriveMenuCategories` 도 동일 헬퍼 사용으로 통일 → 3곳이 labels.ts 단일 소스 공유(categoryLabels override 포함). tsc/build 통과
+- **연동 정리(설계 확인)**: 카테고리 **집합**은 shopSettings(builtin 4 + customCategories) 단일 소스로 3곳 동기화. **사전상담 가격**은 해당 카테고리에 대표(featured) 포트폴리오 사진이 있으면 그 사진 가격을 "N원~"으로, 없으면 설정 기본가를 표시(getPriceHint) — 의도된 동작. (린업-테스트 심플 "1원~"은 ₩1 웨딩 사진, 설정 ₩500,000 은 별개 기본가/오타값)
+
 ### 22.4 🟡 미확인
 - **P2** 온보딩 완료 "저장 중 오류" — 인증 owner 저장 경로(updateShop/setShopSettings)라 P0와 별개. 브라우저 콘솔 로그로 재현 필요(commitDB가 uploaded/errors 카운트 로깅 중)
 - **검증**: tsc/lint/build 통과. P0 DB 실측 검증 완료
