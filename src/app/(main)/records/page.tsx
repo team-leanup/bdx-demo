@@ -1055,7 +1055,7 @@ export default function RecordsPage() {
                     {selectedEvent.channel && (
                       <div className="flex justify-between">
                         <span className="text-sm text-text-secondary">채널</span>
-                        <span className="truncate max-w-[180px] text-sm font-medium text-text">{{ kakao: '카카오', naver: '네이버', phone: '전화', walk_in: '방문', instagram: '인스타그램' }[selectedEvent.channel] ?? selectedEvent.channel}</span>
+                        <span className="truncate max-w-[180px] text-sm font-medium text-text">{{ kakao: '카카오', naver: '네이버', phone: '전화', walk_in: '방문', instagram: '인스타그램', pre_consult: '사전 상담', consultation_link: '상담 링크', manual: '직접 등록' }[selectedEvent.channel] ?? selectedEvent.channel}</span>
                       </div>
                     )}
                     {selectedEvent.customerPhone && (
@@ -1069,7 +1069,7 @@ export default function RecordsPage() {
                             title="전화걸기"
                           >
                             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.338c0-1.093.9-1.988 1.99-1.988h1.332c.47 0 .896.207 1.196.555l1.74 2.028a1.49 1.49 0 01-.076 2.003l-.813.813a8.982 8.982 0 004.701 4.701l.813-.813a1.49 1.49 0 012.003-.076l2.028 1.74c.348.3.555.726.555 1.196v1.332c0 1.09-.895 1.99-1.988 1.99h-.144C7.033 19.5 4.5 16.967 4.5 10.5v-.144c0-.047.001-.093.004-.14l-.004.022z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
                             </svg>
                           </a>
                         </div>
@@ -1196,9 +1196,10 @@ export default function RecordsPage() {
 
                       const handleSheetClick = () => {
                         if (matchedRecord) {
-                          router.push(`/consultation/treatment-sheet?consultationId=${matchedRecord.id}&customerId=${matchedRecord.customerId}`);
+                          // 시술 확인서(/consultation/treatment-sheet) 대신 종합 상담 상세 페이지로 이동
+                          closeSelectedEventSheet();
+                          router.push(`/records/${matchedRecord.id}`);
                         }
-                        // preConsultationData 분기는 인라인 토글로 대체됨
                       };
 
                       return (
@@ -1255,7 +1256,7 @@ export default function RecordsPage() {
                                     onClick={handleSheetClick}
                                     className="flex-1 rounded-xl border border-primary/30 bg-primary px-4 py-2.5 text-xs font-medium text-white hover:bg-primary/90 active:scale-[0.98] transition-all"
                                   >
-                                    시술 확인서
+                                    상담 상세
                                   </button>
                                 )}
                                 {!matchedRecord && booking?.preConsultationData && (
@@ -1387,7 +1388,8 @@ export default function RecordsPage() {
                                 onClick={() => {
                                   const recordId = matchedRecord?.id ?? selectedEvent.originalId;
                                   closeSelectedEventSheet();
-                                  router.push(`/records/${recordId}`);
+                                  // 상담 상세로 이동하면서 공유카드 생성 모달 자동 오픈 (?share=1)
+                                  router.push(`/records/${recordId}?share=1`);
                                 }}
                                 className="w-full rounded-xl border border-primary bg-primary/5 px-4 py-3 text-sm font-semibold text-primary active:scale-[0.98] transition-transform"
                               >

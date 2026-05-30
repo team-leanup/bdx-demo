@@ -8,6 +8,7 @@ import { DragConfirmModal } from '@/components/calendar/DragConfirmModal';
 import { useLongPress } from '@/lib/hooks/useLongPress';
 import { cn } from '@/lib/cn';
 import { formatDayLabelKo, getCurrentTimeInKorea, getTodayInKorea, toKoreanShortDateTimeString } from '@/lib/format';
+import { CATEGORY_LABELS } from '@/lib/labels';
 import { useCustomerStore } from '@/store/customer-store';
 import {
   canMoveReservation,
@@ -310,7 +311,7 @@ function DraggableEvent({
         <div className="flex items-center gap-1.5 opacity-60 leading-tight">
           <span>{ev.startTime}–{ev.endTime}</span>
           {ev.serviceLabel && (
-            <span className="rounded bg-white/40 px-1 py-px font-medium text-text">{ev.serviceLabel}</span>
+            <span className="rounded bg-white/40 px-1 py-px font-medium text-text">{CATEGORY_LABELS[ev.serviceLabel] ?? ev.serviceLabel}</span>
           )}
           {ev.channel && <ChannelIcon channel={ev.channel} />}
         </div>

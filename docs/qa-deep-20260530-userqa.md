@@ -186,7 +186,17 @@ Chrome 실측(모바일 ~500px 뷰포트) end-to-end 테스트 + 18 에이전트
 - **#2 [MED] 메뉴↔사전상담 카테고리 이름 불일치** 🔵 — 원장 메뉴 기본 라벨("심플 / 원컬러", "자석 / 마그넷")과 사전상담 i18n("심플", "자석") 불일치. 사전상담 한국어 기본 라벨을 메뉴 기본값에 맞춤. **잔여**: 원장이 builtin 카테고리를 메뉴에서 rename하면 사전상담 전파 안 됨(menuCategories가 DB/shopData 미노출 — SSOT 후속 필요). 가격은 이미 메뉴 featured 최저가 연동됨
 - **#3 [확인] '이대로 진행하기' 후 이름·전화 없이 즉시 확정** ✅ 현재 코드 정상 — `confirm/page.tsx` 예약 생성은 "이대로 예약하기"(Book Now, name/phone 입력 후)에서만. "이대로 진행하기"는 /confirm 이동만. **프로덕션(beauty-decision.com)이 구버전이라 재배포 시 해소**
 
-### 2차 검증 로그
+## 4차 — 클라이언트 실기기 피드백 6건 (예약상세/타임그리드/상담상세)
+
+전부 🟢, Chrome 라이브 검증:
+- **채널 "pre_consult" 영어 노출** → 라벨맵에 `pre_consult: '사전 상담'` 등 추가 (예약상세 시트 "사전 상담" 확인)
+- **전화 아이콘 깨짐** → records 시트 전화 SVG path가 비정상이던 것을 올바른 Heroicons phone path로 교체
+- **타임그리드 "french" raw 키 노출** → DesignerDayGridCalendar에서 `CATEGORY_LABELS[serviceLabel]`로 한글화(자석/프렌치). (메뉴 "자석 / 마그넷"과의 완전 일치는 CATEGORY_LABELS SSOT 후속)
+- **공유카드 만들기 작동 안함** → 시트 버튼이 `/records/[id]?share=1`로 이동해 ShareCardGeneratorModal 자동 오픈(라이브: 모달 9:16/3:4/링크복사 확인)
+- **시술 확인서 → 상담 상세 교체** → 버튼 라벨 변경 + `handleSheetClick`이 `/consultation/treatment-sheet`(시술확인서) 대신 `/records/[id]`(종합 상담상세)로 라우팅
+- **상담 상세 페이지 전면 개선** → `/records/[id]`에 "사전 상담 응답" 섹션 추가(시술부위·종류·느낌·쉐입·방향·네일상태·오프·길이·랩핑·키워드·추가옵션·파츠·요청사항·참고이미지) + 기존 시술리포트·고객·가격·결제·파츠 유지. 제목 "상담 상세". 라이브: 이손님 레코드에서 사전상담 응답+결제(₩98,000)+파츠 모두 표시 확인
+
+## 2차 검증 로그
 - `npx tsc --noEmit` → 0 · `pnpm lint` 에러 0 · `pnpm build` exit 0(전 라우트)
 - Chrome 재실측: SL-04 영어 요일(Sat/Mon)·BUG-A 콘솔에러 소멸·FM-1 토글 비활성·가격 3경로 105,000 일치·매출 레코드 offType=other_shop 확인
 - 테스트 잔여물 정리(QA자동/QA검증둘 예약·레코드·신규고객 삭제, 이손님 통계 원복). 기존 데이터(이손님 5/28 예약) 보존
