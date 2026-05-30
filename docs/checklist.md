@@ -747,6 +747,14 @@
 - **수정**: 설정을 `resolveMenuCategoryLabel(cat, categoryLabels)` 로 교체(라벨 칸 폭 w-16→w-28). 포트폴리오 `deriveMenuCategories` 도 동일 헬퍼 사용으로 통일 → 3곳이 labels.ts 단일 소스 공유(categoryLabels override 포함). tsc/build 통과
 - **연동 정리(설계 확인)**: 카테고리 **집합**은 shopSettings(builtin 4 + customCategories) 단일 소스로 3곳 동기화. **사전상담 가격**은 해당 카테고리에 대표(featured) 포트폴리오 사진이 있으면 그 사진 가격을 "N원~"으로, 없으면 설정 기본가를 표시(getPriceHint) — 의도된 동작. (린업-테스트 심플 "1원~"은 ₩1 웨딩 사진, 설정 ₩500,000 은 별개 기본가/오타값)
 
+### 22.7 🟢 설정 가격 연동 전수 감사 + 레거시 제거 (가격 모델 일원화)
+- **연동 버그 수정**: 자샵/타샵 오프가 설정 저장 시 `baseOffSameShop/baseOffOtherShop`(상담)만 갱신되고 `surcharges.selfRemoval/otherRemoval`(사전상담·현장모드)는 미갱신 → 오프 가격이 사전상담/현장에 반영 안 됨. `handleSavePrices` 에서 두 표현 동기화
+- **랩핑 추가금**: 수정 모드엔 있으나 읽기 화면 누락 → 읽기 행 추가
+- **시술 종류 정렬**: custom 행 라벨 w-16→w-28 (builtin과 통일)
+- **레거시 완전 제거**(사용자 결정): `/consultation` 화면은 진입점 없는 죽은 코드(홈·예약 시작 모두 /field-mode). `src/app/consultation/`·`src/components/consultation/`·`src/components/canvas/`·`use-consultation-guard.ts` 삭제(42파일), middleware PUBLIC_PREFIXES 정리. 설정에서 가산모델 전용 죽은 항목 5개(핸드/페디 기본·리페어·풀아트추가·이달의아트추가) 제거
+- **가격 모델 현황**: 실제 운영 플로우(사전상담·현장모드·포트폴리오)는 **카테고리 모델**(`calculatePreConsultPrice` + categoryPricing 시술종류) 단일 사용. `calculatePrice`(가산모델)·`consultation-store`·`time-calculator` 는 삭제하지 않고 **records 상세·대시보드·analytics·홈·결제·캘린더의 내부 인프라로 유지**
+- **검증**: clean tsc PASS / lint 0 error / build 성공
+
 ### 22.4 🟡 미확인
 - **P2** 온보딩 완료 "저장 중 오류" — 인증 owner 저장 경로(updateShop/setShopSettings)라 P0와 별개. 브라우저 콘솔 로그로 재현 필요(commitDB가 uploaded/errors 카운트 로깅 중)
 - **검증**: tsc/lint/build 통과. P0 DB 실측 검증 완료
