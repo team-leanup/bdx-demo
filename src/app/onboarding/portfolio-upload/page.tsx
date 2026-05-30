@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { useOnboardingPhotoStore } from '@/store/onboarding-photo-store';
+import { resizeTreatmentPhoto } from '@/lib/image-utils';
 
 const MAX_PHOTOS = 20;
 const MIN_PHOTOS = 3;
@@ -37,7 +38,9 @@ export default function PortfolioUploadPage() {
       const reader = new FileReader();
       reader.onload = () => {
         const dataUrl = reader.result as string;
-        addPhotos([{ id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, dataUrl }]);
+        void resizeTreatmentPhoto(dataUrl).then((resized) => {
+          addPhotos([{ id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, dataUrl: resized }]);
+        });
       };
       reader.readAsDataURL(file);
     });

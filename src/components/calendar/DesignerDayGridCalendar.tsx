@@ -22,6 +22,7 @@ import {
 import type { TimeGridEvent } from '@/components/calendar/TimeGridCalendar';
 import type { UserRole } from '@/types/auth';
 import type { CustomerTag } from '@/types/customer';
+import { DISPLAY_STAGE_LABELS, DISPLAY_STAGE_DOT } from '@/lib/booking-stage';
 
 interface DesignerDayGridCalendarProps {
   date: string;
@@ -290,16 +291,28 @@ function DraggableEvent({
       style={{ top, height, touchAction: canDrag ? 'none' : undefined }}
     >
       {/* 상태 뱃지 — 우측 상단 overlay */}
-      {ev.type === 'reservation' && (
-        <div className={cn(
-          'absolute -top-2 right-0 z-20 rounded-full px-1.5 py-px text-[9px] font-semibold border border-white shadow-sm',
-          ev.preConsultationCompletedAt ? 'bg-emerald-500 text-white'
-            : ev.consultationLinkSentAt ? 'bg-amber-400 text-amber-900'
-            : 'bg-slate-200 text-slate-600',
-        )}>
-          {ev.preConsultationCompletedAt ? '완료' : ev.consultationLinkSentAt ? '대기' : '미발송'}
-        </div>
-      )}
+      {ev.type === 'reservation' && (() => {
+        if (ev.status === 'cancelled') return null;
+        // ev 필드로 DisplayStage 도출
+        const ds = ev.status === 'completed'
+          ? 'treatment_done' as const
+          : ev.preConsultationCompletedAt
+            ? 'response_done' as const
+            : ev.consultationLinkSentAt
+              ? 'waiting_response' as const
+              : 'link_not_sent' as const;
+        const dotBg = DISPLAY_STAGE_DOT[ds];
+        const textColor = ds === 'waiting_response' ? 'text-amber-900' : 'text-white';
+        return (
+          <div className={cn(
+            'absolute -top-2 right-0 z-20 rounded-full px-1.5 py-px text-[9px] font-semibold border border-white shadow-sm',
+            dotBg,
+            textColor,
+          )}>
+            {DISPLAY_STAGE_LABELS[ds]}
+          </div>
+        );
+      })()}
       <div className="h-full overflow-hidden flex flex-col text-xs">
         {/* ① 시간 + 고객명 */}
         <div className="flex items-baseline gap-1">

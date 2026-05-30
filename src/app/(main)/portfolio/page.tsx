@@ -15,6 +15,7 @@ import { PortfolioOverlay } from '@/components/portfolio/PortfolioOverlay';
 import { cn } from '@/lib/cn';
 import { resolveMenuCategoryLabel } from '@/lib/labels';
 import { formatDateDot, formatPrice } from '@/lib/format';
+import { resizeTreatmentPhoto } from '@/lib/image-utils';
 
 // ── 텍스트 입력 팝업 ──
 interface EditPopupState {
@@ -670,15 +671,15 @@ export default function PortfolioPage(): React.ReactElement {
       const dataUrl = reader.result as string;
       const cat = pickerCategory ?? 'simple';
       // 0530: 업로드 실패를 토스트로 노출 (이전엔 void 로 삼켜 "첨부가 안 됨" 처럼 보였음)
-      void addPhoto({
+      void resizeTreatmentPhoto(dataUrl).then((resized) => addPhoto({
         customerId: '',
         kind: 'treatment',
-        imageDataUrl: dataUrl,
+        imageDataUrl: resized,
         // 0529 버그5: 커스텀 카테고리(custom-*)도 그대로 저장 (DesignCategory = builtin | string)
         styleCategory: cat,
         isFeatured: true,
         isPublic: true,
-      }).then((r) => {
+      })).then((r) => {
         if (r.success) pushToast('success', '메뉴에 사진을 추가했어요');
         else pushToast('error', r.error ?? '사진 업로드에 실패했어요. 다시 시도해 주세요');
       });

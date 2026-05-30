@@ -3,6 +3,7 @@
 import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
+import { resizeTreatmentPhoto } from '@/lib/image-utils';
 
 // SVG/HTML 같은 XSS 벡터 차단용 화이트리스트
 const ALLOWED_PHOTO_TYPES = new Set<string>([
@@ -49,7 +50,9 @@ export function PhotoCapture({ photos, onAdd, onRemove, maxPhotos = 3 }: PhotoCa
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === 'string') {
-        onAdd(reader.result);
+        void resizeTreatmentPhoto(reader.result).then((resized) => {
+          onAdd(resized);
+        });
       }
     };
     reader.onerror = () => {

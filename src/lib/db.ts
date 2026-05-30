@@ -8,6 +8,8 @@ import type { Shop, Designer, BusinessHours, ShopExtendedSettings, CategoryPrici
 import type { ShopPublicData } from '@/types/pre-consultation';
 
 const PORTFOLIO_BUCKET = 'portfolio-images';
+// portfolio-images 버킷 서버측 file_size_limit 과 일치 (2MB). 초과 시 업로드 전 차단.
+const PORTFOLIO_MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
 const DESIGNER_AVATAR_BUCKET = 'designer-profile-images';
 
 interface PortfolioMutationResult {
@@ -1369,6 +1371,12 @@ export async function dbInsertPortfolioPhoto(photo: PortfolioPhoto): Promise<Por
 
     if (!imagePath && photo.imageDataUrl.startsWith('data:')) {
       const { blob, mimeType } = dataUrlToBlob(photo.imageDataUrl);
+      // portfolio-images 버킷 서버측 제한 = 2MB. 업로드 전 가드해 깨끗한 에러 반환
+      // (정석 수정은 업로드 전 resizeTreatmentPhoto 로 ~400KB 압축 — PhotoCapture/업로드 폼에서 적용).
+      if (blob.size > PORTFOLIO_MAX_UPLOAD_BYTES) {
+        console.error('[db] dbInsertPortfolioPhoto blob too large:', blob.size);
+        return { success: false, error: '사진 용량이 너무 큽니다. 다시 시도해 주세요.' };
+      }
       const extension = getPortfolioFileExtension(mimeType);
       // 온보딩/메뉴 사진은 customerId 없음 → 'onboarding' 폴더 사용 (빈 문자열도 포함)
       const folder = photo.customerId || 'onboarding';

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useShallow } from 'zustand/react/shallow';
@@ -14,7 +14,6 @@ import { Button } from '@/components/ui/Button';
 import { ShareCardGeneratorModal } from '@/components/share-card/ShareCardGeneratorModal';
 import { useAuthStore } from '@/store/auth-store';
 import { useAppStore } from '@/store/app-store';
-import { CATEGORY_LABELS } from '@/lib/labels';
 import { resolveCategoryLabelKo } from '@/lib/category-resolver';
 
 // ─── Animation variants ───────────────────────────────────────────────────────
@@ -89,14 +88,22 @@ export default function WrapUpPage(): React.ReactElement {
     [customerId, getById],
   );
 
-  // Local form state: 이미 연결된 고객이 있으면 그 정보 사용
-  const [localName, setLocalName] = useState(
-    linkedCustomer?.name ?? customerName,
-  );
-  const [localPhone, setLocalPhone] = useState(
-    linkedCustomer?.phone ?? customerPhone,
-  );
+  // Local form state: 초기값은 빈 문자열로 시작, useEffect에서 채움
+  const [localName, setLocalName] = useState('');
+  const [localPhone, setLocalPhone] = useState('');
   const [customerSaved, setCustomerSaved] = useState(!!customerId);
+
+  // store hydrate 완료 후 linkedCustomer/store 값으로 채우기
+  // (사용자가 직접 입력을 시작했으면 덮어쓰지 않음)
+  useEffect(() => {
+    const nameSource = linkedCustomer?.name ?? customerName ?? '';
+    const phoneSource = linkedCustomer?.phone ?? customerPhone ?? '';
+    setLocalName((prev) => (prev === '' ? nameSource : prev));
+    setLocalPhone((prev) => (prev === '' ? phoneSource : prev));
+    if (customerId && !customerSaved) {
+      setCustomerSaved(true);
+    }
+  }, [customerId, linkedCustomer, customerName, customerPhone, customerSaved]);
   const [isSaving, setIsSaving] = useState(false);
   const [isGoingHome, setIsGoingHome] = useState(false);
   const [skipped, setSkipped] = useState(false);
@@ -311,9 +318,6 @@ export default function WrapUpPage(): React.ReactElement {
         <h1 className="text-2xl font-bold text-text tracking-tight">
           {t('fieldMode.wrapUpTitle')} ✓
         </h1>
-        <p className="text-text-muted text-sm mt-1">
-          STEP 9~11 · 마무리 단계
-        </p>
       </motion.div>
 
       {/* Success banner */}

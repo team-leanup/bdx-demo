@@ -14,15 +14,15 @@ const RESERVATION_READINESS_META: Record<ReservationReadinessState, ReservationR
   completed: {
     state: 'completed',
     dotColor: 'bg-emerald-500',
-    label: '사전 상담 완료',
-    shortLabel: '완료',
+    label: '응답 완료',
+    shortLabel: '응답 완료',
     className: 'bg-emerald-50 text-emerald-700',
   },
   waiting_response: {
     state: 'waiting_response',
     dotColor: 'bg-amber-400',
     label: '응답 대기',
-    shortLabel: '대기',
+    shortLabel: '응답 대기',
     className: 'bg-amber-50 text-amber-700',
   },
   link_not_sent: {

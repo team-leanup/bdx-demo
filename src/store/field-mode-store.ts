@@ -25,6 +25,8 @@ interface FieldModeState {
   addOns: AddOnOption[];
   /** 0531 — 사전상담 랩핑 선호. 'yes'면 정산에서 surcharges.wrapping 가산 (견적=계산대 일치) */
   wrappingPreference: WrappingPreference | null;
+  /** 0531 — 사전상담에서 손님이 선택한 커스텀 파츠(이름→개수). settlement 견적 정합용 */
+  customPartSelections: Record<string, number>;
   /** 0530 FM-2 — 사전상담에서 손님이 선택한 네일 쉐입 (매출 레코드 정합) */
   nailShape: NailShape | null;
 
@@ -86,6 +88,8 @@ interface FieldModeActions {
     addOns?: AddOnOption[];
     /** 0531 — 사전상담 랩핑 선호 */
     wrappingPreference?: WrappingPreference | null;
+    /** 0531 — 사전상담 커스텀 파츠 선택 */
+    customPartSelections?: Record<string, number>;
     /** 0530 FM-2 — 사전상담 네일 쉐입 */
     nailShape?: NailShape | null;
     customerName?: string;
@@ -113,6 +117,7 @@ const DEFAULT_STATE: FieldModeState = {
   extensionLength: null,
   addOns: [] as AddOnOption[],
   wrappingPreference: null,
+  customPartSelections: {},
   nailShape: null,
   treatmentStartedAt: null,
   inTreatmentAddons: [] as FieldModeAddon[],
@@ -237,6 +242,7 @@ export const useFieldModeStore = create<FieldModeStore>()(
           lengthType: data.lengthType ?? 'keep',
           addOns: data.addOns ?? [],
           wrappingPreference: data.wrappingPreference ?? null,
+          customPartSelections: data.customPartSelections ?? {},
           nailShape: data.nailShape ?? null,
           customerName: data.customerName ?? '',
           customerPhone: data.customerPhone ?? '',

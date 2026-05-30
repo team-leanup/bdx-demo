@@ -258,13 +258,13 @@ export function PortfolioOverlay({
               </button>
             </div>
 
-            {/* 이 디자인으로 상담 시작 */}
+            {/* 이 디자인으로 시술 시작 */}
             <div className="border-t border-border px-4 py-3">
               <button
                 onClick={() => { router.push(`/field-mode?portfolioId=${photo.id}`); onClose(); }}
                 className="w-full rounded-xl bg-primary py-2.5 text-xs font-bold text-white"
               >
-                이 디자인으로 상담
+                이 디자인으로 시술 시작
               </button>
             </div>
 

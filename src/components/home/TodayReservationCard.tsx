@@ -60,8 +60,10 @@ const LANGUAGE_SHORT_LABEL: Record<'en' | 'zh' | 'ja', string> = {
   ja: '日',
 };
 
-function addMinutesToTime(time: string, minutes: number): string {
+function addMinutesToTime(time: string, minutes: number): string | null {
+  if (!time || !time.includes(':')) return null;
   const [h, m] = time.split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) return null;
   const total = h * 60 + m + minutes;
   // 자정 초과(>=24:00) 시 23:59로 clamp — 다음날 표시는 별도 UX로 처리
   if (total >= 24 * 60) return '23:59';
@@ -239,7 +241,7 @@ export function TodayReservationCard({
             // H-3: 시술 종료 예상 시간 및 다음 예약까지 여유 시간
             const endTime = addMinutesToTime(booking.reservationTime, defaultDurationMinutes);
             const nextBooking = reservations[idx + 1];
-            const gapMinutes = nextBooking
+            const gapMinutes = nextBooking && endTime
               ? calcGapMinutes(endTime, nextBooking.reservationTime)
               : null;
 
@@ -280,13 +282,23 @@ export function TodayReservationCard({
                   <div className="flex min-w-0 items-start gap-3 md:flex-1 md:items-center">
                     {/* 시간 라벨 */}
                     <div className="flex w-11 shrink-0 flex-col items-center">
-                      <span className="text-xs font-semibold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                        {booking.reservationTime}
-                      </span>
-                      <div className="mt-1 h-1 w-1 rounded-full bg-primary/40" />
-                      <span className="mt-1 text-[10px] text-text-muted leading-tight" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                        ~{endTime}
-                      </span>
+                      {booking.reservationTime && booking.reservationTime.includes(':') ? (
+                        <>
+                          <span className="text-xs font-semibold text-text" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                            {booking.reservationTime}
+                          </span>
+                          <div className="mt-1 h-1 w-1 rounded-full bg-primary/40" />
+                          {endTime && (
+                            <span className="mt-1 text-[10px] text-text-muted leading-tight" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                              ~{endTime}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="rounded-full bg-surface-alt px-1.5 py-0.5 text-[9px] text-text-muted leading-tight text-center">
+                          시간 미정
+                        </span>
+                      )}
                       {gapMinutes !== null && gapMinutes > 0 && (
                         <span className="mt-0.5 text-[9px] text-primary/60 leading-tight text-center">
                           {gapMinutes}분 여유
@@ -387,10 +399,6 @@ export function TodayReservationCard({
                           unoptimized
                         />
                       </div>
-                    ) : !booking.customerId ? (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-alt border border-border">
-                        <span className="text-[8px] font-medium text-text-muted">신규</span>
-                      </div>
                     ) : null}
                     <div className="ml-auto flex shrink-0 items-center gap-1.5">
                       {booking.customerId && stage !== 'completed' && (
@@ -419,7 +427,7 @@ export function TodayReservationCard({
                           }}
                           className="shrink-0 rounded-lg bg-surface-alt px-3 py-2.5 text-xs font-semibold text-text-muted cursor-pointer hover:bg-border active:scale-95 transition-all"
                         >
-                          상담 완료
+                          시술 완료
                         </button>
                       ) : stage === 'just_registered' ? (
                         <button
@@ -433,7 +441,7 @@ export function TodayReservationCard({
                           onClick={(e) => { e.stopPropagation(); handleStartClick(booking); }}
                           className="rounded-lg bg-primary px-3 py-2.5 text-xs font-semibold text-white active:scale-95 transition-transform shadow-sm shadow-primary/30 ring-1 ring-primary/20"
                         >
-                          상담 시작
+                          시술 시작
                         </button>
                       ) : stage === 'pre_consult_done' ? (
                         <>
@@ -447,7 +455,7 @@ export function TodayReservationCard({
                             onClick={(e) => { e.stopPropagation(); handleStartClick(booking); }}
                             className="rounded-lg bg-primary px-3 py-2.5 text-xs font-semibold text-white active:scale-95 transition-transform shadow-sm shadow-primary/30 ring-1 ring-primary/20"
                           >
-                            상담 시작
+                            시술 시작
                           </button>
                         </>
                       ) : stage === 'in_treatment' ? (
@@ -459,7 +467,7 @@ export function TodayReservationCard({
                           onClick={(e) => { e.stopPropagation(); handleStartClick(booking); }}
                           className="rounded-lg bg-primary px-3 py-2.5 text-xs font-semibold text-white active:scale-95 transition-transform shadow-sm shadow-primary/30 ring-1 ring-primary/20"
                         >
-                          상담 시작
+                          시술 시작
                         </button>
                       )}
                     </div>

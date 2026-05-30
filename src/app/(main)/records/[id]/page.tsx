@@ -24,54 +24,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { fetchBookingRequestById } from '@/lib/db';
 import type { BookingRequest } from '@/types/consultation';
 import type { PreConsultationData } from '@/types/pre-consultation';
-
-// ── 사전상담 레이블 맵 (preconsult/[bookingId]/page.tsx 패턴 재사용) ──
-const PRE_CATEGORY_LABEL: Record<string, string> = {
-  simple: '심플 (원컬러·그라데이션)',
-  french: '프렌치',
-  magnet: '자석 (캣아이·자석젤)',
-  art: '아트 (풀아트·포인트)',
-};
-const PRE_NAIL_STATUS_LABEL: Record<string, string> = { none: '맨손', existing: '기존 젤 있음' };
-const PRE_REMOVAL_LABEL: Record<string, string> = { none: '오프 없음', self_shop: '당샵 오프', other_shop: '타샵 오프' };
-const PRE_LENGTH_PREF_LABEL: Record<string, string> = { keep: '현재 유지', shorten: '짧게', extend: '연장' };
-const PRE_EXTENSION_LEN_LABEL: Record<string, string> = { natural: '자연스러운 길이', medium: '중간', long: '길게' };
-const PRE_SHAPE_LABEL: Record<string, string> = {
-  round: '라운드', oval: '오벌', square: '스퀘어', squoval: '스퀘오벌',
-  almond: '아몬드', stiletto: '스틸레토', coffin: '코핀',
-};
-const PRE_WRAPPING_LABEL: Record<string, string> = { yes: '랩핑 원함', no: '랩핑 불필요' };
-const PRE_FEEL_LABEL: Record<string, string> = { natural: '내추럴', french: '프렌치', trendy: '트렌디', fancy: '화려한' };
-const PRE_STYLE_PREF_LABEL: Record<string, string> = { photo_match: '사진과 동일하게', natural_fit: '자연스럽게', clean_subtle: '깔끔하게' };
-const PRE_STYLE_KW_LABEL: Record<string, string> = {
-  office_friendly: '오피스 룩', slim_fingers: '손가락 길어보이게',
-  tidy_look: '단정한 느낌', subtle_point: '은은한 포인트', more_fancy: '좀 더 화려하게',
-};
-const PRE_ADDON_LABEL: Record<string, string> = { stone: '스톤', parts: '파츠', glitter: '글리터', point_art: '포인트 아트', wrapping: '랩핑' };
-const PRE_BODY_PART_LABEL: Record<string, string> = { hand: '손', foot: '발' };
-
-// ── 사전상담 섹션 서브 컴포넌트 ──
-function PreInfoRow({ label, value }: { label: string; value?: string }): React.ReactElement | null {
-  if (!value) return null;
-  return (
-    <div className="flex justify-between text-sm">
-      <span className="text-text-secondary">{label}</span>
-      <span className="font-medium text-text">{value}</span>
-    </div>
-  );
-}
-
-function PreTagList({ tags, labelMap }: { tags: string[]; labelMap: Record<string, string> }): React.ReactElement {
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {tags.map((tag) => (
-        <span key={tag} className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-          {labelMap[tag] ?? tag}
-        </span>
-      ))}
-    </div>
-  );
-}
+import { PreConsultDetailView } from '@/components/consultation/PreConsultDetailView';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -156,8 +109,8 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
     const now = getNowInKoreaIso();
     updateRecord(id, { finalizedAt: now });
     if (record.customerId) {
-      // 0529: totalSpend는 회원권 차감분 포함 실제 시술 금액 기준 (field-mode·payment와 일관)
-      const totalServicePrice = record.finalPrice + (record.membershipApplied ?? 0);
+      // 0529: totalSpend는 회원권 차감분 + 예약금 차감분 포함 실제 시술 금액 기준 (field-mode·payment와 일관)
+      const totalServicePrice = record.finalPrice + (record.membershipApplied ?? 0) + (record.deposit ?? 0);
       recordTreatmentCompletion(record.customerId, totalServicePrice, {
         recordId: id,
         date: getTodayInKorea(),
@@ -308,122 +261,18 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
       )}
 
       {/* 사전 상담 응답 */}
-      {preConsultBooking?.preConsultationData && (() => {
-        const raw = preConsultBooking.preConsultationData as unknown as PreConsultationData;
-        const preImages = raw.referenceImageUrls?.length
-          ? raw.referenceImageUrls
-          : (preConsultBooking.referenceImageUrls ?? []);
-        const hasPreData =
-          raw.designCategory ||
-          raw.nailStatus ||
-          raw.removalPreference ||
-          raw.lengthPreference ||
-          (raw.styleKeyword && raw.styleKeyword.length > 0) ||
-          ((raw.addOns && raw.addOns.length > 0) || (raw.customPartSelections && Object.keys(raw.customPartSelections).length > 0)) ||
-          raw.additionalRequest ||
-          preImages.length > 0;
-        if (!hasPreData) return null;
-        return (
-          <Card className="mx-4">
-            <h2 className="mb-3 text-sm font-semibold text-text-secondary">사전 상담 응답</h2>
-            <div className="flex flex-col gap-3">
-              {/* 참고 이미지 */}
-              {preImages.length > 0 && (
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-xs font-semibold text-text-secondary">참고 이미지</span>
-                  <div className="flex gap-2 overflow-x-auto pb-1">
-                    {preImages.map((url, i) => (
-                      <div key={i} className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border border-border">
-                        <Image src={url} alt={`사전상담 참고 ${i + 1}`} fill unoptimized className="object-cover" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* 디자인 선택 */}
-              {(raw.bodyPart || raw.designCategory || raw.designFeel || raw.nailShape || raw.stylePreference) && (
-                <div className="flex flex-col gap-2">
-                  <span className="text-xs font-semibold text-text-secondary">디자인 선택</span>
-                  <div className="flex flex-col gap-1.5">
-                    {raw.bodyPart && <PreInfoRow label="시술 부위" value={PRE_BODY_PART_LABEL[raw.bodyPart] ?? raw.bodyPart} />}
-                    {raw.designCategory && (
-                      <PreInfoRow
-                        label="시술 종류"
-                        value={
-                          PRE_CATEGORY_LABEL[raw.designCategory] ??
-                          shopSettings?.customCategories?.find((cat) => cat.id === raw.designCategory)?.name ??
-                          raw.designCategory
-                        }
-                      />
-                    )}
-                    {raw.designFeel && <PreInfoRow label="디자인 느낌" value={PRE_FEEL_LABEL[raw.designFeel] ?? raw.designFeel} />}
-                    {raw.nailShape && <PreInfoRow label="네일 쉐입" value={PRE_SHAPE_LABEL[raw.nailShape] ?? raw.nailShape} />}
-                    {raw.stylePreference && <PreInfoRow label="시술 방향" value={PRE_STYLE_PREF_LABEL[raw.stylePreference] ?? raw.stylePreference} />}
-                  </div>
-                </div>
-              )}
-
-              {/* 네일 상태 */}
-              {(raw.nailStatus || (raw.removalPreference && raw.removalPreference !== 'none') || raw.lengthPreference || raw.wrappingPreference) && (
-                <div className="flex flex-col gap-2">
-                  <span className="text-xs font-semibold text-text-secondary">네일 상태</span>
-                  <div className="flex flex-col gap-1.5">
-                    {raw.nailStatus && <PreInfoRow label="현재 상태" value={PRE_NAIL_STATUS_LABEL[raw.nailStatus] ?? raw.nailStatus} />}
-                    {raw.removalPreference && raw.removalPreference !== 'none' && (
-                      <PreInfoRow label="오프" value={PRE_REMOVAL_LABEL[raw.removalPreference] ?? raw.removalPreference} />
-                    )}
-                    {raw.lengthPreference && <PreInfoRow label="길이 선호" value={PRE_LENGTH_PREF_LABEL[raw.lengthPreference] ?? raw.lengthPreference} />}
-                    {raw.extensionLength && raw.lengthPreference === 'extend' && (
-                      <PreInfoRow label="연장 길이" value={PRE_EXTENSION_LEN_LABEL[raw.extensionLength] ?? raw.extensionLength} />
-                    )}
-                    {raw.wrappingPreference && (
-                      <PreInfoRow label="랩핑" value={PRE_WRAPPING_LABEL[raw.wrappingPreference] ?? raw.wrappingPreference} />
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* 스타일 키워드 */}
-              {raw.styleKeyword && raw.styleKeyword.length > 0 && (
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-xs font-semibold text-text-secondary">스타일 키워드</span>
-                  <PreTagList tags={raw.styleKeyword} labelMap={PRE_STYLE_KW_LABEL} />
-                </div>
-              )}
-
-              {/* 추가 옵션 */}
-              {((raw.addOns && raw.addOns.length > 0) || (raw.customPartSelections && Object.keys(raw.customPartSelections).length > 0)) && (
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-xs font-semibold text-text-secondary">추가 옵션</span>
-                  {raw.addOns && raw.addOns.length > 0 && (
-                    <PreTagList tags={raw.addOns} labelMap={PRE_ADDON_LABEL} />
-                  )}
-                  {raw.customPartSelections && Object.keys(raw.customPartSelections).length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-1">
-                      {Object.entries(raw.customPartSelections).map(([name, count]) => (
-                        <span key={name} className="rounded-full bg-primary/10 border border-primary/30 px-2.5 py-1 text-xs font-semibold text-primary">
-                          {name} ×{count}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* 손님 요청사항 */}
-              {raw.additionalRequest && raw.additionalRequest.trim() && (
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-xs font-semibold text-text-secondary">손님 요청사항</span>
-                  <div className="rounded-xl bg-surface-alt p-3">
-                    <p className="text-sm text-text whitespace-pre-line">{raw.additionalRequest}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </Card>
-        );
-      })()}
+      {preConsultBooking?.preConsultationData && (
+        <Card className="mx-4">
+          <h2 className="mb-3 text-sm font-semibold text-text-secondary">사전 상담 응답</h2>
+          <PreConsultDetailView
+            data={preConsultBooking.preConsultationData as unknown as PreConsultationData}
+            options={{
+              customParts: shopSettings?.customParts,
+              customCategories: shopSettings?.customCategories,
+            }}
+          />
+        </Card>
+      )}
 
       {/* 시술 리포트 */}
       <Card className="mx-4">

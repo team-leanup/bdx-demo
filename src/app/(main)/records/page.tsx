@@ -8,7 +8,8 @@ import { ReservationReadinessBadge } from '@/components/reservations/Reservation
 import { AnimatePresence, motion } from 'framer-motion';
 import { Card, Input, Modal } from '@/components/ui';
 import { ConsultationLinkContent } from '@/components/reservations/ConsultationLinkModal';
-import { PreConsultSummaryInline } from '@/components/reservations/PreConsultSummaryInline';
+import { PreConsultDetailView } from '@/components/consultation/PreConsultDetailView';
+import type { PreConsultationData } from '@/types/pre-consultation';
 import { PretreatmentAlertModal } from '@/components/alerts/PretreatmentAlertModal';
 import type { CustomerTag } from '@/types/customer';
 import { useRecordsStore } from '@/store/records-store';
@@ -49,6 +50,7 @@ const READINESS_LEGEND = [
   { color: 'bg-slate-300', label: '링크 미발송' },
   { color: 'bg-amber-400', label: '응답 대기' },
   { color: 'bg-emerald-500', label: '응답 완료' },
+  { color: 'bg-blue-500', label: '시술 완료' },
 ] as const;
 
 type MainTab = 'reservations' | 'consultations';
@@ -166,8 +168,6 @@ export default function RecordsPage() {
   const [showAddReservationModal, setShowAddReservationModal] = useState(false);
   const [reservationPrefill, setReservationPrefill] = useState<{ time?: string; designerId?: string; channel?: BookingChannel } | null>(null);
   const [reservationNaverMode, setReservationNaverMode] = useState(false);
-  const [showPreConsultInline, setShowPreConsultInline] = useState(false);
-
   // 주의사항 자동 리마인드 모달 — 오늘 예약 바텀시트가 열릴 때 pinned 주의 태그가 있으면 자동 표시
   const [reminderCustomerName, setReminderCustomerName] = useState<string>('');
   const [reminderTags, setReminderTags] = useState<CustomerTag[]>([]);
@@ -178,7 +178,6 @@ export default function RecordsPage() {
     setLinkGenBooking(null);
     setEditMode(false);
     setSelectedEvent(null);
-    setShowPreConsultInline(false);
     reminderShownForIdRef.current = null;
   };
 
@@ -328,6 +327,7 @@ export default function RecordsPage() {
     const todayRemaining = allReservations.filter((r) => {
       if (r.reservationDate !== today) return false;
       if (r.status === 'completed' || r.status === 'cancelled') return false;
+      if (!r.reservationTime || !r.reservationTime.includes(':')) return false;
       const [h, m] = r.reservationTime.split(':').map(Number);
       const dt = new Date(today);
       dt.setHours(h, m, 0, 0);
@@ -340,6 +340,7 @@ export default function RecordsPage() {
       .filter((r) => {
         if (r.reservationDate !== today) return false;
         if (r.status === 'completed' || r.status === 'cancelled') return false;
+        if (!r.reservationTime || !r.reservationTime.includes(':')) return false;
         const [h, m] = r.reservationTime.split(':').map(Number);
         return h * 60 + m > nowMinutes;
       })
@@ -1050,7 +1051,11 @@ export default function RecordsPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-text-secondary">시간</span>
-                      <span className="text-sm font-medium text-text">{selectedEvent.startTime} – {selectedEvent.endTime}</span>
+                      {selectedEvent.startTime && selectedEvent.startTime.includes(':') ? (
+                        <span className="text-sm font-medium text-text">{selectedEvent.startTime} – {selectedEvent.endTime}</span>
+                      ) : (
+                        <span className="rounded-full bg-surface-alt px-2.5 py-0.5 text-xs font-medium text-text-muted">시간 미정</span>
+                      )}
                     </div>
                     {selectedEvent.channel && (
                       <div className="flex justify-between">
@@ -1185,6 +1190,34 @@ export default function RecordsPage() {
                         </>
                       );
                     })()}
+                    {/* 사전상담 인라인 뷰 — preConsultationCompletedAt 있을 때만 */}
+                    {selectedEvent.preConsultationCompletedAt && (() => {
+                      const booking = allReservations.find((r) => r.id === selectedEvent.originalId);
+                      const preConsultData = booking?.preConsultationData as unknown as PreConsultationData | undefined;
+                      if (!preConsultData) return null;
+                      return (
+                        <div className="mt-2">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-xs font-semibold text-text-secondary">사전 상담 내용</span>
+                            <button
+                              type="button"
+                              onClick={() => { closeSelectedEventSheet(); router.push(`/records/preconsult/${booking!.id}`); }}
+                              className="ml-auto text-[11px] font-semibold text-primary hover:underline"
+                            >
+                              전체 보기 →
+                            </button>
+                          </div>
+                          <PreConsultDetailView
+                            data={preConsultData}
+                            options={{
+                              elevated: false,
+                              customParts: shopSettings.customParts,
+                              customCategories: shopSettings.customCategories,
+                            }}
+                          />
+                        </div>
+                      );
+                    })()}
                     {/* Stage 기반 액션 영역 */}
                     {(() => {
                       const booking = allReservations.find((r) => r.id === selectedEvent.originalId);
@@ -1236,7 +1269,7 @@ export default function RecordsPage() {
                               )}
                               {stage === 'completed' && (
                                 <div className="flex items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200 py-2.5">
-                                  <span className="text-xs font-semibold text-emerald-700">✓ 결제 완료됨</span>
+                                  <span className="text-xs font-semibold text-emerald-700">✓ 시술 완료</span>
                                 </div>
                               )}
                               <div className="flex gap-2">
@@ -1308,7 +1341,7 @@ export default function RecordsPage() {
                                 onClick={handleStartConsultation}
                                 className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-medium text-white active:scale-[0.98] transition-transform"
                               >
-                                상담 시작
+                                시술 시작
                               </button>
                               <div className="flex gap-2">
                                 <button
@@ -1338,16 +1371,8 @@ export default function RecordsPage() {
                                 onClick={handleStartConsultation}
                                 className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-medium text-white active:scale-[0.98] transition-transform"
                               >
-                                상담 시작
+                                시술 시작
                               </button>
-                              {booking?.preConsultationData && (
-                                <button
-                                  onClick={() => { closeSelectedEventSheet(); router.push(`/records/preconsult/${booking.id}`); }}
-                                  className="w-full rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary active:scale-[0.98] transition-transform"
-                                >
-                                  사전 상담 보기
-                                </button>
-                              )}
                               <div className="flex gap-2">
                                 <button
                                   onClick={handleEditModeEnter}

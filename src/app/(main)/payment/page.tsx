@@ -15,6 +15,7 @@ import { DESIGN_SCOPE_LABEL, OFF_TYPE_LABEL } from '@/lib/labels';
 import type { PaymentMethod } from '@/types/consultation';
 import { getRemainingAmount, getMembershipSessionState, canUseMembership } from '@/lib/membership';
 import { cn } from '@/lib/cn';
+import { resizeTreatmentPhoto } from '@/lib/image-utils';
 
 type SectionId = 1 | 2 | 3 | 4 | 5;
 
@@ -207,10 +208,12 @@ export default function PaymentPage(): React.ReactElement | null {
       reader.onload = (e) => {
         const dataUrl = e.target?.result;
         if (typeof dataUrl === 'string') {
-          setPhotos((prev) => [
-            ...prev,
-            { id: generateId('photo'), dataUrl },
-          ]);
+          void resizeTreatmentPhoto(dataUrl).then((resized) => {
+            setPhotos((prev) => [
+              ...prev,
+              { id: generateId('photo'), dataUrl: resized },
+            ]);
+          });
         }
       };
       reader.readAsDataURL(file);

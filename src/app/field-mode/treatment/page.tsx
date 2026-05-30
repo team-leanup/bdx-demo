@@ -5,13 +5,16 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFieldModeStore } from '@/store/field-mode-store';
 import { useAppStore } from '@/store/app-store';
+import { useAuthStore } from '@/store/auth-store';
 import { calculatePreConsultPrice } from '@/lib/pre-consult-price';
+import { fetchBookingRequestById } from '@/lib/db';
 import { useT } from '@/lib/i18n';
 import { Button } from '@/components/ui/Button';
 import { TreatmentTimer } from '@/components/field-mode/TreatmentTimer';
 import { AddOnMiniPanel } from '@/components/field-mode/AddOnMiniPanel';
-import { CATEGORY_LABELS } from '@/lib/labels';
+import { PreConsultDetailView } from '@/components/consultation/PreConsultDetailView';
 import { resolveCategoryLabelKo, resolveCategoryPricing } from '@/lib/category-resolver';
+import type { PreConsultationData } from '@/types/pre-consultation';
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
@@ -19,6 +22,8 @@ export default function TreatmentPage(): React.ReactElement {
   const t = useT();
   const router = useRouter();
   const [showBackConfirm, setShowBackConfirm] = useState(false);
+  const [preConsultData, setPreConsultData] = useState<PreConsultationData | null>(null);
+  const [preConsultOpen, setPreConsultOpen] = useState(false);
 
   const {
     selectedCategory,
@@ -33,9 +38,11 @@ export default function TreatmentPage(): React.ReactElement {
     addInTreatmentAddon,
     removeInTreatmentAddon,
     completeTreatment,
+    bookingId,
   } = useFieldModeStore();
 
   const { shopSettings } = useAppStore();
+  const currentShopId = useAuthStore((s) => s.currentShopId);
 
   // Redirect guard — no category means session is gone
   useEffect(() => {
@@ -43,6 +50,16 @@ export default function TreatmentPage(): React.ReactElement {
       router.replace('/field-mode');
     }
   }, [selectedCategory, router]);
+
+  // 사전 상담 데이터 로드
+  useEffect(() => {
+    if (!bookingId || !currentShopId) return;
+    void fetchBookingRequestById(bookingId, currentShopId).then((booking) => {
+      if (booking?.preConsultationData) {
+        setPreConsultData(booking.preConsultationData as unknown as PreConsultationData);
+      }
+    });
+  }, [bookingId, currentShopId]);
 
   // Wake Lock — keep screen on during treatment
   useEffect(() => {
@@ -195,6 +212,55 @@ export default function TreatmentPage(): React.ReactElement {
               </p>
             </div>
           </motion.div>
+
+          {/* 사전 상담 내용 접이식 섹션 */}
+          {preConsultData && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.22, delay: 0.04, ease: 'easeOut' }}
+              className="bg-surface border border-border rounded-2xl overflow-hidden shadow-sm"
+            >
+              <button
+                type="button"
+                onClick={() => setPreConsultOpen((v) => !v)}
+                className="w-full flex items-center justify-between px-4 py-3 min-h-[44px] hover:bg-surface-alt active:bg-surface-inset transition-colors"
+              >
+                <span className="text-sm font-bold text-text">사전 상담 내용</span>
+                <svg
+                  className={`w-4 h-4 text-text-muted transition-transform duration-200 ${preConsultOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
+              <AnimatePresence initial={false}>
+                {preConsultOpen && (
+                  <motion.div
+                    key="pre-consult-content"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-4 pb-4 pt-1">
+                      <PreConsultDetailView
+                        data={preConsultData}
+                        options={{
+                          customParts: shopSettings.customParts,
+                          customCategories: shopSettings.customCategories,
+                        }}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )}
 
           {/* Add-on mini panel */}
           <motion.div

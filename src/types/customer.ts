@@ -53,6 +53,7 @@ export interface TreatmentHistory {
   imageUrls?: string[];
   colorLabels?: string[];
   partsUsed?: string[];
+  paymentMethod?: 'cash' | 'card' | 'membership';
 }
 
 export type VisitFrequency = 'weekly' | 'biweekly' | 'monthly' | 'irregular';

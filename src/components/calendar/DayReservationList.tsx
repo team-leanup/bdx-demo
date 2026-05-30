@@ -12,7 +12,6 @@ import { getBookingStage } from '@/lib/booking-stage';
 import { Button } from '@/components/ui/Button';
 import { PretreatmentAlertModal } from '@/components/alerts/PretreatmentAlertModal';
 import { LinkCustomerModal } from '@/components/reservations/LinkCustomerModal';
-import { ConsultationLinkModal } from '@/components/reservations/ConsultationLinkModal';
 import { ReservationReadinessBadge } from '@/components/reservations/ReservationReadinessBadge';
 import type { BookingChannel, BookingStatus, BookingRequest } from '@/types/consultation';
 import type { RemovalPreference, LengthPreference, AddOnOption } from '@/types/pre-consultation';
@@ -273,7 +272,6 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
   const setConsultationLocale = useLocaleStore((s) => s.setConsultationLocale);
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
   const getDesignerNameFromStore = useShopStore((s) => s.getDesignerName);
-  const shopName = useShopStore((s) => s.shop?.name) ?? '내 매장';
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const hydrateFromBooking = useFieldModeStore((s) => s.hydrateFromBooking);
   const shopSettings = useAppStore((s) => s.shopSettings);
@@ -282,7 +280,6 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
   const [alertBooking, setAlertBooking] = useState<BookingRequest | null>(null);
   const [alertTags, setAlertTags] = useState<CustomerTag[]>([]);
   const [linkModalBooking, setLinkModalBooking] = useState<BookingRequest | null>(null);
-  const [linkGenBooking, setLinkGenBooking] = useState<BookingRequest | null>(null);
 
   const handleAlertQuickSale = (): void => {
     if (alertBooking) {
@@ -472,15 +469,6 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
                       </div>
 
                       <div className="flex gap-1.5 flex-shrink-0 self-center">
-                        <button
-                          onClick={() => setLinkGenBooking(booking)}
-                          className="rounded-lg bg-surface-alt border border-border px-2.5 py-2 text-xs font-semibold text-text-secondary hover:bg-border active:scale-95 transition-all"
-                          title={t('calendar.consultationLink')}
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                          </svg>
-                        </button>
                         {stage === 'completed' && matchedRecord ? (
                           <Button
                             size="sm"
@@ -543,12 +531,6 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
         reservationDesignerId={linkModalBooking?.designerId}
       />
 
-      <ConsultationLinkModal
-        isOpen={linkGenBooking !== null}
-        onClose={() => setLinkGenBooking(null)}
-        booking={linkGenBooking}
-        shopName={shopName}
-      />
     </div>
   );
 }

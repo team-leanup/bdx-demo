@@ -193,25 +193,64 @@ function CustomerDetailContent({ id }: { id: string }) {
   const getAllRecords = useRecordsStore((s) => s.getAllRecords);
 
   // UF-4: records-store에서 해당 고객 레코드를 가져와 시술 이력과 병합
+  const customerRecords = useMemo(
+    () => getAllRecords().filter((r) => r.customerId === id),
+    [getAllRecords, id],
+  );
+
   const mergedTreatmentHistory = useMemo((): TreatmentHistory[] => {
     const existingHistory = customer?.treatmentHistory ?? [];
-    const recordBased = getAllRecords()
-      .filter((r) => r.customerId === id)
-      .map((r): TreatmentHistory => ({
-        recordId: r.id,
-        date: r.createdAt.split('T')[0],
-        bodyPart: r.consultation.bodyPart,
-        designScope: DESIGN_SCOPE_LABEL[r.consultation.designScope] ?? r.consultation.designScope,
-        price: r.finalPrice,
-        designerName: useShopStore.getState().getDesignerName(r.designerId) || r.designerId,
-      }));
+    const recordBased = customerRecords.map((r): TreatmentHistory => ({
+      recordId: r.id,
+      date: r.createdAt.split('T')[0],
+      bodyPart: r.consultation.bodyPart,
+      designScope: DESIGN_SCOPE_LABEL[r.consultation.designScope] ?? r.consultation.designScope,
+      price: r.finalPrice,
+      designerName: useShopStore.getState().getDesignerName(r.designerId) || r.designerId,
+      paymentMethod: r.paymentMethod,
+      partsUsed: r.consultation.partsSelections?.length
+        ? r.consultation.partsSelections.map((p) => `${p.grade} x${p.quantity}`)
+        : undefined,
+    }));
 
     // N-11: 중복 제거 — recordId 기반 (날짜+금액은 다른 고객의 같은 시술도 중복 처리될 수 있음)
     const seen = new Set(existingHistory.map((h) => h.recordId).filter(Boolean));
     const unique = recordBased.filter((r) => !r.recordId || !seen.has(r.recordId));
 
     return [...existingHistory, ...unique].sort((a, b) => b.date.localeCompare(a.date));
-  }, [customer?.treatmentHistory, getAllRecords, id]);
+  }, [customer?.treatmentHistory, customerRecords]);
+
+  // 결제 수단별 합계 (records 실데이터 기반)
+  const paymentSummary = useMemo(() => {
+    let cash = 0;
+    let card = 0;
+    let membership = 0;
+    for (const r of customerRecords) {
+      if (!r.finalizedAt) continue;
+      const pm = r.paymentMethod;
+      // 복합 결제(membership + cash/card)
+      if (pm === 'membership' && r.secondaryPaymentMethod && r.secondaryAmount) {
+        membership += (r.membershipApplied ?? 0);
+        if (r.secondaryPaymentMethod === 'cash') cash += r.secondaryAmount;
+        else card += r.secondaryAmount;
+      } else if (pm === 'cash') {
+        cash += r.finalPrice;
+      } else if (pm === 'card') {
+        card += r.finalPrice;
+      } else if (pm === 'membership') {
+        membership += (r.membershipApplied ?? r.finalPrice);
+      }
+    }
+    return { cash, card, membership };
+  }, [customerRecords]);
+
+  // 이 고객의 예약 이력 (사전상담 완료 여부 포함)
+  const customerReservations = useMemo(
+    () => reservations
+      .filter((r) => r.customerId === id)
+      .sort((a, b) => b.reservationDate.localeCompare(a.reservationDate)),
+    [reservations, id],
+  );
 
   const customerPhotos = getByCustomerId(id);
   const treatmentPhotos = customerPhotos.filter(
@@ -1010,6 +1049,61 @@ function CustomerDetailContent({ id }: { id: string }) {
       </div>
 
       {/* ─────────────────────────────── */}
+      {/* 2.3 예약 / 사전상담 이력 */}
+      {/* ─────────────────────────────── */}
+      {customerReservations.length > 0 && (
+        <Card className="mx-4 shadow-md rounded-2xl">
+          <h2 className="mb-3 text-sm font-semibold text-text-secondary">예약 이력</h2>
+          <div className="flex flex-col gap-2">
+            {customerReservations.map((res) => {
+              const hasPreConsult = !!res.preConsultationCompletedAt;
+              return (
+                <button
+                  key={res.id}
+                  type="button"
+                  onClick={() => hasPreConsult && router.push(`/records/preconsult/${res.id}`)}
+                  className={cn(
+                    'flex items-center justify-between rounded-xl border px-3 py-2.5 text-left transition-colors',
+                    hasPreConsult
+                      ? 'border-emerald-200 bg-emerald-50 hover:bg-emerald-100 cursor-pointer'
+                      : 'border-border bg-surface-alt cursor-default',
+                  )}
+                >
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span className="text-xs font-semibold text-text">
+                      {res.reservationDate} {res.reservationTime}
+                    </span>
+                    {res.requestNote && (
+                      <span className="text-[11px] text-text-muted truncate max-w-[200px]">{res.requestNote}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                    {hasPreConsult ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-semibold text-white">
+                        <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        사전상담 완료
+                      </span>
+                    ) : (
+                      <span className="inline-flex rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-500">
+                        미완료
+                      </span>
+                    )}
+                    {hasPreConsult && (
+                      <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
+      {/* ─────────────────────────────── */}
       {/* 2.5 회원권 */}
       {/* ─────────────────────────────── */}
       <div className="mx-4">
@@ -1161,6 +1255,33 @@ function CustomerDetailContent({ id }: { id: string }) {
           )}
         </div>
 
+        {/* 결제 수단별 합계 */}
+        {(paymentSummary.cash > 0 || paymentSummary.card > 0 || paymentSummary.membership > 0) && (
+          <div className="mt-3 rounded-xl border border-border bg-surface-alt px-3 py-2.5 flex flex-col gap-1.5">
+            <p className="text-[11px] font-semibold text-text-muted mb-0.5">결제 합계</p>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              {paymentSummary.cash > 0 && (
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] font-medium text-text-muted">현금</span>
+                  <span className="text-xs font-bold text-text tabular-nums">{formatPrice(paymentSummary.cash)}</span>
+                </div>
+              )}
+              {paymentSummary.card > 0 && (
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] font-medium text-text-muted">카드</span>
+                  <span className="text-xs font-bold text-text tabular-nums">{formatPrice(paymentSummary.card)}</span>
+                </div>
+              )}
+              {paymentSummary.membership > 0 && (
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] font-medium text-text-muted">회원권</span>
+                  <span className="text-xs font-bold text-text tabular-nums">{formatPrice(paymentSummary.membership)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* 시술 기록 보기 링크 */}
         <button
           onClick={() => router.push(`/records?customerId=${id}`)}
@@ -1205,7 +1326,12 @@ function CustomerDetailContent({ id }: { id: string }) {
 
                 {/* 내용 */}
                 <div
-                  className="flex-1 min-w-0 rounded-2xl border p-3"
+                  role={hist.recordId ? 'button' : undefined}
+                  onClick={() => hist.recordId && router.push(`/records/${hist.recordId}`)}
+                  className={cn(
+                    'flex-1 min-w-0 rounded-2xl border p-3',
+                    hist.recordId ? 'cursor-pointer hover:border-primary/40 transition-colors' : '',
+                  )}
                   style={{
                     background: 'var(--color-surface-alt)',
                     borderColor: 'var(--color-border)',
@@ -1215,12 +1341,24 @@ function CustomerDetailContent({ id }: { id: string }) {
                     <p className="text-xs font-medium text-text-muted">
                       {formatDateDot(hist.date)}
                     </p>
-                    <span
-                      className="shrink-0 text-base font-bold"
-                      style={{ color: 'var(--color-primary-dark)' }}
-                    >
-                      {hist.price ? formatPrice(hist.price) : '–'}
-                    </span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {hist.paymentMethod && (
+                        <span className={cn(
+                          'inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-semibold',
+                          hist.paymentMethod === 'cash' && 'bg-emerald-50 text-emerald-700',
+                          hist.paymentMethod === 'card' && 'bg-blue-50 text-blue-700',
+                          hist.paymentMethod === 'membership' && 'bg-amber-50 text-amber-700',
+                        )}>
+                          {hist.paymentMethod === 'cash' ? '현금' : hist.paymentMethod === 'card' ? '카드' : '회원권'}
+                        </span>
+                      )}
+                      <span
+                        className="text-base font-bold"
+                        style={{ color: 'var(--color-primary-dark)' }}
+                      >
+                        {hist.price ? formatPrice(hist.price) : '–'}
+                      </span>
+                    </div>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     <Badge variant="neutral" size="sm">{BODY_PART_LABEL[hist.bodyPart] ?? hist.bodyPart}</Badge>
@@ -1229,8 +1367,8 @@ function CustomerDetailContent({ id }: { id: string }) {
                   {/* CU-5: 컬러 & 파츠 칩 */}
                   {(hist.colorLabels?.length ?? 0) > 0 && (
                     <div className="mt-1.5 flex flex-wrap gap-1">
-                      {hist.colorLabels!.map((color, idx) => (
-                        <span key={idx} className="inline-flex px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
+                      {hist.colorLabels!.map((color, colorIdx) => (
+                        <span key={colorIdx} className="inline-flex px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-rose-50 text-rose-700 border border-rose-200">
                           {color}
                         </span>
                       ))}
@@ -1238,8 +1376,8 @@ function CustomerDetailContent({ id }: { id: string }) {
                   )}
                   {(hist.partsUsed?.length ?? 0) > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1">
-                      {hist.partsUsed!.map((part, idx) => (
-                        <Badge key={idx} variant="success" size="sm">{part}</Badge>
+                      {hist.partsUsed!.map((part, partIdx) => (
+                        <Badge key={partIdx} variant="success" size="sm">{part}</Badge>
                       ))}
                     </div>
                   )}
