@@ -113,11 +113,30 @@ export function CategoryPicker(): React.ReactElement {
     return `${(price / 1000).toFixed(0)},000${t('preConsult.won')}~`;
   };
 
+  // builtin 카테고리: locale===ko이면 원장 override 우선, 그 외 locale은 i18n 번역 유지
+  const resolveBuiltinLabel = (cat: CategoryConfig): string => {
+    if (!cat.builtin || !cat.tKey) return cat.label ?? '';
+    if (locale === 'ko') {
+      const override = shopData?.categoryLabels?.[cat.key as string];
+      return override ?? t(cat.tKey);
+    }
+    return t(cat.tKey);
+  };
+
+  // 보조 한국어 라벨 (비ko locale에서 보조 표시): 원장 override 우선
+  const resolveBuiltinLabelKo = (cat: CategoryConfig): string => {
+    if (!cat.builtin || !cat.tKey) return cat.labelKo ?? '';
+    const override = shopData?.categoryLabels?.[cat.key as string];
+    return override ?? tKo(cat.tKey);
+  };
+
   return (
     <div className="grid grid-cols-2 gap-3">
       {visibleCategories.map((cat) => {
         const isSelected = selected === cat.key;
         const thumb = categoryThumbs[cat.key];
+        const displayLabel = cat.builtin ? resolveBuiltinLabel(cat) : (cat.label ?? '');
+        const displayLabelKo = cat.builtin ? resolveBuiltinLabelKo(cat) : (cat.labelKo ?? '');
         return (
           <motion.button
             key={cat.key}
@@ -141,7 +160,7 @@ export function CategoryPicker(): React.ReactElement {
               {thumb ? (
                 <Image
                   src={thumb}
-                  alt={cat.builtin ? t(cat.tKey!) : (cat.label ?? '')}
+                  alt={displayLabel}
                   fill
                   unoptimized
                   sizes="(max-width: 420px) 48vw, 200px"
@@ -161,11 +180,11 @@ export function CategoryPicker(): React.ReactElement {
             {/* 텍스트/가격 영역 */}
             <div className="flex flex-col items-center gap-0.5 px-3 py-3 text-center">
               <p className={`font-semibold text-sm ${isSelected ? 'text-primary' : 'text-text'}`}>
-                {cat.builtin ? t(cat.tKey!) : cat.label}
+                {displayLabel}
               </p>
               {locale !== 'ko' && (
                 <p className="text-xs text-text-muted opacity-60">
-                  {cat.builtin ? tKo(cat.tKey!) : cat.labelKo}
+                  {displayLabelKo}
                 </p>
               )}
               {(cat.builtin ? t(cat.tDescKey!) : cat.desc) && (

@@ -20,11 +20,19 @@ export const EXPRESSION_LABEL: Record<string, string> = {
 };
 
 export const CATEGORY_LABELS: Record<string, string> = {
-  simple: '심플',
+  simple: '심플 / 원컬러',
   french: '프렌치',
-  magnet: '자석',
+  magnet: '자석 / 마그넷',
   art: '아트',
 };
+
+/**
+ * 원장측 카테고리 라벨 단일 해석 헬퍼.
+ * overrides(shop.settings.categoryLabels)가 있으면 우선, 없으면 CATEGORY_LABELS 기본값, 그것도 없으면 key 그대로.
+ */
+export function resolveMenuCategoryLabel(key: string, overrides?: Record<string, string>): string {
+  return overrides?.[key] ?? CATEGORY_LABELS[key] ?? key;
+}
 
 export const OFF_TYPE_LABEL: Record<string, string> = {
   none: '없음',

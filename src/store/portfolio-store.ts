@@ -382,12 +382,16 @@ export const usePortfolioStore = create<PortfolioStore>()(
       },
       renameCategory: (key, label) => {
         set((s) => ({ menuCategories: s.menuCategories.map((c) => c.key === key ? { ...c, label } : c) }));
+        const app = useAppStore.getState();
         if (key.startsWith('custom-')) {
-          const app = useAppStore.getState();
           const existing = app.shopSettings.customCategories ?? [];
           if (existing.some((c) => c.id === key)) {
             void app.setShopSettings({ customCategories: existing.map((c) => c.id === key ? { ...c, name: label } : c) });
           }
+        } else {
+          // builtin 카테고리(simple/french/magnet/art) rename → shop categoryLabels에 영속
+          const existing = app.shopSettings.categoryLabels ?? {};
+          void app.setShopSettings({ categoryLabels: { ...existing, [key]: label } });
         }
       },
       removeCategory: (key) => {

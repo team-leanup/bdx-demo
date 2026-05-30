@@ -8,7 +8,8 @@ import { DragConfirmModal } from '@/components/calendar/DragConfirmModal';
 import { useLongPress } from '@/lib/hooks/useLongPress';
 import { cn } from '@/lib/cn';
 import { formatDayLabelKo, getCurrentTimeInKorea, getTodayInKorea, toKoreanShortDateTimeString } from '@/lib/format';
-import { CATEGORY_LABELS } from '@/lib/labels';
+import { resolveMenuCategoryLabel } from '@/lib/labels';
+import { useAppStore } from '@/store/app-store';
 import { useCustomerStore } from '@/store/customer-store';
 import {
   canMoveReservation,
@@ -128,6 +129,7 @@ interface DraggableEventProps {
   activeDesignerId: string | null;
   hourHeight: number;
   axisWidth: number;
+  categoryLabels?: Record<string, string>;
   onEventClick?: (event: TimeGridEvent) => void;
   onEventMove?: (reservationId: string, updates: { reservationTime: string; designerId?: string }) => void;
   onRequestMove?: (pending: PendingMove) => void;
@@ -148,6 +150,7 @@ function DraggableEvent({
   activeDesignerId,
   hourHeight,
   axisWidth,
+  categoryLabels,
   onEventClick,
   onEventMove,
   onRequestMove,
@@ -311,7 +314,7 @@ function DraggableEvent({
         <div className="flex items-center gap-1.5 opacity-60 leading-tight">
           <span>{ev.startTime}–{ev.endTime}</span>
           {ev.serviceLabel && (
-            <span className="rounded bg-white/40 px-1 py-px font-medium text-text">{CATEGORY_LABELS[ev.serviceLabel] ?? ev.serviceLabel}</span>
+            <span className="rounded bg-white/40 px-1 py-px font-medium text-text">{resolveMenuCategoryLabel(ev.serviceLabel, categoryLabels)}</span>
           )}
           {ev.channel && <ChannelIcon channel={ev.channel} />}
         </div>
@@ -355,6 +358,7 @@ interface SlotColumnProps {
   activeDesignerId: string | null;
   hourHeight: number;
   axisWidth: number;
+  categoryLabels?: Record<string, string>;
   getPrimaryTags: (customerId: string) => CustomerTag[];
   onEventClick?: (event: TimeGridEvent) => void;
   onEventMove?: (reservationId: string, updates: { reservationTime: string; designerId?: string }) => void;
@@ -375,6 +379,7 @@ function SlotColumn({
   activeDesignerId,
   hourHeight,
   axisWidth,
+  categoryLabels,
   getPrimaryTags,
   onEventClick,
   onEventMove,
@@ -476,6 +481,7 @@ function SlotColumn({
             activeDesignerId={activeDesignerId}
             hourHeight={hourHeight}
             axisWidth={axisWidth}
+            categoryLabels={categoryLabels}
             onEventClick={onEventClick}
             onEventMove={onEventMove}
             onRequestMove={onRequestMove}
@@ -505,6 +511,7 @@ export function DesignerDayGridCalendar({
   // R-6: 스와이프 안내 1회성 툴팁
   const [showSwipeTip, setShowSwipeTip] = useState(false);
   const getPrimaryTags = useCustomerStore((s) => s.getPrimaryTags);
+  const categoryLabels = useAppStore((s) => s.shopSettings.categoryLabels);
   const gridRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
@@ -694,6 +701,7 @@ export function DesignerDayGridCalendar({
                   activeDesignerId={activeDesignerId}
                   hourHeight={hourHeight}
                   axisWidth={0}
+                  categoryLabels={categoryLabels}
                   getPrimaryTags={getPrimaryTags}
                   onEventClick={onEventClick}
                   onEventMove={onEventMove}

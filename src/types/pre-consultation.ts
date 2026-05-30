@@ -160,4 +160,6 @@ export interface ShopPublicData {
   baseSolidPointPrice?: number;
   baseFullArtPrice?: number;
   baseMonthlyArtPrice?: number;
+  /** builtin 카테고리 이름 override (원장 rename 반영 — ko locale에서만 사용) */
+  categoryLabels?: Record<string, string>;
 }

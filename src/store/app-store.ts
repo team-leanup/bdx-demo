@@ -39,6 +39,8 @@ interface ShopSettings {
   customParts?: { id: string; name: string; pricePerUnit: number }[];
   /** 0528 — 사장님이 추가한 시술 종류 (기본 4개 외, 최대 4개) */
   customCategories?: CustomCategory[];
+  /** builtin 카테고리(simple/french/magnet/art) 이름 override — 원장 rename 시 shop settings에 영속 */
+  categoryLabels?: Record<string, string>;
 }
 
 const DEFAULT_CATEGORY_PRICING: CategoryPricingSettings = {
@@ -160,6 +162,8 @@ export const useAppStore = create<AppStore>()(
             customParts: next.customParts,
             customCategories: next.customCategories,
             depositAmount: next.depositAmount,
+            // builtin 카테고리 rename override
+            categoryLabels: next.categoryLabels,
           });
 
           if (!result.success) {
@@ -235,6 +239,7 @@ export const useAppStore = create<AppStore>()(
               customParts: s.customParts ?? state.shopSettings.customParts,
               customCategories: s.customCategories ?? state.shopSettings.customCategories,
               depositAmount: s.depositAmount ?? state.shopSettings.depositAmount,
+              categoryLabels: s.categoryLabels ?? state.shopSettings.categoryLabels,
             } : {}),
           },
         }));
@@ -288,6 +293,7 @@ export const useAppStore = create<AppStore>()(
             customCategories: p.shopSettings?.customCategories ?? DEFAULT_SHOP_SETTINGS.customCategories,
             customParts: p.shopSettings?.customParts ?? DEFAULT_SHOP_SETTINGS.customParts,
             depositAmount: p.shopSettings?.depositAmount ?? DEFAULT_SHOP_SETTINGS.depositAmount,
+            categoryLabels: p.shopSettings?.categoryLabels ?? DEFAULT_SHOP_SETTINGS.categoryLabels,
           },
         };
       },

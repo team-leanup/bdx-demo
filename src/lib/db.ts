@@ -1799,6 +1799,7 @@ export async function fetchShopPublicData(shopId: string): Promise<ShopPublicDat
     baseSolidPointPrice: settings.baseSolidPointPrice ?? undefined,
     baseFullArtPrice: settings.baseFullArtPrice ?? undefined,
     baseMonthlyArtPrice: settings.baseMonthlyArtPrice ?? undefined,
+    categoryLabels: settings.categoryLabels ?? undefined,
   };
 }
 

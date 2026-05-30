@@ -123,6 +123,12 @@ export interface ShopExtendedSettings {
    * 치환 변수: {customerName}, {shopName}
    */
   revisitMessageTemplate?: string;
+  /**
+   * 원장이 builtin 카테고리(simple/french/magnet/art)를 rename했을 때의 override.
+   * key: builtin 카테고리 키, value: 원장이 지정한 한국어 라벨.
+   * settings jsonb에 자동 포함되므로 DB 마이그레이션 불필요.
+   */
+  categoryLabels?: Record<string, string>;
 }
 
 export interface Shop {
