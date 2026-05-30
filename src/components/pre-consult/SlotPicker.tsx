@@ -40,10 +40,14 @@ export function SlotPicker({ link, selectedDate, selectedTime, onSelect }: Props
 
   const [openDate, setOpenDate] = useState<string | null>(null);
 
+  // openDate(=현재 펼쳐 보는 날짜)는 최초 1회만 초기화한다.
+  // 이전 버전은 selectedDate가 있으면 매번 openDate를 selectedDate로 되돌려, 시간 선택 후
+  // 다른 날짜칩을 눌러도 즉시 원래 날짜로 튕기는 버그가 있었다. (날짜 전환 불가)
   useEffect(() => {
-    if (selectedDate) setOpenDate(selectedDate);
-    else if (availableDates.length > 0 && !openDate) setOpenDate(availableDates[0].date);
-  }, [selectedDate, availableDates, openDate]);
+    if (!openDate && availableDates.length > 0) {
+      setOpenDate(selectedDate ?? availableDates[0].date);
+    }
+  }, [openDate, selectedDate, availableDates]);
 
   if (availableDates.length === 0) {
     return (

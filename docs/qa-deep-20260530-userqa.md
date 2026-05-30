@@ -174,6 +174,18 @@ Chrome 실측(모바일 ~500px 뷰포트) end-to-end 테스트 + 18 에이전트
 - **is_quick_sale=true** — field-mode 시술이 quick_sale로 플래그(설계 확인 필요, 통계 영향 경미)
 - 환율 실시간 연동(근사 표시로 완화), customPart 모달 재열기 복원(부분)
 
+## 3차 — FM-2 완결 + 클라이언트 실기기 피드백 3건
+
+### FM-2 완전 해결 (🔵→🟢)
+- field-mode 스토어에 `nailShape` 필드 추가 + `hydrateFromBooking`/preconsult 핸들러가 사전상담 nailShape 전달 → 레코드 nailShape 정합
+- settlement에서 `inTreatmentAddons`를 `shopSettings.customParts`와 라벨 매칭해 `partsSelections`(customPartId 포함) 복원, `hasParts` 정정
+- **라이브+DB 검증**: 레코드 offType=other_shop · nailShape=almond · hasParts=true · partsSelections=[큐빅, 스와로브스키] 확인. 대시보드 '파츠 추가 0개'·'쉐입 라운드' 전파 해소
+
+### 클라이언트 실기기 피드백 3건
+- **#1 [HIGH] 날짜·시간 선택 후 다른 날짜 선택 불가** 🟢 — SlotPicker useEffect가 `openDate`를 deps에 넣고 매번 `setOpenDate(selectedDate)`로 되돌려 시간 선택 후 날짜 전환이 튕기던 버그. 최초 1회만 초기화하도록 수정. **라이브 검증**: 6.2+14:00 후 6.3 클릭 → 정상 전환
+- **#2 [MED] 메뉴↔사전상담 카테고리 이름 불일치** 🔵 — 원장 메뉴 기본 라벨("심플 / 원컬러", "자석 / 마그넷")과 사전상담 i18n("심플", "자석") 불일치. 사전상담 한국어 기본 라벨을 메뉴 기본값에 맞춤. **잔여**: 원장이 builtin 카테고리를 메뉴에서 rename하면 사전상담 전파 안 됨(menuCategories가 DB/shopData 미노출 — SSOT 후속 필요). 가격은 이미 메뉴 featured 최저가 연동됨
+- **#3 [확인] '이대로 진행하기' 후 이름·전화 없이 즉시 확정** ✅ 현재 코드 정상 — `confirm/page.tsx` 예약 생성은 "이대로 예약하기"(Book Now, name/phone 입력 후)에서만. "이대로 진행하기"는 /confirm 이동만. **프로덕션(beauty-decision.com)이 구버전이라 재배포 시 해소**
+
 ### 2차 검증 로그
 - `npx tsc --noEmit` → 0 · `pnpm lint` 에러 0 · `pnpm build` exit 0(전 라우트)
 - Chrome 재실측: SL-04 영어 요일(Sat/Mon)·BUG-A 콘솔에러 소멸·FM-1 토글 비활성·가격 3경로 105,000 일치·매출 레코드 offType=other_shop 확인

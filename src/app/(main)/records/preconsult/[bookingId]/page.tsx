@@ -216,6 +216,7 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
         removalType: raw?.removalPreference,
         lengthType: raw?.lengthPreference,
         addOns: raw?.addOns,
+        nailShape: raw?.nailShape ?? null,
         bookingId: booking.id,
         designerId: booking.designerId,
         customerName: booking.customerName,

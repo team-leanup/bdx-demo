@@ -17,7 +17,7 @@ import { CATEGORY_LABELS } from '@/lib/labels';
 import { resolveCategoryLabelKo } from '@/lib/category-resolver';
 import { useReservationStore } from '@/store/reservation-store';
 import { useCustomerStore } from '@/store/customer-store';
-import type { PaymentMethod, OffType } from '@/types/consultation';
+import type { PaymentMethod, OffType, ConsultationType } from '@/types/consultation';
 import type { AddOnOption } from '@/types/pre-consultation';
 import { generateId } from '@/lib/generate-id';
 import { getRemainingAmount, getMembershipSessionState, canUseMembership as canUseMembershipFn, getEffectiveStatus } from '@/lib/membership';
@@ -73,6 +73,7 @@ export default function SettlementPage(): React.ReactElement | null {
     removalType,
     lengthType,
     addOns,
+    nailShape,
     inTreatmentAddons,
     treatmentStartedAt,
     paymentMethod,
@@ -255,11 +256,24 @@ export default function SettlementPage(): React.ReactElement | null {
       : removalType === 'other_shop' ? 'other_shop'
       : 'none';
 
-    // [FM-2] addOns에 파츠 관련 항목 있으면 hasParts=true
-    const hasParts = addOns.includes('parts');
-    const partsSelections = hasParts
-      ? [{ grade: 'A' as const, quantity: 1 }]
-      : [];
+    // [FM-2] inTreatmentAddons(사전상담 carry + 시술 중 추가) 중 샵 커스텀 파츠(큐빅·스와 등)와
+    //        라벨이 일치하는 항목을 partsSelections로 복원해 매출 레코드에 정합 저장.
+    //        point_art·glitter 등 일반 add-on은 customParts에 없으므로 자동 제외됨.
+    const restoredParts: { grade: 'A'; quantity: number; customPartId: string }[] = [];
+    for (const addon of inTreatmentAddons) {
+      const part = shopSettings.customParts?.find((p) => p.name === addon.label);
+      if (!part) continue;
+      const existing = restoredParts.find((s) => s.customPartId === part.id);
+      if (existing) existing.quantity += 1;
+      else restoredParts.push({ grade: 'A', quantity: 1, customPartId: part.id });
+    }
+    const hasParts = restoredParts.length > 0 || addOns.includes('parts');
+    const partsSelections: ConsultationType['partsSelections'] =
+      restoredParts.length > 0
+        ? restoredParts
+        : addOns.includes('parts')
+          ? [{ grade: 'A', quantity: 1 }]
+          : [];
 
     // [SALES-5] 할인/예약금 내역 보존
     const grossPrice = subtotal; // 할인/예약금 차감 전 금액
@@ -290,6 +304,7 @@ export default function SettlementPage(): React.ReactElement | null {
         // [FM-2] 실제 field-mode 상태를 consultation 레코드에 정확히 저장
         consultationOverrides: {
           offType,
+          nailShape: nailShape ?? undefined,
           hasParts,
           partsSelections,
         },
