@@ -1278,6 +1278,11 @@ export default function SettingsPage() {
       baseMonthlyArtPrice: monthlyArt,
       surcharges: {
         ...shopSettings.surcharges,
+        // [CRITICAL 0530] 자샵/타샵 오프는 두 표현(baseOff* = 상담, surcharges.*Removal = 사전상담·현장모드)이
+        // 따로 존재한다. 설정 저장 시 둘을 모두 동기화하지 않으면 오프 가격이 상담에만 반영되고
+        // 사전상담/현장 시술엔 온보딩 값이 그대로 남아 "연동 안 됨" 이 된다.
+        selfRemoval: offSameShop,
+        otherRemoval: offOtherShop,
         repairPer: repair,
         extension,
         wrapping,
@@ -1593,6 +1598,10 @@ export default function SettingsPage() {
                   <span className="text-text-secondary">연장 추가금</span>
                   <span className="font-medium text-text">+{formatPrice(savedPrices.extension)}</span>
                 </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary">랩핑 추가금</span>
+                  <span className="font-medium text-text">+{formatPrice(savedPrices.wrapping)}</span>
+                </div>
                 <div className="my-1 border-t border-border/50" />
                 <div className="flex justify-between text-sm">
                   <span className="text-text-secondary">{t('settings.service_solidPoint')}</span>
@@ -1838,7 +1847,7 @@ export default function SettingsPage() {
                 </div>
               ) : (
                 <div key={cat.id} className="flex items-center gap-2 mb-2">
-                  <span className="w-16 flex-shrink-0 text-sm text-text-secondary truncate">{cat.name}</span>
+                  <span className="w-28 flex-shrink-0 text-sm text-text-secondary truncate">{cat.name}</span>
                   <div className="flex flex-1 items-center justify-between">
                     <span className="text-sm font-medium text-text">{formatPrice(cat.price)}</span>
                     <span className="text-xs text-text-muted">{cat.time}분</span>
