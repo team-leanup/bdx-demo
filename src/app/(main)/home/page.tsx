@@ -212,6 +212,7 @@ export default function HomePage() {
       lengthType: (raw?.lengthPreference ?? 'keep') as LengthPreference,
       addOns: (raw?.addOns ?? []) as AddOnOption[],
       wrappingPreference: (raw?.wrappingPreference as 'yes' | 'no' | undefined) ?? null,
+      customPartSelections: (raw?.customPartSelections as Record<string, number> | undefined),
       selectedPhotoUrl: (raw?.selectedPhotoUrl as string | undefined) ?? null,
       selectedPhotoId: (raw?.selectedPhotoId as string | undefined) ?? null,
     });

@@ -74,6 +74,7 @@ export default function SettlementPage(): React.ReactElement | null {
     lengthType,
     addOns,
     wrappingPreference,
+    customPartSelections,
     nailShape,
     inTreatmentAddons,
     treatmentStartedAt,
@@ -172,8 +173,11 @@ export default function SettlementPage(): React.ReactElement | null {
       surcharges: shopSettings.surcharges,
       photoBasePrice: selectedPhotoPrice ?? undefined,
       customCategories: shopSettings.customCategories,
+      // 0531: 사전상담 커스텀 파츠를 base 에 포함 → 손님 견적 = 계산대 일치 (이전엔 파츠 누락)
+      customPartSelections,
+      customParts: shopSettings.customParts,
     });
-  }, [selectedCategory, removalType, lengthType, wrappingPreference, addOns, shopSettings, selectedPhotoPrice]);
+  }, [selectedCategory, removalType, lengthType, wrappingPreference, customPartSelections, addOns, shopSettings, selectedPhotoPrice]);
 
   const inTreatmentTotal = inTreatmentAddons.reduce((s, a) => s + a.amount, 0);
   const subtotal = (baseEstimate?.minTotal ?? 0) + inTreatmentTotal;

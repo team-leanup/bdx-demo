@@ -106,22 +106,9 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
       currentStep: ConsultationStep.START,
     });
     if (booking.preConsultationData) {
-      // 사전상담에서 손님이 선택한 커스텀 파츠 → inTreatmentAddons로 변환
-      // (settlement에서 inTreatmentTotal로 합산되어 시술 금액에 자동 반영)
-      const hydratedAt = new Date().toISOString();
-      const initialInTreatmentAddons = raw?.customPartSelections && shopSettings?.customParts
-        ? Object.entries(raw.customPartSelections).flatMap(([name, countRaw]) => {
-            const part = shopSettings.customParts!.find((p) => p.name === name);
-            if (!part) return [];
-            const count = typeof countRaw === 'number' ? Math.max(0, Math.floor(countRaw)) : 0;
-            return Array.from({ length: count }, (_, i) => ({
-              id: `pre-${name}-${i}-${Date.now()}`,
-              label: part.name,
-              amount: part.pricePerUnit,
-              addedAt: hydratedAt,
-            }));
-          })
-        : [];
+      // 0531: 사전상담 커스텀 파츠는 customPartSelections 로 전달 → settlement baseEstimate 에 포함된다.
+      //   (이전엔 initialInTreatmentAddons 로도 넣어 base+inTreatment 이중청구 위험이 있어 제거.
+      //    home 진입 경로와 동일하게 base 단일 계상 → 손님 견적=계산대 일치.)
       // 0528 C4: PreConsultationData(removalPreference/lengthPreference)와
       // FieldModeStore.hydrateFromBooking 시그니처(removalType/lengthType) 키 매핑.
       // spread는 손님 입력 정보를 무시하므로 명시적 매핑 필수.
@@ -141,7 +128,6 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
         customerName: booking.customerName,
         customerPhone: booking.phone,
         customerId: resolvedCustomerId ?? booking.customerId ?? booking.preConsultationData?.customerId ?? null,
-        initialInTreatmentAddons,
       });
     }
     // H2: treatment 화면 안내 배너용 sessionStorage 설정

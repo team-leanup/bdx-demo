@@ -1289,7 +1289,7 @@ export default function RecordsPage() {
                                     onClick={handleSheetClick}
                                     className="flex-1 rounded-xl border border-primary/30 bg-primary px-4 py-2.5 text-xs font-medium text-white hover:bg-primary/90 active:scale-[0.98] transition-all"
                                   >
-                                    상담 상세
+                                    시술 상세
                                   </button>
                                 )}
                                 {!matchedRecord && booking?.preConsultationData && (

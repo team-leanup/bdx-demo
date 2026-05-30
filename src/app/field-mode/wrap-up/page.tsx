@@ -140,6 +140,24 @@ export default function WrapUpPage(): React.ReactElement {
     return undefined;
   }, [localName, localPhone, customers]);
 
+  // 0531: 사전상담 등으로 전화번호가 채워졌고 그 번호가 기존 고객과 정확히 일치하면 자동 연결.
+  // (결제 시 addQuickSaleRecord 가 이미 고객을 생성/연결하므로, wrap-up 진입 시점엔 보통 카드가 존재 →
+  //  손님이 사전상담에서 입력한 정보로 '고객 카드 연결됨'이 자동 표시되고 '저장' 버튼이 필요 없어진다.)
+  const autoLinkTarget = useMemo(() => {
+    const phone = localPhone.replace(/[^0-9]/g, '');
+    if (phone.length < 8) return undefined;
+    return customers.find((c) => c.phone?.replace(/[^0-9]/g, '') === phone);
+  }, [localPhone, customers]);
+
+  useEffect(() => {
+    if (!customerSaved && autoLinkTarget) {
+      setLocalName(autoLinkTarget.name);
+      setLocalPhone(autoLinkTarget.phone ?? '');
+      setCustomerInfo(autoLinkTarget.name, autoLinkTarget.phone ?? '', autoLinkTarget.id);
+      setCustomerSaved(true);
+    }
+  }, [autoLinkTarget, customerSaved, setCustomerInfo]);
+
   const showSuggestion =
     matchedCustomer &&
     !customerSaved &&
