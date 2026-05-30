@@ -73,6 +73,7 @@ export default function SettlementPage(): React.ReactElement | null {
     removalType,
     lengthType,
     addOns,
+    wrappingPreference,
     nailShape,
     inTreatmentAddons,
     treatmentStartedAt,
@@ -165,13 +166,14 @@ export default function SettlementPage(): React.ReactElement | null {
       designCategory: selectedCategory,
       removalPreference: removalType,
       lengthPreference: lengthType,
+      wrappingPreference,
       addOns,
       categoryPricing: shopSettings.categoryPricing,
       surcharges: shopSettings.surcharges,
       photoBasePrice: selectedPhotoPrice ?? undefined,
       customCategories: shopSettings.customCategories,
     });
-  }, [selectedCategory, removalType, lengthType, addOns, shopSettings, selectedPhotoPrice]);
+  }, [selectedCategory, removalType, lengthType, wrappingPreference, addOns, shopSettings, selectedPhotoPrice]);
 
   const inTreatmentTotal = inTreatmentAddons.reduce((s, a) => s + a.amount, 0);
   const subtotal = (baseEstimate?.minTotal ?? 0) + inTreatmentTotal;

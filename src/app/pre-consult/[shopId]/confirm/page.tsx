@@ -593,10 +593,15 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                 />
               )}
 
-              {/* Add-on surcharge */}
+              {/* Add-on surcharge (랩핑 선호도 addOnSurcharge 에 포함 → 라벨에 함께 표시) */}
               {priceEstimate.addOnSurcharge > 0 && (
                 <PriceRow
-                  label={addOns.map((a) => labels.addOn[a] ?? a).join(' + ')}
+                  label={[
+                    ...addOns.map((a) => labels.addOn[a] ?? a),
+                    ...(wrappingPreference === 'yes' && !addOns.includes('wrapping')
+                      ? [labels.addOn.wrapping ?? '랩핑']
+                      : []),
+                  ].join(' + ')}
                   amount={priceEstimate.addOnSurcharge}
                   won={t('preConsult.won')}
                   muted
@@ -621,14 +626,6 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                 <span className="font-bold text-text">{t('preConsult.estimatedPrice')}</span>
                 <span className="text-xl font-bold text-primary">
                   {formatPrice(priceEstimate.minTotal)}{t('preConsult.won')}
-                </span>
-              </div>
-
-              {/* Estimated time */}
-              <div className="flex justify-between items-center mt-0.5">
-                <span className="text-xs text-text-muted">{t('preConsult.estimatedTime')}</span>
-                <span className="text-xs text-text-secondary font-medium">
-                  {priceEstimate.estimatedMinutes}{t('preConsult.min')}
                 </span>
               </div>
 

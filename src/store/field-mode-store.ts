@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { DesignCategory, RemovalPreference, LengthPreference, ExtensionLength, AddOnOption } from '@/types/pre-consultation';
+import type { DesignCategory, RemovalPreference, LengthPreference, ExtensionLength, AddOnOption, WrappingPreference } from '@/types/pre-consultation';
 import type { PaymentMethod, NailShape } from '@/types/consultation';
 import type { FieldModePhase, FieldModeAddon } from '@/types/field-mode';
 
@@ -23,6 +23,8 @@ interface FieldModeState {
   lengthType: LengthPreference;
   extensionLength: ExtensionLength | null;
   addOns: AddOnOption[];
+  /** 0531 — 사전상담 랩핑 선호. 'yes'면 정산에서 surcharges.wrapping 가산 (견적=계산대 일치) */
+  wrappingPreference: WrappingPreference | null;
   /** 0530 FM-2 — 사전상담에서 손님이 선택한 네일 쉐입 (매출 레코드 정합) */
   nailShape: NailShape | null;
 
@@ -82,6 +84,8 @@ interface FieldModeActions {
     removalType?: RemovalPreference;
     lengthType?: LengthPreference;
     addOns?: AddOnOption[];
+    /** 0531 — 사전상담 랩핑 선호 */
+    wrappingPreference?: WrappingPreference | null;
     /** 0530 FM-2 — 사전상담 네일 쉐입 */
     nailShape?: NailShape | null;
     customerName?: string;
@@ -108,6 +112,7 @@ const DEFAULT_STATE: FieldModeState = {
   lengthType: 'keep' as LengthPreference,
   extensionLength: null,
   addOns: [] as AddOnOption[],
+  wrappingPreference: null,
   nailShape: null,
   treatmentStartedAt: null,
   inTreatmentAddons: [] as FieldModeAddon[],
@@ -231,6 +236,7 @@ export const useFieldModeStore = create<FieldModeStore>()(
           removalType: data.removalType ?? 'none',
           lengthType: data.lengthType ?? 'keep',
           addOns: data.addOns ?? [],
+          wrappingPreference: data.wrappingPreference ?? null,
           nailShape: data.nailShape ?? null,
           customerName: data.customerName ?? '',
           customerPhone: data.customerPhone ?? '',

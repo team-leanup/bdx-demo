@@ -58,6 +58,7 @@ export default function FieldModePage() {
   const lengthType = useFieldModeStore((s) => s.lengthType);
   const extensionLength = useFieldModeStore((s) => s.extensionLength);
   const addOns = useFieldModeStore((s) => s.addOns);
+  const wrappingPreference = useFieldModeStore((s) => s.wrappingPreference);
   const selectDesign = useFieldModeStore((s) => s.selectDesign);
   // 0529 이슈 #1: 포트폴리오 비어있어도 카테고리만으로 진행할 수 있도록.
   const selectCategoryOnly = useFieldModeStore((s) => s.selectCategoryOnly);
@@ -120,6 +121,7 @@ export default function FieldModePage() {
       designCategory: selectedCategory,
       removalPreference: removalType,
       lengthPreference: lengthType,
+      wrappingPreference,
       addOns,
       categoryPricing: shopSettings.categoryPricing,
       surcharges: shopSettings.surcharges,
@@ -127,7 +129,7 @@ export default function FieldModePage() {
       customParts: shopSettings.customParts,
       customCategories: shopSettings.customCategories,
     });
-  }, [selectedCategory, removalType, lengthType, addOns, shopSettings, customPartCounts]);
+  }, [selectedCategory, removalType, lengthType, wrappingPreference, addOns, shopSettings, customPartCounts]);
 
   // ── Reconstruct selected photo ────────────────────────────────────────────
   const selectedPhoto = useMemo((): PortfolioPhoto | null => {
