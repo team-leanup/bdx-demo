@@ -1,13 +1,14 @@
 'use client';
 
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useMemo, useState, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { useT, useKo, useLocale } from '@/lib/i18n';
 import { usePreConsultStore } from '@/store/pre-consult-store';
 import { fetchBookingRequestById, fetchConsultationLinkPublic, fetchShopPreConsultLinkData } from '@/lib/db';
 import { Button } from '@/components/ui/Button';
 import { SlotPicker } from '@/components/pre-consult/SlotPicker';
+import { computeAvailableDates } from '@/lib/consultation-link-slots';
 import type { BookingRequest } from '@/types/consultation';
 import type { ConsultationLinkPublicData } from '@/types/consultation-link';
 
@@ -105,7 +106,15 @@ function PreConsultStartInner(): React.ReactElement {
     router.push(`/pre-consult/${params.shopId}/design`);
   };
 
-  const canStart = linkIdParam && linkData
+  // 예약 가능한 슬롯이 있는 링크(공유 링크 + 샵 고정 링크 모두)면 시간 선택을 필수로 한다.
+  // 미선택 시 confirm 에서 경로 C 로 빠져 reservation_time='미정' booking 이 생성되고,
+  // 그 슬롯이 다음 손님에게 막히지 않는 문제(가용 슬롯 표시에 booked 반영 안 됨)를 방지.
+  // 슬롯이 아예 없는 샵(영업시간 없음/만석)은 종전대로 시간 없이 진행 허용.
+  const hasAvailableSlots = useMemo(
+    () => (linkData ? computeAvailableDates(linkData).length > 0 : false),
+    [linkData],
+  );
+  const canStart = linkData && hasAvailableSlots
     ? Boolean(selectedSlotDate && selectedSlotTime)
     : true;
 
@@ -200,11 +209,7 @@ function PreConsultStartInner(): React.ReactElement {
         className="w-full max-w-xs mx-auto mt-auto pb-4 pt-3"
       >
         <Button size="lg" fullWidth disabled={!canStart} onClick={handleStart}>
-          {linkData && selectedSlotDate && selectedSlotTime
-            ? t('preConsult.startBtn')
-            : linkData
-            ? t('preConsult.selectTimeFirst')
-            : t('preConsult.startBtn')}
+          {canStart ? t('preConsult.startBtn') : t('preConsult.selectTimeFirst')}
         </Button>
       </motion.div>
     </div>

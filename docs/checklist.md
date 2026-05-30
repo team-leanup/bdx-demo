@@ -735,6 +735,12 @@
 - **원인**: 픽커가 `kind==='treatment'` 사진만 노출 → 온보딩 업로드(`reference`) 사진을 메뉴에 못 넣음. 업로드 실패도 `void` 로 삼켜 무반응
 - **수정**: 픽커 후보를 `kind` 무관 전체 비-featured 사진으로 확대. 업로드/카테고리 추가·변경 실패를 토스트로 노출
 
+### 22.5 🟢 P1 샵 고정 링크 슬롯 미차단 (예약한 시간이 다음 손님에게 안 막힘)
+- **증상**: 샵 고정 사전상담 링크에서 시간 선택 후 제출했는데, 그 슬롯이 슬롯 픽커에서 계속 예약 가능으로 표시됨
+- **원인**: 샵 고정 링크 welcome 의 `canStart` 가 `linkIdParam` 일 때만 슬롯을 요구 → 슬롯 미선택でも 진행 가능 → confirm 에서 경로 C(`dbCompletePreConsultation`)로 빠져 `reservation_time='미정'` booking 생성. '미정' 은 어떤 슬롯과도 매칭 안 돼 `computeAvailableDates` 의 bookedSet 에서 영원히 제외됨. (실측: `bk-e4afe065` reservation_time='미정')
+- **수정**: welcome `canStart` 를 `linkData && 가용슬롯>0` 이면 슬롯 선택 필수로 변경(`computeAvailableDates` 로 가용 여부 판정). 정상 흐름이 경로 A-2(`dbCreateBookingFromShopLink`, 실제 시간)로 가 booking 에 실제 시간 기록 → 슬롯 픽커가 line-through·카운트 감소로 차단. 버튼 텍스트도 canStart 와 일치. 슬롯 없는 샵(만석/휴무)은 종전대로 시간 없이 진행 허용
+- 참고: RPC `get_shop_pre_consult_data` 는 booked slots(pending/confirmed)를 정상 반환하고 SlotPicker/`computeAvailableDates` 차단 로직도 정상 → 데이터(=실제 시간)만 들어오면 동작
+
 ### 22.4 🟡 미확인
 - **P2** 온보딩 완료 "저장 중 오류" — 인증 owner 저장 경로(updateShop/setShopSettings)라 P0와 별개. 브라우저 콘솔 로그로 재현 필요(commitDB가 uploaded/errors 카운트 로깅 중)
 - **검증**: tsc/lint/build 통과. P0 DB 실측 검증 완료
