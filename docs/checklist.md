@@ -758,3 +758,21 @@
 ### 22.4 🟡 미확인
 - **P2** 온보딩 완료 "저장 중 오류" — 인증 owner 저장 경로(updateShop/setShopSettings)라 P0와 별개. 브라우저 콘솔 로그로 재현 필요(commitDB가 uploaded/errors 카운트 로깅 중)
 - **검증**: tsc/lint/build 통과. P0 DB 실측 검증 완료
+
+## 23. 🟢 사전상담 통합 + 상태4단계 + 네이밍 + 포트폴리오 + 가격정합 (2026-05-30 대규모)
+멀티에이전트(9 조사 + 6 구현) + Chrome 실측 QA. 커밋 95f2c03·6b018c4.
+### 23.1 🟢 사전상담 내용 전 원장화면 통합 (최우선)
+- 공용 `PreConsultDetailView`(이미지·디자인선택·네일상태·스타일키워드·추가옵션·요청사항, 가격/시간 계산 없음) 신설
+- 임베드: records/preconsult(예상시간 제거)·records/[id](시술상세)·예약상세 모달(인라인)·**field-mode/treatment 접이식 섹션(실측 확인)**·customers/[id]
+### 23.2 🟢 상태 4단계 (링크 미발송/응답 대기/응답 완료/시술 완료)
+- booking-stage DisplayStage + DISPLAY_STAGE_LABELS/DOT. records 범례·타임그리드 뱃지·홈 카드 통일(실측). '신규' 뱃지·'미리 정하기'(채널라벨 '사전상담'으로) 정리
+### 23.3 🟢 네이밍/시간/포트폴리오/가격
+- 상담 시작→시술 시작(홈/기록/포폴/i18n), 상담 상세→시술 상세(실측)
+- '미정'·비HH:MM → '시간 미정' 칩(NaN 제거, 실측). serviceLabel raw→한국어 시술종류
+- 포트폴리오 저장 400(버킷 2MB 초과): 업로드 전 resizeTreatmentPhoto(1600px/~400KB) 강제 + db 가드
+- wrap-up STEP9~11 삭제 + 고객 자동매핑(useEffect)
+- 가격정합: records/[id] quick-sale 가산모델 재계산 → 저장 pricing_adjustments 사용(합계 92k vs 최종 47k → 시술금액 57k − 차감 10k = 47k, 실측). handleFinalize deposit 누락 수정. preconsult→field-mode wrappingPreference carry
+- customers/[id]: 결제 합계·시술이력 드릴다운·예약이력(전화 매칭, 실측)
+### 23.4 🟡 잔여(비파괴 QA 한계 — 사용자 인터랙티브 확인 권장)
+- wrap-up 고객 자동매핑·포트폴리오 사진 업로드·예약상세 모달 인라인: 코드+빌드 검증 완료, 본인 Chrome에서 클릭 확인 권장 (MCP CDP 클릭 불안정으로 미실측)
+- records/[id] '시술 리포트'는 저장된 consultation 스냅샷(핸드/단색+포인트)이라 카테고리(프렌치)와 표기 차이 — 가격 아닌 표시 스냅샷
