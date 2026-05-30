@@ -314,7 +314,11 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
         <div className="flex flex-wrap gap-1.5 mb-3">
           <Badge variant="neutral" size="sm">{BODY_PART_LABEL[c.bodyPart]}</Badge>
           <Badge variant="primary" size="sm">
-            {DESIGN_SCOPE_LABEL[c.designScope] ?? c.designScope}
+            {/* 0531: 시술 종류는 designCategory 우선(프렌치 등). designScope는 french→solid_point 처럼
+                손실 매핑이라 단독 사용 시 "단색+포인트"로 잘못 표시됨 — 기록 목록(ConsultationListItem)과 통일. */}
+            {c.designCategory
+              ? resolveCategoryLabelKo(c.designCategory, shopSettings)
+              : (DESIGN_SCOPE_LABEL[c.designScope] ?? c.designScope)}
           </Badge>
           {c.expressions.map((exp) => (
             <Badge key={exp} variant="neutral" size="sm">

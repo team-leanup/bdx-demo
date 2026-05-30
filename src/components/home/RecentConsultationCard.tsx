@@ -5,7 +5,9 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui';
 import { formatPrice, formatRelativeDate } from '@/lib/format';
-import { BODY_PART_LABEL, DESIGN_SCOPE_LABEL } from '@/lib/labels';
+import { BODY_PART_LABEL } from '@/lib/labels';
+import { resolveRecordCategoryLabelKo } from '@/lib/category-resolver';
+import { useAppStore } from '@/store/app-store';
 import type { ConsultationRecord } from '@/types/consultation';
 
 interface RecentConsultationCardProps {
@@ -29,6 +31,7 @@ export function RecentConsultationCard({
   itemVariants,
 }: RecentConsultationCardProps): React.ReactElement {
   const [isOpen, setIsOpen] = useState(false);
+  const shopSettings = useAppStore((s) => s.shopSettings);
 
   return (
     <motion.div data-tour-id="tour-recent" variants={itemVariants} className="rounded-2xl bg-surface border border-border overflow-hidden">
@@ -113,7 +116,7 @@ export function RecentConsultationCard({
                         {BODY_PART_LABEL[record.consultation.bodyPart] ?? record.consultation.bodyPart}
                       </Badge>
                       <Badge variant="primary" size="sm">
-                        {DESIGN_SCOPE_LABEL[record.consultation.designScope] ?? record.consultation.designScope}
+                        {resolveRecordCategoryLabelKo(record.consultation, shopSettings)}
                       </Badge>
                     </div>
                     <span className="text-xs text-text-muted">

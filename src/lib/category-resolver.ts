@@ -13,7 +13,7 @@ import type {
   DesignCategory,
 } from '@/types/pre-consultation';
 import { BUILTIN_DESIGN_CATEGORIES } from '@/types/pre-consultation';
-import { CATEGORY_LABELS, resolveMenuCategoryLabel } from '@/lib/labels';
+import { CATEGORY_LABELS, resolveMenuCategoryLabel, DESIGN_SCOPE_LABEL } from '@/lib/labels';
 
 // SSOT: builtin 카테고리 한국어 라벨은 labels.ts CATEGORY_LABELS 단일 소스.
 // (자석 / 마그넷, 심플 / 원컬러 — 모든 화면 동일 표기)
@@ -66,6 +66,22 @@ export function resolveCategoryLabelKo(
   if (isBuiltinCategory(category)) return resolveMenuCategoryLabel(category, shopSettings?.categoryLabels);
   const custom = shopSettings?.customCategories?.find((c) => c.id === category);
   return custom?.name ?? category;
+}
+
+/**
+ * 저장된 시술 기록의 '시술 종류' 라벨.
+ * - designCategory 우선 → resolveCategoryLabelKo (풀라벨·custom 이름·rename override)
+ * - 없으면 designScope fallback (DESIGN_SCOPE_LABEL)
+ * designScope는 french→solid_point 등 손실 매핑이라 단독 사용 시 "단색+포인트"로 오표시되므로,
+ * 원본 designCategory가 있으면 반드시 우선한다. (records 목록·상세·홈·고객이력 통일)
+ */
+export function resolveRecordCategoryLabelKo(
+  consultation: { designCategory?: DesignCategory | null; designScope?: string | null },
+  shopSettings?: ShopExtendedSettings | null,
+): string {
+  if (consultation.designCategory) return resolveCategoryLabelKo(consultation.designCategory, shopSettings);
+  const scope = consultation.designScope ?? '';
+  return DESIGN_SCOPE_LABEL[scope] ?? scope;
 }
 
 /** 카테고리 설명 (builtin: 고정 한국어, custom: description 필드) */

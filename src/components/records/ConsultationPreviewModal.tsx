@@ -8,7 +8,9 @@ import { usePortfolioStore } from '@/store/portfolio-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { getSafetyTagMeta } from '@/lib/tag-safety';
 import { formatPrice, formatRelativeDate } from '@/lib/format';
-import { BODY_PART_LABEL, DESIGN_SCOPE_LABEL } from '@/lib/labels';
+import { BODY_PART_LABEL } from '@/lib/labels';
+import { resolveRecordCategoryLabelKo } from '@/lib/category-resolver';
+import { useAppStore } from '@/store/app-store';
 import type { ConsultationRecord } from '@/types/consultation';
 
 interface ConsultationPreviewModalProps {
@@ -24,6 +26,7 @@ export function ConsultationPreviewModal({
 }: ConsultationPreviewModalProps): React.ReactElement {
   const getByRecordId = usePortfolioStore((s) => s.getByRecordId);
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
+  const shopSettings = useAppStore((s) => s.shopSettings);
 
   const photos = record ? getByRecordId(record.id) : [];
   const refImages = record?.consultation.referenceImages ?? [];
@@ -61,7 +64,7 @@ export function ConsultationPreviewModal({
                   )}
                 </div>
                 <p className="text-xs text-text-muted mt-0.5">
-                  {formatRelativeDate(record.createdAt)} · {BODY_PART_LABEL[record.consultation.bodyPart]} · {DESIGN_SCOPE_LABEL[record.consultation.designScope]}
+                  {formatRelativeDate(record.createdAt)} · {BODY_PART_LABEL[record.consultation.bodyPart]} · {resolveRecordCategoryLabelKo(record.consultation, shopSettings)}
                 </p>
               </div>
               <button

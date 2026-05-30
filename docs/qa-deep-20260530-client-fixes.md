@@ -50,6 +50,13 @@
 - LOW-2: RevenueChart `aggregateWeekly` key에 연도 포함(연말 collision 방지).
 - 파일: analytics.ts, dashboard/page.tsx, DesignerPerformance.tsx, KPICards.tsx, RevenueChart.tsx.
 
+### 6. 시술 종류 라벨 손실 매핑 수정 (후속)
+- 증상: 시술 상세 "시술 리포트" 등에서 프렌치 레코드가 **"단색+포인트"** 로 표시.
+- 원인: quick-sale 레코드 저장 시 `designScope = designCategoryToScope(category)` (french→solid_point 손실 매핑). 표시 측이 `DESIGN_SCOPE_LABEL[designScope]` 를 쓰면 원본 카테고리(프렌치)를 잃음.
+- 수정: 공용 헬퍼 `resolveRecordCategoryLabelKo(consultation, shopSettings)` 신설 — `designCategory` 우선(풀라벨/custom/rename), 없을 때만 designScope fallback. 적용: records/[id] 시술 리포트, 홈 RecentConsultationCard, 고객 상세 시술 이력, ConsultationPreviewModal. (records 목록 ConsultationListItem·field-mode·타임그리드 DesignerDayGridCalendar는 이미 카테고리/serviceLabel 기반.) `TimeGridCalendar`(미렌더 데드)·payment(records 리다이렉트)는 제외.
+- 검증: 프렌치 레코드 시술상세 "핸드 프렌치", 고객 이력 "프렌치" 확인(이전 "단색+포인트" 사라짐).
+- 파일: category-resolver.ts, records/[id]/page.tsx, RecentConsultationCard.tsx, customers/[id]/page.tsx, ConsultationPreviewModal.tsx.
+
 ## 검증
 - `npx tsc --noEmit` 통과, `pnpm lint` 경고만(기존 패턴, 신규 에러 0).
 - Chrome 실측: field-mode 탭("자석 / 마그넷")·필터칩 제거·정산 79,000·wrap-up 자동연결·가격 내역·대시보드 렌더 전부 확인.

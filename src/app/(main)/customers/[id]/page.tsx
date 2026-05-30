@@ -31,7 +31,8 @@ import { useReservationStore } from '@/store/reservation-store';
 import { normalizePhone } from '@/lib/phone';
 import { useRecordsStore } from '@/store/records-store';
 import type { TreatmentHistory } from '@/types/customer';
-import { DESIGN_SCOPE_LABEL } from '@/lib/labels';
+import { resolveRecordCategoryLabelKo } from '@/lib/category-resolver';
+import { useAppStore } from '@/store/app-store';
 import { resizePortfolioImage } from '@/lib/image-utils';
 import type { PortfolioPhotoKind } from '@/types/portfolio';
 import { getSafetyTagMeta } from '@/lib/tag-safety';
@@ -192,6 +193,7 @@ function CustomerDetailContent({ id }: { id: string }) {
   const getByCustomerId = usePortfolioStore((s) => s.getByCustomerId);
   const reservations = useReservationStore((s) => s.reservations);
   const getAllRecords = useRecordsStore((s) => s.getAllRecords);
+  const shopSettings = useAppStore((s) => s.shopSettings);
 
   // UF-4: records-store에서 해당 고객 레코드를 가져와 시술 이력과 병합
   const customerRecords = useMemo(
@@ -205,7 +207,8 @@ function CustomerDetailContent({ id }: { id: string }) {
       recordId: r.id,
       date: r.createdAt.split('T')[0],
       bodyPart: r.consultation.bodyPart,
-      designScope: DESIGN_SCOPE_LABEL[r.consultation.designScope] ?? r.consultation.designScope,
+      // 0531: 시술 종류는 designCategory 우선(프렌치 등). designScope 손실 매핑 보정.
+      designScope: resolveRecordCategoryLabelKo(r.consultation, shopSettings),
       price: r.finalPrice,
       designerName: useShopStore.getState().getDesignerName(r.designerId) || r.designerId,
       paymentMethod: r.paymentMethod,
@@ -219,7 +222,7 @@ function CustomerDetailContent({ id }: { id: string }) {
     const unique = recordBased.filter((r) => !r.recordId || !seen.has(r.recordId));
 
     return [...existingHistory, ...unique].sort((a, b) => b.date.localeCompare(a.date));
-  }, [customer?.treatmentHistory, customerRecords]);
+  }, [customer?.treatmentHistory, customerRecords, shopSettings]);
 
   // 결제 수단별 합계 (records 실데이터 기반)
   const paymentSummary = useMemo(() => {
