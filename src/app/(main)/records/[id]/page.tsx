@@ -90,6 +90,19 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
   // 0529: 샵 설정 가격으로 계산 (이전엔 인자 누락으로 기본값 사용 → 가격 상세 부정확)
   const breakdown = calculatePrice(c, buildServicePricingFromShopSettings(shopSettings));
 
+  // 0531: 현장모드(quick-sale) 기록은 카테고리 모델로 청구됐으므로, 가산모델(calculatePrice)로
+  // 재계산한 breakdown 을 쓰면 합계가 실제 청구액과 불일치한다(예: 합계 92,000 vs 최종 47,000).
+  // → 저장된 pricing_adjustments.basePrice(시술 총액)를 SSOT 로 사용.
+  const isFieldModeRecord = record.isQuickSale === true || id.startsWith('fm-') || id.startsWith('qs-');
+  const storedGross =
+    record.pricingAdjustments?.basePrice ??
+    (record.finalPrice +
+      (record.deposit ?? 0) +
+      (record.membershipApplied ?? 0) +
+      (record.pricingAdjustments?.discountAmount ?? 0));
+  const useStoredPricing = isFieldModeRecord && storedGross > 0;
+  const displaySubtotal = useStoredPricing ? storedGross : breakdown.subtotal;
+
   const pinnedTags = getPinnedTags(record.customerId);
   const safetyTags = pinnedTags.filter((tag) => {
     const level = getSafetyTagMeta(tag).level;
@@ -364,22 +377,29 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
             </div>
           )}
 
-          {breakdown.items
-            .filter((item) => !item.isDiscount)
-            .map((item, i) => (
-              <div key={i} className="flex justify-between text-sm">
-                <span className="text-text-secondary">{item.label}</span>
-                <span className="text-text">
-                  {i === 0 ? formatPrice(item.amount) : `+${formatPrice(item.amount)}`}
-                </span>
-              </div>
-            ))}
+          {useStoredPricing ? (
+            <div className="flex justify-between text-sm">
+              <span className="text-text-secondary">시술 금액</span>
+              <span className="text-text">{formatPrice(storedGross)}</span>
+            </div>
+          ) : (
+            breakdown.items
+              .filter((item) => !item.isDiscount)
+              .map((item, i) => (
+                <div key={i} className="flex justify-between text-sm">
+                  <span className="text-text-secondary">{item.label}</span>
+                  <span className="text-text">
+                    {i === 0 ? formatPrice(item.amount) : `+${formatPrice(item.amount)}`}
+                  </span>
+                </div>
+              ))
+          )}
 
           <div className="my-2 border-t border-border" />
 
           <div className="flex justify-between text-sm">
             <span className="font-medium text-text">{t('recordDetail.subtotal')}</span>
-            <span className="font-semibold text-text">{formatPrice(breakdown.subtotal)}</span>
+            <span className="font-semibold text-text">{formatPrice(displaySubtotal)}</span>
           </div>
 
           {breakdown.items
@@ -410,6 +430,22 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
               <span className="text-error">-{formatPrice(record.membershipApplied!)}</span>
             </div>
           )}
+          {/* 0531: 현장모드 기록은 deposit/할인이 별도 컬럼 없이 finalPrice 에만 반영돼,
+              합계−명시차감 과 최종금액 사이 설명 안 된 차액이 남을 수 있다. 그 차액을 '할인·예약금 차감'으로 표시해
+              합계 − 차감 = 최종 이 시각적으로 성립하게 한다. */}
+          {useStoredPricing && (() => {
+            const shown =
+              (record.pricingAdjustments?.discountAmount ?? 0) +
+              (record.deposit ?? 0) +
+              (record.membershipApplied ?? 0);
+            const gap = displaySubtotal - record.finalPrice - shown;
+            return gap > 0 ? (
+              <div className="flex justify-between text-sm">
+                <span className="text-text-secondary">할인·예약금 차감</span>
+                <span className="text-error">-{formatPrice(gap)}</span>
+              </div>
+            ) : null;
+          })()}
 
           {/* 결제수단 표시 */}
           {record.paymentMethod && (

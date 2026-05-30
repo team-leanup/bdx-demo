@@ -69,7 +69,7 @@ export default function HomePage() {
     naver: { label: t('home.channel_naver'), icon: '🟢', variant: 'neutral' },
     phone: { label: t('home.channel_phone'), icon: '📞', variant: 'neutral' },
     walk_in: { label: t('home.channel_walk_in'), icon: '🚶', variant: 'neutral' },
-    pre_consult: { label: '미리 정하기', icon: '📋', variant: 'primary' },
+    pre_consult: { label: '사전상담', icon: '📋', variant: 'primary' },
   };
 
   useEffect(() => {

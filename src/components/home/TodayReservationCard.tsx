@@ -28,6 +28,7 @@ import ConsultationLinkModal from '@/components/reservations/ConsultationLinkMod
 import { getSafetyTagMeta } from '@/lib/tag-safety';
 import { PreConsultSummaryInline } from '@/components/reservations/PreConsultSummaryInline';
 import { getBookingStage } from '@/lib/booking-stage';
+import { resolveCategoryLabelKo } from '@/lib/category-resolver';
 import type { BookingChannel, BookingRequest } from '@/types/consultation';
 import type { CustomerTag } from '@/types/customer';
 
@@ -139,6 +140,7 @@ export function TodayReservationCard({
   const setEntryPoint = useConsultationStore((s) => s.setEntryPoint);
   const allRecords = useRecordsStore((s) => s.records);
   const defaultDurationMinutes = useAppStore((s) => s.shopSettings.timeSettings.baseHand) ?? 60;
+  const shopSettings = useAppStore((s) => s.shopSettings);
 
   const [alertBooking, setAlertBooking] = useState<BookingRequest | null>(null);
   const [alertTags, setAlertTags] = useState<CustomerTag[]>([]);
@@ -324,7 +326,7 @@ export function TodayReservationCard({
                         )}
                         {booking.serviceLabel && (
                           <span className="max-w-[100px] truncate px-2 py-0.5 rounded-full bg-primary/10 text-[11px] text-primary font-semibold">
-                            {booking.serviceLabel}
+                            {resolveCategoryLabelKo(booking.serviceLabel, shopSettings)}
                           </span>
                         )}
                         {/* H-3: 클릭 가능한 준비도 배지 */}

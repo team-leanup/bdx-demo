@@ -28,6 +28,7 @@ import { getRemainingAmount, getMembershipSessionState, formatWon } from '@/lib/
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useReservationStore } from '@/store/reservation-store';
+import { normalizePhone } from '@/lib/phone';
 import { useRecordsStore } from '@/store/records-store';
 import type { TreatmentHistory } from '@/types/customer';
 import { DESIGN_SCOPE_LABEL } from '@/lib/labels';
@@ -245,12 +246,13 @@ function CustomerDetailContent({ id }: { id: string }) {
   }, [customerRecords]);
 
   // 이 고객의 예약 이력 (사전상담 완료 여부 포함)
-  const customerReservations = useMemo(
-    () => reservations
-      .filter((r) => r.customerId === id)
-      .sort((a, b) => b.reservationDate.localeCompare(a.reservationDate)),
-    [reservations, id],
-  );
+  // customerId 직접 연결 + 전화번호 매칭(사전상담 booking 이 customer_id 미연결인 경우 대비).
+  const customerReservations = useMemo(() => {
+    const phone = customer?.phone ? normalizePhone(customer.phone) : null;
+    return reservations
+      .filter((r) => r.customerId === id || (!!phone && !!r.phone && normalizePhone(r.phone) === phone))
+      .sort((a, b) => b.reservationDate.localeCompare(a.reservationDate));
+  }, [reservations, id, customer?.phone]);
 
   const customerPhotos = getByCustomerId(id);
   const treatmentPhotos = customerPhotos.filter(
