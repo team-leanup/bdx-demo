@@ -71,6 +71,18 @@ function useLabelMaps() {
       point_art: t('preConsult.addOnPointArt'),
       wrapping: t('preConsult.wrappingLabel'),
     },
+    stylePreference: {
+      photo_match: t('preConsult.stylePhotoMatch'),
+      natural_fit: t('preConsult.styleNaturalFit'),
+      clean_subtle: t('preConsult.styleCleanSubtle'),
+    } as Record<string, string>,
+    styleKeyword: {
+      office_friendly: t('preConsult.kwOffice'),
+      slim_fingers: t('preConsult.kwSlim'),
+      tidy_look: t('preConsult.kwTidy'),
+      subtle_point: t('preConsult.kwPoint'),
+      more_fancy: t('preConsult.kwFancy'),
+    } as Record<string, string>,
   };
 }
 
@@ -538,6 +550,25 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                   .map(([name, count]) => `${name} ×${count}`)
                   .join(', ')}
               />
+            )}
+            {stylePreference && (
+              <SummaryRow
+                label={t('preConsult.styleTitle')}
+                value={labels.stylePreference[stylePreference] ?? stylePreference}
+              />
+            )}
+            {styleKeywords.length > 0 && (
+              <SummaryRow
+                label={t('preConsult.keywordTitle')}
+                value={styleKeywords.map((k) => labels.styleKeyword[k] ?? k).join(', ')}
+              />
+            )}
+            {/* 기타 요청사항 — 자유 입력이라 전체 폭으로 표시 (손님이 적은 내용 누락 방지) */}
+            {additionalRequest && additionalRequest.trim() && (
+              <div className="mt-1 pt-2 border-t border-border/60 flex flex-col gap-1">
+                <span className="text-xs text-text-muted">{t('preConsult.additionalRequestTitle')}</span>
+                <p className="text-sm text-text whitespace-pre-line break-keep">{additionalRequest.trim()}</p>
+              </div>
             )}
           </div>
         </motion.section>
