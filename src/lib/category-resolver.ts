@@ -13,13 +13,11 @@ import type {
   DesignCategory,
 } from '@/types/pre-consultation';
 import { BUILTIN_DESIGN_CATEGORIES } from '@/types/pre-consultation';
+import { CATEGORY_LABELS, resolveMenuCategoryLabel } from '@/lib/labels';
 
-const BUILTIN_KO: Record<BuiltinDesignCategory, string> = {
-  simple: '심플',
-  french: '프렌치',
-  magnet: '자석',
-  art: '아트',
-};
+// SSOT: builtin 카테고리 한국어 라벨은 labels.ts CATEGORY_LABELS 단일 소스.
+// (자석 / 마그넷, 심플 / 원컬러 — 모든 화면 동일 표기)
+const BUILTIN_KO: Record<BuiltinDesignCategory, string> = CATEGORY_LABELS as Record<BuiltinDesignCategory, string>;
 
 const BUILTIN_DESC_KO: Record<BuiltinDesignCategory, string> = {
   simple: '깔끔한 원컬러·그라데이션',
@@ -59,12 +57,13 @@ export function resolveCategoryLabel(
   }
 }
 
-/** 한국어 라벨만 — (main) 페이지·통계에서 사용 */
+/** 한국어 라벨만 — (main) 페이지·통계·field-mode에서 사용.
+ *  builtin은 메뉴 SSOT(resolveMenuCategoryLabel)로 위임 → 사장님 rename(categoryLabels) 반영 + 풀라벨 통일. */
 export function resolveCategoryLabelKo(
   category: DesignCategory,
   shopSettings?: ShopExtendedSettings | null,
 ): string {
-  if (isBuiltinCategory(category)) return BUILTIN_KO[category];
+  if (isBuiltinCategory(category)) return resolveMenuCategoryLabel(category, shopSettings?.categoryLabels);
   const custom = shopSettings?.customCategories?.find((c) => c.id === category);
   return custom?.name ?? category;
 }

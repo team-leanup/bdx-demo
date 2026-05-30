@@ -69,8 +69,9 @@ export function calculatePreConsultPrice(input: PriceCalcInput): PreConsultPrice
     } else if (addOn === 'point_art') {
       addOnSurcharge += surcharges.pointArt;
     } else if (addOn === 'wrapping') {
-      // 랩핑 추가금: 샵이 설정한 값만 청구. 미설정(undefined) 시 0.
-      addOnSurcharge += surcharges.wrapping ?? 0;
+      // 0531: 랩핑 추가금 미설정 시 기본 5000 (SurchargeSettings 주석·설정 UI(?? 5000)·getAddOnAmount 와 통일).
+      //   이전 '?? 0' 은 settlement(74,000) vs 사전상담 확인(79,000) 불일치의 원인이었음.
+      addOnSurcharge += surcharges.wrapping ?? ADDON_FIXED_PRICES.wrapping;
     }
   }
   // 0531: 랩핑 선호('네일 랩핑 원하시나요? → 네')도 surcharges.wrapping 을 견적에 가산한다.
@@ -78,7 +79,7 @@ export function calculatePreConsultPrice(input: PriceCalcInput): PreConsultPrice
   // addOns 에 이미 'wrapping' 이 있으면 중복 청구 방지. field-mode 정산도 wrappingPreference 를
   // 동일하게 carry·청구하므로 견적=계산대 일치 유지.
   if (wrappingPreference === 'yes' && !addOns.includes('wrapping')) {
-    addOnSurcharge += surcharges.wrapping ?? 0;
+    addOnSurcharge += surcharges.wrapping ?? ADDON_FIXED_PRICES.wrapping;
   }
 
   // 4-1. Custom parts surcharge (사장님이 등록한 파츠 × 손님이 선택한 개수)

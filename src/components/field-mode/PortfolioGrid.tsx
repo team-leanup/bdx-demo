@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/cn';
 import { useT } from '@/lib/i18n';
 import { useAppStore } from '@/store/app-store';
+import { resolveMenuCategoryLabel } from '@/lib/labels';
 import type { PortfolioPhoto } from '@/types/portfolio';
 import type { DesignCategory } from '@/types/pre-consultation';
 
@@ -22,26 +23,29 @@ interface CategoryTab {
   label?: string;
 }
 
-const BUILTIN_CATEGORY_TABS: CategoryTab[] = [
-  { key: null, labelKey: 'fieldMode.categoryAll' },
-  { key: 'simple', labelKey: 'fieldMode.categorySimple' },
-  { key: 'french', labelKey: 'fieldMode.categoryFrench' },
-  { key: 'magnet', labelKey: 'fieldMode.categoryMagnet' },
-  { key: 'art', labelKey: 'fieldMode.categoryArt' },
-];
+const BUILTIN_CATEGORY_KEYS: DesignCategory[] = ['simple', 'french', 'magnet', 'art'];
 
 export function PortfolioGrid({ photos, onSelectPhoto, selectedCategory }: PortfolioGridProps) {
   const t = useT();
   const customCategories = useAppStore((s) => s.shopSettings.customCategories) ?? [];
+  const categoryLabels = useAppStore((s) => s.shopSettings.categoryLabels);
   const [sortMode, setSortMode] = useState<SortMode>('featured');
 
+  // 라벨 SSOT: builtin은 resolveMenuCategoryLabel(메뉴 기준·rename 반영), '전체'만 i18n
   const categoryTabs = useMemo<CategoryTab[]>(() => {
+    const builtins: CategoryTab[] = [
+      { key: null, labelKey: 'fieldMode.categoryAll' },
+      ...BUILTIN_CATEGORY_KEYS.map<CategoryTab>((key) => ({
+        key,
+        label: resolveMenuCategoryLabel(key, categoryLabels),
+      })),
+    ];
     const customs = customCategories.slice().sort((a, b) => a.order - b.order).map<CategoryTab>((c) => ({
       key: c.id,
       label: c.name,
     }));
-    return [...BUILTIN_CATEGORY_TABS, ...customs];
-  }, [customCategories]);
+    return [...builtins, ...customs];
+  }, [customCategories, categoryLabels]);
 
   const filtered = photos.filter((p) => {
     if (selectedCategory === null) return true;

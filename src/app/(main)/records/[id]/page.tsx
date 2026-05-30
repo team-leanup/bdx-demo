@@ -13,6 +13,7 @@ import { usePortfolioStore } from '@/store/portfolio-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { useConsultationStore } from '@/store/consultation-store';
 import { calculatePrice, buildServicePricingFromShopSettings } from '@/lib/price-calculator';
+import { resolveCategoryLabelKo, resolveCategoryPricing } from '@/lib/category-resolver';
 import { useT } from '@/lib/i18n';
 import { getSafetyTagMeta } from '@/lib/tag-safety';
 import { SafetyTag } from '@/components/ui/SafetyTag';
@@ -102,6 +103,24 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
       (record.pricingAdjustments?.discountAmount ?? 0));
   const useStoredPricing = isFieldModeRecord && storedGross > 0;
   const displaySubtotal = useStoredPricing ? storedGross : breakdown.subtotal;
+
+  // 0531: 시술 금액 항목별 내역
+  //  1) 저장된 lineItems(신규 정산 레코드) → 그대로 표시 (합계 = storedGross)
+  //  2) 없으면(구 레코드) 카테고리 base + 나머지 옵션 2행 근사 (합계 = storedGross 보장)
+  //  3) quick-sale 아닌 상담 레코드 → calculatePrice breakdown.items
+  const storedLineItems = record.pricingAdjustments?.lineItems;
+  const approxLineItems: { label: string; amount: number }[] = (() => {
+    if (!useStoredPricing || (storedLineItems && storedLineItems.length > 0)) return [];
+    const catLabel = c.designCategory ? resolveCategoryLabelKo(c.designCategory, shopSettings) : '시술 금액';
+    const catBase = c.designCategory ? (resolveCategoryPricing(c.designCategory, shopSettings)?.price ?? 0) : 0;
+    if (catBase > 0 && catBase < storedGross) {
+      return [
+        { label: catLabel, amount: catBase },
+        { label: '오프·옵션·파츠 등', amount: storedGross - catBase },
+      ];
+    }
+    return [];
+  })();
 
   const pinnedTags = getPinnedTags(record.customerId);
   const safetyTags = pinnedTags.filter((tag) => {
@@ -282,6 +301,7 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
             options={{
               customParts: shopSettings?.customParts,
               customCategories: shopSettings?.customCategories,
+              categoryLabels: shopSettings?.categoryLabels,
             }}
           />
         </Card>
@@ -377,7 +397,27 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
             </div>
           )}
 
-          {useStoredPricing ? (
+          {storedLineItems && storedLineItems.length > 0 ? (
+            // 신규 정산 레코드: 저장된 항목별 내역 (합계 = storedGross)
+            storedLineItems.map((item, i) => (
+              <div key={i} className="flex justify-between text-sm">
+                <span className="text-text-secondary">{item.label}</span>
+                <span className="text-text">
+                  {i === 0 ? formatPrice(item.amount) : `+${formatPrice(item.amount)}`}
+                </span>
+              </div>
+            ))
+          ) : approxLineItems.length > 0 ? (
+            // 구 레코드: 카테고리 base + 나머지 근사 2행
+            approxLineItems.map((item, i) => (
+              <div key={i} className="flex justify-between text-sm">
+                <span className="text-text-secondary">{item.label}</span>
+                <span className="text-text">
+                  {i === 0 ? formatPrice(item.amount) : `+${formatPrice(item.amount)}`}
+                </span>
+              </div>
+            ))
+          ) : useStoredPricing ? (
             <div className="flex justify-between text-sm">
               <span className="text-text-secondary">시술 금액</span>
               <span className="text-text">{formatPrice(storedGross)}</span>

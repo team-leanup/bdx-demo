@@ -19,18 +19,20 @@ import type { DailyConsultation } from '@/lib/analytics';
 type Period = 'daily' | 'weekly' | 'monthly';
 
 function aggregateWeekly(daily: DailyConsultation[]) {
-  const weeks: Record<string, { consultations: number }> = {};
+  // 0531 LOW-2: key는 연도 포함(YYYY-M/D)으로 연도 경계 collision 방지, 표시 라벨은 M/D주만.
+  const weeks: Record<string, { label: string; consultations: number }> = {};
   for (const d of daily) {
     const date = new Date(d.date);
     const day = date.getDay();
     const diff = (day + 6) % 7;
     const monday = new Date(date);
     monday.setDate(date.getDate() - diff);
-    const key = `${monday.getMonth() + 1}/${monday.getDate()}주`;
-    if (!weeks[key]) weeks[key] = { consultations: 0 };
+    const key = `${monday.getFullYear()}-${monday.getMonth() + 1}/${monday.getDate()}`;
+    const label = `${monday.getMonth() + 1}/${monday.getDate()}주`;
+    if (!weeks[key]) weeks[key] = { label, consultations: 0 };
     weeks[key].consultations += d.consultations;
   }
-  return Object.entries(weeks).map(([label, v]) => ({ label, ...v }));
+  return Object.entries(weeks).map(([, v]) => ({ label: v.label, consultations: v.consultations }));
 }
 
 function aggregateMonthly(daily: DailyConsultation[]) {

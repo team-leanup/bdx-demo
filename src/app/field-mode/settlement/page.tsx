@@ -284,6 +284,53 @@ export default function SettlementPage(): React.ReactElement | null {
     // [SALES-5] 할인/예약금 내역 보존
     const grossPrice = subtotal; // 할인/예약금 차감 전 금액
 
+    // 0531: 시술 금액 항목별 내역 — records 가격 상세 표시용. 합계 = grossPrice 보장.
+    //   subtotal = baseEstimate.minTotal(카테고리+오프+연장+옵션+파츠) + inTreatmentTotal(시술 중 추가)
+    //   와 동일 구성으로 라인을 쌓아 정확히 일치시킨다.
+    const priceLineItems: { label: string; amount: number }[] = [];
+    if (baseEstimate) {
+      priceLineItems.push({ label: resolveCategoryLabelKo(selectedCategory, shopSettings), amount: baseEstimate.categoryBase });
+      if (baseEstimate.removalSurcharge > 0) {
+        priceLineItems.push({ label: removalType === 'self_shop' ? '자샵 오프' : '타샵 오프', amount: baseEstimate.removalSurcharge });
+      }
+      if (baseEstimate.extensionSurcharge > 0) {
+        priceLineItems.push({ label: '연장', amount: baseEstimate.extensionSurcharge });
+      }
+      const addonBreakdownAmount = (addon: AddOnOption): number => {
+        switch (addon) {
+          case 'stone': return ADDON_FIXED_PRICES.stone;
+          case 'parts': return shopSettings.surcharges.largeParts;
+          case 'glitter': return ADDON_FIXED_PRICES.glitter;
+          case 'point_art': return shopSettings.surcharges.pointArt;
+          case 'wrapping': return shopSettings.surcharges.wrapping ?? ADDON_FIXED_PRICES.wrapping; // estimate 와 동일
+          default: return 0;
+        }
+      };
+      for (const addon of addOns) {
+        const amt = addonBreakdownAmount(addon);
+        if (amt > 0) priceLineItems.push({ label: ADD_ON_LABELS[addon] ?? addon, amount: amt });
+      }
+      if (wrappingPreference === 'yes' && !addOns.includes('wrapping')) {
+        const w = shopSettings.surcharges.wrapping ?? ADDON_FIXED_PRICES.wrapping;
+        if (w > 0) priceLineItems.push({ label: '랩핑', amount: w });
+      }
+      if (customPartSelections && shopSettings.customParts) {
+        for (const part of shopSettings.customParts) {
+          const raw = customPartSelections[part.name];
+          const count = typeof raw === 'number' ? Math.max(0, Math.floor(raw)) : 0;
+          if (count > 0) priceLineItems.push({ label: `${part.name} ×${count}`, amount: part.pricePerUnit * count });
+        }
+      }
+    }
+    for (const a of inTreatmentAddons) {
+      priceLineItems.push({ label: a.label, amount: a.amount });
+    }
+    // 합계 정합 안전망: 라인 합이 grossPrice 와 다르면 조정 라인 추가
+    const lineItemsSum = priceLineItems.reduce((s, li) => s + li.amount, 0);
+    if (lineItemsSum !== grossPrice) {
+      priceLineItems.push({ label: '기타', amount: grossPrice - lineItemsSum });
+    }
+
     // 1) 시술 기록 저장 — 실패 시 회원권 차감 skip (2026-04-20 R3: 데이터 정합성)
     let recordSaved = true;
     try {
@@ -314,13 +361,14 @@ export default function SettlementPage(): React.ReactElement | null {
           hasParts,
           partsSelections,
         },
-        // [SALES-5] 할인/예약금 내역
-        pricingMeta: (discountAmount > 0 || depositApplied > 0) ? {
+        // [SALES-5] 할인/예약금 내역 + 0531 항목별 내역(lineItems) — 항상 전달해 가격 상세 보존
+        pricingMeta: {
           grossPrice,
           discountPercent: discountPercent > 0 ? discountPercent : undefined,
           discountAmount: discountAmount > 0 ? discountAmount : undefined,
           depositAmount: depositApplied > 0 ? depositApplied : undefined,
-        } : undefined,
+          lineItems: priceLineItems,
+        },
       });
     } catch {
       console.warn('[settlement] DB save failed — skipping membership deduction');

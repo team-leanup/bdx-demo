@@ -70,6 +70,8 @@ interface RecordsStore {
       discountPercent?: number;
       discountAmount?: number;
       depositAmount?: number;
+      /** 0531: 시술 금액 항목별 내역 (합계 = grossPrice) — 가격 상세 표시용 */
+      lineItems?: { label: string; amount: number }[];
     };
   }) => Promise<void>;
   updateRecord: (id: string, patch: Partial<ConsultationRecord>) => void;
@@ -174,6 +176,8 @@ export const useRecordsStore = create<RecordsStore>()(
               extras: [],
               discountAmount: pricingMeta.discountAmount,
               finalPrice,
+              // 0531: 항목별 내역 보존 (합계 = grossPrice) — records/[id] 가격 상세 표시
+              lineItems: pricingMeta.lineItems && pricingMeta.lineItems.length > 0 ? pricingMeta.lineItems : undefined,
             }
           : undefined;
 

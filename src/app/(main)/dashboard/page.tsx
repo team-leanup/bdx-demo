@@ -21,7 +21,6 @@ import { useReservationStore } from '@/store/reservation-store';
 import { useAppStore } from '@/store/app-store';
 import { buildServicePricingFromShopSettings } from '@/lib/price-calculator';
 import {
-  computeRegularVisitRate,
   computeUpsellMetrics,
   computeForeignReservationSummary,
   computeGoldenTimeTargets,
@@ -73,7 +72,6 @@ export default function DashboardPage() {
     () => buildServicePricingFromShopSettings(shopSettings),
     [shopSettings],
   );
-  const regularVisitRate = useMemo(() => computeRegularVisitRate(customers), [customers]);
   const upsellMetrics = useMemo(() => computeUpsellMetrics(records, shopPricing), [records, shopPricing]);
 
   const todayRevenue = useMemo(() => computeTodayRevenue(records), [records]);

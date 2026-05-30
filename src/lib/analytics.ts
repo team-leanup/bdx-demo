@@ -318,7 +318,8 @@ export function computeDesignScopeBreakdown(records: ConsultationRecord[]): Serv
     const key = r.consultation.designCategory || r.consultation.designScope;
     if (key) counts[key] = (counts[key] ?? 0) + 1;
   }
-  const total = records.length || 1;
+  // 0531 HIGH-2: 분모를 '분류된 레코드 합'으로 — 미분류 레코드 포함 시 비율 합계가 100% 미만이 되던 문제 수정.
+  const total = Object.values(counts).reduce((s, v) => s + v, 0) || 1;
   return Object.entries(counts)
     .sort((a, b) => b[1] - a[1])
     .map(([key, count]) => ({
@@ -525,7 +526,8 @@ export function computeGoldenTimeTargets(
   reservations: BookingRequest[],
   averageCycleDays = 28,
 ): GoldenTimeTarget[] {
-  const today = new Date(`${getTodayInKorea()}T12:00:00`);
+  // 0531 HIGH-3: TZ suffix(+09:00) 명시 — 비KST 환경에서 주차 범위가 하루 어긋나던 문제 수정.
+  const today = new Date(`${getTodayInKorea()}T12:00:00+09:00`);
   const weekStart = startOfWeek(today);
   const weekEnd = endOfWeek(today);
   const reservedCustomerIds = new Set(
@@ -618,25 +620,33 @@ export function computeCustomerAnalytics(
   };
 }
 
-// Group reservations by hour, count each hour from 10-18
+// Group reservations by hour. 0531 HIGH-1: 시간대 범위를 하드코딩(10~18)하지 않고
+// 기본 영업시간(10~19) baseline + 실제 예약이 있는 시각을 모두 포함하도록 동적 확장.
+// → 19·20시 등 늦은 예약이 차트/카운트에서 누락되던 문제 수정.
 // 0530 MED-3: '이달 기준' 표기와 일치하도록 이달 예약만 포함, 취소 건 제외
 export function computeHourlyDistribution(reservations: BookingRequest[]): HourlyDistribution[] {
-  const hours = [10, 11, 12, 13, 14, 15, 16, 17, 18];
   const monthPrefix = getTodayInKorea().slice(0, 7); // YYYY-MM
   const counts: Record<number, number> = {};
+  const presentHours: number[] = [];
   for (const r of reservations) {
     if (
       r.status === 'cancelled' ||
       !r.reservationDate.startsWith(monthPrefix) ||
-      !r.reservationTime
+      !r.reservationTime ||
+      !/^\d{1,2}:\d{2}$/.test(r.reservationTime)
     ) {
       continue;
     }
     const hour = parseInt(r.reservationTime.split(':')[0], 10);
-    if (hours.includes(hour)) {
-      counts[hour] = (counts[hour] ?? 0) + 1;
-    }
+    if (Number.isNaN(hour)) continue;
+    counts[hour] = (counts[hour] ?? 0) + 1;
+    presentHours.push(hour);
   }
+  // baseline 10~19 + 실제 예약 시각으로 범위 확장 (어떤 예약도 누락되지 않음)
+  const minHour = Math.min(10, ...presentHours);
+  const maxHour = Math.max(19, ...presentHours);
+  const hours: number[] = [];
+  for (let h = minHour; h <= maxHour; h++) hours.push(h);
   return hours.map((hour) => ({
     hour,
     label: `${hour}시`,

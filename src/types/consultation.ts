@@ -185,6 +185,9 @@ export interface ConsultationRecord {
     // L-8: discountAmount 저장 필드 추가
     discountAmount?: number;
     finalPrice: number;
+    // 0531: 시술 금액 항목별 내역(저장 시점 보존) — 카테고리 base + 오프 + 옵션 + 파츠 + 시술중추가.
+    // 합계 = basePrice(grossPrice). records/[id] 가격 상세에서 그대로 표시.
+    lineItems?: { label: string; amount: number }[];
   };
   notes?: string;
   imageUrls?: string[];

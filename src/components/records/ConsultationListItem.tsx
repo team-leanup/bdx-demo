@@ -3,10 +3,12 @@
 import Image from 'next/image';
 import { formatPrice, toKoreanTimeString } from '@/lib/format';
 import { DESIGN_SCOPE_LABEL, BODY_PART_LABEL, EXPRESSION_LABEL, getDesignerName } from '@/lib/labels';
+import { resolveCategoryLabelKo } from '@/lib/category-resolver';
 import { SafetyTag } from '@/components/ui/SafetyTag';
 import { FlagIcon } from '@/components/ui/FlagIcon';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useCustomerStore } from '@/store/customer-store';
+import { useAppStore } from '@/store/app-store';
 import { getSafetyTagMeta } from '@/lib/tag-safety';
 import type { ConsultationRecord } from '@/types/consultation';
 
@@ -24,6 +26,7 @@ export function ConsultationListItem({
 
   const getByRecordId = usePortfolioStore((s) => s.getByRecordId);
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
+  const shopSettings = useAppStore((s) => s.shopSettings);
 
   const photos = getByRecordId(record.id);
   const thumbnail = photos[0];
@@ -107,12 +110,10 @@ export function ConsultationListItem({
               {BODY_PART_LABEL[c.bodyPart] ?? c.bodyPart}
             </span>
             <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-              {/* 0528 N3: designCategory 우선 (magnet→solid_tone 매핑 우회) */}
+              {/* 0528 N3: designCategory 우선. 라벨 SSOT=resolveCategoryLabelKo (builtin 풀라벨·custom 이름) */}
               {(() => {
                 const cat = c.designCategory;
-                const CATEGORY_LABEL: Record<string, string> = { simple: '심플', french: '프렌치', magnet: '자석', art: '아트' };
-                if (cat && CATEGORY_LABEL[cat]) return CATEGORY_LABEL[cat];
-                if (cat) return cat;
+                if (cat) return resolveCategoryLabelKo(cat, shopSettings);
                 return DESIGN_SCOPE_LABEL[c.designScope] ?? c.designScope;
               })()}
             </span>

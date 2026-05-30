@@ -59,7 +59,7 @@ export function DesignerPerformance() {
 
   const rateChartData = designerStats.map((d) => ({
     name: d.designerName,
-    '예약 배정률': d.assignedBookingRate,
+    '예약 점유율': d.assignedBookingRate,
     '상담 완료율': d.consultationCompletionRate,
   }));
 
@@ -107,7 +107,7 @@ export function DesignerPerformance() {
       </div>
 
       <div>
-        <p className="mb-3 text-xs font-medium text-text-secondary">예약 배정률 / 상담 완료율</p>
+        <p className="mb-3 text-xs font-medium text-text-secondary">예약 점유율 / 상담 완료율</p>
         <div className="h-[160px] md:h-48">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={rateChartData} margin={{ top: 0, right: 8, left: -12, bottom: 0 }}>
@@ -126,7 +126,7 @@ export function DesignerPerformance() {
                 domain={[0, 100]}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="예약 배정률" radius={[6, 6, 0, 0]} fill="var(--color-primary)" />
+              <Bar dataKey="예약 점유율" radius={[6, 6, 0, 0]} fill="var(--color-primary)" />
               <Bar dataKey="상담 완료율" radius={[6, 6, 0, 0]} fill="color-mix(in srgb, var(--color-primary) 50%, white)" />
             </BarChart>
           </ResponsiveContainer>
@@ -157,7 +157,7 @@ export function DesignerPerformance() {
                   <p className="mt-0.5 font-semibold text-text">{d.consultations}건</p>
                 </div>
                 <div className="rounded-lg bg-surface-alt px-3 py-2">
-                  <p className="text-[10px] text-text-muted">예약 배정률</p>
+                  <p className="text-[10px] text-text-muted">예약 점유율</p>
                   <p className="mt-0.5 font-semibold text-text">{d.assignedBookingRate}%</p>
                 </div>
                 <div className="rounded-lg bg-surface-alt px-3 py-2">

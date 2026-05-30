@@ -10,6 +10,7 @@ import { usePortfolioStore } from '@/store/portfolio-store';
 import { useAppStore } from '@/store/app-store';
 import { useAuthStore } from '@/store/auth-store';
 import { calculatePreConsultPrice } from '@/lib/pre-consult-price';
+import { resolveMenuCategoryLabel } from '@/lib/labels';
 import { DesignConfirmSheet } from '@/components/field-mode/DesignConfirmSheet';
 import { QuickOptionsPanel } from '@/components/field-mode/QuickOptionsPanel';
 import { PriceBar } from '@/components/field-mode/PriceBar';
@@ -28,13 +29,7 @@ interface CategoryTab {
   label?: string;
 }
 
-const BUILTIN_CATEGORY_TABS: CategoryTab[] = [
-  { key: null, labelKey: 'fieldMode.categoryAll' },
-  { key: 'simple', labelKey: 'fieldMode.categorySimple' },
-  { key: 'french', labelKey: 'fieldMode.categoryFrench' },
-  { key: 'magnet', labelKey: 'fieldMode.categoryMagnet' },
-  { key: 'art', labelKey: 'fieldMode.categoryArt' },
-];
+const BUILTIN_CATEGORY_KEYS: DesignCategory[] = ['simple', 'french', 'magnet', 'art'];
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
@@ -105,14 +100,21 @@ export default function FieldModePage() {
   // ── Shop settings ─────────────────────────────────────────────────────────
   const { shopSettings } = useAppStore();
 
-  // builtin + custom 카테고리 탭
+  // builtin + custom 카테고리 탭 — 라벨 SSOT: builtin은 resolveMenuCategoryLabel(메뉴 기준·rename 반영)
   const categoryTabs = useMemo<CategoryTab[]>(() => {
+    const builtins: CategoryTab[] = [
+      { key: null, labelKey: 'fieldMode.categoryAll' },
+      ...BUILTIN_CATEGORY_KEYS.map<CategoryTab>((key) => ({
+        key,
+        label: resolveMenuCategoryLabel(key, shopSettings.categoryLabels),
+      })),
+    ];
     const customs = (shopSettings.customCategories ?? [])
       .slice()
       .sort((a, b) => a.order - b.order)
       .map<CategoryTab>((c) => ({ key: c.id, label: c.name }));
-    return [...BUILTIN_CATEGORY_TABS, ...customs];
-  }, [shopSettings.customCategories]);
+    return [...builtins, ...customs];
+  }, [shopSettings.customCategories, shopSettings.categoryLabels]);
 
   // ── Price estimate ────────────────────────────────────────────────────────
   const estimate = useMemo(() => {
@@ -307,14 +309,14 @@ export default function FieldModePage() {
                     <div className="mt-4 w-full max-w-[280px] flex flex-col gap-2">
                       <p className="text-xs text-text-muted text-center">사진 없이 카테고리만으로 시작</p>
                       <div className="grid grid-cols-2 gap-2">
-                        {BUILTIN_CATEGORY_TABS.filter((c) => c.key !== null && c.labelKey).map((cat) => (
+                        {BUILTIN_CATEGORY_KEYS.map((key) => (
                           <button
-                            key={cat.key as string}
+                            key={key}
                             type="button"
-                            onClick={() => selectCategoryOnly(cat.key as DesignCategory)}
+                            onClick={() => selectCategoryOnly(key)}
                             className="px-3 py-2.5 rounded-xl border border-primary/30 bg-primary/5 text-primary text-sm font-semibold hover:bg-primary/10 active:scale-95 transition-all"
                           >
-                            {t(cat.labelKey as string)}
+                            {resolveMenuCategoryLabel(key, shopSettings.categoryLabels)}
                           </button>
                         ))}
                       </div>

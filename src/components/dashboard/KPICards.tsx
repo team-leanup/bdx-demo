@@ -183,8 +183,9 @@ function buildKPIDetail(
     }
     case '오늘 예약': {
       const today = getTodayInKorea();
+      // 0531 LOW-1: KPI 카운트(computeTodayBookings)와 동일하게 유효 시간(HH:MM) 예약만 — '미정' 등 제외
       const todayRes = reservations
-        .filter((r) => r.reservationDate === today && r.status !== 'cancelled')
+        .filter((r) => r.reservationDate === today && r.status !== 'cancelled' && r.reservationTime && /^\d{1,2}:\d{2}$/.test(r.reservationTime))
         .sort((a, b) => a.reservationTime.localeCompare(b.reservationTime));
       const channelLabel: Record<string, string> = {
         kakao: '카카오톡',

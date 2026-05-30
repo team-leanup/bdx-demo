@@ -6,9 +6,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { PreConsultationData } from '@/types/pre-consultation';
 
 // ── 레이블 상수 (사전상담 표시 SSOT — 모든 원장 화면이 이 컴포넌트를 통해 동일하게 표시) ──
+// SSOT 정렬: labels.ts CATEGORY_LABELS 와 동일 표기 (자석 / 마그넷, 심플 / 원컬러)
 export const PRE_CATEGORY_LABEL: Record<string, string> = {
-  simple: '심플 (원컬러·그라데이션)', french: '프렌치',
-  magnet: '자석 (캣아이·자석젤)', art: '아트 (풀아트·포인트)',
+  simple: '심플 / 원컬러', french: '프렌치',
+  magnet: '자석 / 마그넷', art: '아트',
 };
 export const PRE_NAIL_STATUS_LABEL: Record<string, string> = { none: '맨손', existing: '기존 젤 있음' };
 export const PRE_REMOVAL_LABEL: Record<string, string> = { none: '오프 없음', self_shop: '당샵 오프', other_shop: '타샵 오프' };
@@ -40,6 +41,8 @@ export interface PreConsultDetailViewOptions {
   customParts?: Array<{ name: string; pricePerUnit: number }>;
   /** 커스텀 카테고리 이름 resolve (없으면 id 그대로 표시) */
   customCategories?: Array<{ id: string; name: string }>;
+  /** builtin 카테고리 사장님 rename override (shopSettings.categoryLabels) */
+  categoryLabels?: Record<string, string>;
 }
 
 export interface PreConsultDetailViewProps {
@@ -99,6 +102,7 @@ export function PreConsultDetailView({
     showSelectedBadge = true,
     customParts,
     customCategories,
+    categoryLabels,
   } = options;
 
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
@@ -154,8 +158,9 @@ export function PreConsultDetailView({
               label="시술 종류"
               value={
                 data.designCategory
-                  ? (PRE_CATEGORY_LABEL[data.designCategory] ??
+                  ? (categoryLabels?.[data.designCategory] ??
                       customCategories?.find((c) => c.id === data.designCategory)?.name ??
+                      PRE_CATEGORY_LABEL[data.designCategory] ??
                       data.designCategory)
                   : undefined
               }

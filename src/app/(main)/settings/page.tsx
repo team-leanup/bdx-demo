@@ -36,7 +36,7 @@ const DAY_LABEL_KEYS = ['days_mon', 'days_tue', 'days_wed', 'days_thu', 'days_fr
 const SERVICE_TOGGLE_ITEMS: { key: keyof ServiceStructure; label: string; description: string }[] = [
   { key: 'removal', label: '오프 (제거)', description: '자샵오프, 타샵오프 선택 옵션' },
   { key: 'french', label: '프렌치', description: '프렌치 네일 표현 기법' },
-  { key: 'magnet', label: '마그네틱', description: '마그네틱/캣아이 표현 기법' },
+  { key: 'magnet', label: '자석 / 마그넷', description: '자석젤·캣아이 등 마그네틱 시술' },
   { key: 'pointFullArt', label: '아트 (포인트/풀아트)', description: '포인트·풀아트 시술' },
   { key: 'parts', label: '파츠', description: '파츠 (스톤, 참 등) 옵션' },
   { key: 'extension', label: '연장', description: '네일 연장 서비스' },

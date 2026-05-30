@@ -40,8 +40,6 @@ import {
   ConsultationList,
   PeriodFilter,
 } from '@/components/records';
-import { TAG_PRESETS } from '@/data/tag-presets';
-import { TagIconSvg } from '@/components/ui/TagIconSvg';
 import { ReservationForm } from '@/components/home/ReservationForm';
 import type { BookingChannel, BookingRequest } from '@/types/consultation';
 import type { ConsultationRecord } from '@/types/consultation';
@@ -153,7 +151,6 @@ export default function RecordsPage() {
   const [extraDesignerIds, setExtraDesignerIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterPeriod>('all');
-  const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [linkGenBooking, setLinkGenBooking] = useState<BookingRequest | null>(null);
 
   const [selectedDate, setSelectedDate] = useState(getTodayStr());
@@ -386,18 +383,9 @@ export default function RecordsPage() {
         (r.consultation.customerPhone ?? '').includes(q) ||
         DESIGN_SCOPE_LABEL[r.consultation.designScope]?.toLowerCase().includes(q);
       const matchPeriod = isInPeriod(r.createdAt, filter);
-      let matchTag = true;
-      if (tagFilter) {
-        if (tagFilter === '외국인') {
-          matchTag = !!r.language && r.language !== 'ko';
-        } else {
-          const customerTags = getPinnedTags(r.customerId);
-          matchTag = customerTags.some((t) => t.value === tagFilter);
-        }
-      }
-      return matchSearch && matchPeriod && matchTag;
+      return matchSearch && matchPeriod;
     });
-  }, [sorted, search, filter, tagFilter, role, activeDesignerId, getPinnedTags, customerFilterId]);
+  }, [sorted, search, filter, role, activeDesignerId, customerFilterId]);
 
   const handleEventClick = (ev: TimeGridEvent) => {
     if (ev.type === 'consultation') {
@@ -812,47 +800,6 @@ export default function RecordsPage() {
             </div>
           )}
 
-          {/* R-5: 태그 필터 칩 */}
-          <div className="relative after:absolute after:right-0 after:top-0 after:bottom-0 after:w-8 after:bg-gradient-to-l after:from-background after:to-transparent after:pointer-events-none">
-          <div className="flex gap-2 overflow-x-auto px-4 md:px-0 pb-1 scrollbar-hide">
-            <button
-              onClick={() => setTagFilter(null)}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                tagFilter === null
-                  ? 'bg-primary text-white'
-                  : 'bg-surface border border-border text-text-secondary hover:bg-surface-alt'
-              }`}
-            >
-              전체
-            </button>
-            <button
-              onClick={() => setTagFilter(tagFilter === '외국인' ? null : '외국인')}
-              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold leading-none transition-colors ${
-                tagFilter === '외국인'
-                  ? 'bg-primary text-white'
-                  : 'bg-surface border border-border text-text-secondary hover:bg-surface-alt'
-              }`}
-            >
-              <TagIconSvg icon="🌏" className="h-3.5 w-3.5" />
-              <span>외국인</span>
-            </button>
-            {TAG_PRESETS.filter((p) => ['design', 'shape', 'etc'].includes(p.category)).flatMap((p) => p.options).map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setTagFilter(tagFilter === opt.value ? null : opt.value)}
-                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold leading-none transition-colors ${
-                  tagFilter === opt.value
-                    ? 'bg-primary text-white'
-                    : 'bg-surface border border-border text-text-secondary hover:bg-surface-alt'
-                }`}
-              >
-                {opt.icon && <TagIconSvg icon={opt.icon} className="h-3.5 w-3.5" />}
-                <span>{opt.value}</span>
-              </button>
-            ))}
-          </div>
-          </div>
-
           <PeriodFilter
             filter={filter}
             onFilterChange={setFilter}
@@ -1213,6 +1160,7 @@ export default function RecordsPage() {
                               elevated: false,
                               customParts: shopSettings.customParts,
                               customCategories: shopSettings.customCategories,
+                              categoryLabels: shopSettings.categoryLabels,
                             }}
                           />
                         </div>

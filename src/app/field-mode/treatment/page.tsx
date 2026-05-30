@@ -253,6 +253,7 @@ export default function TreatmentPage(): React.ReactElement {
                         options={{
                           customParts: shopSettings.customParts,
                           customCategories: shopSettings.customCategories,
+                          categoryLabels: shopSettings.categoryLabels,
                         }}
                       />
                     </div>
