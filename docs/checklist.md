@@ -723,7 +723,8 @@
 ### 22.1 🔴→🟢 P0 사전상담/예약 제출 RLS 차단 (전 실제 샵)
 - **증상**: 손님 사전상담 제출 시 `new row violates row-level security policy for table "pre_consultations"`
 - **원인**: `pre_consultations`·`booking_requests` 의 `*_verified_insert` 정책 with_check 가 `EXISTS(SELECT 1 FROM shops WHERE id=shop_id)` 사용 → 이 서브쿼리가 **anon 의 shops RLS 하에서 평가**되는데 anon 은 `shop-demo` 외 실제 샵을 SELECT 못 함 → EXISTS=false → INSERT 거부. **shop-demo 만 동작, 모든 실제 샵의 고객 제출(경로 A/A-2/C) 전면 차단**
-- **수정**: 마이그레이션 `20260530_fix_anon_submit_rls` — `shop_exists(text)` SECURITY DEFINER 함수(shops RLS 우회, boolean만 반환)로 with_check 교체. 두 정책 모두 적용. anon 역할 INSERT 실측 검증(pc/bk 모두 통과) 후 테스트행 롤백
+- **수정**: 마이그레이션 `20260530_fix_anon_submit_rls` — `shop_exists(text)` SECURITY DEFINER 함수(shops RLS 우회, boolean만 반환)로 with_check 교체. anon 역할 INSERT 실측 검증(pc/bk 모두 통과) 후 테스트행 롤백
+- **P0-2 후속**: 로그인 사장님이 본인 고객화면 테스트 시 요청 역할이 `authenticated` → pre_consultations 에 authenticated INSERT 정책 없어 403 지속. 마이그레이션 `20260530_fix_submit_rls_authenticated` 로 두 정책을 `anon + authenticated` 로 확장. authenticated 역할 INSERT 실측 검증 완료. (실제 손님 anon 은 1차로 이미 해결, 사장님 테스트가 2차로 해결됨)
 
 ### 22.2 🟢 P1 시술 종류 SSOT 3중 분리 (포트폴리오 메뉴판 ↔ 설정 ↔ 사전상담)
 - **증상**: 포트폴리오 메뉴엔 '흠흠' 보이는데 설정·사전상담엔 없음 (DB customCategories 엔 '테스트'만 존재)
