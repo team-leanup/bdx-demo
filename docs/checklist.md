@@ -717,3 +717,23 @@
 - **SL-01** 사전상담 링크 설정 UI 부재 — 제품 결정 보류(사용자 지시)
 - **FM-2 잔여** field-mode 매출레코드 nailShape·partsSelections 손실(데이터모델 작업 필요, final_price는 정확)
 - is_quick_sale=true 플래그(설계 확인) · 환율 실시간 · customPart 모달 복원(부분)
+
+## 22. 🟢 클라이언트 실측 버그 3건 (2026-05-30 3차) — 프로덕션 라이브
+
+### 22.1 🔴→🟢 P0 사전상담/예약 제출 RLS 차단 (전 실제 샵)
+- **증상**: 손님 사전상담 제출 시 `new row violates row-level security policy for table "pre_consultations"`
+- **원인**: `pre_consultations`·`booking_requests` 의 `*_verified_insert` 정책 with_check 가 `EXISTS(SELECT 1 FROM shops WHERE id=shop_id)` 사용 → 이 서브쿼리가 **anon 의 shops RLS 하에서 평가**되는데 anon 은 `shop-demo` 외 실제 샵을 SELECT 못 함 → EXISTS=false → INSERT 거부. **shop-demo 만 동작, 모든 실제 샵의 고객 제출(경로 A/A-2/C) 전면 차단**
+- **수정**: 마이그레이션 `20260530_fix_anon_submit_rls` — `shop_exists(text)` SECURITY DEFINER 함수(shops RLS 우회, boolean만 반환)로 with_check 교체. 두 정책 모두 적용. anon 역할 INSERT 실측 검증(pc/bk 모두 통과) 후 테스트행 롤백
+
+### 22.2 🟢 P1 시술 종류 SSOT 3중 분리 (포트폴리오 메뉴판 ↔ 설정 ↔ 사전상담)
+- **증상**: 포트폴리오 메뉴엔 '흠흠' 보이는데 설정·사전상담엔 없음 (DB customCategories 엔 '테스트'만 존재)
+- **원인**: `portfolio-store.menuCategories`(localStorage) 별도 리스트 유지 + `addCategory` 의 DB 동기화가 `void`(fire-and-forget)라 실패해도 무시 → localStorage 엔 흠흠, DB엔 없음(divergence)
+- **수정**: `menuCategories` 로컬 상태 제거 → 포트폴리오 카테고리를 `shopSettings`(categoryLabels + customCategories)에서 파생(`deriveMenuCategories`). `addCategory/renameCategory/removeCategory` 를 `setShopSettings` await + 결과 반환(낙관적 업데이트·실패 롤백은 setShopSettings 처리)으로 변경 → 설정·사전상담과 항상 동일 집합
+
+### 22.3 🟢 P1 "메뉴에 추가" 사진 첨부 안 됨
+- **원인**: 픽커가 `kind==='treatment'` 사진만 노출 → 온보딩 업로드(`reference`) 사진을 메뉴에 못 넣음. 업로드 실패도 `void` 로 삼켜 무반응
+- **수정**: 픽커 후보를 `kind` 무관 전체 비-featured 사진으로 확대. 업로드/카테고리 추가·변경 실패를 토스트로 노출
+
+### 22.4 🟡 미확인
+- **P2** 온보딩 완료 "저장 중 오류" — 인증 owner 저장 경로(updateShop/setShopSettings)라 P0와 별개. 브라우저 콘솔 로그로 재현 필요(commitDB가 uploaded/errors 카운트 로깅 중)
+- **검증**: tsc/lint/build 통과. P0 DB 실측 검증 완료

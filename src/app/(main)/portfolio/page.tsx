@@ -252,8 +252,27 @@ const DESIGN_SCOPE_LABEL: Record<string, string> = {
   monthly_art: '이달의 아트',
 };
 
-// 기본 카테고리 (스토어에서 동적으로 관리됨)
-const DEFAULT_categoryOrder = ['simple', 'french', 'magnet', 'art'] as const;
+// 0530: 시술 종류 SSOT — 메뉴 카테고리는 shopSettings(categoryLabels + customCategories)에서 파생.
+// 설정 '시술 종류' / 사전상담 고객 화면과 100% 동일한 집합·순서를 보장한다.
+const BUILTIN_MENU_CATEGORIES: { key: string; label: string }[] = [
+  { key: 'simple', label: '심플 / 원컬러' },
+  { key: 'french', label: '프렌치' },
+  { key: 'magnet', label: '자석 / 마그넷' },
+  { key: 'art', label: '아트' },
+];
+
+function deriveMenuCategories(
+  categoryLabels: Record<string, string> | undefined,
+  customCategories: { id: string; name: string; order: number }[] | undefined,
+): { key: string; label: string }[] {
+  const labels = categoryLabels ?? {};
+  const builtin = BUILTIN_MENU_CATEGORIES.map((c) => ({ key: c.key, label: labels[c.key] ?? c.label }));
+  const custom = (customCategories ?? [])
+    .slice()
+    .sort((a, b) => a.order - b.order)
+    .map((c) => ({ key: c.id, label: c.name }));
+  return [...builtin, ...custom];
+}
 
 // ── InlineEditText: 탭→인라인 편집→blur/enter로 저장 ──
 function InlineEditText({ value, onSave, readOnly }: { value: string; onSave: (v: string) => void; readOnly?: boolean }): React.ReactElement {
@@ -335,7 +354,9 @@ function MenuCategoryMove({ photoId, currentCategory }: { photoId: string; curre
   // 0529 버그B: updatePhoto(store-only)는 DB에 저장하지 않아 새로고침 시 카테고리가 리셋됐다.
   // updatePhotoMetadata로 styleCategory를 DB까지 영속화한다.
   const updatePhotoMetadata = usePortfolioStore((s) => s.updatePhotoMetadata);
-  const cats = usePortfolioStore((s) => s.menuCategories);
+  const categoryLabels = useAppStore((s) => s.shopSettings.categoryLabels);
+  const customCategories = useAppStore((s) => s.shopSettings.customCategories);
+  const cats = deriveMenuCategories(categoryLabels, customCategories);
   if (!open) {
     return (
       <button onClick={(e) => { e.stopPropagation(); setOpen(true); }} className="text-[9px] text-text-muted px-1.5 py-0.5 rounded-full bg-surface-alt hover:bg-border transition-colors">
@@ -377,19 +398,16 @@ export default function PortfolioPage(): React.ReactElement {
   const clearMigrationNotice = usePortfolioStore((s) => s.clearMigrationNotice);
   const getMenuPhotos = usePortfolioStore((s) => s.getMenuPhotos);
   const toggleMenu = usePortfolioStore((s) => s.toggleMenu);
-  const menuCategoriesStore = usePortfolioStore((s) => s.menuCategories);
   const addCategory = usePortfolioStore((s) => s.addCategory);
   const renameCategory = usePortfolioStore((s) => s.renameCategory);
   const customCategoriesSetting = useAppStore((s) => s.shopSettings.customCategories);
-  // 0529: 시술 종류 SSOT — builtin(로컬) + DB customCategories 통합.
-  // 설정/메뉴판 어디서 추가하든 모든 시술종류 선택 UI에 함께 반영된다.
-  const menuCategories = useMemo(() => {
-    const custom = customCategoriesSetting ?? [];
-    const builtin = menuCategoriesStore.filter((c) => !c.key.startsWith('custom-'));
-    const fromDb = custom.slice().sort((a, b) => a.order - b.order).map((c) => ({ key: c.id, label: c.name }));
-    const localOnly = menuCategoriesStore.filter((c) => c.key.startsWith('custom-') && !custom.some((cc) => cc.id === c.key));
-    return [...builtin, ...fromDb, ...localOnly];
-  }, [menuCategoriesStore, customCategoriesSetting]);
+  const categoryLabelsSetting = useAppStore((s) => s.shopSettings.categoryLabels);
+  // 0530: 시술 종류 SSOT — shopSettings(categoryLabels + customCategories)에서만 파생.
+  // 별도 로컬 리스트를 제거해 설정·사전상담과 항상 동일한 집합을 보장 (localStorage 분리 제거).
+  const menuCategories = useMemo(
+    () => deriveMenuCategories(categoryLabelsSetting, customCategoriesSetting),
+    [categoryLabelsSetting, customCategoriesSetting],
+  );
   const categoryOrder = menuCategories.map((c) => c.key);
   const categoryLabelMap = Object.fromEntries(menuCategories.map((c) => [c.key, c.label]));
   const getById = useCustomerStore((s) => s.getById);
@@ -456,6 +474,13 @@ export default function PortfolioPage(): React.ReactElement {
 
   const handleDismissToast = (id: string): void => {
     setToasts((current) => current.filter((toast) => toast.id !== id));
+  };
+
+  const pushToast = (type: ToastData['type'], message: string): void => {
+    setToasts((current) => [
+      ...current,
+      { id: `toast-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, type, message },
+    ]);
   };
 
   const recordMap = useMemo(() => new Map(records.map((record) => [record.id, record])), [records]);
@@ -612,12 +637,14 @@ export default function PortfolioPage(): React.ReactElement {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [menuPhotos, categoryOrder.join(',')]);
 
-  // Non-menu treatment photos grouped by category (for "메뉴에 추가" picker)
+  // 메뉴에 추가 픽커용: 아직 메뉴에 없는(=isFeatured=false) 모든 포트폴리오 사진을 카테고리별로.
+  // 0530: 기존엔 kind==='treatment' 사진만 노출해 온보딩 업로드(reference) 사진을 메뉴에 못 넣었음.
+  //       reference 포함한 전체 비-featured 사진을 후보로 보여준다.
   const nonMenuByCategory = useMemo(() => {
     const grouped = new Map<string, PortfolioPhoto[]>();
     categoryOrder.forEach((cat) => grouped.set(cat, []));
 
-    treatmentPhotos
+    photos
       .filter((p) => !p.isFeatured)
       .forEach((photo) => {
         const cat = photo.styleCategory ?? 'simple';
@@ -627,7 +654,7 @@ export default function PortfolioPage(): React.ReactElement {
 
     return grouped;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [treatmentPhotos, categoryOrder.join(',')]);
+  }, [photos, categoryOrder.join(',')]);
 
   // Picker state: which category is open
   const [pickerCategory, setPickerCategory] = useState<string | null>(null);
@@ -643,6 +670,7 @@ export default function PortfolioPage(): React.ReactElement {
     reader.onload = () => {
       const dataUrl = reader.result as string;
       const cat = pickerCategory ?? 'simple';
+      // 0530: 업로드 실패를 토스트로 노출 (이전엔 void 로 삼켜 "첨부가 안 됨" 처럼 보였음)
       void addPhoto({
         customerId: '',
         kind: 'treatment',
@@ -651,6 +679,9 @@ export default function PortfolioPage(): React.ReactElement {
         styleCategory: cat,
         isFeatured: true,
         isPublic: true,
+      }).then((r) => {
+        if (r.success) pushToast('success', '메뉴에 사진을 추가했어요');
+        else pushToast('error', r.error ?? '사진 업로드에 실패했어요. 다시 시도해 주세요');
       });
       setPickerCategory(null);
     };
@@ -771,7 +802,11 @@ export default function PortfolioPage(): React.ReactElement {
                   onUploadPhoto={handleUploadPhoto}
                   onRemoveFromMenu={(id) => toggleMenu(id)}
                   onOpenOverlay={(id) => setOverlayPhotoId(id)}
-                  onRenameCategory={(newLabel) => renameCategory(cat, newLabel)}
+                  onRenameCategory={(newLabel) => {
+                    void renameCategory(cat, newLabel).then((r) => {
+                      if (!r.success) pushToast('error', r.error ?? '카테고리 이름 변경에 실패했어요');
+                    });
+                  }}
                 />
               );
             })
@@ -805,7 +840,12 @@ export default function PortfolioPage(): React.ReactElement {
           <button
             onClick={() => setEditPopup({
               open: true, title: '새 카테고리 추가', placeholder: '카테고리 이름', initialValue: '',
-              onConfirm: (v) => addCategory(v),
+              onConfirm: (v) => {
+                void addCategory(v).then((r) => {
+                  if (r.success) pushToast('success', '시술 종류를 추가했어요');
+                  else pushToast('error', r.error ?? '카테고리 추가에 실패했어요. 다시 시도해 주세요');
+                });
+              },
             })}
             className="flex items-center gap-1.5 text-sm text-text-muted hover:text-primary transition-colors py-2"
           >

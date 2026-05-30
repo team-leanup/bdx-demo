@@ -51,11 +51,11 @@ interface PortfolioStore {
   updatePhotoMetadata: (id: string, updates: Partial<PortfolioPhoto>) => Promise<{ success: boolean; error?: string }>;
   setPhotos: (photos: PortfolioPhoto[]) => void;
 
-  // 카테고리 관리
-  menuCategories: { key: string; label: string }[];
-  addCategory: (label: string) => void;
-  renameCategory: (key: string, label: string) => void;
-  removeCategory: (key: string) => void;
+  // 카테고리 관리 — SSOT 는 shopSettings(customCategories / categoryLabels).
+  // DB 동기화를 await 하고 결과를 반환해 실패를 호출부에서 처리한다.
+  addCategory: (label: string) => Promise<{ success: boolean; error?: string }>;
+  renameCategory: (key: string, label: string) => Promise<{ success: boolean; error?: string }>;
+  removeCategory: (key: string) => Promise<{ success: boolean; error?: string }>;
 
   clearAll: () => Promise<{ success: boolean; error?: string }>;
 }
@@ -124,12 +124,6 @@ export const usePortfolioStore = create<PortfolioStore>()(
       photos: [],
       _dbReady: false,
       migrationNotice: null,
-      menuCategories: [
-        { key: 'simple', label: '심플 / 원컬러' },
-        { key: 'french', label: '프렌치' },
-        { key: 'magnet', label: '자석 / 마그넷' },
-        { key: 'art', label: '아트' },
-      ],
 
       hydrateFromDB: async () => {
         const currentShopId = useAuthStore.getState().currentShopId;
@@ -367,34 +361,35 @@ export const usePortfolioStore = create<PortfolioStore>()(
         set({ photos: sortPortfolioPhotos(photos) });
       },
 
-      // 0529: 시술 종류 SSOT 통합 — 포트폴리오 카테고리 추가/수정/삭제를 DB customCategories와
-      // 동기화한다. 그래야 예약등록·사진수정·사전상담·설정 등 모든 시술종류 선택 UI에 함께 반영된다.
-      addCategory: (label) => {
-        const key = `custom-${Date.now()}`;
-        set((s) => ({ menuCategories: [...s.menuCategories, { key, label }] }));
+      // 0530: 시술 종류 SSOT = shopSettings(customCategories / categoryLabels).
+      // 포트폴리오 메뉴 카테고리는 별도 로컬 리스트를 두지 않고 shopSettings 에서 파생한다.
+      // 추가/수정/삭제는 setShopSettings(DB) 를 await 하고 결과를 반환 — 실패 시 호출부에서 안내.
+      // setShopSettings 가 이미 낙관적 업데이트 + 실패 롤백을 처리하므로 로컬 분리(divergence)가 없다.
+      addCategory: async (label) => {
         const app = useAppStore.getState();
         const existing = app.shopSettings.customCategories ?? [];
-        if (!existing.some((c) => c.id === key)) {
-          void app.setShopSettings({
-            customCategories: [...existing, { id: key, name: label, price: 0, time: 60, order: existing.length }],
-          });
-        }
+        const key = `custom-${Date.now()}`;
+        if (existing.some((c) => c.id === key)) return { success: true };
+        return app.setShopSettings({
+          customCategories: [...existing, { id: key, name: label, price: 0, time: 60, order: existing.length }],
+        });
       },
-      renameCategory: (key, label) => {
-        set((s) => ({ menuCategories: s.menuCategories.map((c) => c.key === key ? { ...c, label } : c) }));
+      renameCategory: async (key, label) => {
         const app = useAppStore.getState();
         if (key.startsWith('custom-')) {
           const existing = app.shopSettings.customCategories ?? [];
-          if (existing.some((c) => c.id === key)) {
-            void app.setShopSettings({ customCategories: existing.map((c) => c.id === key ? { ...c, name: label } : c) });
+          if (!existing.some((c) => c.id === key)) {
+            return { success: false, error: '카테고리를 찾을 수 없습니다' };
           }
-        } else {
-          // builtin 카테고리(simple/french/magnet/art) rename → shop categoryLabels에 영속
-          const existing = app.shopSettings.categoryLabels ?? {};
-          void app.setShopSettings({ categoryLabels: { ...existing, [key]: label } });
+          return app.setShopSettings({
+            customCategories: existing.map((c) => (c.id === key ? { ...c, name: label } : c)),
+          });
         }
+        // builtin 카테고리(simple/french/magnet/art) rename → shop categoryLabels 에 영속
+        const existing = app.shopSettings.categoryLabels ?? {};
+        return app.setShopSettings({ categoryLabels: { ...existing, [key]: label } });
       },
-      removeCategory: (key) => {
+      removeCategory: async (key) => {
         // 해당 카테고리에 속한 사진들을 기본값 'simple'로 재할당 (orphan 방지)
         const orphanIds: string[] = get().photos
           .filter((p) => p.styleCategory === key)
@@ -413,14 +408,14 @@ export const usePortfolioStore = create<PortfolioStore>()(
             }
           }
         }
-        set((s) => ({ menuCategories: s.menuCategories.filter((c) => c.key !== key) }));
         if (key.startsWith('custom-')) {
           const app = useAppStore.getState();
           const existing = app.shopSettings.customCategories ?? [];
           if (existing.some((c) => c.id === key)) {
-            void app.setShopSettings({ customCategories: existing.filter((c) => c.id !== key) });
+            return app.setShopSettings({ customCategories: existing.filter((c) => c.id !== key) });
           }
         }
+        return { success: true };
       },
 
       clearAll: async () => {
