@@ -1216,8 +1216,10 @@ export default function SettingsPage() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [editingShop, editingPrices]);
-  const [priceOffSame, setPriceOffSame] = useState(String(shopSettings.baseOffSameShop || DEFAULT_BASE_PRICES.offSameShop));
-  const [priceOffOther, setPriceOffOther] = useState(String(shopSettings.baseOffOtherShop || DEFAULT_BASE_PRICES.offOtherShop));
+  // 오프 추가금: baseOff* 와 surcharges.*Removal 두 표현이 있어 온보딩(surcharges) 값도 폴백으로 읽는다.
+  // 저장 시 handleSavePrices 가 두 표현을 모두 동기화하므로 이후로는 항상 일치.
+  const [priceOffSame, setPriceOffSame] = useState(String(shopSettings.baseOffSameShop ?? shopSettings.surcharges.selfRemoval ?? DEFAULT_BASE_PRICES.offSameShop));
+  const [priceOffOther, setPriceOffOther] = useState(String(shopSettings.baseOffOtherShop ?? shopSettings.surcharges.otherRemoval ?? DEFAULT_BASE_PRICES.offOtherShop));
   const [priceExtension, setPriceExtension] = useState(String(shopSettings.surcharges.extension ?? DEFAULT_BASE_PRICES.extension));
   const [priceWrapping, setPriceWrapping] = useState(String(shopSettings.surcharges.wrapping ?? 5000));
   // [CRITICAL SSOT] 계산 엔진은 surcharges.pointArt를 읽으므로,
@@ -1226,8 +1228,8 @@ export default function SettingsPage() {
   const [priceDeposit, setPriceDeposit] = useState(String(shopSettings.depositAmount ?? 10000));
   const [monthlyTarget, setMonthlyTarget] = useState(String(shopSettings.monthlyTargetRevenue ?? ''));
   const [savedPrices, setSavedPrices] = useState({
-    offSameShop: shopSettings.baseOffSameShop || DEFAULT_BASE_PRICES.offSameShop,
-    offOtherShop: shopSettings.baseOffOtherShop || DEFAULT_BASE_PRICES.offOtherShop,
+    offSameShop: shopSettings.baseOffSameShop ?? shopSettings.surcharges.selfRemoval ?? DEFAULT_BASE_PRICES.offSameShop,
+    offOtherShop: shopSettings.baseOffOtherShop ?? shopSettings.surcharges.otherRemoval ?? DEFAULT_BASE_PRICES.offOtherShop,
     extension: shopSettings.surcharges.extension ?? DEFAULT_BASE_PRICES.extension,
     wrapping: shopSettings.surcharges.wrapping ?? 5000,
     solidPoint: shopSettings.surcharges.pointArt ?? DEFAULT_BASE_PRICES.solidPoint,
