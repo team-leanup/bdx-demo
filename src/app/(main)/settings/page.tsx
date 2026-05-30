@@ -1216,31 +1216,21 @@ export default function SettingsPage() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [editingShop, editingPrices]);
-  const [priceHand, setPriceHand] = useState(String(shopSettings.baseHandPrice || DEFAULT_BASE_PRICES.hand));
-  const [priceFoot, setPriceFoot] = useState(String(shopSettings.baseFootPrice || DEFAULT_BASE_PRICES.foot));
   const [priceOffSame, setPriceOffSame] = useState(String(shopSettings.baseOffSameShop || DEFAULT_BASE_PRICES.offSameShop));
   const [priceOffOther, setPriceOffOther] = useState(String(shopSettings.baseOffOtherShop || DEFAULT_BASE_PRICES.offOtherShop));
-  const [priceRepair, setPriceRepair] = useState(String(shopSettings.surcharges.repairPer ?? DEFAULT_BASE_PRICES.repair));
   const [priceExtension, setPriceExtension] = useState(String(shopSettings.surcharges.extension ?? DEFAULT_BASE_PRICES.extension));
   const [priceWrapping, setPriceWrapping] = useState(String(shopSettings.surcharges.wrapping ?? 5000));
-  // [CRITICAL SSOT] 계산 엔진은 surcharges.pointArt/fullArt를 읽으므로,
-  // 설정 화면도 그 값을 초기값으로 표시한다. (baseSolid/FullArtPrice는 save 시 함께 동기화)
+  // [CRITICAL SSOT] 계산 엔진은 surcharges.pointArt를 읽으므로,
+  // 설정 화면도 그 값을 초기값으로 표시한다. (baseSolidPointPrice는 save 시 함께 동기화)
   const [priceSolidPoint, setPriceSolidPoint] = useState(String(shopSettings.surcharges.pointArt ?? DEFAULT_BASE_PRICES.solidPoint));
-  const [priceFullArt, setPriceFullArt] = useState(String(shopSettings.surcharges.fullArt ?? DEFAULT_BASE_PRICES.fullArt));
-  const [priceMonthlyArt, setPriceMonthlyArt] = useState(String(shopSettings.baseMonthlyArtPrice ?? DEFAULT_BASE_PRICES.monthlyArt));
   const [priceDeposit, setPriceDeposit] = useState(String(shopSettings.depositAmount ?? 10000));
   const [monthlyTarget, setMonthlyTarget] = useState(String(shopSettings.monthlyTargetRevenue ?? ''));
   const [savedPrices, setSavedPrices] = useState({
-    hand: shopSettings.baseHandPrice || DEFAULT_BASE_PRICES.hand,
-    foot: shopSettings.baseFootPrice || DEFAULT_BASE_PRICES.foot,
     offSameShop: shopSettings.baseOffSameShop || DEFAULT_BASE_PRICES.offSameShop,
     offOtherShop: shopSettings.baseOffOtherShop || DEFAULT_BASE_PRICES.offOtherShop,
-    repair: shopSettings.surcharges.repairPer ?? DEFAULT_BASE_PRICES.repair,
     extension: shopSettings.surcharges.extension ?? DEFAULT_BASE_PRICES.extension,
     wrapping: shopSettings.surcharges.wrapping ?? 5000,
     solidPoint: shopSettings.surcharges.pointArt ?? DEFAULT_BASE_PRICES.solidPoint,
-    fullArt: shopSettings.surcharges.fullArt ?? DEFAULT_BASE_PRICES.fullArt,
-    monthlyArt: shopSettings.baseMonthlyArtPrice ?? DEFAULT_BASE_PRICES.monthlyArt,
   });
 
   const [categoryPricingEdit, setCategoryPricingEdit] = useState<CategoryPricingSettings>(shopSettings.categoryPricing);
@@ -1248,63 +1238,47 @@ export default function SettingsPage() {
   const [editingCategoryPricing, setEditingCategoryPricing] = useState(false);
 
   const handleSavePrices = () => {
-    const hand = parseInt(priceHand, 10);
-    const foot = parseInt(priceFoot, 10);
     const offSameShop = parseInt(priceOffSame, 10);
     const offOtherShop = parseInt(priceOffOther, 10);
-    const repair = parseInt(priceRepair, 10);
     const extension = parseInt(priceExtension, 10);
     const wrapping = parseInt(priceWrapping, 10);
     const solidPoint = parseInt(priceSolidPoint, 10);
-    const fullArt = parseInt(priceFullArt, 10);
-    const monthlyArt = parseInt(priceMonthlyArt, 10);
     const deposit = parseInt(priceDeposit, 10) || 0;
     const targetRevenue = parseInt(monthlyTarget, 10) || 0;
     // 0528 M8: deposit/monthlyTarget도 음수 차단 (0은 허용)
     if (deposit < 0 || targetRevenue < 0) return;
-    if ([hand, foot, offSameShop, offOtherShop, repair, extension, wrapping, solidPoint, fullArt, monthlyArt].some((v) => isNaN(v) || v < 0)) return;
-    setSavedPrices({ hand, foot, offSameShop, offOtherShop, repair, extension, wrapping, solidPoint, fullArt, monthlyArt });
+    if ([offSameShop, offOtherShop, extension, wrapping, solidPoint].some((v) => isNaN(v) || v < 0)) return;
+    setSavedPrices({ offSameShop, offOtherShop, extension, wrapping, solidPoint });
     setShopSettings({
       depositAmount: deposit,
       monthlyTargetRevenue: targetRevenue > 0 ? targetRevenue : undefined,
-      baseHandPrice: hand,
-      baseFootPrice: foot,
       baseOffSameShop: offSameShop,
       baseOffOtherShop: offOtherShop,
-      // SSOT: baseSolid/FullArtPrice는 화면 표시용이고, 실제 계산은 surcharges.*를 사용.
+      // SSOT: baseSolidPointPrice는 화면 표시용이고, 실제 계산은 surcharges.pointArt를 사용.
       // 두 값을 항상 동기화해서 설정 화면 표시값과 계산값이 동일하게 유지한다.
       baseSolidPointPrice: solidPoint,
-      baseFullArtPrice: fullArt,
-      baseMonthlyArtPrice: monthlyArt,
       surcharges: {
         ...shopSettings.surcharges,
         // [CRITICAL 0530] 자샵/타샵 오프는 두 표현(baseOff* = 상담, surcharges.*Removal = 사전상담·현장모드)이
-        // 따로 존재한다. 설정 저장 시 둘을 모두 동기화하지 않으면 오프 가격이 상담에만 반영되고
-        // 사전상담/현장 시술엔 온보딩 값이 그대로 남아 "연동 안 됨" 이 된다.
+        // 따로 존재한다. 설정 저장 시 둘을 모두 동기화하지 않으면 오프 가격이 사전상담/현장 시술엔
+        // 온보딩 값이 그대로 남아 "연동 안 됨" 이 된다.
         selfRemoval: offSameShop,
         otherRemoval: offOtherShop,
-        repairPer: repair,
         extension,
         wrapping,
-        // [CRITICAL] solidPoint/fullArt 설정값을 surcharges에도 저장 — 계산 엔진이 이 값을 읽음
+        // [CRITICAL] solidPoint 설정값을 surcharges에도 저장 — 계산 엔진이 이 값을 읽음
         pointArt: solidPoint,
-        fullArt,
       },
     });
     setEditingPrices(false);
   };
 
   const handleCancelPrices = () => {
-    setPriceHand(String(savedPrices.hand));
-    setPriceFoot(String(savedPrices.foot));
     setPriceOffSame(String(savedPrices.offSameShop));
     setPriceOffOther(String(savedPrices.offOtherShop));
-    setPriceRepair(String(savedPrices.repair));
     setPriceExtension(String(savedPrices.extension));
     setPriceWrapping(String(savedPrices.wrapping));
     setPriceSolidPoint(String(savedPrices.solidPoint));
-    setPriceFullArt(String(savedPrices.fullArt));
-    setPriceMonthlyArt(String(savedPrices.monthlyArt));
     setPriceDeposit(String(shopSettings.depositAmount ?? 10000));
     setMonthlyTarget(String(shopSettings.monthlyTargetRevenue ?? ''));
     setEditingPrices(false);
@@ -1574,25 +1548,12 @@ export default function SettingsPage() {
             {!editingPrices ? (
               <div className="flex flex-col gap-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">{t('settings.service_hand')}</span>
-                  <span className="font-medium text-text">{formatPrice(savedPrices.hand)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">{t('settings.service_foot')}</span>
-                  <span className="font-medium text-text">{formatPrice(savedPrices.foot)}</span>
-                </div>
-                <div className="my-1 border-t border-border/50" />
-                <div className="flex justify-between text-sm">
                   <span className="text-text-secondary">자샵오프</span>
                   <span className="font-medium text-text">+{formatPrice(savedPrices.offSameShop)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-text-secondary">타샵오프</span>
                   <span className="font-medium text-text">+{formatPrice(savedPrices.offOtherShop)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">리페어 개당</span>
-                  <span className="font-medium text-text">+{formatPrice(savedPrices.repair)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-text-secondary">연장 추가금</span>
@@ -1606,14 +1567,6 @@ export default function SettingsPage() {
                 <div className="flex justify-between text-sm">
                   <span className="text-text-secondary">{t('settings.service_solidPoint')}</span>
                   <span className="font-medium text-text">+{formatPrice(savedPrices.solidPoint)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">{t('settings.service_fullArt')}</span>
-                  <span className="font-medium text-text">+{formatPrice(savedPrices.fullArt)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">{t('settings.service_monthlyArt')}</span>
-                  <span className="font-medium text-text">+{formatPrice(savedPrices.monthlyArt)}</span>
                 </div>
                 <div className="my-1 border-t border-border/50" />
                 <div className="flex justify-between text-sm">
@@ -1633,16 +1586,11 @@ export default function SettingsPage() {
             ) : (
               <div className="flex flex-col gap-2.5">
                 {[
-                  { labelKey: 'service_hand', value: priceHand, onChange: setPriceHand },
-                  { labelKey: 'service_foot', value: priceFoot, onChange: setPriceFoot },
                   { label: '자샵오프', value: priceOffSame, onChange: setPriceOffSame },
                   { label: '타샵오프', value: priceOffOther, onChange: setPriceOffOther },
-                  { label: '리페어 개당', value: priceRepair, onChange: setPriceRepair },
                   { label: '연장 추가금', value: priceExtension, onChange: setPriceExtension },
                   { label: '랩핑 추가금', value: priceWrapping, onChange: setPriceWrapping },
                   { labelKey: 'service_solidPoint', value: priceSolidPoint, onChange: setPriceSolidPoint },
-                  { labelKey: 'service_fullArt', value: priceFullArt, onChange: setPriceFullArt },
-                  { labelKey: 'service_monthlyArt', value: priceMonthlyArt, onChange: setPriceMonthlyArt },
                   { label: '예약금', value: priceDeposit, onChange: setPriceDeposit },
                   { label: '월 목표 매출', value: monthlyTarget, onChange: setMonthlyTarget },
                 ].map(({ labelKey, label, value, onChange }: {
