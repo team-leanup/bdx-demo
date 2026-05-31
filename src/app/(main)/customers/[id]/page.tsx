@@ -130,6 +130,8 @@ function CustomerDetailContent({ id }: { id: string }) {
   const addMembership = useCustomerStore((s) => s.addMembership);
   const manualDeductMembership = useCustomerStore((s) => s.manualDeductMembership);
   const updateMembership = useCustomerStore((s) => s.updateMembership);
+  const membershipSyncError = useCustomerStore((s) => s.membershipSyncError);
+  const clearMembershipSyncError = useCustomerStore((s) => s.clearMembershipSyncError);
   const designers = useShopStore((s) => s.designers);
 
   const [isVip, setIsVip] = useState(() => useCustomerStore.getState().getById(id)?.isRegular ?? false);
@@ -264,8 +266,6 @@ function CustomerDetailContent({ id }: { id: string }) {
 
   // CU-2: 최근 3장 미니 갤러리
   const recentTreatmentPhotos = treatmentPhotos.slice(0, 3);
-  const [photoPopupId, setPhotoPopupId] = useState<string | null>(null);
-
   // CU-3: 태그 아이콘 맵
   const tagIconMap = useMemo(() =>
     TAG_PRESETS.flatMap((p) => p.options).reduce<Record<string, string | undefined>>(
@@ -317,6 +317,14 @@ function CustomerDetailContent({ id }: { id: string }) {
 
   const toastTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => { clearTimeout(toastTimerRef.current); }, []);
+
+  // [MED] 회원권 DB sync 실패 시 toast 알림
+  useEffect(() => {
+    if (membershipSyncError && membershipSyncError.customerId === id) {
+      pushToast('error', `회원권 저장에 실패했어요: ${membershipSyncError.message}`);
+      clearMembershipSyncError();
+    }
+  }, [membershipSyncError, id, clearMembershipSyncError, pushToast]);
 
   const handleVipToggle = () => {
     const newVal = !isVip;
@@ -578,7 +586,7 @@ function CustomerDetailContent({ id }: { id: string }) {
             </div>
             <div className="mt-1 flex items-center gap-1.5">
               <p className="truncate text-sm text-text-secondary">
-                담당: {assignedDesigner}
+                {assignedDesigner ? `담당: ${assignedDesigner}` : '담당 미지정'}
               </p>
               <button
                 onClick={() => setShowDesignerPicker((v) => !v)}
@@ -1263,27 +1271,27 @@ function CustomerDetailContent({ id }: { id: string }) {
         {(paymentSummary.cash > 0 || paymentSummary.card > 0 || paymentSummary.membership > 0 || paymentSummary.deposit > 0) && (
           <div className="mt-3 rounded-xl border border-border bg-surface-alt px-3 py-2.5 flex flex-col gap-1.5">
             <p className="text-[11px] font-semibold text-text-muted mb-0.5">결제 합계</p>
-            <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="flex flex-wrap gap-2 text-center">
               {paymentSummary.cash > 0 && (
-                <div className="flex flex-col gap-0.5">
+                <div className="flex flex-col gap-0.5 min-w-[60px] flex-1">
                   <span className="text-[10px] font-medium text-text-muted">현금</span>
                   <span className="text-xs font-bold text-text tabular-nums">{formatPrice(paymentSummary.cash)}</span>
                 </div>
               )}
               {paymentSummary.card > 0 && (
-                <div className="flex flex-col gap-0.5">
+                <div className="flex flex-col gap-0.5 min-w-[60px] flex-1">
                   <span className="text-[10px] font-medium text-text-muted">카드</span>
                   <span className="text-xs font-bold text-text tabular-nums">{formatPrice(paymentSummary.card)}</span>
                 </div>
               )}
               {paymentSummary.membership > 0 && (
-                <div className="flex flex-col gap-0.5">
+                <div className="flex flex-col gap-0.5 min-w-[60px] flex-1">
                   <span className="text-[10px] font-medium text-text-muted">회원권</span>
                   <span className="text-xs font-bold text-text tabular-nums">{formatPrice(paymentSummary.membership)}</span>
                 </div>
               )}
               {paymentSummary.deposit > 0 && (
-                <div className="flex flex-col gap-0.5">
+                <div className="flex flex-col gap-0.5 min-w-[60px] flex-1">
                   <span className="text-[10px] font-medium text-text-muted">예약금</span>
                   <span className="text-xs font-bold text-text tabular-nums">{formatPrice(paymentSummary.deposit)}</span>
                 </div>
@@ -1309,6 +1317,14 @@ function CustomerDetailContent({ id }: { id: string }) {
       {/* ─────────────────────────────── */}
       <Card className="mx-4 shadow-md rounded-2xl">
         <h2 className="mb-4 text-sm font-semibold text-text-secondary">시술 이력</h2>
+        {mergedTreatmentHistory.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 gap-2">
+            <svg className="h-8 w-8 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <p className="text-sm text-text-muted">아직 시술 이력이 없습니다</p>
+          </div>
+        ) : (
         <div className="relative flex flex-col gap-0">
           {mergedTreatmentHistory.map((hist, idx) => {
             const scopeIcon = DESIGN_SCOPE_ICON[hist.designScope] ?? '●';
@@ -1397,6 +1413,7 @@ function CustomerDetailContent({ id }: { id: string }) {
             );
           })}
         </div>
+        )}
       </Card>
 
       {/* ─────────────────────────────── */}
@@ -1479,51 +1496,6 @@ function CustomerDetailContent({ id }: { id: string }) {
           </div>
         )}
       </Card>
-
-      {/* CU-2: 사진 팝업 모달 */}
-      {photoPopupId && (() => {
-        const photo = treatmentPhotos.find((p) => p.id === photoPopupId);
-        if (!photo) return null;
-        return (
-          <Modal isOpen={true} onClose={() => setPhotoPopupId(null)} title="시술 사진">
-            <div className="flex flex-col gap-4 p-4">
-              <div className="relative aspect-square w-full max-w-sm mx-auto rounded-2xl overflow-hidden bg-surface-alt">
-                <Image
-                  src={photo.imageDataUrl}
-                  alt="시술 사진"
-                  fill
-                  unoptimized
-                  className="object-cover"
-                />
-              </div>
-              {photo.takenAt && (
-                <p className="text-center text-sm text-text-secondary">{formatDateDot(photo.takenAt)}</p>
-              )}
-              {photo.note && (
-                <p className="text-sm text-text text-center">{photo.note}</p>
-              )}
-              <Button
-                variant="secondary"
-                fullWidth
-                onClick={() => router.push(`/portfolio/${photo.id}`)}
-              >
-                포트폴리오 상세 보기
-              </Button>
-            </div>
-          </Modal>
-        );
-      })()}
-
-      {/* CTA 버튼 */}
-      <div className="px-4 flex flex-col gap-2">
-        <Button
-          variant="secondary"
-          fullWidth
-          onClick={() => router.push(`/records?customerId=${id}&view=list`)}
-        >
-          시술 기록 보기
-        </Button>
-      </div>
 
       {/* 회원권 등록 모달 */}
       <Modal

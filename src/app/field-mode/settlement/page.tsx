@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useFieldModeStore } from '@/store/field-mode-store';
 import { useRecordsStore } from '@/store/records-store';
 import { useAuthStore } from '@/store/auth-store';
@@ -133,6 +133,7 @@ export default function SettlementPage(): React.ReactElement | null {
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  const [showBackConfirm, setShowBackConfirm] = useState(false);
 
   // ── Discount ───────────────────────────────────────────────────────────────
   const [discountPercent, setDiscountPercent] = useState(0);
@@ -387,6 +388,8 @@ export default function SettlementPage(): React.ReactElement | null {
       console.warn('[settlement] DB save failed — skipping membership deduction');
       setSaveError(true);
       recordSaved = false;
+      setIsSaving(false);
+      return; // [HIGH] DB 저장 실패 시 wrap-up 이동 차단
     }
 
     // 2) 예약 → completed — DB 저장 성공 시에만 (실패 시 예약 상태 변경 차단)
@@ -419,7 +422,7 @@ export default function SettlementPage(): React.ReactElement | null {
         <div className="flex items-center gap-3 px-4 py-3 max-w-lg mx-auto">
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={() => setShowBackConfirm(true)}
             className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-secondary hover:bg-surface-alt active:scale-95 transition-all"
             aria-label={t('fieldMode.back')}
           >
@@ -533,21 +536,48 @@ export default function SettlementPage(): React.ReactElement | null {
             <SettlementCard icon="💎" title="파츠 빠른 추가">
               <p className="text-xs text-text-muted mb-3">탭하면 위 시술 추가 항목에 누적돼요</p>
               <div className="flex flex-wrap gap-2">
-                {shopSettings.customParts.map((part) => (
-                  <button
-                    key={part.id}
-                    type="button"
-                    onClick={() => _addInTreatmentAddon({
-                      label: part.name,
-                      amount: part.pricePerUnit,
-                    })}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-surface-alt border border-border px-3 py-1.5 text-xs font-medium hover:border-primary/40 hover:bg-primary/5 active:scale-95 transition-all"
-                  >
-                    <span className="text-primary font-bold">+</span>
-                    <span className="font-semibold text-text">{part.name}</span>
-                    <span className="text-primary">₩{part.pricePerUnit.toLocaleString()}</span>
-                  </button>
-                ))}
+                {shopSettings.customParts.map((part) => {
+                  // [HIGH] 이중청구 방지: 사전상담에서 이미 baseEstimate에 포함된 파츠(수량>0)는 추가 차단
+                  const preSelectedCount = customPartSelections
+                    ? (typeof customPartSelections[part.name] === 'number' ? customPartSelections[part.name] : 0)
+                    : 0;
+                  const isAlreadyInBase = preSelectedCount > 0;
+                  return (
+                    <button
+                      key={part.id}
+                      type="button"
+                      disabled={isAlreadyInBase}
+                      title={isAlreadyInBase ? `사전 상담에서 ${preSelectedCount}개 포함됨 (기본 금액에 반영)` : undefined}
+                      onClick={() => {
+                        if (isAlreadyInBase) return;
+                        _addInTreatmentAddon({
+                          label: part.name,
+                          amount: part.pricePerUnit,
+                        });
+                      }}
+                      className={cn(
+                        'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all',
+                        isAlreadyInBase
+                          ? 'bg-surface-alt/60 border-border/50 text-text-muted cursor-not-allowed opacity-60'
+                          : 'bg-surface-alt border-border hover:border-primary/40 hover:bg-primary/5 active:scale-95',
+                      )}
+                    >
+                      {isAlreadyInBase ? (
+                        <>
+                          <span className="text-text-muted">✓</span>
+                          <span className="font-semibold text-text-muted">{part.name}</span>
+                          <span className="text-text-muted">기본 포함×{preSelectedCount}</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-primary font-bold">+</span>
+                          <span className="font-semibold text-text">{part.name}</span>
+                          <span className="text-primary">₩{part.pricePerUnit.toLocaleString()}</span>
+                        </>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </SettlementCard>
           </motion.div>
@@ -649,9 +679,14 @@ export default function SettlementPage(): React.ReactElement | null {
                 <span className="text-xs text-text-muted">원</span>
               </div>
             )}
-            {depositApplied > 0 && (
+            {depositApplied > 0 && depositApplied <= subtotal && (
               <p className="text-xs text-blue-600 font-semibold mt-2 text-right">
                 -{depositApplied.toLocaleString()}원 예약금 차감
+              </p>
+            )}
+            {depositApplied > subtotal && (
+              <p className="text-xs text-error font-semibold mt-2 text-right">
+                ⚠ 예약금({depositApplied.toLocaleString()}원)이 시술금({subtotal.toLocaleString()}원)을 초과합니다
               </p>
             )}
           </div>
@@ -857,15 +892,27 @@ export default function SettlementPage(): React.ReactElement | null {
 
       {/* DB save error banner */}
       {saveError && (
-        <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mx-4 mb-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3 flex items-center gap-3">
-          <span className="text-red-500 text-lg leading-none">!</span>
-          <p className="text-sm font-medium text-red-700 flex-1">
-            저장 중 오류가 발생했습니다. 데이터는 기기에 임시 보관됩니다.
-          </p>
+        <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 mx-4 mb-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3 flex items-start gap-3">
+          <span className="text-red-500 text-lg leading-none mt-0.5">!</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-red-700">
+              저장 중 오류가 발생했습니다. 데이터는 기기에 임시 보관됩니다.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setSaveError(false);
+                void handlePaymentComplete();
+              }}
+              className="mt-1.5 text-xs font-bold text-red-600 hover:text-red-800 underline underline-offset-2"
+            >
+              다시 시도
+            </button>
+          </div>
           <button
             type="button"
             onClick={() => setSaveError(false)}
-            className="text-red-400 hover:text-red-600 text-lg leading-none"
+            className="text-red-400 hover:text-red-600 text-lg leading-none flex-shrink-0"
             aria-label="닫기"
           >
             ×
@@ -897,13 +944,53 @@ export default function SettlementPage(): React.ReactElement | null {
           variant="primary"
           size="lg"
           fullWidth
-          disabled={!paymentMethod}
+          disabled={!paymentMethod || depositApplied > subtotal}
           loading={isSaving}
           onClick={() => void handlePaymentComplete()}
         >
           {t('fieldMode.paymentComplete')}
         </Button>
       </div>
+
+      {/* Back confirmation dialog */}
+      <AnimatePresence>
+        {showBackConfirm && (
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center bg-backdrop/60 px-4 pb-safe"
+            onClick={() => setShowBackConfirm(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 24 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md bg-surface rounded-2xl p-6 mb-4 shadow-elevated"
+            >
+              <p className="text-base font-bold text-text mb-1">정산을 취소하시겠어요?</p>
+              <p className="text-sm text-text-muted mb-5">
+                입력한 정산 정보가 유지됩니다.
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={() => setShowBackConfirm(false)}
+                >
+                  계속 진행
+                </Button>
+                <Button
+                  variant="danger"
+                  fullWidth
+                  onClick={() => { setShowBackConfirm(false); router.back(); }}
+                >
+                  돌아가기
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Customer picker modal */}
       <Modal

@@ -55,7 +55,9 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
         ? { customerId: resolvedCustomerId }
         : {}),
     });
-    router.push(`/records`);
+    // [MED] 예약 날짜를 쿼리파라미터로 전달 → records 페이지가 오늘로 초기화되지 않도록
+    const dateParam = booking.reservationDate ? `?date=${booking.reservationDate}` : '';
+    router.push(`/records${dateParam}`);
   };
 
   // customer 자동 매칭/생성 (handleConfirm·handleStartConsultation에서 공통 사용)

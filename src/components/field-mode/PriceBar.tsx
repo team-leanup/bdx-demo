@@ -9,6 +9,8 @@ import { CATEGORY_LABELS } from '@/lib/labels';
 interface PriceBarProps {
   estimate: PreConsultPriceEstimate;
   designCategory?: string;
+  /** resolved 카테고리 라벨 — 커스텀 카테고리 포함. 제공 시 designCategory보다 우선 */
+  categoryLabel?: string;
   hasRemoval?: boolean;
   hasExtension?: boolean;
   addOnCount?: number;
@@ -18,6 +20,7 @@ interface PriceBarProps {
 export function PriceBar({
   estimate,
   designCategory,
+  categoryLabel,
   hasRemoval,
   hasExtension,
   addOnCount,
@@ -31,8 +34,10 @@ export function PriceBar({
       : `₩${estimate.minTotal.toLocaleString()}~${estimate.maxTotal.toLocaleString()}`;
 
   const summaryParts: string[] = [];
-  if (designCategory) {
-    // builtin이면 CATEGORY_LABELS, 그 외(custom)는 호출자가 별도 처리하므로 여기서는 빈 라벨
+  if (categoryLabel) {
+    summaryParts.push(categoryLabel);
+  } else if (designCategory) {
+    // fallback: builtin 라벨만 (커스텀은 호출부에서 categoryLabel로 전달 권장)
     const builtinLabel = CATEGORY_LABELS[designCategory];
     if (builtinLabel) summaryParts.push(builtinLabel);
   }

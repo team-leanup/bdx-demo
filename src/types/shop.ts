@@ -118,6 +118,8 @@ export interface ShopExtendedSettings {
   customCategories?: CustomCategory[];
   /** 0528: 예약금 (사전상담 제출 시 booking_requests.deposit에 자동 적용) */
   depositAmount?: number;
+  /** 월 목표 매출 — 대시보드 KPI 달성률 표시용. shops.settings jsonb에 자동 포함 */
+  monthlyTargetRevenue?: number;
   /**
    * 0423 반영: 재방문 알림 문자 기본 문구틀 (샵주인 편집 가능).
    * 치환 변수: {customerName}, {shopName}

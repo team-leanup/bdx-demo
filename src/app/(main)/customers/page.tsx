@@ -36,10 +36,15 @@ export default function CustomersPage() {
 
   const handleCreateCustomer = () => {
     if (!name.trim()) return;
-    const newCustomer = createCustomer({
-      name: name.trim(),
-      phone: phone.trim() || undefined,
-    });
+    let newCustomer;
+    try {
+      newCustomer = createCustomer({
+        name: name.trim(),
+        phone: phone.trim() || undefined,
+      });
+    } catch {
+      return;
+    }
     if (memo.trim()) {
       const now = getNowInKoreaIso();
       appendSmallTalkNote(newCustomer.id, {
@@ -180,8 +185,17 @@ export default function CustomersPage() {
             <svg className="mb-3 h-10 w-10 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            <p className="text-base font-medium text-text-secondary">검색 결과가 없습니다</p>
-            <p className="mt-1 text-sm text-text-muted">다른 검색어를 시도해보세요</p>
+            {search.trim() || filterTab !== 'all' ? (
+              <>
+                <p className="text-base font-medium text-text-secondary">검색 결과가 없습니다</p>
+                <p className="mt-1 text-sm text-text-muted">다른 검색어를 시도해보세요</p>
+              </>
+            ) : (
+              <>
+                <p className="text-base font-medium text-text-secondary">아직 고객이 없어요</p>
+                <p className="mt-1 text-sm text-text-muted">위 버튼으로 첫 고객을 등록해보세요</p>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">

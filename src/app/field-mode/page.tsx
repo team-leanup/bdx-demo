@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/cn';
@@ -35,6 +35,7 @@ const BUILTIN_CATEGORY_KEYS: DesignCategory[] = ['simple', 'french', 'magnet', '
 
 export default function FieldModePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const t = useT();
 
   // Category + sort state for the portfolio grid
@@ -84,6 +85,24 @@ export default function FieldModePage() {
   useEffect(() => {
     hydrateFromDB();
   }, [hydrateFromDB]);
+
+  // portfolioId 쿼리 파라미터 — '이 디자인으로 시술 시작' 진입 시 해당 사진 자동 선택
+  const autoSelectPortfolioId = searchParams.get('portfolioId');
+  useEffect(() => {
+    if (!autoSelectPortfolioId) return;
+    // allPhotos가 아직 비어 있으면(hydrate 전) 잠시 대기; hydrate 완료 후 다시 실행
+    const photo = allPhotos.find((p) => p.id === autoSelectPortfolioId);
+    if (!photo) return;
+    const photoUrl = photo.imagePath
+      ? (photo.imagePath.startsWith('http') ? photo.imagePath : getPortfolioPublicUrl(photo.imagePath))
+      : photo.imageDataUrl;
+    selectDesign(
+      photo.id,
+      photoUrl,
+      (photo.styleCategory ?? 'simple') as DesignCategory,
+      photo.price ?? null,
+    );
+  }, [autoSelectPortfolioId, allPhotos, selectDesign]);
 
   // phase 가드: 이 페이지에서 렌더 가능한 phase가 아니면 portfolio로 리셋
   useEffect(() => {
@@ -406,6 +425,7 @@ export default function FieldModePage() {
             key="price-bar"
             estimate={estimate}
             designCategory={selectedCategory ?? undefined}
+            categoryLabel={selectedCategory ? resolveMenuCategoryLabel(selectedCategory, shopSettings.categoryLabels) : undefined}
             hasRemoval={removalType !== 'none'}
             hasExtension={lengthType === 'extend'}
             addOnCount={addOns.length}

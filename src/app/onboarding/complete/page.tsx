@@ -249,41 +249,54 @@ export default function CompletePage() {
 
       {/* Feature highlights */}
       <div className="w-full flex flex-col gap-3 mb-10">
-        {FEATURES.map((feature, i) => (
-          <motion.div
-            key={feature.title}
-            initial={{ opacity: 0, x: -12 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.35, delay: 0.5 + i * 0.1 }}
-            className="flex items-center gap-4 rounded-2xl border border-border bg-surface px-4 py-3.5"
-          >
-            {/* Icon container */}
-            <div
-              className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ backgroundColor: 'var(--color-primary-light, color-mix(in srgb, var(--color-primary) 12%, transparent))' }}
-            >
-              <span style={{ color: 'var(--color-primary)' }}>{feature.icon}</span>
-            </div>
-
-            {/* Text */}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-text">{feature.title}</p>
-              <p className="text-xs text-text-secondary mt-0.5">{feature.description}</p>
-            </div>
-
-            {/* Check badge */}
+        {FEATURES.map((feature, i) => {
+          // 포트폴리오 항목(index 0)은 사진 0장이면 '건너뜀' 상태로 표시
+          const isPortfolioItem = i === 0;
+          const hasNoPhotos = isPortfolioItem && photos.length === 0;
+          const displayTitle = hasNoPhotos ? '포트폴리오 (건너뜀)' : feature.title;
+          const displayDesc = hasNoPhotos ? '나중에 설정에서 언제든 추가할 수 있어요' : feature.description;
+          return (
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.65 + i * 0.1 }}
-              className="flex-shrink-0 w-5 h-5 rounded-full bg-primary flex items-center justify-center"
+              key={feature.title}
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.35, delay: 0.5 + i * 0.1 }}
+              className="flex items-center gap-4 rounded-2xl border border-border bg-surface px-4 py-3.5"
             >
-              <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                <path d="M1 4L4 7L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              {/* Icon container */}
+              <div
+                className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: hasNoPhotos ? 'var(--color-surface-alt)' : 'var(--color-primary-light, color-mix(in srgb, var(--color-primary) 12%, transparent))' }}
+              >
+                <span style={{ color: hasNoPhotos ? 'var(--color-text-muted)' : 'var(--color-primary)' }}>{feature.icon}</span>
+              </div>
+
+              {/* Text */}
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-medium ${hasNoPhotos ? 'text-text-muted' : 'text-text'}`}>{displayTitle}</p>
+                <p className="text-xs text-text-secondary mt-0.5">{displayDesc}</p>
+              </div>
+
+              {/* Check / Skip badge */}
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.65 + i * 0.1 }}
+                className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${hasNoPhotos ? 'bg-border' : 'bg-primary'}`}
+              >
+                {hasNoPhotos ? (
+                  <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
+                    <path d="M2 2L8 8M8 2L2 8" stroke="var(--color-text-muted)" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                ) : (
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                    <path d="M1 4L4 7L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </motion.div>
             </motion.div>
-          </motion.div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Error message */}

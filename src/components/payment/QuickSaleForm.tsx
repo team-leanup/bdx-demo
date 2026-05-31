@@ -6,6 +6,7 @@ import { PaymentMethodSelector } from './PaymentMethodSelector';
 import { useCustomerStore } from '@/store/customer-store';
 import { useShopStore } from '@/store/shop-store';
 import { useAppStore } from '@/store/app-store';
+import { getRemainingAmount, canUseMembership as canUseMembershipFn } from '@/lib/membership';
 import type { PaymentMethod } from '@/types/consultation';
 import type { Customer } from '@/types/customer';
 
@@ -41,6 +42,7 @@ interface QuickSaleFormProps {
   onCancel: () => void;
   initialCustomerId?: string;
   initialCustomerName?: string;
+  membershipRemainingAmount?: number;
 }
 
 // 기본 시술 종류 — 사전상담/현장모드/예약과 통일 (심플/프렌치/자석/아트)
@@ -61,6 +63,7 @@ export function QuickSaleForm({
   onCancel,
   initialCustomerId,
   initialCustomerName,
+  membershipRemainingAmount,
 }: QuickSaleFormProps): React.ReactElement {
   const customers = useCustomerStore((s) => s.customers);
   const designers = useShopStore((s) => s.designers);
@@ -113,6 +116,14 @@ export function QuickSaleForm({
   });
   const [errors, setErrors] = useState<Partial<Record<keyof QuickSaleFormValues, string>>>({});
   const [showDropdown, setShowDropdown] = useState(false);
+
+  // [HIGH] 선택된 고객의 회원권 잔액 계산 — form.customerId 변경 시 자동 반영
+  const selectedCustomerMembershipRemaining = useMemo(() => {
+    if (!form.customerId) return membershipRemainingAmount;
+    const selected = customers.find((c) => c.id === form.customerId);
+    if (!selected?.membership || !canUseMembershipFn(selected.membership)) return 0;
+    return getRemainingAmount(selected.membership);
+  }, [form.customerId, customers, membershipRemainingAmount]);
 
   const set = useCallback(<K extends keyof QuickSaleFormValues>(key: K, val: QuickSaleFormValues[K]) => {
     setForm((prev) => ({ ...prev, [key]: val }));
@@ -282,6 +293,7 @@ export function QuickSaleForm({
         <PaymentMethodSelector
           value={form.paymentMethod}
           onChange={(m) => set('paymentMethod', m)}
+          membershipRemainingAmount={selectedCustomerMembershipRemaining}
         />
         {errors.paymentMethod && <span className="text-[11px] text-error">{errors.paymentMethod}</span>}
       </div>

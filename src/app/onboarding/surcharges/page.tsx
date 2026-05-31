@@ -78,14 +78,22 @@ export default function SurchargesPage() {
   const [selfRemoval, setSelfRemoval] = useState(init.selfRemoval);
   const [otherRemoval, setOtherRemoval] = useState(init.otherRemoval);
 
+  // extensionEnabled: init.extension > 0이면 ON, 0이면 OFF로 초기화
+  // 단, 이전에 저장 시 extension=0으로 저장된 경우(토글 OFF) ON으로 복원되지 않도록 분리
   const [extensionEnabled, setExtensionEnabled] = useState(init.extension > 0);
-  const [extension, setExtension] = useState(init.extension || 20000);
+  const [extension, setExtension] = useState(init.extension > 0 ? init.extension : 20000);
+  const [showExtensionZeroWarning, setShowExtensionZeroWarning] = useState(false);
 
   const [parts, setParts] = useState(init.partsExcessPer);
   const [glitter, setGlitter] = useState(init.largeParts);
   const [pointArt, setPointArt] = useState(init.pointArt);
 
   const handleNext = () => {
+    // 연장 ON인데 금액 0이면 경고 (한 번만 — 두 번째는 그대로 진행)
+    if (extensionEnabled && extension === 0 && !showExtensionZeroWarning) {
+      setShowExtensionZeroWarning(true);
+      return;
+    }
     setShopSettings({
       surcharges: {
         ...init,
@@ -148,7 +156,7 @@ export default function SurchargesPage() {
               <PriceInput
                 label="연장 추가금"
                 value={extension}
-                onChange={setExtension}
+                onChange={(v) => { setExtension(v); setShowExtensionZeroWarning(false); }}
               />
             </motion.div>
           )}
@@ -182,8 +190,14 @@ export default function SurchargesPage() {
         간단하게만 설정해도 충분해요
       </p>
 
+      {showExtensionZeroWarning && (
+        <p className="text-xs text-amber-500 text-center mb-2">
+          연장이 켜져 있는데 금액이 0원이에요. 그래도 계속하시겠어요?
+        </p>
+      )}
+
       <Button size="lg" fullWidth onClick={handleNext}>
-        다음
+        {showExtensionZeroWarning ? '그래도 계속하기' : '다음'}
       </Button>
     </motion.div>
   );

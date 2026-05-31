@@ -26,13 +26,13 @@ interface MembershipPlanStore {
     /** 0531 회의: 금액 차감 방식으로 전환 — 횟수는 더 이상 입력받지 않음(금액권=0) */
     totalSessions?: number;
     validDays: number | null;
-  }) => MembershipPlan | null;
+  }) => Promise<{ success: boolean; error?: string; plan?: MembershipPlan }>;
 
-  updatePlan: (id: string, updates: Partial<Omit<MembershipPlan, 'id' | 'shopId' | 'createdAt'>>) => void;
+  updatePlan: (id: string, updates: Partial<Omit<MembershipPlan, 'id' | 'shopId' | 'createdAt'>>) => Promise<{ success: boolean; error?: string }>;
 
-  togglePlanActive: (id: string) => void;
+  togglePlanActive: (id: string) => Promise<{ success: boolean; error?: string }>;
 
-  removePlan: (id: string) => void;
+  removePlan: (id: string) => Promise<{ success: boolean; error?: string }>;
 
   reset: () => void;
 }
@@ -57,9 +57,9 @@ export const useMembershipPlanStore = create<MembershipPlanStore>()(
 
       getById: (id) => get().plans.find((p) => p.id === id),
 
-      addPlan: (input) => {
+      addPlan: async (input) => {
         const shopId = useAuthStore.getState().currentShopId;
-        if (!shopId) return null;
+        if (!shopId) return { success: false, error: '샵 정보를 찾을 수 없습니다.' };
         const now = getNowInKoreaIso();
         const plan: MembershipPlan = {
           id: `mp-${Date.now()}`,
@@ -74,32 +74,70 @@ export const useMembershipPlanStore = create<MembershipPlanStore>()(
           updatedAt: now,
         };
         set((state) => ({ plans: [...state.plans, plan] }));
-        void dbUpsertMembershipPlan(plan).catch(console.error);
-        return plan;
-      },
-
-      updatePlan: (id, updates) => {
-        set((state) => ({
-          plans: state.plans.map((p) =>
-            p.id === id ? { ...p, ...updates, updatedAt: getNowInKoreaIso() } : p,
-          ),
-        }));
-        const updated = get().plans.find((p) => p.id === id);
-        if (updated) {
-          void dbUpsertMembershipPlan(updated).catch(console.error);
+        try {
+          const result = await dbUpsertMembershipPlan(plan);
+          if (!result.success) {
+            // 롤백
+            set((state) => ({ plans: state.plans.filter((p) => p.id !== plan.id) }));
+            return { success: false, error: result.error ?? '회원권 추가에 실패했습니다.' };
+          }
+        } catch (err) {
+          set((state) => ({ plans: state.plans.filter((p) => p.id !== plan.id) }));
+          return { success: false, error: err instanceof Error ? err.message : '회원권 추가에 실패했습니다.' };
         }
+        return { success: true, plan };
       },
 
-      togglePlanActive: (id) => {
+      updatePlan: async (id, updates) => {
+        const previous = get().plans.find((p) => p.id === id);
+        if (!previous) return { success: false, error: '회원권을 찾을 수 없습니다.' };
+        const updated = { ...previous, ...updates, updatedAt: getNowInKoreaIso() };
+        set((state) => ({
+          plans: state.plans.map((p) => (p.id === id ? updated : p)),
+        }));
+        try {
+          const result = await dbUpsertMembershipPlan(updated);
+          if (!result.success) {
+            // 롤백
+            set((state) => ({
+              plans: state.plans.map((p) => (p.id === id ? previous : p)),
+            }));
+            return { success: false, error: result.error ?? '회원권 수정에 실패했습니다.' };
+          }
+        } catch (err) {
+          set((state) => ({
+            plans: state.plans.map((p) => (p.id === id ? previous : p)),
+          }));
+          return { success: false, error: err instanceof Error ? err.message : '회원권 수정에 실패했습니다.' };
+        }
+        return { success: true };
+      },
+
+      togglePlanActive: async (id) => {
         const target = get().plans.find((p) => p.id === id);
-        if (!target) return;
-        get().updatePlan(id, { isActive: !target.isActive });
+        if (!target) return { success: false, error: '회원권을 찾을 수 없습니다.' };
+        return get().updatePlan(id, { isActive: !target.isActive });
       },
 
-      removePlan: (id) => {
+      removePlan: async (id) => {
         const shopId = useAuthStore.getState().currentShopId;
+        const previous = get().plans.find((p) => p.id === id);
         set((state) => ({ plans: state.plans.filter((p) => p.id !== id) }));
-        void dbDeleteMembershipPlan(id, shopId).catch(console.error);
+        try {
+          const result = await dbDeleteMembershipPlan(id, shopId);
+          if (!result.success) {
+            if (previous) {
+              set((state) => ({ plans: [...state.plans, previous].sort((a, b) => a.sortOrder - b.sortOrder) }));
+            }
+            return { success: false, error: result.error ?? '회원권 삭제에 실패했습니다.' };
+          }
+        } catch (err) {
+          if (previous) {
+            set((state) => ({ plans: [...state.plans, previous].sort((a, b) => a.sortOrder - b.sortOrder) }));
+          }
+          return { success: false, error: err instanceof Error ? err.message : '회원권 삭제에 실패했습니다.' };
+        }
+        return { success: true };
       },
 
       reset: () => set({ plans: [], _dbReady: false }),

@@ -7,6 +7,7 @@ import { useT } from '@/lib/i18n';
 import { DESIGN_SCOPE_LABEL, BODY_PART_LABEL } from '@/lib/labels';
 import type { ShareCardPublicData } from '@/types/share-card';
 import { ShareCardCTASection } from '@/components/share-card/ShareCardCTASection';
+import { LanguageSelector } from '@/components/ui/LanguageSelector';
 
 interface Props {
   data: ShareCardPublicData;
@@ -63,16 +64,21 @@ const SHAPE_LABEL: Record<string, string> = {
   coffin: '코핀',
 };
 
-const DEFAULT_FEEDBACK_LINE = '너무 만족하셨어요';
-const CONSULT_BUILT_LINE = '상담을 통해 완성된 디자인입니다';
+// 아래 상수는 useT() 훅으로 대체됨 — 컴포넌트 내부에서 t()로 직접 사용
 
 function getDesignLabel(scope: string): string {
   return INSTA_SCOPE_LABEL[scope] ?? DESIGN_SCOPE_LABEL[scope] ?? scope;
 }
 
+/** iOS Safari (iPhone/iPad/iPod) 감지 */
+function isIOS(): boolean {
+  return /iP(ad|hone|od)/.test(navigator.userAgent);
+}
+
 export function ShareCardClient({ data, shareCardId }: Props): React.ReactElement {
   const t = useT();
   const [isDownloading, setIsDownloading] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // 사진 1장만 사용 (이미지 배열 있어도 첫 장만 카드에 노출)
   const mainImage = data.imageUrls[0];
@@ -80,9 +86,9 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
   const handleDownload = useCallback(async () => {
     if (isDownloading) return;
     setIsDownloading(true);
+    setSaveError(null);
 
     try {
-      // 동적 import로 html2canvas-pro 로드 + 카드 DOM 캡처
       const target = document.getElementById('share-card-capture-target');
       if (!target) return;
       const html2canvas = (await import('html2canvas-pro')).default;
@@ -96,14 +102,35 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
         logging: false,
       });
 
-      const url = canvas.toDataURL('image/jpeg', 0.95);
-      const link = document.createElement('a');
       const shopSlug = data.shopName.replace(/\s+/g, '_').toLowerCase();
-      link.download = `bdx_${shopSlug}_nail.jpg`;
-      link.href = url;
-      link.click();
+      const fileName = `bdx_${shopSlug}_nail.jpg`;
+
+      if (isIOS()) {
+        // iOS Safari: canvas → Blob → navigator.share({files}) 우선
+        // Web Share API Level 2 미지원 시 새 탭으로 이미지 열기 (저장은 꾹눌러 직접)
+        const blob = await new Promise<Blob | null>((resolve) => {
+          canvas.toBlob(resolve, 'image/jpeg', 0.95);
+        });
+        if (blob && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'image/jpeg' })] })) {
+          const file = new File([blob], fileName, { type: 'image/jpeg' });
+          await navigator.share({ files: [file], title: fileName });
+        } else {
+          // Web Share 미지원 — 이미지를 새 탭에서 열고 안내
+          const url = canvas.toDataURL('image/jpeg', 0.95);
+          window.open(url, '_blank');
+          setSaveError('사진을 꾹 눌러 저장해주세요 / Press & hold to save');
+        }
+      } else {
+        // 데스크탑 / 안드로이드: 기존 다운로드
+        const url = canvas.toDataURL('image/jpeg', 0.95);
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = url;
+        link.click();
+      }
     } catch (err) {
       console.error('이미지 저장 실패:', err);
+      setSaveError('저장에 실패했어요. 다시 시도해주세요. / Save failed, please try again.');
     } finally {
       setIsDownloading(false);
     }
@@ -122,6 +149,11 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
 
   return (
     <div className="min-h-dvh bg-background flex flex-col items-center justify-start py-8 px-4">
+      {/* 언어 선택 — 외국인 고객용 */}
+      <div className="w-full max-w-sm mb-5 flex justify-end">
+        <LanguageSelector />
+      </div>
+
       {/* 캡처 대상 카드 (9:16) */}
       <motion.div
         id="share-card-capture-target"
@@ -172,7 +204,7 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
               {designLabel}
             </span>
             <span className="text-[11px] font-medium text-[#6B7280] leading-snug mt-2.5">
-              {CONSULT_BUILT_LINE}
+              {t('shareCard.consultBuiltLine')}
             </span>
           </div>
 
@@ -183,7 +215,7 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
           >
             <FeedbackRow icon="💅" parts={shapeParts} />
             {showMinutes && <FeedbackRow icon="⏱️" number={data.estimatedMinutes} unit="분" />}
-            <FeedbackRow icon="💕" parts={[DEFAULT_FEEDBACK_LINE]} isLast />
+            <FeedbackRow icon="💕" parts={[t('shareCard.feedbackDefault')]} isLast />
           </div>
 
           {/* 하단: 샵/날짜/BDX + CTA/QR */}
@@ -240,9 +272,15 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
             </>
           )}
         </button>
-        <p className="text-center text-[11px] text-text-muted mt-2.5">
-          인스타그램 업로드용 · JPG 고화질
-        </p>
+        {saveError ? (
+          <p className="text-center text-[12px] text-amber-600 mt-2.5 px-2 leading-snug">
+            {saveError}
+          </p>
+        ) : (
+          <p className="text-center text-[11px] text-text-muted mt-2.5">
+            {t('shareCard.imageHint')}
+          </p>
+        )}
       </motion.div>
 
       <motion.div

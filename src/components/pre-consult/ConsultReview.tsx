@@ -251,7 +251,7 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
           <ReviewRow
             label={t('preConsult.reviewWrapping')}
             value={wrappingLabel}
-            section="nailStatus"
+            section="wrapping"
             modifyLabel={t('preConsult.modifyBtn')}
             onModify={onModify}
           />

@@ -630,18 +630,25 @@ export function UploadPhotoForm({ onCancel, onSuccess }: UploadPhotoFormProps): 
         >
           취소
         </Button>
-        <Button
-          variant="primary"
-          onClick={handleUpload}
-          loading={isProcessing}
-          disabled={!selectedFile || selectedTags.length < 3}
-          className={cn(
-            'h-14 w-full text-base shadow-sm sm:h-11 sm:flex-1 sm:text-base',
-            selectedTags.length < 3 && 'opacity-50',
+        <div className="flex flex-col gap-1.5 flex-1">
+          <Button
+            variant="primary"
+            onClick={handleUpload}
+            loading={isProcessing}
+            disabled={!selectedFile || selectedTags.length < 3}
+            className={cn(
+              'h-14 w-full text-base shadow-sm sm:h-11 sm:text-base',
+              selectedTags.length < 3 && 'opacity-50',
+            )}
+          >
+            업로드
+          </Button>
+          {selectedTags.length < 3 && (
+            <p className="text-center text-[11px] text-text-muted">
+              태그 {3 - selectedTags.length}개 더 선택하면 업로드할 수 있어요
+            </p>
           )}
-        >
-          업로드
-        </Button>
+        </div>
       </div>
     </div>
   );

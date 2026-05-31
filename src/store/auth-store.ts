@@ -246,13 +246,36 @@ export const useAuthStore = create<AuthStore>()(
         _isAuthenticating = true;
         try {
           const normalizedEmail = normalizeEmail(email);
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: normalizedEmail,
-            password,
-          });
+          let data: Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>['data'];
+          let error: Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>['error'];
+          try {
+            const result = await supabase.auth.signInWithPassword({
+              email: normalizedEmail,
+              password,
+            });
+            data = result.data;
+            error = result.error;
+          } catch (networkErr) {
+            return { success: false, error: '네트워크 연결을 확인해 주세요.' };
+          }
 
           if (error || !data.user) {
-            return { success: false, error: error?.message ?? '로그인에 실패했습니다.' };
+            const raw = error?.message ?? '';
+            let mapped: string;
+            if (/email.*not.*confirmed|not confirmed/i.test(raw)) {
+              mapped = '이메일 인증이 완료되지 않았습니다. 메일함에서 인증 링크를 클릭한 뒤 다시 로그인해 주세요.';
+            } else if (/invalid.*credentials|invalid.*password|wrong.*password|email.*invalid|invalid.*login/i.test(raw)) {
+              mapped = '이메일 또는 비밀번호가 올바르지 않습니다.';
+            } else if (/too many.*requests|rate limit/i.test(raw)) {
+              mapped = '로그인 시도가 너무 많습니다. 잠시 후 다시 시도해 주세요.';
+            } else if (/user.*not.*found|no user/i.test(raw)) {
+              mapped = '등록되지 않은 이메일이에요. 회원가입을 먼저 진행해 주세요.';
+            } else if (raw) {
+              mapped = '로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+            } else {
+              mapped = '로그인에 실패했습니다.';
+            }
+            return { success: false, error: mapped };
           }
 
           const context = await resolveAuthContext(data.user.id);
@@ -280,16 +303,22 @@ export const useAuthStore = create<AuthStore>()(
         }
 
         const nextPath = intent === 'signup' ? '/signup' : '/login';
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback?next=${encodeURIComponent(nextPath)}`,
-            scopes: 'email profile',
-          },
-        });
+        let error: Awaited<ReturnType<typeof supabase.auth.signInWithOAuth>>['error'];
+        try {
+          const result = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              redirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+              scopes: 'email profile',
+            },
+          });
+          error = result.error;
+        } catch (networkErr) {
+          return { success: false, error: '네트워크 연결을 확인해 주세요.' };
+        }
 
         if (error) {
-          return { success: false, error: error.message };
+          return { success: false, error: 'Google 로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.' };
         }
 
         return { success: true };

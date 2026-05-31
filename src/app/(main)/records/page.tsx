@@ -63,6 +63,7 @@ export default function RecordsPage() {
   const t = useT();
   const [mainTab, setMainTab] = useState<MainTab>('reservations');
   const [viewMode, setViewMode] = useState<ViewMode>('day');
+  const [foreignFilterActive, setForeignFilterActive] = useState(false);
   // 디자이너 토글: 로그인 디자이너는 항상 표시, 나머지는 토글
   const [extraDesignerIds, setExtraDesignerIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
@@ -222,12 +223,18 @@ export default function RecordsPage() {
     return list;
   }, [activeDesigners, visibleDesignerIds, extraDesignerIds, activeDesignerId]);
 
+  // [MED] ?filter=foreign 활성 시 language !== 'ko' 예약만 노출
+  const baseReservations = useMemo(
+    () => foreignFilterActive ? allReservations.filter((r) => r.language && r.language !== 'ko') : allReservations,
+    [allReservations, foreignFilterActive],
+  );
+
   const dayReservations = useMemo(
     () =>
-      allReservations
+      baseReservations
         .filter((r) => r.reservationDate === selectedDate)
         .sort((a, b) => a.reservationTime.localeCompare(b.reservationTime)),
-    [allReservations, selectedDate],
+    [baseReservations, selectedDate],
   );
 
   const weekStats = useMemo(() => {
@@ -287,9 +294,9 @@ export default function RecordsPage() {
 
 
   const timeGridEvents = useMemo(
-    () => toTimeGridEvents(allReservations, getCustomerById),
+    () => toTimeGridEvents(baseReservations, getCustomerById),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [allReservations, getCustomerById, customers],
+    [baseReservations, getCustomerById, customers],
   );
 
   const sorted = useMemo(
@@ -487,6 +494,19 @@ export default function RecordsPage() {
     month: t('records.filterMonth'),
   };
 
+  // [MED] ?date= 쿼리파라미터로 진입 시 선택 날짜 설정 (사전상담 확정 후 리다이렉트 등)
+  useEffect(() => {
+    const dateParam = searchParams.get('date');
+    if (!dateParam || !/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) return;
+    setSelectedDate(dateParam);
+    // URL에서 date 파라미터 제거
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('date');
+    const nextQuery = params.toString();
+    router.replace(nextQuery ? `/records?${nextQuery}` : '/records', { scroll: false });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const legacyView = searchParams.get('view');
     if (!legacyView) return;
@@ -521,6 +541,24 @@ export default function RecordsPage() {
     setSearch(customer?.name ?? nextCustomerId);
   }, [searchParams, getCustomerById]);
 
+  // [MED] ?filter=foreign: 예약 탭으로 전환 + language !== 'ko' 외국인 예약만 표시
+  useEffect(() => {
+    const filterParam = searchParams.get('filter');
+    if (filterParam !== 'foreign') {
+      setForeignFilterActive(false);
+      return;
+    }
+    setMainTab('reservations');
+    setViewMode('day');
+    setForeignFilterActive(true);
+    // URL에서 filter 파라미터 제거
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('filter');
+    const nextQuery = params.toString();
+    router.replace(nextQuery ? `/records?${nextQuery}` : '/records', { scroll: false });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const bookingId = searchParams.get('bookingId');
     if (!bookingId) return;
@@ -539,6 +577,19 @@ export default function RecordsPage() {
     if (targetEvent) {
       setSelectedEvent(targetEvent);
     } else {
+      // [MED] endTime 공백 방지 — duration 기반으로 계산, 없으면 1시간 기본값
+      const _dlTime = targetReservation.reservationTime;
+      let _dlEndTime = '';
+      if (_dlTime && _dlTime.includes(':')) {
+        const [_dlH, _dlM] = _dlTime.split(':').map(Number);
+        if (!isNaN(_dlH) && !isNaN(_dlM)) {
+          const durationMins = (targetReservation as BookingRequest & { duration?: number }).duration ?? 60;
+          const totalMins = _dlH * 60 + _dlM + durationMins;
+          const endHours = Math.min(Math.floor(totalMins / 60), 23);
+          const endMins = totalMins % 60;
+          _dlEndTime = `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}`;
+        }
+      }
       setSelectedEvent({
         id: `res-${targetReservation.id}`,
         originalId: targetReservation.id,
@@ -546,7 +597,7 @@ export default function RecordsPage() {
         title: targetReservation.customerName,
         date: targetReservation.reservationDate,
         startTime: targetReservation.reservationTime,
-        endTime: '',
+        endTime: _dlEndTime,
         status: targetReservation.status,
         customerId: targetReservation.customerId,
         customerPhone: targetReservation.phone,
@@ -578,6 +629,18 @@ export default function RecordsPage() {
       </div>
 
       <MainTabBar activeTab={mainTab} onTabChange={setMainTab} />
+
+      {foreignFilterActive && (
+        <div className="mx-4 md:mx-0 flex items-center justify-between gap-2 rounded-xl bg-primary/10 px-4 py-2.5">
+          <span className="text-xs font-medium text-primary">외국인 예약만 표시 중 ({baseReservations.length}건)</span>
+          <button
+            onClick={() => setForeignFilterActive(false)}
+            className="text-xs text-primary underline underline-offset-2"
+          >
+            전체 보기
+          </button>
+        </div>
+      )}
 
       {mainTab === 'reservations' && (
         <>
@@ -944,7 +1007,10 @@ export default function RecordsPage() {
                     <div className="flex justify-between">
                       <span className="text-sm text-text-secondary">시간</span>
                       {selectedEvent.startTime && selectedEvent.startTime.includes(':') ? (
-                        <span className="text-sm font-medium text-text">{selectedEvent.startTime} – {selectedEvent.endTime}</span>
+                        <span className="text-sm font-medium text-text">
+                          {selectedEvent.startTime}
+                          {selectedEvent.endTime ? ` – ${selectedEvent.endTime}` : ''}
+                        </span>
                       ) : (
                         <span className="rounded-full bg-surface-alt px-2.5 py-0.5 text-xs font-medium text-text-muted">시간 미정</span>
                       )}

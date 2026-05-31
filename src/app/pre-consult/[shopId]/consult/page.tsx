@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useT } from '@/lib/i18n';
@@ -44,6 +44,14 @@ export default function PreConsultConsultPage(): React.ReactElement {
   const params = useParams<{ shopId: string }>();
   const t = useT();
   const setCurrentStep = usePreConsultStore((s) => s.setCurrentStep);
+
+  // Guard: selectedCategory가 없으면 사전상담 시작 페이지로 redirect
+  const selectedCategory = usePreConsultStore((s) => s.selectedCategory);
+  useEffect(() => {
+    if (!selectedCategory) {
+      router.replace(`/pre-consult/${params.shopId}`);
+    }
+  }, [selectedCategory, params.shopId, router]);
 
   // 0528 H3: 새로고침 시 store 스냅샷 기반으로 진행 상태 복원
   const [completedSections, setCompletedSections] = useState<Set<SectionId>>(() => {
@@ -101,10 +109,32 @@ export default function PreConsultConsultPage(): React.ReactElement {
   }, [router, params.shopId, setCurrentStep]);
 
   const handleModify = useCallback((section: string): void => {
-    // Scroll to the specified section and reset completedSections from that point
     const idx = SECTION_ORDER.indexOf(section as SectionId);
-    if (idx === -1) return;
 
+    // Section ID가 SECTION_ORDER에 없는 경우(예: "wrapping"은 nailStatus 섹션 내 필드)
+    // completedSections 변경 없이 해당 섹션의 부모 섹션으로 스크롤만.
+    if (idx === -1) {
+      // wrapping은 nailStatus 섹션 소속
+      const parentSection = section === 'wrapping' ? 'nailStatus' : null;
+      if (parentSection) {
+        const parentIdx = SECTION_ORDER.indexOf(parentSection as SectionId);
+        setCompletedSections((prev) => {
+          const next = new Set<SectionId>();
+          for (let i = 0; i < parentIdx; i++) {
+            if (prev.has(SECTION_ORDER[i])) {
+              next.add(SECTION_ORDER[i]);
+            }
+          }
+          return next;
+        });
+        setTimeout(() => {
+          sectionRefs.current[parentSection]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
+      return;
+    }
+
+    // Scroll to the specified section and reset completedSections from that point
     setCompletedSections((prev) => {
       const next = new Set<SectionId>();
       for (let i = 0; i < idx; i++) {

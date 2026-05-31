@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
@@ -19,6 +19,9 @@ export default function NoticePage() {
     }
   }, [shopSettings.shopName, router]);
 
+  // 중복클릭 방지 ref
+  const submittingRef = useRef(false);
+
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (e.target.value.length <= MAX_LENGTH) {
       setNotice(e.target.value);
@@ -26,8 +29,15 @@ export default function NoticePage() {
   };
 
   const handleComplete = async () => {
-    await setShopSettings({ customerNotice: notice.trim() || shopSettings.customerNotice });
-    router.push('/onboarding/complete');
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    try {
+      await setShopSettings({ customerNotice: notice.trim() || shopSettings.customerNotice });
+      router.push('/onboarding/complete');
+    } catch (err) {
+      console.error('[onboarding/notice] handleComplete error:', err);
+      submittingRef.current = false;
+    }
   };
 
   const remaining = MAX_LENGTH - notice.length;

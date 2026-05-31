@@ -380,7 +380,7 @@ export function StaffSection(): React.ReactElement {
                 <div className="flex flex-wrap items-center gap-1.5 pl-11">
                   <button
                     onClick={() => startEdit(d)}
-                    className="rounded-lg border border-border px-2.5 py-2 text-xs font-semibold text-text-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary transition-all"
+                    className="rounded-lg border border-border px-2.5 py-2 text-xs font-semibold text-text-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary transition-all min-h-[44px]"
                     disabled={isBusy}
                   >
                     프로필 수정
@@ -388,7 +388,7 @@ export function StaffSection(): React.ReactElement {
                   <label
                     htmlFor={inputId}
                     className={cn(
-                      'rounded-lg border border-border px-2.5 py-2 text-xs font-semibold text-text-secondary transition-all',
+                      'rounded-lg border border-border px-2.5 py-2 text-xs font-semibold text-text-secondary transition-all min-h-[44px] flex items-center',
                       isBusy
                         ? 'cursor-not-allowed opacity-40'
                         : 'cursor-pointer hover:border-primary/40 hover:bg-primary/10 hover:text-primary',
@@ -407,7 +407,7 @@ export function StaffSection(): React.ReactElement {
                   {hasImage && (
                     <button
                       onClick={() => void handleDeleteProfileImage(d.id)}
-                      className="rounded-lg border border-border px-2.5 py-2 text-xs font-semibold text-text-secondary hover:border-error/40 hover:bg-error/10 hover:text-error transition-all"
+                      className="rounded-lg border border-border px-2.5 py-2 text-xs font-semibold text-text-secondary hover:border-error/40 hover:bg-error/10 hover:text-error transition-all min-h-[44px]"
                       disabled={isBusy}
                     >
                       사진 삭제
@@ -433,7 +433,7 @@ export function StaffSection(): React.ReactElement {
                   ) : (
                     <button
                       onClick={() => void handleDelete(d)}
-                      className="rounded-lg border border-border px-2.5 py-2 text-xs font-semibold text-text-secondary hover:border-error/40 hover:bg-error/10 hover:text-error transition-all disabled:opacity-40"
+                      className="rounded-lg border border-border px-2.5 py-2 text-xs font-semibold text-text-secondary hover:border-error/40 hover:bg-error/10 hover:text-error transition-all disabled:opacity-40 min-h-[44px]"
                       disabled={isBusy || d.role === 'owner'}
                     >
                       프로필 삭제

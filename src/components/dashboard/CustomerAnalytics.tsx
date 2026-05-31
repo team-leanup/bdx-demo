@@ -35,6 +35,14 @@ export function CustomerAnalytics() {
     { name: '신규', value: analytics.newCustomers },
   ];
 
+  if (customers.length === 0) {
+    return (
+      <div className="flex items-center justify-center rounded-xl border border-dashed border-border bg-surface-alt py-10 text-sm text-text-muted">
+        아직 고객 데이터가 없습니다.
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 md:gap-8">
       {/* 신규 vs 재방문 */}

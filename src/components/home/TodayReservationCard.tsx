@@ -340,7 +340,7 @@ export function TodayReservationCard({
                       </div>
                     ) : null}
                     <div className="ml-auto flex shrink-0 items-center gap-1.5">
-                      {booking.customerId && stage !== 'completed' && (
+                      {booking.customerId && stage !== 'completed' && stage !== 'cancelled' && (
                         <button
                           onClick={(e) => { e.stopPropagation(); router.push(`/customers/${booking.customerId}`); }}
                           className="rounded-lg bg-surface-alt border border-border px-2.5 py-2.5 text-xs font-semibold text-text-secondary hover:bg-border active:scale-95 transition-all"
@@ -348,7 +348,11 @@ export function TodayReservationCard({
                           고객 정보
                         </button>
                       )}
-                      {stage === 'completed' ? (
+                      {stage === 'cancelled' ? (
+                        <span className="rounded-lg bg-surface-alt border border-border px-3 py-2.5 text-xs font-semibold text-text-muted cursor-default">
+                          취소됨
+                        </span>
+                      ) : stage === 'completed' ? (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();

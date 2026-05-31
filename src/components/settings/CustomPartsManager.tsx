@@ -6,6 +6,8 @@ import { useAppStore } from '@/store/app-store';
 import { useT } from '@/lib/i18n';
 import { formatPrice } from '@/lib/format';
 
+const MAX_CUSTOM_PARTS = 30;
+
 export function CustomPartsManager(): React.ReactElement {
   const { customParts, addPart, removePart, updatePart } = usePartsStore();
   const setShopSettings = useAppStore((s) => s.setShopSettings);
@@ -33,6 +35,7 @@ export function CustomPartsManager(): React.ReactElement {
   const handleAdd = () => {
     const price = parseInt(newPartPrice, 10);
     if (!newPartName.trim() || isNaN(price) || price < 0) return;
+    if (customParts.length >= MAX_CUSTOM_PARTS) return;
     addPart(newPartName.trim(), price);
     setNewPartName('');
     setNewPartPrice('');
@@ -151,7 +154,7 @@ export function CustomPartsManager(): React.ReactElement {
         );
       })}
 
-      {/* Add form */}
+      {/* Add form — 최대 30개 제한 */}
       {showAddForm ? (
         <div className="flex flex-col gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3 mt-1">
           <div className="flex gap-2">
@@ -190,7 +193,7 @@ export function CustomPartsManager(): React.ReactElement {
             </button>
           </div>
         </div>
-      ) : (
+      ) : customParts.length < MAX_CUSTOM_PARTS ? (
         <button
           onClick={() => setShowAddForm(true)}
           className="mt-1 flex items-center gap-1.5 rounded-xl border border-dashed border-primary/40 py-2 px-3 text-xs font-semibold text-primary hover:bg-primary/5 transition-colors"
@@ -200,6 +203,10 @@ export function CustomPartsManager(): React.ReactElement {
           </svg>
           {t('settings.service_addPart')}
         </button>
+      ) : null}
+
+      {customParts.length >= MAX_CUSTOM_PARTS && !showAddForm && (
+        <p className="text-xs text-text-muted text-center py-2">파츠는 최대 {MAX_CUSTOM_PARTS}개까지 등록할 수 있습니다.</p>
       )}
 
       {customParts.length === 0 && !showAddForm && (

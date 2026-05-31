@@ -98,26 +98,31 @@ export function HourlyBookings() {
         </div>
       )}
 
-      {/* 시간대별 텍스트 리스트 (상위 3개 강조) */}
+      {/* 시간대별 텍스트 리스트 (상위 3개 강조, 0건 제외) */}
       <div className="flex flex-col gap-1.5">
         <p className="text-xs font-medium text-text-secondary">상위 예약 시간대</p>
-        {[...hourlyData]
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 3)
-          .map((d, idx) => (
-            <div key={d.hour} className="flex items-center justify-between rounded-xl bg-surface-alt px-4 py-2">
-              <div className="flex items-center gap-2">
-                <span
-                  className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white"
-                  style={{ backgroundColor: 'var(--color-primary)', opacity: 1 - idx * 0.2 }}
-                >
-                  {idx + 1}
-                </span>
-                <span className="text-sm font-medium text-text">{d.label}</span>
+        {totalBookings === 0 ? (
+          <p className="text-center text-sm text-text-muted py-3">이달 예약 데이터가 없습니다.</p>
+        ) : (
+          [...hourlyData]
+            .sort((a, b) => b.count - a.count)
+            .filter((d) => d.count > 0)
+            .slice(0, 3)
+            .map((d, idx) => (
+              <div key={d.hour} className="flex items-center justify-between rounded-xl bg-surface-alt px-4 py-2">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                    style={{ backgroundColor: 'var(--color-primary)', opacity: 1 - idx * 0.2 }}
+                  >
+                    {idx + 1}
+                  </span>
+                  <span className="text-sm font-medium text-text">{d.label}</span>
+                </div>
+                <span className="text-sm font-semibold text-primary">{d.count}건</span>
               </div>
-              <span className="text-sm font-semibold text-primary">{d.count}건</span>
-            </div>
-          ))}
+            ))
+        )}
       </div>
     </div>
   );

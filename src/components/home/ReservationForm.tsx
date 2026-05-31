@@ -8,6 +8,7 @@ import { useCustomerStore } from '@/store/customer-store';
 import { useShopStore } from '@/store/shop-store';
 import { useAppStore } from '@/store/app-store';
 import type { BookingChannel, BookingRequest } from '@/types/consultation';
+import type { BusinessHours } from '@/types/shop';
 import type { Locale } from '@/store/locale-store';
 import { getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
 import { formatPhoneInput } from '@/lib/phone';
@@ -23,6 +24,19 @@ function generateTimeSlots(start = '10:00', end = '20:00'): string[] {
     if (m >= 60) { h++; m = 0; }
   }
   return slots;
+}
+
+function getTimeSlotsForDate(
+  dateStr: string,
+  businessHours: BusinessHours[],
+): string[] {
+  if (!businessHours || businessHours.length === 0) return generateTimeSlots();
+  const dayOfWeek = new Date(dateStr + 'T00:00:00').getDay();
+  const dayHours = businessHours.find((bh) => bh.dayOfWeek === dayOfWeek);
+  if (!dayHours || !dayHours.isOpen || !dayHours.openTime || !dayHours.closeTime) {
+    return generateTimeSlots();
+  }
+  return generateTimeSlots(dayHours.openTime, dayHours.closeTime);
 }
 
 const CHANNEL_OPTIONS: { value: BookingChannel; label: string }[] = [
@@ -76,6 +90,7 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
   const customers = useCustomerStore((s) => s.customers);
   const designers = useShopStore((s) => s.designers);
   const customCategories = useAppStore((s) => s.shopSettings.customCategories) ?? [];
+  const businessHours = useAppStore((s) => s.shopSettings.businessHours) ?? [];
   const serviceOptions = useMemo(
     () => [
       ...BUILTIN_SERVICE_OPTIONS,
@@ -307,7 +322,7 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
               className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
             >
               <option value="">시간 선택</option>
-              {generateTimeSlots().map((slot) => (
+              {getTimeSlotsForDate(formDate, businessHours).map((slot) => (
                 <option key={slot} value={slot}>{slot}</option>
               ))}
             </select>

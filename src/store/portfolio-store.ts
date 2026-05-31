@@ -44,7 +44,7 @@ interface PortfolioStore {
   getByKind: (kind: PortfolioPhotoKind) => PortfolioPhoto[];
 
   togglePhotoVisibility: (id: string) => void;
-  toggleMenu: (id: string, price?: number) => void;
+  toggleMenu: (id: string, price?: number) => Promise<{ success: boolean; error?: string }>;
   getMenuPhotos: () => PortfolioPhoto[];
   updatePhoto: (id: string, updates: Partial<PortfolioPhoto>) => void;
   /** DB 동기화 포함 메타데이터 업데이트 (시술종류/디자인타입/가격/메모/태그/컬러/촬영일/대표 등) */
@@ -290,18 +290,26 @@ export const usePortfolioStore = create<PortfolioStore>()(
         }
       },
 
-      toggleMenu: (id, price) => {
+      toggleMenu: async (id, price) => {
         const currentShopId = useAuthStore.getState().currentShopId;
         const current = get().photos.find((p) => p.id === id);
-        if (!current) return;
+        if (!current) return { success: false, error: '사진을 찾을 수 없습니다' };
         const turningOn = !current.isFeatured;
         const updates: Partial<PortfolioPhoto> = turningOn
           ? { isFeatured: true, price }
           : { isFeatured: false, price: undefined };
+        // optimistic update
         get().updatePhoto(id, updates);
-        if (currentShopId && currentShopId !== 'shop-demo') {
-          dbUpdatePhotoFeatured(id, currentShopId, turningOn, turningOn ? price : undefined).catch(console.error);
+        if (!currentShopId || currentShopId === 'shop-demo') {
+          return { success: true };
         }
+        const result = await dbUpdatePhotoFeatured(id, currentShopId, turningOn, turningOn ? price : undefined);
+        if (!result.success) {
+          // rollback
+          get().updatePhoto(id, { isFeatured: current.isFeatured, price: current.price });
+          return { success: false, error: result.error };
+        }
+        return { success: true };
       },
 
       getMenuPhotos: () => get().photos.filter((p) => p.isFeatured === true),

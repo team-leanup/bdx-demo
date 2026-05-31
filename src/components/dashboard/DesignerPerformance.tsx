@@ -66,6 +66,14 @@ export function DesignerPerformance() {
   // 상담 건수 기준 최대값 (프로그레스 바용)
   const maxConsultations = Math.max(...designerStats.map((d) => d.consultations), 1);
 
+  if (designerStats.length === 0) {
+    return (
+      <div className="flex items-center justify-center rounded-xl border border-dashed border-border bg-surface-alt py-10 text-sm text-text-muted">
+        아직 상담 기록이 없습니다.
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-5 md:gap-6">
       {/* 디자이너별 상담 건수 비교 - 수평 프로그레스 바 */}

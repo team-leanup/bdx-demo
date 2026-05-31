@@ -150,6 +150,7 @@ export function ShareCardGeneratorModal({
     portfolioPhotos[0]?.id ?? null,
   );
   const [downloading, setDownloading] = useState<CardRatio | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [shareLinkCopied, setShareLinkCopied] = useState(false);
   const [resolvedShareCardId, setResolvedShareCardId] = useState<string | undefined>(record.shareCardId);
@@ -219,6 +220,7 @@ export function ShareCardGeneratorModal({
     const ref = ratio === '9:16' ? captureRef916 : captureRef34;
     if (!ref.current || !resolvedImageUrl) return;
     setDownloading(ratio);
+    setDownloadError(null);
     try {
       await new Promise((r) => setTimeout(r, 200));
       const canvas = await html2canvas(ref.current, {
@@ -236,6 +238,7 @@ export function ShareCardGeneratorModal({
       link.click();
     } catch (err) {
       console.error('[share-card] download failed:', err);
+      setDownloadError('이미지 저장에 실패했어요. 다시 시도해주세요.');
     } finally {
       setDownloading(null);
     }
@@ -379,6 +382,9 @@ export function ShareCardGeneratorModal({
             <div className="flex-shrink-0 flex flex-col gap-2 px-5 pb-safe pt-3 border-t border-border">
               {shareCardError && (
                 <p className="text-xs text-error text-center py-1">{shareCardError}</p>
+              )}
+              {downloadError && (
+                <p className="text-xs text-amber-600 text-center py-1">{downloadError}</p>
               )}
               {/* 이미지 다운로드 + 링크 복사 */}
               <div className="flex gap-2">

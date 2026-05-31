@@ -24,12 +24,12 @@ export default function Error({
         >
           다시 시도
         </button>
-        <a
-          href="/home"
+        <button
+          onClick={() => { window.location.href = '/'; }}
           className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
         >
           홈으로
-        </a>
+        </button>
       </div>
     </div>
   );

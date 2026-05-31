@@ -17,19 +17,29 @@ export default function ShopInfoPage() {
   const [shopName, setShopName] = useState(shopSettings.shopName || '');
   const [phone, setPhone] = useState(shopSettings.shopPhone || '');
   const [logoPreview, setLogoPreview] = useState<string | null>(pendingLogoDataUrl);
+  const [logoError, setLogoError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const canProceed = shopName.trim().length > 0;
 
+  const MAX_LOGO_BYTES = 4 * 1024 * 1024; // 4MB
+
   const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setLogoError(null);
+    // 4MB 크기 검증
+    if (file.size > MAX_LOGO_BYTES) {
+      setLogoError('4MB 이하 이미지만 선택할 수 있어요');
+      e.target.value = '';
+      return;
+    }
     try {
       const dataUrl = await resizeImageToBase64(file, 400);
       setLogoPreview(dataUrl);
       setPendingLogoDataUrl(dataUrl);
     } catch {
-      // 업로드 실패는 무시 (선택 사항)
+      setLogoError('이미지를 불러오지 못했어요. 다시 시도해 주세요');
     }
     // 같은 파일 재선택 가능하도록 초기화
     e.target.value = '';
@@ -112,6 +122,9 @@ export default function ShopInfoPage() {
                 </button>
               )}
               <p className="text-xs text-text-muted">JPEG, PNG, WebP · 4MB 이하</p>
+              {logoError && (
+                <p className="text-xs text-error">{logoError}</p>
+              )}
             </div>
           </div>
           <input

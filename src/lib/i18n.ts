@@ -508,6 +508,9 @@ const translations = {
       generating: '생성 중...',
       shareLinkCopy: '공유 링크 복사',
       shareLinkCopied: '링크가 복사되었어요!\n인스타 스토리에 붙여넣기하세요',
+      feedbackDefault: '너무 만족하셨어요',
+      consultBuiltLine: '상담을 통해 완성된 디자인입니다',
+      imageHint: '인스타그램 업로드용 · JPG 고화질',
     },
     dashboard: {
       title: '대시보드',
@@ -1145,6 +1148,10 @@ const translations = {
       uploadErrorType: 'JPEG, PNG, WEBP 형식만 업로드할 수 있어요.',
       uploadErrorSize: '5MB 이하의 파일만 업로드할 수 있어요.',
       uploadFormats: 'JPEG · PNG · WEBP · 5MB 이하',
+      uploadError: '업로드 중 오류가 발생했어요.',
+      phonePlaceholder: '010-0000-0000',
+      zoomImage: '확대',
+      removeImage: '삭제',
     },
     fieldMode: {
       title: '현장 시술',
@@ -1736,6 +1743,9 @@ const translations = {
       generating: 'Generating...',
       shareLinkCopy: 'Copy Share Link',
       shareLinkCopied: 'Link copied!\nPaste it in your Instagram story',
+      feedbackDefault: 'Absolutely loved it',
+      consultBuiltLine: 'Design crafted through your consultation',
+      imageHint: 'For Instagram · High-quality JPG',
     },
     dashboard: {
       title: 'Dashboard',
@@ -2373,6 +2383,10 @@ const translations = {
       sentBy: 'sent you this',
       invalidLink: 'Invalid link',
       invalidLinkDesc: 'Please check the link you received from the store',
+      uploadError: 'An error occurred while uploading.',
+      phonePlaceholder: 'Phone number',
+      zoomImage: 'Zoom in',
+      removeImage: 'Remove',
     },
     fieldMode: {
       title: 'In-Shop Treatment',
@@ -2964,6 +2978,9 @@ const translations = {
       generating: '生成中...',
       shareLinkCopy: '复制分享链接',
       shareLinkCopied: '链接已复制！\n粘贴到Instagram故事中',
+      feedbackDefault: '非常满意',
+      consultBuiltLine: '通过咨询完成的设计',
+      imageHint: '用于Instagram上传 · 高清JPG',
     },
     dashboard: {
       title: '数据看板',
@@ -3601,6 +3618,10 @@ const translations = {
       sentBy: '发送给您的',
       invalidLink: '无效的链接',
       invalidLinkDesc: '请重新确认从商店收到的链接',
+      uploadError: '上传时发生了错误。',
+      phonePlaceholder: '电话号码',
+      zoomImage: '放大',
+      removeImage: '删除',
     },
     fieldMode: {
       title: '现场施术',
@@ -4192,6 +4213,9 @@ const translations = {
       generating: '生成中...',
       shareLinkCopy: 'シェアリンクをコピー',
       shareLinkCopied: 'リンクがコピーされました！\nInstagramストーリーに貼り付けてください',
+      feedbackDefault: '大変満足されました',
+      consultBuiltLine: 'カウンセリングで完成したデザインです',
+      imageHint: 'Instagram投稿用 · 高画質JPG',
     },
     dashboard: {
       title: 'ダッシュボード',
@@ -4829,6 +4853,10 @@ const translations = {
       sentBy: 'からお送りしました',
       invalidLink: '無効なリンクです',
       invalidLinkDesc: '店舗から受け取ったリンクをご確認ください',
+      uploadError: 'アップロード中にエラーが発生しました。',
+      phonePlaceholder: '電話番号',
+      zoomImage: '拡大',
+      removeImage: '削除',
     },
     fieldMode: {
       title: '店内施術',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
@@ -40,6 +40,8 @@ export default function PortfolioClassifyPage() {
   const [direction, setDirection] = useState(1);
   const [phase, setPhase] = useState<'classify' | 'featured'>('classify');
   const [featuredIds, setFeaturedIds] = useState<Set<string>>(new Set());
+  // 전환 중 입력 잠금 — 더블탭 시 2장 건너뜀 방지
+  const transitioningRef = useRef(false);
 
   const currentPhoto = photos[currentIndex];
   const totalPhotos = photos.length;
@@ -48,6 +50,10 @@ export default function PortfolioClassifyPage() {
   // 0529 UX: 카테고리 선택 → 잠깐 highlight → 자동으로 다음 사진. 사용자가 advance를 인지하지 못하는 이슈 해소.
   const classify = useCallback(
     (category: StyleCategory) => {
+      // 전환 중이면 무시 — 빠른 더블탭으로 2장 건너뜀 방지
+      if (transitioningRef.current) return;
+      transitioningRef.current = true;
+
       if (currentPhoto) {
         classifyPhoto(currentPhoto.id, category);
       }
@@ -61,6 +67,7 @@ export default function PortfolioClassifyPage() {
           setPhase('featured');
           return prev;
         });
+        transitioningRef.current = false;
       }, 320);
     },
     [totalPhotos, currentPhoto, classifyPhoto]
@@ -250,11 +257,11 @@ export default function PortfolioClassifyPage() {
             })}
           </div>
 
-          {/* Skip */}
+          {/* Skip — 최소 44px 터치타겟 */}
           <button
             type="button"
             onClick={skip}
-            className="text-xs text-text-muted hover:text-text-secondary transition-colors"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center text-xs text-text-muted hover:text-text-secondary transition-colors px-4"
           >
             건너뛰기
           </button>

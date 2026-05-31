@@ -81,6 +81,7 @@ export default function PricingPage() {
   const [pricing, setPricing] = useState<CategoryPricing>({
     ...shopSettings.categoryPricing,
   });
+  const [showAllZeroWarning, setShowAllZeroWarning] = useState(false);
 
   const update = (
     key: keyof CategoryPricing,
@@ -91,9 +92,17 @@ export default function PricingPage() {
       ...prev,
       [key]: { ...prev[key], [field]: value },
     }));
+    // 수정 시작하면 경고 해제
+    setShowAllZeroWarning(false);
   };
 
   const handleNext = () => {
+    // 모든 카테고리 가격이 0이면 경고 (한 번만 — 두 번째는 통과)
+    const allZero = CATEGORIES.every((cat) => pricing[cat.key].price === 0);
+    if (allZero && !showAllZeroWarning) {
+      setShowAllZeroWarning(true);
+      return;
+    }
     setShopSettings({ categoryPricing: pricing });
     router.push('/onboarding/surcharges');
   };
@@ -143,8 +152,14 @@ export default function PricingPage() {
         시작 기준이에요, 상황에 따라 달라질 수 있어요
       </p>
 
+      {showAllZeroWarning && (
+        <p className="text-xs text-amber-500 text-center mb-2">
+          가격이 모두 0원이에요. 그래도 계속하시겠어요?
+        </p>
+      )}
+
       <Button size="lg" fullWidth onClick={handleNext}>
-        다음
+        {showAllZeroWarning ? '그래도 계속하기' : '다음'}
       </Button>
     </motion.div>
   );

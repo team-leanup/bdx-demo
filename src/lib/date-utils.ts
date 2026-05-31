@@ -59,7 +59,11 @@ export function toTimeGridEvents(
     if (!r.reservationTime || !r.reservationTime.includes(':')) continue;
     const [h, m] = r.reservationTime.split(':').map(Number);
     if (isNaN(h) || isNaN(m)) continue;
-    const endH = Math.min(h + 1, 23);
+    // [MED] duration 기반 endTime 계산 — duration 없으면 60분(1시간) 기본값
+    const durationMins = (r as BookingRequest & { duration?: number }).duration ?? 60;
+    const totalEndMins = h * 60 + m + durationMins;
+    const endH = Math.min(Math.floor(totalEndMins / 60), 23);
+    const endM = totalEndMins % 60;
     const customer = r.customerId ? getCustomerById(r.customerId) : undefined;
     const durationMap: Record<string, string> = { short: '짧음', normal: '보통', long: '김' };
     const sensitivityMap: Record<string, string> = { normal: '보통', sensitive: '민감' };
@@ -68,7 +72,7 @@ export function toTimeGridEvents(
       title: r.customerName,
       date: r.reservationDate,
       startTime: r.reservationTime,
-      endTime: `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`,
+      endTime: `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`,
       type: 'reservation',
       status: r.status,
       channel: r.channel,

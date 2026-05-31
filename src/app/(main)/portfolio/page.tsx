@@ -86,23 +86,33 @@ interface MenuToggleRowProps {
   photoId: string;
   isFeatured: boolean | undefined;
   featuredPrice: number | undefined;
+  onError?: (msg: string) => void;
 }
 
-function MenuToggleRow({ photoId, isFeatured, featuredPrice }: MenuToggleRowProps): React.ReactElement {
+function MenuToggleRow({ photoId, isFeatured, featuredPrice, onError }: MenuToggleRowProps): React.ReactElement {
   const toggleMenu = usePortfolioStore((s) => s.toggleMenu);
   const [editing, setEditing] = useState(false);
   const [priceInput, setPriceInput] = useState('');
+  const [priceWarning, setPriceWarning] = useState(false);
 
   const handleRegister = (e: React.MouseEvent): void => {
     e.stopPropagation();
     setEditing(true);
     setPriceInput('');
+    setPriceWarning(false);
   };
 
   const handleConfirm = (e: React.MouseEvent): void => {
     e.stopPropagation();
     const parsed = parseInt(priceInput.replace(/[^0-9]/g, ''), 10);
-    toggleMenu(photoId, isNaN(parsed) ? undefined : parsed);
+    if (!isNaN(parsed) && parsed === 0) {
+      setPriceWarning(true);
+      return;
+    }
+    setPriceWarning(false);
+    void toggleMenu(photoId, isNaN(parsed) ? undefined : parsed).then((r) => {
+      if (!r.success) onError?.(r.error ?? '메뉴 등록에 실패했어요');
+    });
     setEditing(false);
   };
 
@@ -113,7 +123,9 @@ function MenuToggleRow({ photoId, isFeatured, featuredPrice }: MenuToggleRowProp
 
   const handleRemove = (e: React.MouseEvent): void => {
     e.stopPropagation();
-    toggleMenu(photoId);
+    void toggleMenu(photoId).then((r) => {
+      if (!r.success) onError?.(r.error ?? '메뉴 해제에 실패했어요');
+    });
   };
 
   if (isFeatured) {
@@ -135,17 +147,21 @@ function MenuToggleRow({ photoId, isFeatured, featuredPrice }: MenuToggleRowProp
   if (editing) {
     return (
       <div
-        className="flex items-center gap-1 pt-1.5 border-t border-border/60"
+        className="flex flex-col gap-0.5 pt-1.5 border-t border-border/60"
         onClick={(e) => e.stopPropagation()}
       >
+        <div className="flex items-center gap-1">
         <input
           autoFocus
           type="number"
           inputMode="numeric"
           placeholder="가격 (원)"
           value={priceInput}
-          onChange={(e) => setPriceInput(e.target.value)}
-          className="flex-1 min-w-0 rounded-lg border border-border bg-surface px-2 py-1 text-[10px] text-text focus:outline-none focus:border-primary"
+          onChange={(e) => { setPriceInput(e.target.value); setPriceWarning(false); }}
+          className={cn(
+            'flex-1 min-w-0 rounded-lg border bg-surface px-2 py-1 text-[10px] text-text focus:outline-none',
+            priceWarning ? 'border-error focus:border-error' : 'border-border focus:border-primary',
+          )}
         />
         <button
           onClick={handleConfirm}
@@ -159,6 +175,10 @@ function MenuToggleRow({ photoId, isFeatured, featuredPrice }: MenuToggleRowProp
         >
           취소
         </button>
+        </div>
+        {priceWarning && (
+          <p className="text-[10px] text-error">0원은 등록할 수 없어요. 가격을 입력해 주세요</p>
+        )}
       </div>
     );
   }
@@ -393,6 +413,7 @@ export default function PortfolioPage(): React.ReactElement {
   const router = useRouter();
   const searchParams = useSearchParams();
   const photos = usePortfolioStore((s) => s.photos);
+  const dbReady = usePortfolioStore((s) => s._dbReady);
   const hydrateFromDB = usePortfolioStore((s) => s.hydrateFromDB);
   const migrationNotice = usePortfolioStore((s) => s.migrationNotice);
   const clearMigrationNotice = usePortfolioStore((s) => s.clearMigrationNotice);
@@ -664,7 +685,9 @@ export default function PortfolioPage(): React.ReactElement {
   const [pickerCategory, setPickerCategory] = useState<string | null>(null);
 
   const handleAddToMenu = (photo: PortfolioPhoto): void => {
-    toggleMenu(photo.id, photo.price);
+    void toggleMenu(photo.id, photo.price).then((r) => {
+      if (!r.success) pushToast('error', r.error ?? '메뉴 등록에 실패했어요');
+    });
     setPickerCategory(null);
   };
 
@@ -780,7 +803,14 @@ export default function PortfolioPage(): React.ReactElement {
       {/* ── MENU TAB ────────────────────────────────────────────────────────── */}
       {activeTab === 'menu' && (
         <div className="flex flex-col gap-6 px-4 md:px-0 pt-4">
-          {menuCount === 0 ? (
+          {!dbReady ? (
+            <div className="flex items-center justify-center py-16">
+              <svg className="h-6 w-6 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            </div>
+          ) : menuCount === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <svg className="mb-3 h-12 w-12 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -804,7 +834,7 @@ export default function PortfolioPage(): React.ReactElement {
                   onClosePicker={() => setPickerCategory(null)}
                   onAddToMenu={handleAddToMenu}
                   onUploadPhoto={handleUploadPhoto}
-                  onRemoveFromMenu={(id) => toggleMenu(id)}
+                  onRemoveFromMenu={(id) => { void toggleMenu(id).then((r) => { if (!r.success) pushToast('error', r.error ?? '메뉴 해제에 실패했어요'); }); }}
                   onOpenOverlay={(id) => setOverlayPhotoId(id)}
                   onRenameCategory={(newLabel) => {
                     void renameCategory(cat, newLabel).then((r) => {
@@ -816,8 +846,8 @@ export default function PortfolioPage(): React.ReactElement {
             })
           )}
 
-          {/* "메뉴에 추가" sections for categories with no menu items yet */}
-          {categoryOrder.map((cat) => {
+          {/* "메뉴에 추가" sections for categories with no menu items yet — menuCount>0일 때만 */}
+          {menuCount > 0 && categoryOrder.map((cat) => {
             const items = menuByCategory.get(cat) ?? [];
             const nonMenuItems = nonMenuByCategory.get(cat) ?? [];
             // 0529 버그4: 메뉴 사진이 없는 카테고리도 항상 표시해 사진 추가 진입점을 제공한다.
@@ -835,7 +865,7 @@ export default function PortfolioPage(): React.ReactElement {
                 onClosePicker={() => setPickerCategory(null)}
                 onAddToMenu={handleAddToMenu}
                 onUploadPhoto={handleUploadPhoto}
-                onRemoveFromMenu={(id) => toggleMenu(id)}
+                onRemoveFromMenu={(id) => { void toggleMenu(id).then((r) => { if (!r.success) pushToast('error', r.error ?? '메뉴 해제에 실패했어요'); }); }}
                 onOpenOverlay={(id) => setOverlayPhotoId(id)}
               />
             );
@@ -1119,6 +1149,7 @@ export default function PortfolioPage(): React.ReactElement {
                                 photoId={photo.id}
                                 isFeatured={photo.isFeatured}
                                 featuredPrice={photo.isFeatured ? photo.price : undefined}
+                                onError={(msg) => pushToast('error', msg)}
                               />
                             </div>
                           </div>

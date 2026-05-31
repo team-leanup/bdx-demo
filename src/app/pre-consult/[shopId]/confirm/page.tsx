@@ -109,14 +109,15 @@ interface PriceRowProps {
   amount: number;
   won: string;
   muted?: boolean;
+  isBase?: boolean;
 }
 
-function PriceRow({ label, amount, won, muted = false }: PriceRowProps): React.ReactElement {
+function PriceRow({ label, amount, won, muted = false, isBase = false }: PriceRowProps): React.ReactElement {
   return (
     <div className="flex justify-between items-center py-1">
       <span className={`text-sm ${muted ? 'text-text-muted' : 'text-text-secondary'}`}>{label}</span>
       <span className={`text-sm font-medium ${muted ? 'text-text-muted' : 'text-text'}`}>
-        +{amount.toLocaleString('ko-KR')}{won}
+        {isBase ? '' : '+'}{amount.toLocaleString('ko-KR')}{won}
       </span>
     </div>
   );
@@ -172,9 +173,20 @@ export default function PreConsultConfirmPage(): React.ReactElement {
         })
         .catch(() => {
           // 조회 실패 — shopData 없이 graceful degradation
+        })
+        .finally(() => {
+          setShopDataLoading(false);
         });
     }
   }, [shopData, params.shopId, store]);
+
+  // shopData 로딩 상태: null이면 재조회 중, false면 조회 완료(실패 포함)
+  const [shopDataLoading, setShopDataLoading] = useState(!shopData);
+
+  // 새로고침 시 shopData가 null인 경우 로딩 상태 동기화
+  useEffect(() => {
+    if (shopData) setShopDataLoading(false);
+  }, [shopData]);
 
   const [name, setName] = useState(customerName);
   const [phone, setPhone] = useState(customerPhone);
@@ -574,7 +586,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
         </motion.section>
 
         {/* ── Section 2: Confirmed Price ────────────────────────────────────── */}
-        {priceEstimate && (
+        {(priceEstimate || shopDataLoading || (!shopData && !shopDataLoading)) && (
           <motion.section
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -590,8 +602,24 @@ export default function PreConsultConfirmPage(): React.ReactElement {
               </p>
             )}
 
+            {/* shopData 로딩 중 */}
+            {shopDataLoading && !priceEstimate && (
+              <div className="rounded-2xl border border-border bg-surface p-5 flex items-center justify-center gap-2">
+                <div className="w-4 h-4 rounded-full border-2 border-primary/30 border-t-primary animate-spin flex-shrink-0" />
+                <span className="text-sm text-text-muted">{t('common.loading')}</span>
+              </div>
+            )}
+
+            {/* shopData 로딩 실패 + priceEstimate 없음 */}
+            {!shopDataLoading && !priceEstimate && (
+              <div className="rounded-2xl border border-border bg-surface p-4 text-center">
+                <p className="text-sm text-text-muted">{t('preConsult.loadingShopData')}</p>
+              </div>
+            )}
+
+            {priceEstimate && (
             <div className="rounded-2xl border border-border bg-surface p-4 flex flex-col gap-1">
-              {/* Base price */}
+              {/* Base price — 기본금액이므로 '+' 없이 표시 */}
               <PriceRow
                 label={
                   selectedCategory
@@ -602,6 +630,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                 }
                 amount={priceEstimate.categoryBase}
                 won={t('preConsult.won')}
+                isBase
               />
 
               {/* Removal surcharge */}
@@ -690,6 +719,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                 </div>
               )}
             </div>
+            )}
           </motion.section>
         )}
 
@@ -783,7 +813,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                   const v = e.target.value;
                   setPhone(locale === 'ko' ? formatPhoneInput(v) : v);
                 }}
-                placeholder="010-0000-0000"
+                placeholder={t('preConsult.phonePlaceholder')}
                 autoComplete="tel"
               />
 

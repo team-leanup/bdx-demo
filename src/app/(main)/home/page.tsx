@@ -181,7 +181,7 @@ export default function HomePage() {
   };
 
   const handleStartConsultation = (booking: BookingRequest) => {
-    if (booking.status === 'completed') return;
+    if (booking.status === 'completed' || booking.status === 'cancelled') return;
     if (booking.requestNote) {
       sessionStorage.setItem('consultation_customer_memo', booking.requestNote);
     } else {

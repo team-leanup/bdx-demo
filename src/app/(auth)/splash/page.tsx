@@ -3,16 +3,33 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { useAuthStore } from '@/store/auth-store';
 
 export default function SplashPage() {
   const router = useRouter();
+  const isInitialized = useAuthStore((s) => s.isInitialized);
+  const role = useAuthStore((s) => s.role);
+  const currentShopId = useAuthStore((s) => s.currentShopId);
+  const currentShopOnboardingComplete = useAuthStore((s) => s.currentShopOnboardingComplete);
 
   useEffect(() => {
+    // 세션 있으면 5초 대기 없이 즉시 이동
+    if (isInitialized && role && currentShopId) {
+      router.replace(currentShopOnboardingComplete ? '/home' : '/onboarding');
+      return;
+    }
+
+    // 데모 쿠키 체크: bdx-demo=true 이면 바로 /home
+    if (typeof document !== 'undefined' && document.cookie.split(';').some((c) => c.trim() === 'bdx-demo=true')) {
+      router.replace('/home');
+      return;
+    }
+
     const timer = setTimeout(() => {
       router.push('/intro');
     }, 5000);
     return () => clearTimeout(timer);
-  }, [router]);
+  }, [isInitialized, role, currentShopId, currentShopOnboardingComplete, router]);
 
   return (
     <div

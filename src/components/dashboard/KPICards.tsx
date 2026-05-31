@@ -14,7 +14,7 @@ import { BentoCard } from '@/components/ui';
 import { useRecordsStore } from '@/store/records-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { useReservationStore } from '@/store/reservation-store';
-import { getTodayInKorea, parseKoreanDateString, toKoreanDateString } from '@/lib/format';
+import { getTodayInKorea, toKoreanDateString } from '@/lib/format';
 
 function buildKPIDetail(
   label: string,
@@ -26,14 +26,13 @@ function buildKPIDetail(
   switch (label) {
     case '이달 상담 건수': {
       const today = getTodayInKorea();
-      const now = parseKoreanDateString(today);
-      const [yearStr, monthStr] = today.split('-');
+      const [yearStr, monthStr, dayStr] = today.split('-');
       const thisYear = parseInt(yearStr, 10);
       const thisMonth = parseInt(monthStr, 10);
+      const daysPassed = parseInt(dayStr, 10); // KST 기준 오늘 날짜 = 경과 일수
       // KPI value와 동일 기준: records + preConsultationCompletedAt 예약 (중복 제외)
       const totalCount = computeMonthlyConsultations(records, reservations, thisYear, thisMonth);
-      const daysInMonth = new Date(now.getUTCFullYear(), now.getUTCMonth() + 1, 0).getDate();
-      const daysPassed = now.getUTCDate();
+      const daysInMonth = new Date(thisYear, thisMonth, 0).getDate(); // KST year/month 기준
       const dailyAvg = daysPassed > 0 ? (totalCount / daysPassed).toFixed(1) : '0';
       return (
         <div className="flex flex-col gap-3">

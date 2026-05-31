@@ -30,6 +30,8 @@ export function MembershipPlansSection(): React.ReactElement {
   const [modalMode, setModalMode] = useState<'closed' | 'create' | { mode: 'edit'; plan: MembershipPlan }>('closed');
   const [form, setForm] = useState<PlanFormState>(EMPTY_FORM);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
 
   const openCreate = (): void => {
     setForm(EMPTY_FORM);
@@ -50,7 +52,7 @@ export function MembershipPlansSection(): React.ReactElement {
     setForm(EMPTY_FORM);
   };
 
-  const handleSubmit = (): void => {
+  const handleSubmit = async (): Promise<void> => {
     const name = form.name.trim();
     const price = Number(form.price);
     if (!name || !Number.isFinite(price) || price <= 0) {
@@ -61,17 +63,38 @@ export function MembershipPlansSection(): React.ReactElement {
       return;
     }
 
+    setIsSaving(true);
+    let result: { success: boolean; error?: string };
     if (modalMode === 'create') {
-      addPlan({ name, price, validDays });
+      result = await addPlan({ name, price, validDays });
     } else if (typeof modalMode === 'object' && modalMode.mode === 'edit') {
-      updatePlan(modalMode.plan.id, { name, price, validDays });
+      result = await updatePlan(modalMode.plan.id, { name, price, validDays });
+    } else {
+      setIsSaving(false);
+      return;
     }
+    setIsSaving(false);
+    if (!result.success) {
+      setFeedback({ tone: 'error', message: result.error ?? '저장에 실패했습니다.' });
+      return;
+    }
+    setFeedback({ tone: 'success', message: modalMode === 'create' ? '회원권 상품을 추가했습니다.' : '회원권 상품을 수정했습니다.' });
     closeModal();
   };
 
-  const handleDelete = (planId: string): void => {
-    removePlan(planId);
+  const handleDelete = async (planId: string): Promise<void> => {
+    const result = await removePlan(planId);
     setConfirmDeleteId(null);
+    if (!result.success) {
+      setFeedback({ tone: 'error', message: result.error ?? '회원권 삭제에 실패했습니다.' });
+    }
+  };
+
+  const handleToggleActive = async (planId: string): Promise<void> => {
+    const result = await togglePlanActive(planId);
+    if (!result.success) {
+      setFeedback({ tone: 'error', message: result.error ?? '상태 변경에 실패했습니다.' });
+    }
   };
 
   const isFormValid = (() => {
@@ -104,6 +127,18 @@ export function MembershipPlansSection(): React.ReactElement {
             + 상품 추가
           </button>
         </div>
+
+        {feedback && (
+          <div
+            className={`mb-3 rounded-xl border px-3 py-2 text-xs font-medium ${
+              feedback.tone === 'success'
+                ? 'border-success/20 bg-success/10 text-success'
+                : 'border-error/20 bg-error/10 text-error'
+            }`}
+          >
+            {feedback.message}
+          </div>
+        )}
 
         {plans.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-surface-alt/50 px-4 py-8 text-center">
@@ -143,7 +178,7 @@ export function MembershipPlansSection(): React.ReactElement {
                   </div>
                   <Toggle
                     checked={plan.isActive}
-                    onChange={() => togglePlanActive(plan.id)}
+                    onChange={() => void handleToggleActive(plan.id)}
                     aria-label={plan.isActive ? '비활성화' : '활성화'}
                   />
                 </div>
@@ -215,11 +250,11 @@ export function MembershipPlansSection(): React.ReactElement {
             </button>
             <button
               type="button"
-              disabled={!isFormValid}
-              onClick={handleSubmit}
+              disabled={!isFormValid || isSaving}
+              onClick={() => void handleSubmit()}
               className="flex-1 rounded-xl bg-primary py-3 text-sm font-medium text-white disabled:opacity-40"
             >
-              {modalMode === 'create' ? '추가' : '저장'}
+              {isSaving ? '저장 중...' : modalMode === 'create' ? '추가' : '저장'}
             </button>
           </div>
         </div>
@@ -241,7 +276,7 @@ export function MembershipPlansSection(): React.ReactElement {
             <Button
               variant="primary"
               fullWidth
-              onClick={() => confirmDeleteId && handleDelete(confirmDeleteId)}
+              onClick={() => { if (confirmDeleteId) void handleDelete(confirmDeleteId); }}
               className="!bg-red-500 hover:!bg-red-600"
             >
               삭제

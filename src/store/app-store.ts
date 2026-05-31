@@ -162,6 +162,7 @@ export const useAppStore = create<AppStore>()(
             customParts: next.customParts,
             customCategories: next.customCategories,
             depositAmount: next.depositAmount,
+            monthlyTargetRevenue: next.monthlyTargetRevenue,
             // builtin 카테고리 rename override
             categoryLabels: next.categoryLabels,
           });
@@ -243,6 +244,7 @@ export const useAppStore = create<AppStore>()(
               customParts: s.customParts ?? state.shopSettings.customParts,
               customCategories: s.customCategories ?? state.shopSettings.customCategories,
               depositAmount: s.depositAmount ?? state.shopSettings.depositAmount,
+              monthlyTargetRevenue: s.monthlyTargetRevenue ?? state.shopSettings.monthlyTargetRevenue,
               categoryLabels: s.categoryLabels ?? state.shopSettings.categoryLabels,
             } : {}),
           },

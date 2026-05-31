@@ -6,6 +6,7 @@ import { getTodayInKorea, toKoreanDateString } from '@/lib/format';
 import { calculatePrice } from '@/lib/price-calculator';
 import type { ServicePricing } from '@/types/price';
 import { getReservationReadiness } from '@/lib/reservation-readiness';
+import { CATEGORY_LABELS as MENU_CATEGORY_LABELS } from '@/lib/labels';
 
 // ─── Dashboard Types ─────────────────────────────────────────────────────────
 
@@ -537,11 +538,22 @@ export function computeGoldenTimeTargets(
   return customers
     .filter((customer) => customer.visitCount >= 2)
     .filter((customer) => !reservedCustomerIds.has(customer.id))
+    // [MED] 결함 4: lastVisitDate 빈 문자열/Invalid Date → NaN 전파 방지
+    .filter((customer) => {
+      if (!customer.lastVisitDate) return false;
+      const d = toLocalDate(customer.lastVisitDate);
+      return !isNaN(d.getTime());
+    })
     .map((customer) => {
       const lastVisitDate = toLocalDate(customer.lastVisitDate);
       const expectedReservationDate = addDays(lastVisitDate, averageCycleDays);
+      // [MED] 결함 5: designScope raw 키 → 번역 라벨. 카테고리 키(simple/french/magnet/art)와 designScope 키 모두 처리.
+      const rawServiceKey =
+        customer.treatmentHistory[customer.treatmentHistory.length - 1]?.designScope ?? '';
       const recentServiceLabel =
-        customer.treatmentHistory[customer.treatmentHistory.length - 1]?.designScope ?? '최근 시술';
+        MENU_CATEGORY_LABELS[rawServiceKey] ??
+        DESIGN_SCOPE_LABEL[rawServiceKey] ??
+        (rawServiceKey || '최근 시술');
 
       return {
         customerId: customer.id,
@@ -697,8 +709,10 @@ export function computeKPICards(
 
   // 오늘 매출 및 어제 대비
   const todayRevenue = computeTodayRevenue(records);
+  // [LOW] 결함 7-1: KST 오늘 날짜에서 1일 빼기 — new Date()는 로컬 TZ 의존, KST 정오 기준으로 계산
   const yesterdayStr = (() => {
-    const d = new Date();
+    const todayKST = getTodayInKorea(); // YYYY-MM-DD KST 기준
+    const d = new Date(`${todayKST}T12:00:00+09:00`);
     d.setDate(d.getDate() - 1);
     return toKoreanDateString(d);
   })();

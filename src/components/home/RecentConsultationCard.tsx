@@ -78,6 +78,12 @@ export function RecentConsultationCard({
             className="overflow-hidden"
           >
             <div className="flex flex-col">
+              {records.length === 0 && (
+                <div className="flex flex-col items-center justify-center gap-1 px-4 py-6 border-t border-border">
+                  <p className="text-sm text-text-secondary">최근 상담 기록이 없습니다</p>
+                  <p className="text-xs text-text-muted">시술을 완료하면 여기에 표시됩니다</p>
+                </div>
+              )}
               {records.map((record, idx) => (
                 <motion.div
                   key={record.id}

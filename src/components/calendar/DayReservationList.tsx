@@ -274,6 +274,7 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
   const getDesignerNameFromStore = useShopStore((s) => s.getDesignerName);
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const hydrateFromBooking = useFieldModeStore((s) => s.hydrateFromBooking);
+  const startTreatment = useFieldModeStore((s) => s.startTreatment);
   const shopSettings = useAppStore((s) => s.shopSettings);
   const records = useRecordsStore((s) => s.records);
   const [showForm, setShowForm] = useState(false);
@@ -344,6 +345,19 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
       selectedPhotoUrl: (raw?.selectedPhotoUrl as string | undefined) ?? null,
       selectedPhotoId: (raw?.selectedPhotoId as string | undefined) ?? null,
     });
+
+    // [HIGH] pre_consult_done: 사전상담 완료 + 유효 카테고리면 field-mode 처음부터 재시작하지 않고 바로 시술 화면으로
+    const validatedCategory = asDesignCategory(raw?.designCategory, shopSettings);
+    const hasPreConsult = !!booking.preConsultationCompletedAt && !!validatedCategory;
+    if (hasPreConsult) {
+      startTreatment();
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('field-mode:from-pre-consult', booking.id);
+      }
+      router.push('/field-mode/treatment');
+      return;
+    }
+
     router.push('/field-mode');
   };
 

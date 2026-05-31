@@ -268,8 +268,8 @@ export const useFieldModeStore = create<FieldModeStore>()(
             },
       ),
       partialize: (state) => {
-        const { afterPhotoUrls: _, ...rest } = state;
-        return { ...rest, afterPhotoUrls: [] };
+        // afterPhotoUrls를 sessionStorage에 포함 — wrap-up 새로고침 시 소실 방지
+        return { ...state };
       },
     },
   ),

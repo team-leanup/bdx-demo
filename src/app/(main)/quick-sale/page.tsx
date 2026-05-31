@@ -40,6 +40,7 @@ function QuickSaleContent(): React.ReactElement {
   const [toasts, setToasts] = useState<ToastData[]>([]);
   const submittingRef = useRef(false);
 
+
   const pushToast = (type: ToastData['type'], message: string): void => {
     setToasts((prev) => [...prev, { id: `t-${Date.now()}`, type, message }]);
   };

@@ -20,9 +20,10 @@ type Period = 'daily' | 'weekly' | 'monthly';
 
 function aggregateWeekly(daily: DailyConsultation[]) {
   // 0531 LOW-2: key는 연도 포함(YYYY-M/D)으로 연도 경계 collision 방지, 표시 라벨은 M/D주만.
+  // KST 정오 파싱: YYYY-MM-DD 문자열을 UTC 자정으로 해석하면 KST에서 전날이 됨.
   const weeks: Record<string, { label: string; consultations: number }> = {};
   for (const d of daily) {
-    const date = new Date(d.date);
+    const date = new Date(`${d.date}T12:00:00+09:00`);
     const day = date.getDay();
     const diff = (day + 6) % 7;
     const monday = new Date(date);
@@ -40,7 +41,7 @@ function aggregateMonthly(daily: DailyConsultation[]) {
   // 표시 라벨은 월만 노출하되, key는 YYYY-MM월로 구분
   const months: Record<string, { label: string; consultations: number }> = {};
   for (const d of daily) {
-    const date = new Date(d.date);
+    const date = new Date(`${d.date}T12:00:00+09:00`);
     const yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}월`;
     const displayLabel = `${date.getMonth() + 1}월`;
     if (!months[yearMonth]) months[yearMonth] = { label: displayLabel, consultations: 0 };

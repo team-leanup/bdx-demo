@@ -50,6 +50,7 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
   const shopSettings = useAppStore((s) => s.shopSettings);
   const currentShopId = useAuthStore((s) => s.currentShopId);
 
+  const finalizingRef = useRef(false);
   const [checklistData, setChecklistData] = useState<DailyChecklistType | undefined>(record?.checklist);
   const [showShareCard, setShowShareCard] = useState(false);
   const [editingFinalPrice, setEditingFinalPrice] = useState(false);
@@ -145,6 +146,8 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
 
   const handleFinalize = (): void => {
     if (record.finalizedAt) return;
+    if (finalizingRef.current) return;
+    finalizingRef.current = true;
     const now = getNowInKoreaIso();
     updateRecord(id, { finalizedAt: now });
     // 0531 — 연결된 예약의 status도 completed로 갱신(DB 정합성). 타임그리드 인라인 결제완료와 동일.
@@ -198,7 +201,13 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
       {/* 헤더 */}
       <div className="flex items-center gap-3 px-4 pt-4">
         <button
-          onClick={() => router.back()}
+          onClick={() => {
+            if (window.history.length > 1) {
+              router.back();
+            } else {
+              router.push('/records');
+            }
+          }}
           className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-alt text-text-secondary"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -670,6 +679,7 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
           }))}
           shopName={shopSettings.shopName}
           categoryLabel={resolveRecordCategoryLabelKo(record.consultation, shopSettings)}
+          onShareCardCreated={(newId) => updateRecord(id, { shareCardId: newId })}
         />
       )}
     </div>

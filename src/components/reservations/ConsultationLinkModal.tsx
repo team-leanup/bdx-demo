@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { useReservationStore } from "@/store/reservation-store";
 import { getNowInKoreaIso } from "@/lib/format";
@@ -73,16 +73,8 @@ export function ConsultationLinkContent({
     }
   };
 
-  const linkSentRef = useRef(false);
-
-  useEffect(() => {
-    if (booking && !booking.consultationLinkSentAt && !linkSentRef.current) {
-      linkSentRef.current = true;
-      useReservationStore.getState().updateReservation(booking.id, {
-        consultationLinkSentAt: getNowInKoreaIso(),
-      });
-    }
-  }, [booking]);
+  // consultationLinkSentAt 기록은 handleCopy / handleOpen 에서만 수행
+  // (모달 오픈만으로 자동 기록하던 useEffect 제거 — 2026-05-31 수정)
 
   return (
     <div className="p-5">

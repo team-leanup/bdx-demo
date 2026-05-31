@@ -7,10 +7,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useShopStore } from '@/store/shop-store';
 import { useAppStore } from '@/store/app-store';
+import { useRecordsStore } from '@/store/records-store';
 import { resolveCategoryLabelKo } from '@/lib/category-resolver';
 import { formatPrice, formatDateDot } from '@/lib/format';
 import { cn } from '@/lib/cn';
-import { downloadForInstagram } from '@/lib/image-utils';
 import { designCategoryToScope } from '@/lib/category-mapping';
 import { InstagramHashtags } from './InstagramHashtags';
 import { ShareCardGeneratorModal } from '@/components/share-card/ShareCardGeneratorModal';
@@ -56,22 +56,31 @@ export function PortfolioOverlay({
   const shopName = useShopStore((s) => s.shop?.name) ?? '네일샵';
   const shopSettings = useAppStore((s) => s.shopSettings);
   const [currentId, setCurrentId] = useState(initialPhotoId);
-  const [downloading, setDownloading] = useState(false);
   const [showHashtags, setShowHashtags] = useState(false);
   const [showShareCard, setShowShareCard] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPartsMemo, setEditingPartsMemo] = useState(false);
   const [partsMemoInput, setPartsMemoInput] = useState('');
+  const [saveToast, setSaveToast] = useState(false);
+  const [menuErrorToast, setMenuErrorToast] = useState<string | null>(null);
+
+  const showMenuError = (msg: string): void => {
+    setMenuErrorToast(msg);
+    setTimeout(() => setMenuErrorToast(null), 3000);
+  };
 
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        if (showEditModal || showShareCard) return;
+        onClose();
+      }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, [onClose, showEditModal, showShareCard]);
 
   const currentIndex = photoIds.indexOf(currentId);
   const photo = photos.find((p) => p.id === currentId);
@@ -98,16 +107,32 @@ export function PortfolioOverlay({
     if (currentIndex < photoIds.length - 1) setCurrentId(photoIds[currentIndex + 1]);
   }, [currentIndex, photoIds]);
 
-  const handleDownload = async (ratio: '4:5' | '9:16'): Promise<void> => {
-    if (!photo?.imageDataUrl) return;
-    setDownloading(true);
-    try { await downloadForInstagram(photo.imageDataUrl, ratio); } catch { /* */ } finally { setDownloading(false); }
-  };
-
   if (!photo) return <></>;
 
   return (
     <AnimatePresence>
+      {saveToast && (
+        <motion.div
+          key="save-toast"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 16 }}
+          className="fixed bottom-24 left-1/2 z-[200] -translate-x-1/2 rounded-full bg-success px-4 py-2 text-sm font-medium text-white shadow-lg pointer-events-none"
+        >
+          저장했어요
+        </motion.div>
+      )}
+      {menuErrorToast && (
+        <motion.div
+          key="menu-error-toast"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 16 }}
+          className="fixed bottom-24 left-1/2 z-[200] -translate-x-1/2 rounded-full bg-error px-4 py-2 text-sm font-medium text-white shadow-lg pointer-events-none"
+        >
+          {menuErrorToast}
+        </motion.div>
+      )}
       <motion.div
         key="overlay-backdrop"
         initial={{ opacity: 0 }}
@@ -287,7 +312,7 @@ export function PortfolioOverlay({
             {/* 액션 */}
             <div className="border-t border-border px-4 py-3 flex gap-2">
               <button
-                onClick={() => toggleMenu(photo.id, photo.price)}
+                onClick={() => { void toggleMenu(photo.id, photo.price).then((r) => { if (!r.success) showMenuError(r.error ?? '메뉴 변경에 실패했어요'); }); }}
                 className={cn('rounded-xl px-4 py-2.5 text-xs font-medium transition-colors min-h-[44px]',
                   photo.isFeatured ? 'bg-amber-50 text-amber-600 border border-amber-200' : 'border border-border text-text-secondary',
                 )}
@@ -306,20 +331,41 @@ export function PortfolioOverlay({
           </div>
 
           {/* 인디케이터 */}
-          {photoIds.length > 1 && (
-            <div className="flex justify-center gap-1 py-2 shrink-0 border-t border-border">
-              {photoIds.map((pid) => (
-                <button
-                  key={pid}
-                  onClick={() => setCurrentId(pid)}
-                  aria-label={`사진 ${photoIds.indexOf(pid) + 1}번으로 이동`}
-                  className={cn('relative flex items-center justify-center min-w-[44px] min-h-[44px]')}
-                >
-                  <span className={cn('h-1.5 rounded-full transition-all', pid === currentId ? 'w-4 bg-primary' : 'w-1.5 bg-border')} />
-                </button>
-              ))}
-            </div>
-          )}
+          {photoIds.length > 1 && (() => {
+            const MAX_DOTS = 7;
+            const total = photoIds.length;
+            // 도트가 MAX_DOTS 이하면 전부 표시, 초과하면 현재 인덱스 중심으로 슬라이딩 윈도우
+            let visibleIds: string[];
+            if (total <= MAX_DOTS) {
+              visibleIds = photoIds;
+            } else {
+              const half = Math.floor(MAX_DOTS / 2);
+              let start = Math.max(0, currentIndex - half);
+              const end = Math.min(total - 1, start + MAX_DOTS - 1);
+              start = Math.max(0, end - MAX_DOTS + 1);
+              visibleIds = photoIds.slice(start, end + 1);
+            }
+            return (
+              <div className="flex items-center justify-center gap-1 py-2 shrink-0 border-t border-border overflow-hidden">
+                {total > MAX_DOTS && currentIndex >= Math.floor(MAX_DOTS / 2) + 1 && (
+                  <span className="text-[10px] text-text-muted px-1 shrink-0">…</span>
+                )}
+                {visibleIds.map((pid) => (
+                  <button
+                    key={pid}
+                    onClick={() => setCurrentId(pid)}
+                    aria-label={`사진 ${photoIds.indexOf(pid) + 1}번으로 이동`}
+                    className="relative flex items-center justify-center min-w-[28px] min-h-[28px]"
+                  >
+                    <span className={cn('h-1.5 rounded-full transition-all', pid === currentId ? 'w-4 bg-primary' : 'w-1.5 bg-border')} />
+                  </button>
+                ))}
+                {total > MAX_DOTS && currentIndex < total - Math.floor(MAX_DOTS / 2) - 1 && (
+                  <span className="text-[10px] text-text-muted px-1 shrink-0">…</span>
+                )}
+              </div>
+            );
+          })()}
         </motion.div>
       </motion.div>
 
@@ -357,6 +403,9 @@ export function PortfolioOverlay({
             linkedRecord?.consultation?.designCategory ?? photo.styleCategory ?? derivedScope,
             shopSettings,
           )}
+          onShareCardCreated={linkedRecord?.id ? (newId) => {
+            useRecordsStore.getState().updateRecord(linkedRecord.id, { shareCardId: newId });
+          } : undefined}
         />
       )}
 
@@ -366,6 +415,11 @@ export function PortfolioOverlay({
           photo={photo}
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
+          onSuccess={() => {
+            setShowEditModal(false);
+            setSaveToast(true);
+            setTimeout(() => setSaveToast(false), 2500);
+          }}
         />
       )}
     </AnimatePresence>

@@ -542,6 +542,11 @@ export default function WrapUpPage(): React.ReactElement {
           ]}
           shopName={shopName}
           categoryLabel={resolveRecordCategoryLabelKo(currentRecord.consultation, shopSettings)}
+          onShareCardCreated={(newId) => {
+            if (recordId) {
+              useRecordsStore.getState().updateRecord(recordId, { shareCardId: newId });
+            }
+          }}
         />
       )}
     </motion.div>

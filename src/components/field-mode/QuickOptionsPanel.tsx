@@ -193,7 +193,12 @@ export function QuickOptionsPanel({
         <SectionLabel>랩핑</SectionLabel>
         <div className="grid grid-cols-2 gap-2 mt-3">
           <OptionBtn active={!addOns.includes('wrapping')} label="없음" onClick={() => { if (addOns.includes('wrapping')) onToggleAddOn('wrapping'); }} />
-          <OptionBtn active={addOns.includes('wrapping')} label="랩핑" sublabel="+₩5,000" onClick={() => { if (!addOns.includes('wrapping')) onToggleAddOn('wrapping'); }} />
+          <OptionBtn
+            active={addOns.includes('wrapping')}
+            label="랩핑"
+            sublabel={`+₩${(surcharges.wrapping ?? 5000).toLocaleString()}`}
+            onClick={() => { if (!addOns.includes('wrapping')) onToggleAddOn('wrapping'); }}
+          />
         </div>
       </section>
 

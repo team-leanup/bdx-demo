@@ -143,12 +143,13 @@ export function StyleSelector({ onComplete }: StyleSelectorProps): React.ReactEl
               );
             })}
           </div>
-
-          <Button fullWidth onClick={handleNext} className="mt-2">
-            {t('preConsult.next')}
-          </Button>
         </motion.div>
       )}
+
+      {/* Next button — always visible regardless of stylePreference selection */}
+      <Button fullWidth onClick={handleNext} className="mt-2">
+        {t('preConsult.next')}
+      </Button>
     </div>
   );
 }

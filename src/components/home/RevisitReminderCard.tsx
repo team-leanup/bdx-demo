@@ -96,15 +96,17 @@ export function RevisitReminderCard({
             </div>
             {/* H-6: SMS 버튼 + 복사 버튼 그룹 */}
             <div className="flex shrink-0 items-center gap-1.5">
-              <button
-                onClick={() => sendSms(customer.phone, customer.name)}
-                className="flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-surface-alt text-text-secondary active:scale-95 transition-all hover:bg-border"
-                title="문자 보내기"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3v-3z" />
-                </svg>
-              </button>
+              {customer.phone && (
+                <button
+                  onClick={() => sendSms(customer.phone, customer.name)}
+                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-surface-alt text-text-secondary active:scale-95 transition-all hover:bg-border"
+                  title="문자 보내기"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3v-3z" />
+                  </svg>
+                </button>
+              )}
               <button
                 onClick={() => copyMessage(customer.id, customer.name)}
                 className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold text-white active:scale-95 transition-all ${copiedId === customer.id ? 'bg-green-600' : 'bg-primary'}`}

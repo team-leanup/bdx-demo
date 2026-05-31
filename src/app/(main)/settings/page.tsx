@@ -93,7 +93,15 @@ export default function SettingsPage() {
 
   const [activeTab, setActiveTab] = useState<TabId>('shop');
 
-  
+  // 탭 전환 시 편집 중인 상태 초기화 (unsaved 내용 유실 방지)
+  const handleTabChange = (tabId: TabId): void => {
+    if (tabId !== activeTab) {
+      setEditingShop(false);
+      setEditingCategoryPricing(false);
+      setEditingPrices(false);
+    }
+    setActiveTab(tabId);
+  };
 
   // 매장 정보 편집
   const [editingShop, setEditingShop] = useState(false);
@@ -144,6 +152,13 @@ export default function SettingsPage() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [editingShop, editingPrices]);
+
+  // shopFeedback 자동 dismiss (성공 메시지 3초 후 해제)
+  useEffect(() => {
+    if (!shopFeedback || shopFeedback.tone !== 'success') return;
+    const timer = setTimeout(() => setShopFeedback(null), 3000);
+    return () => clearTimeout(timer);
+  }, [shopFeedback]);
   // 오프 추가금: baseOff* 와 surcharges.*Removal 두 표현이 있어 온보딩(surcharges) 값도 폴백으로 읽는다.
   // 저장 시 handleSavePrices 가 두 표현을 모두 동기화하므로 이후로는 항상 일치.
   const [priceOffSame, setPriceOffSame] = useState(String(shopSettings.baseOffSameShop ?? shopSettings.surcharges.selfRemoval ?? DEFAULT_BASE_PRICES.offSameShop));
@@ -166,8 +181,12 @@ export default function SettingsPage() {
   const [categoryPricingEdit, setCategoryPricingEdit] = useState<CategoryPricingSettings>(shopSettings.categoryPricing);
   const [customCategoriesEdit, setCustomCategoriesEdit] = useState<CustomCategory[]>(shopSettings.customCategories ?? []);
   const [editingCategoryPricing, setEditingCategoryPricing] = useState(false);
+  const [isSavingPrices, setIsSavingPrices] = useState(false);
+  const [pricesFeedback, setPricesFeedback] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
+  const [isSavingCategoryPricing, setIsSavingCategoryPricing] = useState(false);
+  const [categoryPricingFeedback, setCategoryPricingFeedback] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
 
-  const handleSavePrices = () => {
+  const handleSavePrices = async (): Promise<void> => {
     const offSameShop = parseInt(priceOffSame, 10);
     const offOtherShop = parseInt(priceOffOther, 10);
     const extension = parseInt(priceExtension, 10);
@@ -176,10 +195,17 @@ export default function SettingsPage() {
     const deposit = parseInt(priceDeposit, 10) || 0;
     const targetRevenue = parseInt(monthlyTarget, 10) || 0;
     // 0528 M8: deposit/monthlyTarget도 음수 차단 (0은 허용)
-    if (deposit < 0 || targetRevenue < 0) return;
-    if ([offSameShop, offOtherShop, extension, wrapping, solidPoint].some((v) => isNaN(v) || v < 0)) return;
-    setSavedPrices({ offSameShop, offOtherShop, extension, wrapping, solidPoint });
-    setShopSettings({
+    if (deposit < 0 || targetRevenue < 0) {
+      setPricesFeedback({ tone: 'error', message: '금액은 0 이상이어야 합니다.' });
+      return;
+    }
+    if ([offSameShop, offOtherShop, extension, wrapping, solidPoint].some((v) => isNaN(v) || v < 0)) {
+      setPricesFeedback({ tone: 'error', message: '가격을 올바르게 입력해 주세요.' });
+      return;
+    }
+    setIsSavingPrices(true);
+    setPricesFeedback(null);
+    const result = await setShopSettings({
       depositAmount: deposit,
       monthlyTargetRevenue: targetRevenue > 0 ? targetRevenue : undefined,
       baseOffSameShop: offSameShop,
@@ -200,6 +226,13 @@ export default function SettingsPage() {
         pointArt: solidPoint,
       },
     });
+    setIsSavingPrices(false);
+    if (!result.success) {
+      setPricesFeedback({ tone: 'error', message: result.error ?? '가격표 저장에 실패했습니다. 다시 시도해 주세요.' });
+      return;
+    }
+    setSavedPrices({ offSameShop, offOtherShop, extension, wrapping, solidPoint });
+    setPricesFeedback({ tone: 'success', message: '가격표가 저장되었습니다.' });
     setEditingPrices(false);
   };
 
@@ -214,16 +247,33 @@ export default function SettingsPage() {
     setEditingPrices(false);
   };
 
-  const handleSaveCategoryPricing = () => {
+  const handleSaveCategoryPricing = async (): Promise<void> => {
+    // 기본 4개 카테고리 음수/NaN 검증
+    const builtinKeys = ['simple', 'french', 'magnet', 'art'] as const;
+    for (const key of builtinKeys) {
+      const item = categoryPricingEdit[key];
+      if (!Number.isFinite(item.price) || item.price < 0 || !Number.isFinite(item.time) || item.time < 0) {
+        setCategoryPricingFeedback({ tone: 'error', message: '가격과 시간은 0 이상의 숫자여야 합니다.' });
+        return;
+      }
+    }
     // 추가 카테고리는 한국어 이름 + 양수 가격이 있는 것만 저장
     const cleanedCustom = customCategoriesEdit
       .filter((c) => c.name.trim().length > 0 && c.price >= 0 && c.time >= 0)
       .map((c, idx) => ({ ...c, name: c.name.trim(), order: idx }));
-    void setShopSettings({
+    setIsSavingCategoryPricing(true);
+    setCategoryPricingFeedback(null);
+    const result = await setShopSettings({
       categoryPricing: categoryPricingEdit,
       customCategories: cleanedCustom,
     });
+    setIsSavingCategoryPricing(false);
+    if (!result.success) {
+      setCategoryPricingFeedback({ tone: 'error', message: result.error ?? '시술 종류 저장에 실패했습니다.' });
+      return;
+    }
     setCustomCategoriesEdit(cleanedCustom);
+    setCategoryPricingFeedback({ tone: 'success', message: '시술 종류가 저장되었습니다.' });
     setEditingCategoryPricing(false);
   };
 
@@ -412,6 +462,7 @@ export default function SettingsPage() {
                       value={shopName}
                       onChange={(e) => setShopName(e.target.value)}
                       placeholder={t('settings.shop_name')}
+                      maxLength={40}
                     />
                   </div>
                   <div>
@@ -481,7 +532,7 @@ export default function SettingsPage() {
               <span className="text-sm font-medium text-text">{t('settings.service_priceTable')}</span>
               {!editingPrices ? (
                 <button
-                  onClick={() => setEditingPrices(true)}
+                  onClick={() => { setEditingPrices(true); setPricesFeedback(null); }}
                   className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-alt transition-colors"
                 >
                   {t('settings.shop_edit')}
@@ -490,19 +541,33 @@ export default function SettingsPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={handleCancelPrices}
-                    className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-alt transition-colors"
+                    disabled={isSavingPrices}
+                    className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-alt transition-colors disabled:opacity-40"
                   >
                     {t('common.cancel')}
                   </button>
                   <button
-                    onClick={handleSavePrices}
-                    className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary/90 transition-colors"
+                    onClick={() => void handleSavePrices()}
+                    disabled={isSavingPrices}
+                    className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary/90 transition-colors disabled:opacity-40"
                   >
-                    {t('common.save')}
+                    {isSavingPrices ? '저장 중...' : t('common.save')}
                   </button>
                 </div>
               )}
             </div>
+            {pricesFeedback && (
+              <div
+                className={cn(
+                  'mb-3 rounded-xl border px-3 py-2 text-xs font-medium',
+                  pricesFeedback.tone === 'success'
+                    ? 'border-success/20 bg-success/10 text-success'
+                    : 'border-error/20 bg-error/10 text-error',
+                )}
+              >
+                {pricesFeedback.message}
+              </div>
+            )}
 
             {!editingPrices ? (
               <div className="flex flex-col gap-2">
@@ -590,6 +655,7 @@ export default function SettingsPage() {
                     // 편집 진입 시 항상 현재 shopSettings로 재초기화 (stale state 방지)
                     setCategoryPricingEdit(shopSettings.categoryPricing);
                     setCustomCategoriesEdit(shopSettings.customCategories ?? []);
+                    setCategoryPricingFeedback(null);
                     setEditingCategoryPricing(true);
                   }}
                   className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-alt transition-colors"
@@ -600,19 +666,33 @@ export default function SettingsPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={handleCancelCategoryPricing}
-                    className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-alt transition-colors"
+                    disabled={isSavingCategoryPricing}
+                    className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-alt transition-colors disabled:opacity-40"
                   >
                     {t('common.cancel')}
                   </button>
                   <button
-                    onClick={handleSaveCategoryPricing}
-                    className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary/90 transition-colors"
+                    onClick={() => void handleSaveCategoryPricing()}
+                    disabled={isSavingCategoryPricing}
+                    className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary/90 transition-colors disabled:opacity-40"
                   >
-                    {t('common.save')}
+                    {isSavingCategoryPricing ? '저장 중...' : t('common.save')}
                   </button>
                 </div>
               )}
             </div>
+            {categoryPricingFeedback && (
+              <div
+                className={cn(
+                  'mb-3 rounded-xl border px-3 py-2 text-xs font-medium',
+                  categoryPricingFeedback.tone === 'success'
+                    ? 'border-success/20 bg-success/10 text-success'
+                    : 'border-error/20 bg-error/10 text-error',
+                )}
+              >
+                {categoryPricingFeedback.message}
+              </div>
+            )}
 
             {(['simple', 'french', 'magnet', 'art'] as const).map((cat) => {
               // 0530: 포트폴리오 메뉴판·사전상담과 동일한 라벨(심플 / 원컬러, 자석 / 마그넷)로 통일.
@@ -873,6 +953,7 @@ export default function SettingsPage() {
                 ) : (
                   <button
                     onClick={async () => {
+                      if (!window.confirm('데모 모드로 전환하면 현재 세션에서 로그아웃됩니다. 계속하시겠습니까?')) return;
                       await logout();
                       const { loginAsDemo } = useAuthStore.getState();
                       await loginAsDemo();
@@ -937,7 +1018,7 @@ export default function SettingsPage() {
             {visibleTabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as TabId)}
+                onClick={() => handleTabChange(tab.id as TabId)}
                 className={cn(
                   'flex-shrink-0 flex items-center gap-1.5 px-4 py-3 text-sm font-semibold border-b-2 transition-colors duration-150',
                   effectiveTab === tab.id
@@ -957,7 +1038,7 @@ export default function SettingsPage() {
           {visibleTabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as TabId)}
+              onClick={() => handleTabChange(tab.id as TabId)}
               className={cn(
                 'flex items-center gap-2.5 px-3 py-2.5 rounded-2xl text-sm font-semibold transition-colors duration-150 text-left',
                 effectiveTab === tab.id

@@ -159,14 +159,18 @@ export default function PortfolioUploadPage() {
                     alt=""
                     className="w-full h-full object-cover"
                   />
+                  {/* 시각 크기(20px)는 유지, 투명 패딩으로 터치타겟 44px 확보 */}
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); removePhoto(photo.id); }}
-                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center shadow-sm"
+                    className="absolute top-0 right-0 w-11 h-11 flex items-center justify-center"
+                    aria-label="사진 삭제"
                   >
-                    <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
-                      <path d="M2 2L8 8M8 2L2 8" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
+                    <span className="w-5 h-5 rounded-full bg-black/60 flex items-center justify-center shadow-sm">
+                      <svg width="8" height="8" viewBox="0 0 10 10" fill="none">
+                        <path d="M2 2L8 8M8 2L2 8" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                    </span>
                   </button>
                 </motion.div>
               ))}

@@ -61,7 +61,14 @@ export default function OnboardingLayout({
       {showProgress && (
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
           {/* Progress bar: 7 segments */}
-          <div className="flex gap-1 px-4 pt-3">
+          <div
+            className="flex gap-1 px-4 pt-3"
+            role="progressbar"
+            aria-label="온보딩 진행률"
+            aria-valuenow={currentStep}
+            aria-valuemin={0}
+            aria-valuemax={TOTAL_STEPS}
+          >
             {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
               <motion.div
                 key={i}

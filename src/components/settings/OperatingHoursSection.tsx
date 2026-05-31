@@ -1,10 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, Toggle, TimeInput } from '@/components/ui';
 import { useAppStore } from '@/store/app-store';
 import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/cn';
+
+/** "HH:MM" 형태 문자열 비교. a > b이면 true */
+function timeIsAfter(a: string, b: string): boolean {
+  return a.replace(':', '') > b.replace(':', '');
+}
 
 const DAY_LABEL_KEYS = ['days_mon', 'days_tue', 'days_wed', 'days_thu', 'days_fri', 'days_sat', 'days_sun'];
 
@@ -23,6 +28,18 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       {children}
     </div>
   );
+}
+
+function buildDaySchedules(storedHours: ReturnType<typeof useAppStore.getState>['shopSettings']['businessHours']): DaySchedule[] {
+  return DAY_LABEL_KEYS.map((_, uiIdx) => {
+    const dow = (uiIdx + 1) % 7;
+    const h = storedHours.find((bh) => bh.dayOfWeek === dow);
+    return {
+      isOpen: h?.isOpen ?? (uiIdx !== 6),
+      openTime: h?.openTime ?? '10:00',
+      closeTime: h?.closeTime ?? '20:00',
+    };
+  });
 }
 
 export function OperatingHoursSection(): React.ReactElement {
@@ -47,18 +64,28 @@ export function OperatingHoursSection(): React.ReactElement {
     }),
   );
   const [daySchedules, setDaySchedules] = useState<DaySchedule[]>(() =>
-    DAY_LABEL_KEYS.map((_, uiIdx) => {
-      const dow = (uiIdx + 1) % 7;
-      const h = storedHours.find((bh) => bh.dayOfWeek === dow);
-      return {
-        isOpen: h?.isOpen ?? (uiIdx !== 6),
-        openTime: h?.openTime ?? '10:00',
-        closeTime: h?.closeTime ?? '20:00',
-      };
-    }),
+    buildDaySchedules(storedHours),
   );
   const [isSaving, setIsSaving] = useState(false);
   const [feedback, setFeedback] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
+
+  // 결함 7: shopSettings.businessHours가 외부(탭 재방문, 다른 화면 저장 후 복귀)에서 변경될 때
+  // local state를 동기화해 stale 상태 방지.
+  const storedHoursKey = JSON.stringify(storedHours);
+  useEffect(() => {
+    const openDay = storedHours.find((h) => h.isOpen);
+    setBulkOpen(openDay?.openTime ?? '10:00');
+    setBulkClose(openDay?.closeTime ?? '20:00');
+    setBulkClosedDays(
+      DAY_LABEL_KEYS.map((_, uiIdx) => {
+        const dow = (uiIdx + 1) % 7;
+        const h = storedHours.find((bh) => bh.dayOfWeek === dow);
+        return h ? !h.isOpen : false;
+      }),
+    );
+    setDaySchedules(buildDaySchedules(storedHours));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storedHoursKey]);
 
   const toggleBulkClosedDay = (index: number) => {
     setBulkClosedDays((prev) => {
@@ -75,8 +102,26 @@ export function OperatingHoursSection(): React.ReactElement {
   };
 
   const handleSave = async () => {
-    setIsSaving(true);
     setFeedback(null);
+
+    // 결함 4: openTime > closeTime 역전 검증
+    if (bulkMode) {
+      if (timeIsAfter(bulkOpen, bulkClose)) {
+        setFeedback({ tone: 'error', message: '오픈 시간이 마감 시간보다 늦습니다. 다시 확인해 주세요.' });
+        return;
+      }
+    } else {
+      for (let i = 0; i < daySchedules.length; i++) {
+        const s = daySchedules[i];
+        if (s.isOpen && timeIsAfter(s.openTime, s.closeTime)) {
+          const label = DAY_LABELS[i];
+          setFeedback({ tone: 'error', message: `${label}요일: 오픈 시간이 마감 시간보다 늦습니다.` });
+          return;
+        }
+      }
+    }
+
+    setIsSaving(true);
 
     const businessHours = DAY_LABEL_KEYS.map((_, uiIdx) => {
       const dow = (uiIdx + 1) % 7;
