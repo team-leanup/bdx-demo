@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/cn';
-import type { SurchargeSettings } from '@/types/shop';
+import type { SurchargeSettings, CustomPartSetting } from '@/types/shop';
 import { ADDON_FIXED_PRICES } from '@/lib/pre-consult-price';
 import type { FieldModeAddon } from '@/types/field-mode';
 import type { AddOnOption } from '@/types/pre-consultation';
@@ -16,6 +16,8 @@ interface AddOnMiniPanelProps {
   onRemove: (id: string) => void;
   /** 0530 FM-1: 사전상담에서 이미 반영된(=baseEstimate에 포함된) add-on. 중복 청구 방지용으로 퀵버튼 비활성화 */
   carriedAddOns?: AddOnOption[];
+  /** 0531: 설정의 커스텀 파츠(종류·단가) 연동. 있으면 하드코딩 퀵버튼 대신 파츠를 수량 선택 가능하게 표시 */
+  customParts?: CustomPartSetting[];
 }
 
 interface QuickAddBtn {
@@ -38,11 +40,14 @@ export function AddOnMiniPanel({
   onAdd,
   onRemove,
   carriedAddOns = [],
+  customParts,
 }: AddOnMiniPanelProps): React.ReactElement {
   const t = useT();
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [customLabel, setCustomLabel] = useState('');
   const [customAmount, setCustomAmount] = useState('');
+
+  const hasCustomParts = !!customParts && customParts.length > 0;
 
   const handleQuickAdd = (labelKey: string, amount: number): void => {
     onAdd({ label: t(labelKey), amount });
@@ -72,38 +77,93 @@ export function AddOnMiniPanel({
 
       {/* Quick-add buttons */}
       <div className="flex flex-wrap gap-2">
-        {QUICK_ADDS.map(({ labelKey, getAmount, addOnKey }) => {
-          const amount = getAmount(surcharges);
-          // FM-1: 사전상담에서 이미 반영된 add-on은 baseEstimate에 포함돼 있으므로 다시 누르면 이중 청구됨 → 비활성화
-          const alreadyApplied = addOnKey != null && carriedAddOns.includes(addOnKey);
-          if (alreadyApplied) {
+        {hasCustomParts ? (
+          // 0531: 설정 커스텀 파츠 연동 — 탭하면 1개씩 누적, 수량 스테퍼로 여러 개 선택·가격 계산
+          customParts!.map((part) => {
+            const matching = addons.filter((a) => a.label === part.name);
+            const qty = matching.length;
+            const addOne = (): void => onAdd({ label: part.name, amount: part.pricePerUnit });
+            const removeOne = (): void => {
+              const last = matching[matching.length - 1];
+              if (last) onRemove(last.id);
+            };
+            if (qty === 0) {
+              return (
+                <button
+                  key={part.id}
+                  type="button"
+                  onClick={addOne}
+                  className="min-h-[44px] rounded-xl px-3 py-2 bg-surface-alt border border-border text-sm font-medium text-text hover:border-primary hover:bg-primary/5 active:scale-[0.97] transition-all duration-150 select-none"
+                >
+                  <span className="text-primary font-bold">+ </span>
+                  {part.name}{' '}
+                  <span className="text-primary font-semibold">₩{part.pricePerUnit.toLocaleString()}</span>
+                </button>
+              );
+            }
             return (
-              <span
-                key={labelKey}
-                aria-disabled="true"
-                className="min-h-[44px] inline-flex items-center gap-1 rounded-xl px-3 py-2 bg-primary/5 border border-primary/30 text-sm font-medium text-primary/70 select-none cursor-default"
+              <div
+                key={part.id}
+                className="min-h-[44px] inline-flex items-center gap-2 rounded-xl pl-3 pr-1 py-1 bg-primary/5 border border-primary/40"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-                {t(labelKey)} <span className="text-text-muted">· 사전상담 반영됨</span>
-              </span>
+                <span className="text-sm font-semibold text-text">{part.name}</span>
+                <span className="text-xs text-primary font-medium tabular-nums">₩{part.pricePerUnit.toLocaleString()}</span>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={removeOne}
+                    aria-label={`${part.name} 1개 빼기`}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-surface border border-border text-base font-bold leading-none text-text-secondary hover:border-primary active:scale-95 transition-all"
+                  >
+                    −
+                  </button>
+                  <span className="min-w-[1.25rem] text-center text-sm font-bold text-primary tabular-nums">{qty}</span>
+                  <button
+                    type="button"
+                    onClick={addOne}
+                    aria-label={`${part.name} 1개 추가`}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-base font-bold leading-none text-white hover:bg-primary-dark active:scale-95 transition-all"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
             );
-          }
-          return (
-            <button
-              key={labelKey}
-              type="button"
-              onClick={() => handleQuickAdd(labelKey, amount)}
-              className="min-h-[44px] rounded-xl px-3 py-2 bg-surface-alt border border-border text-sm font-medium text-text hover:border-primary hover:bg-primary/5 active:scale-[0.97] transition-all duration-150 select-none"
-            >
-              {t(labelKey)}{' '}
-              <span className="text-primary font-semibold">
-                +₩{amount.toLocaleString()}
-              </span>
-            </button>
-          );
-        })}
+          })
+        ) : (
+          QUICK_ADDS.map(({ labelKey, getAmount, addOnKey }) => {
+            const amount = getAmount(surcharges);
+            // FM-1: 사전상담에서 이미 반영된 add-on은 baseEstimate에 포함돼 있으므로 다시 누르면 이중 청구됨 → 비활성화
+            const alreadyApplied = addOnKey != null && carriedAddOns.includes(addOnKey);
+            if (alreadyApplied) {
+              return (
+                <span
+                  key={labelKey}
+                  aria-disabled="true"
+                  className="min-h-[44px] inline-flex items-center gap-1 rounded-xl px-3 py-2 bg-primary/5 border border-primary/30 text-sm font-medium text-primary/70 select-none cursor-default"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                  {t(labelKey)} <span className="text-text-muted">· 사전상담 반영됨</span>
+                </span>
+              );
+            }
+            return (
+              <button
+                key={labelKey}
+                type="button"
+                onClick={() => handleQuickAdd(labelKey, amount)}
+                className="min-h-[44px] rounded-xl px-3 py-2 bg-surface-alt border border-border text-sm font-medium text-text hover:border-primary hover:bg-primary/5 active:scale-[0.97] transition-all duration-150 select-none"
+              >
+                {t(labelKey)}{' '}
+                <span className="text-primary font-semibold">
+                  +₩{amount.toLocaleString()}
+                </span>
+              </button>
+            );
+          })
+        )}
 
         {/* 기타 직접입력 toggle */}
         <button

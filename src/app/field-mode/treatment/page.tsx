@@ -279,6 +279,7 @@ export default function TreatmentPage(): React.ReactElement {
               onAdd={addInTreatmentAddon}
               onRemove={removeInTreatmentAddon}
               carriedAddOns={addOns}
+              customParts={shopSettings.customParts}
             />
           </motion.div>
 
