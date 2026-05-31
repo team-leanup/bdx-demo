@@ -829,18 +829,3 @@ export function computePopularTreatments(
     .slice(0, 3)
     .map(([name, count], i) => ({ rank: i + 1, name, count }));
 }
-
-// Top 3 busiest hours
-export function computePeakHours(
-  reservations: BookingRequest[],
-): { time: string; label: string; count: number }[] {
-  const dist = computeHourlyDistribution(reservations);
-  return [...dist]
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 3)
-    .map((d) => ({
-      time: `${d.hour}:00~${d.hour + 1}:00`,
-      label: d.label,
-      count: d.count,
-    }));
-}

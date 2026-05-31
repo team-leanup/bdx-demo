@@ -63,7 +63,22 @@
 
 **검증:** `npx tsc --noEmit` 통과, `pnpm lint` 에러 0(기존 경고만).
 
-## 3. Phase B — 리팩토링 (커밋 2) — *진행 예정, 아래 갱신*
+## 3. Phase B — 리팩토링 (커밋 2)
+
+"폴더/코드가 너무 복잡하다"는 지적에 따라 **기존 동작 보존(동작 변화 0)** 을 철칙으로 안전 리팩토링. 삭제는 grep 0건 확인 후에만, 추출은 부모 스코프 의존 없는 순수 대상만.
+
+- **settings/page.tsx 2077 → 981줄 (53%↓)** — `CustomPartsManager`·`StaffSection`·`OperatingHoursSection`·`StorageManagementSection` 4개 컴포넌트를 `components/settings/`로 분리(모두 store 훅 직접 접근하는 독립 컴포넌트라 prop drilling 없음). 미사용 import 12개 제거.
+- **TodayReservationCard.tsx 592 → 529줄** — `ChannelEmojiBadge`(컴포넌트) 분리, `addMinutesToTime`·`calcGapMinutes`→`time-calculator.ts`, `isRenderableImageSrc`→`image-utils.ts`, `getBookingThumbnailItems`→`booking-thumbnail.ts`(신규). CLAUDE.md '컴포넌트 내 컴포넌트 정의 금지' 해소.
+- **records/page.tsx 날짜 유틸 추출** — `isInPeriod`·`toTimeGridEvents`+`FilterPeriod`→`date-utils.ts`(신규), `getMonday`/`getTodayStr` 중복 wrapper는 기존 `format.ts`의 `getKoreanWeekStart`/`getTodayInKorea`로 직접 교체. KST 앵커 로직 보존.
+- **db.ts createId 중복 제거** — 내부 `createId`(generate-id.ts `generateId`와 동일 로직)를 `generateId`로 교체(8곳). 생성 ID 형식 불변.
+- **데드코드 제거** — `analytics.ts:computePeakHours`, `lib/index.ts`(미사용 배럴 파일), `home/index.ts`·`records/index.ts` 미사용 배럴 export. 내부 호출이 있는 `computeTopDesignScope`/`computeTodayBookings`/`computeRegularCount`는 보존.
+
+**검증:** `.next` 캐시 클리어 후 `pnpm build` **EXIT 0, Compiled successfully, 37/37 페이지 생성**. tsc(src) 클린, lint 에러 0.
+
+### 보류한 리팩토링 (리스크 대비 실익 — 후속)
+- `customers/[id]/page.tsx`(1798줄) 분리 — 내부 컴포넌트가 부모 스코프(useState 40개)에 강결합, prop drilling 회귀 위험으로 보류.
+- `db.ts`(2406줄) 도메인 분리 — re-export 유지하며 단계적 PR 권장(이번엔 createId 중복만).
+- `price-calculator.ts` DEFAULT_SERVICE_PRICING.wrapping SSOT — 레거시 가산 모델 가격에 영향 가능, 파일럿 후 처리.
 
 ## 4. 보류/후속 (오너 결정 필요)
 - **R12 QR 상담** — 회의 합의대로 보류 유지(컴포넌트는 존재, 진입점 미연결).

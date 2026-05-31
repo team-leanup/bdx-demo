@@ -1,4 +1,5 @@
 import { getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
+import { generateId } from '@/lib/generate-id';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database';
 import type { Customer, CustomerTag, MembershipPlan, SmallTalkNote, VisitFrequency, TagCategory, TagAccent } from '@/types/customer';
@@ -62,22 +63,6 @@ interface DbErrorSnapshot {
   raw?: unknown;
 }
 
-function createId(prefix: string): string {
-  // 2026-04-20: Math.random 예측 가능성 제거 — crypto.randomUUID() 사용 (IDOR 방지)
-  // fallback: crypto.randomUUID 미지원 환경 (Node <19, 일부 구형 브라우저)
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}-${crypto.randomUUID()}`;
-  }
-  // Web Crypto API fallback
-  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
-    const bytes = new Uint8Array(16);
-    crypto.getRandomValues(bytes);
-    const hex = Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('');
-    return `${prefix}-${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
-  }
-  // 최후 수단 (개발 환경만 도달 가능)
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-}
 
 function toShop(row: Database['public']['Tables']['shops']['Row']): Shop {
   return {
@@ -316,7 +301,7 @@ export async function dbCreateShopAccount(
   }
 
   // Use SECURITY DEFINER RPC to bypass RLS chicken-and-egg problem
-  const shopId = createId('shop');
+  const shopId = generateId('shop');
 
   // 2026-04-20 R9: p_user_id 전달 제거 — 서버가 auth.uid()로 강제 확인 (주입 방지)
   const { data: rpcResult, error: rpcError } = await supabase.rpc('create_shop_account', {
@@ -434,7 +419,7 @@ export async function dbCreateDesigner(
   const { data, error } = await supabase
     .from('designers')
     .insert({
-      id: createId('designer'),
+      id: generateId('designer'),
       shop_id: shopId,
       name: trimmedName,
       role: 'staff',
@@ -1920,7 +1905,7 @@ export async function dbCreatePreConsultation(
   shopId: string,
   language: string,
 ): Promise<{ success: boolean; id?: string; error?: string }> {
-  const id = createId('pc');
+  const id = generateId('pc');
   const now = getNowInKoreaIso();
 
   const { error } = await supabase.from('pre_consultations').insert({
@@ -2014,7 +1999,7 @@ export async function dbCompletePreConsultation(
   }
 
   // Bridge: INSERT into booking_requests so the owner receives a notification
-  const bookingId = createId('bk');
+  const bookingId = generateId('bk');
   const { error: bookingError } = await supabase.from('booking_requests').insert({
     id: bookingId,
     shop_id: shopId,
@@ -2080,7 +2065,7 @@ export async function uploadPreConsultImage(
     const rawExt = file.name.split('.').pop()?.toLowerCase() ?? '';
     const ext = ALLOWED_IMAGE_EXT.has(rawExt) ? rawExt : 'jpg';
 
-    const uuid = createId('img');
+    const uuid = generateId('img');
     const path = `${shopId}/${uuid}/${Date.now()}.${ext}`;
 
     const { error: uploadError } = await supabase.storage
@@ -2138,7 +2123,7 @@ function toConsultationLink(
 export async function dbCreateConsultationLink(
   input: CreateConsultationLinkInput,
 ): Promise<{ success: boolean; link?: ConsultationLink; error?: string }> {
-  const id = createId('cl');
+  const id = generateId('cl');
   const { data, error } = await supabase
     .from('consultation_links')
     .insert({
@@ -2279,7 +2264,7 @@ export async function dbCreateBookingFromShopLink(input: {
   deposit?: number;
 }): Promise<{ success: boolean; bookingId?: string; error?: string }> {
   const now = getNowInKoreaIso();
-  const bookingId = createId('bk');
+  const bookingId = generateId('bk');
 
   // 2026-05-30: 슬롯 중복 예약 방지 (데모 샵은 anon SELECT 가능해 사전 검사 동작)
   const { data: conflict } = await supabase
@@ -2352,7 +2337,7 @@ export async function dbCreateBookingFromConsultationLink(input: {
   deposit?: number;
 }): Promise<{ success: boolean; bookingId?: string; error?: string }> {
   const now = getNowInKoreaIso();
-  const bookingId = createId('bk');
+  const bookingId = generateId('bk');
 
   // 2026-05-30: 슬롯 중복 예약 방지 — 동시 제출/재제출 시 같은 슬롯 이중 예약 차단.
   // (데모 샵은 anon SELECT 가 허용되어 사전 검사가 동작, 실 샵은 uq_booking_link_slot UNIQUE 인덱스가 최종 방어)

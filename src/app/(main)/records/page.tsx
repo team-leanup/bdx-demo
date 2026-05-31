@@ -24,6 +24,8 @@ import { asDesignCategory } from '@/lib/design-category-guard';
 import { useCustomerStore } from '@/store/customer-store';
 import { useT } from '@/lib/i18n';
 import { formatPrice, getKoreanWeekStart, getTodayInKorea, toKoreanDateString, toKoreanTimeString, getNowInKoreaIso } from '@/lib/format';
+import { isInPeriod, toTimeGridEvents } from '@/lib/date-utils';
+import type { FilterPeriod } from '@/lib/date-utils';
 import { MonthCalendar } from '@/components/calendar/MonthCalendar';
 import { DayReservationList } from '@/components/calendar/DayReservationList';
 import { WeekCalendar } from '@/components/calendar/WeekCalendar';
@@ -53,97 +55,7 @@ const READINESS_LEGEND = [
 
 type MainTab = 'reservations' | 'consultations';
 type ViewMode = 'day' | 'month';
-type FilterPeriod = 'all' | 'today' | 'week' | 'month';
 
-function isInPeriod(dateStr: string, period: FilterPeriod): boolean {
-  const today = getTodayInKorea();
-  const todayDate = new Date(`${today}T12:00:00`);
-  const normalizedDate = toKoreanDateString(dateStr);
-  const d = new Date(`${normalizedDate}T12:00:00`);
-  if (period === 'all') return true;
-  if (period === 'today') return normalizedDate === today;
-  if (period === 'week') {
-    const startOfWeek = new Date(todayDate);
-    const dayOfWeek = (todayDate.getDay() + 6) % 7; // Monday=0, Sunday=6
-    startOfWeek.setDate(todayDate.getDate() - dayOfWeek);
-    startOfWeek.setHours(0, 0, 0, 0);
-    // 0531 — 주 끝(일요일) 상한 추가: 상한이 없으면 다음 주 이후 미래 레코드까지 '이번주'에 포함됨
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
-    return d >= startOfWeek && d <= endOfWeek;
-  }
-  if (period === 'month') {
-    return d.getFullYear() === todayDate.getFullYear() && d.getMonth() === todayDate.getMonth();
-  }
-  return true;
-}
-
-function getMonday(dateStr: string): string {
-  return getKoreanWeekStart(dateStr);
-}
-
-function getTodayStr(): string {
-  return getTodayInKorea();
-}
-
-function toTimeGridEvents(
-  reservations: import('@/types/consultation').BookingRequest[],
-  getCustomerById: (id: string) => import('@/types/customer').Customer | undefined,
-): TimeGridEvent[] {
-  const events: TimeGridEvent[] = [];
-
-  for (const r of reservations) {
-    if (!r.reservationTime || !r.reservationTime.includes(':')) continue;
-    const [h, m] = r.reservationTime.split(':').map(Number);
-    if (isNaN(h) || isNaN(m)) continue;
-    const endH = Math.min(h + 1, 23);
-    const customer = r.customerId ? getCustomerById(r.customerId) : undefined;
-    const durationMap: Record<string, string> = { short: '짧음', normal: '보통', long: '김' };
-    const sensitivityMap: Record<string, string> = { normal: '보통', sensitive: '민감' };
-    events.push({
-      id: `res-${r.id}`,
-      title: r.customerName,
-      date: r.reservationDate,
-      startTime: r.reservationTime,
-      endTime: `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`,
-      type: 'reservation',
-      status: r.status,
-      channel: r.channel,
-      customerPhone: r.phone,
-      requestNote: r.requestNote,
-      language: r.language,
-      designerId: r.designerId,
-      originalId: r.id,
-      customerId: r.customerId,
-      serviceLabel: r.serviceLabel,
-      consultationLinkSentAt: r.consultationLinkSentAt,
-      preConsultationCompletedAt: r.preConsultationCompletedAt,
-      nailShape: customer?.preference?.preferredShape ?? undefined,
-      cuticleSensitivity: customer?.preference?.cuticleSensitivity ? sensitivityMap[customer.preference.cuticleSensitivity] : undefined,
-      durationPreference: customer?.durationPreference ? durationMap[customer.durationPreference] : undefined,
-      customerNote: r.requestNote,
-      visitCount: customer?.visitCount ?? 0,
-      preferredColors: customer?.treatmentHistory?.[0]?.colorLabels ?? [],
-      removalNeeded: (() => {
-        const raw = r.preConsultationData as Record<string, unknown> | undefined;
-        const pref = raw?.removalPreference as string | undefined;
-        if (pref === 'self_shop') return '자샵 제거';
-        if (pref === 'other_shop') return '타샵 제거';
-        return undefined;
-      })(),
-      wrappingNeeded: (() => {
-        const raw = r.preConsultationData as Record<string, unknown> | undefined;
-        const pref = raw?.wrappingPreference as string | undefined;
-        if (pref === 'yes') return '랩핑 원함';
-        if (pref === 'no') return '랩핑 불필요';
-        return undefined;
-      })(),
-    });
-  }
-
-  return events;
-}
 
 export default function RecordsPage() {
   const router = useRouter();
@@ -157,8 +69,8 @@ export default function RecordsPage() {
   const [filter, setFilter] = useState<FilterPeriod>('all');
   const [linkGenBooking, setLinkGenBooking] = useState<BookingRequest | null>(null);
 
-  const [selectedDate, setSelectedDate] = useState(getTodayStr());
-  const [weekStartDate, setWeekStartDate] = useState(getMonday(getTodayStr()));
+  const [selectedDate, setSelectedDate] = useState(getTodayInKorea());
+  const [weekStartDate, setWeekStartDate] = useState(getKoreanWeekStart(getTodayInKorea()));
   const [selectedEvent, setSelectedEvent] = useState<TimeGridEvent | null>(null);
   const [customerFilterId, setCustomerFilterId] = useState<string | null>(null);
 
@@ -319,7 +231,7 @@ export default function RecordsPage() {
   );
 
   const weekStats = useMemo(() => {
-    const today = getTodayStr();
+    const today = getTodayInKorea();
     // N-12: KST 기준으로 날짜 파싱 (UTC 파싱 방지)
     const todayDate = new Date(`${today}T00:00:00+09:00`);
     const weekStart = new Date(todayDate);

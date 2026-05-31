@@ -5,17 +5,10 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CustomerTagChip } from '@/components/customer/CustomerTagChip';
 import { ReservationReadinessBadge } from '@/components/reservations/ReservationReadinessBadge';
-import { Badge } from '@/components/ui';
 import { SafetyTag } from '@/components/ui/SafetyTag';
 import { FlagIcon } from '@/components/ui/FlagIcon';
 import { IconCalendar } from '@/components/icons';
-function ChannelEmojiBadge({ variant, label }: { variant: string; icon: string; label: string }) {
-  return (
-    <Badge variant={variant as 'primary' | 'neutral' | 'success' | 'warning'} size="sm">
-      {label}
-    </Badge>
-  );
-}
+import { ChannelEmojiBadge } from '@/components/home/ChannelEmojiBadge';
 import { useRouter } from 'next/navigation';
 import { useConsultationStore } from '@/store/consultation-store';
 import { useCustomerStore } from '@/store/customer-store';
@@ -23,12 +16,14 @@ import { usePortfolioStore } from '@/store/portfolio-store';
 import { useRecordsStore } from '@/store/records-store';
 import { useAppStore } from '@/store/app-store';
 import { PretreatmentAlertModal } from '@/components/alerts/PretreatmentAlertModal';
-
 import ConsultationLinkModal from '@/components/reservations/ConsultationLinkModal';
 import { getSafetyTagMeta } from '@/lib/tag-safety';
 import { PreConsultSummaryInline } from '@/components/reservations/PreConsultSummaryInline';
 import { getBookingStage } from '@/lib/booking-stage';
 import { resolveCategoryLabelKo } from '@/lib/category-resolver';
+import { addMinutesToTime, calcGapMinutes } from '@/lib/time-calculator';
+import { isRenderableImageSrc } from '@/lib/image-utils';
+import { getBookingThumbnailItems } from '@/lib/booking-thumbnail';
 import type { BookingChannel, BookingRequest } from '@/types/consultation';
 import type { CustomerTag } from '@/types/customer';
 
@@ -60,64 +55,6 @@ const LANGUAGE_SHORT_LABEL: Record<'en' | 'zh' | 'ja', string> = {
   zh: '中',
   ja: '日',
 };
-
-function addMinutesToTime(time: string, minutes: number): string | null {
-  if (!time || !time.includes(':')) return null;
-  const [h, m] = time.split(':').map(Number);
-  if (isNaN(h) || isNaN(m)) return null;
-  const total = h * 60 + m + minutes;
-  // 자정 초과(>=24:00) 시 23:59로 clamp — 다음날 표시는 별도 UX로 처리
-  if (total >= 24 * 60) return '23:59';
-  const hh = Math.floor(total / 60);
-  const mm = total % 60;
-  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
-}
-
-function calcGapMinutes(timeA: string, timeB: string): number {
-  const [ah, am] = timeA.split(':').map(Number);
-  const [bh, bm] = timeB.split(':').map(Number);
-  return (bh * 60 + bm) - (ah * 60 + am);
-}
-
-interface BookingThumbnailItem {
-  src: string;
-  label: '요청' | '이전';
-}
-
-function isRenderableImageSrc(src: string | undefined): src is string {
-  if (!src) {
-    return false;
-  }
-
-  return !src.startsWith('blob:');
-}
-
-function getBookingThumbnailItems(
-  booking: BookingRequest,
-  portfolioImageUrls: string[],
-): BookingThumbnailItem[] {
-  const items: BookingThumbnailItem[] = [];
-  const seen = new Set<string>();
-  const requestImageUrls = booking.preConsultationData?.referenceImages?.length
-    ? booking.preConsultationData.referenceImages
-    : (booking.referenceImageUrls ?? []);
-
-  for (const src of requestImageUrls) {
-    if (!isRenderableImageSrc(src) || seen.has(src)) continue;
-    seen.add(src);
-    items.push({ src, label: '요청' });
-    if (items.length >= 2) break;
-  }
-
-  for (const src of portfolioImageUrls) {
-    if (!isRenderableImageSrc(src) || seen.has(src)) continue;
-    seen.add(src);
-    items.push({ src, label: '이전' });
-    if (items.length >= 3) break;
-  }
-
-  return items;
-}
 
 export function TodayReservationCard({
   reservations,

@@ -1,6 +1,15 @@
 export const MAX_PROFILE_IMAGE_KB = 150;
 
 /**
+ * 렌더링 가능한 이미지 src 인지 확인합니다.
+ * blob: URL은 세션 간 유효하지 않으므로 false를 반환합니다.
+ */
+export function isRenderableImageSrc(src: string | undefined): src is string {
+  if (!src) return false;
+  return !src.startsWith('blob:');
+}
+
+/**
  * 이미지를 인스타그램 규격으로 리사이즈하여 다운로드
  * - 9:16 (1080×1920): 스토리/릴스
  * - 4:5 (1080×1350): 피드

@@ -86,6 +86,30 @@ export function calculateTimeBreakdown(
 }
 
 /**
+ * HH:mm 시간 문자열에 분을 더해 새로운 HH:mm 문자열을 반환합니다.
+ * 자정(24:00) 초과 시 "23:59"로 clamp.
+ */
+export function addMinutesToTime(time: string, minutes: number): string | null {
+  if (!time || !time.includes(':')) return null;
+  const [h, m] = time.split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) return null;
+  const total = h * 60 + m + minutes;
+  if (total >= 24 * 60) return '23:59';
+  const hh = Math.floor(total / 60);
+  const mm = total % 60;
+  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
+/**
+ * 두 HH:mm 시간 문자열 사이의 분 차이를 반환합니다. (timeB - timeA)
+ */
+export function calcGapMinutes(timeA: string, timeB: string): number {
+  const [ah, am] = timeA.split(':').map(Number);
+  const [bh, bm] = timeB.split(':').map(Number);
+  return (bh * 60 + bm) - (ah * 60 + am);
+}
+
+/**
  * 분을 시:분 형식의 문자열로 변환
  */
 export function minutesToTimeString(minutes: number): string {
