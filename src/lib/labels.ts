@@ -43,25 +43,35 @@ export function resolveMenuCategoryLabel(key: string, overrides?: Record<string,
 
 /**
  * 손님 화면(사전상담)용 병기 라벨 헬퍼.
- * - builtin(simple/french/magnet/art): `${한국어}(${영어})` 형태
+ * - builtin(simple/french/magnet/art): `${한국어} (${영어})` 형태
  *   - 한국어: overrides 우선 → CATEGORY_LABELS 기본값
  *   - 영어: CATEGORY_LABELS_EN 고정
- * - custom-*: customCategories에서 name + (nameEn 있으면 `(${nameEn})`).
+ * - custom-*: customCategories에서 name + (현지어 또는 nameEn 있으면 병기).
  *   못 찾으면 key 그대로.
+ * @param locale 현재 언어(optional). zh/ja인 경우 커스텀 카테고리 현지어 우선 표기.
+ *               ko는 한국어만, 미전달 시 기존 동작(ko+en 병기) 유지.
  */
 export function resolveMenuCategoryLabelBilingual(
   key: string,
   overrides?: Record<string, string>,
-  customCategories?: Array<{ id: string; name: string; nameEn?: string }>,
+  customCategories?: Array<{ id: string; name: string; nameEn?: string; nameZh?: string; nameJa?: string }>,
+  locale?: string,
 ): string {
   if (key in CATEGORY_LABELS) {
     const ko = overrides?.[key] ?? CATEGORY_LABELS[key];
     const en = CATEGORY_LABELS_EN[key];
-    return `${ko}(${en})`;
+    return `${ko} (${en})`;
   }
   const custom = customCategories?.find((c) => c.id === key);
   if (custom) {
-    return custom.nameEn?.trim() ? `${custom.name}(${custom.nameEn.trim()})` : custom.name;
+    // zh/ja: 현지어가 있으면 '현지어 (한국어)', 없으면 'name (nameEn)' 또는 name만
+    if (locale === 'zh' && custom.nameZh?.trim()) {
+      return `${custom.nameZh.trim()} (${custom.name})`;
+    }
+    if (locale === 'ja' && custom.nameJa?.trim()) {
+      return `${custom.nameJa.trim()} (${custom.name})`;
+    }
+    return custom.nameEn?.trim() ? `${custom.name} (${custom.nameEn.trim()})` : custom.name;
   }
   return key;
 }

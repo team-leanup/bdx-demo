@@ -28,8 +28,8 @@ export function GreetingHeader({
     <motion.div variants={itemVariants} className="flex items-start justify-between">
       <div className="min-w-0 flex-1">
         <p className="text-xs font-medium text-text-secondary">{shopName}</p>
-        <h1 className="mt-0.5 text-xl font-bold tracking-tight text-text">
-          {activeDesignerName ? `${activeDesignerName}님, ` : ''}{greeting} <span className="text-primary">✦</span>
+        <h1 className="mt-0.5 text-xl font-bold tracking-tight text-text break-keep">
+          {activeDesignerName ? `${activeDesignerName}님, ` : ''}{greeting} <span className="text-primary" aria-hidden="true">✦</span>
         </h1>
         <p className="mt-0.5 text-xs text-text-muted">
           {role === 'owner' ? '원장' : role === 'staff' ? '선생님' : ''}{role ? ' · ' : ''}{todayDateStr}
@@ -46,7 +46,7 @@ export function GreetingHeader({
           />
         ) : (
           <span className="text-sm font-semibold text-primary">
-            {activeDesignerName?.slice(0, 1) ?? shopName.slice(0, 1)}
+            {activeDesignerName?.slice(0, 1) ?? (shopName.slice(0, 1) || 'B')}
           </span>
         )}
       </div>

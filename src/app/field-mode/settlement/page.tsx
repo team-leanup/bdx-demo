@@ -92,15 +92,20 @@ export default function SettlementPage(): React.ReactElement | null {
   } = useFieldModeStore();
 
   // [FM-1] addOns 라벨 목록 — inTreatmentAddons에서 이미 baseEstimate에 포함된 addon을 중복 추가하면 이중청구 발생
-  // 추가 시 addOns에 포함된 addon 라벨과 동일한 경우 차단
+  // 추가 시 addOns에 포함된 addon 라벨과 동일한 경우 차단.
+  // 0531: wrappingPreference === 'yes' 이면 addOns에 'wrapping'이 없어도 baseEstimate에 랩핑이 포함됨
+  //       → 시술 중 '랩핑' 라벨 추가를 차단해 이중청구 방지.
   const addOnLabelSet = useMemo<Set<string>>(() => {
     const labels = new Set<string>();
     addOns.forEach((addon) => {
       const label = ADD_ON_LABELS[addon];
       if (label) labels.add(label);
     });
+    if (wrappingPreference === 'yes' && !addOns.includes('wrapping')) {
+      labels.add(ADD_ON_LABELS['wrapping']);
+    }
     return labels;
-  }, [addOns]);
+  }, [addOns, wrappingPreference]);
 
   const addInTreatmentAddon = (addon: { label: string; amount: number }): void => {
     // [FM-1] 기본 옵션(addOns)에 이미 포함된 항목이면 inTreatmentAddons에 추가하지 않음
@@ -136,7 +141,7 @@ export default function SettlementPage(): React.ReactElement | null {
   // M2 fix: booking별 예약금이 있으면 우선 사용, 없으면 샵 기본값
   const matchedBooking = useReservationStore((s) => s.reservations.find((r) => r.id === bookingId));
   const presetDeposit = matchedBooking?.deposit ?? shopSettings.depositAmount ?? 0;
-  const [depositApplied, setDepositApplied] = useState(0);
+  const [depositApplied, setDepositApplied] = useState(presetDeposit);
   const [customDepositInput, setCustomDepositInput] = useState('');
   const [showCustomDeposit, setShowCustomDeposit] = useState(false);
 
@@ -532,7 +537,7 @@ export default function SettlementPage(): React.ReactElement | null {
                   <button
                     key={part.id}
                     type="button"
-                    onClick={() => addInTreatmentAddon({
+                    onClick={() => _addInTreatmentAddon({
                       label: part.name,
                       amount: part.pricePerUnit,
                     })}

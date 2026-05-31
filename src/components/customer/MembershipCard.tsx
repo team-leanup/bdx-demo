@@ -33,8 +33,10 @@ const STATUS_STYLES: Record<Membership['status'], { bar: string; badge: string; 
   },
 };
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string | undefined | null): string {
+  if (!dateStr) return '—';
   const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '—';
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
 }
 

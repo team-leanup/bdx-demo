@@ -12,8 +12,8 @@ import { useReservationStore } from '@/store/reservation-store';
 import { useConsultationStore } from '@/store/consultation-store';
 import { useFieldModeStore } from '@/store/field-mode-store';
 import { ConsultationStep } from '@/types/consultation';
-import type { BookingChannel, BookingRequest } from '@/types/consultation';
-import type { RemovalPreference, LengthPreference, AddOnOption } from '@/types/pre-consultation';
+import type { BookingChannel, BookingRequest, NailShape } from '@/types/consultation';
+import type { RemovalPreference, LengthPreference, AddOnOption, WrappingPreference } from '@/types/pre-consultation';
 import { asDesignCategory } from '@/lib/design-category-guard';
 import {
   GreetingHeader,
@@ -214,8 +214,10 @@ export default function HomePage() {
       removalType: (raw?.removalPreference ?? 'none') as RemovalPreference,
       lengthType: (raw?.lengthPreference ?? 'keep') as LengthPreference,
       addOns: (raw?.addOns ?? []) as AddOnOption[],
-      wrappingPreference: (raw?.wrappingPreference as 'yes' | 'no' | undefined) ?? null,
-      customPartSelections: (raw?.customPartSelections as Record<string, number> | undefined),
+      wrappingPreference: (raw?.wrappingPreference as WrappingPreference | undefined) ?? null,
+      customPartSelections: (raw?.customPartSelections as Record<string, number> | undefined) ?? {},
+      selectedPhotoPrice: (raw?.selectedPhotoPrice as number | undefined) ?? null,
+      nailShape: (raw?.nailShape as NailShape | undefined) ?? null,
       selectedPhotoUrl: (raw?.selectedPhotoUrl as string | undefined) ?? null,
       selectedPhotoId: (raw?.selectedPhotoId as string | undefined) ?? null,
     });

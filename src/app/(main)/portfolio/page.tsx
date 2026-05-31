@@ -999,7 +999,7 @@ export default function PortfolioPage(): React.ReactElement {
             )}
           </AnimatePresence>
 
-          {/* Photo grid */}
+          {/* Photo grid — R14: 카테고리별 그룹핑. 카테고리 없는 사진은 '기타' 섹션 */}
           {filteredPhotos.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <svg className="mb-3 h-12 w-12 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -1025,67 +1025,111 @@ export default function PortfolioPage(): React.ReactElement {
                 </Button>
               )}
             </div>
-          ) : (
-            <div className="columns-2 sm:columns-3 lg:columns-4 gap-3">
-              {filteredPhotos.map(({ photo, customer, serviceType, price, effectiveDate }, idx) => {
-                const imgSrc = photo.imageDataUrl || NAIL_FALLBACKS[idx % NAIL_FALLBACKS.length];
-                return (
-                  <div
-                    key={photo.id}
-                    className="break-inside-avoid mb-3 group rounded-xl overflow-hidden bg-surface-alt shadow-sm hover:shadow-md transition-shadow"
-                  >
-                    <button
-                      onClick={() => setOverlayPhotoId(photo.id)}
-                      className="relative block w-full overflow-hidden"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={imgSrc}
-                        alt={customer?.name ?? '포트폴리오'}
-                        className="w-full h-auto block transition-transform group-hover:scale-105"
-                        loading="lazy"
-                      />
-                      {photo.isFeatured && (
-                        <span className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full bg-amber-400 text-white text-[9px] font-bold shadow-sm">
-                          메뉴
-                        </span>
-                      )}
-                    </button>
-                    <div className="p-2.5 space-y-1.5">
-                      <div className="flex items-center justify-between gap-1">
-                        <p className="text-xs font-semibold text-foreground truncate">
-                          {customer?.name ?? '미지정'}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground shrink-0">{formatDateDot(effectiveDate)}</p>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-1">
-                        {serviceType && (
-                          <span className="max-w-[80px] truncate px-2 py-0.5 rounded border border-border bg-muted text-[10px] font-medium text-muted-foreground">
-                            {serviceType}
-                          </span>
-                        )}
-                        {photo.designType && (
-                          <span className="max-w-[80px] truncate px-2 py-0.5 rounded border border-border bg-muted text-[10px] font-medium text-muted-foreground">
-                            {photo.designType}
-                          </span>
-                        )}
-                      </div>
-                      <div className="h-4 flex items-center">
-                        {price != null && (
-                          <p className="text-[11px] font-semibold text-foreground truncate">{formatPrice(price)}</p>
-                        )}
-                      </div>
-                      <MenuToggleRow
-                        photoId={photo.id}
-                        isFeatured={photo.isFeatured}
-                        featuredPrice={photo.isFeatured ? photo.price : undefined}
-                      />
+          ) : (() => {
+            // R14: categoryOrder 순서로 그룹핑, 나머지는 '기타'
+            type PhotoEntry = typeof filteredPhotos[number];
+            const grouped = new Map<string, PhotoEntry[]>();
+            categoryOrder.forEach((cat) => grouped.set(cat, []));
+            const etcKey = '__etc__';
+            grouped.set(etcKey, []);
+
+            filteredPhotos.forEach((entry) => {
+              const cat = entry.photo.styleCategory;
+              if (cat && grouped.has(cat)) {
+                grouped.get(cat)!.push(entry);
+              } else {
+                grouped.get(etcKey)!.push(entry);
+              }
+            });
+
+            // 빈 카테고리 제외, '기타'는 항목 있을 때만
+            const sections: { key: string; label: string; entries: PhotoEntry[] }[] = [];
+            categoryOrder.forEach((cat) => {
+              const entries = grouped.get(cat) ?? [];
+              if (entries.length > 0) {
+                sections.push({ key: cat, label: categoryLabelMap[cat] ?? cat, entries });
+              }
+            });
+            const etcEntries = grouped.get(etcKey) ?? [];
+            if (etcEntries.length > 0) {
+              sections.push({ key: etcKey, label: '기타', entries: etcEntries });
+            }
+
+            return (
+              <div className="flex flex-col gap-6">
+                {sections.map(({ key, label, entries }) => (
+                  <div key={key} className="flex flex-col gap-2">
+                    {/* 섹션 헤더 */}
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-text tracking-tight">{label}</h3>
+                      <span className="text-xs text-text-muted tabular-nums">{entries.length}장</span>
+                      <div className="flex-1 h-px bg-border" />
+                    </div>
+                    {/* 사진 그리드 */}
+                    <div className="columns-2 sm:columns-3 lg:columns-4 gap-3">
+                      {entries.map(({ photo, customer, serviceType, price, effectiveDate }, idx) => {
+                        const imgSrc = photo.imageDataUrl || NAIL_FALLBACKS[idx % NAIL_FALLBACKS.length];
+                        return (
+                          <div
+                            key={photo.id}
+                            className="break-inside-avoid mb-3 group rounded-xl overflow-hidden bg-surface-alt shadow-sm hover:shadow-md transition-shadow"
+                          >
+                            <button
+                              onClick={() => setOverlayPhotoId(photo.id)}
+                              className="relative block w-full overflow-hidden"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={imgSrc}
+                                alt={customer?.name ?? '포트폴리오'}
+                                className="w-full h-auto block transition-transform group-hover:scale-105"
+                                loading="lazy"
+                              />
+                              {photo.isFeatured && (
+                                <span className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full bg-amber-400 text-white text-[9px] font-bold shadow-sm">
+                                  메뉴
+                                </span>
+                              )}
+                            </button>
+                            <div className="p-2.5 space-y-1.5">
+                              <div className="flex items-center justify-between gap-1">
+                                <p className="text-xs font-semibold text-foreground truncate">
+                                  {customer?.name ?? '미지정'}
+                                </p>
+                                <p className="text-[10px] text-muted-foreground shrink-0">{formatDateDot(effectiveDate)}</p>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-1">
+                                {serviceType && (
+                                  <span className="max-w-[80px] truncate px-2 py-0.5 rounded border border-border bg-muted text-[10px] font-medium text-muted-foreground">
+                                    {serviceType}
+                                  </span>
+                                )}
+                                {photo.designType && (
+                                  <span className="max-w-[80px] truncate px-2 py-0.5 rounded border border-border bg-muted text-[10px] font-medium text-muted-foreground">
+                                    {photo.designType}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="h-4 flex items-center">
+                                {price != null && (
+                                  <p className="text-[11px] font-semibold text-foreground truncate">{formatPrice(price)}</p>
+                                )}
+                              </div>
+                              <MenuToggleRow
+                                photoId={photo.id}
+                                isFeatured={photo.isFeatured}
+                                featuredPrice={photo.isFeatured ? photo.price : undefined}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
+                ))}
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>

@@ -156,9 +156,25 @@ export default function SurchargesPage() {
 
         {/* Section 3: 추가 옵션 */}
         <SectionCard title="추가 옵션" delay={0.14}>
-          <PriceInput label="파츠" value={parts} onChange={setParts} />
-          <PriceInput label="글리터" value={glitter} onChange={setGlitter} />
-          <PriceInput label="포인트아트" value={pointArt} onChange={setPointArt} />
+          <PriceInput
+            label="파츠 초과분 (개당)"
+            value={parts}
+            onChange={setParts}
+            helper="파츠 개수가 기본 포함 수를 넘었을 때 1개당 추가금"
+          />
+          <PriceInput
+            label="큰 파츠 추가금"
+            value={glitter}
+            onChange={setGlitter}
+            helper="대형 파츠(스톤·오브제 등) 선택 시 부과되는 추가금"
+          />
+          <PriceInput
+            label="포인트아트"
+            value={pointArt}
+            onChange={setPointArt}
+            helper="포인트 아트 1개 추가 시 금액"
+          />
+          <p className="text-xs text-text-muted pt-1">고객이 선택하게 돼요</p>
         </SectionCard>
       </div>
 

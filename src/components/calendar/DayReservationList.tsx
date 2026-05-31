@@ -13,8 +13,8 @@ import { Button } from '@/components/ui/Button';
 import { PretreatmentAlertModal } from '@/components/alerts/PretreatmentAlertModal';
 import { LinkCustomerModal } from '@/components/reservations/LinkCustomerModal';
 import { ReservationReadinessBadge } from '@/components/reservations/ReservationReadinessBadge';
-import type { BookingChannel, BookingStatus, BookingRequest } from '@/types/consultation';
-import type { RemovalPreference, LengthPreference, AddOnOption } from '@/types/pre-consultation';
+import type { BookingChannel, BookingStatus, BookingRequest, NailShape } from '@/types/consultation';
+import type { RemovalPreference, LengthPreference, AddOnOption, WrappingPreference } from '@/types/pre-consultation';
 import { asDesignCategory } from '@/lib/design-category-guard';
 import { ConsultationStep } from '@/types/consultation';
 import type { CustomerTag } from '@/types/customer';
@@ -335,6 +335,12 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
       removalType: (raw?.removalPreference ?? 'none') as RemovalPreference,
       lengthType: (raw?.lengthPreference ?? 'keep') as LengthPreference,
       addOns: (raw?.addOns ?? []) as AddOnOption[],
+      // 0531 — 정산 가격 정합성: 랩핑·커스텀파츠·사진가격·손톱모양도 함께 hydrate해야
+      // 시술 시작 직후 정산 견적이 사전상담 견적과 일치한다.
+      wrappingPreference: (raw?.wrappingPreference as WrappingPreference | undefined) ?? null,
+      customPartSelections: (raw?.customPartSelections as Record<string, number> | undefined) ?? {},
+      selectedPhotoPrice: (raw?.selectedPhotoPrice as number | undefined) ?? null,
+      nailShape: (raw?.nailShape as NailShape | undefined) ?? null,
       selectedPhotoUrl: (raw?.selectedPhotoUrl as string | undefined) ?? null,
       selectedPhotoId: (raw?.selectedPhotoId as string | undefined) ?? null,
     });

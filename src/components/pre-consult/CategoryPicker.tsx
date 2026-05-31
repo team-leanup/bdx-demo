@@ -124,6 +124,7 @@ export function CategoryPicker(): React.ReactElement {
       cat.key as string,
       shopData?.categoryLabels ?? undefined,
       shopData?.customCategories ?? undefined,
+      locale,
     );
   };
 
@@ -135,7 +136,7 @@ export function CategoryPicker(): React.ReactElement {
         const displayLabel = cat.builtin
           ? resolveBuiltinLabel(cat)
           : locale !== 'ko' && cat.labelKo
-          ? resolveMenuCategoryLabelBilingual(cat.key as string, undefined, shopData?.customCategories ?? undefined)
+          ? resolveMenuCategoryLabelBilingual(cat.key as string, undefined, shopData?.customCategories ?? undefined, locale)
           : (cat.label ?? '');
         return (
           <motion.button

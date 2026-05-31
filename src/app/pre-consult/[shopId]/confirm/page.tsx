@@ -617,7 +617,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
               {/* Extension surcharge */}
               {priceEstimate.extensionSurcharge > 0 && (
                 <PriceRow
-                  label={t('preConsult.lengthExtend')}
+                  label={`${t('preConsult.lengthExtend')} (${t('preConsult.perFinger')})`}
                   amount={priceEstimate.extensionSurcharge}
                   won={t('preConsult.won')}
                   muted
@@ -628,9 +628,14 @@ export default function PreConsultConfirmPage(): React.ReactElement {
               {priceEstimate.addOnSurcharge > 0 && (
                 <PriceRow
                   label={[
-                    ...addOns.map((a) => labels.addOn[a] ?? a),
+                    ...addOns
+                      .filter((a) => a !== 'wrapping')
+                      .map((a) => labels.addOn[a] ?? a),
                     ...(wrappingPreference === 'yes' && !addOns.includes('wrapping')
-                      ? [labels.addOn.wrapping ?? '랩핑']
+                      ? [`${labels.addOn.wrapping ?? t('preConsult.wrappingLabel')} (${t('preConsult.perFinger')})`]
+                      : []),
+                    ...(addOns.includes('wrapping')
+                      ? [`${labels.addOn.wrapping ?? t('preConsult.wrappingLabel')} (${t('preConsult.perFinger')})`]
                       : []),
                   ].join(' + ')}
                   amount={priceEstimate.addOnSurcharge}

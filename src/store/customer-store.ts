@@ -13,7 +13,7 @@ import {
   dbInsertMembershipTransaction,
 } from '@/lib/db';
 import { generateId } from '@/lib/generate-id';
-import { getRemainingAmount, getUsedAmount, isMembershipExpired } from '@/lib/membership';
+import { getRemainingAmount, getUsedAmount, isMembershipExpired, getEffectiveStatus } from '@/lib/membership';
 
 interface LegacyCustomerTagAccent {
   accentColor?: TagAccent;
@@ -560,14 +560,12 @@ export const useCustomerStore = create<CustomerStore>()(
               id: txnId,
               date: getTodayInKorea(),
               type: 'use',
-              sessionsDelta: -1,
+              sessionsDelta: 0,
               amountDelta: deductedAmount > 0 ? -deductedAmount : undefined,
               recordId,
             };
 
-            // 0423: 횟수 카운터는 음수로 가지 않도록 clamp
-            const remainingSessions = Math.max(0, m.remainingSessions - 1);
-            const usedSessions = m.usedSessions + 1;
+            // 금액제 전환: 회차 카운터는 변경하지 않음 (remainingAmount/usedAmount만 진실 원천)
             const remainingAmount = Math.max(0, prevRemainingAmount - deductedAmount);
             const usedAmount = prevUsedAmount + deductedAmount;
             // 잔액 0원이면 소진 (횟수 카운터와 무관하게 금액 기준)
@@ -576,8 +574,6 @@ export const useCustomerStore = create<CustomerStore>()(
 
             const updatedMembership: Membership = {
               ...m,
-              remainingSessions,
-              usedSessions,
               remainingAmount,
               usedAmount,
               status,
@@ -600,7 +596,7 @@ export const useCustomerStore = create<CustomerStore>()(
                 shopId,
                 date: getTodayInKorea(),
                 type: 'use',
-                sessionsDelta: -1,
+                sessionsDelta: 0,
                 amountDelta: deductedAmount > 0 ? -deductedAmount : undefined,
                 recordId,
               }),
@@ -629,6 +625,8 @@ export const useCustomerStore = create<CustomerStore>()(
             if (c.id !== customerId) return c;
             const m = c.membership;
             if (!m) return c;
+            // 수정 2: expired/used_up 회원권은 차감 차단
+            if (getEffectiveStatus(m) !== 'active') return c;
             // 0531 회의: 회원권 금액 차감 — 입력값(amount)을 차감 금액(원)으로 직접 해석.
             // 잔액 초과 시 잔액만큼만 차감. (횟수 카운터는 더 이상 사용하지 않음)
             const prevRemainingAmount = getRemainingAmount(m);

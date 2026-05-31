@@ -393,6 +393,9 @@ body {
 .safe-top {
   padding-top: env(safe-area-inset-top);
 }
+.pt-safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
 .safe-bottom {
   padding-bottom: max(8px, env(safe-area-inset-bottom));
 }

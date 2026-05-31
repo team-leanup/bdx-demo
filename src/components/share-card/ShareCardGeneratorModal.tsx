@@ -300,10 +300,11 @@ export function ShareCardGeneratorModal({
             className="relative w-full max-w-sm sm:mx-4 rounded-t-3xl sm:rounded-3xl bg-background shadow-2xl max-h-[92dvh] flex flex-col"
             role="dialog"
             aria-modal="true"
+            aria-labelledby="share-card-modal-title"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
-              <h2 className="text-base font-bold text-text">{t('shareCard.createCard')}</h2>
+              <h2 id="share-card-modal-title" className="text-base font-bold text-text">{t('shareCard.createCard')}</h2>
               <button
                 type="button"
                 onClick={onClose}

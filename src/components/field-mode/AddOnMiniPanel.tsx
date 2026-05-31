@@ -49,9 +49,11 @@ export function AddOnMiniPanel({
   // 커스텀 파츠가 설정돼 있으면 일반 '파츠' 버튼은 스테퍼로 대체, 나머지 표준 추가금은 항상 노출
   const quickAdds = hasCustomParts ? STANDARD_ADDS : [PARTS_ADD, ...STANDARD_ADDS];
 
-  const handleQuickAdd = (labelKey: string, amount: number): void => {
-    onAdd({ label: t(labelKey), amount });
-  };
+  // 스테퍼로 이미 표시 중인 라벨 집합 — 하단 목록에서 중복 제외하기 위해 빌드
+  const stepperLabels = new Set<string>([
+    ...(customParts ?? []).map((p) => p.name),
+    ...quickAdds.map(({ labelKey, getAmount }) => (getAmount(surcharges) > 0 ? t(labelKey) : '')).filter(Boolean),
+  ]);
 
   const handleCustomSubmit = (): void => {
     const trimmed = customLabel.trim();
@@ -131,22 +133,61 @@ export function AddOnMiniPanel({
             );
           })}
 
-        {/* 표준 추가금 — 탭마다 1개씩 누적 (비활성화 없음) */}
+        {/* 표준 추가금 — 커스텀 파츠와 동일한 수량 스테퍼 UI (방향 A: store 구조 유지, 표시 단계에서 label 기준 group) */}
         {quickAdds.map(({ labelKey, getAmount }) => {
           const amount = getAmount(surcharges);
           if (amount <= 0) return null;
+          const label = t(labelKey);
+          // 동일 라벨 항목을 group해 qty 계산
+          const matching = addons.filter((a) => a.label === label);
+          const qty = matching.length;
+          const addOne = (): void => onAdd({ label, amount });
+          const removeOne = (): void => {
+            const last = matching[matching.length - 1];
+            if (last) onRemove(last.id);
+          };
+          if (qty === 0) {
+            return (
+              <button
+                key={labelKey}
+                type="button"
+                onClick={addOne}
+                className="min-h-[44px] rounded-xl px-3 py-2 bg-surface-alt border border-border text-sm font-medium text-text hover:border-primary hover:bg-primary/5 active:scale-[0.97] transition-all duration-150 select-none"
+              >
+                {label}{' '}
+                <span className="text-primary font-semibold">
+                  +₩{amount.toLocaleString()}
+                </span>
+              </button>
+            );
+          }
           return (
-            <button
+            <div
               key={labelKey}
-              type="button"
-              onClick={() => handleQuickAdd(labelKey, amount)}
-              className="min-h-[44px] rounded-xl px-3 py-2 bg-surface-alt border border-border text-sm font-medium text-text hover:border-primary hover:bg-primary/5 active:scale-[0.97] transition-all duration-150 select-none"
+              className="min-h-[44px] inline-flex items-center gap-2 rounded-xl pl-3 pr-1 py-1 bg-primary/5 border border-primary/40"
             >
-              {t(labelKey)}{' '}
-              <span className="text-primary font-semibold">
-                +₩{amount.toLocaleString()}
-              </span>
-            </button>
+              <span className="text-sm font-semibold text-text">{label}</span>
+              <span className="text-xs text-primary font-medium tabular-nums">₩{amount.toLocaleString()}</span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={removeOne}
+                  aria-label={`${label} 1개 빼기`}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-surface border border-border text-base font-bold leading-none text-text-secondary hover:border-primary active:scale-95 transition-all"
+                >
+                  −
+                </button>
+                <span className="min-w-[1.25rem] text-center text-sm font-bold text-primary tabular-nums">{qty}</span>
+                <button
+                  type="button"
+                  onClick={addOne}
+                  aria-label={`${label} 1개 추가`}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-base font-bold leading-none text-white hover:bg-primary-dark active:scale-95 transition-all"
+                >
+                  +
+                </button>
+              </div>
+            </div>
           );
         })}
 
@@ -208,15 +249,15 @@ export function AddOnMiniPanel({
         )}
       </AnimatePresence>
 
-      {/* Added items list */}
+      {/* Added items list — 스테퍼로 관리되는 항목(커스텀 파츠·표준 추가금)은 위에서 표시되므로 여기선 기타 직접입력만 노출 */}
       <AnimatePresence initial={false}>
-        {addons.length > 0 && (
+        {addons.some((a) => !stepperLabels.has(a.label)) && (
           <motion.ul
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="flex flex-col gap-1.5 mt-1"
           >
-            {addons.map((addon) => (
+            {addons.filter((a) => !stepperLabels.has(a.label)).map((addon) => (
               <motion.li
                 key={addon.id}
                 layout

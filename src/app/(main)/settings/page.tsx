@@ -187,13 +187,13 @@ function CustomPartsManager() {
               <div className="flex items-center gap-1 flex-shrink-0">
                 <button
                   onClick={() => setConfirmDeleteId(null)}
-                  className="rounded-md border border-border px-2 py-1 text-[11px] font-semibold text-text-secondary hover:bg-surface transition-colors"
+                  className="rounded-md border border-border px-2 py-1 text-xs font-semibold text-text-secondary hover:bg-surface transition-colors"
                 >
                   {t('common.cancel')}
                 </button>
                 <button
                   onClick={() => handleDelete(part.id)}
-                  className="rounded-md bg-error/10 border border-error/30 px-2 py-1 text-[11px] font-semibold text-error hover:bg-error/20 transition-colors"
+                  className="rounded-md bg-error/10 border border-error/30 px-2 py-1 text-xs font-semibold text-error hover:bg-error/20 transition-colors"
                 >
                   {t('common.delete')}
                 </button>
@@ -623,12 +623,12 @@ function StaffSection() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-semibold text-text truncate min-w-0">{d.name}</span>
                       {d.role === 'owner' && (
-                        <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-medium text-primary">
+                        <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary">
                           {t('settings.staff_owner')}
                         </span>
                       )}
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                           d.isActive
                             ? 'bg-success/15 text-success'
                             : 'bg-error/15 text-error'
@@ -644,7 +644,7 @@ function StaffSection() {
                 <div className="flex flex-wrap items-center gap-1.5 pl-11">
                   <button
                     onClick={() => startEdit(d)}
-                    className="rounded-lg border border-border px-2.5 py-2 text-[11px] font-semibold text-text-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary transition-all"
+                    className="rounded-lg border border-border px-2.5 py-2 text-xs font-semibold text-text-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary transition-all"
                     disabled={isBusy}
                   >
                     프로필 수정
@@ -652,7 +652,7 @@ function StaffSection() {
                   <label
                     htmlFor={inputId}
                     className={cn(
-                      'rounded-lg border border-border px-2.5 py-2 text-[11px] font-semibold text-text-secondary transition-all',
+                      'rounded-lg border border-border px-2.5 py-2 text-xs font-semibold text-text-secondary transition-all',
                       isBusy
                         ? 'cursor-not-allowed opacity-40'
                         : 'cursor-pointer hover:border-primary/40 hover:bg-primary/10 hover:text-primary',
@@ -671,7 +671,7 @@ function StaffSection() {
                   {hasImage && (
                     <button
                       onClick={() => void handleDeleteProfileImage(d.id)}
-                      className="rounded-lg border border-border px-2.5 py-2 text-[11px] font-semibold text-text-secondary hover:border-error/40 hover:bg-error/10 hover:text-error transition-all"
+                      className="rounded-lg border border-border px-2.5 py-2 text-xs font-semibold text-text-secondary hover:border-error/40 hover:bg-error/10 hover:text-error transition-all"
                       disabled={isBusy}
                     >
                       사진 삭제
@@ -681,14 +681,14 @@ function StaffSection() {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => setConfirmDeleteId(null)}
-                        className="rounded-md border border-border px-2 py-1 text-[11px] font-semibold text-text-secondary hover:bg-surface transition-colors"
+                        className="rounded-md border border-border px-2 py-1 text-xs font-semibold text-text-secondary hover:bg-surface transition-colors"
                         disabled={isBusy}
                       >
                         취소
                       </button>
                       <button
                         onClick={() => void handleDelete(d)}
-                        className="rounded-md border border-error/30 bg-error/10 px-2 py-1 text-[11px] font-semibold text-error hover:bg-error/20 transition-colors"
+                        className="rounded-md border border-error/30 bg-error/10 px-2 py-1 text-xs font-semibold text-error hover:bg-error/20 transition-colors"
                         disabled={isBusy}
                       >
                         삭제
@@ -697,7 +697,7 @@ function StaffSection() {
                   ) : (
                     <button
                       onClick={() => void handleDelete(d)}
-                      className="rounded-lg border border-border px-2.5 py-2 text-[11px] font-semibold text-text-secondary hover:border-error/40 hover:bg-error/10 hover:text-error transition-all disabled:opacity-40"
+                      className="rounded-lg border border-border px-2.5 py-2 text-xs font-semibold text-text-secondary hover:border-error/40 hover:bg-error/10 hover:text-error transition-all disabled:opacity-40"
                       disabled={isBusy || d.role === 'owner'}
                     >
                       프로필 삭제
@@ -723,25 +723,25 @@ function StaffSection() {
                       <button
                         onClick={() => void handlePinSave(d.id)}
                         disabled={pinBusyId === d.id || newPin.length !== 4}
-                        className="rounded-lg bg-primary px-2.5 py-2 text-[11px] font-semibold text-white disabled:opacity-40"
+                        className="rounded-lg bg-primary px-2.5 py-2 text-xs font-semibold text-white disabled:opacity-40"
                       >
                         {pinBusyId === d.id ? '저장 중...' : '저장'}
                       </button>
                       <button
                         onClick={() => { setPinEditingId(null); setNewPin(''); }}
                         disabled={pinBusyId === d.id}
-                        className="rounded-lg border border-border px-2.5 py-2 text-[11px] font-semibold text-text-secondary"
+                        className="rounded-lg border border-border px-2.5 py-2 text-xs font-semibold text-text-secondary"
                       >
                         취소
                       </button>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-text-muted">PIN: ••••</span>
+                      <span className="text-xs text-text-muted">PIN: ••••</span>
                       <button
                         onClick={() => { setPinEditingId(d.id); setNewPin(''); setFeedback(null); }}
                         disabled={isBusy}
-                        className="rounded-lg border border-border px-2.5 py-1 text-[11px] font-semibold text-text-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary transition-all"
+                        className="rounded-lg border border-border px-2.5 py-1 text-xs font-semibold text-text-secondary hover:border-primary/40 hover:bg-primary/10 hover:text-primary transition-all"
                       >
                         변경
                       </button>
@@ -907,7 +907,7 @@ function OperatingHoursSection() {
                   </button>
                 ))}
               </div>
-              <p className="text-[11px] text-text-muted mt-2">{t('settings.hours_closedNote')}</p>
+              <p className="text-xs text-text-muted mt-2">{t('settings.hours_closedNote')}</p>
             </div>
           </div>
         ) : (
@@ -945,7 +945,7 @@ function OperatingHoursSection() {
                       onChange={(v) => updateDaySchedule(i, { openTime: v })}
                       disabled={!s.isOpen}
                     />
-                    <span className="text-text-muted text-[10px]">~</span>
+                    <span className="text-text-muted text-xs">~</span>
                     <TimeInput
                       value={s.closeTime}
                       onChange={(v) => updateDaySchedule(i, { closeTime: v })}
@@ -1469,7 +1469,7 @@ export default function SettingsPage() {
                     onChange={(e) => void handleLogoChange(e)}
                     disabled={logoUploading}
                   />
-                  <span className="text-[11px] text-text-muted">고객 화면·첫 화면에 표시돼요</span>
+                  <span className="text-xs text-text-muted">고객 화면·첫 화면에 표시돼요</span>
                 </div>
               </div>
 
@@ -1678,7 +1678,7 @@ export default function SettingsPage() {
             <div className="mb-3 flex items-center justify-between">
               <div>
                 <span className="text-sm font-medium text-text">시술 종류</span>
-                <p className="mt-0.5 text-[11px] text-text-muted">사전상담·현장모드·포트폴리오에서 사용됩니다 (최대 {4 + MAX_CUSTOM_CATEGORIES}개)</p>
+                <p className="mt-0.5 text-xs text-text-muted">사전상담·현장모드·포트폴리오에서 사용됩니다 (최대 {4 + MAX_CUSTOM_CATEGORIES}개)</p>
               </div>
               {!editingCategoryPricing ? (
                 <button
@@ -1811,7 +1811,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <details className="mt-2">
-                    <summary className="cursor-pointer text-[11px] text-text-muted hover:text-text-secondary">다국어 이름 (선택) · 미입력 시 한국어로 표시</summary>
+                    <summary className="cursor-pointer text-xs text-text-muted hover:text-text-secondary">다국어 이름 (선택) · 미입력 시 한국어로 표시</summary>
                     <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <input
                         type="text"
@@ -1877,14 +1877,14 @@ export default function SettingsPage() {
 
             <div className="mb-2">
               <p className="text-xs font-medium text-text-secondary">{t('settings.service_customParts')}</p>
-              <p className="text-[11px] text-text-muted mt-0.5">{t('settings.service_customPartsDesc')}</p>
+              <p className="text-xs text-text-muted mt-0.5">{t('settings.service_customPartsDesc')}</p>
             </div>
             <CustomPartsManager />
 
             <Card className="mx-4 md:mx-0">
               <div className="mb-3">
                 <span className="text-sm font-medium text-text">시술 항목 관리</span>
-                <p className="mt-0.5 text-[11px] text-text-muted">현재 매장에서 제공 중인 시술을 선택하세요. OFF한 항목은 상담 시 표시되지 않습니다.</p>
+                <p className="mt-0.5 text-xs text-text-muted">현재 매장에서 제공 중인 시술을 선택하세요. OFF한 항목은 상담 시 표시되지 않습니다.</p>
               </div>
 
               <div className="flex flex-col gap-0">
@@ -1892,7 +1892,7 @@ export default function SettingsPage() {
                   <div key={item.key} className="flex items-center justify-between border-b border-border/50 py-3 last:border-b-0">
                     <div>
                       <p className="text-sm font-medium text-text">{item.label}</p>
-                      <p className="text-[11px] text-text-muted">{item.description}</p>
+                      <p className="text-xs text-text-muted">{item.description}</p>
                     </div>
                     <Toggle
                       checked={shopSettings.serviceStructure[item.key]}

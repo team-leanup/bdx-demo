@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '@/store/auth-store';
 import { useLocaleStore } from '@/store/locale-store';
 import { useAppStore } from '@/store/app-store';
@@ -35,6 +35,19 @@ export function StatusBar({ shopName: shopNameProp }: StatusBarProps) {
   const logoPublicUrl = storeLogoUrl ? getShopLogoPublicUrl(storeLogoUrl) : null;
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showSwitcher, setShowSwitcher] = useState(false);
+  const langTriggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!showLangMenu) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowLangMenu(false);
+        langTriggerRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showLangMenu]);
 
   return (
     <>
@@ -74,10 +87,13 @@ export function StatusBar({ shopName: shopNameProp }: StatusBarProps) {
         <div className="flex items-center gap-1 relative">
           {/* Language toggle */}
           <button
+            ref={langTriggerRef}
             type="button"
             onClick={() => setShowLangMenu((v) => !v)}
             className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-alt transition-colors"
             aria-label="언어 변경"
+            aria-expanded={showLangMenu}
+            aria-haspopup="listbox"
           >
             <svg
               className="w-5 h-5 text-text-secondary"
@@ -104,13 +120,20 @@ export function StatusBar({ shopName: shopNameProp }: StatusBarProps) {
                 className="fixed inset-0 z-40"
                 onClick={() => setShowLangMenu(false)}
               />
-              <div className="absolute right-0 top-full mt-1 z-50 bg-surface border border-border rounded-xl shadow-lg p-2 flex flex-col gap-1 min-w-[110px]">
+              <div
+                role="listbox"
+                aria-label="언어 선택"
+                className="absolute right-0 top-full mt-1 z-50 bg-surface border border-border rounded-xl shadow-lg p-2 flex flex-col gap-1 min-w-[110px]"
+              >
                 {LOCALE_LABELS.map((opt) => (
                   <button
                     key={opt.value}
+                    role="option"
+                    aria-selected={locale === opt.value}
                     onClick={() => {
                       setLocale(opt.value);
                       setShowLangMenu(false);
+                      langTriggerRef.current?.focus();
                     }}
                     className={cn(
                       'text-xs font-medium px-3 py-1.5 rounded-lg transition-colors text-left',

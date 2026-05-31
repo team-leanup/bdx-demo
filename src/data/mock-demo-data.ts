@@ -128,9 +128,9 @@ export const DEMO_CUSTOMERS: Customer[] = [
     preference: { customerId: 'demo-c-003', preferredShape: '오벌', preferredLength: '보통', cuticleSensitivity: 'sensitive' as const, updatedAt: isoKR(NOW) },
     membership: {
       id: 'demo-mb-c003',
-      totalSessions: 10,
-      usedSessions: 3,
-      remainingSessions: 7,
+      totalSessions: 0,
+      usedSessions: 0,
+      remainingSessions: 0,
       purchaseAmount: 500000,
       usedAmount: 150000,
       remainingAmount: 350000,

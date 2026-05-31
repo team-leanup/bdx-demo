@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { useT, useKo, useLocale } from '@/lib/i18n';
 import { usePreConsultStore } from '@/store/pre-consult-store';
-import { fetchBookingRequestById, fetchConsultationLinkPublic, fetchShopPreConsultLinkData } from '@/lib/db';
+import { fetchBookingRequestById, fetchConsultationLinkPublic, fetchShopPreConsultLinkData, getShopLogoPublicUrl } from '@/lib/db';
 import { Button } from '@/components/ui/Button';
 import { SlotPicker } from '@/components/pre-consult/SlotPicker';
 import { computeAvailableDates } from '@/lib/consultation-link-slots';
@@ -32,6 +32,7 @@ function PreConsultStartInner(): React.ReactElement {
   const locale = useLocale();
 
   const shopName = usePreConsultStore((s) => s.shopName);
+  const shopData = usePreConsultStore((s) => s.shopData);
   const setBookingId = usePreConsultStore((s) => s.setBookingId);
   const setConsultationLinkId = usePreConsultStore((s) => s.setConsultationLinkId);
   const setSelectedSlot = usePreConsultStore((s) => s.setSelectedSlot);
@@ -146,6 +147,9 @@ function PreConsultStartInner(): React.ReactElement {
   const displayShopName = linkData?.shopName || shopName;
   const heroTitle = linkData?.title || t('preConsult.heroTitle');
   const heroSub = linkData?.description || t('preConsult.heroSub');
+  const logoUrl = shopData?.logoUrl
+    ? getShopLogoPublicUrl(shopData.logoUrl)
+    : null;
 
   return (
     <div className="flex-1 flex flex-col px-6 py-6 gap-6 overflow-y-auto">
@@ -155,6 +159,17 @@ function PreConsultStartInner(): React.ReactElement {
         transition={{ duration: 0.5 }}
         className="text-center flex flex-col gap-3 pt-4"
       >
+        {/* 매장 로고 (있을 때만 표시) */}
+        {logoUrl && (
+          <div className="flex justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={logoUrl}
+              alt={displayShopName ?? ''}
+              className="h-12 w-12 rounded-full object-cover border border-border"
+            />
+          </div>
+        )}
         <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mx-auto">
           <span className="font-bold">{displayShopName}</span>
           <span className="text-text-muted">{t('preConsult.sentBy')}</span>

@@ -525,13 +525,15 @@ export default function WrapUpPage(): React.ReactElement {
             estimatedMinutes: currentRecord.estimatedMinutes,
           }}
           portfolioPhotos={[
-            ...portfolioPhotos.map((p) => ({
-              id: p.id,
-              imageDataUrl: p.imageDataUrl,
-              imagePath: p.imagePath,
-            })),
+            ...portfolioPhotos
+              .filter((p) => p.imageDataUrl || p.imagePath)
+              .map((p) => ({
+                id: p.id,
+                imageDataUrl: p.imageDataUrl,
+                imagePath: p.imagePath,
+              })),
             ...afterPhotoUrls
-              .filter((url) => !portfolioPhotos.some((p) => p.imageDataUrl === url))
+              .filter((url) => url && !portfolioPhotos.some((p) => p.imageDataUrl === url))
               .map((url, i) => ({
                 id: `after-photo-${i}`,
                 imageDataUrl: url,

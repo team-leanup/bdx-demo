@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -63,12 +63,22 @@ export function PortfolioOverlay({
   const [editingPartsMemo, setEditingPartsMemo] = useState(false);
   const [partsMemoInput, setPartsMemoInput] = useState('');
 
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   const currentIndex = photoIds.indexOf(currentId);
   const photo = photos.find((p) => p.id === currentId);
   const customer = photo?.customerId ? customerMap.get(photo.customerId) : undefined;
   const linkedRecord = photo?.recordId ? recordMap.get(photo.recordId) : undefined;
   const serviceType = photo?.serviceType
-    ?? (linkedRecord ? DESIGN_SCOPE_LABEL[linkedRecord.consultation.designScope] ?? linkedRecord.consultation.designScope : undefined);
+    ?? (linkedRecord ? DESIGN_SCOPE_LABEL[linkedRecord.consultation?.designScope] ?? linkedRecord.consultation?.designScope : undefined);
   const effectivePrice = photo?.price ?? linkedRecord?.finalPrice;
   const effectiveDate = photo ? (photo.takenAt ?? photo.createdAt) : undefined;
   const imgSrc = photo?.imageDataUrl || NAIL_FALLBACKS[currentIndex % NAIL_FALLBACKS.length];
@@ -78,7 +88,7 @@ export function PortfolioOverlay({
   // 그 외 카테고리는 designCategoryToScope로 DesignScope로 변환, 없으면 linkedRecord 값, 기본값 full_art
   const derivedScope: DesignScope | string = photo?.styleCategory
     ? (photo.styleCategory === 'magnet' ? 'magnet' : designCategoryToScope(photo.styleCategory))
-    : (linkedRecord?.consultation.designScope ?? 'full_art');
+    : (linkedRecord?.consultation?.designScope ?? 'full_art');
 
   const goPrev = useCallback(() => {
     if (currentIndex > 0) setCurrentId(photoIds[currentIndex - 1]);
@@ -113,6 +123,9 @@ export function PortfolioOverlay({
           exit={{ y: 40, opacity: 0 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
           className="relative w-full max-w-sm sm:mx-4 rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl bg-surface max-h-[90dvh] flex flex-col"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="portfolio-overlay-title"
           onClick={(e) => e.stopPropagation()}
         >
           {/* 사진 */}
@@ -129,7 +142,7 @@ export function PortfolioOverlay({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
             </button>
-            <button onClick={onClose} aria-label="닫기" className="absolute top-3 right-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm">
+            <button ref={closeButtonRef} onClick={onClose} aria-label="닫기" className="absolute top-3 right-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm">
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
 
@@ -164,7 +177,7 @@ export function PortfolioOverlay({
           <div className="flex-1 overflow-y-auto">
             {/* 정보 */}
             <div className="px-4 pt-3 pb-2">
-              <p className="text-base font-bold text-text truncate">{photo.designType ?? customer?.name ?? '미지정'}</p>
+              <p id="portfolio-overlay-title" className="text-base font-bold text-text truncate">{photo.designType ?? customer?.name ?? '미지정'}</p>
               <div className="flex items-center gap-2 mt-0.5 text-xs text-text-secondary">
                 {customer?.name && <span>{customer.name}</span>}
                 {serviceType && <span className="text-primary font-medium">{serviceType}</span>}
@@ -198,13 +211,13 @@ export function PortfolioOverlay({
                     />
                     <button
                       onClick={() => { void updatePhotoMetadata(photo.id, { partsMemo: partsMemoInput.trim() || undefined }); setEditingPartsMemo(false); }}
-                      className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white"
+                      className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white min-h-[44px]"
                     >
                       저장
                     </button>
                     <button
                       onClick={() => setEditingPartsMemo(false)}
-                      className="rounded-lg border border-border px-3 py-1.5 text-xs text-text-secondary"
+                      className="rounded-lg border border-border px-3 py-1.5 text-xs text-text-secondary min-h-[44px]"
                     >
                       취소
                     </button>
@@ -212,7 +225,7 @@ export function PortfolioOverlay({
                 ) : (
                   <button
                     onClick={() => { setPartsMemoInput(photo.partsMemo ?? ''); setEditingPartsMemo(true); }}
-                    className="flex items-center gap-1 text-[11px] text-text-secondary hover:text-primary transition-colors"
+                    className="flex items-center gap-1 text-[11px] text-text-secondary hover:text-primary transition-colors min-h-[44px]"
                   >
                     <svg className="w-3 h-3 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -255,7 +268,7 @@ export function PortfolioOverlay({
             <div className="border-t border-border px-4 py-3">
               <button
                 onClick={() => setShowShareCard(true)}
-                className="w-full rounded-xl bg-primary py-2.5 text-xs font-bold text-white"
+                className="w-full rounded-xl bg-primary py-2.5 text-xs font-bold text-white min-h-[44px]"
               >
                 공유카드 만들기
               </button>
@@ -265,7 +278,7 @@ export function PortfolioOverlay({
             <div className="border-t border-border px-4 py-3">
               <button
                 onClick={() => { router.push(`/field-mode?portfolioId=${photo.id}`); onClose(); }}
-                className="w-full rounded-xl bg-primary py-2.5 text-xs font-bold text-white"
+                className="w-full rounded-xl bg-primary py-2.5 text-xs font-bold text-white min-h-[44px]"
               >
                 이 디자인으로 시술 시작
               </button>
@@ -275,7 +288,7 @@ export function PortfolioOverlay({
             <div className="border-t border-border px-4 py-3 flex gap-2">
               <button
                 onClick={() => toggleMenu(photo.id, photo.price)}
-                className={cn('rounded-xl px-4 py-2.5 text-xs font-medium transition-colors',
+                className={cn('rounded-xl px-4 py-2.5 text-xs font-medium transition-colors min-h-[44px]',
                   photo.isFeatured ? 'bg-amber-50 text-amber-600 border border-amber-200' : 'border border-border text-text-secondary',
                 )}
               >
@@ -284,7 +297,7 @@ export function PortfolioOverlay({
               {photo.recordId && (
                 <button
                   onClick={() => { router.push(`/records/${photo.recordId}`); onClose(); }}
-                  className="flex-1 rounded-xl border border-border py-2.5 text-xs font-medium text-text-secondary"
+                  className="flex-1 rounded-xl border border-border py-2.5 text-xs font-medium text-text-secondary min-h-[44px]"
                 >
                   기록 상세
                 </button>
@@ -299,8 +312,11 @@ export function PortfolioOverlay({
                 <button
                   key={pid}
                   onClick={() => setCurrentId(pid)}
-                  className={cn('h-1.5 rounded-full transition-all', pid === currentId ? 'w-4 bg-primary' : 'w-1.5 bg-border')}
-                />
+                  aria-label={`사진 ${photoIds.indexOf(pid) + 1}번으로 이동`}
+                  className={cn('relative flex items-center justify-center min-w-[44px] min-h-[44px]')}
+                >
+                  <span className={cn('h-1.5 rounded-full transition-all', pid === currentId ? 'w-4 bg-primary' : 'w-1.5 bg-border')} />
+                </button>
               ))}
             </div>
           )}
@@ -338,7 +354,7 @@ export function PortfolioOverlay({
           portfolioPhotos={[{ id: photo.id, imageDataUrl: photo.imageDataUrl }]}
           shopName={shopName}
           categoryLabel={resolveCategoryLabelKo(
-            linkedRecord?.consultation.designCategory ?? photo.styleCategory ?? derivedScope,
+            linkedRecord?.consultation?.designCategory ?? photo.styleCategory ?? derivedScope,
             shopSettings,
           )}
         />
