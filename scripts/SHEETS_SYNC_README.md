@@ -5,7 +5,7 @@
 ## 구성
 
 - **DB 함수** (`supabase/migrations/...add_bdx_admin_stats_rpc.sql`) — Supabase 에 이미 적용 완료
-  - `public.get_bdx_admin_stats()` — 전체 집계 (anon 키로 호출 가능)
+  - `public.get_bdx_admin_stats()` — 전체 집계 (**service_role 키 필요** — 0530 보안 변경)
   - `public.get_bdx_shop_stats()` — 샵별 상세 (service_role 키 필요)
 - **Apps Script** (`scripts/sheets-bdx-stats.gs`) — 시트에 붙여넣을 코드
 - **시트** — `BDX-현황표` (https://docs.google.com/spreadsheets/d/1U2zYcGAGFY6slF-nLOeB3l0xcTGWibkaU3V88t0Va-Q)
@@ -18,8 +18,12 @@
 2. `Code.gs` 의 모든 내용 삭제 → `scripts/sheets-bdx-stats.gs` 내용 전체 붙여넣기 → 저장
 3. 좌측 톱니바퀴 (`Project Settings`) → `Script properties` → `Add script property`
    - `SUPABASE_URL` = `https://pzwmqorvrhdkckkdqemo.supabase.co`
-   - `SUPABASE_ANON_KEY` = (Supabase Dashboard → Project Settings → API → `anon` `public`)
-   - `SUPABASE_SERVICE_KEY` = (동일 페이지 → `service_role` `secret`)  ※ 샵별 탭이 필요 없으면 생략
+   - `SUPABASE_SERVICE_KEY` = (Supabase Dashboard → Project Settings → API → `service_role` `secret`) **필수**
+   - `SUPABASE_ANON_KEY` = (동일 페이지 → `anon` `public`)  ※ 현재 코드 미사용(하위호환 보관용)
+
+   > ⚠️ **2026-05-30 보안 변경**: 두 RPC 모두 anon 에게 비즈니스 지표·PII 를 노출하므로
+   > anon/authenticated EXECUTE 권한을 회수하고 **service_role 전용**으로 좁혔습니다.
+   > 따라서 `전체 현황`·`샵별 현황` 두 탭 모두 `SUPABASE_SERVICE_KEY` 가 있어야 동기화됩니다.
 4. 상단 함수 선택 박스에서 `syncAll` 선택 → `▶ 실행` → 권한 승인 (Google 계정 로그인)
 5. 시계 아이콘 (`트리거`) → `+ 트리거 추가`
    - 실행 함수: `syncAll`

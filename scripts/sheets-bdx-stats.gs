@@ -27,8 +27,11 @@ function syncAll() {
 function syncOverview() {
   const props = PropertiesService.getScriptProperties();
   const url = props.getProperty('SUPABASE_URL');
-  const key = props.getProperty('SUPABASE_ANON_KEY');
-  if (!url || !key) throw new Error('SUPABASE_URL / SUPABASE_ANON_KEY 가 Script properties 에 설정되지 않았습니다.');
+  // 0531: get_bdx_admin_stats 는 보안 감사(20260530_audit_fixes.sql)로 anon/authenticated EXECUTE 가 회수됨.
+  //       (전체 비즈니스 지표가 anon 키로 노출되던 문제) → service_role 키로만 호출 가능.
+  //       ANON_KEY 로 호출하면 403/PGRST → 시트 갱신 중단. 반드시 SERVICE_KEY 사용.
+  const key = props.getProperty('SUPABASE_SERVICE_KEY');
+  if (!url || !key) throw new Error('SUPABASE_URL / SUPABASE_SERVICE_KEY 가 Script properties 에 설정되지 않았습니다. (get_bdx_admin_stats 는 service_role 전용)');
 
   const res = UrlFetchApp.fetch(`${url}/rest/v1/rpc/get_bdx_admin_stats`, {
     method: 'post',

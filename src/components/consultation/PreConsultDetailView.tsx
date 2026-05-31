@@ -20,11 +20,17 @@ export const PRE_SHAPE_LABEL: Record<string, string> = {
   almond: '아몬드', stiletto: '스틸레토', coffin: '코핀',
 };
 export const PRE_WRAPPING_LABEL: Record<string, string> = { yes: '랩핑 원함', no: '랩핑 불필요' };
-export const PRE_FEEL_LABEL: Record<string, string> = { natural: '내추럴', french: '프렌치', trendy: '트렌디', fancy: '화려한' };
-export const PRE_STYLE_PREF_LABEL: Record<string, string> = { photo_match: '사진과 동일하게', natural_fit: '자연스럽게', clean_subtle: '깔끔하게' };
+// 0531 — 손님이 사전상담에서 실제로 본/고른 문구를 원장도 "그대로" 보도록 i18n ko preConsult.* 와 동일 표기로 통일.
+// (이전: 내추럴/사진과 동일하게/오피스 룩 등 임의 축약 → 손님 선택과 불일치)
+export const PRE_FEEL_LABEL: Record<string, string> = {
+  natural: '심플하고 자연스럽게', french: '깔끔한 프렌치 느낌', trendy: '트렌디한 디자인 느낌', fancy: '화려한 아트 느낌',
+};
+export const PRE_STYLE_PREF_LABEL: Record<string, string> = {
+  photo_match: '사진과 최대한 비슷하게', natural_fit: '자연스럽게 어울리게', clean_subtle: '깔끔하고 튀지 않게',
+};
 export const PRE_STYLE_KW_LABEL: Record<string, string> = {
-  office_friendly: '오피스 룩', slim_fingers: '손가락 길어보이게',
-  tidy_look: '단정한 느낌', subtle_point: '은은한 포인트', more_fancy: '좀 더 화려하게',
+  office_friendly: '직장에서도 무난하게', slim_fingers: '손이 길어 보이게',
+  tidy_look: '깔끔해 보이게', subtle_point: '포인트만 살짝', more_fancy: '조금 더 화려하게',
 };
 export const PRE_ADDON_LABEL: Record<string, string> = { stone: '스톤', parts: '파츠', glitter: '글리터', point_art: '포인트 아트', wrapping: '랩핑' };
 export const PRE_BODY_PART_LABEL: Record<string, string> = { hand: '손', foot: '발' };
