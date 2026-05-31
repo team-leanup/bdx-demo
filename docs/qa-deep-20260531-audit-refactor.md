@@ -80,7 +80,29 @@
 - `db.ts`(2406줄) 도메인 분리 — re-export 유지하며 단계적 PR 권장(이번엔 createId 중복만).
 - `price-calculator.ts` DEFAULT_SERVICE_PRICING.wrapping SSOT — 레거시 가산 모델 가격에 영향 가능, 파일럿 후 처리.
 
-## 4. 보류/후속 (오너 결정 필요)
+## 4. 실도메인 QA (beauty-decision.com, 배포 후 직접 검증)
+
+Vercel 재배포(빌드 EXIT 0) 후 실도메인에서 Chrome으로 직접 검증. **전 페이지 콘솔 에러 0.**
+
+| 항목 | 결과 |
+|------|------|
+| 설정(리팩토링 53%↓) | 매장/서비스 탭, StaffSection·OperatingHoursSection·CustomPartsManager·MembershipPlansSection 모두 정상 렌더 |
+| R5 회원권 금액제 | "10만원 회원권 / ₩100,000 충전" 회차 표기 없음 |
+| R10 손가락당 | 설정 "연장·랩핑 추가금 (손가락당)" |
+| R4 대시보드 | "오늘 매출 ₩116,200" 최상단, 업셀링 아래 |
+| R13/R18 | 기록 타임그리드 "린업라우드" 단일 컬럼(미지정 아님) |
+| R6 per finger | 확인 화면 "Wrapping (per finger) +5,000KRW"(영어) |
+| R8 한영병기 | "심플 / 원컬러 (Simple)" 괄호 앞 공백 |
+| R9/R12 시술시간 | 메뉴 미표기, 확인화면 "Estimated time ~75min" |
+| R10/R13 안내문구 | 영어 "Extra time and cost may apply…" + 한국어 보조 |
+| R16 발 토글 | "Where would you like it? Hands" (발 옵션 없음) |
+| R14 기록 갤러리 | 카테고리 그룹(프렌치·자석/마그넷·아트·테스트 카테고리) |
+| R11 표준 추가금 스테퍼 | 시술 중 랩핑 버튼→"− N +" 전환, ×2 시 합계 61,200→71,200 정확, − 되돌림 정확 |
+| R20 슬롯 | 날짜·시간 슬롯(점심 비활성) |
+
+리팩토링 후 런타임 회귀 없음 확인. (시술/예약은 제출하지 않아 테스트 매출데이터 미생성)
+
+## 5. 보류/후속 (오너 결정 필요)
 - **R12 QR 상담** — 회의 합의대로 보류 유지(컴포넌트는 존재, 진입점 미연결).
 - **R15 사전상담 링크 CRUD(SL-01)** — 날짜·디자이너·슬롯간격 지정 독립 링크 관리 UI. 제품 결정 보류 상태. bookingId 기반 시간지정 공유는 동작 중.
 - medium 리스크 리팩토링(settings/customers/db 대형 파일 분리)은 안전성 확인 후 단계적.
