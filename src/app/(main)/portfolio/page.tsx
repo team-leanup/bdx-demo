@@ -508,11 +508,15 @@ export default function PortfolioPage(): React.ReactElement {
     [photos, getById],
   );
 
-  // Only treatment photos for records tab
-  const treatmentPhotos = useMemo(() => photos.filter((p) => p.kind === 'treatment'), [photos]);
+  // 0531 회의: 시술 기록 갤러리에는 온보딩에서 등록한 메뉴 사진(reference)까지 모두 자동 포함.
+  // (사전상담 메뉴엔 일부만 노출될 수 있지만, 기록 갤러리는 전체를 카테고리별로 보여준다)
+  const recordGalleryPhotos = useMemo(
+    () => photos.filter((p) => p.kind === 'treatment' || p.kind === 'reference'),
+    [photos],
+  );
 
   const photoCards = useMemo(() => {
-    return treatmentPhotos.map((photo) => {
+    return recordGalleryPhotos.map((photo) => {
       const customer = photo.customerId ? getById(photo.customerId) : undefined;
       const linkedRecord = photo.recordId ? recordMap.get(photo.recordId) : undefined;
       const serviceType = photo.serviceType
@@ -541,7 +545,7 @@ export default function PortfolioPage(): React.ReactElement {
         searchSource,
       };
     });
-  }, [treatmentPhotos, getById, recordMap]);
+  }, [recordGalleryPhotos, getById, recordMap]);
 
   const filteredPhotos = useMemo(() => {
     const q = search.toLowerCase();
@@ -593,7 +597,7 @@ export default function PortfolioPage(): React.ReactElement {
   // 등록된 포트폴리오의 태그 기반으로 동적 해시태그 생성
   const dynamicMoodTags = useMemo(() => {
     const tagCounts = new Map<string, number>();
-    treatmentPhotos.forEach((photo) => {
+    recordGalleryPhotos.forEach((photo) => {
       (photo.tags ?? []).forEach((tag) => {
         tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
       });
@@ -602,7 +606,7 @@ export default function PortfolioPage(): React.ReactElement {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 8)
       .map(([tag]) => `#${tag}`);
-  }, [treatmentPhotos]);
+  }, [recordGalleryPhotos]);
 
   const dateOptions: { key: DateFilter; label: string }[] = [
     { key: 'all', label: '전체 기간' },
@@ -690,7 +694,7 @@ export default function PortfolioPage(): React.ReactElement {
 
   // Derived counts for header
   const menuCount = menuPhotos.length;
-  const recordsCount = treatmentPhotos.length;
+  const recordsCount = recordGalleryPhotos.length;
 
   // Overlay photo ids depend on active tab
   const overlayPhotoIds = useMemo(() => {
