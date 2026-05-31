@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useT, useKo, useLocale } from '@/lib/i18n';
 import { usePreConsultStore } from '@/store/pre-consult-store';
 import { calculatePreConsultPrice } from '@/lib/pre-consult-price';
+import { resolveMenuCategoryLabelBilingual } from '@/lib/labels';
 import { dbCompletePreConsultation, dbCompletePreconsultationBooking, dbCreatePreConsultation, fetchShopPublicData, fetchBookingRequestById, dbCreateBookingFromConsultationLink, dbCreateBookingFromShopLink } from '@/lib/db';
 import { getNowInKoreaIso } from '@/lib/format';
 import { formatPhoneInput, normalizePhone, isValidPhoneForLocale } from '@/lib/phone';
@@ -487,8 +488,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                 {selectedCategory && (
                   <span className="inline-block px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold w-fit">
                     {labels.category[selectedCategory] ??
-                      shopData?.customCategories?.find((c) => c.id === selectedCategory)?.name ??
-                      selectedCategory}
+                      resolveMenuCategoryLabelBilingual(selectedCategory, undefined, shopData?.customCategories ?? undefined, locale)}
                   </span>
                 )}
                 {referenceImageUrls.length > 0 && (
@@ -624,8 +624,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                 label={
                   selectedCategory
                     ? (labels.category[selectedCategory] ??
-                       shopData?.customCategories?.find((c) => c.id === selectedCategory)?.name ??
-                       selectedCategory)
+                       resolveMenuCategoryLabelBilingual(selectedCategory, undefined, shopData?.customCategories ?? undefined, locale))
                     : t('preConsult.defaultCategory')
                 }
                 amount={priceEstimate.categoryBase}

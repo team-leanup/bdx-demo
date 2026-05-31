@@ -56,6 +56,16 @@ const LANGUAGE_OPTIONS: { value: Locale; flag: string; label: string }[] = [
 // 기본 시술 종류 — 사전상담/현장모드/포트폴리오와 통일 (심플/프렌치/자석/아트)
 const BUILTIN_SERVICE_OPTIONS = ['심플', '프렌치', '자석', '아트'];
 
+// 0601: 수동 예약의 '시술 종류'(serviceLabel)를 designCategory 키로 매핑.
+//  → 예약에 designCategory가 실리면 슬롯 차단 RPC·스케줄 타임그리드가
+//    카테고리별 설정 시술시간을 자동 사용(사전상담 예약과 동일 경로).
+const BUILTIN_SERVICE_TO_CATEGORY: Record<string, string> = {
+  '심플': 'simple',
+  '프렌치': 'french',
+  '자석': 'magnet',
+  '아트': 'art',
+};
+
 interface ReservationFormProps {
   onSubmit: (reservation: BookingRequest) => void;
   onCancel?: () => void;
@@ -175,6 +185,12 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
     if (isSubmitting) return;
     setIsSubmitting(true);
 
+    // 시술 종류 → designCategory 키 (built-in 라벨 매핑 또는 커스텀 카테고리명 → id)
+    const designCategory = serviceLabel
+      ? (BUILTIN_SERVICE_TO_CATEGORY[serviceLabel]
+        ?? customCategories.find((c) => c.name === serviceLabel)?.id)
+      : undefined;
+
     const newBooking: BookingRequest = {
       id: `booking-new-${Date.now()}`,
       shopId: currentShopId,
@@ -190,6 +206,7 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
       language: formLanguage,
       designerId: formDesignerId || undefined,
       serviceLabel: serviceLabel || undefined,
+      designCategory,
       customerId: selectedCustomerId || undefined,
     };
     try {

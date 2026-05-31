@@ -150,6 +150,10 @@ export interface BookingRequest {
   language?: 'ko' | 'en' | 'zh' | 'ja';
   designerId?: string;
   serviceLabel?: string;   // e.g., "자석젤", "원컬러", "그라데이션", "아트"
+  /** 0601: 시술 카테고리 키(simple/french/magnet/art 또는 custom-*). 슬롯 차단 RPC·스케줄
+   *  타임그리드가 카테고리별 설정 시술시간을 쓰는 기준. 수동 예약은 시술 종류 선택에서 매핑,
+   *  사전상담 예약은 pre_consultation_data.designCategory 에서 round-trip. */
+  designCategory?: import('@/types/pre-consultation').DesignCategory;
   customerId?: string;     // link to customer in customer-store
   consultationLinkSentAt?: string;   // 사전 상담 링크 발송 시각
   preConsultationCompletedAt?: string;

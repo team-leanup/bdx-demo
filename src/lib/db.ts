@@ -922,6 +922,7 @@ export async function fetchBookingRequests(shopId?: string | null): Promise<Book
     serviceLabel: row.service_label ?? undefined,
     customerId: row.customer_id ?? undefined,
     preConsultationData: (row.pre_consultation_data as unknown as BookingRequest['preConsultationData']) ?? undefined,
+    designCategory: ((row.pre_consultation_data as { designCategory?: string } | null)?.designCategory) ?? undefined,
     preConsultationCompletedAt: row.pre_consultation_completed_at ?? undefined,
     consultationLinkSentAt: row.consultation_link_sent_at ?? undefined,
     consultationLinkId: (row as Record<string, unknown>).consultation_link_id as string | undefined,
@@ -986,6 +987,7 @@ export async function fetchBookingRequestById(
     serviceLabel: (row.service_label as string) ?? undefined,
     customerId: (row.customer_id as string) ?? undefined,
     preConsultationData: (row.pre_consultation_data as unknown as BookingRequest['preConsultationData']) ?? undefined,
+    designCategory: ((row.pre_consultation_data as { designCategory?: string } | null)?.designCategory) ?? undefined,
     preConsultationCompletedAt: (row.pre_consultation_completed_at as string) ?? undefined,
     consultationLinkSentAt: (row.consultation_link_sent_at as string) ?? undefined,
     deposit: row.deposit as number | undefined,
@@ -1396,7 +1398,13 @@ export async function dbUpsertReservation(reservation: BookingRequest): Promise<
     designer_id: designerId,
     service_label: reservation.serviceLabel ?? null,
     customer_id: customerId,
-    pre_consultation_data: (reservation.preConsultationData as unknown as import('@/types/database').Json) ?? null,
+    // 0601: 사전상담 예약은 preConsultationData(전체) 보존. 수동/외부 예약은 designCategory만
+    // pre_consultation_data jsonb에 실어 슬롯 RPC·스케줄이 카테고리 시술시간을 쓰게 한다.
+    pre_consultation_data:
+      (reservation.preConsultationData as unknown as import('@/types/database').Json)
+      ?? (reservation.designCategory
+        ? ({ designCategory: reservation.designCategory } as unknown as import('@/types/database').Json)
+        : null),
     pre_consultation_completed_at: reservation.preConsultationCompletedAt ?? null,
     consultation_link_sent_at: reservation.consultationLinkSentAt ?? null,
     // 2026-05-30: deposit 누락 시 예약 수정/상태변경마다 보증금이 NULL 로 덮어써지던 문제 수정

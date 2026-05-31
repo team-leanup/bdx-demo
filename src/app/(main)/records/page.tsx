@@ -486,6 +486,7 @@ export default function RecordsPage() {
       language: newBooking.language,
       designerId: newBooking.designerId,
       serviceLabel: newBooking.serviceLabel,
+      designCategory: newBooking.designCategory,
       customerId: newBooking.customerId,
     });
   };

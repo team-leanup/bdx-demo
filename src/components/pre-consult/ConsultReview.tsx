@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { useT, useKo, useLocale } from '@/lib/i18n';
 import { usePreConsultStore } from '@/store/pre-consult-store';
+import { resolveMenuCategoryLabelBilingual } from '@/lib/labels';
 import { Button } from '@/components/ui/Button';
 import type { NailCurrentStatus, RemovalPreference, LengthPreference, ExtensionLength, WrappingPreference, DesignFeel, StylePreference, StyleKeyword, AddOnOption } from '@/types/pre-consultation';
 import type { NailShape } from '@/types/consultation';
@@ -184,7 +185,7 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
                 if (['simple', 'french', 'magnet', 'art'].includes(cat)) {
                   return t(`preConsult.cat${cat.charAt(0).toUpperCase()}${cat.slice(1)}`);
                 }
-                return store.shopData?.customCategories?.find((c) => c.id === cat)?.name ?? cat;
+                return resolveMenuCategoryLabelBilingual(cat, undefined, store.shopData?.customCategories ?? undefined, locale);
               })()}
             </p>
           </div>

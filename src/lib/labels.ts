@@ -64,6 +64,8 @@ export function resolveMenuCategoryLabelBilingual(
   }
   const custom = customCategories?.find((c) => c.id === key);
   if (custom) {
+    // ko: 한국어 이름만 (외국어 병기 안 함)
+    if (locale === 'ko') return custom.name;
     // zh/ja: 현지어가 있으면 '현지어 (한국어)', 없으면 'name (nameEn)' 또는 name만
     if (locale === 'zh' && custom.nameZh?.trim()) {
       return `${custom.nameZh.trim()} (${custom.name})`;

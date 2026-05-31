@@ -117,12 +117,8 @@ export function CategoryPicker(): React.ReactElement {
       const override = shopData?.categoryLabels?.[cat.key as string];
       return override ?? t(cat.tKey);
     }
-    return resolveMenuCategoryLabelBilingual(
-      cat.key as string,
-      shopData?.categoryLabels ?? undefined,
-      shopData?.customCategories ?? undefined,
-      locale,
-    );
+    // 비ko: 현재 언어 번역 사용 (zh→艺术, ja→アート, en→Art). 영어 고정 병기 X
+    return t(cat.tKey);
   };
 
   return (

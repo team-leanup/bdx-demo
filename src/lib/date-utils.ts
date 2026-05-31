@@ -66,7 +66,8 @@ export function toTimeGridEvents(
     //   이전엔 (duration ?? 60)이라 magnet(80분) 예약이 13:00~14:00으로 표시돼
     //   슬롯 차단(14:20까지)과 어긋났음. 명시 duration > 카테고리시간 > 60분 순.
     const explicitDuration = (r as BookingRequest & { duration?: number }).duration;
-    const designCategory = (r.preConsultationData as { designCategory?: string } | undefined)?.designCategory;
+    const designCategory = r.designCategory
+      ?? (r.preConsultationData as { designCategory?: string } | undefined)?.designCategory;
     const durationMins = explicitDuration
       ?? resolveCategoryTimeMin(designCategory, categorySettings?.categoryPricing, categorySettings?.customCategories, 60);
     const totalEndMins = h * 60 + m + durationMins;
