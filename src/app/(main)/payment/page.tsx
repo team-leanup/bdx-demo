@@ -172,7 +172,7 @@ export default function PaymentPage(): React.ReactElement | null {
 
     setIsProcessing(false);
     setCurrentSection(3);
-  }, [paymentMethod, record, recordId, updateRecord, secondaryPaymentMethod]);
+  }, [paymentMethod, record, recordId, updateRecord, secondaryPaymentMethod, shopSettings]);
 
   const handleCustomerRegister = useCallback((): void => {
     if (!customerName.trim() || !record || !recordId) return;

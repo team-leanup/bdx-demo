@@ -24,8 +24,11 @@ import { estimateTime } from '@/lib/time-calculator';
 interface RecordsStore {
   records: ConsultationRecord[];
   _dbReady: boolean;
+  /** DB 삭제 실패 시 UI toast용 에러 상태 (customer-store의 membershipSyncError와 동일 패턴) */
+  dbDeleteError: { id: string; message: string; at: string } | null;
 
   hydrateFromDB: () => Promise<void>;
+  clearDbDeleteError: () => void;
   addRecord: (record: ConsultationRecord) => Promise<void>;
   addQuickSaleRecord: (params: {
     id: string;
@@ -85,6 +88,9 @@ export const useRecordsStore = create<RecordsStore>()(
     (set, get) => ({
       records: [],
       _dbReady: false,
+      dbDeleteError: null,
+
+      clearDbDeleteError: () => set({ dbDeleteError: null }),
 
       hydrateFromDB: async () => {
         const currentShopId = useAuthStore.getState().currentShopId;
@@ -339,7 +345,16 @@ export const useRecordsStore = create<RecordsStore>()(
             });
           }
         }
-        dbDeleteRecord(id, currentShopId).catch(console.error);
+        dbDeleteRecord(id, currentShopId).catch((err: unknown) => {
+          console.error('[records-store] removeRecord DB delete failed:', err);
+          set({
+            dbDeleteError: {
+              id,
+              message: err instanceof Error ? err.message : '기록 삭제 저장에 실패했어요',
+              at: getNowInKoreaIso(),
+            },
+          });
+        });
       },
 
       getRecordById: (id) => get().records.find((r) => r.id === id),
@@ -358,7 +373,7 @@ export const useRecordsStore = create<RecordsStore>()(
             },
       ),
       partialize: (state) => {
-        const { _dbReady: _, ...rest } = state;
+        const { _dbReady: _, dbDeleteError: __, ...rest } = state;
         return rest;
       },
     },

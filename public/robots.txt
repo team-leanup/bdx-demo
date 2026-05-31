@@ -1,0 +1,11 @@
+User-agent: *
+Disallow: /home
+Disallow: /records
+Disallow: /customers
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /field-mode
+Disallow: /onboarding
+Allow: /pre-consult
+Allow: /share
+Allow: /

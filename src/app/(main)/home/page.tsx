@@ -50,6 +50,16 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.42, ease: [0.22, 1, 0.36, 1] } },
 };
 
+// 정적 부분(icon, variant)은 모듈 레벨 상수로 — 매 렌더 재생성 방지
+// label은 i18n 훅 의존이라 컴포넌트 내부에서 주입
+const CHANNEL_BADGE_STATIC: Record<BookingChannel, { icon: string; variant: 'primary' | 'neutral' | 'success' | 'warning' }> = {
+  kakao: { icon: '💬', variant: 'neutral' },
+  naver: { icon: '🟢', variant: 'neutral' },
+  phone: { icon: '📞', variant: 'neutral' },
+  walk_in: { icon: '🚶', variant: 'neutral' },
+  pre_consult: { icon: '📋', variant: 'primary' },
+};
+
 
 export default function HomePage() {
   const router = useRouter();
@@ -65,13 +75,13 @@ export default function HomePage() {
   const getAllRecords = useRecordsStore((s) => s.getAllRecords);
   const records = useMemo(() => getAllRecords(), [getAllRecords]);
 
-  const CHANNEL_BADGE: Record<BookingChannel, { label: string; icon: string; variant: 'primary' | 'neutral' | 'success' | 'warning' }> = {
-    kakao: { label: t('home.channel_kakao'), icon: '💬', variant: 'neutral' },
-    naver: { label: t('home.channel_naver'), icon: '🟢', variant: 'neutral' },
-    phone: { label: t('home.channel_phone'), icon: '📞', variant: 'neutral' },
-    walk_in: { label: t('home.channel_walk_in'), icon: '🚶', variant: 'neutral' },
-    pre_consult: { label: '사전상담', icon: '📋', variant: 'primary' },
-  };
+  const CHANNEL_BADGE: Record<BookingChannel, { label: string; icon: string; variant: 'primary' | 'neutral' | 'success' | 'warning' }> = useMemo(() => ({
+    kakao: { label: t('home.channel_kakao'), ...CHANNEL_BADGE_STATIC.kakao },
+    naver: { label: t('home.channel_naver'), ...CHANNEL_BADGE_STATIC.naver },
+    phone: { label: t('home.channel_phone'), ...CHANNEL_BADGE_STATIC.phone },
+    walk_in: { label: t('home.channel_walk_in'), ...CHANNEL_BADGE_STATIC.walk_in },
+    pre_consult: { label: '사전상담', ...CHANNEL_BADGE_STATIC.pre_consult },
+  }), [t]);
 
   useEffect(() => {
     restoreLocale();

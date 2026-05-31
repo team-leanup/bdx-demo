@@ -129,9 +129,7 @@ export default function CompletePage() {
           usePortfolioStore.getState().setPhotos(portfolioPhotos);
         } else {
           try {
-            console.log(`[onboarding] uploading ${portfolioPhotos.length} portfolio photos for shop ${currentShopId}`);
             const batchResult = await dbBatchInsertPortfolioPhotos(portfolioPhotos);
-            console.log(`[onboarding] batch result: uploaded=${batchResult.uploaded}, errors=${batchResult.errors}`);
             if (batchResult.errors > 0) {
               console.error(`[onboarding] portfolio partial fail: ${batchResult.errors}/${portfolioPhotos.length}`);
               portfolioPartialFail = true;

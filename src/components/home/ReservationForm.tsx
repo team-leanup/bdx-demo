@@ -108,6 +108,7 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
   const [formNote, setFormNote] = useState('');
   const [formLanguage, setFormLanguage] = useState<Locale>('ko');
   const [formImages, setFormImages] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const ownerDesigner = designers.find((d) => d.role === 'owner' && d.isActive);
   const [formDesignerId, setFormDesignerId] = useState(initialValues?.designerId ?? ownerDesigner?.id ?? '');
   const [serviceLabel, setServiceLabel] = useState('');
@@ -171,6 +172,8 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
 
   const handleSubmit = () => {
     if (!formName.trim() || !formTime || !currentShopId) return;
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     const newBooking: BookingRequest = {
       id: `booking-new-${Date.now()}`,
@@ -189,19 +192,23 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
       serviceLabel: serviceLabel || undefined,
       customerId: selectedCustomerId || undefined,
     };
-    onSubmit(newBooking);
-    setFormName('');
-    setFormPhone('');
-    setFormDate(today);
-    setFormTime('');
-    setFormChannel('kakao');
-    setFormNote('');
-    setFormLanguage('ko');
-    setFormImages([]);
-    setFormDesignerId('');
-    setServiceLabel('');
-    setSelectedCustomerId(null);
-    // 0529 이슈 #4: onSubmit이 이미 모달 close를 책임짐 — onCancel 중복 호출 제거로 재오픈 트리거 차단.
+    try {
+      onSubmit(newBooking);
+      setFormName('');
+      setFormPhone('');
+      setFormDate(today);
+      setFormTime('');
+      setFormChannel('kakao');
+      setFormNote('');
+      setFormLanguage('ko');
+      setFormImages([]);
+      setFormDesignerId('');
+      setServiceLabel('');
+      setSelectedCustomerId(null);
+      // 0529 이슈 #4: onSubmit이 이미 모달 close를 책임짐 — onCancel 중복 호출 제거로 재오픈 트리거 차단.
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -425,9 +432,9 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
         <Button
           fullWidth
           onClick={handleSubmit}
-          disabled={!formName.trim() || !formTime}
+          disabled={!formName.trim() || !formTime || isSubmitting}
         >
-          등록
+          {isSubmitting ? '등록 중...' : '등록'}
         </Button>
     </div>
   );

@@ -47,3 +47,9 @@ qa-*.png
 .qa/
 *.auth-state.json
 .playwright-mcp/
+
+# QA/공유카드 테스트 아티팩트
+share-card-v2-*
+*.dataurl.txt
+qa-*.png
+screenshots/

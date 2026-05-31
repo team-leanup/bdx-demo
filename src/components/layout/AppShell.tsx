@@ -2,6 +2,7 @@ import { StatusBar } from './StatusBar';
 import { BottomTabBar } from './BottomTabBar';
 import { SideNav } from './SideNav';
 import { ConsultationAlertBanner } from '@/components/home/ConsultationAlertBanner';
+import { DbErrorToaster } from './DbErrorToaster';
 import { cn } from '@/lib/cn';
 import type { ReactNode } from 'react';
 
@@ -32,6 +33,7 @@ export function AppShell({ children, hideStatusBar, hideTabBar }: AppShellProps)
         </main>
         {!hideTabBar && <BottomTabBar />}
       </div>
+      <DbErrorToaster />
     </div>
   );
 }

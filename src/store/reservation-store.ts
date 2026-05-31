@@ -15,8 +15,11 @@ import { getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
 interface ReservationStore {
   reservations: BookingRequest[];
   _dbReady: boolean;
+  /** DB 쓰기 실패 시 UI toast용 에러 상태 (customer-store의 membershipSyncError와 동일 패턴) */
+  dbWriteError: { op: 'add' | 'update' | 'remove'; id: string; message: string; at: string } | null;
 
   hydrateFromDB: () => Promise<void>;
+  clearDbWriteError: () => void;
   addReservation: (reservation: Omit<BookingRequest, 'id' | 'createdAt' | 'status' | 'shopId'>) => void;
   updateReservation: (id: string, updates: Partial<BookingRequest>) => void;
   removeReservation: (id: string) => void;
@@ -32,6 +35,9 @@ export const useReservationStore = create<ReservationStore>()(
     (set, get) => ({
       reservations: [],
       _dbReady: false,
+      dbWriteError: null,
+
+      clearDbWriteError: () => set({ dbWriteError: null }),
 
       hydrateFromDB: async () => {
         const currentShopId = useAuthStore.getState().currentShopId;
@@ -104,7 +110,17 @@ export const useReservationStore = create<ReservationStore>()(
         const dbSync = newlyCreatedCustomer
           ? dbUpsertCustomer(newlyCreatedCustomer).then(() => dbUpsertReservation(newEntry))
           : dbUpsertReservation(newEntry);
-        dbSync.catch(console.error);
+        dbSync.catch((err: unknown) => {
+          console.error('[reservation-store] addReservation DB sync failed:', err);
+          set({
+            dbWriteError: {
+              op: 'add',
+              id: newEntry.id,
+              message: err instanceof Error ? err.message : '예약 저장에 실패했어요',
+              at: getNowInKoreaIso(),
+            },
+          });
+        });
       },
 
       updateReservation: (id, updates) => {
@@ -115,7 +131,17 @@ export const useReservationStore = create<ReservationStore>()(
         }));
         const updated = get().reservations.find((r) => r.id === id);
         if (updated) {
-          dbUpsertReservation(updated).catch(console.error);
+          dbUpsertReservation(updated).catch((err: unknown) => {
+            console.error('[reservation-store] updateReservation DB sync failed:', err);
+            set({
+              dbWriteError: {
+                op: 'update',
+                id,
+                message: err instanceof Error ? err.message : '예약 수정 저장에 실패했어요',
+                at: getNowInKoreaIso(),
+              },
+            });
+          });
         }
       },
 
@@ -124,7 +150,17 @@ export const useReservationStore = create<ReservationStore>()(
         set((state) => ({
           reservations: state.reservations.filter((r) => r.id !== id),
         }));
-        dbDeleteReservation(id, currentShopId).catch(console.error);
+        dbDeleteReservation(id, currentShopId).catch((err: unknown) => {
+          console.error('[reservation-store] removeReservation DB sync failed:', err);
+          set({
+            dbWriteError: {
+              op: 'remove',
+              id,
+              message: err instanceof Error ? err.message : '예약 삭제 저장에 실패했어요',
+              at: getNowInKoreaIso(),
+            },
+          });
+        });
       },
 
       getByDate: (date) => {
@@ -183,7 +219,7 @@ export const useReservationStore = create<ReservationStore>()(
             },
       ),
       partialize: (state) => {
-        const { _dbReady: _, ...rest } = state;
+        const { _dbReady: _, dbWriteError: __, ...rest } = state;
         // localStorage QuotaExceeded 방지 — base64 data URL은 persist에서 제거
         // (Supabase Storage URL은 보존)
         const slim = rest.reservations.map((r) => {

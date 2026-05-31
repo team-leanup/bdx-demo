@@ -9,9 +9,9 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/favicon.ico",
-      "sizes": "64x64",
-      "type": "image/x-icon"
+      "src": "/bdx-logo/bdx-symbol.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
     }
   ]
 }

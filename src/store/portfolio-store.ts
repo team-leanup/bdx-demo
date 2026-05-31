@@ -29,9 +29,12 @@ interface PortfolioStore {
   photos: PortfolioPhoto[];
   _dbReady: boolean;
   migrationNotice: PortfolioNotice | null;
+  /** DB 쓰기 실패 시 UI toast용 에러 상태 (customer-store의 membershipSyncError와 동일 패턴) */
+  dbWriteError: PortfolioNotice | null;
 
   hydrateFromDB: () => Promise<void>;
   clearMigrationNotice: () => void;
+  clearDbWriteError: () => void;
 
   addPhoto: (
     photo: Omit<PortfolioPhoto, 'id' | 'createdAt' | 'shopId'>,
@@ -124,6 +127,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
       photos: [],
       _dbReady: false,
       migrationNotice: null,
+      dbWriteError: null,
 
       hydrateFromDB: async () => {
         const currentShopId = useAuthStore.getState().currentShopId;
@@ -209,6 +213,8 @@ export const usePortfolioStore = create<PortfolioStore>()(
 
       clearMigrationNotice: () => set({ migrationNotice: null }),
 
+      clearDbWriteError: () => set({ dbWriteError: null }),
+
       addPhoto: async (input) => {
         const currentShopId = useAuthStore.getState().currentShopId;
         if (!currentShopId) {
@@ -286,7 +292,17 @@ export const usePortfolioStore = create<PortfolioStore>()(
           photos: state.photos.map((p) => (p.id === id ? { ...p, isPublic: newIsPublic } : p)),
         }));
         if (currentShopId && currentShopId !== 'shop-demo') {
-          dbTogglePhotoVisibility(id, currentShopId, newIsPublic).catch(console.error);
+          dbTogglePhotoVisibility(id, currentShopId, newIsPublic).catch((err: unknown) => {
+            console.error('[portfolio-store] togglePhotoVisibility DB sync failed:', err);
+            // 낙관적 업데이트 롤백: visibility를 원래대로 되돌림
+            set((state) => ({
+              photos: state.photos.map((p) => (p.id === id ? { ...p, isPublic: !newIsPublic } : p)),
+              dbWriteError: {
+                type: 'error' as const,
+                message: err instanceof Error ? err.message : '공개 설정 저장에 실패했어요',
+              },
+            }));
+          });
         }
       },
 
@@ -461,6 +477,9 @@ export const usePortfolioStore = create<PortfolioStore>()(
       ),
       partialize: (state) => ({
         ...state,
+        // 에러/알림 상태는 세션 간 보존하지 않음
+        migrationNotice: null,
+        dbWriteError: null,
         photos: state.photos.map((p) => ({
           ...p,
           imageDataUrl: p.imagePath ? '' : p.imageDataUrl,

@@ -16,11 +16,27 @@ function formatBookingDateTime(date: string, time: string, locale: string): stri
   const [year, month, day] = date.split('-').map(Number);
   const d = new Date(Date.UTC(year, month - 1, day, 12));
   const weekdaysKo = ['일', '월', '화', '수', '목', '금', '토'];
-  const weekdaysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const weekday = locale === 'ko' ? weekdaysKo[d.getUTCDay()] : weekdaysEn[d.getUTCDay()];
-  return locale === 'ko'
-    ? `${month}월 ${day}일 ${weekday}요일 ${time}`
-    : `${month}/${day} (${weekday}) ${time}`;
+  const localeMap: Record<string, string> = { ko: 'ko-KR', en: 'en-US', zh: 'zh-CN', ja: 'ja-JP' };
+  const bcp47 = localeMap[locale] ?? 'en-US';
+
+  if (locale === 'ko') {
+    const weekday = weekdaysKo[d.getUTCDay()];
+    return `${month}월 ${day}일 ${weekday}요일 ${time}`;
+  }
+
+  if (locale === 'zh') {
+    const weekday = d.toLocaleDateString(bcp47, { weekday: 'short', timeZone: 'UTC' });
+    return `${month}月${day}日 ${weekday} ${time}`;
+  }
+
+  if (locale === 'ja') {
+    const weekday = d.toLocaleDateString(bcp47, { weekday: 'short', timeZone: 'UTC' });
+    return `${month}月${day}日(${weekday}) ${time}`;
+  }
+
+  // en fallback
+  const weekday = d.toLocaleDateString(bcp47, { weekday: 'short', timeZone: 'UTC' });
+  return `${month}/${day} (${weekday}) ${time}`;
 }
 
 function PreConsultStartInner(): React.ReactElement {

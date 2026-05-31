@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input, Modal } from '@/components/ui';
 import { formatPrice, getNowInKoreaIso } from '@/lib/format';
@@ -33,9 +33,12 @@ export default function CustomersPage() {
   const findByPhoneNormalized = useCustomerStore((s) => s.findByPhoneNormalized);
 
   const duplicateCustomer = phone.trim().length >= 8 ? findByPhoneNormalized(phone.trim()) : undefined;
+  const isCreatingRef = useRef(false);
 
   const handleCreateCustomer = () => {
     if (!name.trim()) return;
+    if (isCreatingRef.current) return;
+    isCreatingRef.current = true;
     let newCustomer;
     try {
       newCustomer = createCustomer({
@@ -43,6 +46,7 @@ export default function CustomersPage() {
         phone: phone.trim() || undefined,
       });
     } catch {
+      isCreatingRef.current = false;
       return;
     }
     if (memo.trim()) {
@@ -60,6 +64,7 @@ export default function CustomersPage() {
     setName('');
     setPhone('');
     setMemo('');
+    isCreatingRef.current = false;
     router.push(`/customers/${newCustomer.id}`);
   };
 

@@ -111,7 +111,6 @@ export default function PortfolioClassifyPage() {
   const handleFinish = () => {
     try {
       storeFeaturedIds(Array.from(featuredIds));
-      console.log('[onboarding] featured saved, navigating to pricing', Array.from(featuredIds));
       router.push('/onboarding/pricing');
     } catch (err) {
       console.error('[onboarding] handleFinish error:', err);
