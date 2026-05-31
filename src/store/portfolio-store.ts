@@ -411,15 +411,21 @@ export const usePortfolioStore = create<PortfolioStore>()(
           return { success: true };
         }
 
-        const results = await Promise.all([
-          dbUpdatePhotoMetadata(id, currentShopId, { isRepresentative: value }),
-          ...siblings.map((s) => dbUpdatePhotoMetadata(s.id, currentShopId, { isRepresentative: false })),
-        ]);
-        const failed = results.find((r) => !r.success);
-        if (failed) {
-          // rollback 전체
+        // DB unique 제약(카테고리당 대표 1장) 충돌 방지: 기존 대표를 먼저 해제한 뒤 target을 켠다.
+        if (siblings.length > 0) {
+          const clearResults = await Promise.all(
+            siblings.map((s) => dbUpdatePhotoMetadata(s.id, currentShopId, { isRepresentative: false })),
+          );
+          const clearFailed = clearResults.find((r) => !r.success);
+          if (clearFailed) {
+            set({ photos: snapshot });
+            return clearFailed;
+          }
+        }
+        const result = await dbUpdatePhotoMetadata(id, currentShopId, { isRepresentative: value });
+        if (!result.success) {
           set({ photos: snapshot });
-          return failed;
+          return result;
         }
         return { success: true };
       },

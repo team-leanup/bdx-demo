@@ -50,6 +50,7 @@ export default function FieldModePage() {
   const selectedCategory = useFieldModeStore((s) => s.selectedCategory);
   const selectedPhotoId = useFieldModeStore((s) => s.selectedPhotoId);
   const selectedPhotoUrl = useFieldModeStore((s) => s.selectedPhotoUrl);
+  const selectedPhotoPrice = useFieldModeStore((s) => s.selectedPhotoPrice);
   const removalType = useFieldModeStore((s) => s.removalType);
   const lengthType = useFieldModeStore((s) => s.lengthType);
   const extensionLength = useFieldModeStore((s) => s.extensionLength);
@@ -154,8 +155,11 @@ export default function FieldModePage() {
       customPartSelections: customPartCounts,
       customParts: shopSettings.customParts,
       customCategories: shopSettings.customCategories,
+      // 0602: options 단계 견적도 선택 사진 가격을 기준으로 — treatment(정산)와 동일.
+      // (이전엔 photoBasePrice 미전달로 PriceBar가 카테고리 기본가를 보여 정산가와 불일치)
+      photoBasePrice: selectedPhotoPrice ?? undefined,
     });
-  }, [selectedCategory, removalType, lengthType, wrappingPreference, addOns, shopSettings, customPartCounts]);
+  }, [selectedCategory, removalType, lengthType, wrappingPreference, addOns, shopSettings, customPartCounts, selectedPhotoPrice]);
 
   // ── Reconstruct selected photo ────────────────────────────────────────────
   const selectedPhoto = useMemo((): PortfolioPhoto | null => {

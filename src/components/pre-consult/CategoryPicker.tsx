@@ -126,6 +126,7 @@ export function CategoryPicker(): React.ReactElement {
       {visibleCategories.map((cat) => {
         const isSelected = selected === cat.key;
         const thumb = categoryThumbs[cat.key];
+        const priceHint = getPriceHint(cat.key);
         const displayLabel = cat.builtin
           ? resolveBuiltinLabel(cat)
           : locale !== 'ko' && cat.labelKo
@@ -181,9 +182,9 @@ export function CategoryPicker(): React.ReactElement {
                   {cat.builtin ? t(cat.tDescKey!) : cat.desc}
                 </p>
               )}
-              {!!getPriceHint(cat.key) && (
+              {!!priceHint && (
                 <span className="mt-1 text-xs font-semibold text-primary tabular-nums">
-                  {getPriceHint(cat.key)}
+                  {priceHint}
                 </span>
               )}
             </div>

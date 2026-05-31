@@ -1350,18 +1350,27 @@ function MenuCard({ photo, fallbackIdx, editMode, onRemove, onOpenOverlay }: Men
         {editMode && (
           <div className="flex items-center gap-1 flex-wrap mt-1">
             <button
+              type="button"
+              aria-pressed={!!photo.isStaffPick}
+              aria-label="직원추천 표시 토글"
               onClick={(e) => { e.stopPropagation(); void updatePhotoMetadata(photo.id, { isStaffPick: !photo.isStaffPick }); }}
               className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full transition-colors',
                 photo.isStaffPick ? 'bg-primary text-white' : 'bg-surface-alt text-text-muted',
               )}
             >추천</button>
             <button
+              type="button"
+              aria-pressed={!!photo.isPopular}
+              aria-label="인기 표시 토글"
               onClick={(e) => { e.stopPropagation(); void updatePhotoMetadata(photo.id, { isPopular: !photo.isPopular }); }}
               className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full transition-colors',
                 photo.isPopular ? 'bg-amber-500 text-white' : 'bg-surface-alt text-text-muted',
               )}
             >인기</button>
             <button
+              type="button"
+              aria-pressed={!!photo.isRepresentative}
+              aria-label="이 카테고리의 대표(커버) 사진으로 지정"
               onClick={(e) => { e.stopPropagation(); void setRepresentative(photo.id, !photo.isRepresentative); }}
               className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full transition-colors',
                 photo.isRepresentative ? 'bg-text text-white' : 'bg-surface-alt text-text-muted',
