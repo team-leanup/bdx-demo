@@ -143,8 +143,14 @@ export function computeAvailableDates(link: ConsultationLinkPublicData): Availab
           if (b.date !== dateStr) return false;
           const [bh, bm] = b.time.split(':').map(Number);
           const bStartMin = bh * 60 + bm;
-          // BookedSlot에 duration 없으므로 link.estimatedDurationMin을 proxy로 사용
-          const bEndMin = bStartMin + durationMin;
+          // 기존 예약의 실제 종료시간(endTime, RPC가 카테고리 시술시간으로 계산) 우선 사용.
+          // 없으면 link.estimatedDurationMin proxy.
+          let bEndMin = bStartMin + durationMin;
+          if (b.endTime && /^\d{2}:\d{2}$/.test(b.endTime)) {
+            const [eh, em] = b.endTime.split(':').map(Number);
+            const candidateEnd = eh * 60 + em;
+            if (candidateEnd > bStartMin) bEndMin = candidateEnd;
+          }
           return sStartMin < bEndMin && sEndMin > bStartMin;
         });
         return { date: dateStr, time, isBooked };

@@ -24,6 +24,8 @@ export interface ConsultationLink {
 export interface BookedSlot {
   date: string;
   time: string;
+  /** 예약 종료시간 HH:MM (RPC가 카테고리 시술시간 기반 계산). 없으면 estimatedDurationMin proxy 사용. */
+  endTime?: string;
 }
 
 export interface LinkPortfolioPreview {
