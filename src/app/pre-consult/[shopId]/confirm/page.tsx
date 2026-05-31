@@ -49,10 +49,10 @@ function useLabelMaps() {
       round: t('preConsult.shapeRound'),
       oval: t('preConsult.shapeOval'),
       square: t('preConsult.shapeSquare'),
-      squoval: t('preConsult.shapeSquare'),
+      squoval: t('preConsult.shapeSquoval'),
       almond: t('preConsult.shapeAlmond'),
-      stiletto: t('preConsult.shapeAlmond'),
-      coffin: t('preConsult.shapeAlmond'),
+      stiletto: t('preConsult.shapeStiletto'),
+      coffin: t('preConsult.shapeCoffin'),
     },
     feel: {
       natural: t('preConsult.feelNatural'),
@@ -664,8 +664,8 @@ export default function PreConsultConfirmPage(): React.ReactElement {
               <p className="text-xs text-primary font-medium mt-2">{t('preConsult.priceNotice')}</p>
               <p className="text-xs text-text-muted">{t('preConsult.priceDisclaimer')}</p>
 
-              {/* 샵 안내 문구 (온보딩에서 설정) */}
-              {shopData?.customerNotice && (
+              {/* 샵 안내 문구 (온보딩에서 설정) — 사장님이 한국어로 입력한 내용이므로 ko에서만 표시 */}
+              {shopData?.customerNotice && locale === 'ko' && (
                 <div className="mt-3 pt-3 border-t border-border flex items-start gap-2">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5">
                     <circle cx="12" cy="12" r="10" />
@@ -713,7 +713,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
             )}
           </div>
 
-          {consultationLinkId && selectedSlotDate && selectedSlotTime && (
+          {selectedSlotDate && selectedSlotTime && (
             <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
               <p className="text-xs text-text-muted">{t('preConsult.selectedSlotLabel')}</p>
               <p className="mt-0.5 text-sm font-bold text-primary">
@@ -721,10 +721,17 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                   const [y, m, d] = selectedSlotDate.split('-').map(Number);
                   const dt = new Date(Date.UTC(y, m - 1, d, 12));
                   const weekdaysKo = ['일', '월', '화', '수', '목', '금', '토'];
+                  const weekdaysZh = ['日', '一', '二', '三', '四', '五', '六'];
+                  const weekdaysJa = ['日', '月', '火', '水', '木', '金', '土'];
                   const weekdaysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                  const wd = locale === 'ko' ? weekdaysKo[dt.getUTCDay()] : weekdaysEn[dt.getUTCDay()];
+                  const wdArr = locale === 'ko' ? weekdaysKo : locale === 'zh' ? weekdaysZh : locale === 'ja' ? weekdaysJa : weekdaysEn;
+                  const wd = wdArr[dt.getUTCDay()];
                   return locale === 'ko'
                     ? `${m}월 ${d}일 (${wd}) ${selectedSlotTime}`
+                    : locale === 'zh'
+                    ? `${m}月${d}日 (${wd}) ${selectedSlotTime}`
+                    : locale === 'ja'
+                    ? `${m}月${d}日 (${wd}) ${selectedSlotTime}`
                     : `${m}/${d} (${wd}) ${selectedSlotTime}`;
                 })()}
               </p>
@@ -748,7 +755,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                 label={t('preConsult.nameLabel')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder={locale === 'ko' ? '홍길동' : 'Your name'}
+                placeholder={locale === 'ko' ? '홍길동' : locale === 'zh' ? '您的姓名' : locale === 'ja' ? 'お名前' : 'Your name'}
                 autoComplete="name"
               />
 

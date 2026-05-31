@@ -35,6 +35,7 @@ export default function TreatmentPage(): React.ReactElement {
     removalType,
     lengthType,
     wrappingPreference,
+    customPartSelections,
     addInTreatmentAddon,
     removeInTreatmentAddon,
     completeTreatment,
@@ -90,8 +91,10 @@ export default function TreatmentPage(): React.ReactElement {
       surcharges: shopSettings.surcharges,
       photoBasePrice: selectedPhotoPrice ?? undefined,
       customCategories: shopSettings.customCategories,
+      customPartSelections,
+      customParts: shopSettings.customParts,
     });
-  }, [selectedCategory, removalType, lengthType, wrappingPreference, addOns, shopSettings, selectedPhotoPrice]);
+  }, [selectedCategory, removalType, lengthType, wrappingPreference, customPartSelections, addOns, shopSettings, selectedPhotoPrice]);
 
   // Running total
   const inTreatmentTotal = inTreatmentAddons.reduce((sum, a) => sum + a.amount, 0);

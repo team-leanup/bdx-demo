@@ -229,8 +229,10 @@ function CustomerDetailContent({ id }: { id: string }) {
     let cash = 0;
     let card = 0;
     let membership = 0;
+    let deposit = 0;
     for (const r of customerRecords) {
       if (!r.finalizedAt) continue;
+      deposit += (r.deposit ?? 0);
       const pm = r.paymentMethod;
       // 복합 결제(membership + cash/card)
       if (pm === 'membership' && r.secondaryPaymentMethod && r.secondaryAmount) {
@@ -245,7 +247,7 @@ function CustomerDetailContent({ id }: { id: string }) {
         membership += (r.membershipApplied ?? r.finalPrice);
       }
     }
-    return { cash, card, membership };
+    return { cash, card, membership, deposit };
   }, [customerRecords]);
 
   // 이 고객의 예약 이력 (사전상담 완료 여부 포함)
@@ -1261,7 +1263,7 @@ function CustomerDetailContent({ id }: { id: string }) {
         </div>
 
         {/* 결제 수단별 합계 */}
-        {(paymentSummary.cash > 0 || paymentSummary.card > 0 || paymentSummary.membership > 0) && (
+        {(paymentSummary.cash > 0 || paymentSummary.card > 0 || paymentSummary.membership > 0 || paymentSummary.deposit > 0) && (
           <div className="mt-3 rounded-xl border border-border bg-surface-alt px-3 py-2.5 flex flex-col gap-1.5">
             <p className="text-[11px] font-semibold text-text-muted mb-0.5">결제 합계</p>
             <div className="grid grid-cols-3 gap-2 text-center">
@@ -1281,6 +1283,12 @@ function CustomerDetailContent({ id }: { id: string }) {
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[10px] font-medium text-text-muted">회원권</span>
                   <span className="text-xs font-bold text-text tabular-nums">{formatPrice(paymentSummary.membership)}</span>
+                </div>
+              )}
+              {paymentSummary.deposit > 0 && (
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] font-medium text-text-muted">예약금</span>
+                  <span className="text-xs font-bold text-text tabular-nums">{formatPrice(paymentSummary.deposit)}</span>
                 </div>
               )}
             </div>

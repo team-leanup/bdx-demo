@@ -141,7 +141,16 @@ export function computeAvailableDates(link: ConsultationLinkPublicData): Availab
       .map((time) => ({
         date: dateStr,
         time,
-        isBooked: bookedSet.has(`${dateStr}__${time}`),
+        isBooked:
+          bookedSet.has(`${dateStr}__${time}`) ||
+          (link.bookedSlots ?? []).some((b) => {
+            if (b.date !== dateStr) return false;
+            // 슬롯 S가 기존 예약 B보다 앞에서 시작하지만 끝(S+durationMin)이 B.time을 넘는 경우: S < B.time && S+durationMin > B.time
+            return (
+              timeLess(time, b.time) &&
+              timeLess(b.time, addMinutes(time, durationMin))
+            );
+          }),
       }));
 
     if (slots.length === 0) continue;
@@ -153,15 +162,4 @@ export function computeAvailableDates(link: ConsultationLinkPublicData): Availab
     });
   }
   return result;
-}
-
-export function formatSlotLabel(date: string, time: string, locale: 'ko' | 'en' | 'zh' | 'ja' = 'ko'): string {
-  const d = parseDate(date);
-  const month = d.getUTCMonth() + 1;
-  const day = d.getUTCDate();
-  const weekday = WEEKDAY_KO[d.getUTCDay()];
-  if (locale === 'ko') {
-    return `${month}월 ${day}일 (${weekday}) ${time}`;
-  }
-  return `${month}/${day} ${time}`;
 }

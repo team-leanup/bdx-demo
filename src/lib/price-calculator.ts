@@ -2,6 +2,7 @@ import type { ConsultationType } from '@/types/consultation';
 import type { PriceBreakdown, PriceItem, ServicePricing, PartsPricing } from '@/types/price';
 import type { CustomPart } from '@/types/canvas';
 import { estimateTime } from '@/lib/time-calculator';
+import { ADDON_FIXED_PRICES } from '@/lib/pre-consult-price';
 
 export const DEFAULT_SERVICE_PRICING: ServicePricing = {
   handBase: 60000,
@@ -65,8 +66,8 @@ export function buildServicePricingFromShopSettings(settings: {
     french: settings.surcharges.french,
     magnetic: settings.surcharges.magnet,
     extraColorPerUnit: DEFAULT_SERVICE_PRICING.extraColorPerUnit,
-    // [HIGH] 랩핑 추가금: surcharges.wrapping이 없거나 0이면 기존 견적에 영향 없음
-    wrapping: settings.surcharges.wrapping ?? 0,
+    // [HIGH] 랩핑 추가금: surcharges.wrapping이 없으면 ADDON_FIXED_PRICES.wrapping(5,000) 사용
+    wrapping: settings.surcharges.wrapping ?? ADDON_FIXED_PRICES.wrapping,
   };
 }
 

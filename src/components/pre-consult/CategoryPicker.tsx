@@ -102,7 +102,7 @@ export function CategoryPicker(): React.ReactElement {
   const getPriceHint = (cat: DesignCategory): string => {
     const menuMin = menuMinPrices[cat];
     if (menuMin != null) {
-      return `${menuMin.toLocaleString()}원~`;
+      return `${menuMin.toLocaleString()}${t('preConsult.won')}~`;
     }
     if (!shopData) return '';
     // builtin: categoryPricing 조회 / custom: customCategories에서 직접
@@ -110,7 +110,7 @@ export function CategoryPicker(): React.ReactElement {
     const customPrice = shopData.customCategories?.find((c) => c.id === cat)?.price;
     const price = customPrice ?? builtinPrice;
     if (!price) return '';
-    return `${(price / 1000).toFixed(0)},000${t('preConsult.won')}~`;
+    return `${price.toLocaleString()}${t('preConsult.won')}~`;
   };
 
   // builtin 카테고리: locale===ko이면 원장 override 우선, 그 외 locale은 i18n 번역 유지

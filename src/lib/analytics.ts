@@ -158,8 +158,10 @@ const SHAPE_LABEL: Record<string, string> = {
 };
 
 // 0528 M5 — 회원권 결제로 finalPrice=0인 경우도 실제 시술 금액(=membershipApplied)을 매출로 인식
+// 0531 SALES-2 — 예약금(deposit)은 finalPrice에 포함되지 않은 선납분이므로 gross 매출에 합산해야
+//   customer.totalSpend(= finalPrice + membershipApplied + deposit)와 집계 기준이 일치한다.
 function recordRevenue(r: ConsultationRecord): number {
-  return r.finalPrice + (r.membershipApplied ?? 0);
+  return r.finalPrice + (r.membershipApplied ?? 0) + (r.deposit ?? 0);
 }
 
 // Sum finalPrice of records where finalizedAt falls on today (Korea)
@@ -236,9 +238,10 @@ export function computeReturnRate(
   return Math.round((returning / customers.length) * 1000) / 10;
 }
 
-// Count customers where isRegular === true
+// 0531 HIGH — 단골 기준을 드릴다운 목록·라벨('3회 이상 방문 고객 기준')과 통일.
+// (이전 isRegular 플래그 기준은 드릴다운 visitCount>=3 필터와 수치가 달랐음)
 export function computeRegularCount(customers: Customer[]): number {
-  return customers.filter((c) => c.isRegular === true).length;
+  return customers.filter((c) => c.visitCount >= 3).length;
 }
 
 // Count reservations where reservationDate === today
@@ -325,7 +328,7 @@ export function computeDesignScopeBreakdown(records: ConsultationRecord[]): Serv
     .map(([key, count]) => ({
       name: CATEGORY_DISPLAY_LABEL[key] ?? DESIGN_SCOPE_LABEL[key] ?? key,
       count,
-      percentage: Math.round((count / total) * 1000) / 10,
+      percentage: Math.round((count / total) * 100),
     }));
 }
 
@@ -346,7 +349,7 @@ export function computeExpressionBreakdown(records: ConsultationRecord[]): Servi
     .map(([key, count]) => ({
       name: EXPRESSION_LABEL[key] ?? key,
       count,
-      percentage: Math.round((count / total) * 1000) / 10,
+      percentage: Math.round((count / total) * 100),
     }));
 }
 
@@ -397,7 +400,7 @@ export function computeDesignerStats(
         designerName: designer.name,
         consultations: designerRecords.length,
         bookings: designerReservations.length,
-        revenue: designerRecords.filter((r) => r.finalizedAt).reduce((sum, record) => sum + record.finalPrice + (record.membershipApplied ?? 0), 0),
+        revenue: designerRecords.filter((r) => r.finalizedAt).reduce((sum, record) => sum + recordRevenue(record), 0),
         assignedBookingRate: roundToSingleDecimal(
           (designerReservations.length / totalActiveReservations) * 100,
         ),
@@ -613,8 +616,8 @@ export function computeCustomerAnalytics(
   return {
     newCustomers,
     returningCustomers,
-    newPercentage: Math.round((newCustomers / total) * 1000) / 10,
-    returningPercentage: Math.round((returningCustomers / total) * 1000) / 10,
+    newPercentage: Math.round((newCustomers / total) * 100),
+    returningPercentage: Math.round((returningCustomers / total) * 100),
     averageVisitInterval,
     vipCustomers,
   };
@@ -698,7 +701,6 @@ export function computeKPICards(
         ) / 10
       : 0;
 
-  const returnRate = computeReturnRate(customers);
   const regularCount = computeRegularCount(customers);
   const todayBookings = computeTodayBookings(reservations);
 
@@ -711,11 +713,10 @@ export function computeKPICards(
   })();
   const yesterdayRevenue = records
     .filter((r) => r.finalizedAt && toKoreanDateString(r.finalizedAt) === yesterdayStr)
-    .reduce((sum, r) => sum + r.finalPrice + (r.membershipApplied ?? 0), 0);
+    .reduce((sum, r) => sum + recordRevenue(r), 0);
   const todayRevenueChange = computeChangeRate(todayRevenue, yesterdayRevenue);
 
   // 재방문율 전월 대비 계산
-  const customerMap = new Map(customers.map((c) => [c.id, c]));
   const thisMonthPrefix = `${year}-${String(month).padStart(2, '0')}`;
   const prevMonthPrefix = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
 
@@ -779,9 +780,11 @@ export function computeKPICards(
       icon: '📊',
     },
     {
+      // 0531 HIGH — 표시값과 변화율을 동일 메트릭(이달 레코드 기준 재방문율)으로 통일.
+      // (이전: 표시값=전체기간 returnRate, 변화율=이달 vs 전월 → 서로 다른 지표를 비교)
       label: '재방문율',
-      value: `${returnRate}%`,
-      rawValue: returnRate,
+      value: `${thisMonthReturnRate}%`,
+      rawValue: thisMonthReturnRate,
       change: returnRateChange,
       changeDirection: dir(returnRateChange),
       icon: '🔄',
@@ -837,9 +840,10 @@ export function computePopularTreatments(
 }
 
 // Percentage of customers that are regular
+// 0531 — computeRegularCount와 동일 기준(3회 이상 방문)으로 통일.
 export function computeRegularVisitRate(customers: Customer[]): number {
   if (customers.length === 0) return 0;
-  const regular = customers.filter((c) => c.isRegular === true).length;
+  const regular = customers.filter((c) => c.visitCount >= 3).length;
   return Math.round((regular / customers.length) * 100);
 }
 

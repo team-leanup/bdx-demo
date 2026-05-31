@@ -6,6 +6,8 @@ import { useRecordsStore } from '@/store/records-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useConsultationStore } from '@/store/consultation-store';
+import { useReservationStore } from '@/store/reservation-store';
+import { resolveRecordCategoryLabelKo } from '@/lib/category-resolver';
 import { PaymentMethodSelector } from '@/components/payment/PaymentMethodSelector';
 import { PaymentSummary } from '@/components/payment/PaymentSummary';
 import { buildBreakdownFromRecord } from '@/lib/price-utils';
@@ -121,6 +123,12 @@ export default function PaymentPage(): React.ReactElement | null {
       membershipApplied: membershipAppliedAmount > 0 ? membershipAppliedAmount : undefined,
     });
 
+    // 0531 — 연결된 예약 status를 completed로 갱신(DB 정합성). records/[id]·타임그리드와 일관.
+    const completedBookingId = record.consultation?.bookingId;
+    if (completedBookingId) {
+      useReservationStore.getState().updateReservation(completedBookingId, { status: 'completed' });
+    }
+
     if (paymentMethod === 'membership' && record.customerId) {
       // 0423: 회원권 잔액만큼만 차감 (차액은 현금/카드로 별도 처리)
       useCustomerStore.getState().useMembershipSession(
@@ -134,7 +142,8 @@ export default function PaymentPage(): React.ReactElement | null {
     // field-mode(quickSale)는 addQuickSaleRecord에서 이미 처리됨
     // totalSpend는 회원권 차감분 포함 실제 시술 금액(finalPrice + membershipApplied) 기준 (field-mode와 일관)
     if (record.customerId && !record.isQuickSale) {
-      const totalServicePrice = record.finalPrice + membershipAppliedAmount;
+      // 0531 — 예약금(deposit)도 포함해 totalSpend 집계(records/[id]·field-mode와 일관)
+      const totalServicePrice = record.finalPrice + membershipAppliedAmount + (record.deposit ?? 0);
       useCustomerStore.getState().recordTreatmentCompletion(
         record.customerId,
         totalServicePrice,
@@ -142,7 +151,8 @@ export default function PaymentPage(): React.ReactElement | null {
           recordId: record.id,
           date: getTodayInKorea(),
           bodyPart: record.consultation?.bodyPart ?? 'hand',
-          designScope: record.consultation?.designScope ?? '기타',
+          // 0531 — designScope 손실 매핑 방지: designCategory 우선 라벨
+          designScope: record.consultation ? resolveRecordCategoryLabelKo(record.consultation) : '기타',
           price: totalServicePrice,
           imageUrls: [],
         },

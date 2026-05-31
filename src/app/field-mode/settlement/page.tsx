@@ -644,7 +644,7 @@ export default function SettlementPage(): React.ReactElement | null {
               {isMembershipPayment ? (
                 <>
                   <p className="text-sm text-text-muted line-through">
-                    ₩{subtotal.toLocaleString()}
+                    ₩{afterDiscountDeposit.toLocaleString()}
                   </p>
                   <span className="rounded-full bg-success/10 text-success text-[10px] font-bold px-2 py-0.5 border border-success/20">
                     회원권 {membershipApplied.toLocaleString()}원 차감
@@ -670,7 +670,7 @@ export default function SettlementPage(): React.ReactElement | null {
                   </span>
                 </div>
                 <p className="text-[11px] text-amber-800 leading-snug">
-                  {membershipSessionState.currentSessionNumber}회차에서 {membershipApplied.toLocaleString()}원 차감 + {secondaryPaymentMethod === 'cash' ? '현금' : '카드'}로 {remainingAfterMembership.toLocaleString()}원 결제
+                  {depositApplied > 0 && `예약금 ${depositApplied.toLocaleString()}원 차감 후 `}{membershipSessionState.currentSessionNumber}회차에서 {membershipApplied.toLocaleString()}원 차감 + {secondaryPaymentMethod === 'cash' ? '현금' : '카드'}로 {remainingAfterMembership.toLocaleString()}원 결제
                   <br />
                   결제 후 회원권 총 잔액 {membershipRemainingAfter.toLocaleString()}원
                 </p>
@@ -678,7 +678,7 @@ export default function SettlementPage(): React.ReactElement | null {
             )}
             {isMembershipPayment && membershipSessionState && remainingAfterMembership === 0 && membershipApplied > 0 && (
               <p className="text-xs text-success font-medium mt-1">
-                {membershipSessionState.currentSessionNumber}회차에서 {membershipApplied.toLocaleString()}원 차감 · 추가로 받으실 금액 없어요
+                {depositApplied > 0 && `예약금 ${depositApplied.toLocaleString()}원 차감 후 `}{membershipSessionState.currentSessionNumber}회차에서 {membershipApplied.toLocaleString()}원 차감 · 추가로 받으실 금액 없어요
                 <br />
                 <span className="text-[11px] text-text-muted">
                   결제 후 회원권 총 잔액: {membershipRemainingAfter.toLocaleString()}원

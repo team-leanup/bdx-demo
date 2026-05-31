@@ -819,6 +819,7 @@ export async function fetchConsultationRecords(shopId?: string | null): Promise<
     upsellAmount: (row as Record<string, unknown>).upsell_amount as number | undefined,
     isQuickSale: row.is_quick_sale ?? false,
     shareCardId: (row as Record<string, unknown>).share_card_id as string | undefined,
+    deposit: (row as Record<string, unknown>).deposit as number | undefined,
   }));
 }
 
@@ -851,6 +852,7 @@ export async function fetchBookingRequests(shopId?: string | null): Promise<Book
     preConsultationData: (row.pre_consultation_data as unknown as BookingRequest['preConsultationData']) ?? undefined,
     preConsultationCompletedAt: row.pre_consultation_completed_at ?? undefined,
     consultationLinkSentAt: row.consultation_link_sent_at ?? undefined,
+    consultationLinkId: (row as Record<string, unknown>).consultation_link_id as string | undefined,
     deposit: (row as Record<string, unknown>).deposit as number | undefined,
   }));
 }
@@ -1147,6 +1149,7 @@ export async function dbUpsertRecord(record: ConsultationRecord): Promise<{ succ
     upsell_amount: record.upsellAmount ?? null,
     is_quick_sale: record.isQuickSale ?? false,
     share_card_id: record.shareCardId ?? null,
+    deposit: record.deposit ?? null,
   });
   if (error) {
     console.error('[db] dbUpsertRecord error:', toDbErrorSnapshot(error));

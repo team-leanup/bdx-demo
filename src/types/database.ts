@@ -187,6 +187,7 @@ export type Database = {
           consultation: Json
           created_at: string | null
           customer_id: string
+          deposit: number | null
           designer_id: string
           estimated_minutes: number | null
           final_price: number | null
@@ -208,6 +209,7 @@ export type Database = {
           consultation: Json
           created_at?: string | null
           customer_id: string
+          deposit?: number | null
           designer_id: string
           estimated_minutes?: number | null
           final_price?: number | null
@@ -229,6 +231,7 @@ export type Database = {
           consultation?: Json
           created_at?: string | null
           customer_id?: string
+          deposit?: number | null
           designer_id?: string
           estimated_minutes?: number | null
           final_price?: number | null

@@ -726,4 +726,14 @@
 
 ---
 
-*최종 업데이트: 2026-03-17 (QA 오탐 정정 반영)*
+## 2026-05-31 — 전 구간 심층 QA + 라이브 E2E
+
+멀티에이전트 감사(48에이전트, 확정 33 + 비판 6) + Chrome 신규 사전상담 실측 → **수정 26건 + DB 마이그레이션 1건**. 상세: [`qa-deep-20260531.md`](./qa-deep-20260531.md).
+- 대시보드 매출 deposit 합산·단골 기준·재방문율 메트릭·비율 정수화
+- deposit DB 영속화 + 3개 결제경로 totalSpend·designScope 정합
+- 슬롯 후방겹침 이중예약(HIGH) / 시술-정산 가격 정합(HIGH, hydrate 필드 전달)
+- CategoryPicker 통화 혼용·반올림 / confirm A-2 슬롯표시·zh-ja·shape맵
+- 마이그레이션 `20260531_qa_fixes.sql`(적용완료): consultation_records.deposit, uq 슬롯 인덱스 pending/confirmed 한정
+- 라이브 검증: 신규 제출 DB 영속(A-2, deposit 10000) / 슬롯차단+후방겹침 / 대시보드·통화 정확 / tsc·lint 통과
+
+*최종 업데이트: 2026-05-31 (전 구간 심층 QA)*

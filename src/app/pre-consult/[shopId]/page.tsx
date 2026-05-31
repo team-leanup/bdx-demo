@@ -80,7 +80,7 @@ function PreConsultStartInner(): React.ReactElement {
         .then((result) => {
           if (!result || result.shopId !== params.shopId) {
             setLinkError(t('preConsult.linkInvalid'));
-          } else if (result.status !== 'active') {
+          } else if (result.status !== 'active' || (result.expiresAt && result.expiresAt < new Date().toISOString())) {
             setLinkError(t('preConsult.linkInvalid'));
           } else {
             setLinkData(result);

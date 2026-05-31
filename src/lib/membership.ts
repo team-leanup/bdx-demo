@@ -128,11 +128,15 @@ export function getMembershipSessionState(m: Membership): MembershipSessionState
   // 사용액이 마지막 회차를 넘어갈 수 있으니 마지막 회차로 clamp
   const rawIdx = Math.floor(usedAmount / sessionLimit);
   const currentSessionIdx = Math.min(total - 1, rawIdx);
+  const isLastSession = currentSessionIdx >= total - 1;
   const currentSessionUsed = Math.max(
     0,
     Math.min(sessionLimit, usedAmount - currentSessionIdx * sessionLimit),
   );
-  const currentSessionRemaining = Math.max(0, sessionLimit - currentSessionUsed);
+  // 마지막 회차는 정수 나눗셈 잔차 포함 실제 잔액(remainingAmount)을 표시
+  const currentSessionRemaining = isLastSession
+    ? Math.max(0, remainingAmount)
+    : Math.max(0, sessionLimit - currentSessionUsed);
   // 0529 MED-1: rawIdx가 total을 초과한 경우에도 remainingSessionsCount가 1로 표시되던 문제 보정.
   // 잔여액이 1원이라도 남으면 1회, 0원이면 0회로 정정.
   const remainingSessionsCount = remainingAmount > 0

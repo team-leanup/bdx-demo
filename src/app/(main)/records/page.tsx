@@ -19,7 +19,7 @@ import { useAppStore } from '@/store/app-store';
 import { useConsultationStore } from '@/store/consultation-store';
 import { useFieldModeStore } from '@/store/field-mode-store';
 import { ConsultationStep } from '@/types/consultation';
-import type { RemovalPreference, LengthPreference, AddOnOption } from '@/types/pre-consultation';
+import type { RemovalPreference, LengthPreference, AddOnOption, WrappingPreference } from '@/types/pre-consultation';
 import { asDesignCategory } from '@/lib/design-category-guard';
 import { useCustomerStore } from '@/store/customer-store';
 import { useT } from '@/lib/i18n';
@@ -32,7 +32,7 @@ import { getSafetyTagMeta, sortSafetyTags } from '@/lib/tag-safety';
 import { getBookingStage } from '@/lib/booking-stage';
 import { cn } from '@/lib/cn';
 import type { TimeGridEvent } from '@/components/calendar/TimeGridCalendar';
-import { DESIGN_SCOPE_LABEL } from '@/lib/labels';
+import { resolveRecordCategoryLabelKo } from '@/lib/category-resolver';
 import { useShopStore } from '@/store/shop-store';
 import { useLocaleStore } from '@/store/locale-store';
 import {
@@ -41,7 +41,7 @@ import {
   PeriodFilter,
 } from '@/components/records';
 import { ReservationForm } from '@/components/home/ReservationForm';
-import type { BookingChannel, BookingRequest } from '@/types/consultation';
+import type { BookingChannel, BookingRequest, NailShape } from '@/types/consultation';
 import type { ConsultationRecord } from '@/types/consultation';
 
 const READINESS_LEGEND = [
@@ -67,7 +67,11 @@ function isInPeriod(dateStr: string, period: FilterPeriod): boolean {
     const dayOfWeek = (todayDate.getDay() + 6) % 7; // Monday=0, Sunday=6
     startOfWeek.setDate(todayDate.getDate() - dayOfWeek);
     startOfWeek.setHours(0, 0, 0, 0);
-    return d >= startOfWeek;
+    // 0531 — 주 끝(일요일) 상한 추가: 상한이 없으면 다음 주 이후 미래 레코드까지 '이번주'에 포함됨
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+    return d >= startOfWeek && d <= endOfWeek;
   }
   if (period === 'month') {
     return d.getFullYear() === todayDate.getFullYear() && d.getMonth() === todayDate.getMonth();
@@ -381,11 +385,11 @@ export default function RecordsPage() {
         !q ||
         (r.consultation.customerName ?? '').toLowerCase().includes(q) ||
         (r.consultation.customerPhone ?? '').includes(q) ||
-        DESIGN_SCOPE_LABEL[r.consultation.designScope]?.toLowerCase().includes(q);
+        resolveRecordCategoryLabelKo(r.consultation, shopSettings).toLowerCase().includes(q);
       const matchPeriod = isInPeriod(r.createdAt, filter);
       return matchSearch && matchPeriod;
     });
-  }, [sorted, search, filter, role, activeDesignerId, customerFilterId]);
+  }, [sorted, search, filter, role, activeDesignerId, customerFilterId, shopSettings]);
 
   const handleEventClick = (ev: TimeGridEvent) => {
     if (ev.type === 'consultation') {
@@ -456,6 +460,12 @@ export default function RecordsPage() {
         removalType: (raw?.removalPreference ?? 'none') as RemovalPreference,
         lengthType: (raw?.lengthPreference ?? 'keep') as LengthPreference,
         addOns: (raw?.addOns ?? []) as AddOnOption[],
+        // 0531 — 정산 가격 정합성: 랩핑·커스텀파츠·사진가격·손톱모양도 함께 hydrate해야
+        // 시술 시작 직후 정산 견적이 사전상담 견적과 일치한다.
+        wrappingPreference: (raw?.wrappingPreference as WrappingPreference | undefined) ?? null,
+        customPartSelections: (raw?.customPartSelections as Record<string, number> | undefined) ?? {},
+        selectedPhotoPrice: (raw?.selectedPhotoPrice as number | undefined) ?? null,
+        nailShape: (raw?.nailShape as NailShape | undefined) ?? null,
         selectedPhotoUrl: (raw?.selectedPhotoUrl as string | undefined) ?? null,
         selectedPhotoId: (raw?.selectedPhotoId as string | undefined) ?? null,
       });
@@ -483,6 +493,11 @@ export default function RecordsPage() {
     params.set('bookingId', selectedEvent.originalId);
     if (selectedEvent.customerId) params.set('customerId', selectedEvent.customerId);
     params.set('customerName', selectedEvent.title);
+    // 0531 — 예약에 등록된 예약금을 quick-sale로 전달해 자동 차감/집계
+    const booking = allReservations.find((r) => r.id === selectedEvent.originalId);
+    if (booking?.deposit && booking.deposit > 0) {
+      params.set('deposit', String(booking.deposit));
+    }
     closeSelectedEventSheet();
     router.push(`/quick-sale?${params.toString()}`);
   };
@@ -1199,12 +1214,14 @@ export default function RecordsPage() {
                                     }
                                     if (matchedRecord.customerId) {
                                       // 0529: totalSpend는 회원권 차감분 포함 실제 시술 금액 기준 (field-mode·payment와 일관)
-                                      const totalServicePrice = matchedRecord.finalPrice + (matchedRecord.membershipApplied ?? 0);
+                                      // 0531: 예약금(deposit)도 포함 — records/[id] handleFinalize와 통일
+                                      const totalServicePrice = matchedRecord.finalPrice + (matchedRecord.membershipApplied ?? 0) + (matchedRecord.deposit ?? 0);
                                       recordTreatmentCompletion(matchedRecord.customerId, totalServicePrice, {
                                         recordId: matchedRecord.id,
                                         date: getTodayInKorea(),
                                         bodyPart: matchedRecord.consultation?.bodyPart ?? 'hand',
-                                        designScope: matchedRecord.consultation?.designScope ?? '기타',
+                                        // 0531: designScope 손실 매핑 방지 — designCategory 우선 라벨 사용
+                                        designScope: matchedRecord.consultation ? resolveRecordCategoryLabelKo(matchedRecord.consultation, shopSettings) : '기타',
                                         price: totalServicePrice,
                                         imageUrls: [],
                                       });
@@ -1357,16 +1374,36 @@ export default function RecordsPage() {
                           )}
                           {stage === 'completed' && (
                             <div className="mt-3 flex flex-col gap-2">
+                              {matchedRecord ? (
+                                <button
+                                  onClick={() => {
+                                    closeSelectedEventSheet();
+                                    // 상담 상세로 이동하면서 공유카드 생성 모달 자동 오픈 (?share=1)
+                                    router.push(`/records/${matchedRecord.id}?share=1`);
+                                  }}
+                                  className="w-full rounded-xl border border-primary bg-primary/5 px-4 py-3 text-sm font-semibold text-primary active:scale-[0.98] transition-transform"
+                                >
+                                  공유카드 만들기
+                                </button>
+                              ) : (
+                                // 0531 — 시술 기록이 삭제된 완료 예약: bookingId로 잘못 이동하던 404 방지
+                                <p className="text-center text-xs text-text-muted py-2">시술 기록이 삭제되었습니다</p>
+                              )}
                               <button
-                                onClick={() => {
-                                  const recordId = matchedRecord?.id ?? selectedEvent.originalId;
-                                  closeSelectedEventSheet();
-                                  // 상담 상세로 이동하면서 공유카드 생성 모달 자동 오픈 (?share=1)
-                                  router.push(`/records/${recordId}?share=1`);
-                                }}
-                                className="w-full rounded-xl border border-primary bg-primary/5 px-4 py-3 text-sm font-semibold text-primary active:scale-[0.98] transition-transform"
+                                onClick={closeSelectedEventSheet}
+                                className="w-full rounded-xl bg-surface-alt px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
                               >
-                                공유카드 만들기
+                                닫기
+                              </button>
+                            </div>
+                          )}
+                          {stage === 'cancelled' && (
+                            <div className="mt-3 flex flex-col gap-2">
+                              <button
+                                onClick={handleDeleteRecord}
+                                className="w-full rounded-xl py-2.5 text-xs font-medium text-error hover:bg-error/10 transition-colors"
+                              >
+                                예약 삭제
                               </button>
                               <button
                                 onClick={closeSelectedEventSheet}

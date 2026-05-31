@@ -154,6 +154,7 @@ export interface BookingRequest {
   consultationLinkSentAt?: string;   // 사전 상담 링크 발송 시각
   preConsultationCompletedAt?: string;
   preConsultationData?: ConsultationType;
+  consultationLinkId?: string;   // 링크 기반 예약 식별
   deposit?: number;        // 원장 직접 입력 예약금
 }
 

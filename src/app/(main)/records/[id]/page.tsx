@@ -13,7 +13,8 @@ import { usePortfolioStore } from '@/store/portfolio-store';
 import { useCustomerStore } from '@/store/customer-store';
 import { useConsultationStore } from '@/store/consultation-store';
 import { calculatePrice, buildServicePricingFromShopSettings } from '@/lib/price-calculator';
-import { resolveCategoryLabelKo, resolveCategoryPricing } from '@/lib/category-resolver';
+import { resolveCategoryLabelKo, resolveCategoryPricing, resolveRecordCategoryLabelKo } from '@/lib/category-resolver';
+import { useReservationStore } from '@/store/reservation-store';
 import { useT } from '@/lib/i18n';
 import { getSafetyTagMeta } from '@/lib/tag-safety';
 import { SafetyTag } from '@/components/ui/SafetyTag';
@@ -40,6 +41,7 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
   const record = useRecordsStore(useShallow((s) => s.records.find((r) => r.id === id)));
   const updateRecord = useRecordsStore((s) => s.updateRecord);
   const removeRecord = useRecordsStore((s) => s.removeRecord);
+  const updateReservation = useReservationStore((s) => s.updateReservation);
   const portfolioPhotos = usePortfolioStore(useShallow((s) => s.photos.filter((p) => p.recordId === id)));
   const getPinnedTags = useCustomerStore((s) => s.getPinnedTags);
   const recordTreatmentCompletion = useCustomerStore((s) => s.recordTreatmentCompletion);
@@ -119,6 +121,11 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
         { label: '오프·옵션·파츠 등', amount: storedGross - catBase },
       ];
     }
+    // 0531 — 카테고리가만으로 총액과 같거나(추가옵션 없음) 할인으로 총액이 더 낮은 경우:
+    //   빈 배열로 두면 내역이 통째로 사라지므로 단일 행으로 표시(음수 방지)
+    if (catBase > 0) {
+      return [{ label: catLabel, amount: storedGross }];
+    }
     return [];
   })();
 
@@ -140,6 +147,11 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
     if (record.finalizedAt) return;
     const now = getNowInKoreaIso();
     updateRecord(id, { finalizedAt: now });
+    // 0531 — 연결된 예약의 status도 completed로 갱신(DB 정합성). 타임그리드 인라인 결제완료와 동일.
+    const bookingId = record.consultation?.bookingId;
+    if (bookingId) {
+      updateReservation(bookingId, { status: 'completed' });
+    }
     if (record.customerId) {
       // 0529: totalSpend는 회원권 차감분 + 예약금 차감분 포함 실제 시술 금액 기준 (field-mode·payment와 일관)
       const totalServicePrice = record.finalPrice + (record.membershipApplied ?? 0) + (record.deposit ?? 0);
@@ -147,7 +159,8 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
         recordId: id,
         date: getTodayInKorea(),
         bodyPart: record.consultation?.bodyPart ?? 'hand',
-        designScope: record.consultation?.designScope ?? '기타',
+        // 0531 — designScope 손실 매핑 방지: designCategory 우선 라벨 사용
+        designScope: record.consultation ? resolveRecordCategoryLabelKo(record.consultation, shopSettings) : '기타',
         price: totalServicePrice,
         imageUrls: [],
       });
