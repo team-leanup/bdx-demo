@@ -160,11 +160,11 @@ export function TimeGridCalendar({ events, weekStartDate, onEventClick, onWeekCh
       {/* Navigation */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <button onClick={handlePrev} className="p-1.5 rounded-lg hover:bg-surface-alt text-text-secondary">
+          <button onClick={handlePrev} className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-surface-alt text-text-secondary">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 4l-4 4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
           <span className="text-sm font-semibold text-text min-w-[120px] text-center">{weekLabel}</span>
-          <button onClick={handleNext} className="p-1.5 rounded-lg hover:bg-surface-alt text-text-secondary">
+          <button onClick={handleNext} className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-surface-alt text-text-secondary">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
         </div>
@@ -235,23 +235,23 @@ export function TimeGridCalendar({ events, weekStartDate, onEventClick, onWeekCh
                         style={{ top, height }}
                       >
                         <div className="text-[10px] font-semibold truncate flex items-center gap-1">
-                          <span className={cn('inline-block px-0.5 rounded text-[9px] font-bold', ev.type === 'reservation' ? 'bg-warning/20 text-warning' : 'bg-primary/15 text-primary')}>
+                          <span className={cn('inline-block px-0.5 rounded text-[10px] font-bold', ev.type === 'reservation' ? 'bg-warning/20 text-warning' : 'bg-primary/15 text-primary')}>
                             {ev.type === 'reservation' ? '예약' : '상담'}
                           </span>
                           {ev.title}
                         </div>
                         {ev.type === 'consultation' && ev.designScope && (
-                          <div className="text-[9px] font-medium truncate">
+                          <div className="text-[10px] font-medium truncate">
                             {BODY_PART_LABEL[ev.bodyPart ?? ''] ?? ''} {DESIGN_SCOPE_LABEL[ev.designScope] ?? ev.designScope}
                             {ev.finalPrice != null && ` · ${formatPrice(ev.finalPrice)}`}
                           </div>
                         )}
                         {ev.type === 'consultation' && ev.expressions && ev.expressions.length > 0 && height >= 56 && (
-                          <div className="text-[9px] opacity-60 truncate">
+                          <div className="text-[10px] opacity-60 truncate">
                             {ev.expressions.map((e) => EXPRESSION_LABEL[e] ?? e).join(', ')}
                           </div>
                         )}
-                        <div className="text-[9px] opacity-70 truncate">{ev.startTime}–{ev.endTime}</div>
+                        <div className="text-[10px] opacity-70 truncate">{ev.startTime}–{ev.endTime}</div>
                       </button>
                     );
                   })}

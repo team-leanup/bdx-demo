@@ -234,10 +234,21 @@ export default function SettlementPage(): React.ReactElement | null {
     }
   }
 
+  // 0531 R3 — 사전상담 커스텀 파츠 선택분(수량>0) 존재 여부
+  const hasCustomPartLines =
+    !!customPartSelections &&
+    !!shopSettings.customParts &&
+    shopSettings.customParts.some((p) => {
+      const raw = customPartSelections[p.name];
+      return typeof raw === 'number' && raw > 0;
+    });
+  // 0531 R3 — 랩핑/커스텀파츠만 추가금이 있어도 기본 옵션 카드를 표시(이전엔 숨겨져 5,000원이 총액에만 반영되고 내역엔 안 보임)
   const hasBaseOptions =
     removalType !== 'none' ||
     lengthType === 'extend' ||
-    addOns.length > 0;
+    addOns.length > 0 ||
+    (wrappingPreference === 'yes' && !addOns.includes('wrapping')) ||
+    hasCustomPartLines;
 
   // ── Remove label ─────────────────────────────────────────────────────────────
 
@@ -481,6 +492,19 @@ export default function SettlementPage(): React.ReactElement | null {
                       label={ADD_ON_LABELS[addon] ?? addon}
                       amount={amount}
                     />
+                  );
+                })}
+                {/* 0531 R3 — 랩핑 선호(addOns에 미포함) 라인. 저장 lineItems·총액과 동일 기준 */}
+                {wrappingPreference === 'yes' && !addOns.includes('wrapping') && getAddOnAmount('wrapping') > 0 && (
+                  <LineRow label="랩핑" amount={getAddOnAmount('wrapping')} />
+                )}
+                {/* 0531 R3 — 사전상담 커스텀 파츠 선택분 라인 */}
+                {customPartSelections && shopSettings.customParts?.map((part) => {
+                  const raw = customPartSelections[part.name];
+                  const count = typeof raw === 'number' ? Math.max(0, Math.floor(raw)) : 0;
+                  if (count <= 0) return null;
+                  return (
+                    <LineRow key={part.name} label={`${part.name} ×${count}`} amount={part.pricePerUnit * count} />
                   );
                 })}
               </div>

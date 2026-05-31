@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/Button';
 import { ShareCardGeneratorModal } from '@/components/share-card/ShareCardGeneratorModal';
 import { useAuthStore } from '@/store/auth-store';
 import { useAppStore } from '@/store/app-store';
+import { toKoreanDateString, getTodayInKorea } from '@/lib/format';
 import { resolveCategoryLabelKo } from '@/lib/category-resolver';
 
 // ─── Animation variants ───────────────────────────────────────────────────────
@@ -238,7 +239,7 @@ export default function WrapUpPage(): React.ReactElement {
             const totalServicePrice = record.finalPrice + (record.membershipApplied ?? 0) + (record.deposit ?? 0);
             customerStore.recordTreatmentCompletion(savedId, totalServicePrice, {
               recordId,
-              date: record.createdAt.split('T')[0] ?? new Date().toISOString().split('T')[0],
+              date: toKoreanDateString(record.createdAt) ?? getTodayInKorea(),
               bodyPart: 'hand',
               designScope: record.consultation?.designCategory ?? '기타',
               price: totalServicePrice,

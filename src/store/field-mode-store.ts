@@ -57,7 +57,7 @@ interface FieldModeState {
 
 interface FieldModeActions {
   setPhase: (phase: FieldModePhase) => void;
-  selectDesign: (photoId: string, photoUrl: string, category: DesignCategory) => void;
+  selectDesign: (photoId: string, photoUrl: string, category: DesignCategory, optionalPrice?: number | null) => void;
   // 0529 이슈 #1: 포트폴리오 사진 없이 카테고리만으로 시술 진행
   selectCategoryOnly: (category: DesignCategory) => void;
   confirmDesign: () => void;
@@ -140,10 +140,12 @@ export const useFieldModeStore = create<FieldModeStore>()(
 
       setPhase: (phase) => set({ phase }),
 
-      selectDesign: (photoId, photoUrl, category) =>
+      selectDesign: (photoId, photoUrl, category, optionalPrice) =>
         set({
           selectedPhotoId: photoId,
           selectedPhotoUrl: photoUrl,
+          // 0531 R3: 사진별 가격을 저장해야 직접경로(사전상담 없이) 정산이 카테고리 기본가 대신 사진 가격을 사용
+          selectedPhotoPrice: optionalPrice ?? null,
           selectedCategory: category,
           phase: 'design-confirm',
         }),

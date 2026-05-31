@@ -22,7 +22,7 @@ export function LanguageSelector() {
             key={lang}
             onClick={() => setLocale(lang)}
             className={[
-              'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-150',
+              'flex items-center gap-1.5 rounded-full px-3 py-2.5 min-h-[44px] text-sm font-medium transition-all duration-150',
               isActive
                 ? 'bg-primary text-white shadow-sm'
                 : 'bg-surface-alt border border-border text-text-secondary hover:border-primary/40 hover:text-text',

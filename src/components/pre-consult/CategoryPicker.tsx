@@ -192,7 +192,7 @@ export function CategoryPicker(): React.ReactElement {
                   {cat.builtin ? t(cat.tDescKey!) : cat.desc}
                 </p>
               )}
-              {(menuMinPrices[cat.key] != null || shopData) && (
+              {!!getPriceHint(cat.key) && (
                 <span className="mt-1 text-xs font-semibold text-primary tabular-nums">
                   {getPriceHint(cat.key)}
                 </span>

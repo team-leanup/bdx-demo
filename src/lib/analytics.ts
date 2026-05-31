@@ -229,15 +229,6 @@ export function computeTopDesignScope(records: ConsultationRecord[]): string {
   return CATEGORY_DISPLAY_LABEL[top[0]] ?? DESIGN_SCOPE_LABEL[top[0]] ?? top[0];
 }
 
-// Return rate = (customers with visitCount >= 2) / total * 100
-export function computeReturnRate(
-  customers: Customer[],
-): number {
-  if (customers.length === 0) return 0;
-  const returning = customers.filter((c) => c.visitCount >= 2).length;
-  return Math.round((returning / customers.length) * 1000) / 10;
-}
-
 // 0531 HIGH — 단골 기준을 드릴다운 목록·라벨('3회 이상 방문 고객 기준')과 통일.
 // (이전 isRegular 플래그 기준은 드릴다운 visitCount>=3 필터와 수치가 달랐음)
 export function computeRegularCount(customers: Customer[]): number {
@@ -453,7 +444,7 @@ export function computeUpsellMetrics(records: ConsultationRecord[], shopPricing?
       upsellConsultations += 1;
     }
 
-    const totalPartsInRecord = record.consultation.partsSelections.reduce(
+    const totalPartsInRecord = (record.consultation.partsSelections ?? []).reduce(
       (sum, selection) => sum + selection.quantity,
       0,
     );

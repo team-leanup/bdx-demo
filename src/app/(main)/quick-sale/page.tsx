@@ -72,7 +72,10 @@ function QuickSaleContent(): React.ReactElement {
       customerName: data.customerName || undefined,
       customerPhone: data.customerPhone,
       serviceType: data.serviceType || undefined,
-      finalPrice: data.amount,
+      // [0531 R3] 회원권 결제 시 finalPrice는 회원권으로 덮이지 않은 잔액만.
+      //   addQuickSaleRecord가 totalSpend = finalPrice + membershipApplied 로 집계하므로,
+      //   finalPrice=data.amount 이면 회원권 차감분이 이중 계상됨(전액 회원권 시 2배).
+      finalPrice: isMembershipPayment ? Math.max(0, data.amount - membershipApplied) : data.amount,
       notes: data.memo || undefined,
       paymentMethod: data.paymentMethod,
       // [SALES-1] 회원권 차감액 저장 — totalSpend 정합

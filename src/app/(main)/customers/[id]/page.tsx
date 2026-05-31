@@ -10,7 +10,7 @@ import { SafetyTag } from '@/components/ui/SafetyTag';
 import { FlagIcon } from '@/components/ui/FlagIcon';
 import type { ToastData } from '@/components/ui';
 import { cn } from '@/lib/cn';
-import { formatPrice, formatRelativeDate, formatDateDot, getNowInKoreaIso } from '@/lib/format';
+import { formatPrice, formatRelativeDate, formatDateDot, getNowInKoreaIso, toKoreanDateString } from '@/lib/format';
 import {
   CUSTOMER_TAG_ACCENTS,
   getCustomerTagDotClasses,
@@ -205,7 +205,7 @@ function CustomerDetailContent({ id }: { id: string }) {
     const existingHistory = customer?.treatmentHistory ?? [];
     const recordBased = customerRecords.map((r): TreatmentHistory => ({
       recordId: r.id,
-      date: r.createdAt.split('T')[0],
+      date: toKoreanDateString(r.createdAt),
       bodyPart: r.consultation.bodyPart,
       // 0531: 시술 종류는 designCategory 우선(프렌치 등). designScope 손실 매핑 보정.
       designScope: resolveRecordCategoryLabelKo(r.consultation, shopSettings),
@@ -1650,7 +1650,7 @@ function CustomerDetailContent({ id }: { id: string }) {
                   id: existing?.id ?? generateId('mb'),
                   totalSessions: total,
                   usedSessions: existing?.usedSessions ?? 0,
-                  remainingSessions: existing ? total - existing.usedSessions : total,
+                  remainingSessions: existing ? Math.max(0, total - existing.usedSessions) : total,
                   purchaseAmount: amount,
                   usedAmount: prevUsedAmount,
                   remainingAmount: nextRemainingAmount,

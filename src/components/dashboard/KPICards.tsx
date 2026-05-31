@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { KPICard } from '@/lib/analytics';
 import {
   computeKPICards,
@@ -114,11 +114,11 @@ function buildKPIDetail(
       return (
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-            <span className="text-sm text-text-secondary">재방문 고객 (이달)</span>
+            <span className="text-sm text-text-secondary">재방문 고객 (전체)</span>
             <span className="font-bold text-text">{analytics.returningCustomers}명</span>
           </div>
           <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-            <span className="text-sm text-text-secondary">신규 고객 (이달)</span>
+            <span className="text-sm text-text-secondary">신규 고객 (전체)</span>
             <span className="font-bold text-text">{analytics.newCustomers}명</span>
           </div>
           <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
@@ -230,6 +230,12 @@ function KPIBottomSheet({ kpi, onClose }: BottomSheetProps) {
   const reservations = useReservationStore((s) => s.reservations);
   const detail = buildKPIDetail(kpi.label, records, customers, reservations, kpi.rawValue);
 
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, [onClose]);
+
   return (
     <>
       {/* 오버레이 */}
@@ -238,7 +244,7 @@ function KPIBottomSheet({ kpi, onClose }: BottomSheetProps) {
         onClick={onClose}
       />
       {/* 바텀시트 패널 */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 flex max-h-[88dvh] flex-col overflow-hidden rounded-t-2xl bg-background shadow-sm pb-safe md:bottom-auto md:top-1/2 md:left-1/2 md:right-auto md:w-full md:max-h-[85vh] md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl md:pb-0">
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex max-h-[88dvh] flex-col overflow-hidden rounded-t-2xl bg-background shadow-sm pb-safe md:bottom-auto md:top-1/2 md:left-1/2 md:right-auto md:w-full md:max-h-[85vh] md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl md:pb-0" role="dialog" aria-modal="true" aria-labelledby="kpi-sheet-title">
         {/* 핸들 */}
         <div className="flex flex-shrink-0 justify-center pt-3 pb-1">
           <div className="h-1 w-10 rounded-full bg-border" />
@@ -247,7 +253,7 @@ function KPIBottomSheet({ kpi, onClose }: BottomSheetProps) {
         <div className="flex flex-shrink-0 items-center justify-between px-5 py-3">
           <div className="flex items-center gap-2">
             <span className="text-xl">{kpi.icon}</span>
-            <h3 className="text-base font-bold text-text">{kpi.label}</h3>
+            <h3 id="kpi-sheet-title" className="text-base font-bold text-text">{kpi.label}</h3>
           </div>
           <button
             onClick={onClose}

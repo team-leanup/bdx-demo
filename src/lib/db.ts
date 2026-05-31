@@ -12,6 +12,16 @@ const PORTFOLIO_BUCKET = 'portfolio-images';
 const PORTFOLIO_MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
 const DESIGNER_AVATAR_BUCKET = 'designer-profile-images';
 
+// 0531 R3 — 레거시 레코드 방어: expressions·partsSelections 누락(구 DB 레코드) 시 빈 배열로 정규화.
+// 이 한 곳에서 정규화하면 analytics·records/[id]·ConsultationListItem 등 downstream의 .map/.reduce crash가 모두 예방된다.
+function normalizeConsultation(c: ConsultationType): ConsultationType {
+  return {
+    ...c,
+    expressions: c.expressions ?? [],
+    partsSelections: c.partsSelections ?? [],
+  };
+}
+
 interface PortfolioMutationResult {
   success: boolean;
   photo?: PortfolioPhoto;
@@ -800,7 +810,7 @@ export async function fetchConsultationRecords(shopId?: string | null): Promise<
     shopId: row.shop_id,
     designerId: row.designer_id,
     customerId: row.customer_id,
-    consultation: row.consultation as unknown as ConsultationType,
+    consultation: normalizeConsultation(row.consultation as unknown as ConsultationType),
     totalPrice: row.total_price ?? 0,
     estimatedMinutes: row.estimated_minutes ?? 0,
     finalPrice: row.final_price ?? 0,

@@ -11,10 +11,22 @@ function formatSlot(date: string, time: string, locale: string): string {
   const dt = new Date(Date.UTC(y, m - 1, d, 12));
   const weekdaysKo = ['일', '월', '화', '수', '목', '금', '토'];
   const weekdaysEn = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const wd = locale === 'ko' ? weekdaysKo[dt.getUTCDay()] : weekdaysEn[dt.getUTCDay()];
-  return locale === 'ko'
-    ? `${m}월 ${d}일 (${wd}) ${time}`
-    : `${m}/${d} (${wd}) ${time}`;
+  const weekdaysZh = ['日', '一', '二', '三', '四', '五', '六'];
+  const weekdaysJa = ['日', '月', '火', '水', '木', '金', '土'];
+  if (locale === 'ko') {
+    const wd = weekdaysKo[dt.getUTCDay()];
+    return `${m}월 ${d}일 (${wd}) ${time}`;
+  }
+  if (locale === 'zh') {
+    const wd = weekdaysZh[dt.getUTCDay()];
+    return `${m}月${d}日 (${wd}) ${time}`;
+  }
+  if (locale === 'ja') {
+    const wd = weekdaysJa[dt.getUTCDay()];
+    return `${m}月${d}日 (${wd}) ${time}`;
+  }
+  const wd = weekdaysEn[dt.getUTCDay()];
+  return `${m}/${d} (${wd}) ${time}`;
 }
 
 export default function PreConsultCompletePage(): React.ReactElement {

@@ -182,6 +182,14 @@ export default function RecordsPage() {
     reminderShownForIdRef.current = null;
   };
 
+  useEffect(() => {
+    if (!selectedEvent) return;
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') closeSelectedEventSheet(); };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedEvent]);
+
   const hydrateConsultation = useConsultationStore((s) => s.hydrateConsultation);
   const hydrateFromBooking = useFieldModeStore((s) => s.hydrateFromBooking);
   const startTreatment = useFieldModeStore((s) => s.startTreatment);
@@ -760,8 +768,8 @@ export default function RecordsPage() {
                 <button
                   type="button"
                   onClick={() => setViewMode('day')}
-                  className="absolute top-2 right-2 flex items-center justify-center w-8 h-8 rounded-lg bg-surface-alt text-text-secondary hover:text-primary hover:bg-primary/10 transition-colors"
-                  title="일간 보기"
+                  className="absolute top-2 right-2 flex items-center justify-center w-10 h-10 rounded-lg bg-surface-alt text-text-secondary hover:text-primary hover:bg-primary/10 transition-colors"
+                  aria-label="일간 보기"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
@@ -844,9 +852,12 @@ export default function RecordsPage() {
               exit={{ opacity: 0, y: 60 }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
               className="fixed bottom-0 left-0 right-0 z-50 flex max-h-[88dvh] flex-col overflow-hidden rounded-t-2xl bg-background pt-5 pb-safe md:bottom-auto md:top-1/2 md:left-1/2 md:right-auto md:w-full md:max-h-[85vh] md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="record-sheet-title"
             >
               <div className="mb-4 flex flex-shrink-0 items-center justify-between px-5">
-                <h3 className="text-base font-semibold text-text">
+                <h3 id="record-sheet-title" className="text-base font-semibold text-text">
                   {linkGenBooking
                     ? '상담 링크 생성'
                     : editMode
@@ -855,7 +866,7 @@ export default function RecordsPage() {
                 </h3>
                 <button
                   onClick={linkGenBooking ? () => setLinkGenBooking(null) : closeSelectedEventSheet}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-alt text-text-muted"
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-alt text-text-muted"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

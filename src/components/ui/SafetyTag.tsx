@@ -11,7 +11,7 @@ interface SafetyTagProps {
 }
 
 const SIZE_CLASSES: Record<NonNullable<SafetyTagProps['size']>, string> = {
-  xs: 'px-1.5 py-0.5 text-[9px] gap-1',
+  xs: 'px-1.5 py-0.5 text-[10px] gap-1',
   sm: 'px-2 py-0.5 text-[10px] gap-1',
   md: 'px-3 py-1 text-xs gap-1.5',
 };

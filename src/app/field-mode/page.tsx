@@ -174,6 +174,7 @@ export default function FieldModePage() {
       photo.id,
       photoUrl,
       (photo.styleCategory ?? 'simple') as DesignCategory,
+      photo.price ?? null,
     );
   }
 

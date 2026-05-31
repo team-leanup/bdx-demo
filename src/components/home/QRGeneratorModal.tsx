@@ -24,6 +24,13 @@ export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGenera
     }
   }, []);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, [isOpen, onClose]);
+
   // 미리 정하기 링크: /pre-consult/[shopId]
   const preConsultPath = shopId ? `/pre-consult/${shopId}` : '/pre-consult';
   const consultationUrl = origin ? `${origin}${preConsultPath}` : preConsultPath;
@@ -73,11 +80,14 @@ export function QRGeneratorModal({ isOpen, onClose, shopId, shopName }: QRGenera
             exit={{ opacity: 0, y: 40 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className="relative w-full max-w-sm mx-4 mb-safe rounded-3xl bg-surface overflow-hidden shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="qr-modal-title"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-border">
               <div>
-                <h2 className="text-base font-semibold text-text">미리 정하기 QR</h2>
+                <h2 id="qr-modal-title" className="text-base font-semibold text-text">미리 정하기 QR</h2>
                 <p className="text-xs text-text-muted mt-0.5">고객이 스캔하면 디자인을 미리 선택할 수 있어요</p>
               </div>
               <button

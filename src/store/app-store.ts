@@ -171,16 +171,20 @@ export const useAppStore = create<AppStore>()(
             return { success: false, error: result.error };
           }
 
-          // 0528 C6: baseHandPrice/baseFootPrice는 shops 루트 컬럼이므로 별도 updateShop 호출
+          // 0528 C6: baseHandPrice/baseFootPrice/businessHours는 shops 루트 컬럼이므로 별도 updateShop 호출
+          // 0531 R3: businessHours가 settings jsonb가 아닌 shops.business_hours 루트 컬럼이라
+          //   updateShop을 거치지 않으면 DB 미반영(영업시간 변경이 localStorage에만 남아 슬롯 계산 오류) → 가드에 포함.
           if (
             settings.baseHandPrice !== undefined ||
-            settings.baseFootPrice !== undefined
+            settings.baseFootPrice !== undefined ||
+            settings.businessHours !== undefined
           ) {
             try {
               const { useShopStore } = await import('@/store/shop-store');
               await useShopStore.getState().updateShop({
                 baseHandPrice: next.baseHandPrice,
                 baseFootPrice: next.baseFootPrice,
+                businessHours: next.businessHours,
               });
             } catch (err) {
               console.error('[app-store] base price update failed:', err);

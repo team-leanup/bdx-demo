@@ -383,7 +383,7 @@ export function TodayReservationCard({
                               className="h-full w-full object-cover"
                               unoptimized
                             />
-                            <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 py-0.5 text-[8px] font-semibold leading-none text-white">
+                            <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-1 text-[10px] font-semibold leading-none text-white">
                               {item.label}
                             </span>
                           </button>
@@ -406,7 +406,7 @@ export function TodayReservationCard({
                       {booking.customerId && stage !== 'completed' && (
                         <button
                           onClick={(e) => { e.stopPropagation(); router.push(`/customers/${booking.customerId}`); }}
-                          className="rounded-lg bg-surface-alt border border-border px-2.5 py-2.5 text-[11px] font-semibold text-text-secondary hover:bg-border active:scale-95 transition-all"
+                          className="rounded-lg bg-surface-alt border border-border px-2.5 py-2.5 text-xs font-semibold text-text-secondary hover:bg-border active:scale-95 transition-all"
                         >
                           고객 정보
                         </button>
@@ -449,7 +449,7 @@ export function TodayReservationCard({
                         <>
                           <button
                             onClick={(e) => { e.stopPropagation(); router.push(`/records/preconsult/${booking.id}`); }}
-                            className="rounded-lg bg-surface-alt border border-border px-2.5 py-2.5 text-[11px] font-semibold text-text-secondary cursor-pointer hover:bg-border active:scale-95 transition-all"
+                            className="rounded-lg bg-surface-alt border border-border px-2.5 py-2.5 text-xs font-semibold text-text-secondary cursor-pointer hover:bg-border active:scale-95 transition-all"
                           >
                             상담 내용
                           </button>

@@ -96,7 +96,7 @@ export function ConsultationLinkContent({
         <button
           type="button"
           onClick={handleCopy}
-          className="rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white"
+          className="rounded-md bg-primary px-3 py-2.5 min-h-[44px] text-sm font-semibold text-white"
         >
           {copied ? "복사됨" : "복사"}
         </button>
@@ -106,14 +106,14 @@ export function ConsultationLinkContent({
         <button
           type="button"
           onClick={handleOpen}
-          className="rounded-md border border-border px-3 py-2 text-sm font-medium text-text-secondary hover:bg-surface-alt"
+          className="rounded-md border border-border px-3 py-2.5 min-h-[44px] text-sm font-medium text-text-secondary hover:bg-surface-alt"
         >
           새 탭에서 열기
         </button>
         <button
           type="button"
           onClick={onClose}
-          className="rounded-md px-3 py-2 text-sm font-medium text-text-muted hover:underline"
+          className="rounded-md px-3 py-2.5 min-h-[44px] text-sm font-medium text-text-muted hover:underline"
         >
           {closeLabel}
         </button>
