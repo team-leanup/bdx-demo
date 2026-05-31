@@ -158,8 +158,8 @@ const SHAPE_LABEL: Record<string, string> = {
 };
 
 // 0528 M5 — 회원권 결제로 finalPrice=0인 경우도 실제 시술 금액(=membershipApplied)을 매출로 인식
-// 0531 SALES-2 — 예약금(deposit)은 finalPrice에 포함되지 않은 선납분이므로 gross 매출에 합산해야
-//   customer.totalSpend(= finalPrice + membershipApplied + deposit)와 집계 기준이 일치한다.
+// 0531 SALES-2 — settlement에서 finalPrice = subtotal - discount - deposit - membership이므로
+//   역산해 gross를 복원: finalPrice + membershipApplied + deposit = subtotal - discount
 function recordRevenue(r: ConsultationRecord): number {
   return r.finalPrice + (r.membershipApplied ?? 0) + (r.deposit ?? 0);
 }
@@ -272,7 +272,7 @@ export function computeDailyConsultations(
   days: number,
 ): DailyConsultation[] {
   const result: DailyConsultation[] = [];
-  const today = new Date();
+  const today = new Date(`${getTodayInKorea()}T12:00:00+09:00`);
 
   // preConsultation 전용 예약만 사용 (record로 이미 전환된 booking 제외)
   const recordBookingIds = new Set(
@@ -837,14 +837,6 @@ export function computePopularTreatments(
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
     .map(([name, count], i) => ({ rank: i + 1, name, count }));
-}
-
-// Percentage of customers that are regular
-// 0531 — computeRegularCount와 동일 기준(3회 이상 방문)으로 통일.
-export function computeRegularVisitRate(customers: Customer[]): number {
-  if (customers.length === 0) return 0;
-  const regular = customers.filter((c) => c.visitCount >= 3).length;
-  return Math.round((regular / customers.length) * 100);
 }
 
 // Top 3 busiest hours

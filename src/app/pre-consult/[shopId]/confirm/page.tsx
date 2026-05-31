@@ -515,7 +515,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
             )}
             {extensionLength && lengthPreference === 'extend' && (
               <SummaryRow
-                label={t('preConsult.extensionNatural')}
+                label={t('preConsult.extensionLengthLabel')}
                 value={labels.extensionLength[extensionLength] ?? extensionLength}
               />
             )}
@@ -755,7 +755,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                 label={t('preConsult.nameLabel')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder={locale === 'ko' ? '홍길동' : locale === 'zh' ? '您的姓名' : locale === 'ja' ? 'お名前' : 'Your name'}
+                placeholder={t('preConsult.namePlaceholder')}
                 autoComplete="name"
               />
 

@@ -5,7 +5,6 @@ import type { KPICard } from '@/lib/analytics';
 import {
   computeKPICards,
   computeDesignScopeBreakdown,
-  computeReturnRate,
   computeCustomerAnalytics,
   computeMonthlyConsultations,
 } from '@/lib/analytics';
@@ -22,6 +21,7 @@ function buildKPIDetail(
   records: ConsultationRecord[],
   customers: Customer[],
   reservations: BookingRequest[],
+  rawValue: number = 0,
 ): React.ReactNode {
   switch (label) {
     case '이달 상담 건수': {
@@ -111,15 +111,14 @@ function buildKPIDetail(
     }
     case '재방문율': {
       const analytics = computeCustomerAnalytics(records, customers);
-      const returnRate = computeReturnRate(customers);
       return (
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-            <span className="text-sm text-text-secondary">재방문 고객</span>
+            <span className="text-sm text-text-secondary">재방문 고객 (이달)</span>
             <span className="font-bold text-text">{analytics.returningCustomers}명</span>
           </div>
           <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-            <span className="text-sm text-text-secondary">신규 고객</span>
+            <span className="text-sm text-text-secondary">신규 고객 (이달)</span>
             <span className="font-bold text-text">{analytics.newCustomers}명</span>
           </div>
           <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
@@ -127,8 +126,8 @@ function buildKPIDetail(
             <span className="font-bold text-text">{analytics.averageVisitInterval}일</span>
           </div>
           <div className="flex items-center justify-between rounded-xl bg-primary/10 p-3">
-            <span className="text-sm font-semibold text-primary">재방문율</span>
-            <span className="font-bold text-primary">{returnRate}%</span>
+            <span className="text-sm font-semibold text-primary">이달 재방문율</span>
+            <span className="font-bold text-primary">{rawValue}%</span>
           </div>
         </div>
       );
@@ -162,7 +161,7 @@ function buildKPIDetail(
     case '오늘 매출': {
       const today = getTodayInKorea();
       const todayRecords = records.filter((r) => r.finalizedAt && toKoreanDateString(r.finalizedAt) === today);
-      const totalRevenue = todayRecords.reduce((sum, r) => sum + r.finalPrice + (r.membershipApplied ?? 0), 0);
+      const totalRevenue = todayRecords.reduce((sum, r) => sum + r.finalPrice + (r.membershipApplied ?? 0) + (r.deposit ?? 0), 0);
       const avgRevenue = todayRecords.length > 0 ? Math.round(totalRevenue / todayRecords.length) : 0;
       return (
         <div className="flex flex-col gap-3">
@@ -229,7 +228,7 @@ function KPIBottomSheet({ kpi, onClose }: BottomSheetProps) {
   const records = useRecordsStore((s) => s.records);
   const customers = useCustomerStore((s) => s.customers);
   const reservations = useReservationStore((s) => s.reservations);
-  const detail = buildKPIDetail(kpi.label, records, customers, reservations);
+  const detail = buildKPIDetail(kpi.label, records, customers, reservations, kpi.rawValue);
 
   return (
     <>

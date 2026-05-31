@@ -109,7 +109,7 @@ export function CategoryPicker(): React.ReactElement {
     const builtinPrice = shopData.categoryPricing?.[cat]?.price;
     const customPrice = shopData.customCategories?.find((c) => c.id === cat)?.price;
     const price = customPrice ?? builtinPrice;
-    if (!price) return '';
+    if (price == null) return '';
     return `${price.toLocaleString()}${t('preConsult.won')}~`;
   };
 

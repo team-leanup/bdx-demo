@@ -7,6 +7,7 @@ import { useCustomerStore } from '@/store/customer-store';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useConsultationStore } from '@/store/consultation-store';
 import { useReservationStore } from '@/store/reservation-store';
+import { useAppStore } from '@/store/app-store';
 import { resolveRecordCategoryLabelKo } from '@/lib/category-resolver';
 import { PaymentMethodSelector } from '@/components/payment/PaymentMethodSelector';
 import { PaymentSummary } from '@/components/payment/PaymentSummary';
@@ -35,6 +36,7 @@ export default function PaymentPage(): React.ReactElement | null {
   const membership = useCustomerStore((s) =>
     customerIdForMembership ? s.getById(customerIdForMembership)?.membership : undefined,
   );
+  const shopSettings = useAppStore((s) => s.shopSettings);
 
   // Guards
   useEffect(() => {
@@ -152,7 +154,7 @@ export default function PaymentPage(): React.ReactElement | null {
           date: getTodayInKorea(),
           bodyPart: record.consultation?.bodyPart ?? 'hand',
           // 0531 — designScope 손실 매핑 방지: designCategory 우선 라벨
-          designScope: record.consultation ? resolveRecordCategoryLabelKo(record.consultation) : '기타',
+          designScope: record.consultation ? resolveRecordCategoryLabelKo(record.consultation, shopSettings) : '기타',
           price: totalServicePrice,
           imageUrls: [],
         },
