@@ -59,7 +59,6 @@ function getDesignLabel(scope: string): string {
   return INSTA_SCOPE_LABEL[scope] ?? DESIGN_SCOPE_LABEL[scope] ?? scope;
 }
 
-const DEFAULT_FEEDBACK_LINE = '너무 만족하셨어요';
 const CONSULT_BUILT_LINE = '상담을 통해 완성된 디자인입니다';
 
 export type CardRatio = '9:16' | '3:4';
@@ -221,14 +220,17 @@ export function ShareCardImageTemplate({
             {moodTitle}
           </span>
 
-          {/* Body Large — 한글 서브 (타이틀과 한 묶음으로 인식되도록 간격 축소) */}
-          <span style={{
-            fontSize: 30, fontWeight: 600, color: '#4B5563',
-            lineHeight: 1.25, letterSpacing: '-0.018em',
-            marginTop: 10,
-          }}>
-            {designLabel}
-          </span>
+          {/* Body Large — 한글 서브. categoryLabel(실제 카테고리)이 타이틀로 쓰이면
+              designScope 기반 라벨은 중복·불일치이므로 숨김. 레거시(카테고리 없음)만 표시. */}
+          {!categoryLabel && (
+            <span style={{
+              fontSize: 30, fontWeight: 600, color: '#4B5563',
+              lineHeight: 1.25, letterSpacing: '-0.018em',
+              marginTop: 10,
+            }}>
+              {designLabel}
+            </span>
+          )}
 
           {/* Body — 상담 메시지 (서브에서 한 호흡 두고 분리) */}
           <span style={{
@@ -251,21 +253,16 @@ export function ShareCardImageTemplate({
           <FeedbackRow
             icon="💅"
             parts={shapeBodyParts}
-            isLast={false}
+            isLast={!showMinutes}
           />
           {showMinutes && (
             <FeedbackRow
               icon="⏱️"
               number={estimatedMinutes}
               unit="분"
-              isLast={false}
+              isLast
             />
           )}
-          <FeedbackRow
-            icon="💕"
-            parts={[DEFAULT_FEEDBACK_LINE]}
-            isLast
-          />
         </div>
 
         {/* Bottom: Shop + Date + BDX logo | CTA + QR */}

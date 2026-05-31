@@ -121,11 +121,13 @@ export function ProfileSwitcher({ isOpen, onClose }: ProfileSwitcherProps) {
   };
 
   const gridCols =
-    designers.length <= 2
-      ? 'grid-cols-2'
-      : designers.length === 3
-        ? 'grid-cols-3'
-        : 'grid-cols-2 sm:grid-cols-3';
+    designers.length === 1
+      ? 'grid-cols-1'
+      : designers.length === 2
+        ? 'grid-cols-2'
+        : designers.length === 3
+          ? 'grid-cols-3'
+          : 'grid-cols-2 sm:grid-cols-3';
 
   return (
     <AnimatePresence>
