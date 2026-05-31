@@ -180,11 +180,14 @@ export default function FieldModePage() {
       if (activeCategory === null) return true;
       return p.styleCategory === activeCategory;
     });
+    // 0601: 정렬도 포트폴리오 추천(isStaffPick)/인기(isPopular) 토글과 연동.
     return [...filtered].sort((a, b) => {
       if (sortMode === 'featured') {
-        return (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0);
+        const d = (b.isStaffPick ? 1 : 0) - (a.isStaffPick ? 1 : 0);
+        return d !== 0 ? d : (b.price ?? 0) - (a.price ?? 0);
       }
-      return (b.price ?? 0) - (a.price ?? 0);
+      const d = (b.isPopular ? 1 : 0) - (a.isPopular ? 1 : 0);
+      return d !== 0 ? d : (b.price ?? 0) - (a.price ?? 0);
     });
   }, [publicPhotos, activeCategory, sortMode]);
 
@@ -488,10 +491,16 @@ function PhotoCard({
           </div>
         )}
 
-        {photo.isFeatured && (
-          <span className="absolute top-2 left-2 bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-            직원추천
-          </span>
+        {/* 0601: 포트폴리오 편집모드의 추천/인기 토글(isStaffPick/isPopular)과 연동 */}
+        {(photo.isStaffPick || photo.isPopular) && (
+          <div className="absolute top-2 left-2 flex gap-1">
+            {photo.isStaffPick && (
+              <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full">직원추천</span>
+            )}
+            {photo.isPopular && (
+              <span className="bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">인기</span>
+            )}
+          </div>
         )}
 
         {photo.price != null && photo.price > 0 && (

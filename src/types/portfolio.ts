@@ -26,5 +26,7 @@ export interface PortfolioPhoto {
   isFeatured?: boolean;
   isStaffPick?: boolean;
   isPopular?: boolean;
+  /** 0601: 카테고리 대표사진(커버) — 카테고리당 1장 */
+  isRepresentative?: boolean;
   partsMemo?: string;
 }

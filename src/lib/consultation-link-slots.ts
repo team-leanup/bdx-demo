@@ -91,20 +91,21 @@ export function computeAvailableDates(link: ConsultationLinkPublicData): Availab
   const start = parseDate(link.validFrom < today ? today : link.validFrom);
   const end = parseDate(link.validUntil);
 
-  // I12 fix: 구간 겹침(overlap) 기반으로 이중예약 차단.
-  // 새 슬롯 후보 [sStart, sStart+durationMin)이 기존 예약 [bStart, bStart+bDurMin)과
-  // 겹치면 isBooked=true. 겹침 조건: sStart < bEnd && sEnd > bStart.
-  // BookedSlot에 duration 필드가 없으므로 link.estimatedDurationMin을 보수적 proxy로 사용.
-  // (실제 예약 길이가 달라도 이중예약 방지가 우선이므로 보수적으로 처리)
+  // 0601: 슬롯 차단 = "그 칸이 기존 예약에 물리는가"만 판정.
+  // 손님은 시간 선택 시점에 아직 시술을 안 골랐으므로 새 예약의 길이를 알 수 없다.
+  // 따라서 새 슬롯은 자기 칸([sStart, sStart+slotInterval))만 점유한다고 보고,
+  // 기존 예약 구간 [bStart, bEnd)와 겹치는 슬롯만 차단한다.
+  // (이전엔 새 슬롯을 estimatedDurationMin=90분으로 잡아 90분 시술이 물리는 앞 칸들까지
+  //  과다 차단했다 — 13:00~14:00 예약에 12:00·12:30까지 막히던 버그)
+  // 겹침 조건: sStart < bEnd && sStart+slotInterval > bStart.
   //
-  // 검증 예시: B1=15:15, bDurMin=90 (bEnd=16:45)
-  //   슬롯 14:00 (sEnd=15:30): 14:00<16:45 && 15:30>15:15 → 차단 ✓
-  //   슬롯 14:30 (sEnd=16:00): 14:30<16:45 && 16:00>15:15 → 차단 ✓
-  //   슬롯 15:00 (sEnd=16:30): 15:00<16:45 && 16:30>15:15 → 차단 ✓
-  //   슬롯 15:30 (sEnd=17:00): 15:30<16:45 && 17:00>15:15 → 차단 ✓  (기존 뚫림 수정)
-  //   슬롯 16:00 (sEnd=17:30): 16:00<16:45 && 17:30>15:15 → 차단 ✓  (기존 뚫림 수정)
-  //   슬롯 17:00 (sEnd=18:30): 17:00<16:45 → false → 열림 ✓
-  const durationMin = Math.max(1, Math.floor(link.estimatedDurationMin));
+  // 검증: B=13:00~14:00 (bStart=780, bEnd=840), slotInterval=30
+  //   12:00 (sEnd=12:30): 720<840 && 750>780? → 열림 ✓
+  //   12:30 (sEnd=13:00): 750<840 && 780>780? → 열림 ✓
+  //   13:00 (sEnd=13:30): 780<840 && 810>780 → 차단 ✓
+  //   13:30 (sEnd=14:00): 810<840 && 840>780 → 차단 ✓
+  //   14:00 (sEnd=14:30): 840<840? → 열림 ✓
+  const slotMin = Math.max(1, Math.floor(link.slotIntervalMin));
 
   const result: AvailableDate[] = [];
   for (let d = new Date(start); d.getTime() <= end.getTime(); d.setUTCDate(d.getUTCDate() + 1)) {
@@ -134,18 +135,17 @@ export function computeAvailableDates(link: ConsultationLinkPublicData): Availab
         return true;
       })
       .map((time) => {
-        // I12 fix: 올바른 양방향 구간 겹침 검사.
-        // 새 슬롯 [sStart, sEnd)와 기존 예약 [bStart, bEnd)가 겹치는지 확인.
+        // 새 슬롯 칸 [sStart, sStart+slotInterval)와 기존 예약 [bStart, bEnd)가 겹치면 차단.
         const [sh, sm] = time.split(':').map(Number);
         const sStartMin = sh * 60 + sm;
-        const sEndMin = sStartMin + durationMin;
+        const sEndMin = sStartMin + slotMin;
         const isBooked = (link.bookedSlots ?? []).some((b) => {
           if (b.date !== dateStr) return false;
           const [bh, bm] = b.time.split(':').map(Number);
           const bStartMin = bh * 60 + bm;
           // 기존 예약의 실제 종료시간(endTime, RPC가 카테고리 시술시간으로 계산) 우선 사용.
-          // 없으면 link.estimatedDurationMin proxy.
-          let bEndMin = bStartMin + durationMin;
+          // 없으면 slotInterval만큼만 점유한 것으로 간주.
+          let bEndMin = bStartMin + slotMin;
           if (b.endTime && /^\d{2}:\d{2}$/.test(b.endTime)) {
             const [eh, em] = b.endTime.split(':').map(Number);
             const candidateEnd = eh * 60 + em;

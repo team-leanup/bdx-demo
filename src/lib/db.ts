@@ -276,6 +276,7 @@ function toPortfolioPhoto(row: Database['public']['Tables']['portfolio_photos'][
     isFeatured: row.is_featured ?? false,
     isStaffPick: row.is_staff_pick ?? false,
     isPopular: row.is_popular ?? false,
+    isRepresentative: typeof rowAny['is_representative'] === 'boolean' ? rowAny['is_representative'] : false,
     partsMemo: typeof rowAny['parts_memo'] === 'string' ? rowAny['parts_memo'] : undefined,
   };
 }
@@ -1500,6 +1501,7 @@ export async function dbInsertPortfolioPhoto(photo: PortfolioPhoto): Promise<Por
         is_featured: photo.isFeatured ?? false,
         is_staff_pick: photo.isStaffPick ?? false,
         is_popular: photo.isPopular ?? false,
+        is_representative: photo.isRepresentative ?? false,
         // #17-db: parts_memo 컬럼 (마이그레이션 20260530_audit_fixes.sql 추가분)
         ...(photo.partsMemo !== undefined ? { parts_memo: photo.partsMemo } : {}),
       } as unknown as Database['public']['Tables']['portfolio_photos']['Insert'])
@@ -1601,6 +1603,7 @@ export async function dbUpdatePhotoMetadata(
     isFeatured?: boolean;
     isStaffPick?: boolean;
     isPopular?: boolean;
+    isRepresentative?: boolean;
     /** #17-db: parts_memo 컬럼 (마이그레이션 20260530_audit_fixes.sql 추가분) */
     partsMemo?: string | null;
   },
@@ -1617,6 +1620,7 @@ export async function dbUpdatePhotoMetadata(
   if (updates.isFeatured !== undefined) payload.is_featured = updates.isFeatured;
   if (updates.isStaffPick !== undefined) payload.is_staff_pick = updates.isStaffPick;
   if (updates.isPopular !== undefined) payload.is_popular = updates.isPopular;
+  if (updates.isRepresentative !== undefined) payload.is_representative = updates.isRepresentative;
   // #17-db: parts_memo ↔ partsMemo 매핑
   if (updates.partsMemo !== undefined) payload.parts_memo = updates.partsMemo;
 

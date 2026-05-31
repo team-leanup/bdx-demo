@@ -74,17 +74,24 @@ export function CategoryPicker(): React.ReactElement {
     return result;
   }, [portfolioPhotos]);
 
-  // Representative thumbnail per category (첫 번째 featured 사진)
+  // 카테고리 대표(커버) 썸네일.
+  // 1순위: 사장님이 명시 지정한 대표사진(isRepresentative)
+  // 2순위(폴백): 첫 번째 메뉴등록(isFeatured) 사진
   const categoryThumbs = useMemo(() => {
     const result: Partial<Record<DesignCategory, string>> = {};
+    for (const p of portfolioPhotos) {
+      if (!p.isRepresentative || !p.imageDataUrl) continue;
+      const cat: DesignCategory | null =
+        p.styleCategory ?? serviceTypeToCategory(p.serviceType);
+      if (!cat) continue;
+      if (!result[cat]) result[cat] = p.imageDataUrl;
+    }
     for (const p of portfolioPhotos) {
       if (!p.isFeatured || !p.imageDataUrl) continue;
       const cat: DesignCategory | null =
         p.styleCategory ?? serviceTypeToCategory(p.serviceType);
       if (!cat) continue;
-      if (!result[cat]) {
-        result[cat] = p.imageDataUrl;
-      }
+      if (!result[cat]) result[cat] = p.imageDataUrl;
     }
     return result;
   }, [portfolioPhotos]);

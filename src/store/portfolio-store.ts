@@ -52,6 +52,8 @@ interface PortfolioStore {
   updatePhoto: (id: string, updates: Partial<PortfolioPhoto>) => void;
   /** DB 동기화 포함 메타데이터 업데이트 (시술종류/디자인타입/가격/메모/태그/컬러/촬영일/대표 등) */
   updatePhotoMetadata: (id: string, updates: Partial<PortfolioPhoto>) => Promise<{ success: boolean; error?: string }>;
+  /** 0601: 카테고리 대표사진 토글 — value=true면 같은 카테고리 내 다른 대표는 자동 해제(카테고리당 1장) */
+  setRepresentative: (id: string, value: boolean) => Promise<{ success: boolean; error?: string }>;
   setPhotos: (photos: PortfolioPhoto[]) => void;
 
   // 카테고리 관리 — SSOT 는 shopSettings(customCategories / categoryLabels).
@@ -367,6 +369,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
           isFeatured: updates.isFeatured,
           isStaffPick: updates.isStaffPick,
           isPopular: updates.isPopular,
+          isRepresentative: updates.isRepresentative,
           partsMemo: updates.partsMemo ?? null,
         };
         const result = await dbUpdatePhotoMetadata(id, currentShopId, dbUpdates);
@@ -379,6 +382,46 @@ export const usePortfolioStore = create<PortfolioStore>()(
         }
 
         return result;
+      },
+
+      // 0601: 카테고리 대표사진. value=true면 같은 styleCategory 내 기존 대표를 모두 해제하고
+      // 이 사진만 대표로 — 카테고리당 1장 보장. value=false면 이 사진만 해제.
+      setRepresentative: async (id, value) => {
+        const target = get().photos.find((p) => p.id === id);
+        if (!target) return { success: false, error: '사진을 찾을 수 없습니다' };
+        const cat = target.styleCategory;
+
+        // 해제할 형제(같은 카테고리의 기존 대표) — value=true일 때만
+        const siblings = value && cat != null
+          ? get().photos.filter((p) => p.id !== id && p.styleCategory === cat && p.isRepresentative)
+          : [];
+        const snapshot = get().photos;
+
+        // optimistic
+        set((state) => ({
+          photos: state.photos.map((p) => {
+            if (p.id === id) return { ...p, isRepresentative: value };
+            if (siblings.some((s) => s.id === p.id)) return { ...p, isRepresentative: false };
+            return p;
+          }),
+        }));
+
+        const currentShopId = useAuthStore.getState().currentShopId;
+        if (!currentShopId || currentShopId === 'shop-demo') {
+          return { success: true };
+        }
+
+        const results = await Promise.all([
+          dbUpdatePhotoMetadata(id, currentShopId, { isRepresentative: value }),
+          ...siblings.map((s) => dbUpdatePhotoMetadata(s.id, currentShopId, { isRepresentative: false })),
+        ]);
+        const failed = results.find((r) => !r.success);
+        if (failed) {
+          // rollback 전체
+          set({ photos: snapshot });
+          return failed;
+        }
+        return { success: true };
       },
 
       setPhotos: (photos) => {

@@ -1311,14 +1311,16 @@ interface MenuCardProps {
 function MenuCard({ photo, fallbackIdx, editMode, onRemove, onOpenOverlay }: MenuCardProps): React.ReactElement {
   const imgSrc = photo.imageDataUrl || NAIL_FALLBACKS[fallbackIdx % NAIL_FALLBACKS.length];
   const updatePhotoMetadata = usePortfolioStore((s) => s.updatePhotoMetadata);
+  const setRepresentative = usePortfolioStore((s) => s.setRepresentative);
 
   return (
     <div className="flex items-center gap-3.5 bg-surface rounded-2xl p-3 border border-border/60 shadow-sm">
       {/* 썸네일 — 메뉴판 느낌으로 크게 */}
       <button onClick={onOpenOverlay} className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden shrink-0">
         <Image src={imgSrc} alt={photo.designType ?? ''} fill unoptimized={imgSrc.startsWith('data:')} className="object-cover" />
-        {(photo.isStaffPick || photo.isPopular) && (
-          <div className="absolute top-1 left-1 flex gap-0.5">
+        {(photo.isStaffPick || photo.isPopular || photo.isRepresentative) && (
+          <div className="absolute top-1 left-1 flex flex-wrap gap-0.5 max-w-[calc(100%-0.5rem)]">
+            {photo.isRepresentative && <span className="px-1.5 py-0.5 rounded bg-text text-white text-[9px] font-bold shadow-sm">대표</span>}
             {photo.isStaffPick && <span className="px-1.5 py-0.5 rounded bg-primary text-white text-[9px] font-bold shadow-sm">추천</span>}
             {photo.isPopular && <span className="px-1.5 py-0.5 rounded bg-amber-500 text-white text-[9px] font-bold shadow-sm">인기</span>}
           </div>
@@ -1359,6 +1361,13 @@ function MenuCard({ photo, fallbackIdx, editMode, onRemove, onOpenOverlay }: Men
                 photo.isPopular ? 'bg-amber-500 text-white' : 'bg-surface-alt text-text-muted',
               )}
             >인기</button>
+            <button
+              onClick={(e) => { e.stopPropagation(); void setRepresentative(photo.id, !photo.isRepresentative); }}
+              className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full transition-colors',
+                photo.isRepresentative ? 'bg-text text-white' : 'bg-surface-alt text-text-muted',
+              )}
+              title="이 카테고리의 대표(커버) 사진으로 지정"
+            >대표</button>
             <MenuCategoryMove photoId={photo.id} currentCategory={photo.styleCategory ?? 'simple'} />
             <button
               onClick={(e) => { e.stopPropagation(); onRemove(); }}

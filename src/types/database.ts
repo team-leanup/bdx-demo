@@ -567,6 +567,7 @@ export type Database = {
           is_featured: boolean
           is_staff_pick: boolean
           is_popular: boolean
+          is_representative: boolean
           is_public: boolean
           kind: string
           note: string | null
@@ -589,6 +590,7 @@ export type Database = {
           is_featured?: boolean
           is_staff_pick?: boolean
           is_popular?: boolean
+          is_representative?: boolean
           is_public?: boolean
           kind: string
           note?: string | null
@@ -611,6 +613,7 @@ export type Database = {
           is_featured?: boolean
           is_staff_pick?: boolean
           is_popular?: boolean
+          is_representative?: boolean
           is_public?: boolean
           kind?: string
           note?: string | null
