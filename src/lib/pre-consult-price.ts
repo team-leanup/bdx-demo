@@ -19,6 +19,25 @@ export const ADDON_FIXED_PRICES = {
   wrapping: 5000,
 } as const;
 
+/**
+ * 디자인 카테고리의 기본 시술시간(분)을 샵 설정에서 해석.
+ * builtin은 categoryPricing, custom은 customCategories에서 조회.
+ * 슬롯 차단 RPC(get_shop_pre_consult_data)와 스케줄 타임그리드 종료시간을
+ * 동일 기준(카테고리 시술시간)으로 맞추기 위한 SSOT 헬퍼.
+ */
+export function resolveCategoryTimeMin(
+  designCategory: string | undefined,
+  categoryPricing: CategoryPricingSettings | undefined,
+  customCategories: CustomCategory[] | undefined,
+  fallbackMin = 60,
+): number {
+  if (!designCategory) return fallbackMin;
+  const customCat = customCategories?.find((c) => c.id === designCategory);
+  const builtin = categoryPricing?.[designCategory as keyof CategoryPricingSettings];
+  const t = customCat?.time ?? builtin?.time;
+  return typeof t === 'number' && t > 0 ? t : fallbackMin;
+}
+
 interface PriceCalcInput {
   designCategory: DesignCategory;
   removalPreference: RemovalPreference | null;

@@ -5,9 +5,11 @@
  */
 
 import { getTodayInKorea, toKoreanDateString } from '@/lib/format';
+import { resolveCategoryTimeMin } from '@/lib/pre-consult-price';
 import type { TimeGridEvent } from '@/components/calendar/TimeGridCalendar';
 import type { BookingRequest } from '@/types/consultation';
 import type { Customer } from '@/types/customer';
+import type { CategoryPricingSettings, CustomCategory } from '@/types/shop';
 
 export type FilterPeriod = 'all' | 'today' | 'week' | 'month';
 
@@ -52,6 +54,7 @@ export function isInPeriod(dateStr: string, period: FilterPeriod): boolean {
 export function toTimeGridEvents(
   reservations: BookingRequest[],
   getCustomerById: (id: string) => Customer | undefined,
+  categorySettings?: { categoryPricing?: CategoryPricingSettings; customCategories?: CustomCategory[] },
 ): TimeGridEvent[] {
   const events: TimeGridEvent[] = [];
 
@@ -59,8 +62,13 @@ export function toTimeGridEvents(
     if (!r.reservationTime || !r.reservationTime.includes(':')) continue;
     const [h, m] = r.reservationTime.split(':').map(Number);
     if (isNaN(h) || isNaN(m)) continue;
-    // [MED] duration 기반 endTime 계산 — duration 없으면 60분(1시간) 기본값
-    const durationMins = (r as BookingRequest & { duration?: number }).duration ?? 60;
+    // 0601: 종료시간 = 카테고리 시술시간(슬롯 차단 RPC와 동일 기준)으로 통일.
+    //   이전엔 (duration ?? 60)이라 magnet(80분) 예약이 13:00~14:00으로 표시돼
+    //   슬롯 차단(14:20까지)과 어긋났음. 명시 duration > 카테고리시간 > 60분 순.
+    const explicitDuration = (r as BookingRequest & { duration?: number }).duration;
+    const designCategory = (r.preConsultationData as { designCategory?: string } | undefined)?.designCategory;
+    const durationMins = explicitDuration
+      ?? resolveCategoryTimeMin(designCategory, categorySettings?.categoryPricing, categorySettings?.customCategories, 60);
     const totalEndMins = h * 60 + m + durationMins;
     const endH = Math.min(Math.floor(totalEndMins / 60), 23);
     const endM = totalEndMins % 60;

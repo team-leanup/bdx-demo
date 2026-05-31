@@ -294,9 +294,12 @@ export default function RecordsPage() {
 
 
   const timeGridEvents = useMemo(
-    () => toTimeGridEvents(baseReservations, getCustomerById),
+    () => toTimeGridEvents(baseReservations, getCustomerById, {
+      categoryPricing: shopSettings.categoryPricing,
+      customCategories: shopSettings.customCategories,
+    }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [baseReservations, getCustomerById, customers],
+    [baseReservations, getCustomerById, customers, shopSettings.categoryPricing, shopSettings.customCategories],
   );
 
   const sorted = useMemo(
