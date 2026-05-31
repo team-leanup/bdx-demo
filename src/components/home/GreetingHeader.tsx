@@ -8,6 +8,7 @@ interface GreetingHeaderProps {
   greeting: string;
   role: 'owner' | 'staff' | null;
   todayDateStr: string;
+  logoPublicUrl?: string | null;
   itemVariants: {
     hidden: { opacity: number; y: number };
     visible: { opacity: number; y: number; transition: { duration: number; ease: number[] } };
@@ -20,6 +21,7 @@ export function GreetingHeader({
   greeting,
   role,
   todayDateStr,
+  logoPublicUrl,
   itemVariants,
 }: GreetingHeaderProps): React.ReactElement {
   return (
@@ -33,11 +35,20 @@ export function GreetingHeader({
           {role === 'owner' ? '원장' : role === 'staff' ? '선생님' : ''}{role ? ' · ' : ''}{todayDateStr}
         </p>
       </div>
-      {/* 알림 / 아바타 자리 */}
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-        <span className="text-sm font-semibold text-primary">
-          {activeDesignerName?.slice(0, 1) ?? shopName.slice(0, 1)}
-        </span>
+      {/* 로고 / 이니셜 뱃지 */}
+      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 overflow-hidden flex-shrink-0">
+        {logoPublicUrl ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={logoPublicUrl}
+            alt={shopName}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <span className="text-sm font-semibold text-primary">
+            {activeDesignerName?.slice(0, 1) ?? shopName.slice(0, 1)}
+          </span>
+        )}
       </div>
     </motion.div>
   );

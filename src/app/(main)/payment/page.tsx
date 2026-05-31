@@ -16,7 +16,7 @@ import { generateId } from '@/lib/generate-id';
 import { getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
 import { DESIGN_SCOPE_LABEL, OFF_TYPE_LABEL } from '@/lib/labels';
 import type { PaymentMethod } from '@/types/consultation';
-import { getRemainingAmount, getMembershipSessionState, canUseMembership } from '@/lib/membership';
+import { getRemainingAmount, canUseMembership } from '@/lib/membership';
 import { cn } from '@/lib/cn';
 import { resizeTreatmentPhoto } from '@/lib/image-utils';
 
@@ -343,7 +343,6 @@ export default function PaymentPage(): React.ReactElement | null {
             <PaymentMethodSelector
               value={paymentMethod}
               onChange={setPaymentMethod}
-              membershipRemaining={membership?.remainingSessions}
               membershipRemainingAmount={
                 membership && canUseMembership(membership)
                   ? getRemainingAmount(membership)
@@ -358,7 +357,6 @@ export default function PaymentPage(): React.ReactElement | null {
               const available = getRemainingAmount(membership);
               const applied = Math.max(0, Math.min(available, record.finalPrice));
               const diff = Math.max(0, record.finalPrice - applied);
-              const sessionState = getMembershipSessionState(membership);
               return (
                 <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-4 flex flex-col gap-2">
                   <div className="flex items-center justify-between text-sm">
@@ -368,7 +366,7 @@ export default function PaymentPage(): React.ReactElement | null {
                     </span>
                   </div>
                   <p className="text-[11px] text-text-muted">
-                    {sessionState.currentSessionNumber}회차 · 결제 후 총 잔액 {Math.max(0, available - applied).toLocaleString()}원
+                    결제 후 남은 금액 {Math.max(0, available - applied).toLocaleString()}원
                   </p>
                   {diff > 0 && (
                     <>

@@ -292,6 +292,10 @@ export default function RecordsPage() {
   }, [activeDesignerId, extraDesignerIds]);
 
   const filteredDesignerList = useMemo(() => {
+    // 1인샵: '미지정' 컬럼 없이 원장 한 명만 표시 (담당 미지정 예약도 원장 컬럼에 합쳐 보여줌)
+    if (activeDesigners.length === 1) {
+      return [{ id: activeDesigners[0].id, name: activeDesigners[0].name }];
+    }
     const list = activeDesigners
       .filter((d) => visibleDesignerIds.has(d.id))
       .map((d) => ({ id: d.id, name: d.name }));
@@ -690,7 +694,8 @@ export default function RecordsPage() {
             </span>
           </div>
 
-          {/* 디자이너 토글 — 로그인 디자이너 제외, 나머지 다중 선택 */}
+          {/* 디자이너 토글 — 로그인 디자이너 제외, 나머지 다중 선택. 1인샵은 함께보기 불필요 → 숨김 */}
+          {activeDesigners.length > 1 && (
           <div className="flex items-center gap-2.5 overflow-x-auto px-4 md:px-0 pb-0.5">
             <span className="text-[11px] font-medium text-text-muted flex-shrink-0 whitespace-nowrap">함께 보기</span>
             {[...activeDesigners.filter((d) => d.id !== activeDesignerId), { id: '__unassigned__', name: '미지정', isActive: true }].map((d) => {
@@ -722,6 +727,7 @@ export default function RecordsPage() {
               );
             })}
           </div>
+          )}
 
           {viewMode === 'day' && (
             <div className="flex flex-col gap-2 px-4 md:px-0">
@@ -735,7 +741,11 @@ export default function RecordsPage() {
               </Card>
               <DesignerDayGridCalendar
                 date={selectedDate}
-                events={timeGridEvents.filter((e) =>
+                events={(activeDesigners.length === 1
+                  // 1인샵: 담당 미지정 예약을 원장 컬럼으로 정규화 (미지정 컬럼 없이 한 컬럼에 표시)
+                  ? timeGridEvents.map((e) => ({ ...e, designerId: e.designerId ?? activeDesigners[0].id }))
+                  : timeGridEvents
+                ).filter((e) =>
                   visibleDesignerIds.size === 0 || visibleDesignerIds.has(e.designerId ?? '__unassigned__')
                 )}
                 designers={filteredDesignerList}
@@ -761,7 +771,7 @@ export default function RecordsPage() {
               <Card className="p-4 relative">
                 <MonthCalendar
                   selectedDate={selectedDate}
-                  onSelectDate={(date) => { setSelectedDate(date); setViewMode('day'); }}
+                  onSelectDate={(date) => setSelectedDate(date)}
                   reservations={allReservations}
                 />
                 {/* 일간 뷰 전환 아이콘 */}

@@ -61,6 +61,19 @@ export function NailStatusSelector({ onComplete }: NailStatusSelectorProps): Rea
         )}
       </div>
 
+      {/* 0531 회의: 시술 상태에 따라 시간·비용이 추가될 수 있음을 미리 안내 */}
+      <div className="flex items-start gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5">
+        <svg className="w-4 h-4 shrink-0 mt-0.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+        </svg>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium text-text break-keep">{t('preConsult.statusSurchargeNotice')}</p>
+          {locale !== 'ko' && (
+            <p className="text-[11px] text-text-muted opacity-70 mt-0.5 break-keep">{tKo('preConsult.statusSurchargeNotice')}</p>
+          )}
+        </div>
+      </div>
+
       <div className="flex flex-col gap-2">
         <SelectCard
           selected={store.nailStatus === 'none'}

@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useShopStore } from '@/store/shop-store';
+import { useAppStore } from '@/store/app-store';
+import { resolveCategoryLabelKo } from '@/lib/category-resolver';
 import { formatPrice, formatDateDot } from '@/lib/format';
 import { cn } from '@/lib/cn';
 import { downloadForInstagram } from '@/lib/image-utils';
@@ -52,6 +54,7 @@ export function PortfolioOverlay({
   const toggleMenu = usePortfolioStore((s) => s.toggleMenu);
   const updatePhotoMetadata = usePortfolioStore((s) => s.updatePhotoMetadata);
   const shopName = useShopStore((s) => s.shop?.name) ?? '네일샵';
+  const shopSettings = useAppStore((s) => s.shopSettings);
   const [currentId, setCurrentId] = useState(initialPhotoId);
   const [downloading, setDownloading] = useState(false);
   const [showHashtags, setShowHashtags] = useState(false);
@@ -334,6 +337,10 @@ export function PortfolioOverlay({
           }}
           portfolioPhotos={[{ id: photo.id, imageDataUrl: photo.imageDataUrl }]}
           shopName={shopName}
+          categoryLabel={resolveCategoryLabelKo(
+            linkedRecord?.consultation.designCategory ?? photo.styleCategory ?? derivedScope,
+            shopSettings,
+          )}
         />
       )}
 

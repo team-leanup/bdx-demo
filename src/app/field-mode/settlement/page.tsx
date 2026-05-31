@@ -20,7 +20,7 @@ import { useCustomerStore } from '@/store/customer-store';
 import type { PaymentMethod, OffType, ConsultationType } from '@/types/consultation';
 import type { AddOnOption } from '@/types/pre-consultation';
 import { generateId } from '@/lib/generate-id';
-import { getRemainingAmount, getMembershipSessionState, canUseMembership as canUseMembershipFn, getEffectiveStatus } from '@/lib/membership';
+import { getRemainingAmount, canUseMembership as canUseMembershipFn, getEffectiveStatus } from '@/lib/membership';
 
 const ADD_ON_LABELS: Record<string, string> = {
   stone: '스톤',
@@ -189,9 +189,6 @@ export default function SettlementPage(): React.ReactElement | null {
   // - 잔액보다 시술금이 크면 잔액만큼만 차감 → 차액은 현금/카드로 결제
   const afterDiscountDeposit = Math.max(0, subtotal - discountAmount - depositApplied);
   const membershipRemainingBefore = customerMembership ? getRemainingAmount(customerMembership) : 0;
-  const membershipSessionState = customerMembership
-    ? getMembershipSessionState(customerMembership)
-    : null;
   const membershipApplied = isMembershipPayment
     ? Math.max(0, Math.min(membershipRemainingBefore, afterDiscountDeposit))
     : 0;
@@ -683,7 +680,7 @@ export default function SettlementPage(): React.ReactElement | null {
               )}
             </div>
             {/* 0428 P1-5: 차액이 있으면 강조 박스로 표시 (받아야 할 금액 명확히) */}
-            {isMembershipPayment && membershipSessionState && remainingAfterMembership > 0 && (
+            {isMembershipPayment && customerMembership && remainingAfterMembership > 0 && (
               <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 flex flex-col gap-1.5">
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="text-xs font-semibold text-amber-900">
@@ -694,15 +691,15 @@ export default function SettlementPage(): React.ReactElement | null {
                   </span>
                 </div>
                 <p className="text-[11px] text-amber-800 leading-snug">
-                  {depositApplied > 0 && `예약금 ${depositApplied.toLocaleString()}원 차감 후 `}{membershipSessionState.currentSessionNumber}회차에서 {membershipApplied.toLocaleString()}원 차감 + {secondaryPaymentMethod === 'cash' ? '현금' : '카드'}로 {remainingAfterMembership.toLocaleString()}원 결제
+                  {depositApplied > 0 && `예약금 ${depositApplied.toLocaleString()}원 차감 후 `}회원권에서 {membershipApplied.toLocaleString()}원 차감 + {secondaryPaymentMethod === 'cash' ? '현금' : '카드'}로 {remainingAfterMembership.toLocaleString()}원 결제
                   <br />
                   결제 후 회원권 총 잔액 {membershipRemainingAfter.toLocaleString()}원
                 </p>
               </div>
             )}
-            {isMembershipPayment && membershipSessionState && remainingAfterMembership === 0 && membershipApplied > 0 && (
+            {isMembershipPayment && customerMembership && remainingAfterMembership === 0 && membershipApplied > 0 && (
               <p className="text-xs text-success font-medium mt-1">
-                {depositApplied > 0 && `예약금 ${depositApplied.toLocaleString()}원 차감 후 `}{membershipSessionState.currentSessionNumber}회차에서 {membershipApplied.toLocaleString()}원 차감 · 추가로 받으실 금액 없어요
+                {depositApplied > 0 && `예약금 ${depositApplied.toLocaleString()}원 차감 후 `}회원권에서 {membershipApplied.toLocaleString()}원 차감 · 추가로 받으실 금액 없어요
                 <br />
                 <span className="text-[11px] text-text-muted">
                   결제 후 회원권 총 잔액: {membershipRemainingAfter.toLocaleString()}원
@@ -762,14 +759,14 @@ export default function SettlementPage(): React.ReactElement | null {
                     )}
                   >
                     <span>{label}</span>
-                    {isMembership && customerMembership && canUseMembership && membershipSessionState && (
+                    {isMembership && customerMembership && canUseMembership && membershipRemainingBefore > 0 && (
                       <span
                         className={cn(
                           'text-[10px] font-semibold tabular-nums leading-tight',
                           paymentMethod === 'membership' ? 'text-white/90' : 'text-primary',
                         )}
                       >
-                        {membershipSessionState.currentSessionNumber}회차 {membershipSessionState.currentSessionRemaining.toLocaleString()}원
+                        잔액 {membershipRemainingBefore.toLocaleString()}원
                       </span>
                     )}
                   </button>

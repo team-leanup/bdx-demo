@@ -26,6 +26,7 @@ import { DEFAULT_BASE_PRICES } from '@/data/service-options';
 import { formatPrice } from '@/lib/format';
 import { resolveMenuCategoryLabel } from '@/lib/labels';
 import { resizeImageToBase64 } from '@/lib/image-utils';
+import { getShopLogoPublicUrl } from '@/lib/db';
 import type { ServiceStructure } from '@/types/shop';
 
 const DAY_LABEL_KEYS = ['days_mon', 'days_tue', 'days_wed', 'days_thu', 'days_fri', 'days_sat', 'days_sun'];
@@ -1194,6 +1195,29 @@ export default function SettingsPage() {
   const [editingShop, setEditingShop] = useState(false);
   const [isSavingShop, setIsSavingShop] = useState(false);
   const [shopFeedback, setShopFeedback] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
+  // 0531 회의: 매장 로고 업로드 (고객 화면·첫 화면에 노출)
+  const uploadShopLogo = useShopStore((s) => s.uploadShopLogo);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const logoPublicUrl = shop?.logoUrl ? getShopLogoPublicUrl(shop.logoUrl) : null;
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoUploading(true);
+    try {
+      const base64 = await resizeImageToBase64(file, 400);
+      const result = await uploadShopLogo(base64);
+      setShopFeedback(
+        result.success
+          ? { tone: 'success', message: '로고가 저장됐어요' }
+          : { tone: 'error', message: result.error ?? '로고 저장에 실패했어요' },
+      );
+    } catch {
+      setShopFeedback({ tone: 'error', message: '로고 업로드 중 오류가 발생했어요' });
+    } finally {
+      setLogoUploading(false);
+      e.target.value = '';
+    }
+  };
   const [shopName, setShopName] = useState(shopSettings.shopName || shop?.name || '');
   const [shopPhone, setShopPhone] = useState(shopSettings.shopPhone || shop?.phone || '');
   const [shopAddress, setShopAddress] = useState(shopSettings.shopAddress || shop?.address || '');
@@ -1420,6 +1444,35 @@ export default function SettingsPage() {
                 </div>
               )}
 
+              {/* 매장 로고 — 고객 화면·첫 화면에 표시 */}
+              <div className="mb-4 flex items-center gap-3">
+                <div className="w-16 h-16 rounded-xl border border-border bg-surface-alt overflow-hidden flex items-center justify-center flex-shrink-0">
+                  {logoPublicUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={logoPublicUrl} alt="매장 로고" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-2xl" aria-hidden="true">🏪</span>
+                  )}
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label
+                    htmlFor="shop-logo-input"
+                    className="inline-flex w-fit cursor-pointer items-center rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-alt"
+                  >
+                    {logoUploading ? '업로드 중...' : logoPublicUrl ? '로고 변경' : '로고 추가'}
+                  </label>
+                  <input
+                    id="shop-logo-input"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => void handleLogoChange(e)}
+                    disabled={logoUploading}
+                  />
+                  <span className="text-[11px] text-text-muted">고객 화면·첫 화면에 표시돼요</span>
+                </div>
+              </div>
+
               {!editingShop ? (
                 <>
                   <div className="flex items-start justify-between">
@@ -1558,11 +1611,11 @@ export default function SettingsPage() {
                   <span className="font-medium text-text">+{formatPrice(savedPrices.offOtherShop)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">연장 추가금</span>
+                  <span className="text-text-secondary">연장 추가금 <span className="text-text-muted">(손가락당)</span></span>
                   <span className="font-medium text-text">+{formatPrice(savedPrices.extension)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">랩핑 추가금</span>
+                  <span className="text-text-secondary">랩핑 추가금 <span className="text-text-muted">(손가락당)</span></span>
                   <span className="font-medium text-text">+{formatPrice(savedPrices.wrapping)}</span>
                 </div>
                 <div className="my-1 border-t border-border/50" />
@@ -1590,8 +1643,8 @@ export default function SettingsPage() {
                 {[
                   { label: '자샵오프', value: priceOffSame, onChange: setPriceOffSame },
                   { label: '타샵오프', value: priceOffOther, onChange: setPriceOffOther },
-                  { label: '연장 추가금', value: priceExtension, onChange: setPriceExtension },
-                  { label: '랩핑 추가금', value: priceWrapping, onChange: setPriceWrapping },
+                  { label: '연장 추가금 (손가락당)', value: priceExtension, onChange: setPriceExtension },
+                  { label: '랩핑 추가금 (손가락당)', value: priceWrapping, onChange: setPriceWrapping },
                   { labelKey: 'service_solidPoint', value: priceSolidPoint, onChange: setPriceSolidPoint },
                   { label: '예약금', value: priceDeposit, onChange: setPriceDeposit },
                   { label: '월 목표 매출', value: monthlyTarget, onChange: setMonthlyTarget },

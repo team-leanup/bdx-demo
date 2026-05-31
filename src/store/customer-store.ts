@@ -13,7 +13,7 @@ import {
   dbInsertMembershipTransaction,
 } from '@/lib/db';
 import { generateId } from '@/lib/generate-id';
-import { getRemainingAmount, isMembershipExpired } from '@/lib/membership';
+import { getRemainingAmount, getUsedAmount, isMembershipExpired } from '@/lib/membership';
 
 interface LegacyCustomerTagAccent {
   accentColor?: TagAccent;
@@ -51,7 +51,8 @@ interface CustomerStore {
    * - 횟수도 함께 1회 차감.
    */
   useMembershipSession: (customerId: string, recordId?: string, amount?: number) => void;
-  manualDeductMembership: (customerId: string, count: number, note?: string) => void;
+  /** 0531: 회원권 금액 차감 — amount(원)를 직접 차감 */
+  manualDeductMembership: (customerId: string, amount: number, note?: string) => void;
   updateMembership: (customerId: string, updates: Partial<Membership>) => void;
 
   recordTreatmentCompletion: (
@@ -619,8 +620,8 @@ export const useCustomerStore = create<CustomerStore>()(
         }
       },
 
-      manualDeductMembership: (customerId, count, note) => {
-        if (!Number.isFinite(count) || count <= 0) return;
+      manualDeductMembership: (customerId, amount, note) => {
+        if (!Number.isFinite(amount) || amount <= 0) return;
         const txnId = generateId('txn');
         const today = getTodayInKorea();
         set((state) => ({
@@ -628,61 +629,30 @@ export const useCustomerStore = create<CustomerStore>()(
             if (c.id !== customerId) return c;
             const m = c.membership;
             if (!m) return c;
-            // 0428: 잔액 기반 정책 통일 — useMembershipSession과 동일하게 잔액 0이면 차단
-            if (getRemainingAmount(m) <= 0) return c;
-
-            const prevRemainingAmount = typeof m.remainingAmount === 'number'
-              ? m.remainingAmount
-              : (m.totalSessions > 0
-                ? Math.round(m.purchaseAmount * (m.remainingSessions / m.totalSessions))
-                : 0);
-            const prevUsedAmount = typeof m.usedAmount === 'number'
-              ? m.usedAmount
-              : Math.max(0, m.purchaseAmount - prevRemainingAmount);
-
-            // [SALES-6] 금액권(totalSessions=0)은 count를 '금액'으로 직접 해석하여 차감
-            // 횟수권(totalSessions>0)은 기존 unitPrice 기반 차감 유지
-            let actualDeduct: number;
-            let deductedAmount: number;
-            if (m.totalSessions === 0) {
-              // 금액권: count = 차감할 금액(원), 잔액 초과 시 잔액만큼만
-              actualDeduct = 0; // 횟수 카운터는 건드리지 않음
-              deductedAmount = Math.max(0, Math.min(prevRemainingAmount, Math.round(count)));
-            } else {
-              // 0529 MED-2: 잔액 기반 차감 — 횟수가 0이라도 잔액 남으면 unitPrice 단위로 가능한 만큼 차감.
-              const unitPriceForCheck = Math.floor(m.purchaseAmount / m.totalSessions);
-              const remainingAmountAtStart = getRemainingAmount(m);
-              const maxByAmount = unitPriceForCheck > 0
-                ? Math.floor(remainingAmountAtStart / unitPriceForCheck)
-                : count;
-              const maxBySessions = Math.max(1, m.remainingSessions); // 잔액 있으면 최소 1회 보장
-              actualDeduct = Math.min(count, Math.max(maxByAmount, maxBySessions));
-              // 0423: 금액도 비례 차감 (1회 단가 × 차감 횟수)
-              const unitPrice = Math.floor(m.purchaseAmount / m.totalSessions);
-              deductedAmount = Math.min(prevRemainingAmount, unitPrice * actualDeduct);
-            }
+            // 0531 회의: 회원권 금액 차감 — 입력값(amount)을 차감 금액(원)으로 직접 해석.
+            // 잔액 초과 시 잔액만큼만 차감. (횟수 카운터는 더 이상 사용하지 않음)
+            const prevRemainingAmount = getRemainingAmount(m);
+            if (prevRemainingAmount <= 0) return c;
+            const prevUsedAmount = getUsedAmount(m);
+            const deductedAmount = Math.max(0, Math.min(prevRemainingAmount, Math.round(amount)));
+            if (deductedAmount <= 0) return c;
 
             const transaction: MembershipTransaction = {
               id: txnId,
               date: today,
               type: 'manual_deduct',
-              sessionsDelta: -actualDeduct,
-              amountDelta: deductedAmount > 0 ? -deductedAmount : undefined,
+              sessionsDelta: 0,
+              amountDelta: -deductedAmount,
               note: note?.trim() || undefined,
             };
 
-            const remainingSessions = Math.max(0, m.remainingSessions - actualDeduct);
-            const usedSessions = m.usedSessions + actualDeduct;
             const remainingAmount = Math.max(0, prevRemainingAmount - deductedAmount);
             const usedAmount = prevUsedAmount + deductedAmount;
-            // 0423: 잔액 0원이면 소진 (횟수 카운터와 무관하게 금액 기준)
             const status: Membership['status'] =
               remainingAmount === 0 ? 'used_up' : m.status;
 
             const updatedMembership: Membership = {
               ...m,
-              remainingSessions,
-              usedSessions,
               remainingAmount,
               usedAmount,
               status,

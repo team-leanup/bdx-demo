@@ -1,20 +1,39 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAppStore } from '@/store/app-store';
+import { useOnboardingPhotoStore } from '@/store/onboarding-photo-store';
+import { resizeImageToBase64 } from '@/lib/image-utils';
 
 export default function ShopInfoPage() {
   const router = useRouter();
   const { shopSettings, setShopSettings } = useAppStore();
+  const { setPendingLogoDataUrl, pendingLogoDataUrl } = useOnboardingPhotoStore();
 
   const [shopName, setShopName] = useState(shopSettings.shopName || '');
   const [phone, setPhone] = useState(shopSettings.shopPhone || '');
+  const [logoPreview, setLogoPreview] = useState<string | null>(pendingLogoDataUrl);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const canProceed = shopName.trim().length > 0;
+
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const dataUrl = await resizeImageToBase64(file, 400);
+      setLogoPreview(dataUrl);
+      setPendingLogoDataUrl(dataUrl);
+    } catch {
+      // 업로드 실패는 무시 (선택 사항)
+    }
+    // 같은 파일 재선택 가능하도록 초기화
+    e.target.value = '';
+  };
 
   const handleNext = () => {
     if (!canProceed) return;
@@ -35,6 +54,75 @@ export default function ShopInfoPage() {
       </div>
 
       <div className="flex flex-col gap-4 flex-1">
+        {/* 매장 로고 */}
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium text-text">
+            매장 로고
+            <span className="ml-1.5 text-xs font-normal text-text-muted">(선택)</span>
+          </label>
+          <div className="flex items-center gap-4">
+            {/* 미리보기 / 플레이스홀더 */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex-shrink-0 w-16 h-16 rounded-full border-2 border-dashed border-border bg-surface-alt flex items-center justify-center overflow-hidden hover:border-primary transition-colors"
+              aria-label="로고 이미지 선택"
+            >
+              {logoPreview ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={logoPreview}
+                  alt="매장 로고 미리보기"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <svg
+                  className="w-6 h-6 text-text-muted"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 20.25h18A.75.75 0 0021.75 21V6.75A.75.75 0 0021 6H3a.75.75 0 00-.75.75V20.25c0 .414.336.75.75.75z"
+                  />
+                </svg>
+              )}
+            </button>
+            <div className="flex flex-col gap-1.5">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-sm font-medium text-primary underline underline-offset-2 text-left"
+              >
+                {logoPreview ? '다시 선택' : '이미지 선택'}
+              </button>
+              {logoPreview && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLogoPreview(null);
+                    setPendingLogoDataUrl(null);
+                  }}
+                  className="text-xs text-text-muted text-left hover:text-error transition-colors"
+                >
+                  제거
+                </button>
+              )}
+              <p className="text-xs text-text-muted">JPEG, PNG, WebP · 4MB 이하</p>
+            </div>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={handleLogoChange}
+          />
+        </div>
+
         <Input
           label="매장명"
           placeholder="매장명을 입력하세요"

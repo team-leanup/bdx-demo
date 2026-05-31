@@ -138,7 +138,7 @@ export const DEMO_CUSTOMERS: Customer[] = [
       expiryDate: '2027-01-10',
       status: 'active',
       planId: 'demo-mp-001',
-      planName: '50만원 10회권',
+      planName: '50만원 충전권',
       transactions: [],
     },
     createdAt: isoKR('2025-09-10'),

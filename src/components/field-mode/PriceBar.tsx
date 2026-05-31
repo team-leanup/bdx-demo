@@ -62,9 +62,6 @@ export function PriceBar({
             <span className="text-xl font-bold text-text tracking-tight truncate">
               {priceDisplay}
             </span>
-            <span className="text-xs text-text-muted whitespace-nowrap">
-              · ~{estimate.estimatedMinutes}{t('fieldMode.minutes')}
-            </span>
           </div>
         </div>
 

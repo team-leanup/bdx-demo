@@ -669,6 +669,7 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
             imagePath: p.imagePath,
           }))}
           shopName={shopSettings.shopName}
+          categoryLabel={resolveRecordCategoryLabelKo(record.consultation, shopSettings)}
         />
       )}
     </div>

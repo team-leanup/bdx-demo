@@ -6,9 +6,7 @@ import type { PaymentMethod } from '@/types/consultation';
 interface PaymentMethodSelectorProps {
   value: PaymentMethod | undefined;
   onChange: (method: PaymentMethod) => void;
-  /** 잔여 횟수 (legacy — 0일 때 비활성 판단에 계속 사용) */
-  membershipRemaining?: number;
-  /** 0423 반영: 잔액(원) — 뱃지/안내 표시용 */
+  /** 0531 회의: 회원권 금액 차감 — 잔액(원)으로 사용 가능 여부·뱃지 판단 */
   membershipRemainingAmount?: number;
 }
 
@@ -21,15 +19,12 @@ const METHODS: { key: PaymentMethod; label: string; icon: string }[] = [
 export function PaymentMethodSelector({
   value,
   onChange,
-  membershipRemaining,
   membershipRemainingAmount,
 }: PaymentMethodSelectorProps): React.ReactElement {
-  // 0423: 잔액 또는 횟수 정보가 없으면 안전하게 비활성 (undefined는 "회원권 없음"을 의미)
-  const hasMembership = membershipRemaining !== undefined || membershipRemainingAmount !== undefined;
+  // 0531: 잔액(원) 기준 — 잔액 정보가 없거나(회원권 없음) 0 이하면 비활성
   const membershipDisabled =
-    !hasMembership ||
-    membershipRemaining === 0 ||
-    (typeof membershipRemainingAmount === 'number' && membershipRemainingAmount <= 0);
+    membershipRemainingAmount === undefined ||
+    membershipRemainingAmount <= 0;
 
   return (
     <div className="flex gap-2" role="radiogroup" aria-label="결제수단 선택">

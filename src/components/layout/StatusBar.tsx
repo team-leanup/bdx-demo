@@ -8,6 +8,7 @@ import { useShopStore } from '@/store/shop-store';
 import { NotificationBellButton } from '@/components/layout/NotificationBellButton';
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { ProfileSwitcher } from '@/components/auth/ProfileSwitcher';
+import { getShopLogoPublicUrl } from '@/lib/db';
 import type { Locale } from '@/store/locale-store';
 import { cn } from '@/lib/cn';
 
@@ -29,7 +30,9 @@ export function StatusBar({ shopName: shopNameProp }: StatusBarProps) {
   const { locale, setLocale } = useLocaleStore();
   const { shopSettings } = useAppStore();
   const storeShopName = useShopStore((s) => s.shop?.name);
+  const storeLogoUrl = useShopStore((s) => s.shop?.logoUrl);
   const shopName = shopNameProp || shopSettings.shopName || (storeShopName ?? '네일숲');
+  const logoPublicUrl = storeLogoUrl ? getShopLogoPublicUrl(storeLogoUrl) : null;
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showSwitcher, setShowSwitcher] = useState(false);
 
@@ -53,7 +56,17 @@ export function StatusBar({ shopName: shopNameProp }: StatusBarProps) {
               <span className="text-sm font-semibold text-text hidden sm:inline">{activeDesignerName}</span>
             </button>
           ) : (
-            <span className="font-bold text-base tracking-tight text-primary">{shopName}</span>
+            <span className="flex items-center gap-2 font-bold text-base tracking-tight text-primary">
+              {logoPublicUrl && (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={logoPublicUrl}
+                  alt={shopName}
+                  className="w-7 h-7 rounded-full object-cover flex-shrink-0"
+                />
+              )}
+              {shopName}
+            </span>
           )}
         </div>
 

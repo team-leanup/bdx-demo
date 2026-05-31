@@ -9,11 +9,10 @@ import type { MembershipPlan } from '@/types/customer';
 interface PlanFormState {
   name: string;
   price: string;
-  totalSessions: string;
   validDays: string;
 }
 
-const EMPTY_FORM: PlanFormState = { name: '', price: '', totalSessions: '', validDays: '' };
+const EMPTY_FORM: PlanFormState = { name: '', price: '', validDays: '' };
 
 export function MembershipPlansSection(): React.ReactElement {
   const plans = useMembershipPlanStore((s) => s.plans);
@@ -41,7 +40,6 @@ export function MembershipPlansSection(): React.ReactElement {
     setForm({
       name: plan.name,
       price: String(plan.price),
-      totalSessions: String(plan.totalSessions),
       validDays: plan.validDays != null ? String(plan.validDays) : '',
     });
     setModalMode({ mode: 'edit', plan });
@@ -55,8 +53,7 @@ export function MembershipPlansSection(): React.ReactElement {
   const handleSubmit = (): void => {
     const name = form.name.trim();
     const price = Number(form.price);
-    const totalSessions = Number(form.totalSessions);
-    if (!name || !Number.isFinite(price) || price < 0 || !Number.isFinite(totalSessions) || totalSessions <= 0) {
+    if (!name || !Number.isFinite(price) || price <= 0) {
       return;
     }
     const validDays = form.validDays.trim() === '' ? null : Number(form.validDays);
@@ -65,9 +62,9 @@ export function MembershipPlansSection(): React.ReactElement {
     }
 
     if (modalMode === 'create') {
-      addPlan({ name, price, totalSessions, validDays });
+      addPlan({ name, price, validDays });
     } else if (typeof modalMode === 'object' && modalMode.mode === 'edit') {
-      updatePlan(modalMode.plan.id, { name, price, totalSessions, validDays });
+      updatePlan(modalMode.plan.id, { name, price, validDays });
     }
     closeModal();
   };
@@ -80,9 +77,7 @@ export function MembershipPlansSection(): React.ReactElement {
   const isFormValid = (() => {
     if (!form.name.trim()) return false;
     const price = Number(form.price);
-    const total = Number(form.totalSessions);
-    if (!Number.isFinite(price) || price < 0) return false;
-    if (!Number.isFinite(total) || total <= 0) return false;
+    if (!Number.isFinite(price) || price <= 0) return false;
     if (form.validDays.trim() !== '') {
       const vd = Number(form.validDays);
       if (!Number.isFinite(vd) || vd <= 0) return false;
@@ -113,7 +108,7 @@ export function MembershipPlansSection(): React.ReactElement {
         {plans.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-surface-alt/50 px-4 py-8 text-center">
             <p className="text-sm text-text-muted">등록된 회원권 상품이 없어요</p>
-            <p className="mt-1 text-[11px] text-text-muted">예: 10만원 5회권, 20만원 10회권</p>
+            <p className="mt-1 text-[11px] text-text-muted">예: 20만원 충전권, 50만원 충전권</p>
           </div>
         ) : (
           <ul className="flex flex-col gap-2">
@@ -137,17 +132,7 @@ export function MembershipPlansSection(): React.ReactElement {
                       )}
                     </div>
                     <div className="mt-0.5 flex items-center gap-1.5 flex-wrap text-[11px] text-text-muted tabular-nums">
-                      <span>{formatPrice(plan.price)}</span>
-                      <span>·</span>
-                      <span>{plan.totalSessions}회</span>
-                      {plan.totalSessions > 0 && (
-                        <>
-                          <span>·</span>
-                          <span className="text-primary/80">
-                            1회 {formatPrice(Math.floor(plan.price / plan.totalSessions))}
-                          </span>
-                        </>
-                      )}
+                      <span>{formatPrice(plan.price)} 충전</span>
                       {plan.validDays != null && (
                         <>
                           <span>·</span>
@@ -191,38 +176,22 @@ export function MembershipPlansSection(): React.ReactElement {
             <input
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              placeholder="예: 10만원 5회권"
+              placeholder="예: 20만원 충전권"
               className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-base text-text placeholder:text-text-muted focus:border-primary focus:outline-none"
               maxLength={40}
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-text-secondary mb-1 block">판매 금액 *</label>
+            <label className="text-xs font-medium text-text-secondary mb-1 block">충전 금액 *</label>
             <input
               value={form.price}
               onChange={(e) => setForm((f) => ({ ...f, price: e.target.value.replace(/[^0-9]/g, '') }))}
               inputMode="numeric"
-              placeholder="예: 100000"
+              placeholder="예: 200000"
               className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-base text-text placeholder:text-text-muted focus:border-primary focus:outline-none tabular-nums"
             />
             {form.price && (
-              <p className="mt-1 text-[11px] text-text-muted">{Number(form.price).toLocaleString('ko-KR')}원</p>
-            )}
-          </div>
-          <div>
-            <label className="text-xs font-medium text-text-secondary mb-1 block">총 횟수 *</label>
-            <input
-              value={form.totalSessions}
-              onChange={(e) => setForm((f) => ({ ...f, totalSessions: e.target.value.replace(/[^0-9]/g, '') }))}
-              inputMode="numeric"
-              placeholder="예: 5"
-              className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-base text-text placeholder:text-text-muted focus:border-primary focus:outline-none tabular-nums"
-            />
-            {/* 0423: 1회당 한도 실시간 표시 */}
-            {form.price && form.totalSessions && Number(form.totalSessions) > 0 && (
-              <p className="mt-1 text-[11px] text-primary font-medium tabular-nums">
-                1회 한도 {Math.floor(Number(form.price) / Number(form.totalSessions)).toLocaleString('ko-KR')}원
-              </p>
+              <p className="mt-1 text-[11px] text-text-muted">{Number(form.price).toLocaleString('ko-KR')}원 충전 — 시술마다 금액으로 차감돼요</p>
             )}
           </div>
           <div>

@@ -23,15 +23,15 @@ export function getUsedAmount(m: Membership): number {
 
 /**
  * 시술 단건에 실제로 차감되는 회원권 금액을 계산.
+ * 0531 회의: 회원권은 '금액 차감' 방식 — 잔액(원)만으로 판단한다.
+ * (이전: 잔여 횟수가 0이면 차감 불가 → 금액이 남아도 못 쓰는 문제 제거)
  * - 회원권 잔액이 시술 금액보다 적으면 잔액만큼만 차감
- * - 잔여 횟수가 0이면 차감하지 않음 (회원권 소진)
  */
 export function calcMembershipDeduct(
   m: Membership,
   serviceAmount: number,
 ): number {
-  if (m.status !== 'active') return 0;
-  if (m.remainingSessions <= 0) return 0;
+  if (getEffectiveStatus(m) !== 'active') return 0;
   const remaining = getRemainingAmount(m);
   return Math.max(0, Math.min(remaining, serviceAmount));
 }

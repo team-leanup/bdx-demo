@@ -3,9 +3,10 @@
 import React, { useMemo } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { useT, useKo, useLocale } from '@/lib/i18n';
+import { useT, useLocale } from '@/lib/i18n';
 import { usePreConsultStore } from '@/store/pre-consult-store';
 import { serviceTypeToCategory } from '@/lib/category-mapping';
+import { resolveMenuCategoryLabelBilingual } from '@/lib/labels';
 import type { DesignCategory } from '@/types/pre-consultation';
 
 interface CategoryConfig {
@@ -31,7 +32,6 @@ const BUILTIN_CATEGORIES: CategoryConfig[] = [
 
 export function CategoryPicker(): React.ReactElement {
   const t = useT();
-  const tKo = useKo();
   const locale = useLocale();
   const selected = usePreConsultStore((s) => s.selectedCategory);
   const setSelected = usePreConsultStore((s) => s.setSelectedCategory);
@@ -113,21 +113,18 @@ export function CategoryPicker(): React.ReactElement {
     return `${price.toLocaleString()}${t('preConsult.won')}~`;
   };
 
-  // builtin 카테고리: locale===ko이면 원장 override 우선, 그 외 locale은 i18n 번역 유지
+  // builtin 카테고리: locale===ko이면 한국어만, 비ko이면 '한국어(English)' 병기
   const resolveBuiltinLabel = (cat: CategoryConfig): string => {
     if (!cat.builtin || !cat.tKey) return cat.label ?? '';
     if (locale === 'ko') {
       const override = shopData?.categoryLabels?.[cat.key as string];
       return override ?? t(cat.tKey);
     }
-    return t(cat.tKey);
-  };
-
-  // 보조 한국어 라벨 (비ko locale에서 보조 표시): 원장 override 우선
-  const resolveBuiltinLabelKo = (cat: CategoryConfig): string => {
-    if (!cat.builtin || !cat.tKey) return cat.labelKo ?? '';
-    const override = shopData?.categoryLabels?.[cat.key as string];
-    return override ?? tKo(cat.tKey);
+    return resolveMenuCategoryLabelBilingual(
+      cat.key as string,
+      shopData?.categoryLabels ?? undefined,
+      shopData?.customCategories ?? undefined,
+    );
   };
 
   return (
@@ -135,8 +132,11 @@ export function CategoryPicker(): React.ReactElement {
       {visibleCategories.map((cat) => {
         const isSelected = selected === cat.key;
         const thumb = categoryThumbs[cat.key];
-        const displayLabel = cat.builtin ? resolveBuiltinLabel(cat) : (cat.label ?? '');
-        const displayLabelKo = cat.builtin ? resolveBuiltinLabelKo(cat) : (cat.labelKo ?? '');
+        const displayLabel = cat.builtin
+          ? resolveBuiltinLabel(cat)
+          : locale !== 'ko' && cat.labelKo
+          ? resolveMenuCategoryLabelBilingual(cat.key as string, undefined, shopData?.customCategories ?? undefined)
+          : (cat.label ?? '');
         return (
           <motion.button
             key={cat.key}
@@ -182,11 +182,6 @@ export function CategoryPicker(): React.ReactElement {
               <p className={`font-semibold text-sm ${isSelected ? 'text-primary' : 'text-text'}`}>
                 {displayLabel}
               </p>
-              {locale !== 'ko' && (
-                <p className="text-xs text-text-muted opacity-60">
-                  {displayLabelKo}
-                </p>
-              )}
               {(cat.builtin ? t(cat.tDescKey!) : cat.desc) && (
                 <p className="text-xs text-text-muted leading-tight">
                   {cat.builtin ? t(cat.tDescKey!) : cat.desc}

@@ -12,6 +12,7 @@ import {
   dbDeleteDesigner,
   dbUploadDesignerProfileImage,
   dbDeleteDesignerProfileImage,
+  dbUploadShopLogo,
 } from '@/lib/db';
 import { useAuthStore } from '@/store/auth-store';
 import { getNowInKoreaIso } from '@/lib/format';
@@ -28,6 +29,7 @@ interface ShopStore {
   deleteDesigner: (designerId: string) => Promise<{ success: boolean; error?: string }>;
   uploadDesignerProfileImage: (designerId: string, imageDataUrl: string) => Promise<{ success: boolean; error?: string }>;
   deleteDesignerProfileImage: (designerId: string) => Promise<{ success: boolean; error?: string }>;
+  uploadShopLogo: (imageDataUrl: string) => Promise<{ success: boolean; error?: string }>;
   getDesignerById: (id: string) => Designer | undefined;
   getDesignerName: (id: string) => string;
   getActiveDesigners: () => Designer[];
@@ -159,6 +161,23 @@ export const useShopStore = create<ShopStore>()(
           ),
         }));
 
+        return { success: true };
+      },
+
+      uploadShopLogo: async (imageDataUrl) => {
+        const currentShopId = useAuthStore.getState().currentShopId;
+        if (!currentShopId) {
+          return { success: false, error: '현재 샵 정보를 찾을 수 없습니다.' };
+        }
+
+        const result = await dbUploadShopLogo(currentShopId, imageDataUrl);
+        if (!result.success || !result.shop) {
+          return { success: false, error: result.error };
+        }
+
+        set((state) => ({
+          shop: state.shop ? { ...state.shop, logoUrl: result.shop!.logoUrl } : result.shop,
+        }));
         return { success: true };
       },
 

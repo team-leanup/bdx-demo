@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { TourOverlay } from '@/components/onboarding/TourOverlay';
 import { useShopStore } from '@/store/shop-store';
+import { getShopLogoPublicUrl } from '@/lib/db';
 import { useRecordsStore } from '@/store/records-store';
 import { useAppStore } from '@/store/app-store';
 import { useReservationStore } from '@/store/reservation-store';
@@ -89,7 +90,9 @@ export default function HomePage() {
     }
   }, [searchParams]);
   const storeShopName = useShopStore((s) => s.shop?.name);
+  const storeLogoUrl = useShopStore((s) => s.shop?.logoUrl);
   const shopName = shopSettings.shopName || (storeShopName ?? '내 매장');
+  const logoPublicUrl = storeLogoUrl ? getShopLogoPublicUrl(storeLogoUrl) : null;
 
   const today = getTodayInKorea();
   const todayConsultations = records.filter(
@@ -264,6 +267,7 @@ export default function HomePage() {
         greeting={greeting}
         role={role}
         todayDateStr={todayDateStr}
+        logoPublicUrl={logoPublicUrl}
         itemVariants={itemVariants}
       />
 

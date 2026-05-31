@@ -117,6 +117,8 @@ interface ShareCardImageTemplateProps {
   shopId?: string;
   createdAt?: string;
   estimatedMinutes?: number;
+  /** 실제 시술 카테고리/메뉴 한국어 라벨 — 제공 시 MOOD_TITLE 대신 타이틀로 표시 */
+  categoryLabel?: string;
 }
 
 export function ShareCardImageTemplate({
@@ -128,13 +130,14 @@ export function ShareCardImageTemplate({
   shopId,
   createdAt,
   estimatedMinutes,
+  categoryLabel,
 }: ShareCardImageTemplateProps): React.ReactElement {
   const config = RATIO_CONFIG[ratio];
   const infoPercent = 100 - config.photoPercent;
   const designLabel = getDesignLabel(consultation.designScope);
   const bodyLabel = BODY_PART_LABEL[consultation.bodyPart] ?? consultation.bodyPart;
 
-  const moodTitle = MOOD_TITLE[consultation.designScope] ?? 'Nail Design';
+  const moodTitle = categoryLabel ?? MOOD_TITLE[consultation.designScope] ?? 'Nail Design';
   const hashtag = SCOPE_HASHTAG[consultation.designScope] ?? '#Nail';
 
   const shapeLabel = consultation.nailShape ? SHAPE_LABEL[consultation.nailShape] : null;

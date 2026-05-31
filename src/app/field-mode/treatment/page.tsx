@@ -278,7 +278,6 @@ export default function TreatmentPage(): React.ReactElement {
               surcharges={shopSettings.surcharges}
               onAdd={addInTreatmentAddon}
               onRemove={removeInTreatmentAddon}
-              carriedAddOns={addOns}
               customParts={shopSettings.customParts}
             />
           </motion.div>

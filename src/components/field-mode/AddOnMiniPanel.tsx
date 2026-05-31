@@ -7,31 +7,30 @@ import { cn } from '@/lib/cn';
 import type { SurchargeSettings, CustomPartSetting } from '@/types/shop';
 import { ADDON_FIXED_PRICES } from '@/lib/pre-consult-price';
 import type { FieldModeAddon } from '@/types/field-mode';
-import type { AddOnOption } from '@/types/pre-consultation';
 
 interface AddOnMiniPanelProps {
   addons: FieldModeAddon[];
   surcharges: SurchargeSettings;
   onAdd: (addon: { label: string; amount: number }) => void;
   onRemove: (id: string) => void;
-  /** 0530 FM-1: 사전상담에서 이미 반영된(=baseEstimate에 포함된) add-on. 중복 청구 방지용으로 퀵버튼 비활성화 */
-  carriedAddOns?: AddOnOption[];
-  /** 0531: 설정의 커스텀 파츠(종류·단가) 연동. 있으면 하드코딩 퀵버튼 대신 파츠를 수량 선택 가능하게 표시 */
+  /** 0531: 설정의 커스텀 파츠(종류·단가) 연동. 있으면 일반 '파츠' 버튼 대신 파츠별 수량 스테퍼로 표시 */
   customParts?: CustomPartSetting[];
 }
 
 interface QuickAddBtn {
   labelKey: string;
   getAmount: (s: SurchargeSettings) => number;
-  /** 사전상담 addOns와 매칭되는 키 — carriedAddOns에 있으면 이미 반영된 것으로 보고 중복 추가 차단 */
-  addOnKey?: AddOnOption;
 }
 
-const QUICK_ADDS: QuickAddBtn[] = [
-  { labelKey: 'fieldMode.addParts',     getAmount: (s) => s.largeParts,             addOnKey: 'parts' },
-  { labelKey: 'fieldMode.addGlitter',   getAmount: () => ADDON_FIXED_PRICES.glitter, addOnKey: 'glitter' },
-  { labelKey: 'fieldMode.addPointArt',  getAmount: (s) => s.pointArt,               addOnKey: 'point_art' },
+// 0531 회의: 시술 중 추가금(파츠·글리터·포인트아트·연장·랩핑·제거)을 원장이 자유롭게 여러 번 추가.
+// 사전상담에서 이미 고른 항목도 "현장에서 더 추가"할 수 있어야 하므로 비활성화하지 않는다(탭마다 1개씩 누적).
+const PARTS_ADD: QuickAddBtn = { labelKey: 'fieldMode.addParts', getAmount: (s) => s.largeParts };
+const STANDARD_ADDS: QuickAddBtn[] = [
+  { labelKey: 'fieldMode.addGlitter',   getAmount: () => ADDON_FIXED_PRICES.glitter },
+  { labelKey: 'fieldMode.addPointArt',  getAmount: (s) => s.pointArt },
   { labelKey: 'fieldMode.addExtension', getAmount: (s) => s.extension },
+  { labelKey: 'fieldMode.addWrapping',  getAmount: (s) => s.wrapping ?? ADDON_FIXED_PRICES.wrapping },
+  { labelKey: 'fieldMode.addRemoval',   getAmount: (s) => s.selfRemoval },
 ];
 
 export function AddOnMiniPanel({
@@ -39,7 +38,6 @@ export function AddOnMiniPanel({
   surcharges,
   onAdd,
   onRemove,
-  carriedAddOns = [],
   customParts,
 }: AddOnMiniPanelProps): React.ReactElement {
   const t = useT();
@@ -48,6 +46,8 @@ export function AddOnMiniPanel({
   const [customAmount, setCustomAmount] = useState('');
 
   const hasCustomParts = !!customParts && customParts.length > 0;
+  // 커스텀 파츠가 설정돼 있으면 일반 '파츠' 버튼은 스테퍼로 대체, 나머지 표준 추가금은 항상 노출
+  const quickAdds = hasCustomParts ? STANDARD_ADDS : [PARTS_ADD, ...STANDARD_ADDS];
 
   const handleQuickAdd = (labelKey: string, amount: number): void => {
     onAdd({ label: t(labelKey), amount });
@@ -75,10 +75,10 @@ export function AddOnMiniPanel({
         {t('fieldMode.addOnSection')}
       </p>
 
-      {/* Quick-add buttons */}
+      {/* Quick-add buttons — 모두 여러 번 탭해 누적 추가 가능 (사전상담 반영분도 현장에서 더 추가 가능) */}
       <div className="flex flex-wrap gap-2">
-        {hasCustomParts ? (
-          // 0531: 설정 커스텀 파츠 연동 — 탭하면 1개씩 누적, 수량 스테퍼로 여러 개 선택·가격 계산
+        {/* 설정 커스텀 파츠 — 파츠별 수량 스테퍼 (탭마다 1개씩 누적) */}
+        {hasCustomParts &&
           customParts!.map((part) => {
             const matching = addons.filter((a) => a.label === part.name);
             const qty = matching.length;
@@ -129,41 +129,26 @@ export function AddOnMiniPanel({
                 </div>
               </div>
             );
-          })
-        ) : (
-          QUICK_ADDS.map(({ labelKey, getAmount, addOnKey }) => {
-            const amount = getAmount(surcharges);
-            // FM-1: 사전상담에서 이미 반영된 add-on은 baseEstimate에 포함돼 있으므로 다시 누르면 이중 청구됨 → 비활성화
-            const alreadyApplied = addOnKey != null && carriedAddOns.includes(addOnKey);
-            if (alreadyApplied) {
-              return (
-                <span
-                  key={labelKey}
-                  aria-disabled="true"
-                  className="min-h-[44px] inline-flex items-center gap-1 rounded-xl px-3 py-2 bg-primary/5 border border-primary/30 text-sm font-medium text-primary/70 select-none cursor-default"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                  </svg>
-                  {t(labelKey)} <span className="text-text-muted">· 사전상담 반영됨</span>
-                </span>
-              );
-            }
-            return (
-              <button
-                key={labelKey}
-                type="button"
-                onClick={() => handleQuickAdd(labelKey, amount)}
-                className="min-h-[44px] rounded-xl px-3 py-2 bg-surface-alt border border-border text-sm font-medium text-text hover:border-primary hover:bg-primary/5 active:scale-[0.97] transition-all duration-150 select-none"
-              >
-                {t(labelKey)}{' '}
-                <span className="text-primary font-semibold">
-                  +₩{amount.toLocaleString()}
-                </span>
-              </button>
-            );
-          })
-        )}
+          })}
+
+        {/* 표준 추가금 — 탭마다 1개씩 누적 (비활성화 없음) */}
+        {quickAdds.map(({ labelKey, getAmount }) => {
+          const amount = getAmount(surcharges);
+          if (amount <= 0) return null;
+          return (
+            <button
+              key={labelKey}
+              type="button"
+              onClick={() => handleQuickAdd(labelKey, amount)}
+              className="min-h-[44px] rounded-xl px-3 py-2 bg-surface-alt border border-border text-sm font-medium text-text hover:border-primary hover:bg-primary/5 active:scale-[0.97] transition-all duration-150 select-none"
+            >
+              {t(labelKey)}{' '}
+              <span className="text-primary font-semibold">
+                +₩{amount.toLocaleString()}
+              </span>
+            </button>
+          );
+        })}
 
         {/* 기타 직접입력 toggle */}
         <button

@@ -51,7 +51,8 @@ export default function CompletePage() {
   const currentShopId = useAuthStore((s) => s.currentShopId);
   const setCurrentShopOnboardingComplete = useAuthStore((s) => s.setCurrentShopOnboardingComplete);
   const updateShop = useShopStore((s) => s.updateShop);
-  const { photos, featuredIds, reset: resetPhotos } = useOnboardingPhotoStore();
+  const uploadShopLogo = useShopStore((s) => s.uploadShopLogo);
+  const { photos, featuredIds, pendingLogoDataUrl, reset: resetPhotos } = useOnboardingPhotoStore();
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(false);
   // 0528 H5: useRef로 동기 가드 — useState는 비동기라 빠른 더블탭 시 중복 INSERT 가능
@@ -93,7 +94,16 @@ export default function CompletePage() {
         throw new Error(shopUpdateResult.error ?? 'Shop 저장에 실패했습니다.');
       }
 
-      // 2. categoryPricing + customerNotice DB 저장
+      // 2. 로고 업로드 (선택 사항, 실패해도 온보딩 완료 처리)
+      if (pendingLogoDataUrl && currentShopId && currentShopId !== 'shop-demo') {
+        try {
+          await uploadShopLogo(pendingLogoDataUrl);
+        } catch (logoErr) {
+          console.error('[onboarding] logo upload failed (non-blocking):', logoErr);
+        }
+      }
+
+      // 3. categoryPricing + customerNotice DB 저장
       await setShopSettings({
         categoryPricing: shopSettings.categoryPricing,
         customerNotice: shopSettings.customerNotice,

@@ -3,7 +3,7 @@
 import { cn } from '@/lib/cn';
 import {
   getRemainingAmount,
-  getMembershipSessionState,
+  getUsedAmount,
   getEffectiveStatus,
   formatWon,
 } from '@/lib/membership';
@@ -43,17 +43,16 @@ export function MembershipCard({
   onAddSession,
   onExpire,
 }: MembershipCardProps): React.ReactElement {
-  // 0423: 만료일·잔액을 결합한 실사용 상태로 뱃지 결정
+  // 0531 회의: 회원권은 '금액 차감' 방식 — 회차 표기 없이 남은 금액만 표시
   const effectiveStatus = getEffectiveStatus(membership);
   const style = STATUS_STYLES[effectiveStatus];
 
-  // 0423 반영: 회차별 표시 ("1회권 중 5만원 사용, 남은 금액 5만원")
-  const state = getMembershipSessionState(membership);
-  const totalRemainingAmount = getRemainingAmount(membership);
-
-  // 현재 회차 프로그레스 (회차 내 사용률)
-  const currentSessionPct = state.sessionLimit > 0
-    ? Math.min(100, (state.currentSessionUsed / state.sessionLimit) * 100)
+  const remainingAmount = getRemainingAmount(membership);
+  const usedAmount = getUsedAmount(membership);
+  const purchaseAmount = membership.purchaseAmount;
+  // 잔액 비율 (충전 금액 대비)
+  const remainingPct = purchaseAmount > 0
+    ? Math.max(0, Math.min(100, (remainingAmount / purchaseAmount) * 100))
     : 0;
 
   return (
@@ -76,64 +75,47 @@ export function MembershipCard({
         </span>
       </div>
 
-      {/* 현재 회차 상태 — 지승호 대표 원문대로 */}
+      {/* 남은 금액 (메인) */}
       <div className="flex flex-col gap-2">
-        <div className="flex items-baseline justify-between gap-3 flex-wrap">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-xs font-bold text-primary">
-              {state.currentSessionNumber}회차
-            </span>
-            <span className="text-xs text-text-muted">
-              중 {formatWon(state.currentSessionUsed)} 사용
-            </span>
-          </div>
-          <div className="flex items-baseline gap-1">
-            <span className="text-[11px] font-semibold text-text-muted">남은 금액</span>
-            <span className="text-lg font-black text-text tabular-nums leading-none">
-              {formatWon(state.currentSessionRemaining)}
-            </span>
-          </div>
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="text-[11px] font-semibold text-text-muted">남은 금액</span>
+          <span className="text-2xl font-black text-text tabular-nums leading-none">
+            {formatWon(remainingAmount)}
+          </span>
         </div>
         <div
           className="h-2 rounded-full bg-surface-alt overflow-hidden"
           role="progressbar"
-          aria-valuenow={Math.round(currentSessionPct)}
+          aria-valuenow={Math.round(remainingPct)}
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-label={`${state.currentSessionNumber}회차에 ${formatWon(state.currentSessionRemaining)} 남음`}
+          aria-label={`남은 금액 ${formatWon(remainingAmount)}`}
         >
           <div
             className={cn('h-full rounded-full transition-[width] duration-300', style.bar)}
-            style={{ width: `${currentSessionPct}%` }}
+            style={{ width: `${remainingPct}%` }}
           />
         </div>
       </div>
 
-      {/* 전체 회원권 요약 */}
+      {/* 충전/사용 요약 */}
       <div className="flex items-center justify-between rounded-xl bg-surface-alt border border-border px-3 py-2.5 text-[11px]">
         <div className="flex flex-col gap-0.5">
-          <span className="text-text-muted">총 잔액</span>
-          <span className="text-sm font-black text-text tabular-nums">
-            {formatWon(totalRemainingAmount)}
-          </span>
-        </div>
-        <div className="flex flex-col gap-0.5 items-center">
-          <span className="text-text-muted">남은 회차</span>
+          <span className="text-text-muted">충전 금액</span>
           <span className="text-sm font-bold text-text tabular-nums">
-            {state.remainingSessionsCount} / {membership.totalSessions}회
+            {formatWon(purchaseAmount)}
           </span>
         </div>
         <div className="flex flex-col gap-0.5 items-end">
-          <span className="text-text-muted">1회 한도</span>
+          <span className="text-text-muted">사용 금액</span>
           <span className="text-sm font-bold text-text tabular-nums">
-            {formatWon(state.sessionLimit)}
+            {formatWon(usedAmount)}
           </span>
         </div>
       </div>
 
-      {/* 만료일 / 구매일 */}
-      <div className="flex items-center justify-between text-xs text-text-muted">
-        <span>구매금액 {formatWon(membership.purchaseAmount)}</span>
+      {/* 만료일 */}
+      <div className="flex items-center justify-end text-xs text-text-muted">
         <span>만료일 {formatDate(membership.expiryDate)}</span>
       </div>
 
@@ -146,7 +128,7 @@ export function MembershipCard({
               onClick={onAddSession}
               className="flex-1 min-h-[44px] py-2.5 rounded-xl bg-primary/10 text-primary text-xs font-bold border border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
-              + 회차 추가
+              + 잔액 추가
             </button>
           )}
           {onExpire && effectiveStatus === 'active' && (

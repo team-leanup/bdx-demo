@@ -24,7 +24,7 @@ import { PreferenceEditor } from '@/components/customer/PreferenceEditor';
 import { useCustomerStore } from '@/store/customer-store';
 import { useMembershipPlanStore } from '@/store/membership-plan-store';
 import { generateId } from '@/lib/generate-id';
-import { getRemainingAmount, getMembershipSessionState, formatWon } from '@/lib/membership';
+import { getRemainingAmount, formatWon } from '@/lib/membership';
 import { usePortfolioStore } from '@/store/portfolio-store';
 import { useAuthStore } from '@/store/auth-store';
 import { useReservationStore } from '@/store/reservation-store';
@@ -153,10 +153,9 @@ function CustomerDetailContent({ id }: { id: string }) {
   const [showDeductModal, setShowDeductModal] = useState(false);
   // 0428 P1-6: window.confirm 대신 인라인 모달
   const [showExpireConfirm, setShowExpireConfirm] = useState(false);
-  const [deductCount, setDeductCount] = useState('1');
+  const [deductCount, setDeductCount] = useState('');
   const [deductNote, setDeductNote] = useState('');
   const [mbPurchaseAmount, setMbPurchaseAmount] = useState('');
-  const [mbTotalSessions, setMbTotalSessions] = useState('');
   const [mbExpiryDate, setMbExpiryDate] = useState('');
   const [mbSelectedPlanId, setMbSelectedPlanId] = useState<string>('');
 
@@ -175,12 +174,10 @@ function CustomerDetailContent({ id }: { id: string }) {
     const existing = useCustomerStore.getState().getById(id)?.membership;
     if (existing) {
       setMbPurchaseAmount(String(existing.purchaseAmount));
-      setMbTotalSessions(String(existing.totalSessions));
       setMbExpiryDate(existing.expiryDate ?? '');
       setMbSelectedPlanId(existing.planId ?? '');
     } else {
       setMbPurchaseAmount('');
-      setMbTotalSessions('');
       setMbExpiryDate('');
       setMbSelectedPlanId('');
     }
@@ -1122,13 +1119,13 @@ function CustomerDetailContent({ id }: { id: string }) {
               <button
                 type="button"
                 onClick={() => {
-                  setDeductCount('1');
+                  setDeductCount('');
                   setDeductNote('');
                   setShowDeductModal(true);
                 }}
                 className="text-xs font-medium text-text-secondary hover:text-text hover:underline"
               >
-                횟수 차감
+                금액 차감
               </button>
               <button
                 type="button"
@@ -1550,7 +1547,6 @@ function CustomerDetailContent({ id }: { id: string }) {
                   const plan = activePlans.find((p) => p.id === planId);
                   if (plan) {
                     setMbPurchaseAmount(String(plan.price));
-                    setMbTotalSessions(String(plan.totalSessions));
                     if (plan.validDays != null) {
                       const d = new Date();
                       d.setDate(d.getDate() + plan.validDays);
@@ -1565,10 +1561,7 @@ function CustomerDetailContent({ id }: { id: string }) {
                 <option value="">직접 입력</option>
                 {activePlans.map((plan) => (
                   <option key={plan.id} value={plan.id}>
-                    {plan.name} · {plan.price.toLocaleString('ko-KR')}원 · {plan.totalSessions}회
-                    {plan.totalSessions > 0
-                      ? ` (1회 ${Math.floor(plan.price / plan.totalSessions).toLocaleString('ko-KR')}원)`
-                      : ''}
+                    {plan.name} · {plan.price.toLocaleString('ko-KR')}원 충전
                   </option>
                 ))}
               </select>
@@ -1578,7 +1571,7 @@ function CustomerDetailContent({ id }: { id: string }) {
             </div>
           )}
           <div>
-            <label className="text-xs font-medium text-text-secondary mb-1 block">구매 금액 *</label>
+            <label className="text-xs font-medium text-text-secondary mb-1 block">충전 금액 *</label>
             <input
               value={mbPurchaseAmount}
               onChange={(e) => {
@@ -1586,27 +1579,14 @@ function CustomerDetailContent({ id }: { id: string }) {
                 setMbSelectedPlanId('');
               }}
               inputMode="numeric"
-              placeholder="예: 100000"
+              placeholder="예: 200000"
               className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-base text-text placeholder:text-text-muted focus:border-primary focus:outline-none tabular-nums"
             />
             {mbPurchaseAmount && (
               <p className="mt-1 text-[11px] text-text-muted">
-                {Number(mbPurchaseAmount).toLocaleString('ko-KR')}원
+                {Number(mbPurchaseAmount).toLocaleString('ko-KR')}원 충전 — 시술마다 금액으로 차감돼요
               </p>
             )}
-          </div>
-          <div>
-            <label className="text-xs font-medium text-text-secondary mb-1 block">총 횟수 *</label>
-            <input
-              value={mbTotalSessions}
-              onChange={(e) => {
-                setMbTotalSessions(e.target.value.replace(/[^0-9]/g, ''));
-                setMbSelectedPlanId('');
-              }}
-              inputMode="numeric"
-              placeholder="예: 5"
-              className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-base text-text placeholder:text-text-muted focus:border-primary focus:outline-none tabular-nums"
-            />
           </div>
           <div>
             <label className="text-xs font-medium text-text-secondary mb-1 block">만료일 (선택)</label>
@@ -1631,9 +1611,8 @@ function CustomerDetailContent({ id }: { id: string }) {
             </button>
             <button
               type="button"
-              disabled={!mbPurchaseAmount || !mbTotalSessions || Number(mbTotalSessions) <= 0}
+              disabled={!mbPurchaseAmount || Number(mbPurchaseAmount) <= 0}
               onClick={() => {
-                const total = Number(mbTotalSessions);
                 const amount = Number(mbPurchaseAmount);
                 const today = new Date();
                 const defaultExpiry = new Date(today);
@@ -1648,9 +1627,10 @@ function CustomerDetailContent({ id }: { id: string }) {
                 const nextRemainingAmount = Math.max(0, amount - prevUsedAmount);
                 addMembership(id, {
                   id: existing?.id ?? generateId('mb'),
-                  totalSessions: total,
-                  usedSessions: existing?.usedSessions ?? 0,
-                  remainingSessions: existing ? Math.max(0, total - existing.usedSessions) : total,
+                  // 0531 회의: 금액 차감 방식 — 횟수 카운터 미사용(0)
+                  totalSessions: 0,
+                  usedSessions: 0,
+                  remainingSessions: 0,
                   purchaseAmount: amount,
                   usedAmount: prevUsedAmount,
                   remainingAmount: nextRemainingAmount,
@@ -1664,7 +1644,6 @@ function CustomerDetailContent({ id }: { id: string }) {
                 });
                 setShowMembershipModal(false);
                 setMbPurchaseAmount('');
-                setMbTotalSessions('');
                 setMbExpiryDate('');
                 setMbSelectedPlanId('');
               }}
@@ -1680,7 +1659,7 @@ function CustomerDetailContent({ id }: { id: string }) {
       <Modal
         isOpen={showDeductModal}
         onClose={() => setShowDeductModal(false)}
-        title="회원권 횟수 차감"
+        title="회원권 금액 차감"
       >
         <div className="px-5 py-4 flex flex-col gap-4">
           <p className="text-sm text-text-secondary">
@@ -1691,36 +1670,25 @@ function CustomerDetailContent({ id }: { id: string }) {
               <div className="flex items-center justify-between">
                 <span className="text-text-muted">남은 금액</span>
                 <span className="font-semibold text-text tabular-nums">
-                  {(customer.membership.remainingAmount ?? Math.round(
-                    customer.membership.purchaseAmount *
-                      (customer.membership.remainingSessions / Math.max(1, customer.membership.totalSessions)),
-                  )).toLocaleString()}원
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-text-muted">남은 횟수</span>
-                <span className="font-semibold text-text tabular-nums">
-                  {customer.membership.remainingSessions}회 / {customer.membership.totalSessions}회
+                  {getRemainingAmount(customer.membership).toLocaleString()}원
                 </span>
               </div>
             </div>
           )}
           <div>
-            <label className="text-xs font-medium text-text-secondary mb-1 block">차감 횟수 *</label>
+            <label className="text-xs font-medium text-text-secondary mb-1 block">차감 금액 *</label>
             <input
               value={deductCount}
               onChange={(e) => setDeductCount(e.target.value.replace(/[^0-9]/g, ''))}
               inputMode="numeric"
-              placeholder="1"
+              placeholder="예: 50000"
               className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-base text-text placeholder:text-text-muted focus:border-primary focus:outline-none tabular-nums"
             />
-            {/* 0428 P1-8: 입력 시 예상 차감 금액 + 차감 후 잔액 실시간 미리보기 */}
+            {/* 입력 시 예상 차감 금액 + 차감 후 잔액 실시간 미리보기 */}
             {customer.membership && deductCount && Number(deductCount) > 0 && (() => {
               const n = Number(deductCount);
-              const state = getMembershipSessionState(customer.membership);
-              const sessionLimit = state.sessionLimit;
               const remaining = getRemainingAmount(customer.membership);
-              const expectedDeduct = Math.min(remaining, sessionLimit * n);
+              const expectedDeduct = Math.min(remaining, n);
               const afterRemaining = Math.max(0, remaining - expectedDeduct);
               return (
                 <div className="mt-2 rounded-lg bg-primary/5 border border-primary/15 px-3 py-2 text-xs text-text-secondary tabular-nums">
@@ -1761,7 +1729,7 @@ function CustomerDetailContent({ id }: { id: string }) {
                 if (!Number.isFinite(n) || n <= 0) return;
                 manualDeductMembership(id, n, deductNote);
                 setShowDeductModal(false);
-                setDeductCount('1');
+                setDeductCount('');
                 setDeductNote('');
               }}
               className="flex-1 rounded-xl bg-primary py-3 text-sm font-medium text-white disabled:opacity-40"

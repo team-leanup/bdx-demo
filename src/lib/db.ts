@@ -11,6 +11,7 @@ const PORTFOLIO_BUCKET = 'portfolio-images';
 // portfolio-images 버킷 서버측 file_size_limit 과 일치 (2MB). 초과 시 업로드 전 차단.
 const PORTFOLIO_MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
 const DESIGNER_AVATAR_BUCKET = 'designer-profile-images';
+const SHOP_LOGO_BUCKET = 'designer-profile-images';
 
 // 0531 R3 — 레거시 레코드 방어: expressions·partsSelections 누락(구 DB 레코드) 시 빈 배열로 정규화.
 // 이 한 곳에서 정규화하면 analytics·records/[id]·ConsultationListItem 등 downstream의 .map/.reduce crash가 모두 예방된다.
@@ -43,6 +44,12 @@ export interface DesignerMutationResult {
 
 export interface DesignerDeleteResult {
   success: boolean;
+  error?: string;
+}
+
+export interface ShopLogoMutationResult {
+  success: boolean;
+  shop?: Shop;
   error?: string;
 }
 
@@ -112,6 +119,12 @@ function toDesigner(row: Database['public']['Tables']['designers']['Row'] & { pi
 
 export function getPortfolioPublicUrl(path: string): string {
   const { data } = supabase.storage.from(PORTFOLIO_BUCKET).getPublicUrl(path);
+  return data.publicUrl;
+}
+
+export function getShopLogoPublicUrl(path: string): string {
+  if (path.startsWith('http')) return path;
+  const { data } = supabase.storage.from(SHOP_LOGO_BUCKET).getPublicUrl(path);
   return data.publicUrl;
 }
 
@@ -654,6 +667,68 @@ export async function dbDeleteDesignerProfileImage(
   }
 
   return { success: true, designer: toDesigner(data) };
+}
+
+export async function dbUploadShopLogo(
+  shopId: string,
+  imageDataUrl: string,
+): Promise<ShopLogoMutationResult> {
+  try {
+    // 현재 shop 정보 조회 (기존 logo_url 확인용)
+    const { data: existing, error: existingError } = await supabase
+      .from('shops')
+      .select('*')
+      .eq('id', shopId)
+      .single();
+
+    if (existingError || !existing) {
+      console.error('[db] dbUploadShopLogo fetch error:', toDbErrorSnapshot(existingError));
+      return { success: false, error: '샵 정보를 찾을 수 없습니다.' };
+    }
+
+    const { blob, mimeType } = dataUrlToBlob(imageDataUrl);
+    const extension = getPortfolioFileExtension(mimeType);
+    const imagePath = `${shopId}/shop-logo/logo-${crypto.randomUUID()}.${extension}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(SHOP_LOGO_BUCKET)
+      .upload(imagePath, blob, {
+        contentType: mimeType,
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error('[db] dbUploadShopLogo upload error:', toDbErrorSnapshot(uploadError));
+      return { success: false, error: '로고 이미지 업로드에 실패했습니다.' };
+    }
+
+    const { data, error } = await supabase
+      .from('shops')
+      .update({ logo_url: imagePath, updated_at: getNowInKoreaIso() })
+      .eq('id', shopId)
+      .select('*')
+      .single();
+
+    if (error || !data) {
+      console.error('[db] dbUploadShopLogo update error:', toDbErrorSnapshot(error));
+      await supabase.storage.from(SHOP_LOGO_BUCKET).remove([imagePath]);
+      return { success: false, error: '로고 이미지 저장에 실패했습니다.' };
+    }
+
+    // 기존 로고 삭제
+    const oldLogoPath = existing.logo_url;
+    if (oldLogoPath && typeof oldLogoPath === 'string' && !oldLogoPath.startsWith('http') && oldLogoPath !== imagePath) {
+      const { error: removeOldError } = await supabase.storage.from(SHOP_LOGO_BUCKET).remove([oldLogoPath]);
+      if (removeOldError) {
+        console.error('[db] dbUploadShopLogo remove old logo error:', toDbErrorSnapshot(removeOldError));
+      }
+    }
+
+    return { success: true, shop: toShop(data) };
+  } catch (error) {
+    console.error('[db] dbUploadShopLogo unexpected error:', toDbErrorSnapshot(error));
+    return { success: false, error: '로고 이미지 저장 중 오류가 발생했습니다.' };
+  }
 }
 
 /**

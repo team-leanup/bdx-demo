@@ -13,11 +13,13 @@ export interface OnboardingPhoto {
 interface OnboardingPhotoStore {
   photos: OnboardingPhoto[];
   featuredIds: string[];
+  pendingLogoDataUrl: string | null;
   setPhotos: (photos: OnboardingPhoto[]) => void;
   addPhotos: (newPhotos: OnboardingPhoto[]) => void;
   removePhoto: (id: string) => void;
   classifyPhoto: (id: string, category: StyleCategory) => void;
   setFeaturedIds: (ids: string[]) => void;
+  setPendingLogoDataUrl: (dataUrl: string | null) => void;
   reset: () => void;
 }
 
@@ -28,6 +30,7 @@ export const useOnboardingPhotoStore = create<OnboardingPhotoStore>()(
     (set) => ({
       photos: [],
       featuredIds: [],
+      pendingLogoDataUrl: null,
       setPhotos: (photos) => set({ photos }),
       addPhotos: (newPhotos) =>
         set((s) => ({ photos: [...s.photos, ...newPhotos].slice(0, 20) })),
@@ -38,7 +41,8 @@ export const useOnboardingPhotoStore = create<OnboardingPhotoStore>()(
           photos: s.photos.map((p) => (p.id === id ? { ...p, category } : p)),
         })),
       setFeaturedIds: (ids) => set({ featuredIds: ids }),
-      reset: () => set({ photos: [], featuredIds: [] }),
+      setPendingLogoDataUrl: (dataUrl) => set({ pendingLogoDataUrl: dataUrl }),
+      reset: () => set({ photos: [], featuredIds: [], pendingLogoDataUrl: null }),
     }),
     {
       name: 'bdx-onboarding-photos',

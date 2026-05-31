@@ -23,7 +23,8 @@ interface MembershipPlanStore {
   addPlan: (input: {
     name: string;
     price: number;
-    totalSessions: number;
+    /** 0531 회의: 금액 차감 방식으로 전환 — 횟수는 더 이상 입력받지 않음(금액권=0) */
+    totalSessions?: number;
     validDays: number | null;
   }) => MembershipPlan | null;
 
@@ -65,7 +66,7 @@ export const useMembershipPlanStore = create<MembershipPlanStore>()(
           shopId,
           name: input.name,
           price: input.price,
-          totalSessions: input.totalSessions,
+          totalSessions: input.totalSessions ?? 0,
           validDays: input.validDays,
           isActive: true,
           sortOrder: get().plans.length,

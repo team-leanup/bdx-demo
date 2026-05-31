@@ -660,6 +660,16 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                 </span>
               </div>
 
+              {/* Estimated time */}
+              {priceEstimate.estimatedMinutes > 0 && (
+                <div className="flex justify-between items-center mt-1">
+                  <span className="text-sm text-text-muted">{t('preConsult.estimatedTime')}</span>
+                  <span className="text-sm font-medium text-text-muted">
+                    ~{priceEstimate.estimatedMinutes}{t('preConsult.min')}
+                  </span>
+                </div>
+              )}
+
               {/* Reassurance */}
               <p className="text-xs text-primary font-medium mt-2">{t('preConsult.priceNotice')}</p>
               <p className="text-xs text-text-muted">{t('preConsult.priceDisclaimer')}</p>

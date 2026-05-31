@@ -12,9 +12,10 @@ interface BodyPartOption {
   tKey: string;
 }
 
+// 파일럿 기간 동안 손(hand)만 지원. foot(발/페디) 미구현으로 숨김.
+// 옵션이 2개 이상으로 늘어날 때 아래 배열에 추가.
 const OPTIONS: BodyPartOption[] = [
   { key: 'hand', icon: '🖐️', tKey: 'preConsult.bodyPartHand' },
-  { key: 'foot', icon: '🦶', tKey: 'preConsult.bodyPartFoot' },
 ];
 
 export function BodyPartToggle(): React.ReactElement {
@@ -23,6 +24,12 @@ export function BodyPartToggle(): React.ReactElement {
   const locale = useLocale();
   const bodyPart = usePreConsultStore((s) => s.bodyPart);
   const setBodyPart = usePreConsultStore((s) => s.setBodyPart);
+
+  // 옵션이 1개(hand만)면 토글 UI를 렌더하지 않음.
+  // pre-consult store의 초기값(hand)에 의존하며 선택 없이 진행.
+  if (OPTIONS.length <= 1) {
+    return <></>;
+  }
 
   return (
     <div className="flex flex-col items-center gap-2">

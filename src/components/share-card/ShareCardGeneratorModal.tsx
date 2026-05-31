@@ -29,6 +29,8 @@ interface ShareCardGeneratorModalProps {
   }>;
   shopName: string;
   onShareCardCreated?: (shareCardId: string) => void;
+  /** 실제 시술 카테고리/메뉴 한국어 라벨 — 제공 시 공유카드 타이틀에 표시 */
+  categoryLabel?: string;
 }
 
 // ─── Scaled preview: 카드 전체가 미리보기 영역에 보이도록 ───
@@ -43,6 +45,7 @@ function ScaledPreview({
   shopId,
   createdAt,
   estimatedMinutes,
+  categoryLabel,
 }: {
   imageUrl: string;
   consultation: ConsultationType;
@@ -51,6 +54,7 @@ function ScaledPreview({
   shopId?: string;
   createdAt?: string;
   estimatedMinutes?: number;
+  categoryLabel?: string;
 }): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dims, setDims] = useState<{ width: number; height: number } | null>(null);
@@ -121,6 +125,7 @@ function ScaledPreview({
             shopId={shopId}
             createdAt={createdAt}
             estimatedMinutes={estimatedMinutes}
+            categoryLabel={categoryLabel}
           />
         </div>
       )}
@@ -135,6 +140,7 @@ export function ShareCardGeneratorModal({
   portfolioPhotos,
   shopName,
   onShareCardCreated,
+  categoryLabel,
 }: ShareCardGeneratorModalProps): React.ReactElement | null {
   const t = useT();
   const kakaoTalkUrl = useAppStore((s) => s.shopSettings.kakaoTalkUrl);
@@ -363,6 +369,7 @@ export function ShareCardGeneratorModal({
                   shopId={record.shopId}
                   createdAt={record.createdAt}
                   estimatedMinutes={record.estimatedMinutes}
+                  categoryLabel={categoryLabel}
                 />
               )}
             </div>
@@ -483,6 +490,7 @@ export function ShareCardGeneratorModal({
                 shopId={record.shopId}
                 createdAt={record.createdAt}
                 estimatedMinutes={record.estimatedMinutes}
+                categoryLabel={categoryLabel}
               />
               <ShareCardImageTemplate
                 imageUrl={resolvedImageUrl}
@@ -493,6 +501,7 @@ export function ShareCardGeneratorModal({
                 shopId={record.shopId}
                 createdAt={record.createdAt}
                 estimatedMinutes={record.estimatedMinutes}
+                categoryLabel={categoryLabel}
               />
             </div>
           )}

@@ -166,45 +166,6 @@ export default function DashboardPage() {
       {/* Full Bento Grid */}
       <div className="px-4 md:px-0">
         <BentoGrid cols={4}>
-          <BentoCard span="4x1" variant="accent">
-            <div className="flex h-full flex-col gap-4 p-4 md:p-5">
-              <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-text-secondary">업셀링 리포트</p>
-                  <p className="mt-0.5 text-[11px] leading-snug text-text-muted">기본 시술가 외 추가된 옵션(아트 업그레이드·파츠·추가 컬러·표현 기법) 매출의 합계예요</p>
-                  <div className="mt-2 flex flex-wrap items-end gap-2">
-                    <span className="text-2xl font-extrabold leading-none text-primary sm:text-3xl md:text-4xl">
-                      {formatPrice(upsellMetrics.totalUpsellRevenue)}
-                    </span>
-                    <span className="pb-1 text-xs font-medium text-text-muted">BDX 상담으로 추가된 옵션 매출</span>
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-border bg-surface/80 px-4 py-3">
-                  <p className="text-[11px] text-text-muted">업셀링 적용 상담</p>
-                  <p className="mt-1 text-lg font-bold text-text">{upsellMetrics.upsellConsultations}건</p>
-                  <p className="text-[11px] text-text-muted">전체 상담의 {upsellMetrics.upsellRate}%</p>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-border bg-surface/80 px-4 py-3">
-                <p className="text-[11px] font-semibold text-text-muted">업셀링 포인트</p>
-                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <p className="text-[11px] text-text-muted">파츠 추가</p>
-                    <p className="mt-1 text-lg font-bold text-text">총 {upsellMetrics.partsUpsellCount}개</p>
-                    <p className="text-[11px] text-text-muted">{upsellMetrics.partsUpsellConsultations}건의 상담에서 선택</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] text-text-muted">컬러 추가</p>
-                    <p className="mt-1 text-lg font-bold text-text">총 {upsellMetrics.colorUpsellCount}색</p>
-                    <p className="text-[11px] text-text-muted">{upsellMetrics.colorUpsellConsultations}건의 상담에서 선택</p>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </BentoCard>
-
           {/* 오늘 매출 + 전월 대비 성장: 4×1 */}
           <BentoCard span="4x1">
             <div className="flex h-full flex-col gap-3 p-4 md:p-5 md:flex-row md:items-center md:gap-6">
@@ -306,6 +267,45 @@ export default function DashboardPage() {
                   </p>
                 </div>
               </div>
+            </div>
+          </BentoCard>
+
+          <BentoCard span="4x1" variant="accent">
+            <div className="flex h-full flex-col gap-4 p-4 md:p-5">
+              <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-text-secondary">업셀링 리포트</p>
+                  <p className="mt-0.5 text-[11px] leading-snug text-text-muted">기본 시술가 외 추가된 옵션(아트 업그레이드·파츠·추가 컬러·표현 기법) 매출의 합계예요</p>
+                  <div className="mt-2 flex flex-wrap items-end gap-2">
+                    <span className="text-2xl font-extrabold leading-none text-primary sm:text-3xl md:text-4xl">
+                      {formatPrice(upsellMetrics.totalUpsellRevenue)}
+                    </span>
+                    <span className="pb-1 text-xs font-medium text-text-muted">BDX 상담으로 추가된 옵션 매출</span>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-border bg-surface/80 px-4 py-3">
+                  <p className="text-[11px] text-text-muted">업셀링 적용 상담</p>
+                  <p className="mt-1 text-lg font-bold text-text">{upsellMetrics.upsellConsultations}건</p>
+                  <p className="text-[11px] text-text-muted">전체 상담의 {upsellMetrics.upsellRate}%</p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-surface/80 px-4 py-3">
+                <p className="text-[11px] font-semibold text-text-muted">업셀링 포인트</p>
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-[11px] text-text-muted">파츠 추가</p>
+                    <p className="mt-1 text-lg font-bold text-text">총 {upsellMetrics.partsUpsellCount}개</p>
+                    <p className="text-[11px] text-text-muted">{upsellMetrics.partsUpsellConsultations}건의 상담에서 선택</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-text-muted">컬러 추가</p>
+                    <p className="mt-1 text-lg font-bold text-text">총 {upsellMetrics.colorUpsellCount}색</p>
+                    <p className="text-[11px] text-text-muted">{upsellMetrics.colorUpsellConsultations}건의 상담에서 선택</p>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </BentoCard>
 

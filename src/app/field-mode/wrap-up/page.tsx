@@ -15,7 +15,7 @@ import { ShareCardGeneratorModal } from '@/components/share-card/ShareCardGenera
 import { useAuthStore } from '@/store/auth-store';
 import { useAppStore } from '@/store/app-store';
 import { toKoreanDateString, getTodayInKorea } from '@/lib/format';
-import { resolveCategoryLabelKo } from '@/lib/category-resolver';
+import { resolveCategoryLabelKo, resolveRecordCategoryLabelKo } from '@/lib/category-resolver';
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 
@@ -539,6 +539,7 @@ export default function WrapUpPage(): React.ReactElement {
               })),
           ]}
           shopName={shopName}
+          categoryLabel={resolveRecordCategoryLabelKo(currentRecord.consultation, shopSettings)}
         />
       )}
     </motion.div>
