@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { ADDON_FIXED_PRICES } from '@/lib/pre-consult-price';
 import { cn } from '@/lib/cn';
 import type { AddOnOption } from '@/types/pre-consultation';
-import type { ServiceStructure, SurchargeSettings } from '@/types/shop';
+import type { SurchargeSettings } from '@/types/shop';
 
 interface AdditionalOptionsProps {
   onComplete: () => void;
@@ -19,17 +19,15 @@ interface AddOnConfig {
   extraPrice: number;
 }
 
-const DEFAULT_SURCHARGES: Pick<SurchargeSettings, 'largeParts' | 'pointArt'> = {
+const DEFAULT_SURCHARGES: Pick<SurchargeSettings, 'largeParts'> = {
   largeParts: 3000,
-  pointArt: 20000,
 };
 
-function getAddOnConfigs(surcharges: Pick<SurchargeSettings, 'largeParts' | 'pointArt'>): AddOnConfig[] {
+function getAddOnConfigs(surcharges: Pick<SurchargeSettings, 'largeParts'>): AddOnConfig[] {
   return [
     { key: 'stone', tKey: 'preConsult.addOnStone', icon: '💎', extraPrice: ADDON_FIXED_PRICES.stone },
     { key: 'parts', tKey: 'preConsult.addOnParts', icon: '🌸', extraPrice: surcharges.largeParts },
     { key: 'glitter', tKey: 'preConsult.addOnGlitter', icon: '✨', extraPrice: ADDON_FIXED_PRICES.glitter },
-    { key: 'point_art', tKey: 'preConsult.addOnPointArt', icon: '🎨', extraPrice: surcharges.pointArt },
   ];
 }
 
@@ -40,16 +38,9 @@ export function AdditionalOptions({ onComplete }: AdditionalOptionsProps): React
   const store = usePreConsultStore();
   const shopData = usePreConsultStore((s) => s.shopData);
   const surcharges = shopData?.surcharges ?? DEFAULT_SURCHARGES;
-  const serviceStructure: ServiceStructure | undefined = shopData?.serviceStructure;
   const customParts = shopData?.customParts ?? [];
 
-  // 사장님이 설정에서 OFF한 시술 항목은 옵션에서 제거
-  const ADD_ONS = getAddOnConfigs(surcharges).filter((addon) => {
-    if (!serviceStructure) return true;
-    if (addon.key === 'parts' && !serviceStructure.parts) return false;
-    if (addon.key === 'point_art' && !serviceStructure.pointFullArt) return false;
-    return true;
-  });
+  const ADD_ONS = getAddOnConfigs(surcharges);
 
   const handleToggle = (opt: AddOnOption): void => {
     store.toggleAddOn(opt);

@@ -131,7 +131,7 @@ function MenuToggleRow({ photoId, isFeatured, featuredPrice, onError }: MenuTogg
   if (isFeatured) {
     return (
       <div className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-border/60">
-        <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 truncate">
+        <span className="min-w-0 flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 truncate">
           메뉴{featuredPrice != null ? ` ${formatPrice(featuredPrice)}` : ''}
         </span>
         <button
@@ -1130,17 +1130,17 @@ export default function PortfolioPage(): React.ReactElement {
                               </div>
                               <div className="flex flex-wrap items-center gap-1">
                                 {serviceType && (
-                                  <span className="max-w-[80px] truncate px-2 py-0.5 rounded border border-border bg-muted text-[10px] font-medium text-muted-foreground">
+                                  <span className="max-w-[48%] truncate px-2 py-0.5 rounded border border-border bg-muted text-[10px] font-medium text-muted-foreground">
                                     {serviceType}
                                   </span>
                                 )}
                                 {photo.designType && (
-                                  <span className="max-w-[80px] truncate px-2 py-0.5 rounded border border-border bg-muted text-[10px] font-medium text-muted-foreground">
+                                  <span className="max-w-[48%] truncate px-2 py-0.5 rounded border border-border bg-muted text-[10px] font-medium text-muted-foreground">
                                     {photo.designType}
                                   </span>
                                 )}
                               </div>
-                              <div className="h-4 flex items-center">
+                              <div className="min-h-4 flex items-center">
                                 {price != null && (
                                   <p className="text-[11px] font-semibold text-foreground truncate">{formatPrice(price)}</p>
                                 )}

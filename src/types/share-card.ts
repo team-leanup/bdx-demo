@@ -6,6 +6,10 @@ export interface ShareCardDesignInfo {
   hasParts: boolean;
   bodyPart: 'hand' | 'foot';
   nailShape?: string;
+  /** 실제 시술 카테고리 ID (simple/french/magnet/art 또는 custom-*) */
+  designCategory?: string;
+  /** db.ts에서 미리 해석한 한국어 카테고리 라벨 (공개 페이지에서 shopSettings 불필요) */
+  categoryLabelKo?: string;
 }
 
 export interface ShareCardPublicData {

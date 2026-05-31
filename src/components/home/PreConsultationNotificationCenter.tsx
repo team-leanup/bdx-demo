@@ -6,6 +6,8 @@ import { Modal } from '@/components/ui';
 import { FlagIcon } from '@/components/ui/FlagIcon';
 import { formatDateDot, formatDateDotWithTime, formatTime } from '@/lib/format';
 import { DESIGN_SCOPE_LABEL, BODY_PART_LABEL } from '@/lib/labels';
+import { resolveCategoryLabelKo } from '@/lib/category-resolver';
+import { useAppStore } from '@/store/app-store';
 import {
   getPreConsultationNotifications,
   getUnreadPreConsultationCount,
@@ -29,6 +31,7 @@ export function PreConsultationNotificationCenter({
   reservations,
   onSelectNotification,
 }: PreConsultationNotificationCenterProps): React.ReactElement {
+  const { shopSettings } = useAppStore();
   const notifications = useMemo(
     () => getPreConsultationNotifications(reservations),
     [reservations],
@@ -107,7 +110,7 @@ export function PreConsultationNotificationCenter({
                       {isForeign && <FlagIcon language={notification.language!} size="sm" />}
                       {notification.serviceLabel && (
                         <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary leading-none">
-                          {notification.serviceLabel}
+                          {resolveCategoryLabelKo(notification.serviceLabel, shopSettings)}
                         </span>
                       )}
                       <span className="shrink-0 text-[10px] text-text-muted">

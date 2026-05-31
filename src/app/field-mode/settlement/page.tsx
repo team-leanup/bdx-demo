@@ -26,8 +26,6 @@ const ADD_ON_LABELS: Record<string, string> = {
   stone: '스톤',
   parts: '파츠',
   glitter: '글리터',
-  point_art: '포인트아트',
-  // [HIGH] 랩핑 미표시 버그 수정
   wrapping: '랩핑',
 };
 
@@ -230,7 +228,6 @@ export default function SettlementPage(): React.ReactElement | null {
       case 'stone': return ADDON_FIXED_PRICES.stone;
       case 'parts': return shopSettings.surcharges.largeParts;
       case 'glitter': return ADDON_FIXED_PRICES.glitter;
-      case 'point_art': return shopSettings.surcharges.pointArt;
       // [HIGH] 랩핑 surcharge 반영 — shopSettings 우선, 없으면 고정가
       case 'wrapping': return shopSettings.surcharges.wrapping ?? ADDON_FIXED_PRICES.wrapping;
       default: return 0;
@@ -315,7 +312,6 @@ export default function SettlementPage(): React.ReactElement | null {
           case 'stone': return ADDON_FIXED_PRICES.stone;
           case 'parts': return shopSettings.surcharges.largeParts;
           case 'glitter': return ADDON_FIXED_PRICES.glitter;
-          case 'point_art': return shopSettings.surcharges.pointArt;
           case 'wrapping': return shopSettings.surcharges.wrapping ?? ADDON_FIXED_PRICES.wrapping; // estimate 와 동일
           default: return 0;
         }

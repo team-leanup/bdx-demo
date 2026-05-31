@@ -1,6 +1,7 @@
 import { getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
 import { generateId } from '@/lib/generate-id';
 import { supabase } from '@/lib/supabase';
+import { resolveCategoryLabelKo } from '@/lib/category-resolver';
 import type { Database } from '@/types/database';
 import type { Customer, CustomerTag, MembershipPlan, SmallTalkNote, VisitFrequency, TagCategory, TagAccent } from '@/types/customer';
 import type { ConsultationRecord, ConsultationType, BookingRequest, BookingChannel, BookingStatus, DailyChecklist } from '@/types/consultation';
@@ -1338,6 +1339,13 @@ export async function fetchShareCardPublicData(shareCardId: string): Promise<imp
       hasParts: consultation.hasParts,
       bodyPart: consultation.bodyPart,
       nailShape: consultation.nailShape,
+      designCategory: consultation.designCategory ?? undefined,
+      // 공개 페이지(/share)에서 shopSettings 없이도 카테고리 라벨을 표시할 수 있도록 미리 해석.
+      // builtin(simple/french/magnet/art): CATEGORY_LABELS 기본값 사용 (settings.categoryLabels rename도 반영).
+      // custom-*: shopSettings.customCategories에서 name 조회.
+      categoryLabelKo: consultation.designCategory
+        ? resolveCategoryLabelKo(consultation.designCategory, settings)
+        : undefined,
     },
     estimatedMinutes: (record as { estimated_minutes?: number | null }).estimated_minutes ?? undefined,
     createdAt: (record as { created_at?: string }).created_at ?? undefined,

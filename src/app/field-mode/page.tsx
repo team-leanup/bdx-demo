@@ -106,10 +106,15 @@ export default function FieldModePage() {
 
   // phase 가드: 이 페이지에서 렌더 가능한 phase가 아니면 portfolio로 리셋
   useEffect(() => {
+    // treatment phase는 /field-mode/treatment 전용 — QuickOptionsPanel/PriceBar 깜빡임 없이 즉시 이동
+    if (phase === 'treatment') {
+      router.replace('/field-mode/treatment');
+      return;
+    }
     if (phase !== 'portfolio' && phase !== 'design-confirm' && phase !== 'options') {
       setPhase('portfolio');
     }
-  }, [phase, setPhase]);
+  }, [phase, router, setPhase]);
 
   const publicPhotos = useMemo(
     () => allPhotos.filter((p) => p.isPublic !== false),
@@ -385,7 +390,6 @@ export default function FieldModePage() {
                   extensionLength={extensionLength}
                   addOns={addOns}
                   surcharges={shopSettings.surcharges}
-                  serviceStructure={shopSettings.serviceStructure}
                   customParts={shopSettings.customParts}
                   customPartCounts={customPartCounts}
                   onRemovalChange={setRemovalType}

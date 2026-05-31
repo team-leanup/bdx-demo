@@ -91,25 +91,20 @@ export function computeAvailableDates(link: ConsultationLinkPublicData): Availab
   const start = parseDate(link.validFrom < today ? today : link.validFrom);
   const end = parseDate(link.validUntil);
 
-  // SL-07: estimatedDurationMin > slotIntervalMin인 경우 예약 블록이 여러 슬롯에 걸침.
-  // 기존 예약 각 건의 [start, start+duration) 범위를 슬롯 간격으로 등록해
-  // 겹치는 후속 슬롯도 isBooked로 처리.
+  // I12 fix: 구간 겹침(overlap) 기반으로 이중예약 차단.
+  // 새 슬롯 후보 [sStart, sStart+durationMin)이 기존 예약 [bStart, bStart+bDurMin)과
+  // 겹치면 isBooked=true. 겹침 조건: sStart < bEnd && sEnd > bStart.
+  // BookedSlot에 duration 필드가 없으므로 link.estimatedDurationMin을 보수적 proxy로 사용.
+  // (실제 예약 길이가 달라도 이중예약 방지가 우선이므로 보수적으로 처리)
+  //
+  // 검증 예시: B1=15:15, bDurMin=90 (bEnd=16:45)
+  //   슬롯 14:00 (sEnd=15:30): 14:00<16:45 && 15:30>15:15 → 차단 ✓
+  //   슬롯 14:30 (sEnd=16:00): 14:30<16:45 && 16:00>15:15 → 차단 ✓
+  //   슬롯 15:00 (sEnd=16:30): 15:00<16:45 && 16:30>15:15 → 차단 ✓
+  //   슬롯 15:30 (sEnd=17:00): 15:30<16:45 && 17:00>15:15 → 차단 ✓  (기존 뚫림 수정)
+  //   슬롯 16:00 (sEnd=17:30): 16:00<16:45 && 17:30>15:15 → 차단 ✓  (기존 뚫림 수정)
+  //   슬롯 17:00 (sEnd=18:30): 17:00<16:45 → false → 열림 ✓
   const durationMin = Math.max(1, Math.floor(link.estimatedDurationMin));
-  const intervalMin = Math.max(1, Math.floor(link.slotIntervalMin));
-  const bookedSet = new Set<string>();
-  for (const b of link.bookedSlots ?? []) {
-    // 시작 슬롯 포함, [start, start+duration) 구간의 슬롯을 모두 차단
-    let occupied = b.time;
-    let guard = 0;
-    while (guard < 288) {
-      bookedSet.add(`${b.date}__${occupied}`);
-      const next = addMinutes(occupied, intervalMin);
-      // start + duration을 초과하지 않는 슬롯까지만 차단
-      if (!timeLess(next, addMinutes(b.time, durationMin))) break;
-      occupied = next;
-      guard++;
-    }
-  }
 
   const result: AvailableDate[] = [];
   for (let d = new Date(start); d.getTime() <= end.getTime(); d.setUTCDate(d.getUTCDate() + 1)) {
@@ -138,20 +133,22 @@ export function computeAvailableDates(link: ConsultationLinkPublicData): Availab
         }
         return true;
       })
-      .map((time) => ({
-        date: dateStr,
-        time,
-        isBooked:
-          bookedSet.has(`${dateStr}__${time}`) ||
-          (link.bookedSlots ?? []).some((b) => {
-            if (b.date !== dateStr) return false;
-            // 슬롯 S가 기존 예약 B보다 앞에서 시작하지만 끝(S+durationMin)이 B.time을 넘는 경우: S < B.time && S+durationMin > B.time
-            return (
-              timeLess(time, b.time) &&
-              timeLess(b.time, addMinutes(time, durationMin))
-            );
-          }),
-      }));
+      .map((time) => {
+        // I12 fix: 올바른 양방향 구간 겹침 검사.
+        // 새 슬롯 [sStart, sEnd)와 기존 예약 [bStart, bEnd)가 겹치는지 확인.
+        const [sh, sm] = time.split(':').map(Number);
+        const sStartMin = sh * 60 + sm;
+        const sEndMin = sStartMin + durationMin;
+        const isBooked = (link.bookedSlots ?? []).some((b) => {
+          if (b.date !== dateStr) return false;
+          const [bh, bm] = b.time.split(':').map(Number);
+          const bStartMin = bh * 60 + bm;
+          // BookedSlot에 duration 없으므로 link.estimatedDurationMin을 proxy로 사용
+          const bEndMin = bStartMin + durationMin;
+          return sStartMin < bEndMin && sEndMin > bStartMin;
+        });
+        return { date: dateStr, time, isBooked };
+      });
 
     if (slots.length === 0) continue;
 

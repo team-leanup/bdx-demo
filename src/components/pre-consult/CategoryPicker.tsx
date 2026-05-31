@@ -39,18 +39,8 @@ export function CategoryPicker(): React.ReactElement {
   const shopData = usePreConsultStore((s) => s.shopData);
   const portfolioPhotos = usePreConsultStore((s) => s.portfolioPhotos);
 
-  // 사장님이 설정에서 OFF한 카테고리는 카드에서 숨김 (simple은 항상 노출)
-  // 추가 카테고리는 항상 노출
+  // 모든 빌트인 카테고리 + 사장님이 추가한 커스텀 카테고리 전부 노출
   const visibleCategories = useMemo<CategoryConfig[]>(() => {
-    const s = shopData?.serviceStructure;
-    const builtinFiltered = BUILTIN_CATEGORIES.filter((c) => {
-      if (!s) return true;
-      if (c.key === 'simple') return true;
-      if (c.key === 'french') return s.french !== false;
-      if (c.key === 'magnet') return s.magnet !== false;
-      if (c.key === 'art') return s.pointFullArt !== false;
-      return true;
-    });
     const customConfigs: CategoryConfig[] = (shopData?.customCategories ?? [])
       .slice()
       .sort((a, b) => a.order - b.order)
@@ -66,8 +56,8 @@ export function CategoryPicker(): React.ReactElement {
         labelKo: c.name,
         desc: c.description ?? '',
       }));
-    return [...builtinFiltered, ...customConfigs];
-  }, [shopData?.serviceStructure, shopData?.customCategories, locale]);
+    return [...BUILTIN_CATEGORIES, ...customConfigs];
+  }, [shopData?.customCategories, locale]);
 
   // Minimum price per category from menu (isFeatured) photos
   const menuMinPrices = useMemo(() => {

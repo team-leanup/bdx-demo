@@ -15,7 +15,7 @@ interface RevisitReminderCardProps {
   };
 }
 
-const FOUR_WEEKS_MS = 28 * 24 * 60 * 60 * 1000;
+const DEFAULT_INTERVAL_WEEKS = 4;
 
 export function RevisitReminderCard({
   shopName,
@@ -24,9 +24,12 @@ export function RevisitReminderCard({
   const customers = useCustomerStore((s) => s.customers);
   // 0423 반영: 설정 탭의 기본 문구틀을 사용 (없으면 기본값)
   const revisitTemplate = useAppStore((s) => s.shopSettings.revisitMessageTemplate);
+  // 재방문 주기 (설정값 미설정 시 4주)
+  const intervalWeeks = useAppStore((s) => s.shopSettings.revisitIntervalWeeks ?? DEFAULT_INTERVAL_WEEKS);
 
   const overdueCustomers = useMemo(() => {
-    const threshold = Date.now() - FOUR_WEEKS_MS;
+    const thresholdMs = intervalWeeks * 7 * 24 * 60 * 60 * 1000;
+    const threshold = Date.now() - thresholdMs;
     return customers
       .filter((c) => c.lastVisitDate && new Date(c.lastVisitDate).getTime() < threshold)
       .sort((a, b) => {
@@ -36,7 +39,7 @@ export function RevisitReminderCard({
         return new Date(a.lastVisitDate).getTime() - new Date(b.lastVisitDate).getTime();
       })
       .slice(0, 5);
-  }, [customers]);
+  }, [customers, intervalWeeks]);
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -67,7 +70,7 @@ export function RevisitReminderCard({
         <span className="flex h-5 min-w-5 items-center justify-center rounded-md bg-primary px-1.5 text-[10px] font-medium text-white">
           {overdueCustomers.length}
         </span>
-        <span className="text-xs text-text-muted">· 4주 이상 미방문 단골</span>
+        <span className="text-xs text-text-muted">· {intervalWeeks}주 이상 미방문</span>
       </div>
 
       <div className="flex flex-col">

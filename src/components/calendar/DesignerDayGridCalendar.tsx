@@ -169,7 +169,7 @@ function DraggableEvent({
 
   const handleDragEnd = (
     _event: MouseEvent | TouchEvent | PointerEvent,
-    info: { point: { x: number; y: number } },
+    info: { point: { x: number; y: number }; offset: { x: number; y: number } },
   ): void => {
     setIsDragging(false);
 
@@ -180,7 +180,6 @@ function DraggableEvent({
 
     const rect = gridRef.current.getBoundingClientRect();
     const dropX = (info.point.x - rect.left) + gridRef.current.scrollLeft;
-    const dropY = (info.point.y - rect.top) + gridRef.current.scrollTop;
 
     const columnCount = columns.length;
     const dropXCols = dropX - axisWidth;
@@ -189,7 +188,9 @@ function DraggableEvent({
 
     const targetDesignerId = normalizeDesignerId(columns[colIndex]?.id);
 
-    const minuteFromTop = (dropY / hourHeight) * 60 + startHour * 60;
+    // I11 수정: 포인터 절대위치(point.y) 대신 드래그 이동량(offset.y) 기반으로 시간 계산.
+    // 이벤트 블록의 어느 위치를 잡아도 원래 시작시간 + 이동량으로만 결정되므로 grab 오프셋 오차 제거.
+    const minuteFromTop = timeStrToMinutes(ev.startTime) + (info.offset.y / hourHeight) * 60;
     const snapped = snapToInterval(minuteFromTop, 15);
     const eventDuration = timeStrToMinutes(ev.endTime) - timeStrToMinutes(ev.startTime);
     const clamped = clampStartMinutes({

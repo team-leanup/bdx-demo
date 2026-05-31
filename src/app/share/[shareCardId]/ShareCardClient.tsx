@@ -136,9 +136,30 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
     }
   }, [isDownloading, data.shopName]);
 
-  const designLabel = getDesignLabel(data.design.designScope);
-  const moodTitle = MOOD_TITLE[data.design.designScope] ?? 'Nail Design';
-  const hashtag = SCOPE_HASHTAG[data.design.designScope] ?? '#Nail';
+  // categoryLabelKo가 있으면 실제 카테고리 라벨 우선, 없으면 기존 INSTA_SCOPE_LABEL fallback
+  const designLabel = data.design.categoryLabelKo ?? getDesignLabel(data.design.designScope);
+  // moodTitle: designCategory 기반 영문 무드 타이틀 매핑 우선, 없으면 designScope 기반 fallback
+  const CATEGORY_MOOD_TITLE: Record<string, string> = {
+    simple: 'Clean Minimal',
+    french: 'Elegant French',
+    magnet: 'Magnetic Glow',
+    art: 'Creative Art',
+  };
+  const moodTitle =
+    (data.design.designCategory ? CATEGORY_MOOD_TITLE[data.design.designCategory] : undefined) ??
+    MOOD_TITLE[data.design.designScope] ??
+    'Nail Design';
+  // hashtag: designCategory 기반 우선, 없으면 designScope 기반 fallback
+  const CATEGORY_HASHTAG: Record<string, string> = {
+    simple: '#Minimal',
+    french: '#Classic',
+    magnet: '#Trendy',
+    art: '#Creative',
+  };
+  const hashtag =
+    (data.design.designCategory ? CATEGORY_HASHTAG[data.design.designCategory] : undefined) ??
+    SCOPE_HASHTAG[data.design.designScope] ??
+    '#Nail';
   const bodyLabel = BODY_PART_LABEL[data.design.bodyPart] ?? data.design.bodyPart;
   const shapeLabel = data.design.nailShape ? SHAPE_LABEL[data.design.nailShape] : null;
   const shapeParts = shapeLabel ? [shapeLabel, bodyLabel] : [bodyLabel];

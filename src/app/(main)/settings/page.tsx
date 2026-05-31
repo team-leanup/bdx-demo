@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, Button, Input, LanguageSelector, Toggle, TimeInput, AddressInput } from '@/components/ui';
+import { Card, Button, Input, LanguageSelector, AddressInput } from '@/components/ui';
 import { FeatureDiscovery } from '@/components/onboarding/FeatureDiscovery';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { MembershipPlansSection } from '@/components/settings/MembershipPlansSection';
@@ -24,19 +24,7 @@ import { formatPrice } from '@/lib/format';
 import { resolveMenuCategoryLabel } from '@/lib/labels';
 import { resizeImageToBase64 } from '@/lib/image-utils';
 import { getShopLogoPublicUrl } from '@/lib/db';
-import type { ServiceStructure } from '@/types/shop';
 
-// 사전상담/현장모드 UI에 실제 매핑되는 토글만 노출.
-// 매핑할 UI가 없는 gradation/repair/overlay는 제거 (사장님 혼란 방지).
-// pointFullArt도 추가 — 사전상담 카테고리 '아트' 카드 + 추가옵션 '포인트아트'에 매핑됨.
-const SERVICE_TOGGLE_ITEMS: { key: keyof ServiceStructure; label: string; description: string }[] = [
-  { key: 'removal', label: '오프 (제거)', description: '자샵오프, 타샵오프 선택 옵션' },
-  { key: 'french', label: '프렌치', description: '프렌치 네일 표현 기법' },
-  { key: 'magnet', label: '자석 / 마그넷', description: '자석젤·캣아이 등 마그네틱 시술' },
-  { key: 'pointFullArt', label: '아트 (포인트/풀아트)', description: '포인트·풀아트 시술' },
-  { key: 'parts', label: '파츠', description: '파츠 (스톤, 참 등) 옵션' },
-  { key: 'extension', label: '연장', description: '네일 연장 서비스' },
-];
 
 type TabId = 'shop' | 'service' | 'theme' | 'app';
 
@@ -165,9 +153,6 @@ export default function SettingsPage() {
   const [priceOffOther, setPriceOffOther] = useState(String(shopSettings.baseOffOtherShop ?? shopSettings.surcharges.otherRemoval ?? DEFAULT_BASE_PRICES.offOtherShop));
   const [priceExtension, setPriceExtension] = useState(String(shopSettings.surcharges.extension ?? DEFAULT_BASE_PRICES.extension));
   const [priceWrapping, setPriceWrapping] = useState(String(shopSettings.surcharges.wrapping ?? 5000));
-  // [CRITICAL SSOT] 계산 엔진은 surcharges.pointArt를 읽으므로,
-  // 설정 화면도 그 값을 초기값으로 표시한다. (baseSolidPointPrice는 save 시 함께 동기화)
-  const [priceSolidPoint, setPriceSolidPoint] = useState(String(shopSettings.surcharges.pointArt ?? DEFAULT_BASE_PRICES.solidPoint));
   const [priceDeposit, setPriceDeposit] = useState(String(shopSettings.depositAmount ?? 10000));
   const [monthlyTarget, setMonthlyTarget] = useState(String(shopSettings.monthlyTargetRevenue ?? ''));
   const [savedPrices, setSavedPrices] = useState({
@@ -175,7 +160,6 @@ export default function SettingsPage() {
     offOtherShop: shopSettings.baseOffOtherShop ?? shopSettings.surcharges.otherRemoval ?? DEFAULT_BASE_PRICES.offOtherShop,
     extension: shopSettings.surcharges.extension ?? DEFAULT_BASE_PRICES.extension,
     wrapping: shopSettings.surcharges.wrapping ?? 5000,
-    solidPoint: shopSettings.surcharges.pointArt ?? DEFAULT_BASE_PRICES.solidPoint,
   });
 
   const [categoryPricingEdit, setCategoryPricingEdit] = useState<CategoryPricingSettings>(shopSettings.categoryPricing);
@@ -191,7 +175,6 @@ export default function SettingsPage() {
     const offOtherShop = parseInt(priceOffOther, 10);
     const extension = parseInt(priceExtension, 10);
     const wrapping = parseInt(priceWrapping, 10);
-    const solidPoint = parseInt(priceSolidPoint, 10);
     const deposit = parseInt(priceDeposit, 10) || 0;
     const targetRevenue = parseInt(monthlyTarget, 10) || 0;
     // 0528 M8: deposit/monthlyTarget도 음수 차단 (0은 허용)
@@ -199,7 +182,7 @@ export default function SettingsPage() {
       setPricesFeedback({ tone: 'error', message: '금액은 0 이상이어야 합니다.' });
       return;
     }
-    if ([offSameShop, offOtherShop, extension, wrapping, solidPoint].some((v) => isNaN(v) || v < 0)) {
+    if ([offSameShop, offOtherShop, extension, wrapping].some((v) => isNaN(v) || v < 0)) {
       setPricesFeedback({ tone: 'error', message: '가격을 올바르게 입력해 주세요.' });
       return;
     }
@@ -210,9 +193,6 @@ export default function SettingsPage() {
       monthlyTargetRevenue: targetRevenue > 0 ? targetRevenue : undefined,
       baseOffSameShop: offSameShop,
       baseOffOtherShop: offOtherShop,
-      // SSOT: baseSolidPointPrice는 화면 표시용이고, 실제 계산은 surcharges.pointArt를 사용.
-      // 두 값을 항상 동기화해서 설정 화면 표시값과 계산값이 동일하게 유지한다.
-      baseSolidPointPrice: solidPoint,
       surcharges: {
         ...shopSettings.surcharges,
         // [CRITICAL 0530] 자샵/타샵 오프는 두 표현(baseOff* = 상담, surcharges.*Removal = 사전상담·현장모드)이
@@ -222,8 +202,6 @@ export default function SettingsPage() {
         otherRemoval: offOtherShop,
         extension,
         wrapping,
-        // [CRITICAL] solidPoint 설정값을 surcharges에도 저장 — 계산 엔진이 이 값을 읽음
-        pointArt: solidPoint,
       },
     });
     setIsSavingPrices(false);
@@ -231,7 +209,7 @@ export default function SettingsPage() {
       setPricesFeedback({ tone: 'error', message: result.error ?? '가격표 저장에 실패했습니다. 다시 시도해 주세요.' });
       return;
     }
-    setSavedPrices({ offSameShop, offOtherShop, extension, wrapping, solidPoint });
+    setSavedPrices({ offSameShop, offOtherShop, extension, wrapping });
     setPricesFeedback({ tone: 'success', message: '가격표가 저장되었습니다.' });
     setEditingPrices(false);
   };
@@ -241,7 +219,6 @@ export default function SettingsPage() {
     setPriceOffOther(String(savedPrices.offOtherShop));
     setPriceExtension(String(savedPrices.extension));
     setPriceWrapping(String(savedPrices.wrapping));
-    setPriceSolidPoint(String(savedPrices.solidPoint));
     setPriceDeposit(String(shopSettings.depositAmount ?? 10000));
     setMonthlyTarget(String(shopSettings.monthlyTargetRevenue ?? ''));
     setEditingPrices(false);
@@ -589,11 +566,6 @@ export default function SettingsPage() {
                 </div>
                 <div className="my-1 border-t border-border/50" />
                 <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">{t('settings.service_solidPoint')}</span>
-                  <span className="font-medium text-text">+{formatPrice(savedPrices.solidPoint)}</span>
-                </div>
-                <div className="my-1 border-t border-border/50" />
-                <div className="flex justify-between text-sm">
                   <span className="text-text-secondary">예약금</span>
                   <span className="font-medium text-text">{shopSettings.depositAmount > 0 ? formatPrice(shopSettings.depositAmount) : '없음'}</span>
                 </div>
@@ -614,7 +586,6 @@ export default function SettingsPage() {
                   { label: '타샵오프', value: priceOffOther, onChange: setPriceOffOther },
                   { label: '연장 추가금 (손가락당)', value: priceExtension, onChange: setPriceExtension },
                   { label: '랩핑 추가금 (손가락당)', value: priceWrapping, onChange: setPriceWrapping },
-                  { labelKey: 'service_solidPoint', value: priceSolidPoint, onChange: setPriceSolidPoint },
                   { label: '예약금', value: priceDeposit, onChange: setPriceDeposit },
                   { label: '월 목표 매출', value: monthlyTarget, onChange: setMonthlyTarget },
                 ].map(({ labelKey, label, value, onChange }: {
@@ -865,34 +836,6 @@ export default function SettingsPage() {
             </div>
             <CustomPartsManager />
 
-            <Card className="mx-4 md:mx-0">
-              <div className="mb-3">
-                <span className="text-sm font-medium text-text">시술 항목 관리</span>
-                <p className="mt-0.5 text-xs text-text-muted">현재 매장에서 제공 중인 시술을 선택하세요. OFF한 항목은 상담 시 표시되지 않습니다.</p>
-              </div>
-
-              <div className="flex flex-col gap-0">
-                {SERVICE_TOGGLE_ITEMS.map((item) => (
-                  <div key={item.key} className="flex items-center justify-between border-b border-border/50 py-3 last:border-b-0">
-                    <div>
-                      <p className="text-sm font-medium text-text">{item.label}</p>
-                      <p className="text-xs text-text-muted">{item.description}</p>
-                    </div>
-                    <Toggle
-                      checked={shopSettings.serviceStructure[item.key]}
-                      onChange={(checked) => {
-                        void setShopSettings({
-                          serviceStructure: {
-                            ...shopSettings.serviceStructure,
-                            [item.key]: checked,
-                          },
-                        });
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </Card>
           </Card>
         </Section>
 

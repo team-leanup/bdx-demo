@@ -35,6 +35,8 @@ interface ShopSettings {
   monthlyTargetRevenue?: number;
   /** 0423 반영: 재방문 알림 문자 기본 문구틀 ({customerName}, {shopName} 치환) */
   revisitMessageTemplate: string;
+  /** 재방문 알림 주기 (주 단위, 1~12, 기본 4) */
+  revisitIntervalWeeks?: number;
   /** 0528 — 사전상담/현장모드 노출용 커스텀 파츠 (partsStore와 동기화) */
   customParts?: { id: string; name: string; pricePerUnit: number }[];
   /** 0528 — 사장님이 추가한 시술 종류 (기본 4개 외, 최대 4개) */
@@ -70,6 +72,7 @@ const DEFAULT_SHOP_SETTINGS: ShopSettings = {
   kakaoTalkUrl: '',
   naverReservationUrl: '',
   revisitMessageTemplate: '안녕하세요, {customerName}님! {shopName}입니다. 마지막 방문 이후 한 달이 지났네요. 예약을 도와드릴까요?',
+  revisitIntervalWeeks: 4,
   businessHours: [
     { dayOfWeek: 0, isOpen: false },
     { dayOfWeek: 1, isOpen: true, openTime: '10:00', closeTime: '20:00' },
@@ -165,6 +168,7 @@ export const useAppStore = create<AppStore>()(
             monthlyTargetRevenue: next.monthlyTargetRevenue,
             // builtin 카테고리 rename override
             categoryLabels: next.categoryLabels,
+            revisitIntervalWeeks: next.revisitIntervalWeeks,
           });
 
           if (!result.success) {
@@ -246,6 +250,7 @@ export const useAppStore = create<AppStore>()(
               depositAmount: s.depositAmount ?? state.shopSettings.depositAmount,
               monthlyTargetRevenue: s.monthlyTargetRevenue ?? state.shopSettings.monthlyTargetRevenue,
               categoryLabels: s.categoryLabels ?? state.shopSettings.categoryLabels,
+              revisitIntervalWeeks: s.revisitIntervalWeeks ?? state.shopSettings.revisitIntervalWeeks,
             } : {}),
           },
         }));
@@ -300,6 +305,7 @@ export const useAppStore = create<AppStore>()(
             customParts: p.shopSettings?.customParts ?? DEFAULT_SHOP_SETTINGS.customParts,
             depositAmount: p.shopSettings?.depositAmount ?? DEFAULT_SHOP_SETTINGS.depositAmount,
             categoryLabels: p.shopSettings?.categoryLabels ?? DEFAULT_SHOP_SETTINGS.categoryLabels,
+            revisitIntervalWeeks: p.shopSettings?.revisitIntervalWeeks ?? DEFAULT_SHOP_SETTINGS.revisitIntervalWeeks,
           },
         };
       },

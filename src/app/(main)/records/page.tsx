@@ -567,6 +567,12 @@ export default function RecordsPage() {
     const targetReservation = allReservations.find((r) => r.id === bookingId);
     if (!targetReservation) return;
 
+    // 사전상담 완료된 예약이면 state 변경 없이 즉시 전용 페이지로 이동 (바텀시트 깜빡임 방지)
+    if (targetReservation.preConsultationCompletedAt) {
+      router.replace(`/records/preconsult/${targetReservation.id}`);
+      return;
+    }
+
     const targetEvent = timeGridEvents.find(
       (event) => event.type === 'reservation' && event.originalId === bookingId,
     );
@@ -608,12 +614,6 @@ export default function RecordsPage() {
         consultationLinkSentAt: targetReservation.consultationLinkSentAt,
         preConsultationCompletedAt: targetReservation.preConsultationCompletedAt,
       });
-    }
-
-    // 사전상담 완료된 예약이면 전용 페이지로 바로 이동
-    if (targetReservation.preConsultationCompletedAt) {
-      router.replace(`/records/preconsult/${targetReservation.id}`);
-      return;
     }
 
     const params = new URLSearchParams(searchParams.toString());

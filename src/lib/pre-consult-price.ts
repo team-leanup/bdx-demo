@@ -66,8 +66,6 @@ export function calculatePreConsultPrice(input: PriceCalcInput): PreConsultPrice
       addOnSurcharge += surcharges.largeParts;
     } else if (addOn === 'glitter') {
       addOnSurcharge += ADDON_FIXED_PRICES.glitter;
-    } else if (addOn === 'point_art') {
-      addOnSurcharge += surcharges.pointArt;
     } else if (addOn === 'wrapping') {
       // 0531: 랩핑 추가금 미설정 시 기본 5000 (SurchargeSettings 주석·설정 UI(?? 5000)·getAddOnAmount 와 통일).
       //   이전 '?? 0' 은 settlement(74,000) vs 사전상담 확인(79,000) 불일치의 원인이었음.

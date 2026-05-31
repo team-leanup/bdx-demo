@@ -7,6 +7,9 @@ import { useAppStore } from '@/store/app-store';
 const DEFAULT_TEMPLATE =
   '안녕하세요, {customerName}님! {shopName}입니다. 마지막 방문 이후 한 달이 지났네요. 예약을 도와드릴까요?';
 
+const DEFAULT_INTERVAL_WEEKS = 4;
+const INTERVAL_PRESETS = [2, 3, 4, 6] as const;
+
 const VARIABLES = [
   { key: '{customerName}', label: '고객 이름', sample: '김민지' },
   { key: '{shopName}', label: '매장 이름', sample: '' },
@@ -27,16 +30,25 @@ export function RevisitMessageSection(): React.ReactElement {
   const setShopSettings = useAppStore((s) => s.setShopSettings);
 
   const storeTemplate = shopSettings.revisitMessageTemplate ?? DEFAULT_TEMPLATE;
+  const storeIntervalWeeks = shopSettings.revisitIntervalWeeks ?? DEFAULT_INTERVAL_WEEKS;
+
   const [draft, setDraft] = useState(storeTemplate);
+  const [intervalWeeks, setIntervalWeeks] = useState<number>(storeIntervalWeeks);
+  const [intervalInput, setIntervalInput] = useState<string>(String(storeIntervalWeeks));
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // 스토어 템플릿이 외부에서 바뀐 경우 동기화
+  // 스토어 값이 외부에서 바뀐 경우 동기화
   useEffect(() => {
     setDraft(storeTemplate);
   }, [storeTemplate]);
 
-  const dirty = draft !== storeTemplate;
+  useEffect(() => {
+    setIntervalWeeks(storeIntervalWeeks);
+    setIntervalInput(String(storeIntervalWeeks));
+  }, [storeIntervalWeeks]);
+
+  const dirty = draft !== storeTemplate || intervalWeeks !== storeIntervalWeeks;
 
   const preview = useMemo(() => {
     return renderRevisitMessage(draft, {
@@ -45,9 +57,27 @@ export function RevisitMessageSection(): React.ReactElement {
     });
   }, [draft, shopSettings.shopName]);
 
+  const handleIntervalChange = (raw: string): void => {
+    setIntervalInput(raw);
+    const n = parseInt(raw, 10);
+    if (!isNaN(n) && n >= 1 && n <= 12) {
+      setIntervalWeeks(n);
+    }
+  };
+
+  const handleIntervalBlur = (): void => {
+    // blur 시 범위 클램프 & 인풋 정규화
+    const clamped = Math.min(12, Math.max(1, intervalWeeks));
+    setIntervalWeeks(clamped);
+    setIntervalInput(String(clamped));
+  };
+
   const handleSave = async (): Promise<void> => {
     setStatus('saving');
-    const result = await setShopSettings({ revisitMessageTemplate: draft });
+    const result = await setShopSettings({
+      revisitMessageTemplate: draft,
+      revisitIntervalWeeks: intervalWeeks,
+    });
     if (result.success) {
       setStatus('saved');
       setTimeout(() => setStatus('idle'), 1600);
@@ -58,6 +88,8 @@ export function RevisitMessageSection(): React.ReactElement {
 
   const handleReset = (): void => {
     setDraft(DEFAULT_TEMPLATE);
+    setIntervalWeeks(DEFAULT_INTERVAL_WEEKS);
+    setIntervalInput(String(DEFAULT_INTERVAL_WEEKS));
     textareaRef.current?.focus();
   };
 
@@ -80,6 +112,47 @@ export function RevisitMessageSection(): React.ReactElement {
 
   return (
     <Card className="mx-4 md:mx-0 flex flex-col gap-4">
+      {/* 재방문 주기 설정 */}
+      <div>
+        <p className="text-sm font-semibold text-text">재방문 알림 주기</p>
+        <p className="mt-1 text-[11px] text-text-muted">
+          마지막 방문 이후 이 기간이 지난 고객을 홈 &middot; 재방문 알림에 표시해요.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {INTERVAL_PRESETS.map((w) => (
+            <button
+              key={w}
+              type="button"
+              onClick={() => { setIntervalWeeks(w); setIntervalInput(String(w)); }}
+              aria-pressed={intervalWeeks === w}
+              className={`min-h-[44px] rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                intervalWeeks === w
+                  ? 'border-primary bg-primary text-white'
+                  : 'border-border bg-surface text-text-secondary hover:border-primary/40 hover:text-primary'
+              }`}
+            >
+              {w}주
+            </button>
+          ))}
+          <div className="flex items-center gap-1.5">
+            <input
+              type="number"
+              min={1}
+              max={12}
+              value={intervalInput}
+              onChange={(e) => handleIntervalChange(e.target.value)}
+              onBlur={handleIntervalBlur}
+              aria-label="재방문 주기 직접 입력 (1~12주)"
+              className="w-16 min-h-[44px] rounded-xl border border-border bg-surface px-3 text-center text-sm text-text focus:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            />
+            <span className="text-sm text-text-muted">주</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="h-px bg-border" />
+
+      {/* 알림 문구 설정 */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-text">재방문 알림 기본 문구</p>

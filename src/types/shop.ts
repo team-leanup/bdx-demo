@@ -126,6 +126,11 @@ export interface ShopExtendedSettings {
    */
   revisitMessageTemplate?: string;
   /**
+   * 재방문 알림 주기 (주 단위). 미설정 시 기본 4주.
+   * 유효 범위: 1~12. 설정 UI에서 사장님이 변경 가능.
+   */
+  revisitIntervalWeeks?: number;
+  /**
    * 원장이 builtin 카테고리(simple/french/magnet/art)를 rename했을 때의 override.
    * key: builtin 카테고리 키, value: 원장이 지정한 한국어 라벨.
    * settings jsonb에 자동 포함되므로 DB 마이그레이션 불필요.
