@@ -138,6 +138,8 @@
 > 화살표 = "이 테이블이 저 테이블을 가리킴(외래키)".
 > `shops`는 모두의 부모라 거의 모든 테이블이 `shop_id`로 매달려 있음(아래선 생략 多).
 
+> 🖼️ 렌더된 이미지: **[`docs/erd.png`](erd.png)** (2860px 고해상도) · **[`docs/erd.svg`](erd.svg)** (벡터, 무한 확대) — 컬럼까지 다 보이는 버전.
+
 ```mermaid
 erDiagram
     shops ||--o{ designers : "선생님들"
