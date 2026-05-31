@@ -118,6 +118,8 @@ interface ShareCardImageTemplateProps {
   estimatedMinutes?: number;
   /** 실제 시술 카테고리/메뉴 한국어 라벨 — 제공 시 MOOD_TITLE 대신 타이틀로 표시 */
   categoryLabel?: string;
+  /** 매장 로고 public URL — 제공 시 하단 매장명 옆에 표시 */
+  shopLogoUrl?: string;
 }
 
 export function ShareCardImageTemplate({
@@ -130,6 +132,7 @@ export function ShareCardImageTemplate({
   createdAt,
   estimatedMinutes,
   categoryLabel,
+  shopLogoUrl,
 }: ShareCardImageTemplateProps): React.ReactElement {
   const config = RATIO_CONFIG[ratio];
   const infoPercent = 100 - config.photoPercent;
@@ -270,8 +273,15 @@ export function ShareCardImageTemplate({
           display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
           gap: 28,
         }}>
-          {/* 좌측: 샵 정보 — 0423: 샵 이름 크기 축소 + 간격 정돈 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 0 }}>
+          {/* 좌측: 샵 로고 + 샵 정보 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 18, flex: 1, minWidth: 0 }}>
+            {shopLogoUrl && (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={shopLogoUrl} alt="" style={{ width: 76, height: 76, borderRadius: 18, objectFit: 'cover', flexShrink: 0, border: '1px solid rgba(222,214,200,0.85)' }} />
+              </>
+            )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
             <span style={{
               fontSize: 32, fontWeight: 800, color: '#191F28',
               letterSpacing: '-0.025em', lineHeight: 1.15,
@@ -296,6 +306,7 @@ export function ShareCardImageTemplate({
                 Beauty Decision <span style={{ color: '#E11D48' }}>eXperience</span>
               </span>
             </div>
+          </div>
           </div>
 
           {/* 우측: CTA + QR — 0423: 시각 균형 조정 (QR 축소, 텍스트 타이트) */}

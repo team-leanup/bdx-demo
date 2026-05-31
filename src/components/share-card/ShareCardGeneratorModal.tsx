@@ -4,11 +4,12 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useT } from '@/lib/i18n';
 import { useAppStore } from '@/store/app-store';
+import { useShopStore } from '@/store/shop-store';
 import { DESIGN_SCOPE_LABEL, BODY_PART_LABEL } from '@/lib/labels';
 import { ShareCardImageTemplate } from '@/components/share-card/ShareCardImageTemplate';
 import type { CardRatio } from '@/components/share-card/ShareCardImageTemplate';
 import type { ConsultationType } from '@/types/consultation';
-import { dbCreateShareCard } from '@/lib/db';
+import { dbCreateShareCard, getShopLogoPublicUrl } from '@/lib/db';
 
 interface ShareCardGeneratorModalProps {
   isOpen: boolean;
@@ -45,6 +46,7 @@ function ScaledPreview({
   createdAt,
   estimatedMinutes,
   categoryLabel,
+  shopLogoUrl,
 }: {
   imageUrl: string;
   consultation: ConsultationType;
@@ -54,6 +56,7 @@ function ScaledPreview({
   createdAt?: string;
   estimatedMinutes?: number;
   categoryLabel?: string;
+  shopLogoUrl?: string;
 }): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dims, setDims] = useState<{ width: number; height: number } | null>(null);
@@ -125,6 +128,7 @@ function ScaledPreview({
             createdAt={createdAt}
             estimatedMinutes={estimatedMinutes}
             categoryLabel={categoryLabel}
+            shopLogoUrl={shopLogoUrl}
           />
         </div>
       )}
@@ -144,6 +148,8 @@ export function ShareCardGeneratorModal({
   const t = useT();
   const kakaoTalkUrl = useAppStore((s) => s.shopSettings.kakaoTalkUrl);
   const naverReservationUrl = useAppStore((s) => s.shopSettings.naverReservationUrl);
+  const storeLogoUrl = useShopStore((s) => s.shop?.logoUrl);
+  const shopLogoUrl = storeLogoUrl ? getShopLogoPublicUrl(storeLogoUrl) : undefined;
 
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(
     portfolioPhotos[0]?.id ?? null,
@@ -374,6 +380,7 @@ export function ShareCardGeneratorModal({
                   createdAt={record.createdAt}
                   estimatedMinutes={record.estimatedMinutes}
                   categoryLabel={categoryLabel}
+                  shopLogoUrl={shopLogoUrl}
                 />
               )}
             </div>
@@ -498,6 +505,7 @@ export function ShareCardGeneratorModal({
                 createdAt={record.createdAt}
                 estimatedMinutes={record.estimatedMinutes}
                 categoryLabel={categoryLabel}
+                shopLogoUrl={shopLogoUrl}
               />
               <ShareCardImageTemplate
                 imageUrl={resolvedImageUrl}
@@ -509,6 +517,7 @@ export function ShareCardGeneratorModal({
                 createdAt={record.createdAt}
                 estimatedMinutes={record.estimatedMinutes}
                 categoryLabel={categoryLabel}
+                shopLogoUrl={shopLogoUrl}
               />
             </div>
           )}
