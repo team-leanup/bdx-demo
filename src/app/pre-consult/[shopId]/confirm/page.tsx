@@ -755,7 +755,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                 label={t('preConsult.nameLabel')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder={t('preConsult.namePlaceholder')}
+                placeholder={t('customerForm.namePlaceholder')}
                 autoComplete="name"
               />
 

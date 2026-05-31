@@ -493,11 +493,8 @@ export default function RecordsPage() {
     params.set('bookingId', selectedEvent.originalId);
     if (selectedEvent.customerId) params.set('customerId', selectedEvent.customerId);
     params.set('customerName', selectedEvent.title);
-    // 0531 — 예약에 등록된 예약금을 quick-sale로 전달해 자동 차감/집계
-    const booking = allReservations.find((r) => r.id === selectedEvent.originalId);
-    if (booking?.deposit && booking.deposit > 0) {
-      params.set('deposit', String(booking.deposit));
-    }
+    // 0531 R2 — quick-sale 금액은 시술 총액을 입력하는 필드이므로 예약금을 별도 전달하지 않는다.
+    //   (전달 시 totalSpend = 총액 + 예약금 으로 이중계상됨. 예약금 차감은 field-mode 정산 경로에서만 처리.)
     closeSelectedEventSheet();
     router.push(`/quick-sale?${params.toString()}`);
   };

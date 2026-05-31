@@ -32,7 +32,6 @@ function QuickSaleContent(): React.ReactElement {
   const initialCustomerId = searchParams.get('customerId') ?? undefined;
   const initialCustomerName = searchParams.get('customerName') ?? undefined;
   const bookingId = searchParams.get('bookingId') ?? undefined;
-  const initialDeposit = Number(searchParams.get('deposit') ?? 0);
 
   const addQuickSaleRecord = useRecordsStore((s) => s.addQuickSaleRecord);
   const updateReservation = useReservationStore((s) => s.updateReservation);
@@ -74,7 +73,6 @@ function QuickSaleContent(): React.ReactElement {
       customerPhone: data.customerPhone,
       serviceType: data.serviceType || undefined,
       finalPrice: data.amount,
-      deposit: initialDeposit > 0 ? initialDeposit : undefined,
       notes: data.memo || undefined,
       paymentMethod: data.paymentMethod,
       // [SALES-1] 회원권 차감액 저장 — totalSpend 정합
