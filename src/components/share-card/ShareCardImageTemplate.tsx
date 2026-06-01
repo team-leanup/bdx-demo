@@ -17,26 +17,6 @@ const SCOPE_TO_CATEGORY: Record<string, string> = {
   monthly_art: 'art',
 };
 
-// Design scope → hashtag
-const SCOPE_HASHTAG: Record<string, string> = {
-  solid_tone: '#Minimal',
-  gradient: '#Soft',
-  french: '#Classic',
-  art: '#Creative',
-  magnet: '#Trendy',
-  magnet_art: '#Magnetic',
-  monthly_art: '#Curated',
-  solid_point: '#Point',
-  full_art: '#FullArt',
-};
-
-const CATEGORY_HASHTAG: Record<string, string> = {
-  simple: '#Minimal',
-  french: '#Classic',
-  magnet: '#Trendy',
-  art: '#Creative',
-};
-
 // Nail shape → 한글
 const SHAPE_LABEL: Record<string, string> = {
   round: '라운드',
@@ -176,10 +156,6 @@ export function ShareCardImageTemplate({
     (categoryLabelKo && !isRawKey ? categoryLabelKo : undefined) ??
     (categoryKey ? CATEGORY_LABELS[categoryKey] : undefined) ??
     getDesignLabel(designScope);
-  const hashtag =
-    (designCategory ? CATEGORY_HASHTAG[designCategory] : undefined) ??
-    SCOPE_HASHTAG[designScope] ??
-    '#Nail';
   const bodyLabel = BODY_PART_LABEL[bodyPart] ?? bodyPart;
 
   const shapeLabel = nailShape ? SHAPE_LABEL[nailShape] : null;
@@ -230,20 +206,6 @@ export function ShareCardImageTemplate({
           position: 'absolute', bottom: 0, left: 0, right: 0, height: 180,
           background: 'linear-gradient(to bottom, rgba(245,240,234,0) 0%, rgba(245,240,234,1) 100%)',
         }} />
-
-        {/* 좌상단: 단일 해시태그 pill (광고 느낌 제거, 기록 카드 톤) */}
-        <div style={{
-          position: 'absolute', top: 40, left: 40,
-        }}>
-          <span style={{
-            display: 'inline-flex', padding: '10px 18px', borderRadius: 999,
-            fontSize: 20, fontWeight: 700, letterSpacing: '-0.005em',
-            background: 'rgba(255,255,255,0.92)', color: '#191F28',
-            lineHeight: 1,
-          }}>
-            {hashtag}
-          </span>
-        </div>
       </div>
 
       {/* 하단: 정보 패널 */}
