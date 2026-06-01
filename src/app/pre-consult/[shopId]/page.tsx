@@ -131,7 +131,10 @@ function PreConsultStartInner(): React.ReactElement {
   }, [bookingIdParam, linkIdParam, designCategoryParam, params.shopId, setBookingId, setConsultationLinkId, setSelectedSlot, setSelectedCategory, setLinkDesignerId, t]);
 
   const handleStart = (): void => {
-    router.push(`/pre-consult/${params.shopId}/design`);
+    // 0601: 공유카드에서 넘어온 디자인 종류(builtin·custom)를 /design 까지 carry —
+    //   design 페이지가 shopData로 builtin+custom 모두 검증해 해당 시술을 자동 선택.
+    const dc = designCategoryParam;
+    router.push(`/pre-consult/${params.shopId}/design${dc ? `?designCategory=${encodeURIComponent(dc)}` : ''}`);
   };
 
   // 예약 가능한 슬롯이 있는 링크(공유 링크 + 샵 고정 링크 모두)면 시간 선택을 필수로 한다.

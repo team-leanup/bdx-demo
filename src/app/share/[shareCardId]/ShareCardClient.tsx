@@ -172,6 +172,7 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
           shopId={data.shopId}
           shareCardId={shareCardId}
           designScope={data.design.designScope}
+          designCategory={data.design.designCategory}
         />
       </motion.div>
 

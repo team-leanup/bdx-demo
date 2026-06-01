@@ -9,11 +9,9 @@ import { designScopeToCategory as libDesignScopeToCategory } from '@/lib/categor
 // solid_tone → simple 이므로 magnet을 원본 카테고리로 복원할 수 없음.
 // designCategory prop이 있으면 우선 사용하여 magnet CTA 링크 정확도 보장.
 function resolveCategory(designScope: DesignScope, designCategory?: string | null): StyleCategory {
-  if (designCategory) {
-    // 알려진 StyleCategory 값만 통과 (unknown custom 카테고리는 scope 폴백)
-    const known: StyleCategory[] = ['simple', 'french', 'magnet', 'art'];
-    if ((known as string[]).includes(designCategory)) return designCategory as StyleCategory;
-  }
+  // 0601: designCategory(builtin·custom 모두)가 있으면 그대로 사용 — 커스텀 카테고리 디자인이
+  //   scope 손실 변환(custom→solid_tone→simple)으로 엉뚱하게 선택되던 문제 수정.
+  if (designCategory) return designCategory as StyleCategory;
   return libDesignScopeToCategory(designScope) as StyleCategory;
 }
 
