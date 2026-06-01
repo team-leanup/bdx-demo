@@ -1608,8 +1608,11 @@ function CustomerDetailContent({ id }: { id: string }) {
                   remainingAmount: nextRemainingAmount,
                   purchaseDate: existing?.purchaseDate ?? today.toISOString().slice(0, 10),
                   expiryDate,
-                  // 0428 P0-3: 수정 시 기존 status 보존, 신규는 active
-                  status: existing?.status ?? 'active',
+                  // 0601: 수정 시 잔액이 남아 있으면 active로 재활성화(잘못/수동 만료 해제).
+                  //   날짜 만료는 표시 시점 getEffectiveStatus가 만료일로 재판정하므로
+                  //   저장 status를 'expired'로 굳히지 않는다 — 만료일을 미래로 바꿔도
+                  //   만료 뱃지가 안 풀리던 버그 수정. 잔액 소진 시에만 used_up.
+                  status: nextRemainingAmount > 0 ? 'active' : 'used_up',
                   transactions: existing?.transactions ?? [],
                   planId: selectedPlan?.id ?? existing?.planId,
                   planName: selectedPlan?.name ?? existing?.planName,

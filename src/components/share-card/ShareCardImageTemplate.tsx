@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import { DESIGN_SCOPE_LABEL, BODY_PART_LABEL } from '@/lib/labels';
-import type { ConsultationType } from '@/types/consultation';
 
 // Design scope → mood title (영문)
 const MOOD_TITLE: Record<string, string> = {
@@ -18,6 +17,14 @@ const MOOD_TITLE: Record<string, string> = {
   full_art: 'Full Art Edition',
 };
 
+// 실제 시술 카테고리(designCategory) → mood title (영문) — 공개 페이지와 동일 매핑
+const CATEGORY_MOOD_TITLE: Record<string, string> = {
+  simple: 'Clean Minimal',
+  french: 'Elegant French',
+  magnet: 'Magnetic Glow',
+  art: 'Creative Art',
+};
+
 // Design scope → hashtag
 const SCOPE_HASHTAG: Record<string, string> = {
   solid_tone: '#Minimal',
@@ -29,6 +36,13 @@ const SCOPE_HASHTAG: Record<string, string> = {
   monthly_art: '#Curated',
   solid_point: '#Point',
   full_art: '#FullArt',
+};
+
+const CATEGORY_HASHTAG: Record<string, string> = {
+  simple: '#Minimal',
+  french: '#Classic',
+  magnet: '#Trendy',
+  art: '#Creative',
 };
 
 // Nail shape → 한글
@@ -60,6 +74,8 @@ function getDesignLabel(scope: string): string {
 }
 
 const CONSULT_BUILT_LINE = '상담을 통해 완성된 디자인입니다';
+const FEEDBACK_DEFAULT = '너무 만족하셨어요';
+const RESERVE_CTA_DEFAULT = '이 디자인으로 예약하기';
 
 export type CardRatio = '9:16' | '3:4';
 
@@ -107,42 +123,71 @@ function BdxLogo({ size }: { size: number }): React.ReactElement {
   );
 }
 
+/**
+ * 공유카드 단일 원천(SSOT).
+ * 다운로드 이미지(ShareCardGeneratorModal)와 공개 링크 페이지(ShareCardClient)가
+ * 동일한 이 템플릿을 렌더 → 디자인/폰트/정보 완전 일치.
+ * 0601: consultation 객체 대신 필요한 필드만 직접 받도록 변경(공개 페이지는 전체 상담 데이터가 없음).
+ */
 interface ShareCardImageTemplateProps {
   imageUrl: string;
-  consultation: ConsultationType;
+  designScope: string;
+  /** 실제 시술 카테고리 ID (simple/french/magnet/art …) — 영문 무드 타이틀·해시태그 우선순위에 사용 */
+  designCategory?: string;
+  bodyPart: string;
+  nailShape?: string | null;
+  /** 한국어 카테고리/디자인 라벨 — 영문 타이틀 아래 서브타이틀로 항상 표시 */
+  categoryLabelKo?: string;
   shopName: string;
   ratio: CardRatio;
   templateRef: React.RefObject<HTMLDivElement | null>;
   shopId?: string;
   createdAt?: string;
   estimatedMinutes?: number;
-  /** 실제 시술 카테고리/메뉴 한국어 라벨 — 제공 시 MOOD_TITLE 대신 타이틀로 표시 */
-  categoryLabel?: string;
   /** 매장 로고 public URL — 제공 시 하단 매장명 옆에 표시 */
   shopLogoUrl?: string;
+  /** 💕 만족 피드백 행 문구 (i18n) — 미지정 시 한국어 기본값 */
+  feedbackLabel?: string;
+  /** 상담 완성 안내 문구 (i18n) — 미지정 시 한국어 기본값 */
+  consultBuiltLine?: string;
+  /** QR 옆 CTA 문구 (i18n) — 미지정 시 한국어 기본값 */
+  reserveCtaLabel?: string;
 }
 
 export function ShareCardImageTemplate({
   imageUrl,
-  consultation,
+  designScope,
+  designCategory,
+  bodyPart,
+  nailShape,
+  categoryLabelKo,
   shopName,
   ratio,
   templateRef,
   shopId,
   createdAt,
   estimatedMinutes,
-  categoryLabel,
   shopLogoUrl,
+  feedbackLabel,
+  consultBuiltLine,
+  reserveCtaLabel,
 }: ShareCardImageTemplateProps): React.ReactElement {
   const config = RATIO_CONFIG[ratio];
   const infoPercent = 100 - config.photoPercent;
-  const designLabel = getDesignLabel(consultation.designScope);
-  const bodyLabel = BODY_PART_LABEL[consultation.bodyPart] ?? consultation.bodyPart;
 
-  const moodTitle = categoryLabel ?? MOOD_TITLE[consultation.designScope] ?? 'Nail Design';
-  const hashtag = SCOPE_HASHTAG[consultation.designScope] ?? '#Nail';
+  // 0601 통일: 영문 무드 타이틀(hero) + 한글 라벨(서브) — 공개 페이지와 동일 전략.
+  const moodTitle =
+    (designCategory ? CATEGORY_MOOD_TITLE[designCategory] : undefined) ??
+    MOOD_TITLE[designScope] ??
+    'Nail Design';
+  const hashtag =
+    (designCategory ? CATEGORY_HASHTAG[designCategory] : undefined) ??
+    SCOPE_HASHTAG[designScope] ??
+    '#Nail';
+  const designLabel = categoryLabelKo ?? getDesignLabel(designScope);
+  const bodyLabel = BODY_PART_LABEL[bodyPart] ?? bodyPart;
 
-  const shapeLabel = consultation.nailShape ? SHAPE_LABEL[consultation.nailShape] : null;
+  const shapeLabel = nailShape ? SHAPE_LABEL[nailShape] : null;
   const shapeBodyParts = shapeLabel ? [shapeLabel, bodyLabel] : [bodyLabel];
   const showMinutes = typeof estimatedMinutes === 'number' && estimatedMinutes > 0;
 
@@ -178,10 +223,12 @@ export function ShareCardImageTemplate({
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", "Noto Sans KR", sans-serif',
       }}
     >
-      {/* 상단: 시술 사진 1장 */}
+      {/* 상단: 시술 사진 1장 (없으면 src 빈 문자열 경고 방지 — 베이지 영역 유지) */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: `${config.photoPercent}%` }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        {imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        ) : null}
 
         {/* 하단 페이드 */}
         <div style={{
@@ -190,7 +237,6 @@ export function ShareCardImageTemplate({
         }} />
 
         {/* 좌상단: 단일 해시태그 pill (광고 느낌 제거, 기록 카드 톤) */}
-        {/* 0423: 폰트/패딩 축소로 시각 비중 완화 */}
         <div style={{
           position: 'absolute', top: 40, left: 40,
         }}>
@@ -213,7 +259,6 @@ export function ShareCardImageTemplate({
         padding: '48px 56px 52px',
       }}>
         {/* Upper: 타이틀 + 서브 + 본문 */}
-        {/* 0423 반영: 지승호 대표 "글씨 배열만 알맞게" 피드백 — 리듬 재조정 */}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {/* Display — 영문 무드 타이틀 */}
           <span style={{
@@ -223,17 +268,14 @@ export function ShareCardImageTemplate({
             {moodTitle}
           </span>
 
-          {/* Body Large — 한글 서브. categoryLabel(실제 카테고리)이 타이틀로 쓰이면
-              designScope 기반 라벨은 중복·불일치이므로 숨김. 레거시(카테고리 없음)만 표시. */}
-          {!categoryLabel && (
-            <span style={{
-              fontSize: 30, fontWeight: 600, color: '#4B5563',
-              lineHeight: 1.25, letterSpacing: '-0.018em',
-              marginTop: 10,
-            }}>
-              {designLabel}
-            </span>
-          )}
+          {/* Body Large — 한글 서브 (실제 카테고리 라벨 우선, 없으면 designScope 라벨) */}
+          <span style={{
+            fontSize: 30, fontWeight: 600, color: '#4B5563',
+            lineHeight: 1.25, letterSpacing: '-0.018em',
+            marginTop: 10,
+          }}>
+            {designLabel}
+          </span>
 
           {/* Body — 상담 메시지 (서브에서 한 호흡 두고 분리) */}
           <span style={{
@@ -241,11 +283,11 @@ export function ShareCardImageTemplate({
             lineHeight: 1.45, letterSpacing: '-0.01em',
             marginTop: 24,
           }}>
-            {CONSULT_BUILT_LINE}
+            {consultBuiltLine ?? CONSULT_BUILT_LINE}
           </span>
         </div>
 
-        {/* Middle: 3줄 감성 정보 박스 */}
+        {/* Middle: 감성 정보 박스 (💅 형태/부위 · ⏱️ 시술시간 · 💕 만족 피드백) */}
         <div style={{
           display: 'flex', flexDirection: 'column',
           background: 'rgba(255,255,255,0.62)',
@@ -253,19 +295,11 @@ export function ShareCardImageTemplate({
           border: '1px solid rgba(222, 214, 200, 0.7)',
           overflow: 'hidden',
         }}>
-          <FeedbackRow
-            icon="💅"
-            parts={shapeBodyParts}
-            isLast={!showMinutes}
-          />
+          <FeedbackRow icon="💅" parts={shapeBodyParts} isLast={false} />
           {showMinutes && (
-            <FeedbackRow
-              icon="⏱️"
-              number={estimatedMinutes}
-              unit="분"
-              isLast
-            />
+            <FeedbackRow icon="⏱️" number={estimatedMinutes} unit="분" isLast={false} />
           )}
+          <FeedbackRow icon="💕" parts={[feedbackLabel ?? FEEDBACK_DEFAULT]} isLast />
         </div>
 
         {/* Bottom: Shop + Date + BDX logo | CTA + QR */}
@@ -309,7 +343,7 @@ export function ShareCardImageTemplate({
           </div>
           </div>
 
-          {/* 우측: CTA + QR — 0423: 시각 균형 조정 (QR 축소, 텍스트 타이트) */}
+          {/* 우측: CTA + QR */}
           {qrDataUrl && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: 14,
@@ -321,13 +355,12 @@ export function ShareCardImageTemplate({
               <span style={{
                 fontSize: 18, fontWeight: 800, color: '#191F28',
                 letterSpacing: '-0.012em', lineHeight: 1.3,
-                whiteSpace: 'nowrap' as const,
+                maxWidth: 150, whiteSpace: 'normal' as const,
               }}>
-                이 디자인으로<br />
-                <span style={{ color: '#E11D48' }}>예약하기</span>
+                {reserveCtaLabel ?? RESERVE_CTA_DEFAULT}
               </span>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={qrDataUrl} alt="QR" style={{ width: 108, height: 108, display: 'block' }} />
+              <img src={qrDataUrl} alt="QR" style={{ width: 108, height: 108, display: 'block', flexShrink: 0 }} />
             </div>
           )}
         </div>
@@ -346,7 +379,6 @@ interface FeedbackRowProps {
 
 function FeedbackRow({ icon, parts, number, unit, isLast }: FeedbackRowProps): React.ReactElement {
   const borderBottom = isLast ? 'none' : '1px solid rgba(222, 214, 200, 0.55)';
-  // 0423: 이모지/텍스트 baseline 정렬, 상하 패딩 균일화
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 18,
@@ -398,6 +430,86 @@ function FeedbackRow({ icon, parts, number, unit, isLast }: FeedbackRowProps): R
               </span>
             </span>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * 고정 1080px 템플릿을 부모 너비에 맞춰 축소 렌더하는 미리보기 래퍼.
+ * 모달 미리보기·공개 페이지가 동일 컴포넌트를 공유하기 위해 export.
+ * 0424: aspectRatio만 쓰면 세로로 너무 길어 하단이 잘려 — 뷰포트 기반 max-height 역산.
+ */
+type ShareCardScaledPreviewProps = Omit<ShareCardImageTemplateProps, 'templateRef'> & {
+  className?: string;
+  /** 미리보기 최대 높이(px). 미지정 시 뷰포트의 65%·680px 중 작은 쪽 */
+  maxHeightPx?: number;
+};
+
+export function ShareCardScaledPreview({
+  ratio,
+  className,
+  maxHeightPx,
+  ...templateProps
+}: ShareCardScaledPreviewProps): React.ReactElement {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dims, setDims] = useState<{ width: number; height: number } | null>(null);
+
+  const templateW = 1080;
+  const templateH = ratio === '9:16' ? 1920 : 1440;
+  const cardAspect = templateW / templateH;
+
+  useEffect(() => {
+    function calc(): void {
+      const parent = containerRef.current?.parentElement;
+      if (!parent) return;
+      const parentW = parent.clientWidth;
+      const maxH = maxHeightPx ?? Math.min(window.innerHeight * 0.65, 680);
+      let w = parentW;
+      let h = w / cardAspect;
+      if (h > maxH) {
+        h = maxH;
+        w = h * cardAspect;
+      }
+      setDims({ width: Math.floor(w), height: Math.floor(h) });
+    }
+    calc();
+    const parent = containerRef.current?.parentElement;
+    const obs = parent ? new ResizeObserver(calc) : null;
+    if (parent && obs) obs.observe(parent);
+    window.addEventListener('resize', calc);
+    return () => {
+      obs?.disconnect();
+      window.removeEventListener('resize', calc);
+    };
+  }, [cardAspect, maxHeightPx]);
+
+  const scale = dims ? dims.width / templateW : 0;
+
+  return (
+    <div
+      ref={containerRef}
+      className={className ?? 'relative mx-auto overflow-hidden rounded-2xl border border-border'}
+      style={
+        dims
+          ? { width: dims.width, height: dims.height }
+          : { aspectRatio: `${templateW} / ${templateH}`, width: '100%' }
+      }
+    >
+      {scale > 0 && dims && (
+        <div
+          style={{
+            width: templateW,
+            height: templateH,
+            transform: `scale(${scale})`,
+            transformOrigin: 'top left',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+          }}
+        >
+          <ShareCardImageTemplate ratio={ratio} templateRef={{ current: null }} {...templateProps} />
         </div>
       )}
     </div>

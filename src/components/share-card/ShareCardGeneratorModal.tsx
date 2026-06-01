@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useT } from '@/lib/i18n';
 import { useAppStore } from '@/store/app-store';
 import { useShopStore } from '@/store/shop-store';
-import { DESIGN_SCOPE_LABEL, BODY_PART_LABEL } from '@/lib/labels';
-import { ShareCardImageTemplate } from '@/components/share-card/ShareCardImageTemplate';
+import { ShareCardImageTemplate, ShareCardScaledPreview } from '@/components/share-card/ShareCardImageTemplate';
 import type { CardRatio } from '@/components/share-card/ShareCardImageTemplate';
 import type { ConsultationType } from '@/types/consultation';
 import { dbCreateShareCard, getShopLogoPublicUrl } from '@/lib/db';
@@ -31,109 +30,6 @@ interface ShareCardGeneratorModalProps {
   onShareCardCreated?: (shareCardId: string) => void;
   /** 실제 시술 카테고리/메뉴 한국어 라벨 — 제공 시 공유카드 타이틀에 표시 */
   categoryLabel?: string;
-}
-
-// ─── Scaled preview: 카드 전체가 미리보기 영역에 보이도록 ───
-// 0424 수정: 모바일에서 aspectRatio만 쓰면 카드가 세로로 너무 길어져
-// 하단 정보 패널(타이틀/서브/정보박스/샵/QR)이 밀려 안 보임.
-// → 뷰포트 기반 max-height를 기준으로 width를 역산해 카드 전체가 fit되게.
-function ScaledPreview({
-  imageUrl,
-  consultation,
-  shopName,
-  ratio,
-  shopId,
-  createdAt,
-  estimatedMinutes,
-  categoryLabel,
-  shopLogoUrl,
-}: {
-  imageUrl: string;
-  consultation: ConsultationType;
-  shopName: string;
-  ratio: CardRatio;
-  shopId?: string;
-  createdAt?: string;
-  estimatedMinutes?: number;
-  categoryLabel?: string;
-  shopLogoUrl?: string;
-}): React.ReactElement {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [dims, setDims] = useState<{ width: number; height: number } | null>(null);
-
-  const templateW = 1080;
-  const templateH = ratio === '9:16' ? 1920 : 1440;
-  const cardAspect = templateW / templateH; // 9:16 → 0.5625, 3:4 → 0.75
-
-  useEffect(() => {
-    function calc(): void {
-      const parent = containerRef.current?.parentElement;
-      if (!parent) return;
-      const parentW = parent.clientWidth;
-      // 0424: 사진 셀렉터 축소로 미리보기 공간 더 확보 — 뷰포트의 65% 또는 680px 중 작은 쪽
-      const maxH = Math.min(window.innerHeight * 0.65, 680);
-
-      // 1) width 기준 높이 계산
-      let w = parentW;
-      let h = w / cardAspect;
-      // 2) 높이가 max를 넘으면 height를 줄이고 width도 비율 맞춰 축소
-      if (h > maxH) {
-        h = maxH;
-        w = h * cardAspect;
-      }
-      setDims({ width: Math.floor(w), height: Math.floor(h) });
-    }
-    calc();
-    const parent = containerRef.current?.parentElement;
-    const obs = parent ? new ResizeObserver(calc) : null;
-    if (parent && obs) obs.observe(parent);
-    window.addEventListener('resize', calc);
-    return () => {
-      obs?.disconnect();
-      window.removeEventListener('resize', calc);
-    };
-  }, [cardAspect]);
-
-  const scale = dims ? dims.width / templateW : 0;
-
-  return (
-    <div
-      ref={containerRef}
-      className="relative mx-auto overflow-hidden rounded-2xl border border-border"
-      style={
-        dims
-          ? { width: dims.width, height: dims.height }
-          : { aspectRatio: `${templateW} / ${templateH}`, width: '100%' }
-      }
-    >
-      {scale > 0 && dims && (
-        <div
-          style={{
-            width: templateW,
-            height: templateH,
-            transform: `scale(${scale})`,
-            transformOrigin: 'top left',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-          }}
-        >
-          <ShareCardImageTemplate
-            imageUrl={imageUrl}
-            consultation={consultation}
-            shopName={shopName}
-            ratio={ratio}
-            templateRef={{ current: null }}
-            shopId={shopId}
-            createdAt={createdAt}
-            estimatedMinutes={estimatedMinutes}
-            categoryLabel={categoryLabel}
-            shopLogoUrl={shopLogoUrl}
-          />
-        </div>
-      )}
-    </div>
-  );
 }
 
 export function ShareCardGeneratorModal({
@@ -205,15 +101,6 @@ export function ShareCardGeneratorModal({
 
   const selectedPhoto = portfolioPhotos.find((p) => p.id === selectedPhotoId);
   const resolvedImageUrl = selectedPhoto?.imageDataUrl || selectedPhoto?.imagePath || null;
-
-  const designLabel = useMemo(
-    () => DESIGN_SCOPE_LABEL[record.consultation.designScope] ?? record.consultation.designScope,
-    [record.consultation.designScope],
-  );
-  const bodyLabel = useMemo(
-    () => BODY_PART_LABEL[record.consultation.bodyPart] ?? record.consultation.bodyPart,
-    [record.consultation.bodyPart],
-  );
 
   // Share card URL
   const shareUrl = resolvedShareCardId
@@ -369,18 +256,24 @@ export function ShareCardGeneratorModal({
                 </div>
               )}
 
-              {/* ── Preview (ScaledPreview — 미리보기와 다운로드가 동일한 템플릿) ── */}
+              {/* ── Preview (ShareCardScaledPreview — 미리보기·다운로드·공개링크 동일 템플릿) ── */}
               {resolvedImageUrl && (
-                <ScaledPreview
+                <ShareCardScaledPreview
                   imageUrl={resolvedImageUrl}
-                  consultation={record.consultation}
+                  designScope={record.consultation.designScope}
+                  designCategory={record.consultation.designCategory}
+                  bodyPart={record.consultation.bodyPart}
+                  nailShape={record.consultation.nailShape}
+                  categoryLabelKo={categoryLabel}
                   shopName={shopName}
                   ratio="9:16"
                   shopId={record.shopId}
                   createdAt={record.createdAt}
                   estimatedMinutes={record.estimatedMinutes}
-                  categoryLabel={categoryLabel}
                   shopLogoUrl={shopLogoUrl}
+                  feedbackLabel={t('shareCard.feedbackDefault')}
+                  consultBuiltLine={t('shareCard.consultBuiltLine')}
+                  reserveCtaLabel={t('shareCard.reserveCta')}
                 />
               )}
             </div>
@@ -497,27 +390,39 @@ export function ShareCardGeneratorModal({
             <div style={{ position: 'fixed', left: -9999, top: -9999, zIndex: -1, pointerEvents: 'none' }}>
               <ShareCardImageTemplate
                 imageUrl={resolvedImageUrl}
-                consultation={record.consultation}
+                designScope={record.consultation.designScope}
+                designCategory={record.consultation.designCategory}
+                bodyPart={record.consultation.bodyPart}
+                nailShape={record.consultation.nailShape}
+                categoryLabelKo={categoryLabel}
                 shopName={shopName}
                 ratio="9:16"
                 templateRef={captureRef916}
                 shopId={record.shopId}
                 createdAt={record.createdAt}
                 estimatedMinutes={record.estimatedMinutes}
-                categoryLabel={categoryLabel}
                 shopLogoUrl={shopLogoUrl}
+                feedbackLabel={t('shareCard.feedbackDefault')}
+                consultBuiltLine={t('shareCard.consultBuiltLine')}
+                reserveCtaLabel={t('shareCard.reserveCta')}
               />
               <ShareCardImageTemplate
                 imageUrl={resolvedImageUrl}
-                consultation={record.consultation}
+                designScope={record.consultation.designScope}
+                designCategory={record.consultation.designCategory}
+                bodyPart={record.consultation.bodyPart}
+                nailShape={record.consultation.nailShape}
+                categoryLabelKo={categoryLabel}
                 shopName={shopName}
                 ratio="3:4"
                 templateRef={captureRef34}
                 shopId={record.shopId}
                 createdAt={record.createdAt}
                 estimatedMinutes={record.estimatedMinutes}
-                categoryLabel={categoryLabel}
                 shopLogoUrl={shopLogoUrl}
+                feedbackLabel={t('shareCard.feedbackDefault')}
+                consultBuiltLine={t('shareCard.consultBuiltLine')}
+                reserveCtaLabel={t('shareCard.reserveCta')}
               />
             </div>
           )}

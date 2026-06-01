@@ -747,23 +747,27 @@ export default function RecordsPage() {
 
           {viewMode === 'month' && (
             <div className="flex flex-col gap-2 px-4 md:px-0">
-              <Card className="p-4 relative">
+              {/* 0601: 일간 뷰 전환 버튼을 캘린더 헤더(이전/다음 달 화살표) 위에 겹치지 않게
+                  별도 행으로 분리 — absolute top-2 right-2 가 다음 달 버튼과 포개지던 버그 수정. */}
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('day')}
+                  className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-medium text-text-secondary hover:text-primary hover:border-primary/40 transition-colors min-h-[44px]"
+                  aria-label="일간 타임그리드 보기"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+                  </svg>
+                  일간 보기
+                </button>
+              </div>
+              <Card className="p-4">
                 <MonthCalendar
                   selectedDate={selectedDate}
                   onSelectDate={(date) => setSelectedDate(date)}
                   reservations={allReservations}
                 />
-                {/* 일간 뷰 전환 아이콘 */}
-                <button
-                  type="button"
-                  onClick={() => setViewMode('day')}
-                  className="absolute top-2 right-2 flex items-center justify-center w-10 h-10 rounded-lg bg-surface-alt text-text-secondary hover:text-primary hover:bg-primary/10 transition-colors"
-                  aria-label="일간 보기"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
-                  </svg>
-                </button>
               </Card>
               <DayReservationList date={selectedDate} reservations={dayReservations} />
             </div>

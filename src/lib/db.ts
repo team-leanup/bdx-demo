@@ -2026,7 +2026,10 @@ export async function dbCompletePreConsultation(
     customer_name: payload.customer_name,
     phone: payload.customer_phone,
     reservation_date: getTodayInKorea(),
-    reservation_time: '미정',
+    // 0601: 직접접근(경로 C) 사전상담은 슬롯 미선택 = 시간 미정.
+    //   한국어 리터럴 '미정'을 시간 필드에 저장하면 데이터처럼 안 보여 오류로 오인됨.
+    //   빈 값으로 저장하고 UI(DayReservationList·바텀시트)가 '시간 미정' 라벨로 표시.
+    reservation_time: '',
     channel: 'pre_consult',
     status: 'pending',
     language,

@@ -117,8 +117,11 @@ export default function FieldModePage() {
     }
   }, [phase, router, setPhase]);
 
+  // 0601: 현장 시술 디자인 선택은 '메뉴로 등록(isFeatured)'한 사진만 노출.
+  //   원장이 엄선한 메뉴판만 손님에게 보이고, 미설정·가격 비공개 사진은 숨김.
+  //   (이전엔 isPublic만 걸러 메뉴 미설정 사진까지 전부 노출되던 버그)
   const publicPhotos = useMemo(
-    () => allPhotos.filter((p) => p.isPublic !== false),
+    () => allPhotos.filter((p) => p.isPublic !== false && p.isFeatured === true),
     [allPhotos],
   );
 

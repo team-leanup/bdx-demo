@@ -510,6 +510,7 @@ const translations = {
       shareLinkCopied: '링크가 복사되었어요!\n인스타 스토리에 붙여넣기하세요',
       feedbackDefault: '너무 만족하셨어요',
       consultBuiltLine: '상담을 통해 완성된 디자인입니다',
+      reserveCta: '이 디자인으로 예약하기',
       imageHint: '인스타그램 업로드용 · JPG 고화질',
     },
     dashboard: {
@@ -1745,6 +1746,7 @@ const translations = {
       shareLinkCopied: 'Link copied!\nPaste it in your Instagram story',
       feedbackDefault: 'Absolutely loved it',
       consultBuiltLine: 'Design crafted through your consultation',
+      reserveCta: 'Book this design',
       imageHint: 'For Instagram · High-quality JPG',
     },
     dashboard: {
@@ -2980,6 +2982,7 @@ const translations = {
       shareLinkCopied: '链接已复制！\n粘贴到Instagram故事中',
       feedbackDefault: '非常满意',
       consultBuiltLine: '通过咨询完成的设计',
+      reserveCta: '预约此设计',
       imageHint: '用于Instagram上传 · 高清JPG',
     },
     dashboard: {
@@ -4215,6 +4218,7 @@ const translations = {
       shareLinkCopied: 'リンクがコピーされました！\nInstagramストーリーに貼り付けてください',
       feedbackDefault: '大変満足されました',
       consultBuiltLine: 'カウンセリングで完成したデザインです',
+      reserveCta: 'このデザインで予約する',
       imageHint: 'Instagram投稿用 · 高画質JPG',
     },
     dashboard: {

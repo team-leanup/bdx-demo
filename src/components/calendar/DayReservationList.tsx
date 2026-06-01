@@ -441,9 +441,14 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
                   {/* Card */}
                   <div className={cn('flex-1 mb-2', isLast ? 'mb-0' : '')}>
                     <div className="flex items-start gap-3 p-3 rounded-2xl border border-border bg-surface">
-                      {/* Time */}
+                      {/* Time — 0601: 유효 시간(HH:MM)만 강조 표시. 빈 값·'미정' 등
+                          미스케줄 사전상담은 데이터처럼 안 보이게 muted '미정' 라벨로. */}
                       <div className="text-center flex-shrink-0 w-12">
-                        <p className="text-sm font-bold text-primary">{booking.reservationTime}</p>
+                        {booking.reservationTime && booking.reservationTime.includes(':') ? (
+                          <p className="text-sm font-bold text-primary">{booking.reservationTime}</p>
+                        ) : (
+                          <p className="text-xs font-medium text-text-muted">미정</p>
+                        )}
                       </div>
 
                       {/* Info */}

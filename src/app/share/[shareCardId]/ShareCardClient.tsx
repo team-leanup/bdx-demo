@@ -1,73 +1,19 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import Image from 'next/image';
+import { useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useT } from '@/lib/i18n';
-import { DESIGN_SCOPE_LABEL, BODY_PART_LABEL } from '@/lib/labels';
 import type { ShareCardPublicData } from '@/types/share-card';
 import { ShareCardCTASection } from '@/components/share-card/ShareCardCTASection';
 import { LanguageSelector } from '@/components/ui/LanguageSelector';
+import {
+  ShareCardImageTemplate,
+  ShareCardScaledPreview,
+} from '@/components/share-card/ShareCardImageTemplate';
 
 interface Props {
   data: ShareCardPublicData;
   shareCardId: string;
-}
-
-// DesignScope → 한글 라벨
-const INSTA_SCOPE_LABEL: Record<string, string> = {
-  solid_tone: '원톤 (단색)',
-  gradient: '그라데이션',
-  french: '프렌치',
-  art: '아트 디자인',
-  magnet: '자석',
-  magnet_art: '자석 아트',
-  monthly_art: '월간 아트',
-  solid_point: '단색+포인트',
-  full_art: '풀아트',
-};
-
-// DesignScope → mood title (영문)
-const MOOD_TITLE: Record<string, string> = {
-  solid_tone: 'Clean Minimal',
-  gradient: 'Soft Gradient',
-  french: 'Elegant French',
-  art: 'Creative Art',
-  magnet: 'Magnetic Glow',
-  magnet_art: 'Magnetic Art',
-  monthly_art: 'Monthly Curated',
-  solid_point: 'Subtle Accent',
-  full_art: 'Full Art Edition',
-};
-
-// DesignScope → hashtag 1개
-const SCOPE_HASHTAG: Record<string, string> = {
-  solid_tone: '#Minimal',
-  gradient: '#Soft',
-  french: '#Classic',
-  art: '#Creative',
-  magnet: '#Trendy',
-  magnet_art: '#Magnetic',
-  monthly_art: '#Curated',
-  solid_point: '#Point',
-  full_art: '#FullArt',
-};
-
-// Nail shape → 한글
-const SHAPE_LABEL: Record<string, string> = {
-  round: '라운드',
-  oval: '오벌',
-  square: '스퀘어',
-  squoval: '스퀘발',
-  almond: '아몬드',
-  stiletto: '스틸레토',
-  coffin: '코핀',
-};
-
-// 아래 상수는 useT() 훅으로 대체됨 — 컴포넌트 내부에서 t()로 직접 사용
-
-function getDesignLabel(scope: string): string {
-  return INSTA_SCOPE_LABEL[scope] ?? DESIGN_SCOPE_LABEL[scope] ?? scope;
 }
 
 /** iOS Safari (iPhone/iPad/iPod) 감지 */
@@ -80,8 +26,30 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
   const [isDownloading, setIsDownloading] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  // 0601: 다운로드 품질용 풀사이즈(1080px) 숨김 인스턴스 캡처 — 미리보기는 동일 템플릿을 축소 렌더.
+  const captureRef = useRef<HTMLDivElement | null>(null);
+
   // 사진 1장만 사용 (이미지 배열 있어도 첫 장만 카드에 노출)
-  const mainImage = data.imageUrls[0];
+  const mainImage = data.imageUrls[0] ?? '';
+
+  // 다운로드 이미지·미리보기가 공유하는 단일 템플릿 props (SSOT).
+  // 공개 페이지는 외국인 고객 대상이라 문구를 현재 선택 언어로 전달.
+  const cardProps = {
+    imageUrl: mainImage,
+    designScope: data.design.designScope,
+    designCategory: data.design.designCategory,
+    bodyPart: data.design.bodyPart,
+    nailShape: data.design.nailShape,
+    categoryLabelKo: data.design.categoryLabelKo,
+    shopName: data.shopName,
+    shopId: data.shopId,
+    createdAt: data.createdAt,
+    estimatedMinutes: data.estimatedMinutes,
+    shopLogoUrl: data.shopLogoUrl,
+    feedbackLabel: t('shareCard.feedbackDefault'),
+    consultBuiltLine: t('shareCard.consultBuiltLine'),
+    reserveCtaLabel: t('shareCard.reserveCta'),
+  };
 
   const handleDownload = useCallback(async () => {
     if (isDownloading) return;
@@ -89,11 +57,11 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
     setSaveError(null);
 
     try {
-      const target = document.getElementById('share-card-capture-target');
+      const target = captureRef.current;
       if (!target) return;
       const html2canvas = (await import('html2canvas-pro')).default;
       const canvas = await html2canvas(target, {
-        scale: 3,
+        scale: 2,
         useCORS: true,
         allowTaint: false,
         backgroundColor: '#F5F0EA',
@@ -107,7 +75,6 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
 
       if (isIOS()) {
         // iOS Safari: canvas → Blob → navigator.share({files}) 우선
-        // Web Share API Level 2 미지원 시 새 탭으로 이미지 열기 (저장은 꾹눌러 직접)
         const blob = await new Promise<Blob | null>((resolve) => {
           canvas.toBlob(resolve, 'image/jpeg', 0.95);
         });
@@ -115,13 +82,11 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
           const file = new File([blob], fileName, { type: 'image/jpeg' });
           await navigator.share({ files: [file], title: fileName });
         } else {
-          // Web Share 미지원 — 이미지를 새 탭에서 열고 안내
           const url = canvas.toDataURL('image/jpeg', 0.95);
           window.open(url, '_blank');
           setSaveError('사진을 꾹 눌러 저장해주세요 / Press & hold to save');
         }
       } else {
-        // 데스크탑 / 안드로이드: 기존 다운로드
         const url = canvas.toDataURL('image/jpeg', 0.95);
         const link = document.createElement('a');
         link.download = fileName;
@@ -136,38 +101,6 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
     }
   }, [isDownloading, data.shopName]);
 
-  // categoryLabelKo가 있으면 실제 카테고리 라벨 우선, 없으면 기존 INSTA_SCOPE_LABEL fallback
-  const designLabel = data.design.categoryLabelKo ?? getDesignLabel(data.design.designScope);
-  // moodTitle: designCategory 기반 영문 무드 타이틀 매핑 우선, 없으면 designScope 기반 fallback
-  const CATEGORY_MOOD_TITLE: Record<string, string> = {
-    simple: 'Clean Minimal',
-    french: 'Elegant French',
-    magnet: 'Magnetic Glow',
-    art: 'Creative Art',
-  };
-  const moodTitle =
-    (data.design.designCategory ? CATEGORY_MOOD_TITLE[data.design.designCategory] : undefined) ??
-    MOOD_TITLE[data.design.designScope] ??
-    'Nail Design';
-  // hashtag: designCategory 기반 우선, 없으면 designScope 기반 fallback
-  const CATEGORY_HASHTAG: Record<string, string> = {
-    simple: '#Minimal',
-    french: '#Classic',
-    magnet: '#Trendy',
-    art: '#Creative',
-  };
-  const hashtag =
-    (data.design.designCategory ? CATEGORY_HASHTAG[data.design.designCategory] : undefined) ??
-    SCOPE_HASHTAG[data.design.designScope] ??
-    '#Nail';
-  const bodyLabel = BODY_PART_LABEL[data.design.bodyPart] ?? data.design.bodyPart;
-  const shapeLabel = data.design.nailShape ? SHAPE_LABEL[data.design.nailShape] : null;
-  const shapeParts = shapeLabel ? [shapeLabel, bodyLabel] : [bodyLabel];
-  const showMinutes = typeof data.estimatedMinutes === 'number' && data.estimatedMinutes > 0;
-  const dateStr = data.createdAt
-    ? new Date(data.createdAt).toLocaleDateString('en-CA').replace(/-/g, '.')
-    : new Date().toLocaleDateString('en-CA').replace(/-/g, '.');
-
   return (
     <div className="min-h-dvh bg-background flex flex-col items-center justify-start py-8 px-4">
       {/* 언어 선택 — 외국인 고객용 */}
@@ -175,93 +108,18 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
         <LanguageSelector />
       </div>
 
-      {/* 캡처 대상 카드 (9:16) */}
+      {/* 카드 미리보기 — 다운로드 이미지와 완전히 동일한 SSOT 템플릿을 축소 렌더 */}
       <motion.div
-        id="share-card-capture-target"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="relative w-full max-w-sm overflow-hidden"
-        style={{ aspectRatio: '9 / 16', background: '#F5F0EA' }}
+        className="w-full max-w-sm"
       >
-        {/* 상단: 시술 사진 1장 (약 60%) */}
-        <div className="absolute inset-x-0 top-0" style={{ height: '60%' }}>
-          {mainImage ? (
-            <Image
-              src={mainImage}
-              alt="네일 시술 사진"
-              fill
-              className="object-cover"
-              unoptimized
-              priority
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-rose-50 to-pink-100 flex items-center justify-center">
-              <span className="text-5xl">💅</span>
-            </div>
-          )}
-          {/* 하단 페이드 */}
-          <div
-            className="absolute bottom-0 left-0 right-0 h-20"
-            style={{ background: 'linear-gradient(to bottom, rgba(245,240,234,0) 0%, rgba(245,240,234,1) 100%)' }}
-          />
-
-          {/* 좌상단 해시태그 */}
-          <div className="absolute top-3 left-3">
-            <span className="inline-flex px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/92 text-[#191F28]">
-              {hashtag}
-            </span>
-          </div>
-        </div>
-
-        {/* 하단 정보 패널 (40%) */}
-        <div className="absolute inset-x-0 bottom-0 flex flex-col justify-between px-5 pb-5 pt-4" style={{ height: '40%' }}>
-          {/* Title + Subtitle + Body */}
-          <div className="flex flex-col">
-            <span className="text-[32px] font-black text-[#191F28] leading-[1.0] tracking-[-0.035em]">
-              {moodTitle}
-            </span>
-            <span className="text-[13px] font-semibold text-[#4B5563] leading-tight tracking-tight mt-2">
-              {designLabel}
-            </span>
-            <span className="text-[11px] font-medium text-[#6B7280] leading-snug mt-2.5">
-              {t('shareCard.consultBuiltLine')}
-            </span>
-          </div>
-
-          {/* 3줄 감성 정보 박스 */}
-          <div
-            className="flex flex-col rounded-xl overflow-hidden"
-            style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(222, 214, 200, 0.7)' }}
-          >
-            <FeedbackRow icon="💅" parts={shapeParts} />
-            {showMinutes && <FeedbackRow icon="⏱️" number={data.estimatedMinutes} unit="분" />}
-            <FeedbackRow icon="💕" parts={[t('shareCard.feedbackDefault')]} isLast />
-          </div>
-
-          {/* 하단: 샵/날짜/BDX + CTA/QR */}
-          <div className="flex items-end justify-between gap-2">
-            <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-              <span className="text-[14px] font-black text-[#191F28] tracking-tight truncate">
-                {data.shopName}
-              </span>
-              <span className="text-[9px] font-semibold tracking-[0.08em] text-[#9CA3AF]">{dateStr}</span>
-              <div className="flex items-center gap-1 mt-0.5">
-                <Image
-                  src="/bdx-logo/bdx-symbol.svg"
-                  alt="BDX"
-                  width={14}
-                  height={14}
-                  className="object-contain"
-                  unoptimized
-                />
-                <span className="text-[7px] tracking-[0.14em] text-[#9A8F84] font-bold uppercase">
-                  Beauty Decision <span className="text-[#E11D48]">eXperience</span>
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ShareCardScaledPreview
+          ratio="9:16"
+          className="relative mx-auto overflow-hidden rounded-2xl"
+          {...cardProps}
+        />
       </motion.div>
 
       {/* 이미지 저장 버튼 */}
@@ -316,45 +174,11 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
           designScope={data.design.designScope}
         />
       </motion.div>
-    </div>
-  );
-}
 
-interface FeedbackRowProps {
-  icon: string;
-  parts?: string[];
-  number?: number;
-  unit?: string;
-  isLast?: boolean;
-}
-
-function FeedbackRow({ icon, parts, number, unit, isLast }: FeedbackRowProps): React.ReactElement {
-  return (
-    <div
-      className="flex items-center gap-2.5 px-3 py-2.5"
-      style={{
-        borderBottom: isLast ? 'none' : '1px solid rgba(222, 214, 200, 0.65)',
-      }}
-    >
-      <span
-        className="text-[15px] leading-none w-5 text-center"
-        style={{ fontFamily: 'Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif' }}
-      >
-        {icon}
-      </span>
-      {typeof number === 'number' ? (
-        <span className="flex items-baseline gap-0.5">
-          <span className="text-[14px] font-extrabold text-[#191F28] tabular-nums tracking-tight">{number}</span>
-          {unit && <span className="text-[11px] font-semibold text-[#4B5563] ml-0.5">{unit}</span>}
-        </span>
-      ) : (
-        <div className="flex items-center gap-2">
-          {(parts ?? []).map((p, i) => (
-            <span key={i} className="flex items-center gap-2">
-              {i > 0 && <span className="w-[3px] h-[3px] rounded-full bg-[#C9BEB0] inline-block" />}
-              <span className="text-[12px] font-semibold text-[#1F2937] tracking-tight">{p}</span>
-            </span>
-          ))}
+      {/* 숨김 풀사이즈(1080px) 캡처 타겟 — 다운로드 화질 보존 */}
+      {mainImage && (
+        <div style={{ position: 'fixed', left: -9999, top: -9999, zIndex: -1, pointerEvents: 'none' }}>
+          <ShareCardImageTemplate ratio="9:16" templateRef={captureRef} {...cardProps} />
         </div>
       )}
     </div>
