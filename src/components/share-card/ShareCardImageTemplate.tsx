@@ -2,27 +2,19 @@
 
 import { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
-import { DESIGN_SCOPE_LABEL, BODY_PART_LABEL } from '@/lib/labels';
+import { DESIGN_SCOPE_LABEL, BODY_PART_LABEL, CATEGORY_LABELS } from '@/lib/labels';
 
-// Design scope → mood title (영문)
-const MOOD_TITLE: Record<string, string> = {
-  solid_tone: 'Clean Minimal',
-  gradient: 'Soft Gradient',
-  french: 'Elegant French',
-  art: 'Creative Art',
-  magnet: 'Magnetic Glow',
-  magnet_art: 'Magnetic Art',
-  monthly_art: 'Monthly Curated',
-  solid_point: 'Subtle Accent',
-  full_art: 'Full Art Edition',
-};
-
-// 실제 시술 카테고리(designCategory) → mood title (영문) — 공개 페이지와 동일 매핑
-const CATEGORY_MOOD_TITLE: Record<string, string> = {
-  simple: 'Clean Minimal',
-  french: 'Elegant French',
-  magnet: 'Magnetic Glow',
-  art: 'Creative Art',
+// 0601: 공유카드 타이틀은 영문 무드명 대신 '시술 종류명'(한글 카테고리). designScope → 카테고리 매핑.
+const SCOPE_TO_CATEGORY: Record<string, string> = {
+  solid_tone: 'simple',
+  gradient: 'simple',
+  solid_point: 'french',
+  french: 'french',
+  magnet: 'magnet',
+  magnet_art: 'magnet',
+  art: 'art',
+  full_art: 'art',
+  monthly_art: 'art',
 };
 
 // Design scope → hashtag
@@ -175,16 +167,19 @@ export function ShareCardImageTemplate({
   const config = RATIO_CONFIG[ratio];
   const infoPercent = 100 - config.photoPercent;
 
-  // 0601 통일: 영문 무드 타이틀(hero) + 한글 라벨(서브) — 공개 페이지와 동일 전략.
-  const moodTitle =
-    (designCategory ? CATEGORY_MOOD_TITLE[designCategory] : undefined) ??
-    MOOD_TITLE[designScope] ??
-    'Nail Design';
+  // 0601: 타이틀 = '시술 종류명'(한글 카테고리). categoryLabelKo가 샵 설정 라벨(오버라이드 반영)로
+  //   유효하면 우선, 단 'full_art' 같은 원시 scope/key가 넘어온 경우는 무시하고
+  //   designCategory → scope→카테고리 순으로 CATEGORY_LABELS에서 한글 라벨 해석. (영문 무드 타이틀·서브 줄 제거)
+  const isRawKey = !!categoryLabelKo && /^[a-z_]+$/.test(categoryLabelKo);
+  const categoryKey = designCategory ?? SCOPE_TO_CATEGORY[designScope];
+  const categoryTitle =
+    (categoryLabelKo && !isRawKey ? categoryLabelKo : undefined) ??
+    (categoryKey ? CATEGORY_LABELS[categoryKey] : undefined) ??
+    getDesignLabel(designScope);
   const hashtag =
     (designCategory ? CATEGORY_HASHTAG[designCategory] : undefined) ??
     SCOPE_HASHTAG[designScope] ??
     '#Nail';
-  const designLabel = categoryLabelKo ?? getDesignLabel(designScope);
   const bodyLabel = BODY_PART_LABEL[bodyPart] ?? bodyPart;
 
   const shapeLabel = nailShape ? SHAPE_LABEL[nailShape] : null;
@@ -258,30 +253,21 @@ export function ShareCardImageTemplate({
         display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
         padding: '48px 56px 52px',
       }}>
-        {/* Upper: 타이틀 + 서브 + 본문 */}
+        {/* Upper: 시술 종류명(한글 카테고리) + 상담 메시지 — 영문 무드 타이틀·서브 줄 제거 */}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {/* Display — 영문 무드 타이틀 */}
+          {/* Display — 시술 종류명 */}
           <span style={{
-            fontSize: 84, fontWeight: 900, color: '#191F28',
-            lineHeight: 1, letterSpacing: '-0.035em',
+            fontSize: 72, fontWeight: 900, color: '#191F28',
+            lineHeight: 1.08, letterSpacing: '-0.03em', wordBreak: 'keep-all' as const,
           }}>
-            {moodTitle}
+            {categoryTitle}
           </span>
 
-          {/* Body Large — 한글 서브 (실제 카테고리 라벨 우선, 없으면 designScope 라벨) */}
-          <span style={{
-            fontSize: 30, fontWeight: 600, color: '#4B5563',
-            lineHeight: 1.25, letterSpacing: '-0.018em',
-            marginTop: 10,
-          }}>
-            {designLabel}
-          </span>
-
-          {/* Body — 상담 메시지 (서브에서 한 호흡 두고 분리) */}
+          {/* Body — 상담 메시지 */}
           <span style={{
             fontSize: 22, fontWeight: 500, color: '#6B7280',
             lineHeight: 1.45, letterSpacing: '-0.01em',
-            marginTop: 24,
+            marginTop: 20,
           }}>
             {consultBuiltLine ?? CONSULT_BUILT_LINE}
           </span>
