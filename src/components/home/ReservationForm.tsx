@@ -325,25 +325,27 @@ export function ReservationForm({ onSubmit, onCancel, initialValues, naverMode =
 
         {/* 예약 일자 & 시간 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
+          <div className="min-w-0">
             <label className="mb-1 block text-xs font-medium text-text-secondary">
               예약 일자 <span className="text-error">*</span>
             </label>
+            {/* iOS Safari: input[type=date]가 intrinsic 너비로 안 줄어 다른 필드보다 길어지고
+                가로 스크롤 유발 → appearance-none + min-w-0 + w-full로 컨테이너에 맞춤 */}
             <input
               type="date"
               value={formDate}
               onChange={(e) => setFormDate(e.target.value)}
-              className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
+              className="block w-full min-w-0 appearance-none rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
             />
           </div>
-          <div>
+          <div className="min-w-0">
             <label className="mb-1 block text-xs font-medium text-text-secondary">
               예약 시간 <span className="text-error">*</span>
             </label>
             <select
               value={formTime}
               onChange={(e) => setFormTime(e.target.value)}
-              className="w-full rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
+              className="w-full min-w-0 rounded-xl border border-border bg-surface-alt px-3 py-2.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:border-primary"
             >
               <option value="">시간 선택</option>
               {getTimeSlotsForDate(formDate, businessHours).map((slot) => (
