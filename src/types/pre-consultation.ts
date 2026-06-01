@@ -74,6 +74,8 @@ export interface PreConsultationData {
   selectedPhotoUrl?: string;
   /** 0528 C5 — 사진별 가격(포트폴리오에서 가격이 설정된 사진 선택 시) — 가격 정합성 보장 */
   selectedPhotoPrice?: number;
+  /** 선택한 포트폴리오 사진 ID — 사장님 시술 기록에서 해당 사진 직접 연결용 */
+  selectedPhotoId?: string;
 
   // Current nail status
   nailStatus?: NailCurrentStatus;

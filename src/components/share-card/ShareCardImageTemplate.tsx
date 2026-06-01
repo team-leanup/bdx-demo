@@ -166,11 +166,14 @@ export function ShareCardImageTemplate({
     ? new Date(createdAt).toLocaleDateString('en-CA').replace(/-/g, '.')
     : new Date().toLocaleDateString('en-CA').replace(/-/g, '.');
 
-  // QR code generation
+  // QR code generation — categoryKey 있으면 designCategory 쿼리 추가 (ShareCardCTASection 웹 버튼과 동일 패턴)
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!shopId) return;
-    const url = `https://beauty-decision.com/pre-consult/${shopId}`;
+    const base = `https://beauty-decision.com/pre-consult/${shopId}`;
+    const url = categoryKey
+      ? `${base}?from=share&designCategory=${encodeURIComponent(categoryKey)}`
+      : base;
     QRCode.toDataURL(url, {
       width: 240,
       margin: 1,
@@ -179,7 +182,7 @@ export function ShareCardImageTemplate({
     })
       .then(setQrDataUrl)
       .catch(() => { /* QR generation failed — skip */ });
-  }, [shopId]);
+  }, [shopId, categoryKey]);
 
   return (
     <div

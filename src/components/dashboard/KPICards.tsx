@@ -113,19 +113,19 @@ function buildKPIDetail(
       return (
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-            <span className="text-sm text-text-secondary">재방문 고객 (전체)</span>
+            <span className="text-sm text-text-secondary">재방문 고객 (전체 기간, 2회+)</span>
             <span className="font-bold text-text">{analytics.returningCustomers}명</span>
           </div>
           <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-            <span className="text-sm text-text-secondary">신규 고객 (전체)</span>
+            <span className="text-sm text-text-secondary">신규 고객 (전체 기간)</span>
             <span className="font-bold text-text">{analytics.newCustomers}명</span>
           </div>
           <div className="flex items-center justify-between rounded-xl bg-surface-alt p-3">
-            <span className="text-sm text-text-secondary">평균 방문 주기</span>
+            <span className="text-sm text-text-secondary">평균 방문 주기 (전체 기간)</span>
             <span className="font-bold text-text">{analytics.averageVisitInterval}일</span>
           </div>
           <div className="flex items-center justify-between rounded-xl bg-primary/10 p-3">
-            <span className="text-sm font-semibold text-primary">이달 재방문율</span>
+            <span className="text-sm font-semibold text-primary">이달 재방문율 (이달 레코드 기준)</span>
             <span className="font-bold text-primary">{rawValue}%</span>
           </div>
         </div>

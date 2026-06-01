@@ -109,6 +109,20 @@ export interface MembershipSessionState {
 }
 
 export function getMembershipSessionState(m: Membership): MembershipSessionState {
+  // 금액권(totalSessions=0)은 회차 개념이 없음 — 잔액 기반 값으로 조기 반환.
+  // Math.max(1, 0)=1 으로 강제해 1회권으로 오계산되는 것을 방지.
+  if (m.totalSessions === 0) {
+    const remaining = getRemainingAmount(m);
+    return {
+      sessionLimit: 0,
+      currentSessionNumber: 1,
+      currentSessionUsed: getUsedAmount(m),
+      currentSessionRemaining: remaining,
+      remainingSessionsCount: remaining > 0 ? 1 : 0,
+      isFullyUsed: remaining <= 0,
+    };
+  }
+
   const total = Math.max(1, m.totalSessions);
   const sessionLimit = Math.floor(m.purchaseAmount / total);
   const usedAmount = getUsedAmount(m);

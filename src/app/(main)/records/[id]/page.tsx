@@ -365,16 +365,22 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
             )}
           </div>
         )}
-        {/* 파츠 */}
+        {/* 파츠 — 커스텀 파츠는 종류명, 레거시(customPartId 없음)는 일반 '파츠'로 표시.
+            0601 QA: 등급(A등급) 시스템은 폐기됨 → customPartId를 customParts에서 이름으로 해석. */}
         {c.hasParts && c.partsSelections.length > 0 && (
           <p className="text-sm text-text-secondary mb-1.5">
             <span className="font-medium text-text-secondary">파츠: </span>
-            {c.partsSelections.map((p, i) => (
-              <span key={i} className="text-sm font-medium text-text">
-                {i > 0 && ', '}
-                {t('recordDetail.partsGradeUnit').replace('{grade}', p.grade).replace('{count}', String(p.quantity))}
-              </span>
-            ))}
+            {c.partsSelections.map((p, i) => {
+              const partName = p.customPartId
+                ? shopSettings.customParts?.find((cp) => cp.id === p.customPartId)?.name
+                : undefined;
+              return (
+                <span key={i} className="text-sm font-medium text-text">
+                  {i > 0 && ', '}
+                  {partName ?? '파츠'} × {p.quantity}개
+                </span>
+              );
+            })}
           </p>
         )}
         {/* 추가컬러 */}

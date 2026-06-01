@@ -39,16 +39,18 @@ export default function PreConsultDesignPage(): React.ReactElement {
   }, [bookingId, shopId]);
 
   // 공유카드에서 넘어온 경우 카테고리 자동 선택 (builtin + custom 모두 허용)
+  // URL carry(designCategory)가 있으면 stale selectedCategory 유무와 무관하게 항상 검증·override.
+  // (builtin은 이미 pre-select이라 동일 값 재적용으로 무해; custom은 shopData 로드 후 정확히 검증)
   const shopDataInStore = usePreConsultStore((s) => s.shopData);
   useEffect(() => {
     const designCategory = searchParams.get('designCategory');
-    if (!designCategory || selectedCategory) return;
+    if (!designCategory) return;
     const isBuiltin = (BUILTIN_DESIGN_CATEGORIES as ReadonlyArray<string>).includes(designCategory);
     const isCustom = shopDataInStore?.customCategories?.some((c) => c.id === designCategory) ?? false;
     if (isBuiltin || isCustom) {
       usePreConsultStore.getState().setSelectedCategory(designCategory as StyleCategory);
     }
-  }, [searchParams, selectedCategory, shopDataInStore]);
+  }, [searchParams, shopDataInStore]);
 
   const handleGalleryConfirm = (): void => {
     handleNext();

@@ -211,8 +211,14 @@ function CustomerDetailContent({ id }: { id: string }) {
       price: r.finalPrice,
       designerName: useShopStore.getState().getDesignerName(r.designerId) || r.designerId,
       paymentMethod: r.paymentMethod,
+      // 0601 QA: 등급(A) 대신 커스텀 파츠 종류명 × 수량. customPartId를 customParts에서 해석.
       partsUsed: r.consultation.partsSelections?.length
-        ? r.consultation.partsSelections.map((p) => `${p.grade} x${p.quantity}`)
+        ? r.consultation.partsSelections.map((p) => {
+            const name = p.customPartId
+              ? shopSettings.customParts?.find((cp) => cp.id === p.customPartId)?.name
+              : undefined;
+            return `${name ?? '파츠'} x${p.quantity}`;
+          })
         : undefined,
     }));
 
@@ -1542,8 +1548,21 @@ function CustomerDetailContent({ id }: { id: string }) {
               </p>
             </div>
           )}
+          {/* 기존 회원권 수정 시: 현재 사용금액·잔액 안내 */}
+          {customer.membership && (
+            <div className="rounded-xl bg-surface-alt border border-border px-3 py-2.5 text-xs text-text-secondary flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <span>현재 사용금액</span>
+                <span className="font-semibold tabular-nums text-text">{formatWon(customer.membership.usedAmount ?? 0)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>현재 잔액</span>
+                <span className="font-semibold tabular-nums text-primary">{formatWon(getRemainingAmount(customer.membership))}</span>
+              </div>
+            </div>
+          )}
           <div>
-            <label className="text-xs font-medium text-text-secondary mb-1 block">충전 금액 *</label>
+            <label className="text-xs font-medium text-text-secondary mb-1 block">새 총 충전액 *</label>
             <input
               value={mbPurchaseAmount}
               onChange={(e) => {
@@ -1556,7 +1575,13 @@ function CustomerDetailContent({ id }: { id: string }) {
             />
             {mbPurchaseAmount && (
               <p className="mt-1 text-[11px] text-text-muted">
-                {Number(mbPurchaseAmount).toLocaleString('ko-KR')}원 충전 — 시술마다 금액으로 차감돼요
+                {Number(mbPurchaseAmount).toLocaleString('ko-KR')}원 (총 충전액) — 시술마다 금액으로 차감돼요
+              </p>
+            )}
+            {/* 기존 회원권 수정 시: 입력값이 사용금액보다 작으면 경고 */}
+            {customer.membership && mbPurchaseAmount && Number(mbPurchaseAmount) < (customer.membership.usedAmount ?? 0) && (
+              <p className="mt-1 text-[11px] text-rose-500 font-medium">
+                총 충전액이 이미 사용한 금액({formatWon(customer.membership.usedAmount ?? 0)})보다 작습니다. 잔액이 0이 되어 회원권이 소진 처리됩니다.
               </p>
             )}
           </div>
@@ -1583,7 +1608,11 @@ function CustomerDetailContent({ id }: { id: string }) {
             </button>
             <button
               type="button"
-              disabled={!mbPurchaseAmount || Number(mbPurchaseAmount) <= 0}
+              disabled={
+                !mbPurchaseAmount ||
+                Number(mbPurchaseAmount) <= 0 ||
+                (customer.membership != null && Number(mbPurchaseAmount) < (customer.membership.usedAmount ?? 0))
+              }
               onClick={() => {
                 const amount = Number(mbPurchaseAmount);
                 const today = new Date();

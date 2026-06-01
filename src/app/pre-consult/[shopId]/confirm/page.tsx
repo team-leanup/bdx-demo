@@ -273,7 +273,8 @@ export default function PreConsultConfirmPage(): React.ReactElement {
       setSubmitError(t('preConsult.loadingShopData'));
       return;
     }
-    if (!priceEstimate || !selectedCategory) {
+    // 경로 B(bookingId)는 기존 booking 업데이트 — priceEstimate/selectedCategory 불필요
+    if (!bookingId && (!priceEstimate || !selectedCategory)) {
       setSubmitError(t('preConsult.errorMissingInfo'));
       return;
     }
@@ -303,6 +304,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
       selectedPhotoUrl: selectedPhotoUrl ?? undefined,
       // C5: 사진별 가격을 booking에 저장 → 사장님·settlement에서 동일 가격 사용
       selectedPhotoPrice: selectedPhotoPrice != null && selectedPhotoPrice > 0 ? selectedPhotoPrice : undefined,
+      selectedPhotoId: usePreConsultStore.getState().selectedPhotoId ?? undefined,
       nailStatus: nailStatus ?? undefined,
       removalPreference: removalPreference ?? undefined,
       lengthPreference: lengthPreference ?? undefined,
@@ -324,6 +326,8 @@ export default function PreConsultConfirmPage(): React.ReactElement {
         ...data,
         customerName: name.trim(),
         customerPhone: phone.trim(),
+        // referenceImages: home/records/DayReservationList/booking-thumbnail 등 소비처가
+        // preConsultationData.referenceImages 키를 먼저 읽으므로 호환성 유지 (data.referenceImageUrls와 동일 값)
         referenceImages: referenceImageUrls,
       };
       const result = await dbCreateBookingFromConsultationLink({
@@ -335,7 +339,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
         reservationDate: selectedSlotDate,
         reservationTime: selectedSlotTime,
         language: locale,
-        serviceLabel: selectedCategory,
+        serviceLabel: selectedCategory ?? undefined,
         preConsultationData,
         referenceImageUrls,
         deposit: shopData?.depositAmount ?? 0,
@@ -360,6 +364,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
         ...data,
         customerName: name.trim(),
         customerPhone: phone.trim(),
+        // referenceImages: 소비처 호환 유지 (data.referenceImageUrls와 동일 값)
         referenceImages: referenceImageUrls,
       };
       const result = await dbCreateBookingFromShopLink({
@@ -369,7 +374,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
         reservationDate: selectedSlotDate,
         reservationTime: selectedSlotTime,
         language: locale,
-        serviceLabel: selectedCategory,
+        serviceLabel: selectedCategory ?? undefined,
         preConsultationData,
         referenceImageUrls,
         deposit: shopData?.depositAmount ?? 0,
@@ -414,6 +419,12 @@ export default function PreConsultConfirmPage(): React.ReactElement {
     }
 
     // ─── 경로 C: 바로 접근 (bookingId, linkId 모두 없음) — 레거시 ───
+    // 여기 도달 시 !bookingId 가드에 의해 priceEstimate/selectedCategory가 non-null 보장됨
+    if (!priceEstimate || !selectedCategory) {
+      store.setSubmitting(false);
+      setSubmitError(t('preConsult.errorMissingInfo'));
+      return;
+    }
     const createResult = await dbCreatePreConsultation(params.shopId, locale);
     if (!createResult.success || !createResult.id) {
       store.setSubmitting(false);

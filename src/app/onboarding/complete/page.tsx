@@ -111,6 +111,10 @@ export default function CompletePage() {
         // 0601: 온보딩에서 입력한 예약금·월 목표 매출도 완료 시 확실히 DB 영속
         depositAmount: shopSettings.depositAmount,
         monthlyTargetRevenue: shopSettings.monthlyTargetRevenue,
+        // baseOffSameShop/baseOffOtherShop: surcharges 단계에서 사용자가 입력한 값이
+        // DEFAULT(5000/10000)로 덮어써지지 않도록 shopSettings에서 그대로 전달
+        baseOffSameShop: shopSettings.baseOffSameShop,
+        baseOffOtherShop: shopSettings.baseOffOtherShop,
       });
 
       // 3. 포트폴리오 사진 저장 — 0529 이슈 #7: portfolio 실패는 격리. 일부 실패해도 온보딩 완료 처리.

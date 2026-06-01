@@ -131,7 +131,7 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
       >
         <button
           onClick={handleDownload}
-          disabled={isDownloading}
+          disabled={isDownloading || !mainImage}
           className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-text text-white text-[15px] font-bold tracking-tight transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isDownloading ? (
@@ -154,6 +154,10 @@ export function ShareCardClient({ data, shareCardId }: Props): React.ReactElemen
         {saveError ? (
           <p className="text-center text-[12px] text-amber-600 mt-2.5 px-2 leading-snug">
             {saveError}
+          </p>
+        ) : !mainImage ? (
+          <p className="text-center text-[12px] text-amber-600 mt-2.5 px-2 leading-snug">
+            이미지가 없어요 / No image available
           </p>
         ) : (
           <p className="text-center text-[11px] text-text-muted mt-2.5">

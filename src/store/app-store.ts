@@ -5,6 +5,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import type { ServiceStructure, SurchargeSettings, TimeSettings, BusinessHours, Shop, CategoryPricingSettings, CustomCategory } from '@/types/shop';
 import { dbUpdateShopSettings } from '@/lib/db';
 import { useAuthStore } from '@/store/auth-store';
+import { usePartsStore } from '@/store/parts-store';
 
 // Re-exported for backward compatibility with files that import CategoryPricing from this module
 export type { CategoryPricingSettings as CategoryPricing };
@@ -178,15 +179,39 @@ export const useAppStore = create<AppStore>()(
             settings.baseFootPrice !== undefined ||
             settings.businessHours !== undefined
           ) {
+            // 0601 QA(MED): updateShop 결과를 캡처해 실패를 호출자에게 전달.
+            //   종전엔 try/catch가 throw만 잡고 result.success는 무시해 무조건 {success:true} 반환 →
+            //   영업시간 저장 실패(네트워크/RLS)에도 "저장됨" 토스트가 떠 슬롯 계산이 틀어졌다.
             try {
               const { useShopStore } = await import('@/store/shop-store');
-              await useShopStore.getState().updateShop({
+              const shopResult = await useShopStore.getState().updateShop({
                 baseHandPrice: next.baseHandPrice,
                 baseFootPrice: next.baseFootPrice,
                 businessHours: next.businessHours,
               });
+              if (!shopResult.success) {
+                // settings jsonb는 이미 저장됐으므로 보존하고, 실패한 root 컬럼(영업시간/기본가)만 이전 값으로 되돌린다.
+                set({
+                  shopSettings: {
+                    ...get().shopSettings,
+                    baseHandPrice: previous.baseHandPrice,
+                    baseFootPrice: previous.baseFootPrice,
+                    businessHours: previous.businessHours,
+                  },
+                });
+                return { success: false, error: shopResult.error };
+              }
             } catch (err) {
               console.error('[app-store] base price update failed:', err);
+              set({
+                shopSettings: {
+                  ...get().shopSettings,
+                  baseHandPrice: previous.baseHandPrice,
+                  baseFootPrice: previous.baseFootPrice,
+                  businessHours: previous.businessHours,
+                },
+              });
+              return { success: false, error: '영업시간·기본가 저장에 실패했습니다.' };
             }
           }
         }
@@ -248,6 +273,20 @@ export const useAppStore = create<AppStore>()(
             } : {}),
           },
         }));
+
+        // 0601 QA(HIGH): partsStore(localStorage 전용, DB 동기화 없음)를 DB customParts로 hydrate.
+        //   안 하면 새 기기 로그인/스토리지 클리어 후 CustomPartsManager 마운트 시
+        //   partsStore의 기본 8개(DEFAULT_CUSTOM_PARTS)가 setShopSettings로 DB 값을 덮어쓴다.
+        //   여기서 DB 값을 partsStore에 먼저 넣어두면, 이후 sync 효과는 동일 값을 되써 무해해진다.
+        if (s?.customParts && Array.isArray(s.customParts) && s.customParts.length > 0) {
+          usePartsStore.setState({
+            customParts: s.customParts.map((p) => ({
+              id: p.id,
+              name: p.name,
+              pricePerUnit: p.pricePerUnit,
+            })),
+          });
+        }
       },
 
       resetApp: () =>

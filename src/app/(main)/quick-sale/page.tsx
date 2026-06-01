@@ -81,6 +81,8 @@ function QuickSaleContent(): React.ReactElement {
       paymentMethod: data.paymentMethod,
       // [SALES-1] 회원권 차감액 저장 — totalSpend 정합
       membershipApplied: membershipApplied > 0 ? membershipApplied : undefined,
+      // [0601] 퀵세일은 시술 중 별도 업셀 없음 — computeUpsellMetrics fallback(designSurcharge 등) 차단
+      upsellAmount: 0,
       saleDate: data.saleDate,
       saleTime: data.saleTime,
     }).then(() => {

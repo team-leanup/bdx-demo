@@ -103,6 +103,8 @@ export default function SurchargesPage() {
         extension: extensionEnabled ? extension : 0,
         wrapping,
       },
+      baseOffSameShop: selfRemoval,
+      baseOffOtherShop: otherRemoval,
       depositAmount: deposit,
       monthlyTargetRevenue: monthlyTarget > 0 ? monthlyTarget : undefined,
     });

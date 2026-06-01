@@ -111,7 +111,8 @@ export default function HomePage() {
   const todayRevenue = records
     .filter((r) => r.finalizedAt && toKoreanDateString(r.finalizedAt) === today)
     // 0529: 회원권 차감분 포함 실제 시술 금액 기준 (대시보드 computeTodayRevenue와 일관)
-    .reduce((sum, r) => sum + r.finalPrice + (r.membershipApplied ?? 0), 0);
+    // 0601: deposit 누락 수정 — recordRevenue SSOT(finalPrice+membershipApplied+deposit)와 통일
+    .reduce((sum, r) => sum + r.finalPrice + (r.membershipApplied ?? 0) + (r.deposit ?? 0), 0);
 
   const recentConsultations = [...records]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())

@@ -131,6 +131,27 @@ export default function TreatmentPage(): React.ReactElement {
   const categoryBase = resolveCategoryPricing(selectedCategory, shopSettings)?.price ?? 0;
   const basePrice = selectedPhotoPrice != null && selectedPhotoPrice > 0 ? selectedPhotoPrice : categoryBase;
 
+  // 0601: baseEstimate에 이미 포함된 표준 추가금 라벨 집합 구성.
+  // 사전상담에서 선택된 addOns·wrappingPreference·lengthType·removalType을 ko 라벨로 변환.
+  // AddOnMiniPanel(STANDARD_ADDS)의 라벨키와 동일한 i18n 키를 사용해 정확히 매칭.
+  const baseAddOnLabels: string[] = [];
+  // glitter: addOns에 'glitter' 포함
+  if (addOns.includes('glitter')) {
+    baseAddOnLabels.push(t('fieldMode.addGlitter'));
+  }
+  // wrapping: addOns에 'wrapping' 포함 OR wrappingPreference === 'yes'
+  if (addOns.includes('wrapping') || wrappingPreference === 'yes') {
+    baseAddOnLabels.push(t('fieldMode.addWrapping'));
+  }
+  // 연장: lengthType === 'extend'
+  if (lengthType === 'extend') {
+    baseAddOnLabels.push(t('fieldMode.addExtension'));
+  }
+  // 제거: removalType !== 'none'
+  if (removalType !== 'none') {
+    baseAddOnLabels.push(t('fieldMode.addRemoval'));
+  }
+
   return (
     <div className="min-h-dvh bg-background flex flex-col">
       {/* ── Sticky header ── */}
@@ -279,6 +300,8 @@ export default function TreatmentPage(): React.ReactElement {
               onAdd={addInTreatmentAddon}
               onRemove={removeInTreatmentAddon}
               customParts={shopSettings.customParts}
+              preSelectedPartCounts={customPartSelections}
+              baseAddOnLabels={baseAddOnLabels}
             />
           </motion.div>
 

@@ -15,6 +15,17 @@ interface AddOnMiniPanelProps {
   onRemove: (id: string) => void;
   /** 0531: 설정의 커스텀 파츠(종류·단가) 연동. 있으면 일반 '파츠' 버튼 대신 파츠별 수량 스테퍼로 표시 */
   customParts?: CustomPartSetting[];
+  /**
+   * 0601: 사전상담에서 이미 선택한 커스텀 파츠 수량 (name → count).
+   * baseEstimate에 포함된 수량으로, 파츠 스테퍼 아래에 "사전상담 N개 포함" 보조 라벨로 표시한다.
+   * 스테퍼 수량(qty)은 inTreatment 추가분만 카운트하므로 별도 표기해 혼동을 방지한다.
+   */
+  preSelectedPartCounts?: Record<string, number>;
+  /**
+   * 0601: baseEstimate에 이미 포함된 표준 추가금의 한국어 라벨 집합 (예: ['랩핑', '연장', '제거']).
+   * 해당 라벨의 버튼은 disabled 처리하고 "사전상담 포함" 표기 — 이중청구 방지.
+   */
+  baseAddOnLabels?: string[];
 }
 
 interface QuickAddBtn {
@@ -38,6 +49,8 @@ export function AddOnMiniPanel({
   onAdd,
   onRemove,
   customParts,
+  preSelectedPartCounts,
+  baseAddOnLabels,
 }: AddOnMiniPanelProps): React.ReactElement {
   const t = useT();
   const [showCustomForm, setShowCustomForm] = useState(false);
@@ -47,6 +60,8 @@ export function AddOnMiniPanel({
   const hasCustomParts = !!customParts && customParts.length > 0;
   // 파츠는 커스텀 파츠 스테퍼로만 추가 — 표준 추가금(글리터/연장/랩핑/제거)은 항상 노출
   const quickAdds = STANDARD_ADDS;
+  // 0601: base에 이미 포함된 표준 추가금 라벨 집합 (비활성화 판정용)
+  const baseAddOnLabelSet = new Set<string>(baseAddOnLabels ?? []);
 
   // 스테퍼로 이미 표시 중인 라벨 집합 — 하단 목록에서 중복 제외하기 위해 빌드
   const stepperLabels = new Set<string>([
@@ -88,46 +103,58 @@ export function AddOnMiniPanel({
               const last = matching[matching.length - 1];
               if (last) onRemove(last.id);
             };
+            // 0601: 사전상담에서 선택한 수량 — baseEstimate에 이미 포함됨
+            const preCount = preSelectedPartCounts?.[part.name] ?? 0;
             if (qty === 0) {
               return (
-                <button
-                  key={part.id}
-                  type="button"
-                  onClick={addOne}
-                  className="min-h-[44px] rounded-xl px-3 py-2 bg-surface-alt border border-border text-sm font-medium text-text hover:border-primary hover:bg-primary/5 active:scale-[0.97] transition-all duration-150 select-none"
-                >
-                  <span className="text-primary font-bold">+ </span>
-                  {part.name}{' '}
-                  <span className="text-primary font-semibold">₩{part.pricePerUnit.toLocaleString()}</span>
-                </button>
-              );
-            }
-            return (
-              <div
-                key={part.id}
-                className="min-h-[44px] inline-flex items-center gap-2 rounded-xl pl-3 pr-1 py-1 bg-primary/5 border border-primary/40"
-              >
-                <span className="text-sm font-semibold text-text">{part.name}</span>
-                <span className="text-xs text-primary font-medium tabular-nums">₩{part.pricePerUnit.toLocaleString()}</span>
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={removeOne}
-                    aria-label={`${part.name} 1개 빼기`}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-surface border border-border text-base font-bold leading-none text-text-secondary hover:border-primary active:scale-95 transition-all"
-                  >
-                    −
-                  </button>
-                  <span className="min-w-[1.25rem] text-center text-sm font-bold text-primary tabular-nums">{qty}</span>
+                <div key={part.id} className="flex flex-col items-start gap-0.5">
                   <button
                     type="button"
                     onClick={addOne}
-                    aria-label={`${part.name} 1개 추가`}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-base font-bold leading-none text-white hover:bg-primary-dark active:scale-95 transition-all"
+                    className="min-h-[44px] rounded-xl px-3 py-2 bg-surface-alt border border-border text-sm font-medium text-text hover:border-primary hover:bg-primary/5 active:scale-[0.97] transition-all duration-150 select-none"
                   >
-                    +
+                    <span className="text-primary font-bold">+ </span>
+                    {part.name}{' '}
+                    <span className="text-primary font-semibold">₩{part.pricePerUnit.toLocaleString()}</span>
                   </button>
+                  {preCount > 0 && (
+                    <span className="text-[11px] text-text-muted pl-1">
+                      사전상담 {preCount}개 포함
+                    </span>
+                  )}
                 </div>
+              );
+            }
+            return (
+              <div key={part.id} className="flex flex-col items-start gap-0.5">
+                <div className="min-h-[44px] inline-flex items-center gap-2 rounded-xl pl-3 pr-1 py-1 bg-primary/5 border border-primary/40">
+                  <span className="text-sm font-semibold text-text">{part.name}</span>
+                  <span className="text-xs text-primary font-medium tabular-nums">₩{part.pricePerUnit.toLocaleString()}</span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={removeOne}
+                      aria-label={`${part.name} 1개 빼기`}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-surface border border-border text-base font-bold leading-none text-text-secondary hover:border-primary active:scale-95 transition-all"
+                    >
+                      −
+                    </button>
+                    <span className="min-w-[1.25rem] text-center text-sm font-bold text-primary tabular-nums">{qty}</span>
+                    <button
+                      type="button"
+                      onClick={addOne}
+                      aria-label={`${part.name} 1개 추가`}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-base font-bold leading-none text-white hover:bg-primary-dark active:scale-95 transition-all"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                {preCount > 0 && (
+                  <span className="text-[11px] text-text-muted pl-1">
+                    사전상담 {preCount}개 포함 · 현장 추가 {qty}개
+                  </span>
+                )}
               </div>
             );
           })}
@@ -137,6 +164,28 @@ export function AddOnMiniPanel({
           const amount = getAmount(surcharges);
           if (amount <= 0) return null;
           const label = t(labelKey);
+          // 0601: base에 이미 포함된 표준 추가금 → disabled + "사전상담 포함" 표기 (이중청구 방지)
+          const isBaseIncluded = baseAddOnLabelSet.has(label);
+          if (isBaseIncluded) {
+            return (
+              <div key={labelKey} className="flex flex-col items-start gap-0.5">
+                <button
+                  type="button"
+                  disabled
+                  className="min-h-[44px] rounded-xl px-3 py-2 bg-surface-alt border border-border text-sm font-medium text-text-muted opacity-60 cursor-not-allowed select-none"
+                  aria-label={`${label} — 사전상담 포함`}
+                >
+                  {label}{' '}
+                  <span className="font-semibold">
+                    +₩{amount.toLocaleString()}
+                  </span>
+                </button>
+                <span className="text-[11px] text-text-muted pl-1">
+                  사전상담 포함
+                </span>
+              </div>
+            );
+          }
           // 동일 라벨 항목을 group해 qty 계산
           const matching = addons.filter((a) => a.label === label);
           const qty = matching.length;

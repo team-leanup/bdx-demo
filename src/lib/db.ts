@@ -1,7 +1,7 @@
 import { getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
 import { generateId } from '@/lib/generate-id';
 import { supabase } from '@/lib/supabase';
-import { resolveCategoryLabelKo } from '@/lib/category-resolver';
+import { resolveCategoryLabelKo, resolveCategoryPricing } from '@/lib/category-resolver';
 import { designCategoryToScope } from '@/lib/category-mapping';
 import type { Database } from '@/types/database';
 import type { Customer, CustomerTag, MembershipPlan, SmallTalkNote, VisitFrequency, TagCategory, TagAccent } from '@/types/customer';
@@ -1165,7 +1165,11 @@ export async function dbUpsertShop(shop: Shop): Promise<{ success: boolean; erro
     base_foot_price: shop.baseFootPrice,
     logo_url: shop.logoUrl ?? null,
     onboarding_completed_at: shop.onboardingCompletedAt ?? null,
-    settings: (shop.settings as unknown as import('@/types/database').Json) ?? null,
+    // 0601 QA(HIGH): settings 컬럼은 dbUpdateShopSettings가 단독 소유한다.
+    //   여기서 shop.settings(shop-store hydrate 시점 스냅샷)를 같이 쓰면,
+    //   setShopSettings → dbUpdateShopSettings가 막 저장한 최신 settings를
+    //   updateShop(name/businessHours 등) → dbUpsertShop이 stale 값으로 덮어쓴다.
+    //   upsert는 on-conflict 시 미포함 컬럼을 보존하므로 settings를 빼면 root 컬럼만 갱신된다.
     updated_at: getNowInKoreaIso(),
   });
   if (error) {
@@ -1380,7 +1384,10 @@ export async function fetchShareCardPublicData(shareCardId: string): Promise<imp
   const ph = photo!;
   const styleCat = (ph.style_category ?? 'simple') as DesignCategory;
   const image = ph.image_path ? getPortfolioPublicUrl(ph.image_path) : (ph.image_data_url ?? undefined);
-  const catTime = settings.categoryPricing?.[styleCat as keyof CategoryPricingSettings]?.time;
+  // 0601 QA: 커스텀 카테고리 시술시간은 categoryPricing이 아니라 customCategories[].time에 저장된다.
+  //   categoryPricing[styleCat]만 보면 커스텀은 항상 undefined → 공유카드에 시간 미표시.
+  //   builtin·custom 모두 처리하는 SSOT resolveCategoryPricing으로 조회.
+  const catTime = resolveCategoryPricing(styleCat, settings)?.time;
   return {
     ...base,
     imageUrls: image ? [image] : [],
@@ -2079,6 +2086,16 @@ export async function dbCompletePreConsultation(
   });
 
   if (bookingError) {
+    // 0601 QA(HIGH): 시간미정 path-C 중복 제출이 슬롯 UNIQUE(23505)에 걸려도
+    //   pre_consultation은 이미 'completed'이므로 orphan/오류로 두지 않고 성공 처리한다.
+    //   (uq_shoplink_slot가 reservation_time='' 를 제외하도록 마이그레이션됐으므로 정상 경로에선 발생하지 않음 — 잔여 방어.)
+    if ((bookingError as { code?: string }).code === '23505') {
+      console.warn('[db] dbCompletePreConsultation: 슬롯 중복(23505) — 시간미정 중복 제출로 간주하고 성공 처리', {
+        preConsultationId: id,
+        shopId,
+      });
+      return { success: true };
+    }
     console.error('[db] dbCompletePreConsultation: booking_requests insert failed:', {
       ...toDbErrorSnapshot(bookingError),
       preConsultationId: id,
