@@ -47,6 +47,14 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
     ? [raw.selectedPhotoUrl, ...baseImages]
     : [...baseImages];
 
+  // 0601: '고객 카드 보기'가 DB hydration(~1초) 후 booking.customerId가 채워지며 뒤늦게
+  //   나타나 버튼 바가 2→3개로 튀던 깜빡임 방지 — 전화/이름으로 고객 스토어에서도 즉시
+  //   매칭(읽기 전용, 생성 X)해 첫 렌더에 버튼 유무를 확정한다. allCustomers 구독이라 반응형.
+  const linkedCustomerId =
+    booking.customerId ??
+    (booking.phone ? findCustomerByPhone(booking.phone)?.id : undefined) ??
+    (booking.customerName ? allCustomers.find((c) => c.name === booking.customerName)?.id : undefined);
+
   const handleConfirm = (): void => {
     const resolvedCustomerId = resolveOrCreateCustomer();
     updateReservation(booking.id, {
@@ -207,9 +215,9 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
 
       {/* 하단 CTA */}
       <div className="sticky bottom-0 bg-background border-t border-border px-4 py-3 pb-safe flex gap-2">
-        {booking.customerId && (
+        {linkedCustomerId && (
           <button
-            onClick={() => router.push(`/customers/${booking.customerId}`)}
+            onClick={() => router.push(`/customers/${linkedCustomerId}`)}
             className="flex-1 rounded-xl border border-border bg-surface py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
           >
             고객 카드 보기

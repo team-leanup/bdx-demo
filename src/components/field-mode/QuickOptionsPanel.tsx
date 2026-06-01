@@ -92,11 +92,6 @@ export function QuickOptionsPanel({
 
   const addOnOptions: OptionButton<AddOnOption>[] = [
     { value: 'stone', label: t('fieldMode.addStone'), sublabel: '+₩5,000' },
-    {
-      value: 'parts' as const,
-      label: t('fieldMode.addParts'),
-      sublabel: `+₩${surcharges.largeParts.toLocaleString()}`,
-    },
     { value: 'glitter', label: t('fieldMode.addGlitter'), sublabel: '+₩3,000' },
   ];
 

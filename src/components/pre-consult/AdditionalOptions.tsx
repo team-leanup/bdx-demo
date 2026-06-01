@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/Button';
 import { ADDON_FIXED_PRICES } from '@/lib/pre-consult-price';
 import { cn } from '@/lib/cn';
 import type { AddOnOption } from '@/types/pre-consultation';
-import type { SurchargeSettings } from '@/types/shop';
 
 interface AdditionalOptionsProps {
   onComplete: () => void;
@@ -19,14 +18,10 @@ interface AddOnConfig {
   extraPrice: number;
 }
 
-const DEFAULT_SURCHARGES: Pick<SurchargeSettings, 'largeParts'> = {
-  largeParts: 3000,
-};
-
-function getAddOnConfigs(surcharges: Pick<SurchargeSettings, 'largeParts'>): AddOnConfig[] {
+// 0601: '파츠' 고정 add-on 제거 — 파츠는 커스텀 파츠(아래 스테퍼)로만 선택. 스톤/글리터만 고정 add-on.
+function getAddOnConfigs(): AddOnConfig[] {
   return [
     { key: 'stone', tKey: 'preConsult.addOnStone', icon: '💎', extraPrice: ADDON_FIXED_PRICES.stone },
-    { key: 'parts', tKey: 'preConsult.addOnParts', icon: '🌸', extraPrice: surcharges.largeParts },
     { key: 'glitter', tKey: 'preConsult.addOnGlitter', icon: '✨', extraPrice: ADDON_FIXED_PRICES.glitter },
   ];
 }
@@ -37,10 +32,9 @@ export function AdditionalOptions({ onComplete }: AdditionalOptionsProps): React
   const locale = useLocale();
   const store = usePreConsultStore();
   const shopData = usePreConsultStore((s) => s.shopData);
-  const surcharges = shopData?.surcharges ?? DEFAULT_SURCHARGES;
   const customParts = shopData?.customParts ?? [];
 
-  const ADD_ONS = getAddOnConfigs(surcharges);
+  const ADD_ONS = getAddOnConfigs();
 
   const handleToggle = (opt: AddOnOption): void => {
     store.toggleAddOn(opt);

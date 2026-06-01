@@ -84,9 +84,10 @@ export default function SurchargesPage() {
   const [extension, setExtension] = useState(init.extension > 0 ? init.extension : 20000);
   const [showExtensionZeroWarning, setShowExtensionZeroWarning] = useState(false);
 
-  const [parts, setParts] = useState(init.partsExcessPer);
-  const [glitter, setGlitter] = useState(init.largeParts);
-  const [pointArt, setPointArt] = useState(init.pointArt);
+  // 0601: 온보딩에서도 설정의 랩핑·예약금·월 목표 매출을 설정(커스텀 파츠 제외) — 설정 화면과 동일 항목.
+  const [wrapping, setWrapping] = useState(init.wrapping ?? 5000);
+  const [deposit, setDeposit] = useState(shopSettings.depositAmount ?? 10000);
+  const [monthlyTarget, setMonthlyTarget] = useState(shopSettings.monthlyTargetRevenue ?? 0);
 
   const handleNext = () => {
     // 연장 ON인데 금액 0이면 경고 (한 번만 — 두 번째는 그대로 진행)
@@ -100,10 +101,10 @@ export default function SurchargesPage() {
         selfRemoval,
         otherRemoval,
         extension: extensionEnabled ? extension : 0,
-        partsExcessPer: parts,
-        largeParts: glitter,
-        pointArt,
+        wrapping,
       },
+      depositAmount: deposit,
+      monthlyTargetRevenue: monthlyTarget > 0 ? monthlyTarget : undefined,
     });
     router.push('/onboarding/notice');
   };
@@ -162,28 +163,32 @@ export default function SurchargesPage() {
           )}
         </SectionCard>
 
-        {/* Section 3: 추가 옵션 */}
-        <SectionCard title="추가 옵션" delay={0.14}>
+        {/* Section 3: 랩핑 */}
+        <SectionCard title="랩핑" delay={0.14}>
           <PriceInput
-            label="파츠 초과분 (개당)"
-            value={parts}
-            onChange={setParts}
-            helper="파츠 개수가 기본 포함 수를 넘었을 때 1개당 추가금"
+            label="랩핑 추가금"
+            value={wrapping}
+            onChange={setWrapping}
+            helper="손톱 끝 감싸기 — 손가락당 추가금"
           />
-          <PriceInput
-            label="큰 파츠 추가금"
-            value={glitter}
-            onChange={setGlitter}
-            helper="대형 파츠(스톤·오브제 등) 선택 시 부과되는 추가금"
-          />
-          <PriceInput
-            label="포인트아트"
-            value={pointArt}
-            onChange={setPointArt}
-            helper="포인트 아트 1개 추가 시 금액"
-          />
-          <p className="text-xs text-text-muted pt-1">고객이 선택하게 돼요</p>
         </SectionCard>
+
+        {/* Section 4: 예약금 · 매출 목표 */}
+        <SectionCard title="예약금 · 매출 목표" delay={0.21}>
+          <PriceInput
+            label="예약금"
+            value={deposit}
+            onChange={setDeposit}
+            helper="사전상담 예약 시 자동 적용돼요"
+          />
+          <PriceInput
+            label="월 목표 매출 (선택)"
+            value={monthlyTarget}
+            onChange={setMonthlyTarget}
+            helper="비워두면 미설정 — 대시보드 달성률에 사용돼요"
+          />
+        </SectionCard>
+
       </div>
 
       <p className="text-xs text-text-muted text-center mt-5 mb-3">

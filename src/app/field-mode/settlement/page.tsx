@@ -226,7 +226,6 @@ export default function SettlementPage(): React.ReactElement | null {
   function getAddOnAmount(addon: AddOnOption): number {
     switch (addon) {
       case 'stone': return ADDON_FIXED_PRICES.stone;
-      case 'parts': return shopSettings.surcharges.largeParts;
       case 'glitter': return ADDON_FIXED_PRICES.glitter;
       // [HIGH] 랩핑 surcharge 반영 — shopSettings 우선, 없으면 고정가
       case 'wrapping': return shopSettings.surcharges.wrapping ?? ADDON_FIXED_PRICES.wrapping;
@@ -310,7 +309,6 @@ export default function SettlementPage(): React.ReactElement | null {
       const addonBreakdownAmount = (addon: AddOnOption): number => {
         switch (addon) {
           case 'stone': return ADDON_FIXED_PRICES.stone;
-          case 'parts': return shopSettings.surcharges.largeParts;
           case 'glitter': return ADDON_FIXED_PRICES.glitter;
           case 'wrapping': return shopSettings.surcharges.wrapping ?? ADDON_FIXED_PRICES.wrapping; // estimate 와 동일
           default: return 0;

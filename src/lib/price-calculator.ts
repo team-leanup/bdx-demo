@@ -45,7 +45,6 @@ export function buildServicePricingFromShopSettings(settings: {
     gradation: number;
     french: number;
     magnet: number;
-    pointArt: number;
     fullArt: number;
     wrapping?: number;
   };
@@ -58,8 +57,8 @@ export function buildServicePricingFromShopSettings(settings: {
     repairPerNail: settings.surcharges.repairPer,
     extensionBase: settings.surcharges.extension,
     solidTone: 0,
-    // [CRITICAL] surcharges.pointArt/fullArt가 SSOT — settings 저장 시 항상 동기화됨
-    solidPoint: settings.surcharges.pointArt,
+    // 0601: pointArt 제거 — solid_point(단색+포인트) 디자인 가격은 기본 상수 사용(레거시 records 표시용).
+    solidPoint: DEFAULT_SERVICE_PRICING.solidPoint,
     fullArt: settings.surcharges.fullArt,
     monthlyArt: settings.baseMonthlyArtPrice,
     gradient: settings.surcharges.gradation,

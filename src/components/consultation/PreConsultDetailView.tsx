@@ -174,6 +174,10 @@ export function PreConsultDetailView({
             <InfoRow label="디자인 느낌" value={data.designFeel ? (PRE_FEEL_LABEL[data.designFeel] ?? data.designFeel) : undefined} />
             <InfoRow label="네일 쉐입" value={data.nailShape ? (PRE_SHAPE_LABEL[data.nailShape] ?? data.nailShape) : undefined} />
             <InfoRow label="시술 방향" value={data.stylePreference ? (PRE_STYLE_PREF_LABEL[data.stylePreference] ?? data.stylePreference) : undefined} />
+            {/* 0601: 손님이 고른 메뉴 사진의 가격 — 원장이 시작가를 바로 확인 (이전엔 저장만 되고 미표시) */}
+            {typeof data.selectedPhotoPrice === 'number' && data.selectedPhotoPrice > 0 && (
+              <InfoRow label="선택 사진 가격" value={`₩${data.selectedPhotoPrice.toLocaleString()}`} />
+            )}
           </SectionCard>
         )}
 

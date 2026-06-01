@@ -16,10 +16,8 @@ const DEMO_SHOP_DATA: ShopPublicData = {
   },
   surcharges: {
     selfRemoval: 5000, otherRemoval: 10000, gradation: 10000,
-    french: 10000, magnet: 10000, pointArt: 20000, fullArt: 40000,
-    parts1000included: 2, parts2000included: 2, parts3000included: 2,
-    partsExcessPer: 1000, largeParts: 3000, repairPer: 5000,
-    extension: 20000, overlay: 10000, wrapping: 5000,
+    french: 10000, magnet: 10000, fullArt: 40000,
+    repairPer: 5000, extension: 20000, overlay: 10000, wrapping: 5000,
   },
   customerNotice: '선택하신 디자인을 기준으로 가격과 시간은 변동될 수 있어요',
   kakaoTalkUrl: 'https://pf.kakao.com/_xBDXdemo',

@@ -81,8 +81,6 @@ export function calculatePreConsultPrice(input: PriceCalcInput): PreConsultPrice
   for (const addOn of addOns) {
     if (addOn === 'stone') {
       addOnSurcharge += ADDON_FIXED_PRICES.stone;
-    } else if (addOn === 'parts') {
-      addOnSurcharge += surcharges.largeParts;
     } else if (addOn === 'glitter') {
       addOnSurcharge += ADDON_FIXED_PRICES.glitter;
     } else if (addOn === 'wrapping') {

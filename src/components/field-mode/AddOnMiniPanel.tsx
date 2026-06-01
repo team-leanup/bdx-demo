@@ -24,10 +24,9 @@ interface QuickAddBtn {
 
 // 0531 회의: 시술 중 추가금(파츠·글리터·포인트아트·연장·랩핑·제거)을 원장이 자유롭게 여러 번 추가.
 // 사전상담에서 이미 고른 항목도 "현장에서 더 추가"할 수 있어야 하므로 비활성화하지 않는다(탭마다 1개씩 누적).
-const PARTS_ADD: QuickAddBtn = { labelKey: 'fieldMode.addParts', getAmount: (s) => s.largeParts };
+// 0601: 파츠·포인트아트 빠른추가 제거 — 파츠는 커스텀 파츠로 대체. 글리터/연장/랩핑/제거만 표준 추가금.
 const STANDARD_ADDS: QuickAddBtn[] = [
   { labelKey: 'fieldMode.addGlitter',   getAmount: () => ADDON_FIXED_PRICES.glitter },
-  { labelKey: 'fieldMode.addPointArt',  getAmount: (s) => s.pointArt },
   { labelKey: 'fieldMode.addExtension', getAmount: (s) => s.extension },
   { labelKey: 'fieldMode.addWrapping',  getAmount: (s) => s.wrapping ?? ADDON_FIXED_PRICES.wrapping },
   { labelKey: 'fieldMode.addRemoval',   getAmount: (s) => s.selfRemoval },
@@ -46,8 +45,8 @@ export function AddOnMiniPanel({
   const [customAmount, setCustomAmount] = useState('');
 
   const hasCustomParts = !!customParts && customParts.length > 0;
-  // 커스텀 파츠가 설정돼 있으면 일반 '파츠' 버튼은 스테퍼로 대체, 나머지 표준 추가금은 항상 노출
-  const quickAdds = hasCustomParts ? STANDARD_ADDS : [PARTS_ADD, ...STANDARD_ADDS];
+  // 파츠는 커스텀 파츠 스테퍼로만 추가 — 표준 추가금(글리터/연장/랩핑/제거)은 항상 노출
+  const quickAdds = STANDARD_ADDS;
 
   // 스테퍼로 이미 표시 중인 라벨 집합 — 하단 목록에서 중복 제외하기 위해 빌드
   const stepperLabels = new Set<string>([

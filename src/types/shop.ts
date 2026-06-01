@@ -16,17 +16,13 @@ export interface SurchargeSettings {
   gradation: number;          // 그라데이션 추가금
   french: number;             // 프렌치 추가금
   magnet: number;             // 자석 추가금
-  pointArt: number;           // 포인트 아트
   fullArt: number;            // 풀아트
-  parts1000included: number;  // 1000원 파츠 포함 개수
-  parts2000included: number;  // 2000원 파츠 포함 개수
-  parts3000included: number;  // 3000원 파츠 포함 개수
-  partsExcessPer: number;     // 초과 개당 금액
-  largeParts: number;         // 큰 파츠 추가금
   repairPer: number;          // 리페어 개당
   extension: number;
   overlay: number;            // 오버레이
   wrapping?: number;          // 랩핑 (손톱 끝 감싸기) — 미설정 시 기본 5000
+  // 0601: 파츠 초과분(partsExcessPer)·큰 파츠(largeParts)·포인트아트(pointArt)·파츠 포함개수는
+  //       커스텀 파츠 모델로 대체되어 전면 제거됨.
 }
 
 export interface TimeSettings {

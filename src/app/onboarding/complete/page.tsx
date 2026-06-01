@@ -108,6 +108,9 @@ export default function CompletePage() {
         categoryPricing: shopSettings.categoryPricing,
         customerNotice: shopSettings.customerNotice,
         surcharges: shopSettings.surcharges,
+        // 0601: 온보딩에서 입력한 예약금·월 목표 매출도 완료 시 확실히 DB 영속
+        depositAmount: shopSettings.depositAmount,
+        monthlyTargetRevenue: shopSettings.monthlyTargetRevenue,
       });
 
       // 3. 포트폴리오 사진 저장 — 0529 이슈 #7: portfolio 실패는 격리. 일부 실패해도 온보딩 완료 처리.
