@@ -2,12 +2,13 @@ import { getNowInKoreaIso, getTodayInKorea } from '@/lib/format';
 import { generateId } from '@/lib/generate-id';
 import { supabase } from '@/lib/supabase';
 import { resolveCategoryLabelKo } from '@/lib/category-resolver';
+import { designCategoryToScope } from '@/lib/category-mapping';
 import type { Database } from '@/types/database';
 import type { Customer, CustomerTag, MembershipPlan, SmallTalkNote, VisitFrequency, TagCategory, TagAccent } from '@/types/customer';
 import type { ConsultationRecord, ConsultationType, BookingRequest, BookingChannel, BookingStatus, DailyChecklist } from '@/types/consultation';
 import type { PortfolioPhoto } from '@/types/portfolio';
 import type { Shop, Designer, BusinessHours, ShopExtendedSettings, CategoryPricingSettings, SurchargeSettings } from '@/types/shop';
-import type { ShopPublicData } from '@/types/pre-consultation';
+import type { ShopPublicData, DesignCategory } from '@/types/pre-consultation';
 
 const PORTFOLIO_BUCKET = 'portfolio-images';
 // portfolio-images 버킷 서버측 file_size_limit 과 일치 (2MB). 초과 시 업로드 전 차단.
@@ -278,6 +279,7 @@ function toPortfolioPhoto(row: Database['public']['Tables']['portfolio_photos'][
     isPopular: row.is_popular ?? false,
     isRepresentative: typeof rowAny['is_representative'] === 'boolean' ? rowAny['is_representative'] : false,
     partsMemo: typeof rowAny['parts_memo'] === 'string' ? rowAny['parts_memo'] : undefined,
+    shareCardId: typeof rowAny['share_card_id'] === 'string' ? rowAny['share_card_id'] : undefined,
   };
 }
 
@@ -1249,112 +1251,148 @@ export async function dbCreateShareCard(
   shareCardId: string,
   shopId: string,
 ): Promise<{ success: boolean; error?: string }> {
-  const { error } = await supabase
+  // 1) 상담기록에 attach (시술/상담 연결 카드)
+  const { data: recRows, error } = await supabase
     .from('consultation_records')
     .update({ share_card_id: shareCardId } as Record<string, unknown>)
     .eq('id', recordId)
-    .eq('shop_id', shopId);
+    .eq('shop_id', shopId)
+    .select('id');
 
   if (error) {
     console.error('[db] dbCreateShareCard error:', toDbErrorSnapshot(error));
     return { success: false, error: error.message };
   }
+  if (recRows && recRows.length > 0) return { success: true };
 
-  return { success: true };
+  // 2) 0601: 상담기록 미연결 단독 포트폴리오 사진에 attach (record_id=null 사진 공유 시 404 방지).
+  //    이전엔 consultation_records 0행 업데이트가 에러 없이 success → 공개 링크가 404였음.
+  const { data: photoRows, error: photoErr } = await supabase
+    .from('portfolio_photos')
+    .update({ share_card_id: shareCardId } as Record<string, unknown>)
+    .eq('id', recordId)
+    .eq('shop_id', shopId)
+    .select('id');
+
+  if (photoErr) {
+    console.error('[db] dbCreateShareCard (photo) error:', toDbErrorSnapshot(photoErr));
+    return { success: false, error: photoErr.message };
+  }
+  if (photoRows && photoRows.length > 0) return { success: true };
+
+  return { success: false, error: '공유카드를 연결할 대상(상담기록·사진)을 찾지 못했습니다.' };
 }
 
 export async function fetchShareCardPublicData(shareCardId: string): Promise<import('@/types/share-card').ShareCardPublicData | null> {
-  // Find the consultation record by share_card_id
-  const { data: record, error: recErr } = await supabase
+  // 1순위: 상담기록 연결 카드. 2순위(폴백): 상담기록 미연결 단독 포트폴리오 사진 카드(record_id=null).
+  const { data: recordRaw } = await supabase
     .from('consultation_records')
-    .select('id, shop_id, consultation, image_urls, share_card_id, created_at, estimated_minutes')
+    .select('id, shop_id, consultation, image_urls, created_at, estimated_minutes')
     .eq('share_card_id' as string, shareCardId)
-    .single();
+    .maybeSingle();
+  const record = recordRaw as {
+    id: string; shop_id: string; consultation: unknown;
+    image_urls: unknown; created_at: string | null; estimated_minutes: number | null;
+  } | null;
 
-  if (recErr || !record) {
-    console.error('[db] fetchShareCardPublicData record error:', toDbErrorSnapshot(recErr));
-    return null;
+  const hasRecord = !!record && !!record.consultation;
+
+  type SharePhotoRow = { id: string; shop_id: string; style_category: string | null; image_path: string | null; image_data_url: string | null };
+  let photo: SharePhotoRow | null = null;
+  if (!hasRecord) {
+    const { data: p } = await supabase
+      .from('portfolio_photos')
+      .select('id, shop_id, style_category, image_path, image_data_url')
+      .eq('share_card_id' as string, shareCardId)
+      .maybeSingle();
+    photo = (p as SharePhotoRow | null) ?? null;
   }
 
-  if (!record.consultation) {
-    console.error('[db] fetchShareCardPublicData: consultation is null for record', record.id);
+  const shopId = hasRecord ? record!.shop_id : photo?.shop_id;
+  if (!shopId) {
+    console.error('[db] fetchShareCardPublicData: no record/photo for share_card_id', shareCardId);
     return null;
   }
 
   // Fetch shop data via SECURITY DEFINER RPC.
-  // 2026-05-30: anon 은 shops 테이블 직접 SELECT 가 RLS(shop-demo 외 차단)로 막히므로
-  // 직접 쿼리는 비-demo 샵 공유카드에서 항상 null → 404 를 유발했음. RPC 경유로 수정.
-  const { data: shopRpc, error: shopErr } = await supabase.rpc('get_shop_public_data', {
-    p_shop_id: record.shop_id,
-  });
-
+  // 2026-05-30: anon 은 shops 테이블 직접 SELECT 가 RLS(shop-demo 외 차단)로 막히므로 RPC 경유.
+  const { data: shopRpc, error: shopErr } = await supabase.rpc('get_shop_public_data', { p_shop_id: shopId });
   if (shopErr || !shopRpc) {
     console.error('[db] fetchShareCardPublicData shop error:', toDbErrorSnapshot(shopErr));
     return null;
   }
-
   const shop = shopRpc as unknown as {
-    id: string;
-    name: string;
-    phone: string | null;
-    address: string | null;
-    logo_url: string | null;
-    settings: unknown;
+    id: string; name: string; phone: string | null; address: string | null; logo_url: string | null; settings: unknown;
   };
+  const settings = (shop.settings as unknown as ShopExtendedSettings) ?? ({} as ShopExtendedSettings);
 
-  // Fetch portfolio photos for this record (공개 사진만 — 비공개 사진 URL 노출 방지)
-  const { data: photos } = await supabase
-    .from('portfolio_photos')
-    .select('image_data_url, image_path')
-    .eq('record_id', record.id)
-    .eq('shop_id', record.shop_id)
-    .eq('is_public', true);
-
-  const imageUrls: string[] = [];
-  if (photos) {
-    for (const p of photos) {
-      if (p.image_path) {
-        const { data: urlData } = supabase.storage.from('portfolio-images').getPublicUrl(p.image_path);
-        imageUrls.push(urlData.publicUrl);
-      } else if (p.image_data_url) {
-        imageUrls.push(p.image_data_url);
-      }
-    }
-  }
-
-  // Also include record imageUrls if any
-  const recordImageUrls = (record.image_urls as unknown as string[]) ?? [];
-  const allImages = [...imageUrls, ...recordImageUrls];
-
-  const consultation = record.consultation as unknown as import('@/types/consultation').ConsultationType;
-  const settings = (shop.settings as unknown as import('@/types/shop').ShopExtendedSettings) ?? {};
-
-  return {
+  const base = {
     shopId: shop.id,
     shopName: shop.name,
     shopPhone: shop.phone ?? undefined,
     shopAddress: shop.address ?? undefined,
     shopLogoUrl: shop.logo_url ?? undefined,
-    imageUrls: allImages,
-    design: {
-      designScope: consultation.designScope,
-      expressions: consultation.expressions,
-      hasParts: consultation.hasParts,
-      bodyPart: consultation.bodyPart,
-      nailShape: consultation.nailShape,
-      designCategory: consultation.designCategory ?? undefined,
-      // 공개 페이지(/share)에서 shopSettings 없이도 카테고리 라벨을 표시할 수 있도록 미리 해석.
-      // builtin(simple/french/magnet/art): CATEGORY_LABELS 기본값 사용 (settings.categoryLabels rename도 반영).
-      // custom-*: shopSettings.customCategories에서 name 조회.
-      categoryLabelKo: consultation.designCategory
-        ? resolveCategoryLabelKo(consultation.designCategory, settings)
-        : undefined,
-    },
-    estimatedMinutes: (record as { estimated_minutes?: number | null }).estimated_minutes ?? undefined,
-    createdAt: (record as { created_at?: string }).created_at ?? undefined,
     kakaoTalkUrl: settings.kakaoTalkUrl,
     naverReservationUrl: settings.naverReservationUrl,
-    recordId: record.id,
+  };
+
+  if (hasRecord) {
+    const rec = record!;
+    // record_id 연결 공개 사진 + record.image_urls
+    const { data: photos } = await supabase
+      .from('portfolio_photos')
+      .select('image_data_url, image_path')
+      .eq('record_id', rec.id)
+      .eq('shop_id', rec.shop_id)
+      .eq('is_public', true);
+    const imageUrls: string[] = [];
+    if (photos) {
+      for (const p of photos) {
+        if (p.image_path) imageUrls.push(getPortfolioPublicUrl(p.image_path));
+        else if (p.image_data_url) imageUrls.push(p.image_data_url);
+      }
+    }
+    const allImages = [...imageUrls, ...((rec.image_urls as unknown as string[]) ?? [])];
+    const c = rec.consultation as unknown as import('@/types/consultation').ConsultationType;
+    return {
+      ...base,
+      imageUrls: allImages,
+      design: {
+        designScope: c.designScope,
+        expressions: c.expressions,
+        hasParts: c.hasParts,
+        bodyPart: c.bodyPart,
+        nailShape: c.nailShape,
+        designCategory: c.designCategory ?? undefined,
+        // 공개 페이지에서 shopSettings 없이 카테고리 라벨 표시 — 미리 한글 해석(rename 반영).
+        categoryLabelKo: c.designCategory ? resolveCategoryLabelKo(c.designCategory, settings) : undefined,
+      },
+      estimatedMinutes: (rec as { estimated_minutes?: number | null }).estimated_minutes ?? undefined,
+      createdAt: (rec as { created_at?: string }).created_at ?? undefined,
+      recordId: rec.id,
+    };
+  }
+
+  // 단독 포트폴리오 사진 카드 — 상담 데이터가 없으므로 사진의 시술 종류(style_category)로 구성.
+  const ph = photo!;
+  const styleCat = (ph.style_category ?? 'simple') as DesignCategory;
+  const image = ph.image_path ? getPortfolioPublicUrl(ph.image_path) : (ph.image_data_url ?? undefined);
+  const catTime = settings.categoryPricing?.[styleCat as keyof CategoryPricingSettings]?.time;
+  return {
+    ...base,
+    imageUrls: image ? [image] : [],
+    design: {
+      designScope: designCategoryToScope(styleCat),
+      expressions: [],
+      hasParts: false,
+      bodyPart: 'hand',
+      nailShape: undefined,
+      designCategory: ph.style_category ?? undefined,
+      categoryLabelKo: resolveCategoryLabelKo(styleCat, settings),
+    },
+    estimatedMinutes: typeof catTime === 'number' && catTime > 0 ? catTime : undefined,
+    createdAt: undefined,
+    recordId: ph.id,
   };
 }
 

@@ -393,7 +393,7 @@ export function PortfolioOverlay({
               extensionType: 'none',
               currentStep: 0,
             } as unknown as import('@/types/consultation').ConsultationType,
-            shareCardId: linkedRecord?.shareCardId,
+            shareCardId: linkedRecord?.shareCardId ?? photo.shareCardId,
             createdAt: linkedRecord?.createdAt ?? photo.createdAt,
             estimatedMinutes: linkedRecord?.estimatedMinutes,
           }}
@@ -403,9 +403,14 @@ export function PortfolioOverlay({
             linkedRecord?.consultation?.designCategory ?? photo.styleCategory ?? derivedScope,
             shopSettings,
           )}
-          onShareCardCreated={linkedRecord?.id ? (newId) => {
-            useRecordsStore.getState().updateRecord(linkedRecord.id, { shareCardId: newId });
-          } : undefined}
+          onShareCardCreated={(newId) => {
+            if (linkedRecord?.id) {
+              useRecordsStore.getState().updateRecord(linkedRecord.id, { shareCardId: newId });
+            } else {
+              // 0601: 단독 사진 — 로컬 스토어에 반영해 재오픈 시 같은 링크 재사용(기존 복사 링크 유지)
+              usePortfolioStore.getState().updatePhoto(photo.id, { shareCardId: newId });
+            }
+          }}
         />
       )}
 

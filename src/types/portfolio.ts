@@ -29,4 +29,6 @@ export interface PortfolioPhoto {
   /** 0601: 카테고리 대표사진(커버) — 카테고리당 1장 */
   isRepresentative?: boolean;
   partsMemo?: string;
+  /** 0601: 이 사진으로 만든 공유카드 id (상담기록 미연결 단독 사진도 공유 링크 재사용) */
+  shareCardId?: string;
 }
