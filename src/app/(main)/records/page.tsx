@@ -441,6 +441,12 @@ export default function RecordsPage() {
   const executeDelete = () => {
     if (!selectedEvent) return;
     if (selectedEvent.type === 'reservation') {
+      // 완료/진행 예약에 연결된 시술 기록이 있으면 함께 삭제
+      // (removeRecord가 고객 방문/매출/이력 롤백까지 처리 — orphan 기록 방지)
+      const matchedRecord = allConsultations.find(
+        (r) => r.consultation?.bookingId === selectedEvent.originalId,
+      );
+      if (matchedRecord) removeRecord(matchedRecord.id);
       removeReservation(selectedEvent.originalId);
     } else {
       removeRecord(selectedEvent.originalId);
@@ -1296,12 +1302,6 @@ export default function RecordsPage() {
                                   닫기
                                 </button>
                               </div>
-                              <button
-                                onClick={handleDeleteRecord}
-                                className="mt-2 w-full rounded-xl py-2.5 text-xs font-medium text-error hover:bg-error/10 transition-colors"
-                              >
-                                삭제
-                              </button>
                             </div>
                           )}
                           {stage === 'link_sent' && (
@@ -1404,12 +1404,6 @@ export default function RecordsPage() {
                           {stage === 'cancelled' && (
                             <div className="mt-3 flex flex-col gap-2">
                               <button
-                                onClick={handleDeleteRecord}
-                                className="w-full rounded-xl py-2.5 text-xs font-medium text-error hover:bg-error/10 transition-colors"
-                              >
-                                예약 삭제
-                              </button>
-                              <button
                                 onClick={closeSelectedEventSheet}
                                 className="w-full rounded-xl bg-surface-alt px-4 py-3 text-sm font-semibold text-text-secondary active:scale-[0.98] transition-transform"
                               >
@@ -1417,6 +1411,15 @@ export default function RecordsPage() {
                               </button>
                             </div>
                           )}
+
+                          {/* 일정 삭제 — 모든 단계에서 스케줄표에서 바로 삭제
+                              (잘못 입력 시 삭제 후 재등록 / 완료 건은 시술 기록·매출까지 함께 정리) */}
+                          <button
+                            onClick={handleDeleteRecord}
+                            className="mt-1 w-full rounded-xl py-2.5 text-xs font-medium text-error hover:bg-error/10 transition-colors min-h-[44px]"
+                          >
+                            {matchedRecord ? '시술 기록 삭제' : '일정 삭제'}
+                          </button>
                         </>
                       );
                     })()}
@@ -1450,9 +1453,20 @@ export default function RecordsPage() {
         />
       </Modal>
 
-      <Modal isOpen={confirmDelete} onClose={() => setConfirmDelete(false)} title="기록 삭제">
+      <Modal isOpen={confirmDelete} onClose={() => setConfirmDelete(false)} title="일정 삭제">
         <div className="p-5">
-          <p className="text-sm text-text-secondary mb-4">이 기록을 삭제하시겠습니까? 삭제된 기록은 복구할 수 없습니다.</p>
+          {(() => {
+            const matchedRecord = selectedEvent
+              ? allConsultations.find((r) => r.consultation?.bookingId === selectedEvent.originalId)
+              : undefined;
+            return (
+              <p className="text-sm text-text-secondary mb-4">
+                {matchedRecord?.finalizedAt
+                  ? '이 일정의 시술·결제 기록을 삭제하면 고객의 방문 횟수와 누적 매출에서도 함께 제외돼요. 삭제 후에는 되돌릴 수 없어요.'
+                  : '이 일정을 삭제하시겠습니까? 삭제된 일정은 복구할 수 없어요.'}
+              </p>
+            );
+          })()}
           <div className="flex gap-2">
             <button
               onClick={() => setConfirmDelete(false)}

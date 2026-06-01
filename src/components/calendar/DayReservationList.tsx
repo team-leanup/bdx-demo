@@ -10,6 +10,7 @@ import { useCustomerStore } from '@/store/customer-store';
 import { useRecordsStore } from '@/store/records-store';
 import { getBookingStage } from '@/lib/booking-stage';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui';
 import { PretreatmentAlertModal } from '@/components/alerts/PretreatmentAlertModal';
 import { LinkCustomerModal } from '@/components/reservations/LinkCustomerModal';
 import { ReservationReadinessBadge } from '@/components/reservations/ReservationReadinessBadge';
@@ -277,10 +278,27 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
   const startTreatment = useFieldModeStore((s) => s.startTreatment);
   const shopSettings = useAppStore((s) => s.shopSettings);
   const records = useRecordsStore((s) => s.records);
+  const removeRecord = useRecordsStore((s) => s.removeRecord);
+  const removeReservation = useReservationStore((s) => s.removeReservation);
   const [showForm, setShowForm] = useState(false);
   const [alertBooking, setAlertBooking] = useState<BookingRequest | null>(null);
   const [alertTags, setAlertTags] = useState<CustomerTag[]>([]);
   const [linkModalBooking, setLinkModalBooking] = useState<BookingRequest | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<BookingRequest | null>(null);
+
+  // 삭제 대상에 연결된 시술 기록 (완료 건이면 매출·통계 롤백 안내용)
+  const deleteTargetRecord = deleteTarget
+    ? records.find((r) => r.consultation?.bookingId === deleteTarget.id)
+    : undefined;
+
+  const handleConfirmDelete = (): void => {
+    if (!deleteTarget) return;
+    // 연결된 시술 기록 먼저 삭제 (removeRecord가 고객 방문/매출/이력 롤백 처리)
+    const matched = records.find((r) => r.consultation?.bookingId === deleteTarget.id);
+    if (matched) removeRecord(matched.id);
+    removeReservation(deleteTarget.id);
+    setDeleteTarget(null);
+  };
 
   const handleAlertQuickSale = (): void => {
     if (alertBooking) {
@@ -493,7 +511,7 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
                         )}
                       </div>
 
-                      <div className="flex gap-1.5 flex-shrink-0 self-center">
+                      <div className="flex items-center gap-1 flex-shrink-0 self-center">
                         {stage === 'completed' && matchedRecord ? (
                           <Button
                             size="sm"
@@ -510,6 +528,17 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
                             {t('calendar.startConsultation')}
                           </Button>
                         )}
+                        {/* 일정 삭제 — 스케줄표에서 바로 삭제 (잘못 입력 시 삭제 후 재등록) */}
+                        <button
+                          type="button"
+                          aria-label="일정 삭제"
+                          onClick={() => setDeleteTarget(booking)}
+                          className="flex h-11 w-9 items-center justify-center rounded-lg text-text-muted hover:bg-error/10 hover:text-error transition-colors"
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.16-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.04-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                          </svg>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -555,6 +584,32 @@ export function DayReservationList({ date, reservations }: DayReservationListPro
         reservationLanguage={linkModalBooking?.language}
         reservationDesignerId={linkModalBooking?.designerId}
       />
+
+      <Modal isOpen={deleteTarget !== null} onClose={() => setDeleteTarget(null)} title="일정 삭제">
+        <div className="p-5">
+          <p className="text-sm text-text-secondary mb-4">
+            {deleteTargetRecord?.finalizedAt
+              ? '이 일정의 시술·결제 기록을 삭제하면 고객의 방문 횟수와 누적 매출에서도 함께 제외돼요. 삭제 후에는 되돌릴 수 없어요.'
+              : '이 일정을 삭제하시겠습니까? 삭제된 일정은 복구할 수 없어요.'}
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setDeleteTarget(null)}
+              className="flex-1 rounded-xl border border-border bg-white py-2.5 text-sm font-semibold text-text-secondary hover:bg-surface-alt transition-colors min-h-[44px]"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmDelete}
+              className="flex-1 rounded-xl bg-error py-2.5 text-sm font-bold text-white min-h-[44px]"
+            >
+              삭제
+            </button>
+          </div>
+        </div>
+      </Modal>
 
     </div>
   );
