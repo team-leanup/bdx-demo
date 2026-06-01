@@ -1331,7 +1331,10 @@ export async function fetchShareCardPublicData(shareCardId: string): Promise<imp
     shopName: shop.name,
     shopPhone: shop.phone ?? undefined,
     shopAddress: shop.address ?? undefined,
-    shopLogoUrl: shop.logo_url ?? undefined,
+    // 0601: logo_url은 스토리지 경로 — public URL로 변환해야 공유카드에 로고가 보임(경로 그대로면 깨짐).
+    shopLogoUrl: shop.logo_url
+      ? (shop.logo_url.startsWith('http') ? shop.logo_url : getShopLogoPublicUrl(shop.logo_url))
+      : undefined,
     kakaoTalkUrl: settings.kakaoTalkUrl,
     naverReservationUrl: settings.naverReservationUrl,
   };

@@ -11,6 +11,8 @@ import { SlotPicker } from '@/components/pre-consult/SlotPicker';
 import { computeAvailableDates } from '@/lib/consultation-link-slots';
 import type { BookingRequest } from '@/types/consultation';
 import type { ConsultationLinkPublicData } from '@/types/consultation-link';
+import { BUILTIN_DESIGN_CATEGORIES } from '@/types/pre-consultation';
+import type { DesignCategory } from '@/types/pre-consultation';
 
 function formatBookingDateTime(date: string, time: string, locale: string): string {
   const [year, month, day] = date.split('-').map(Number);
@@ -59,6 +61,8 @@ function PreConsultStartInner(): React.ReactElement {
 
   const bookingIdParam = searchParams.get('bookingId');
   const linkIdParam = searchParams.get('linkId');
+  // 0601: 공유카드 '이 디자인으로 상담하기'(?from=share&designCategory=)에서 넘어온 디자인 종류
+  const designCategoryParam = searchParams.get('designCategory');
 
   const [bookingInfo, setBookingInfo] = useState<BookingRequest | null>(null);
   const [linkData, setLinkData] = useState<ConsultationLinkPublicData | null>(null);
@@ -72,6 +76,13 @@ function PreConsultStartInner(): React.ReactElement {
     setConsultationLinkId(linkIdParam ?? null);
     if (!linkIdParam) {
       setSelectedSlot(null, null);
+    }
+
+    // 0601: 공유카드에서 넘어온 디자인 종류를 스토어에 pre-select.
+    //   /design 이동 시 URL 파라미터가 유실되므로 진입 시점에 스토어에 저장 → 시간 선택 후
+    //   디자인 단계에서 해당 시술 종류가 선택돼 있게 한다. (builtin만 — 공유 CTA는 builtin 카테고리)
+    if (designCategoryParam && (BUILTIN_DESIGN_CATEGORIES as ReadonlyArray<string>).includes(designCategoryParam)) {
+      setSelectedCategory(designCategoryParam as DesignCategory);
     }
 
     // 우선순위 1: bookingId 있으면 해당 예약 정보 로드 (사장님이 발송한 링크)
@@ -117,7 +128,7 @@ function PreConsultStartInner(): React.ReactElement {
       })
       .catch(() => {})
       .finally(() => setIsLoading(false));
-  }, [bookingIdParam, linkIdParam, params.shopId, setBookingId, setConsultationLinkId, setSelectedSlot, setSelectedCategory, setLinkDesignerId, t]);
+  }, [bookingIdParam, linkIdParam, designCategoryParam, params.shopId, setBookingId, setConsultationLinkId, setSelectedSlot, setSelectedCategory, setLinkDesignerId, t]);
 
   const handleStart = (): void => {
     router.push(`/pre-consult/${params.shopId}/design`);
