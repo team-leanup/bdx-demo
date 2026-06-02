@@ -6,6 +6,7 @@ import type { ServiceStructure, SurchargeSettings, TimeSettings, BusinessHours, 
 import { dbUpdateShopSettings } from '@/lib/db';
 import { useAuthStore } from '@/store/auth-store';
 import { usePartsStore } from '@/store/parts-store';
+import { DEFAULT_CUSTOM_PARTS } from '@/data/default-parts';
 
 // Re-exported for backward compatibility with files that import CategoryPricing from this module
 export type { CategoryPricingSettings as CategoryPricing };
@@ -69,6 +70,8 @@ const DEFAULT_SHOP_SETTINGS: ShopSettings = {
   selectedServices: [],
   customerNotice: '선택하신 디자인을 기준으로 가격과 시간은 변동될 수 있어요',
   categoryPricing: { ...DEFAULT_CATEGORY_PRICING },
+  // 설정 미설정 샵의 현장모드·설정 화면 fallback (DB customParts가 null일 때 기본 8종)
+  customParts: [...DEFAULT_CUSTOM_PARTS],
   depositAmount: 10000,
   kakaoTalkUrl: '',
   naverReservationUrl: '',

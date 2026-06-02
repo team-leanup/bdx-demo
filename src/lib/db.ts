@@ -9,6 +9,7 @@ import type { ConsultationRecord, ConsultationType, BookingRequest, BookingChann
 import type { PortfolioPhoto } from '@/types/portfolio';
 import type { Shop, Designer, BusinessHours, ShopExtendedSettings, CategoryPricingSettings, SurchargeSettings } from '@/types/shop';
 import type { ShopPublicData, DesignCategory } from '@/types/pre-consultation';
+import { DEFAULT_CUSTOM_PARTS } from '@/data/default-parts';
 
 const PORTFOLIO_BUCKET = 'portfolio-images';
 // portfolio-images 버킷 서버측 file_size_limit 과 일치 (2MB). 초과 시 업로드 전 차단.
@@ -1984,7 +1985,9 @@ export async function fetchShopPublicData(shopId: string): Promise<ShopPublicDat
     naverReservationUrl: settings.naverReservationUrl ?? undefined,
     // 0528 — 설정 ↔ 상담 연동 확장 필드
     serviceStructure: settings.serviceStructure ?? undefined,
-    customParts: settings.customParts ?? undefined,
+    // 설정을 한 번도 손대지 않아 customParts가 미설정(null)이면 기본 파츠 8종 노출.
+    // 단, 원장이 의도적으로 전부 삭제한 빈 배열([])은 그대로 존중(?? 는 null/undefined만 대체).
+    customParts: settings.customParts ?? DEFAULT_CUSTOM_PARTS,
     customCategories: settings.customCategories ?? undefined,
     depositAmount: settings.depositAmount ?? undefined,
     // 0528 H6·H8: shops 루트 필드도 ShopPublicData에 포함 (사전상담 견적 정확도)

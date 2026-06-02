@@ -679,7 +679,8 @@
 | **스케줄 일정 삭제(0601)** | **1** | **1** | **0** | **0** | **0** |
 | **파츠 동기화·add-on 정리(0602)** | **1** | **1** | **0** | **0** | **0** |
 | **고객 삭제(0602)** | **1** | **1** | **0** | **0** | **0** |
-| **합계** | **251** | **222** | **0** | **3** | **22** |
+| **기본 파츠 fallback(0602)** | **1** | **1** | **0** | **0** | **0** |
+| **합계** | **252** | **223** | **0** | **3** | **22** |
 
 ---
 
@@ -806,3 +807,8 @@
   - `removeCustomer`(customer-store): DB 성공 시에만 로컬 제거.
   - `customers/[id]`: 하단 "이 고객 삭제" + confirm 모달(기록 있으면 차단 안내+[시술 기록 보기], 없으면 삭제→`/customers` replace).
 - **검증**: 라이브 DB 트랜잭션 시뮬레이션(unlink+delete·CASCADE·잔여물0 정리) + RLS 확인. tsc/lint/build EXIT 0. 상세 `docs/qa-deep-20260601.md` §7차.
+
+## 27. 🟢 기본 커스텀 파츠 fallback (2026-06-02 사용자 QA 후속)
+> 설정을 한 번도 안 연 샵은 DB customParts가 null이라 고객 화면에 파츠 미노출(네일숲 shop-001 등).
+- **수정**: SSOT `src/data/default-parts.ts`(기본 8종) 신설 → parts-store·db.ts(`fetchShopPublicData`)·app-store(`DEFAULT_SHOP_SETTINGS`)가 공유. `settings.customParts ?? DEFAULT_CUSTOM_PARTS`로 null/미설정만 기본값 노출, 의도적 빈 배열은 존중. 런타임 fallback이라 DB 백필 불필요.
+- **검증**: tsc/lint/build EXIT 0. 상세 `docs/qa-deep-20260601.md` §8차.

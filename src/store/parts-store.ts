@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { DesignScope, ExpressionType } from '@/types/consultation';
 import { getNowInKoreaIso } from '@/lib/format';
+import { DEFAULT_CUSTOM_PARTS } from '@/data/default-parts';
 
 export interface CustomPartItem {
   id: string;
@@ -45,17 +46,6 @@ interface PartsStore {
   updateDesignPreset: (id: string, updates: Partial<DesignPreset>) => void;
   removeDesignPreset: (id: string) => void;
 }
-
-const DEFAULT_CUSTOM_PARTS: CustomPartItem[] = [
-  { id: 'preset-cubic', name: '큐빅', pricePerUnit: 2000 },
-  { id: 'preset-swarovski', name: '스와로브스키', pricePerUnit: 3000 },
-  { id: 'preset-pearl', name: '진주', pricePerUnit: 2000 },
-  { id: 'preset-glitter', name: '글리터', pricePerUnit: 2000 },
-  { id: 'preset-shell', name: '쉘', pricePerUnit: 2000 },
-  { id: 'preset-foil', name: '호일', pricePerUnit: 1500 },
-  { id: 'preset-sticker', name: '스티커', pricePerUnit: 1000 },
-  { id: 'preset-charm', name: '참', pricePerUnit: 2500 },
-];
 
 const DEFAULT_COLOR_PRESETS: ColorPreset[] = [
   { id: 'color-rose', name: '로즈핑크', hexCode: '#F9A8D4' },
