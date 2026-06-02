@@ -90,11 +90,6 @@ export function QuickOptionsPanel({
     { value: 'long', label: t('fieldMode.extensionLong') },
   ];
 
-  const addOnOptions: OptionButton<AddOnOption>[] = [
-    { value: 'stone', label: t('fieldMode.addStone'), sublabel: '+₩5,000' },
-    { value: 'glitter', label: t('fieldMode.addGlitter'), sublabel: '+₩3,000' },
-  ];
-
   return (
     <div className="flex flex-col gap-6 px-4 pt-4 pb-40 overflow-y-auto">
       {/* Section 1: 제거 여부 */}
@@ -168,23 +163,8 @@ export function QuickOptionsPanel({
         </div>
       </section>
 
-      {/* Section 4: 추가 옵션 */}
-      <section>
-        <SectionLabel>{t('fieldMode.optionAddOnTitle')}</SectionLabel>
-        <div className="flex flex-wrap gap-2 mt-3">
-          {addOnOptions.map((opt) => (
-            <AddOnChip
-              key={opt.value}
-              active={addOns.includes(opt.value)}
-              label={opt.label}
-              sublabel={opt.sublabel}
-              onClick={() => onToggleAddOn(opt.value)}
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* Section 5: 커스텀 파츠 (사장님이 설정에서 등록한 목록) */}
+      {/* Section 4: 커스텀 파츠 (사장님이 설정에서 등록한 목록)
+          0602: 고정 add-on(스톤/글리터) 제거 — 추가 파츠는 설정 동기화 커스텀 파츠로만 선택 */}
       {customParts && customParts.length > 0 && (() => {
         // 활성 파츠의 총 누적 금액
         const partsTotal = customParts.reduce((sum, part) => {
@@ -324,42 +304,3 @@ function OptionBtn({
   );
 }
 
-function AddOnChip({
-  active,
-  label,
-  sublabel,
-  onClick,
-}: {
-  active: boolean;
-  label: string;
-  sublabel?: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cn(
-        'flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-semibold min-h-[44px] border transition-all duration-150 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1',
-        active
-          ? 'bg-primary/10 text-primary border-primary'
-          : 'bg-surface-alt text-text-secondary border-border hover:bg-surface-inset',
-      )}
-    >
-      {active && (
-        <span className="w-4 h-4 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-          <svg width="9" height="7" viewBox="0 0 9 7" fill="none" aria-hidden="true">
-            <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </span>
-      )}
-      <span>{label}</span>
-      {sublabel && (
-        <span className={cn('text-xs font-normal', active ? 'text-primary/70' : 'text-text-muted')}>
-          {sublabel}
-        </span>
-      )}
-    </button>
-  );
-}
