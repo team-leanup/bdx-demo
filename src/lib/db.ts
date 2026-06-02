@@ -1099,6 +1099,58 @@ export async function dbUpsertCustomerTags(customerId: string, tags: CustomerTag
   }
 }
 
+export async function dbDeleteCustomer(
+  customerId: string,
+  shopId?: string,
+): Promise<{ success: boolean; error?: string; reason?: 'has_records'; recordCount?: number }> {
+  if (!shopId) {
+    console.warn('[db] dbDeleteCustomer called without shopId — skipping for safety');
+    return { success: false, error: 'No shop session' };
+  }
+  // 시술·결제 기록(consultation_records)은 customer_id가 NOT NULL + FK NO ACTION이라
+  // 고객만 분리(unlink)할 수 없고, 기록 자체도 portfolio_photos.record_id·small_talk_notes
+  // 등 NO ACTION 의존성이 있어 함께 지우기엔 파괴적. → 기록이 있으면 삭제를 막고,
+  // 원장이 시술 기록을 먼저 삭제하도록 안내.
+  const { count: recordCount, error: countError } = await supabase
+    .from('consultation_records')
+    .select('id', { count: 'exact', head: true })
+    .eq('customer_id', customerId)
+    .eq('shop_id', shopId);
+  if (countError) {
+    console.error('[db] dbDeleteCustomer count error:', toDbErrorSnapshot(countError));
+    return { success: false, error: countError.message };
+  }
+  if ((recordCount ?? 0) > 0) {
+    return { success: false, reason: 'has_records', recordCount: recordCount ?? 0 };
+  }
+
+  // 예약·포트폴리오는 customer_id가 nullable → unlink로 보존(예약 일정·샵 포트폴리오 유지).
+  // customer_tags·small_talk_notes·membership_transactions는 고객 전용이라 CASCADE로 함께 삭제.
+  const unlinkTables = ['booking_requests', 'portfolio_photos'] as const;
+  for (const table of unlinkTables) {
+    const { error: unlinkError } = await supabase
+      .from(table)
+      .update({ customer_id: null } as Record<string, unknown>)
+      .eq('customer_id', customerId)
+      .eq('shop_id', shopId);
+    if (unlinkError) {
+      console.error(`[db] dbDeleteCustomer unlink ${table} error:`, toDbErrorSnapshot(unlinkError));
+      return { success: false, error: unlinkError.message };
+    }
+  }
+
+  const { error } = await supabase
+    .from('customers')
+    .delete()
+    .eq('id', customerId)
+    .eq('shop_id', shopId);
+  if (error) {
+    console.error('[db] dbDeleteCustomer error:', toDbErrorSnapshot(error));
+    return { success: false, error: error.message };
+  }
+  return { success: true };
+}
+
 export async function dbInsertSmallTalkNote(
   note: SmallTalkNote,
   shopId?: string | null,

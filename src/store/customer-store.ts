@@ -9,6 +9,7 @@ import {
   fetchCustomers,
   dbUpsertCustomer,
   dbUpsertCustomerTags,
+  dbDeleteCustomer,
   dbInsertSmallTalkNote,
   dbInsertMembershipTransaction,
 } from '@/lib/db';
@@ -33,6 +34,10 @@ interface CustomerStore {
 
   createCustomer: (input: Partial<Customer>) => Customer;
   updateCustomer: (id: string, updates: Partial<Customer>) => void;
+  /** 고객 삭제. 시술 기록이 있으면 차단(reason:'has_records'), 없으면 예약·포트폴리오는 unlink하고 고객 카드만 제거. */
+  removeCustomer: (
+    id: string,
+  ) => Promise<{ success: boolean; error?: string; reason?: 'has_records'; recordCount?: number }>;
 
   updateTags: (customerId: string, nextTags: CustomerTag[]) => void;
 
@@ -387,6 +392,17 @@ export const useCustomerStore = create<CustomerStore>()(
             console.error('[customer-store] updateCustomer DB sync failed:', err);
           });
         }
+      },
+
+      removeCustomer: async (id) => {
+        const target = get().customers.find((c) => c.id === id);
+        const shopId = target?.shopId ?? useAuthStore.getState().currentShopId ?? undefined;
+        // DB 삭제 성공 시에만 로컬에서 제거 (차단/실패 시 카드 유지)
+        const result = await dbDeleteCustomer(id, shopId);
+        if (result.success) {
+          set((state) => ({ customers: state.customers.filter((c) => c.id !== id) }));
+        }
+        return result;
       },
 
       updateTags: (customerId, nextTags) => {

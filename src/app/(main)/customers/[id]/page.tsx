@@ -125,6 +125,7 @@ function CustomerDetailContent({ id }: { id: string }) {
   const fromChecklist = searchParams.get('fromChecklist') === 'true';
   const customer = useCustomerStore((s) => s.getById(id));
   const updateCustomer = useCustomerStore((s) => s.updateCustomer);
+  const removeCustomer = useCustomerStore((s) => s.removeCustomer);
   const updateTagsInStore = useCustomerStore((s) => s.updateTags);
   const appendSmallTalkNote = useCustomerStore((s) => s.appendSmallTalkNote);
   const addMembership = useCustomerStore((s) => s.addMembership);
@@ -155,6 +156,10 @@ function CustomerDetailContent({ id }: { id: string }) {
   const [showDeductModal, setShowDeductModal] = useState(false);
   // 0428 P1-6: window.confirm 대신 인라인 모달
   const [showExpireConfirm, setShowExpireConfirm] = useState(false);
+  // 0602: 고객 삭제 confirm 모달
+  const [showDeleteCustomerConfirm, setShowDeleteCustomerConfirm] = useState(false);
+  const [isDeletingCustomer, setIsDeletingCustomer] = useState(false);
+  const [deleteCustomerError, setDeleteCustomerError] = useState<string | null>(null);
   const [deductCount, setDeductCount] = useState('');
   const [deductNote, setDeductNote] = useState('');
   const [mbPurchaseAmount, setMbPurchaseAmount] = useState('');
@@ -339,6 +344,26 @@ function CustomerDetailContent({ id }: { id: string }) {
     navigator.vibrate?.(50);
     setVipToast(newVal ? '단골 지정됨' : '단골 해제됨');
     toastTimerRef.current = setTimeout(() => setVipToast(null), 2000);
+  };
+
+  const handleDeleteCustomer = async (): Promise<void> => {
+    if (isDeletingCustomer) return;
+    setIsDeletingCustomer(true);
+    setDeleteCustomerError(null);
+    const result = await removeCustomer(id);
+    if (result.success) {
+      // 뒤로가기로 삭제된 고객에 다시 진입하지 않도록 replace
+      router.replace('/customers');
+    } else {
+      setIsDeletingCustomer(false);
+      if (result.reason === 'has_records') {
+        setDeleteCustomerError(
+          `시술 기록이 ${result.recordCount ?? ''}건 있어 삭제할 수 없어요. 시술 기록을 먼저 삭제한 뒤 다시 시도해 주세요.`,
+        );
+      } else {
+        setDeleteCustomerError(result.error ?? '삭제에 실패했어요. 잠시 후 다시 시도해 주세요.');
+      }
+    }
   };
 
   const handleStartTagEdit = (): void => {
@@ -1782,6 +1807,76 @@ function CustomerDetailContent({ id }: { id: string }) {
               만료 처리
             </button>
           </div>
+        </div>
+      </Modal>
+
+      {/* 0602: 고객 삭제 — 잘못 등록한 고객 정리. 매출·예약·포트폴리오는 보존(연결만 해제) */}
+      <button
+        type="button"
+        onClick={() => { setDeleteCustomerError(null); setShowDeleteCustomerConfirm(true); }}
+        className="mx-4 mt-2 rounded-xl border border-error/30 bg-error/5 py-2.5 text-sm font-semibold text-error hover:bg-error/10 transition-colors min-h-[44px]"
+      >
+        이 고객 삭제
+      </button>
+
+      <Modal
+        isOpen={showDeleteCustomerConfirm}
+        onClose={() => { if (!isDeletingCustomer) setShowDeleteCustomerConfirm(false); }}
+        title="고객을 삭제할까요?"
+      >
+        <div className="flex flex-col gap-4 p-5">
+          {customerRecords.length > 0 ? (
+            <>
+              {/* 시술 기록이 있는 고객은 매출 정합성 보호를 위해 삭제 차단 — 기록 먼저 삭제 안내 */}
+              <p className="text-sm leading-relaxed text-text-secondary break-keep">
+                <span className="font-bold text-text">{customer.name}</span> 고객은 시술 기록이 <span className="font-bold text-text">{customerRecords.length}건</span> 있어요.
+                매출 기록을 보호하기 위해, 시술 기록을 먼저 삭제한 뒤에 고객을 삭제할 수 있어요.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteCustomerConfirm(false)}
+                  className="flex-1 rounded-xl border border-border bg-white py-2.5 text-sm font-semibold text-text-secondary min-h-[44px]"
+                >
+                  닫기
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push(`/records?customerId=${id}`)}
+                  className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-bold text-white min-h-[44px]"
+                >
+                  시술 기록 보기
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-sm leading-relaxed text-text-secondary break-keep">
+                <span className="font-bold text-text">{customer.name}</span> 고객을 삭제하시겠어요? 태그·메모·회원권 정보가 함께 삭제되며, 삭제 후에는 되돌릴 수 없어요.
+              </p>
+              {deleteCustomerError && (
+                <p className="text-xs text-error">{deleteCustomerError}</p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteCustomerConfirm(false)}
+                  disabled={isDeletingCustomer}
+                  className="flex-1 rounded-xl border border-border bg-white py-2.5 text-sm font-semibold text-text-secondary disabled:opacity-50 min-h-[44px]"
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteCustomer}
+                  disabled={isDeletingCustomer}
+                  className="flex-1 rounded-xl bg-error py-2.5 text-sm font-bold text-white disabled:opacity-60 min-h-[44px]"
+                >
+                  {isDeletingCustomer ? '삭제 중…' : '삭제'}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </Modal>
     </div>

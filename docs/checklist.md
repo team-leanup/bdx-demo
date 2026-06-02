@@ -678,7 +678,8 @@
 | **사용자관점 QA(0530)** | **49** | **47** | **0** | **1** | **1** |
 | **스케줄 일정 삭제(0601)** | **1** | **1** | **0** | **0** | **0** |
 | **파츠 동기화·add-on 정리(0602)** | **1** | **1** | **0** | **0** | **0** |
-| **합계** | **250** | **221** | **0** | **3** | **22** |
+| **고객 삭제(0602)** | **1** | **1** | **0** | **0** | **0** |
+| **합계** | **251** | **222** | **0** | **3** | **22** |
 
 ---
 
@@ -795,3 +796,13 @@
   - `QuickOptionsPanel.tsx`: Section 4(스톤/글리터 칩)·`addOnOptions`·미사용 `AddOnChip` 제거. 커스텀 파츠 섹션 유지. 랩핑은 그대로.
   - 요청 2(파츠 설정 동기화: `shopData.customParts`/`shopSettings.customParts`)·3(원장 확인: `PreConsultDetailView`의 `name ×count +₩total`)은 이미 충족 — 검증으로 확인.
 - **검증**: tsc EXIT 0 / lint 0 error / build EXIT 0(37라우트). 상세 `docs/qa-deep-20260601.md` §6차.
+
+## 26. 🟢 고객 등록 후 삭제 기능 (2026-06-02 클라이언트 피드백 — 지승호 대표)
+> 출처: 지승호 대표 카톡(파일럿샵 현장) — "고객 등록 이후에 삭제 가능할 수 있도록 가능할까요?"
+- **이전 상태**: 고객 생성·수정만 있고 삭제 기능 전무 → 잘못/테스트 등록 고객 제거 불가.
+- **DB FK**: `consultation_records.customer_id`는 NOT NULL+NO ACTION(unlink·동반삭제 모두 위험), `booking_requests`/`portfolio_photos`는 nullable, 태그·메모·회원권거래는 CASCADE.
+- **수정**:
+  - `dbDeleteCustomer`(db.ts): 시술 기록 ≥1건이면 **삭제 차단**(`reason:'has_records'`); 없으면 예약·포트폴리오 customer_id를 NULL로 unlink(보존) 후 고객 삭제(태그·메모·회원권거래 CASCADE).
+  - `removeCustomer`(customer-store): DB 성공 시에만 로컬 제거.
+  - `customers/[id]`: 하단 "이 고객 삭제" + confirm 모달(기록 있으면 차단 안내+[시술 기록 보기], 없으면 삭제→`/customers` replace).
+- **검증**: 라이브 DB 트랜잭션 시뮬레이션(unlink+delete·CASCADE·잔여물0 정리) + RLS 확인. tsc/lint/build EXIT 0. 상세 `docs/qa-deep-20260601.md` §7차.
