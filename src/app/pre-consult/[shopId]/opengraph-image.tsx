@@ -94,7 +94,7 @@ export default async function OpengraphImage({
             src={logoSrc}
             width={860}
             height={400}
-            style={{ objectFit: 'contain', marginTop: 28, marginBottom: 32 }}
+            style={{ objectFit: 'contain', marginTop: 56, marginBottom: 14 }}
             alt=""
           />
         ) : (
