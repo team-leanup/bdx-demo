@@ -92,9 +92,9 @@ export default async function OpengraphImage({
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={logoSrc}
-            width={620}
-            height={340}
-            style={{ objectFit: 'contain', marginBottom: 40 }}
+            width={860}
+            height={400}
+            style={{ objectFit: 'contain', marginTop: 28, marginBottom: 32 }}
             alt=""
           />
         ) : (
@@ -122,10 +122,10 @@ export default async function OpengraphImage({
           style={{
             display: 'flex',
             maxWidth: 1000,
-            fontSize: 66,
+            fontSize: 54,
             fontWeight: 700,
             color: '#171717',
-            marginBottom: 18,
+            marginBottom: 16,
             textAlign: 'center',
           }}
         >
@@ -133,14 +133,14 @@ export default async function OpengraphImage({
         </div>
 
         {/* 안내 문구 */}
-        <div style={{ display: 'flex', fontSize: 36, fontWeight: 400, color: '#6b7280' }}>{TAGLINE}</div>
+        <div style={{ display: 'flex', fontSize: 30, fontWeight: 400, color: '#6b7280' }}>{TAGLINE}</div>
 
         {/* 브랜드 워드마크 — flow 배치(absolute 겹침 방지) */}
         <div
           style={{
             display: 'flex',
-            marginTop: 30,
-            fontSize: 26,
+            marginTop: 18,
+            fontSize: 22,
             fontWeight: 700,
             color: '#F472B6',
             letterSpacing: 3,
