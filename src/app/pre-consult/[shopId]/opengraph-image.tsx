@@ -87,30 +87,35 @@ export default async function OpengraphImage({
           }}
         />
 
-        {/* 로고 / 이니셜 */}
-        <div
-          style={{
-            display: 'flex',
-            width: 240,
-            height: 240,
-            borderRadius: 120,
-            overflow: 'hidden',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: '#FDF2F8',
-            border: '4px solid #F472B6',
-            marginBottom: 44,
-          }}
-        >
-          {logoSrc ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img src={logoSrc} width={240} height={240} style={{ objectFit: 'cover' }} alt="" />
-          ) : (
-            <div style={{ display: 'flex', fontSize: 120, fontWeight: 700, color: '#F472B6' }}>
-              {shopName.slice(0, 1)}
-            </div>
-          )}
-        </div>
+        {/* 로고 — 핑크 원/테두리 없이 비율 유지로 크게. 로고 없으면 이니셜 폴백 */}
+        {logoSrc ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={logoSrc}
+            width={620}
+            height={340}
+            style={{ objectFit: 'contain', marginBottom: 40 }}
+            alt=""
+          />
+        ) : (
+          <div
+            style={{
+              display: 'flex',
+              width: 240,
+              height: 240,
+              borderRadius: 120,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#FDF2F8',
+              marginBottom: 40,
+              fontSize: 130,
+              fontWeight: 700,
+              color: '#F472B6',
+            }}
+          >
+            {shopName.slice(0, 1)}
+          </div>
+        )}
 
         {/* 샵 이름 */}
         <div
@@ -130,12 +135,11 @@ export default async function OpengraphImage({
         {/* 안내 문구 */}
         <div style={{ display: 'flex', fontSize: 36, fontWeight: 400, color: '#6b7280' }}>{TAGLINE}</div>
 
-        {/* 하단 브랜드 워드마크 */}
+        {/* 브랜드 워드마크 — flow 배치(absolute 겹침 방지) */}
         <div
           style={{
-            position: 'absolute',
-            bottom: 44,
             display: 'flex',
+            marginTop: 30,
             fontSize: 26,
             fontWeight: 700,
             color: '#F472B6',
