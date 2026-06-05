@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { useReservationStore } from "@/store/reservation-store";
 import { getNowInKoreaIso } from "@/lib/format";
+import { buildPreConsultShareMessage } from "@/lib/share-link-message";
 import type { BookingRequest } from "@/types/consultation";
 
 interface Props {
@@ -49,7 +50,7 @@ export function ConsultationLinkContent({
   const handleCopy = async () => {
     if (!url) return;
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(buildPreConsultShareMessage(url, shopName));
       setCopied(true);
       // 링크 복사 시 consultationLinkSentAt 기록
       if (booking && !booking.consultationLinkSentAt) {

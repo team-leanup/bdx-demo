@@ -71,7 +71,7 @@ export interface CategoryPricingSettings {
 
 /**
  * 0528 — 사장님이 추가한 시술 종류 (기본 4개 외 추가)
- * 최대 4개 추가 가능 (기본 4개 + 추가 4개 = 총 8개)
+ * 최대 20개 추가 가능 (기본 4개 + 추가 20개 = 총 24개)
  * 한국어는 필수, 다른 언어는 선택 → 미입력 시 한국어 fallback
  */
 export interface CustomCategory {
@@ -110,7 +110,7 @@ export interface ShopExtendedSettings {
   naverReservationUrl?: string;
   /** 0528: 커스텀 파츠 (상담 시 빠른 선택 옵션) — 사전상담/현장모드 노출용 */
   customParts?: CustomPartSetting[];
-  /** 0528: 추가 시술 종류 (기본 4개 외 사장님이 추가) — 최대 4개 */
+  /** 0528: 추가 시술 종류 (기본 4개 외 사장님이 추가) — 최대 20개 */
   customCategories?: CustomCategory[];
   /** 0528: 예약금 (사전상담 제출 시 booking_requests.deposit에 자동 적용) */
   depositAmount?: number;

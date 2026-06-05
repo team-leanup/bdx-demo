@@ -16,17 +16,21 @@ interface ConsultReviewProps {
 interface ReviewRowProps {
   label: string;
   value: string;
+  valueKo?: string;
   section: string;
   modifyLabel: string;
   onModify: (section: string) => void;
 }
 
-function ReviewRow({ label, value, section, modifyLabel, onModify }: ReviewRowProps): React.ReactElement {
+function ReviewRow({ label, value, valueKo, section, modifyLabel, onModify }: ReviewRowProps): React.ReactElement {
   return (
     <div className="flex items-center justify-between py-3 border-b border-border last:border-0">
       <div className="flex flex-col gap-0.5 min-w-0">
         <span className="text-xs text-text-muted">{label}</span>
         <span className="text-sm font-semibold text-text truncate">{value}</span>
+        {valueKo && (
+          <span className="text-[10px] text-text-muted opacity-60 font-normal truncate">{valueKo}</span>
+        )}
       </div>
       <button
         type="button"
@@ -150,6 +154,19 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
   const keywordsLabel = useKeywordsLabel(store.styleKeywords, t);
   const addOnsLabel = useAddOnsLabel(store.addOns, t);
 
+  // 한국어 병기용 (locale !== 'ko' 일 때만 활용)
+  const nailStatusLabelKo = useNailStatusLabel(store.nailStatus, tKo);
+  const removalLabelKo = useRemovalLabel(store.removalPreference, tKo);
+  const lengthLabelKo = useLengthLabel(store.lengthPreference, store.extensionLength, tKo);
+  const shapeLabelKo = useShapeLabel(store.nailShape, tKo);
+  const wrappingLabelKo = useWrappingLabel(store.wrappingPreference, tKo);
+  const feelLabelKo = useFeelLabel(store.designFeel, tKo);
+  const styleLabelKo = useStyleLabel(store.stylePreference, tKo);
+  const keywordsLabelKo = useKeywordsLabel(store.styleKeywords, tKo);
+  const addOnsLabelKo = useAddOnsLabel(store.addOns, tKo);
+
+  const isNotKo = locale !== 'ko';
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -230,6 +247,7 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
         <ReviewRow
           label={t('preConsult.reviewCurrentNail')}
           value={`${nailStatusLabel}${store.removalPreference && store.removalPreference !== 'none' ? ` · ${removalLabel}` : ''}`}
+          valueKo={isNotKo ? `${nailStatusLabelKo}${store.removalPreference && store.removalPreference !== 'none' ? ` · ${removalLabelKo}` : ''}` : undefined}
           section="nailStatus"
           modifyLabel={t('preConsult.modifyBtn')}
           onModify={onModify}
@@ -237,6 +255,7 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
         <ReviewRow
           label={t('preConsult.reviewLength')}
           value={lengthLabel}
+          valueKo={isNotKo ? lengthLabelKo : undefined}
           section="length"
           modifyLabel={t('preConsult.modifyBtn')}
           onModify={onModify}
@@ -244,6 +263,7 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
         <ReviewRow
           label={t('preConsult.reviewShape')}
           value={shapeLabel}
+          valueKo={isNotKo ? shapeLabelKo : undefined}
           section="shape"
           modifyLabel={t('preConsult.modifyBtn')}
           onModify={onModify}
@@ -252,6 +272,7 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
           <ReviewRow
             label={t('preConsult.reviewWrapping')}
             value={wrappingLabel}
+            valueKo={isNotKo ? wrappingLabelKo : undefined}
             section="wrapping"
             modifyLabel={t('preConsult.modifyBtn')}
             onModify={onModify}
@@ -260,6 +281,7 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
         <ReviewRow
           label={t('preConsult.reviewFeel')}
           value={feelLabel}
+          valueKo={isNotKo ? feelLabelKo : undefined}
           section="vibe"
           modifyLabel={t('preConsult.modifyBtn')}
           onModify={onModify}
@@ -267,6 +289,7 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
         <ReviewRow
           label={t('preConsult.reviewStyle')}
           value={styleLabel}
+          valueKo={isNotKo ? styleLabelKo : undefined}
           section="style"
           modifyLabel={t('preConsult.modifyBtn')}
           onModify={onModify}
@@ -275,6 +298,7 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
           <ReviewRow
             label={t('preConsult.reviewKeyword')}
             value={keywordsLabel}
+            valueKo={isNotKo ? keywordsLabelKo : undefined}
             section="style"
             modifyLabel={t('preConsult.modifyBtn')}
             onModify={onModify}
@@ -284,6 +308,7 @@ export function ConsultReview({ onConfirm, onModify }: ConsultReviewProps): Reac
           <ReviewRow
             label={t('preConsult.reviewAddOn')}
             value={addOnsLabel}
+            valueKo={isNotKo ? addOnsLabelKo : undefined}
             section="addons"
             modifyLabel={t('preConsult.modifyBtn')}
             onModify={onModify}

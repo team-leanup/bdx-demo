@@ -14,9 +14,9 @@ export type DesignCategory = BuiltinDesignCategory | string;
 /** 기본 카테고리 상수 — 순회/검증에 사용 */
 export const BUILTIN_DESIGN_CATEGORIES: BuiltinDesignCategory[] = ['simple', 'french', 'magnet', 'art'];
 
-/** 사장님이 추가할 수 있는 최대 시술 종류 수 (기본 4 + 추가 4) */
-export const MAX_DESIGN_CATEGORIES = 8;
-export const MAX_CUSTOM_CATEGORIES = 4;
+/** 사장님이 추가할 수 있는 최대 시술 종류 수 (기본 4 + 추가 20). 사실상 "원하는 만큼" — 안전장치 상한만 둔다 */
+export const MAX_DESIGN_CATEGORIES = 24;
+export const MAX_CUSTOM_CATEGORIES = 20;
 
 export type BodyPart = 'hand' | 'foot';
 

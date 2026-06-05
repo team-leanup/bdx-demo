@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '@/store/auth-store';
+import { useShopStore } from '@/store/shop-store';
+import { buildPreConsultShareMessage } from '@/lib/share-link-message';
 import { ToastContainer, type ToastData } from '@/components/ui';
 
 function Link2Icon({ className }: { className?: string }): React.ReactElement {
@@ -23,6 +25,7 @@ function ChevronRightIcon({ className }: { className?: string }): React.ReactEle
 
 export function ShareLinkCard(): React.ReactElement | null {
   const currentShopId = useAuthStore((s) => s.currentShopId);
+  const shopName = useShopStore((s) => s.shop?.name);
   const [url, setUrl] = useState<string>('');
   const [toasts, setToasts] = useState<ToastData[]>([]);
 
@@ -36,10 +39,10 @@ export function ShareLinkCard(): React.ReactElement | null {
 
   const handleCopy = async (): Promise<void> => {
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(buildPreConsultShareMessage(url, shopName));
       setToasts((prev) => [
         ...prev,
-        { id: `${Date.now()}-copy`, type: 'success', message: '링크가 복사되었어요' },
+        { id: `${Date.now()}-copy`, type: 'success', message: '안내 문구와 링크가 복사되었어요' },
       ]);
     } catch {
       setToasts((prev) => [

@@ -614,11 +614,11 @@ export default function SettingsPage() {
 
             <div className="my-3 border-t border-border" />
 
-            {/* 시술 종류 (기본 4개 + 사장님 추가, 최대 8개) */}
+            {/* 시술 종류 (기본 4개 + 사장님이 필요한 만큼 추가) */}
             <div className="mb-3 flex items-center justify-between">
               <div>
                 <span className="text-sm font-medium text-text">시술 종류</span>
-                <p className="mt-0.5 text-xs text-text-muted">사전상담·현장모드·포트폴리오에서 사용됩니다 (최대 {4 + MAX_CUSTOM_CATEGORIES}개)</p>
+                <p className="mt-0.5 text-xs text-text-muted">사전상담·현장모드·포트폴리오에서 사용됩니다 · 필요한 만큼 추가할 수 있어요</p>
               </div>
               {!editingCategoryPricing ? (
                 <button
@@ -814,7 +814,7 @@ export default function SettingsPage() {
               )
             ))}
 
-            {/* 추가하기 버튼 — 편집 모드일 때만, 최대 4개까지 */}
+            {/* 추가하기 버튼 — 편집 모드일 때만 (상한은 안전장치 MAX_CUSTOM_CATEGORIES) */}
             {editingCategoryPricing && customCategoriesEdit.length < MAX_CUSTOM_CATEGORIES && (
               <button
                 type="button"
@@ -824,7 +824,7 @@ export default function SettingsPage() {
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
-                시술 종류 추가 ({customCategoriesEdit.length}/{MAX_CUSTOM_CATEGORIES})
+                시술 종류 추가 ({customCategoriesEdit.length}개)
               </button>
             )}
 

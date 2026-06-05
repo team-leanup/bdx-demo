@@ -1,6 +1,6 @@
 # BDX 개발 체크리스트
 
-> 클라이언트 피드백 기반. 최종 업데이트: 2026-04-15
+> 클라이언트 피드백 기반. 최종 업데이트: 2026-06-04
 
 **상태**: ⬜ 미착수 · 🟡 진행중 · 🔵 부분완료 · 🟢 완료 · 🔴 블로커
 
@@ -680,7 +680,8 @@
 | **파츠 동기화·add-on 정리(0602)** | **1** | **1** | **0** | **0** | **0** |
 | **고객 삭제(0602)** | **1** | **1** | **0** | **0** | **0** |
 | **기본 파츠 fallback(0602)** | **1** | **1** | **0** | **0** | **0** |
-| **합계** | **252** | **223** | **0** | **3** | **22** |
+| **파일럿 피드백(0604)** | **6** | **6** | **0** | **0** | **0** |
+| **합계** | **258** | **229** | **0** | **3** | **22** |
 
 ---
 
@@ -812,3 +813,28 @@
 > 설정을 한 번도 안 연 샵은 DB customParts가 null이라 고객 화면에 파츠 미노출(네일숲 shop-001 등).
 - **수정**: SSOT `src/data/default-parts.ts`(기본 8종) 신설 → parts-store·db.ts(`fetchShopPublicData`)·app-store(`DEFAULT_SHOP_SETTINGS`)가 공유. `settings.customParts ?? DEFAULT_CUSTOM_PARTS`로 null/미설정만 기본값 노출, 의도적 빈 배열은 존중. 런타임 fallback이라 DB 백필 불필요.
 - **검증**: tsc/lint/build EXIT 0. 상세 `docs/qa-deep-20260601.md` §8차.
+
+## 28. 🟢 파일럿 클라이언트 피드백 5건 + 카톡 OG (2026-06-04 — 지승호 대표 미팅)
+
+> 출처: 파일럿샵 미팅 피드백 7건. 영준님 회신 — 데이터 구조 변경 없는 1·2·4·5·7번 + 카톡 OG는 파일럿 중 반영, 3번(가격 표시 방식)·6번(포트폴리오 폴더)은 파일럿 후. 상세 `docs/qa-deep-20260604.md`.
+
+### 28.1 🟢 홈 화면 로고 확대 + 문구 오른쪽 (피드백 1)
+- **수정**: `GreetingHeader.tsx` 컨테이너를 좌우 반전 — 로고를 왼쪽 첫 자식으로 옮기고 `h-9 w-9`→`h-16 w-16`(이니셜 `text-xl`), 문구 블록을 오른쪽으로. `flex items-center gap-3.5`.
+
+### 28.2 🟢 사전상담 페이지 상단 로고 확대 (피드백 2)
+- **수정**: `pre-consult/[shopId]/page.tsx` 상단 로고 `h-12 w-12`→`h-20 w-20` + `border-2 shadow-sm`. 손님이 링크 열 때 샵 로고가 먼저 크게 보여 신뢰감.
+
+### 28.3 🟢 카톡 미리보기 썸네일 = 샵 로고 OG (피드백 2 확장)
+- **수정**: 신규 `pre-consult/[shopId]/opengraph-image.tsx`(ImageResponse 1200×630 카드 — 로고+샵이름+안내문구) + `layout.tsx`에 `generateMetadata`. 로고 PNG/JPG fetch→data URI, SVG·실패 시 이니셜 폴백. 한글은 Google Fonts(Noto Sans KR) subset 동적 로딩(satori가 Pretendard variable woff2 미지원).
+- **배포 후**: 카톡 OG 캐시 → 기존 링크는 카카오 캐시 초기화 도구로 1회 갱신 필요.
+
+### 28.4 🟢 사전상담 합의 페이지 한/외 동시표시 (피드백 4)
+- **수정**: `confirm/page.tsx`·`ConsultReview.tsx`. `useLabelMaps`→`{labels, koLabels}`(useT+useKo), `SummaryRow`/`ReviewRow`에 `valueKo` 병기(`locale!=='ko'`일 때만). 선택 항목(부위/네일/제거/길이/쉐입/랩핑/느낌/옵션/방향/키워드+카테고리)에 한국어 병기. 자유 요청사항·파츠 이름·customerNotice는 원문 유지.
+
+### 28.5 🟢 메뉴 개수 8개 상한 해제 (피드백 5)
+- **수정**: `MAX_CUSTOM_CATEGORIES` 4→20(총 24). 안내문구 "(최대 N개)"→"필요한 만큼 추가", 카운터 "N/MAX"→"N개". 상수 하나로 settings guard·렌더·문구 일괄 반영. 고객 CategoryPicker는 slice 없이 전부 렌더.
+
+### 28.6 🟢 링크 복사 시 안내 문구 첨부 (피드백 7)
+- **수정**: SSOT `src/lib/share-link-message.ts` `buildPreConsultShareMessage` 신설 → `ShareLinkCard`(홈)·`ConsultationLinkModal`(예약별)이 공유. URL만 복사하던 것을 "샵이름 사전상담 + 안내 + URL"로.
+
+- **검증**: lint 0 error / tsc EXIT 0 / build EXIT 0. OG 라우트 생성 확인. 상세 `docs/qa-deep-20260604.md`.

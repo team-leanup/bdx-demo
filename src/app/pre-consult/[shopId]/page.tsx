@@ -196,7 +196,7 @@ function PreConsultStartInner(): React.ReactElement {
             <img
               src={logoUrl}
               alt={displayShopName ?? ''}
-              className="h-12 w-12 rounded-full object-cover border border-border"
+              className="h-20 w-20 rounded-full object-cover border-2 border-border shadow-sm"
             />
           </div>
         )}

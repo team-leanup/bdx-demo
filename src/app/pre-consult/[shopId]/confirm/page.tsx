@@ -18,15 +18,28 @@ import type { PreConsultationData, DesignCategory } from '@/types/pre-consultati
 
 // ─── Label Maps ──────────────────────────────────────────────────────────────
 
-function useLabelMaps() {
-  const t = useT();
+interface LabelMap {
+  category: Record<string, string>;
+  nailStatus: Record<string, string>;
+  removal: Record<string, string>;
+  length: Record<string, string>;
+  extensionLength: Record<string, string>;
+  shape: Record<string, string>;
+  feel: Record<string, string>;
+  wrapping: Record<string, string>;
+  addOn: Record<string, string>;
+  stylePreference: Record<string, string>;
+  styleKeyword: Record<string, string>;
+}
+
+function buildLabelMap(t: (key: string) => string): LabelMap {
   return {
     category: {
       simple: t('preConsult.catSimple'),
       french: t('preConsult.catFrench'),
       magnet: t('preConsult.catMagnet'),
       art: t('preConsult.catArt'),
-    } as Record<string, string>,
+    },
     nailStatus: {
       none: t('preConsult.nailNone'),
       existing: t('preConsult.nailExisting'),
@@ -76,14 +89,23 @@ function useLabelMaps() {
       photo_match: t('preConsult.stylePhotoMatch'),
       natural_fit: t('preConsult.styleNaturalFit'),
       clean_subtle: t('preConsult.styleCleanSubtle'),
-    } as Record<string, string>,
+    },
     styleKeyword: {
       office_friendly: t('preConsult.kwOffice'),
       slim_fingers: t('preConsult.kwSlim'),
       tidy_look: t('preConsult.kwTidy'),
       subtle_point: t('preConsult.kwPoint'),
       more_fancy: t('preConsult.kwFancy'),
-    } as Record<string, string>,
+    },
+  };
+}
+
+function useLabelMaps(): { labels: LabelMap; koLabels: LabelMap } {
+  const t = useT();
+  const tKo = useKo();
+  return {
+    labels: buildLabelMap(t),
+    koLabels: buildLabelMap(tKo),
   };
 }
 
@@ -92,13 +114,19 @@ function useLabelMaps() {
 interface SummaryRowProps {
   label: string;
   value: string;
+  valueKo?: string;
 }
 
-function SummaryRow({ label, value }: SummaryRowProps): React.ReactElement {
+function SummaryRow({ label, value, valueKo }: SummaryRowProps): React.ReactElement {
   return (
     <div className="flex justify-between items-center gap-2 py-1">
       <span className="text-xs text-text-muted flex-shrink-0">{label}</span>
-      <span className="text-xs text-text font-medium text-right">{value}</span>
+      <span className="text-xs text-text font-medium text-right">
+        {value}
+        {valueKo && (
+          <span className="block text-[10px] text-text-muted opacity-60 font-normal">{valueKo}</span>
+        )}
+      </span>
     </div>
   );
 }
@@ -132,7 +160,7 @@ export default function PreConsultConfirmPage(): React.ReactElement {
   const t = useT();
   const tKo = useKo();
   const locale = useLocale();
-  const labels = useLabelMaps();
+  const { labels, koLabels } = useLabelMaps();
 
   const store = usePreConsultStore();
   const selectedPhotoPrice = usePreConsultStore((s) => s.selectedPhotoPrice);
@@ -500,6 +528,11 @@ export default function PreConsultConfirmPage(): React.ReactElement {
                   <span className="inline-block px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-bold w-fit">
                     {labels.category[selectedCategory] ??
                       resolveMenuCategoryLabelBilingual(selectedCategory, undefined, shopData?.customCategories ?? undefined, locale)}
+                    {locale !== 'ko' && (labels.category[selectedCategory] != null) && (
+                      <span className="block text-[10px] text-primary/60 font-normal">
+                        {koLabels.category[selectedCategory]}
+                      </span>
+                    )}
                   </span>
                 )}
                 {referenceImageUrls.length > 0 && (
@@ -517,53 +550,62 @@ export default function PreConsultConfirmPage(): React.ReactElement {
             <SummaryRow
               label={t('preConsult.bodyPartTitle')}
               value={bodyPart === 'foot' ? `🦶 ${t('preConsult.bodyPartFoot')}` : `🖐️ ${t('preConsult.bodyPartHand')}`}
+              valueKo={locale !== 'ko' ? (bodyPart === 'foot' ? `🦶 ${tKo('preConsult.bodyPartFoot')}` : `🖐️ ${tKo('preConsult.bodyPartHand')}`) : undefined}
             />
             {nailStatus && (
               <SummaryRow
                 label={t('preConsult.currentNailTitle')}
                 value={labels.nailStatus[nailStatus] ?? nailStatus}
+                valueKo={locale !== 'ko' ? (koLabels.nailStatus[nailStatus] ?? nailStatus) : undefined}
               />
             )}
             {removalPreference && removalPreference !== 'none' && (
               <SummaryRow
                 label={t('preConsult.removalTitle')}
                 value={labels.removal[removalPreference]}
+                valueKo={locale !== 'ko' ? koLabels.removal[removalPreference] : undefined}
               />
             )}
             {lengthPreference && (
               <SummaryRow
                 label={t('preConsult.lengthTitle')}
                 value={labels.length[lengthPreference] ?? lengthPreference}
+                valueKo={locale !== 'ko' ? (koLabels.length[lengthPreference] ?? lengthPreference) : undefined}
               />
             )}
             {extensionLength && lengthPreference === 'extend' && (
               <SummaryRow
                 label={t('preConsult.extensionLengthLabel')}
                 value={labels.extensionLength[extensionLength] ?? extensionLength}
+                valueKo={locale !== 'ko' ? (koLabels.extensionLength[extensionLength] ?? extensionLength) : undefined}
               />
             )}
             {nailShape && (
               <SummaryRow
                 label={t('preConsult.shapeTitle')}
                 value={labels.shape[nailShape] ?? nailShape}
+                valueKo={locale !== 'ko' ? (koLabels.shape[nailShape] ?? nailShape) : undefined}
               />
             )}
             {wrappingPreference && (
               <SummaryRow
                 label={t('preConsult.wrappingLabel')}
                 value={labels.wrapping[wrappingPreference]}
+                valueKo={locale !== 'ko' ? koLabels.wrapping[wrappingPreference] : undefined}
               />
             )}
             {designFeel && (
               <SummaryRow
                 label={t('preConsult.feelTitle')}
                 value={labels.feel[designFeel] ?? designFeel}
+                valueKo={locale !== 'ko' ? (koLabels.feel[designFeel] ?? designFeel) : undefined}
               />
             )}
             {addOns.length > 0 && (
               <SummaryRow
                 label={t('preConsult.addOnTitle')}
                 value={addOns.map((a) => labels.addOn[a] ?? a).join(', ')}
+                valueKo={locale !== 'ko' ? addOns.map((a) => koLabels.addOn[a] ?? a).join(', ') : undefined}
               />
             )}
             {Object.keys(customPartSelections).length > 0 && (
@@ -578,12 +620,14 @@ export default function PreConsultConfirmPage(): React.ReactElement {
               <SummaryRow
                 label={t('preConsult.styleTitle')}
                 value={labels.stylePreference[stylePreference] ?? stylePreference}
+                valueKo={locale !== 'ko' ? (koLabels.stylePreference[stylePreference] ?? stylePreference) : undefined}
               />
             )}
             {styleKeywords.length > 0 && (
               <SummaryRow
                 label={t('preConsult.keywordTitle')}
                 value={styleKeywords.map((k) => labels.styleKeyword[k] ?? k).join(', ')}
+                valueKo={locale !== 'ko' ? styleKeywords.map((k) => koLabels.styleKeyword[k] ?? k).join(', ') : undefined}
               />
             )}
             {/* 기타 요청사항 — 자유 입력이라 전체 폭으로 표시 (손님이 적은 내용 누락 방지) */}
