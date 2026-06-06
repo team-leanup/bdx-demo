@@ -1186,6 +1186,7 @@ export default function RecordsPage() {
                               customParts: shopSettings.customParts,
                               customCategories: shopSettings.customCategories,
                               categoryLabels: shopSettings.categoryLabels,
+                              customerLanguage: booking?.language,
                             }}
                           />
                         </div>

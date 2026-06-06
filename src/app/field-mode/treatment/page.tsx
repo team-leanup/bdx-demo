@@ -23,6 +23,7 @@ export default function TreatmentPage(): React.ReactElement {
   const router = useRouter();
   const [showBackConfirm, setShowBackConfirm] = useState(false);
   const [preConsultData, setPreConsultData] = useState<PreConsultationData | null>(null);
+  const [customerLang, setCustomerLang] = useState<'ko' | 'en' | 'zh' | 'ja' | undefined>(undefined);
   const [preConsultOpen, setPreConsultOpen] = useState(false);
 
   const {
@@ -58,6 +59,7 @@ export default function TreatmentPage(): React.ReactElement {
     void fetchBookingRequestById(bookingId, currentShopId).then((booking) => {
       if (booking?.preConsultationData) {
         setPreConsultData(booking.preConsultationData as unknown as PreConsultationData);
+        setCustomerLang(booking.language);
       }
     });
   }, [bookingId, currentShopId]);
@@ -278,6 +280,7 @@ export default function TreatmentPage(): React.ReactElement {
                           customParts: shopSettings.customParts,
                           customCategories: shopSettings.customCategories,
                           categoryLabels: shopSettings.categoryLabels,
+                          customerLanguage: customerLang,
                         }}
                       />
                     </div>

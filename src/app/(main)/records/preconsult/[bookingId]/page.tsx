@@ -192,6 +192,7 @@ export default function PreConsultDetailPage({ params }: { params: Promise<{ boo
               customParts: shopSettings?.customParts,
               customCategories: shopSettings?.customCategories,
               categoryLabels: shopSettings?.categoryLabels,
+              customerLanguage: booking.language,
             }}
           />
         ) : images.length === 0 && !booking.requestNote && (

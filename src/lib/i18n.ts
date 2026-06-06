@@ -4990,3 +4990,18 @@ export function useKo() {
     [],
   );
 }
+
+/**
+ * 특정 언어의 라벨을 뽑는 non-hook 번역기.
+ * 사장님 화면(ko 강제)에서 손님이 사전상담한 언어의 라벨을 한국어와 병기할 때 사용한다.
+ */
+export function createTranslator(locale: keyof typeof translations): (key: string) => string {
+  return (key: string): string => {
+    const keys = key.split('.');
+    let result: unknown = translations[locale] as unknown;
+    for (const k of keys) {
+      result = (result as Record<string, unknown>)?.[k];
+    }
+    return (result as string) ?? key;
+  };
+}

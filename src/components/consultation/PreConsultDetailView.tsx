@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PreConsultationData } from '@/types/pre-consultation';
+import { createTranslator } from '@/lib/i18n';
 
 // ── 레이블 상수 (사전상담 표시 SSOT — 모든 원장 화면이 이 컴포넌트를 통해 동일하게 표시) ──
 // SSOT 정렬: labels.ts CATEGORY_LABELS 와 동일 표기 (자석 / 마그넷, 심플 / 원컬러)
@@ -35,6 +36,39 @@ export const PRE_STYLE_KW_LABEL: Record<string, string> = {
 export const PRE_ADDON_LABEL: Record<string, string> = { stone: '스톤', parts: '파츠', glitter: '글리터', point_art: '포인트 아트', wrapping: '랩핑' };
 export const PRE_BODY_PART_LABEL: Record<string, string> = { hand: '손', foot: '발' };
 
+// ── 손님 언어 라벨맵 ──────────────────────────────────────────────────
+interface ForeignPreLabels {
+  bodyPart: Record<string, string>;
+  category: Record<string, string>;
+  nailStatus: Record<string, string>;
+  removal: Record<string, string>;
+  length: Record<string, string>;
+  extensionLength: Record<string, string>;
+  shape: Record<string, string>;
+  feel: Record<string, string>;
+  wrapping: Record<string, string>;
+  addOn: Record<string, string>;
+  stylePreference: Record<string, string>;
+  styleKeyword: Record<string, string>;
+}
+
+function buildForeignPreLabels(t: (key: string) => string): ForeignPreLabels {
+  return {
+    bodyPart: { hand: t('preConsult.bodyPartHand'), foot: t('preConsult.bodyPartFoot') },
+    category: { simple: t('preConsult.catSimple'), french: t('preConsult.catFrench'), magnet: t('preConsult.catMagnet'), art: t('preConsult.catArt') },
+    nailStatus: { none: t('preConsult.nailNone'), existing: t('preConsult.nailExisting') },
+    removal: { self_shop: t('preConsult.removalSelf'), other_shop: t('preConsult.removalOther') },
+    length: { keep: t('preConsult.lengthKeep'), shorten: t('preConsult.lengthShort'), extend: t('preConsult.lengthExtend') },
+    extensionLength: { natural: t('preConsult.extensionNatural'), medium: t('preConsult.extensionMedium'), long: t('preConsult.extensionLong') },
+    shape: { round: t('preConsult.shapeRound'), oval: t('preConsult.shapeOval'), square: t('preConsult.shapeSquare'), squoval: t('preConsult.shapeSquoval'), almond: t('preConsult.shapeAlmond'), stiletto: t('preConsult.shapeStiletto'), coffin: t('preConsult.shapeCoffin') },
+    feel: { natural: t('preConsult.feelNatural'), french: t('preConsult.feelFrench'), trendy: t('preConsult.feelTrendy'), fancy: t('preConsult.feelFancy') },
+    wrapping: { yes: t('preConsult.wrappingYes'), no: t('preConsult.wrappingNo') },
+    addOn: { stone: t('preConsult.addOnStone'), parts: t('preConsult.addOnParts'), glitter: t('preConsult.addOnGlitter'), point_art: t('preConsult.addOnPointArt'), wrapping: t('preConsult.wrappingLabel') },
+    stylePreference: { photo_match: t('preConsult.stylePhotoMatch'), natural_fit: t('preConsult.styleNaturalFit'), clean_subtle: t('preConsult.styleCleanSubtle') },
+    styleKeyword: { office_friendly: t('preConsult.kwOffice'), slim_fingers: t('preConsult.kwSlim'), tidy_look: t('preConsult.kwTidy'), subtle_point: t('preConsult.kwPoint'), more_fancy: t('preConsult.kwFancy') },
+  };
+}
+
 // ── 옵션 ──────────────────────────────────────────────────────────────
 export interface PreConsultDetailViewOptions {
   /** SectionCard 카드 배경 강조 여부 — preconsult 전용 페이지는 true, 임베드는 false (기본) */
@@ -49,6 +83,8 @@ export interface PreConsultDetailViewOptions {
   customCategories?: Array<{ id: string; name: string }>;
   /** builtin 카테고리 사장님 rename override (shopSettings.categoryLabels) */
   categoryLabels?: Record<string, string>;
+  /** 손님이 사전상담한 언어 — ko가 아니면 사장님 화면에 손님 언어 보조 병기 (현장 합의용) */
+  customerLanguage?: 'ko' | 'en' | 'zh' | 'ja';
 }
 
 export interface PreConsultDetailViewProps {
@@ -72,22 +108,26 @@ function SectionCard({ title, icon, elevated, children }: {
   );
 }
 
-function InfoRow({ label, value }: { label: string; value?: string }): React.ReactElement | null {
+function InfoRow({ label, value, valueSub }: { label: string; value?: string; valueSub?: string }): React.ReactElement | null {
   if (!value) return null;
   return (
-    <div className="flex justify-between text-xs">
-      <span className="text-text-muted">{label}</span>
-      <span className="font-medium text-text break-keep">{value}</span>
+    <div className="flex justify-between text-xs gap-2">
+      <span className="text-text-muted flex-shrink-0">{label}</span>
+      <span className="font-medium text-text break-keep text-right">
+        {value}
+        {valueSub && <span className="block text-[10px] font-normal text-text-muted opacity-70">{valueSub}</span>}
+      </span>
     </div>
   );
 }
 
-function TagChips({ tags, labelMap }: { tags: string[]; labelMap: Record<string, string> }): React.ReactElement {
+function TagChips({ tags, labelMap, subLabelMap }: { tags: string[]; labelMap: Record<string, string>; subLabelMap?: Record<string, string> }): React.ReactElement {
   return (
     <div className="flex flex-wrap gap-1.5">
       {tags.map((tag) => (
-        <span key={tag} className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
-          {labelMap[tag] ?? tag}
+        <span key={tag} className="inline-flex flex-col items-center rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary leading-tight">
+          <span>{labelMap[tag] ?? tag}</span>
+          {subLabelMap?.[tag] && <span className="text-[9px] font-normal text-primary/60">{subLabelMap[tag]}</span>}
         </span>
       ))}
     </div>
@@ -109,9 +149,14 @@ export function PreConsultDetailView({
     customParts,
     customCategories,
     categoryLabels,
+    customerLanguage,
   } = options;
 
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
+  // 손님 언어 병기 — customerLanguage !== 'ko'일 때만 fl에 라벨맵 준비
+  const foreignLang = customerLanguage && customerLanguage !== 'ko' ? customerLanguage : null;
+  const fl: ForeignPreLabels | null = foreignLang ? buildForeignPreLabels(createTranslator(foreignLang)) : null;
 
   // 이미지 목록 조합: selectedPhotoUrl을 첫 번째로
   const baseImages = data.referenceImageUrls?.length ? data.referenceImageUrls : [];
@@ -159,7 +204,11 @@ export function PreConsultDetailView({
         {/* 디자인 선택 */}
         {(data.bodyPart || data.designCategory || data.designFeel || data.nailShape || data.stylePreference) && (
           <SectionCard icon="💅" title="디자인 선택" elevated={elevated}>
-            <InfoRow label="시술 부위" value={data.bodyPart ? (PRE_BODY_PART_LABEL[data.bodyPart] ?? data.bodyPart) : undefined} />
+            <InfoRow
+              label="시술 부위"
+              value={data.bodyPart ? (PRE_BODY_PART_LABEL[data.bodyPart] ?? data.bodyPart) : undefined}
+              valueSub={fl && data.bodyPart ? fl.bodyPart[data.bodyPart] : undefined}
+            />
             <InfoRow
               label="시술 종류"
               value={
@@ -170,10 +219,27 @@ export function PreConsultDetailView({
                       data.designCategory)
                   : undefined
               }
+              valueSub={
+                fl && data.designCategory && PRE_CATEGORY_LABEL[data.designCategory] != null
+                  ? fl.category[data.designCategory]
+                  : undefined
+              }
             />
-            <InfoRow label="디자인 느낌" value={data.designFeel ? (PRE_FEEL_LABEL[data.designFeel] ?? data.designFeel) : undefined} />
-            <InfoRow label="네일 쉐입" value={data.nailShape ? (PRE_SHAPE_LABEL[data.nailShape] ?? data.nailShape) : undefined} />
-            <InfoRow label="시술 방향" value={data.stylePreference ? (PRE_STYLE_PREF_LABEL[data.stylePreference] ?? data.stylePreference) : undefined} />
+            <InfoRow
+              label="디자인 느낌"
+              value={data.designFeel ? (PRE_FEEL_LABEL[data.designFeel] ?? data.designFeel) : undefined}
+              valueSub={fl && data.designFeel ? fl.feel[data.designFeel] : undefined}
+            />
+            <InfoRow
+              label="네일 쉐입"
+              value={data.nailShape ? (PRE_SHAPE_LABEL[data.nailShape] ?? data.nailShape) : undefined}
+              valueSub={fl && data.nailShape ? fl.shape[data.nailShape] : undefined}
+            />
+            <InfoRow
+              label="시술 방향"
+              value={data.stylePreference ? (PRE_STYLE_PREF_LABEL[data.stylePreference] ?? data.stylePreference) : undefined}
+              valueSub={fl && data.stylePreference ? fl.stylePreference[data.stylePreference] : undefined}
+            />
             {/* 0601: 손님이 고른 메뉴 사진의 가격 — 원장이 시작가를 바로 확인 (이전엔 저장만 되고 미표시) */}
             {typeof data.selectedPhotoPrice === 'number' && data.selectedPhotoPrice > 0 && (
               <InfoRow label="선택 사진 가격" value={`₩${data.selectedPhotoPrice.toLocaleString()}`} />
@@ -184,22 +250,42 @@ export function PreConsultDetailView({
         {/* 네일 상태 */}
         {(data.nailStatus || (data.removalPreference && data.removalPreference !== 'none') || data.lengthPreference) && (
           <SectionCard icon="✋" title="네일 상태" elevated={elevated}>
-            <InfoRow label="현재 상태" value={data.nailStatus ? (PRE_NAIL_STATUS_LABEL[data.nailStatus] ?? data.nailStatus) : undefined} />
+            <InfoRow
+              label="현재 상태"
+              value={data.nailStatus ? (PRE_NAIL_STATUS_LABEL[data.nailStatus] ?? data.nailStatus) : undefined}
+              valueSub={fl && data.nailStatus ? fl.nailStatus[data.nailStatus] : undefined}
+            />
             {data.removalPreference && data.removalPreference !== 'none' && (
-              <InfoRow label="오프" value={PRE_REMOVAL_LABEL[data.removalPreference] ?? data.removalPreference} />
+              <InfoRow
+                label="오프"
+                value={PRE_REMOVAL_LABEL[data.removalPreference] ?? data.removalPreference}
+                valueSub={fl ? fl.removal[data.removalPreference] : undefined}
+              />
             )}
-            <InfoRow label="길이 선호" value={data.lengthPreference ? (PRE_LENGTH_PREF_LABEL[data.lengthPreference] ?? data.lengthPreference) : undefined} />
+            <InfoRow
+              label="길이 선호"
+              value={data.lengthPreference ? (PRE_LENGTH_PREF_LABEL[data.lengthPreference] ?? data.lengthPreference) : undefined}
+              valueSub={fl && data.lengthPreference ? fl.length[data.lengthPreference] : undefined}
+            />
             {data.extensionLength && data.lengthPreference === 'extend' && (
-              <InfoRow label="연장 길이" value={PRE_EXTENSION_LEN_LABEL[data.extensionLength] ?? data.extensionLength} />
+              <InfoRow
+                label="연장 길이"
+                value={PRE_EXTENSION_LEN_LABEL[data.extensionLength] ?? data.extensionLength}
+                valueSub={fl ? fl.extensionLength[data.extensionLength] : undefined}
+              />
             )}
-            <InfoRow label="랩핑" value={data.wrappingPreference ? (PRE_WRAPPING_LABEL[data.wrappingPreference] ?? data.wrappingPreference) : undefined} />
+            <InfoRow
+              label="랩핑"
+              value={data.wrappingPreference ? (PRE_WRAPPING_LABEL[data.wrappingPreference] ?? data.wrappingPreference) : undefined}
+              valueSub={fl && data.wrappingPreference ? fl.wrapping[data.wrappingPreference] : undefined}
+            />
           </SectionCard>
         )}
 
         {/* 스타일 키워드 */}
         {data.styleKeyword && data.styleKeyword.length > 0 && (
           <SectionCard icon="✨" title="스타일 키워드" elevated={elevated}>
-            <TagChips tags={data.styleKeyword} labelMap={PRE_STYLE_KW_LABEL} />
+            <TagChips tags={data.styleKeyword} labelMap={PRE_STYLE_KW_LABEL} subLabelMap={fl?.styleKeyword} />
           </SectionCard>
         )}
 
@@ -208,7 +294,7 @@ export function PreConsultDetailView({
           (data.customPartSelections && Object.keys(data.customPartSelections).length > 0)) && (
           <SectionCard icon="💎" title="추가 옵션" elevated={elevated}>
             {data.addOns && data.addOns.length > 0 && (
-              <TagChips tags={data.addOns} labelMap={PRE_ADDON_LABEL} />
+              <TagChips tags={data.addOns} labelMap={PRE_ADDON_LABEL} subLabelMap={fl?.addOn} />
             )}
             {data.customPartSelections && Object.keys(data.customPartSelections).length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-1">

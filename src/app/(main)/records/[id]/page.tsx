@@ -324,6 +324,7 @@ export default function RecordDetailPage({ params }: Props): React.ReactElement 
               customParts: shopSettings?.customParts,
               customCategories: shopSettings?.customCategories,
               categoryLabels: shopSettings?.categoryLabels,
+              customerLanguage: preConsultBooking.language,
             }}
           />
         </Card>
