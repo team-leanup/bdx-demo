@@ -52,6 +52,57 @@ interface ForeignPreLabels {
   styleKeyword: Record<string, string>;
 }
 
+// ── 손님 언어 라벨/섹션 제목 맵 ───────────────────────────────────────
+interface ForeignPreTitles {
+  /** InfoRow labelSub */
+  labels: {
+    bodyPart: string;
+    category: string;
+    feel: string;
+    shape: string;
+    stylePreference: string;
+    nailStatus: string;
+    off: string;
+    length: string;
+    extensionLength: string;
+    wrapping: string;
+  };
+  /** SectionCard titleSub */
+  sections: {
+    reference: string;
+    design: string;
+    nailState: string;
+    keywords: string;
+    addOns: string;
+    request: string;
+  };
+}
+
+function buildForeignPreTitles(t: (key: string) => string): ForeignPreTitles {
+  return {
+    labels: {
+      bodyPart: t('consultation.bodyPartTitle'),
+      category: t('preConsult.pdLabelCategory'),
+      feel: t('preConsult.pdLabelFeel'),
+      shape: t('consultation.shapeTitle'),
+      stylePreference: t('preConsult.pdLabelStylePref'),
+      nailStatus: t('preConsult.pdLabelNailStatus'),
+      off: t('preConsult.pdLabelOff'),
+      length: t('preConsult.pdLabelLength'),
+      extensionLength: t('preConsult.pdLabelExtLength'),
+      wrapping: t('preConsult.pdLabelWrapping'),
+    },
+    sections: {
+      reference: t('consultation.referenceTitle'),
+      design: t('preConsult.pdSectionDesign'),
+      nailState: t('preConsult.pdSectionNailState'),
+      keywords: t('preConsult.pdSectionKeywords'),
+      addOns: t('preConsult.pdSectionAddOns'),
+      request: t('preConsult.pdSectionRequest'),
+    },
+  };
+}
+
 function buildForeignPreLabels(t: (key: string) => string): ForeignPreLabels {
   return {
     bodyPart: { hand: t('preConsult.bodyPartHand'), foot: t('preConsult.bodyPartFoot') },
@@ -93,26 +144,31 @@ export interface PreConsultDetailViewProps {
 }
 
 // ── 서브 컴포넌트 ─────────────────────────────────────────────────────
-function SectionCard({ title, icon, elevated, children }: {
-  title: string; icon?: string; elevated?: boolean; children: React.ReactNode;
+function SectionCard({ title, titleSub, icon, elevated, children }: {
+  title: string; titleSub?: string; icon?: string; elevated?: boolean; children: React.ReactNode;
 }): React.ReactElement {
   return (
     <div className={`rounded-2xl border p-4 flex flex-col gap-2 ${
       elevated ? 'bg-surface border-border' : 'bg-surface-alt border-border/60'
     }`}>
       <h4 className="text-xs font-bold text-text-secondary flex items-center gap-1.5">
-        {icon && <span>{icon}</span>}{title}
+        {icon && <span>{icon}</span>}
+        {title}
+        {titleSub && <span className="text-[10px] font-normal opacity-70 ml-0.5">{titleSub}</span>}
       </h4>
       <div className="flex flex-col gap-1.5">{children}</div>
     </div>
   );
 }
 
-function InfoRow({ label, value, valueSub }: { label: string; value?: string; valueSub?: string }): React.ReactElement | null {
+function InfoRow({ label, labelSub, value, valueSub }: { label: string; labelSub?: string; value?: string; valueSub?: string }): React.ReactElement | null {
   if (!value) return null;
   return (
     <div className="flex justify-between text-xs gap-2">
-      <span className="text-text-muted flex-shrink-0">{label}</span>
+      <span className="text-text-muted flex-shrink-0">
+        {label}
+        {labelSub && <span className="block text-[10px] opacity-70 font-normal">{labelSub}</span>}
+      </span>
       <span className="font-medium text-text break-keep text-right">
         {value}
         {valueSub && <span className="block text-[10px] font-normal text-text-muted opacity-70">{valueSub}</span>}
@@ -154,9 +210,11 @@ export function PreConsultDetailView({
 
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
-  // 손님 언어 병기 — customerLanguage !== 'ko'일 때만 fl에 라벨맵 준비
+  // 손님 언어 병기 — customerLanguage !== 'ko'일 때만 fl/ft에 라벨맵 준비
   const foreignLang = customerLanguage && customerLanguage !== 'ko' ? customerLanguage : null;
-  const fl: ForeignPreLabels | null = foreignLang ? buildForeignPreLabels(createTranslator(foreignLang)) : null;
+  const foreignT = foreignLang ? createTranslator(foreignLang) : null;
+  const fl: ForeignPreLabels | null = foreignT ? buildForeignPreLabels(foreignT) : null;
+  const ft: ForeignPreTitles | null = foreignT ? buildForeignPreTitles(foreignT) : null;
 
   // 이미지 목록 조합: selectedPhotoUrl을 첫 번째로
   const baseImages = data.referenceImageUrls?.length ? data.referenceImageUrls : [];
@@ -181,7 +239,7 @@ export function PreConsultDetailView({
       <div className="flex flex-col gap-3">
         {/* 참고 이미지 */}
         {images.length > 0 && (
-          <SectionCard icon="📷" title="참고 이미지" elevated={elevated}>
+          <SectionCard icon="📷" title="참고 이미지" titleSub={ft?.sections.reference} elevated={elevated}>
             <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
               {images.map((url, i) => (
                 <button
@@ -203,14 +261,16 @@ export function PreConsultDetailView({
 
         {/* 디자인 선택 */}
         {(data.bodyPart || data.designCategory || data.designFeel || data.nailShape || data.stylePreference) && (
-          <SectionCard icon="💅" title="디자인 선택" elevated={elevated}>
+          <SectionCard icon="💅" title="디자인 선택" titleSub={ft?.sections.design} elevated={elevated}>
             <InfoRow
               label="시술 부위"
+              labelSub={ft?.labels.bodyPart}
               value={data.bodyPart ? (PRE_BODY_PART_LABEL[data.bodyPart] ?? data.bodyPart) : undefined}
               valueSub={fl && data.bodyPart ? fl.bodyPart[data.bodyPart] : undefined}
             />
             <InfoRow
               label="시술 종류"
+              labelSub={ft?.labels.category}
               value={
                 data.designCategory
                   ? (categoryLabels?.[data.designCategory] ??
@@ -227,16 +287,19 @@ export function PreConsultDetailView({
             />
             <InfoRow
               label="디자인 느낌"
+              labelSub={ft?.labels.feel}
               value={data.designFeel ? (PRE_FEEL_LABEL[data.designFeel] ?? data.designFeel) : undefined}
               valueSub={fl && data.designFeel ? fl.feel[data.designFeel] : undefined}
             />
             <InfoRow
               label="네일 쉐입"
+              labelSub={ft?.labels.shape}
               value={data.nailShape ? (PRE_SHAPE_LABEL[data.nailShape] ?? data.nailShape) : undefined}
               valueSub={fl && data.nailShape ? fl.shape[data.nailShape] : undefined}
             />
             <InfoRow
               label="시술 방향"
+              labelSub={ft?.labels.stylePreference}
               value={data.stylePreference ? (PRE_STYLE_PREF_LABEL[data.stylePreference] ?? data.stylePreference) : undefined}
               valueSub={fl && data.stylePreference ? fl.stylePreference[data.stylePreference] : undefined}
             />
@@ -249,33 +312,38 @@ export function PreConsultDetailView({
 
         {/* 네일 상태 */}
         {(data.nailStatus || (data.removalPreference && data.removalPreference !== 'none') || data.lengthPreference) && (
-          <SectionCard icon="✋" title="네일 상태" elevated={elevated}>
+          <SectionCard icon="✋" title="네일 상태" titleSub={ft?.sections.nailState} elevated={elevated}>
             <InfoRow
               label="현재 상태"
+              labelSub={ft?.labels.nailStatus}
               value={data.nailStatus ? (PRE_NAIL_STATUS_LABEL[data.nailStatus] ?? data.nailStatus) : undefined}
               valueSub={fl && data.nailStatus ? fl.nailStatus[data.nailStatus] : undefined}
             />
             {data.removalPreference && data.removalPreference !== 'none' && (
               <InfoRow
                 label="오프"
+                labelSub={ft?.labels.off}
                 value={PRE_REMOVAL_LABEL[data.removalPreference] ?? data.removalPreference}
                 valueSub={fl ? fl.removal[data.removalPreference] : undefined}
               />
             )}
             <InfoRow
               label="길이 선호"
+              labelSub={ft?.labels.length}
               value={data.lengthPreference ? (PRE_LENGTH_PREF_LABEL[data.lengthPreference] ?? data.lengthPreference) : undefined}
               valueSub={fl && data.lengthPreference ? fl.length[data.lengthPreference] : undefined}
             />
             {data.extensionLength && data.lengthPreference === 'extend' && (
               <InfoRow
                 label="연장 길이"
+                labelSub={ft?.labels.extensionLength}
                 value={PRE_EXTENSION_LEN_LABEL[data.extensionLength] ?? data.extensionLength}
                 valueSub={fl ? fl.extensionLength[data.extensionLength] : undefined}
               />
             )}
             <InfoRow
               label="랩핑"
+              labelSub={ft?.labels.wrapping}
               value={data.wrappingPreference ? (PRE_WRAPPING_LABEL[data.wrappingPreference] ?? data.wrappingPreference) : undefined}
               valueSub={fl && data.wrappingPreference ? fl.wrapping[data.wrappingPreference] : undefined}
             />
@@ -284,7 +352,7 @@ export function PreConsultDetailView({
 
         {/* 스타일 키워드 */}
         {data.styleKeyword && data.styleKeyword.length > 0 && (
-          <SectionCard icon="✨" title="스타일 키워드" elevated={elevated}>
+          <SectionCard icon="✨" title="스타일 키워드" titleSub={ft?.sections.keywords} elevated={elevated}>
             <TagChips tags={data.styleKeyword} labelMap={PRE_STYLE_KW_LABEL} subLabelMap={fl?.styleKeyword} />
           </SectionCard>
         )}
@@ -292,7 +360,7 @@ export function PreConsultDetailView({
         {/* 추가 옵션 */}
         {((data.addOns && data.addOns.length > 0) ||
           (data.customPartSelections && Object.keys(data.customPartSelections).length > 0)) && (
-          <SectionCard icon="💎" title="추가 옵션" elevated={elevated}>
+          <SectionCard icon="💎" title="추가 옵션" titleSub={ft?.sections.addOns} elevated={elevated}>
             {data.addOns && data.addOns.length > 0 && (
               <TagChips tags={data.addOns} labelMap={PRE_ADDON_LABEL} subLabelMap={fl?.addOn} />
             )}
@@ -315,7 +383,7 @@ export function PreConsultDetailView({
 
         {/* 손님 요청사항 */}
         {data.additionalRequest && data.additionalRequest.trim() && (
-          <SectionCard icon="💬" title="손님 요청사항" elevated={elevated}>
+          <SectionCard icon="💬" title="손님 요청사항" titleSub={ft?.sections.request} elevated={elevated}>
             <div className="rounded-xl bg-background p-3">
               <p className="text-xs text-text whitespace-pre-line break-keep">{data.additionalRequest}</p>
             </div>
