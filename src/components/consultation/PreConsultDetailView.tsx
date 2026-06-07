@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PreConsultationData } from '@/types/pre-consultation';
-import { createTranslator } from '@/lib/i18n';
+import { createTranslator, useLocale } from '@/lib/i18n';
 
 // ── 레이블 상수 (사전상담 표시 SSOT — 모든 원장 화면이 이 컴포넌트를 통해 동일하게 표시) ──
 // SSOT 정렬: labels.ts CATEGORY_LABELS 와 동일 표기 (자석 / 마그넷, 심플 / 원컬러)
@@ -210,8 +210,17 @@ export function PreConsultDetailView({
 
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
-  // 손님 언어 병기 — customerLanguage !== 'ko'일 때만 fl/ft에 라벨맵 준비
-  const foreignLang = customerLanguage && customerLanguage !== 'ko' ? customerLanguage : null;
+  // 손님 언어 병기 결정 (둘 다 ko면 병기 없음):
+  //  1순위 — 손님이 외국어로 사전상담했으면 그 언어 (현장에서 손님과 함께 보기 위함)
+  //  2순위 — 손님이 한국어로 상담했더라도 사장님이 앱 언어를 외국어로 전환했으면 그 언어
+  //          (외국 손님이 한국어로 제출했거나, 사장님이 영어로 확인하고 싶은 경우 대응)
+  const appLocale = useLocale();
+  const foreignLang: 'en' | 'zh' | 'ja' | null =
+    customerLanguage && customerLanguage !== 'ko'
+      ? customerLanguage
+      : appLocale !== 'ko'
+        ? appLocale
+        : null;
   const foreignT = foreignLang ? createTranslator(foreignLang) : null;
   const fl: ForeignPreLabels | null = foreignT ? buildForeignPreLabels(foreignT) : null;
   const ft: ForeignPreTitles | null = foreignT ? buildForeignPreTitles(foreignT) : null;

@@ -838,3 +838,15 @@
 - **수정**: SSOT `src/lib/share-link-message.ts` `buildPreConsultShareMessage` 신설 → `ShareLinkCard`(홈)·`ConsultationLinkModal`(예약별)이 공유. URL만 복사하던 것을 "샵이름 사전상담 + 안내 + URL"로.
 
 - **검증**: lint 0 error / tsc EXIT 0 / build EXIT 0. OG 라우트 생성 확인. 상세 `docs/qa-deep-20260604.md`.
+
+## 29. 🟢 사전상담 기록 상세 손님언어 병기 — 사장님 언어 토글도 반영 (2026-06-05~07 — 지승호 대표 피드백)
+
+> 사장님이 기록에서 보는 사전상담 상세(`PreConsultDetailView`)를 손님 언어와 병기. 현장에서 외국인 손님과 같이 기록을 확인하기 위함.
+
+### 29.1 🟢 값·라벨·섹션 제목 병기 (커밋 da90e30 / fffcd6d)
+- **수정**: `PreConsultDetailView`에 `customerLanguage` prop 주입(호출부 4곳: records/preconsult·records/[id]·records 바텀시트·field-mode/treatment). i18n에 `createTranslator(locale)` non-hook 번역기 신설. `InfoRow valueSub`(값) + `labelSub`(라벨) + `SectionCard titleSub`(섹션 제목)에 손님 언어 보조 병기. 자유 요청사항·커스텀 파츠명·가격은 제외.
+
+### 29.2 🟢 사장님 앱 언어 토글도 병기 반영 (2026-06-07)
+- **원인**: `PreConsultDetailView`가 `useLocale`(사장님 앱 언어)을 안 읽고 `customerLanguage`(손님 상담 언어)만 봄 → 손님이 한국어로 상담하면 사장님이 상단에서 영어로 토글해도 병기 0(화면 그대로). 외국 손님이 한국어로 제출했거나 사장님이 영어로 확인하려는 경우 대응 불가.
+- **수정**: `useLocale` 추가. 병기 언어 결정 = 1순위 손님 외국어 상담 언어(`customerLanguage!=='ko'`), 2순위 사장님 앱 언어(`appLocale!=='ko'`). 둘 다 ko면 병기 없음. 기존(사장님 한국어) 동작은 100% 동일, 영어 토글 시에만 영어 병기 추가.
+- **검증**: tsc/lint/build EXIT 0. 프로덕션 영어 상담 실측(값·라벨·제목 전부 병기 확인). 상단 라벨 미표시 신고는 브라우저 캐시였음(하드 리로드 후 정상).
