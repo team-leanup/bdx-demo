@@ -736,4 +736,22 @@
 - 마이그레이션 `20260531_qa_fixes.sql`(적용완료): consultation_records.deposit, uq 슬롯 인덱스 pending/confirmed 한정
 - 라이브 검증: 신규 제출 DB 영속(A-2, deposit 10000) / 슬롯차단+후방겹침 / 대시보드·통화 정확 / tsc·lint 통과
 
-*최종 업데이트: 2026-05-31 (전 구간 심층 QA)*
+---
+
+## 2026-06-22 — 사전상담 사진 업로드 차단 버그 (클라이언트 제보)
+
+> 브론즈힐네일 외국인 손님이 사진 업로드 단계에서 막혀 건너뛰기로만 진행 가능. 지승호 대표 본인 재현.
+
+### ❌ Critical
+| # | 위치 | 이슈 | 파일 |
+|---|------|------|------|
+| BUG-17 | 사전상담 > 참고 사진 업로드 | ~~`ReferenceUpload`의 클라이언트 게이트가 서버보다 엄격(`ALLOWED_TYPES`=jpeg/png/webp만, `MAX_FILE_SIZE`=5MB)이라 아이폰 HEIC·빈 MIME·5~10MB 사진이 서버 도달 전 전량 차단 → 미리보기·다음 버튼 미표시, 건너뛰기만 가능~~ **✅ 수정됨** — MIME을 서버(`db.ts uploadPreConsultImage`)와 동일하게(+gif/heic/heif) + 빈 MIME은 서버 검증 위임, 크기 5→10MB 통일, `accept="image/*"`, i18n 4개 언어 문구 갱신 | `ReferenceUpload.tsx`, `i18n.ts` |
+
+**근거 (Supabase 라이브 + 서버 로그):**
+- 버킷 `pre-consult-refs`: `public:true`, 크기/MIME 제한 없음, anon INSERT 허용 → **서버는 정상** (anon 키 직접 업로드 HTTP 200)
+- 브론즈힐 샵 경로 pre-consult 업로드(POST) **0건** + 거부 에러(4xx/5xx) **0건** → 요청이 서버에 도달조차 못함(클라이언트 차단)
+- 손님 예약(아바, 6/23 18:00) `reference_image_urls` **0장** = 건너뛰기로 진행
+- 버킷 전체 성공 12장 전부 jpeg/png(테스트 샵), **HEIC 0건** / `ALLOWED_TYPES`는 2026-04-06부터 불변(회귀 아님)
+- **결론**: jpeg/png는 원래 정상, 아이폰 HEIC가 처음부터 클라이언트에서 차단되어 왔음(우연히 미노출)
+
+*최종 업데이트: 2026-06-22 (사전상담 사진 업로드 차단 수정)*

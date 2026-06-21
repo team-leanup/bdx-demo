@@ -8,8 +8,9 @@ import { uploadPreConsultImage, fetchBookingRequestById } from '@/lib/db';
 import { Button } from '@/components/ui/Button';
 
 const MAX_FILES = 5;
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB — 서버(uploadPreConsultImage)와 통일
+// 서버가 허용하는 MIME과 동일하게 유지. 아이폰 사진(HEIC/HEIF)·GIF 포함.
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif'];
 
 interface ReferenceUploadProps {
   onComplete: () => void;
@@ -55,8 +56,10 @@ export function ReferenceUpload({ onComplete }: ReferenceUploadProps): React.Rea
     const remaining = MAX_FILES - referenceImageUrls.length;
     const toUpload = files.slice(0, remaining);
 
+    setUploading(true);
     for (const file of toUpload) {
-      if (!ALLOWED_TYPES.includes(file.type)) {
+      // file.type이 비어있는 경우(iOS Safari 등 일부 환경)는 막지 않고 서버 검증에 맡긴다.
+      if (file.type && !ALLOWED_TYPES.includes(file.type)) {
         setErrorMsg(t('preConsult.uploadErrorType'));
         continue;
       }
@@ -67,9 +70,7 @@ export function ReferenceUpload({ onComplete }: ReferenceUploadProps): React.Rea
 
       if (!shopId) continue;
 
-      setUploading(true);
       const result = await uploadPreConsultImage(shopId, file);
-      setUploading(false);
 
       if (result.success && result.url) {
         addReferenceImageUrl(result.url);
@@ -77,6 +78,7 @@ export function ReferenceUpload({ onComplete }: ReferenceUploadProps): React.Rea
         setErrorMsg(result.error ?? t('preConsult.uploadError'));
       }
     }
+    setUploading(false);
 
     // Reset input so same file can be re-selected
     if (fileInputRef.current) {
@@ -120,7 +122,7 @@ export function ReferenceUpload({ onComplete }: ReferenceUploadProps): React.Rea
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept="image/*"
         multiple
         className="hidden"
         onChange={handleFileChange}
