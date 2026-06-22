@@ -56,6 +56,10 @@ export function ReferenceUpload({ onComplete }: ReferenceUploadProps): React.Rea
     const remaining = MAX_FILES - referenceImageUrls.length;
     const toUpload = files.slice(0, remaining);
 
+    // 최대 장수(MAX_FILES)를 초과해 선택한 경우 — 초과분은 추가되지 않으므로 명확히 안내한다.
+    // (HTML <input multiple>은 OS 파일 선택창의 선택 개수를 제한할 수 없어, 받는 쪽에서 제한 + 안내한다.)
+    const exceededLimit = files.length > remaining;
+
     setUploading(true);
     for (const file of toUpload) {
       // file.type이 비어있는 경우(iOS Safari 등 일부 환경)는 막지 않고 서버 검증에 맡긴다.
@@ -79,6 +83,10 @@ export function ReferenceUpload({ onComplete }: ReferenceUploadProps): React.Rea
       }
     }
     setUploading(false);
+
+    if (exceededLimit) {
+      setErrorMsg(t('preConsult.uploadErrorMax'));
+    }
 
     // Reset input so same file can be re-selected
     if (fileInputRef.current) {
