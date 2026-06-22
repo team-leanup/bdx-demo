@@ -108,6 +108,8 @@ interface PreConsultActions {
   // Actions
   setSubmitting: (v: boolean) => void;
   setSubmitted: (id: string) => void;
+  /** 제출 완료 플래그만 해제 (런타임 shopData 등은 보존) — 재예약 진입 시 사용 */
+  clearSubmission: () => void;
   reset: (shopId?: string) => void;
 }
 
@@ -257,6 +259,9 @@ export const usePreConsultStore = create<PreConsultStore>()(
 
       setSubmitted: (id) =>
         set({ isSubmitted: true, submittedId: id, isSubmitting: false }),
+
+      clearSubmission: () =>
+        set({ isSubmitted: false, submittedId: null, isSubmitting: false, bookingId: null }),
 
       reset: (shopId) =>
         set({

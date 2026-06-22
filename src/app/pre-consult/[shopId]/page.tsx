@@ -78,6 +78,14 @@ function PreConsultStartInner(): React.ReactElement {
       setSelectedSlot(null, null);
     }
 
+    // 재예약 대응: 사장님 발송 링크(bookingId 파라미터)가 아닌 신규 예약 경로로
+    // 시작 화면에 다시 진입하면, 이전 제출 완료 플래그를 해제해 손님이 날짜를 바꿔
+    // 새로 예약할 수 있게 한다. (confirm 페이지 새로고침 중복제출 차단은 시작화면을
+    // 거치지 않으므로 그대로 유지된다.)
+    if (!bookingIdParam) {
+      usePreConsultStore.getState().clearSubmission();
+    }
+
     // 0601: 공유카드에서 넘어온 디자인 종류를 스토어에 pre-select.
     //   /design 이동 시 URL 파라미터가 유실되므로 진입 시점에 스토어에 저장 → 시간 선택 후
     //   디자인 단계에서 해당 시술 종류가 선택돼 있게 한다. (builtin만 — 공유 CTA는 builtin 카테고리)

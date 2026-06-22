@@ -77,7 +77,7 @@ export default function RecordsPage() {
 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [editForm, setEditForm] = useState({ title: '', phone: '', startTime: '', requestNote: '', referenceImages: [] as string[], language: 'ko' as 'ko' | 'en' | 'zh' | 'ja', deposit: '' as string });
+  const [editForm, setEditForm] = useState({ title: '', phone: '', reservationDate: '', startTime: '', requestNote: '', referenceImages: [] as string[], language: 'ko' as 'ko' | 'en' | 'zh' | 'ja', deposit: '' as string });
   const editPhotoRef = useRef<HTMLInputElement>(null);
   const [showAddReservationModal, setShowAddReservationModal] = useState(false);
   const [reservationPrefill, setReservationPrefill] = useState<{ time?: string; designerId?: string; channel?: BookingChannel } | null>(null);
@@ -335,6 +335,7 @@ export default function RecordsPage() {
       setEditForm({
         title: ev.title,
         phone: ev.customerPhone ?? '',
+        reservationDate: booking?.reservationDate ?? '',
         startTime: ev.startTime,
         requestNote: ev.requestNote ?? '',
         referenceImages: booking?.referenceImageUrls ?? [],
@@ -350,6 +351,7 @@ export default function RecordsPage() {
     updateReservation(selectedEvent.originalId, {
       customerName: editForm.title,
       phone: editForm.phone,
+      reservationDate: editForm.reservationDate,
       reservationTime: editForm.startTime,
       requestNote: editForm.requestNote,
       referenceImageUrls: editForm.referenceImages.length > 0 ? editForm.referenceImages : undefined,
@@ -462,6 +464,7 @@ export default function RecordsPage() {
     setEditForm({
       title: selectedEvent.title,
       phone: selectedEvent.customerPhone ?? '',
+      reservationDate: booking?.reservationDate ?? '',
       startTime: selectedEvent.startTime,
       requestNote: selectedEvent.requestNote ?? '',
       referenceImages: booking?.referenceImageUrls ?? [],
@@ -899,14 +902,25 @@ export default function RecordsPage() {
                         placeholder="010-0000-0000"
                       />
                     </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-text-secondary">시작 시간</label>
-                      <input
-                        type="time"
-                        value={editForm.startTime}
-                        onChange={(e) => setEditForm((f) => ({ ...f, startTime: e.target.value }))}
-                        className="rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                      />
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-semibold text-text-secondary">예약 날짜</label>
+                        <input
+                          type="date"
+                          value={editForm.reservationDate}
+                          onChange={(e) => setEditForm((f) => ({ ...f, reservationDate: e.target.value }))}
+                          className="rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-semibold text-text-secondary">시작 시간</label>
+                        <input
+                          type="time"
+                          value={editForm.startTime}
+                          onChange={(e) => setEditForm((f) => ({ ...f, startTime: e.target.value }))}
+                          className="rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                        />
+                      </div>
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-semibold text-text-secondary">메모</label>
